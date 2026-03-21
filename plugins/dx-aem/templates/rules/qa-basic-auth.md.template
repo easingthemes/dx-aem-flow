@@ -1,0 +1,96 @@
+---
+description: QA/Stage sites are protected with HTTP Basic Auth — credentials and Chrome DevTools handling
+paths: ["**/*"]
+applyTo: "**/*"
+---
+
+# QA/Stage Basic Auth
+
+QA and Stage environments are protected with HTTP Basic Auth on first visit. After successful authentication, a session cookie is set — no re-auth is needed for the remainder of the browser session (including new tabs).
+
+## Credentials
+
+Resolve credentials in this order (first found wins):
+
+1. **Environment variables** (preferred — keeps secrets out of committed files):
+   - `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS`
+   - `QA_BASIC_AUTH_FALLBACK_USER` / `QA_BASIC_AUTH_FALLBACK_PASS`
+
+2. **`.ai/config.yaml`** under `aem.qa-basic-auth` (legacy fallback):
+   ```yaml
+   aem:
+     qa-basic-auth:
+       username: "<username>"
+       password: "<password>"
+       fallback-username: "<fallback>"
+       fallback-password: "<fallback>"
+   ```
+
+To check env vars:
+```bash
+echo $QA_BASIC_AUTH_USER
+```
+
+If neither source has credentials, report that QA credentials are not set.
+
+**To configure**, add env vars to `.claude/settings.local.json` (auto-gitignored, per-project):
+
+```json
+{
+  "env": {
+    "QA_BASIC_AUTH_USER": "<your-qa-username>",
+    "QA_BASIC_AUTH_PASS": "<your-qa-password>",
+    "QA_BASIC_AUTH_FALLBACK_USER": "<optional-fallback>",
+    "QA_BASIC_AUTH_FALLBACK_PASS": "<optional-fallback>"
+  }
+}
+```
+
+Or set in your shell profile (`~/.zshrc`) for all projects.
+
+## Chrome DevTools MCP Handling
+
+### First navigation to a QA/Stage URL
+
+Embed credentials directly in the URL:
+
+```
+https://<username>:<password>@<qa-hostname>/path/to/page.html
+```
+
+This triggers the browser's built-in Basic Auth mechanism and sets the session cookie.
+
+### Subsequent navigations
+
+Use clean URLs without credentials — the cookie persists for the session:
+
+```
+https://<qa-hostname>/another/page.html
+```
+
+### Fallback: If embedded credentials don't work
+
+Some configurations reject credentials in the URL. Use `evaluate_script` to pre-authenticate via fetch with an Authorization header, then reload. Substitute the resolved username/password values (from env vars or config):
+
+```js
+async () => {
+  const creds = btoa('<resolved-username>:<resolved-password>');
+  const resp = await fetch(window.location.href, {
+    headers: { 'Authorization': 'Basic ' + creds },
+    credentials: 'include'
+  });
+  if (resp.ok) { location.reload(); return { authenticated: true }; }
+  // Try fallback credentials
+  const creds2 = btoa('<resolved-fallback-user>:<resolved-fallback-pass>');
+  const resp2 = await fetch(window.location.href, {
+    headers: { 'Authorization': 'Basic ' + creds2 },
+    credentials: 'include'
+  });
+  if (resp2.ok) { location.reload(); return { authenticated: true, fallback: true }; }
+  return { authenticated: false };
+}
+```
+
+## Detection
+
+A QA/Stage URL is any non-localhost URL that returns HTTP 401 on first request, or any URL matching the QA/Stage author or publisher URLs configured in `.ai/config.yaml` (`aem.author-url-qa`, `aem.publish-url-qa`).

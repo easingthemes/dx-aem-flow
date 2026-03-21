@@ -1,0 +1,63 @@
+{
+  "_doc": "CloudWatch Alarm definitions. Resource names use {{RESOURCE_PREFIX}} — substituted by setup-alarms.sh from infra.json. Do not edit names here; change the prefix in infra.json.",
+  "alarms": [
+    {
+      "nameSuffix": "dlq-depth",
+      "description": "DLQ messages > 5 — failed webhook events accumulating",
+      "namespace": "AWS/SQS",
+      "metricName": "ApproximateNumberOfMessagesVisible",
+      "dimensionName": "QueueName",
+      "dimensionValueSuffix": "dlq",
+      "statistic": "Maximum",
+      "period": 300,
+      "evaluationPeriods": 2,
+      "threshold": 5,
+      "comparisonOperator": "GreaterThanThreshold",
+      "treatMissingData": "notBreaching"
+    },
+    {
+      "nameSuffix": "lambda-errors-wi-router",
+      "description": "WI-Router Lambda errors > 3 in 1 hour",
+      "namespace": "AWS/Lambda",
+      "metricName": "Errors",
+      "dimensionName": "FunctionName",
+      "dimensionValueSuffix": "WI-Router",
+      "dimensionValueCase": "upper-prefix",
+      "statistic": "Sum",
+      "period": 3600,
+      "evaluationPeriods": 1,
+      "threshold": 3,
+      "comparisonOperator": "GreaterThanThreshold",
+      "treatMissingData": "notBreaching"
+    },
+    {
+      "nameSuffix": "lambda-errors-pr-router",
+      "description": "PR-Router Lambda errors > 3 in 1 hour",
+      "namespace": "AWS/Lambda",
+      "metricName": "Errors",
+      "dimensionName": "FunctionName",
+      "dimensionValueSuffix": "PR-Router",
+      "dimensionValueCase": "upper-prefix",
+      "statistic": "Sum",
+      "period": 3600,
+      "evaluationPeriods": 1,
+      "threshold": 3,
+      "comparisonOperator": "GreaterThanThreshold",
+      "treatMissingData": "notBreaching"
+    },
+    {
+      "nameSuffix": "lambda-throttles",
+      "description": "Any Lambda throttled — indicates concurrency limit hit",
+      "namespace": "AWS/Lambda",
+      "metricName": "Throttles",
+      "dimensions": [],
+      "statistic": "Sum",
+      "period": 300,
+      "evaluationPeriods": 1,
+      "threshold": 0,
+      "comparisonOperator": "GreaterThanThreshold",
+      "treatMissingData": "notBreaching",
+      "_note": "No dimensions = all functions. Throttles should never happen at our volume."
+    }
+  ]
+}

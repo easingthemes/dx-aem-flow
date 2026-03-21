@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #1a1a2e;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+a {
+  color: #2d308d;
+  text-decoration: none;
+}
+a:hover {
+  color: #36C0CF;
+}
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: rgba(45, 48, 141, 0.06);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  font-size: 0.85em;
+  color: #2d308d;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+@media print {
+  header, footer, [data-print="hide"] {
+    display: none !important;
+  }
+  main {
+    margin-top: 0 !important;
+  }
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,45 @@
+# Setup — Adopt KAI in a New Project
+
+## Prerequisites
+
+- Node.js v20+
+- Claude Code CLI installed
+- Azure DevOps access (org + project)
+- For automation hub: AWS CLI v2, Azure CLI
+
+## Quick Setup
+
+```bash
+/dx-init          # 1. Core workflow (config, rules, docs, hooks)
+/aem-init         # 2. AEM conventions + project seed data (if AEM project)
+/auto-init        # 3. Automation agents (optional)
+```
+
+Each command detects your environment, asks a few questions, and scaffolds the relevant files.
+
+## What Each Step Does
+
+| Command | Creates | Required? |
+|---------|---------|-----------|
+| `/dx-init` | `.ai/config.yaml`, `.ai/rules/`, `.ai/docs/`, `.claude/rules/`, `.claude/hooks/` | Yes |
+| `/aem-init` | AEM rules in `.claude/rules/`, AEM config in `config.yaml`, project seed data in `.ai/project/` | If AEM project |
+| `/auto-init` | `.ai/automation/` (infra.json, prompts, roles, policy) | If you want autonomous agents |
+
+## Automation: Hub vs Consumer
+
+`/auto-init` asks whether this project is a **hub** or **consumer**:
+
+- **Hub** — owns AWS infrastructure + all work-item webhooks. Run `/auto-provision`, `/auto-deploy`, `/auto-pipelines`, `/auto-webhooks`, `/auto-alarms`.
+- **Consumer** — gets PR pipelines + delegation-ready pipelines. No AWS needed. Run `/auto-pipelines` only.
+
+For detailed infrastructure setup (Lambda config, pipeline variables, service hooks), see [automation/docs/setup-new-project.md](../automation/docs/setup-new-project.md).
+
+## Verify & Upgrade
+
+```bash
+/dx-doctor       # Check all workflow files
+/auto-doctor     # Check automation setup (if applicable)
+/dx-upgrade      # Upgrade to latest plugin versions
+```
+
+All init commands are safe to re-run — they validate against plugin templates and preserve user-customized files.

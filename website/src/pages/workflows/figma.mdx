@@ -1,0 +1,236 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Figma-to-Code Pipeline
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Figma-to-Code Pipeline"
+  subtitle="From a Figma URL to a production AEM component that matches the design. The pipeline builds a verified prototype as a quality gate, then feeds it into the implementation plan -- so the final component gets it right the first time."
+/>
+
+{/* One Command */}
+<SectionHeading
+  badge="One Command"
+  title="From Figma URL to Production Component"
+  subtitle="/dx-figma-all <figma-url> orchestrates the entire pipeline. The prototype is a quality checkpoint -- the real output is a production-ready AEM component."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Pipeline"
+    command="/dx-figma-all <figma-url>"
+    description="Orchestrates all four phases. Or run each phase individually for more control."
+    steps={[
+      { title: 'Extract', subtitle: 'Design context, tokens, screenshots, asset downloads', command: '/dx-figma-extract' },
+      { title: 'Prototype', subtitle: 'Convention-aware HTML/CSS from project patterns', command: '/dx-figma-prototype', color: '#0891b2' },
+      { title: 'Verify', subtitle: 'Screenshot comparison, auto-fix, acceptance checklist', command: '/dx-figma-verify', color: '#d97706' },
+      { title: 'Implement', subtitle: 'Production AEM component built from verified prototype', command: '/dx-plan + /dx-step-all', color: '#059669' },
+    ]}
+  />
+</Section>
+
+{/* Business Value */}
+<SectionHeading
+  badge="Business Value"
+  badgeColor="success"
+  title="What Stakeholders See"
+  subtitle="Design fidelity is verified before production code is written -- no surprises at the end."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="Visual Proof">
+      Side-by-side comparison: Figma design next to the generated prototype. Well-structured Figma files
+      produce exceptional results -- but the pipeline adapts to any input quality.
+    </ContentCard>
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="Acceptance Checklist">
+      Binary pass/fail assertions with concrete values -- "title font-size 26px", "button background #000".
+      QA can verify without Figma access.
+    </ContentCard>
+    <ContentCard icon="mdi:speedometer" iconColor="bg-cyan" title="Faster Feedback">
+      Prototype is ready in minutes, not days. Stakeholders review a working HTML page, not a static
+      screenshot. Iterate before committing to production code.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Phase 1: Extract */}
+<SectionHeading
+  badge="Phase 1"
+  badgeColor="info"
+  title="Figma Extract"
+  subtitle="/dx-figma-extract -- Pulls everything from Figma so it never needs to be consulted again."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="Smart Node Selection">
+      Auto-matches the story requirements against the Figma frame structure. Detects multi-viewport
+      designs (desktop + mobile) and extracts each separately.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Design Quality Analysis">
+      Classifies each Figma node as <em>designed</em>, <em>screenshot-context</em>, or <em>decoration</em>.
+      Adapts the extraction strategy based on what it finds.
+    </ContentCard>
+    <ContentCard icon="mdi:palette" iconColor="bg-emerald-600" title="Token Extraction">
+      Captures all design variables (colors, spacing, typography), reference screenshots, and image assets.
+      Downloads everything locally for offline use.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Output: figma-extract.md">
+    Cleaned reference code (screenshot layers removed), design tokens, dynamic content annotations
+    (values marked with approximate for content-dependent sizing), asset manifest, and Figma reference screenshots.
+    This file is the single source of truth for all downstream steps.
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:star" iconColor="bg-emerald-600" title="Structured Figma">
+      Proper components, auto-layout, design tokens. The pipeline extracts everything directly --
+      exceptional accuracy, near-complete token coverage.
+    </ContentCard>
+    <ContentCard icon="mdi:star-half-full" iconColor="bg-brand-700" title="Hybrid Figma">
+      Mix of structured elements and pasted screenshots for context. The pipeline separates real design
+      from reference material -- strong results with minor gaps.
+    </ContentCard>
+    <ContentCard icon="mdi:star-outline" iconColor="bg-amber-500" title="Screenshot-Based Figma">
+      Primarily pasted screenshots with minimal structure. The pipeline reconstructs elements from images --
+      solid starting point that saves significant manual effort.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Phase 2: Prototype */}
+<SectionHeading
+  badge="Phase 2"
+  badgeColor="secondary"
+  title="Figma Prototype"
+  subtitle="/dx-figma-prototype -- Two parallel agents discover conventions, then a template-based generator produces a standalone prototype."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard
+      icon="mdi:palette-swatch"
+      iconColor="bg-cyan"
+      title="Convention Research"
+      tags={[{ label: 'Parallel', color: 'secondary' }, { label: 'Auto-discovery', color: 'primary' }]}
+    >
+      Two agents run in parallel: <strong>dx-figma-styles</strong> discovers CSS/SCSS conventions
+      (tokens, breakpoints, typography) and <strong>dx-figma-markup</strong> discovers HTML/accessibility patterns.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:view-dashboard"
+      iconColor="bg-cyan-dark"
+      title="Template Scaffold"
+      tags={[{ label: 'Consistent', color: 'info' }, { label: 'Idempotent', color: 'success' }]}
+    >
+      An HTML template provides the comparison layout -- side-by-side for mobile, stacked for desktop.
+      The skill fills two placeholders: component HTML and Figma reference images.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:swap-horizontal"
+      iconColor="bg-amber-500"
+      title="Token Mapping"
+      tags={[{ label: 'Traceable', color: 'warning' }, { label: 'Documented', color: 'primary' }]}
+    >
+      Every Figma design token is mapped to the closest project equivalent. Exact matches, close matches
+      (within 10%), and unmapped values are all documented in the CSS output.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Output">
+    <code>figma-conventions.md</code> with discovered project patterns, plus <code>prototype/index.html</code>,
+    <code>styles.css</code>, and <code>script.js</code>. The prototype uses the project's actual design tokens --
+    not generic CSS. Open it in any browser, no build system required.
+  </HighlightBox>
+</Section>
+
+{/* Phase 3: Verify */}
+<SectionHeading
+  badge="Phase 3"
+  badgeColor="success"
+  title="Figma Verify"
+  subtitle="/dx-figma-verify -- Opens the prototype in a real browser, compares against the Figma reference, and auto-fixes discrepancies."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:web" iconColor="bg-brand-700" title="Browser Rendering">
+      Opens the prototype in Chrome via Chrome DevTools MCP. Hides the Figma reference column, takes a
+      clean screenshot of just the component output.
+    </ContentCard>
+    <ContentCard icon="mdi:camera" iconColor="bg-cyan-dark" title="Visual Comparison">
+      Compares the prototype screenshot against <code>figma-reference.png</code> side by side. Identifies
+      layout shifts, color mismatches, spacing gaps, and missing elements.
+    </ContentCard>
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-amber-500" title="Auto-Fix Loop">
+      If differences are found, the skill patches CSS/HTML and re-screenshots -- up to 2 iterations.
+      Each round narrows the gap without manual intervention.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Output: figma-gaps.md">
+    An acceptance checklist with binary pass/fail assertions -- concrete values like "title font-size 26px",
+    "button background #000", "padding-top 40px". QA can verify the component without Figma access.
+    Verdict: <strong>PASS</strong>, <strong>PASS WITH MINOR GAPS</strong>, or <strong>NEEDS ATTENTION</strong>.
+  </HighlightBox>
+</Section>
+
+{/* Phase 4: Implementation */}
+<SectionHeading
+  badge="Phase 4"
+  badgeColor="warning"
+  title="Production AEM Component"
+  subtitle="The verified prototype is the quality gate. The real output is a production-ready AEM component built from concrete code, not guesswork."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="Prototype as Spec">
+      <code>/dx-plan</code> references the <code>prototype/</code> directory when generating the
+      implementation plan. The planner works from concrete HTML, CSS classes, and design tokens.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Convention Continuity">
+      <code>figma-conventions.md</code> carries forward into every implementation step. Same naming
+      patterns, breakpoints, and token mappings -- consistency from Figma to AEM.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="Design-Accurate Result">
+      Good input, good output. A well-structured Figma file produces an accurate component with
+      minimal rework. The pipeline catches mismatches early, not after deployment.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* End-to-End Flow */}
+<SectionHeading
+  badge="Flow"
+  title="End-to-End Flow"
+  subtitle="From Figma URL to verified prototype and implementation plan."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="End-to-End"
+    command="/dx-figma-all <figma-url>"
+    description="The complete flow from Figma URL to production component."
+    steps={[
+      { title: 'Figma URL', subtitle: 'In story' },
+      { title: 'Extract', subtitle: 'Context + tokens', command: '/dx-figma-extract', color: '#3b82f6' },
+      { title: 'Parallel agents', subtitle: 'Styles + Markup', color: '#8b5cf6' },
+      { title: 'Prototype', subtitle: 'Template + generate', command: '/dx-figma-prototype', color: '#0891b2' },
+      { title: 'Verify', subtitle: 'Screenshot compare', command: '/dx-figma-verify', color: '#22c55e' },
+      { title: 'Plan', subtitle: 'From prototype', command: '/dx-plan', color: '#3b82f6' },
+      { title: 'Execute', subtitle: 'Execute plan', command: '/dx-step-all', color: '#7c3aed' },
+    ]}
+  />
+</Section>

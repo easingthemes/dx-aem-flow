@@ -1,0 +1,170 @@
+# Architecture
+
+## System Overview
+
+```
+                          +------------------+
+                          |   Azure DevOps   |
+                          |  (tickets, PRs)  |
+                          +--------+---------+
+                                   |
+                  +----------------+----------------+
+                  |                                  |
+          [Tag added to WI]                  [PR created/commented]
+                  |                                  |
+                  v                                  v
+          +-------+--------+                +--------+-------+
+          |  ADO Webhook   |                | ADO Build      |
+          |  (service hook)|                | Policy         |
+          +-------+--------+                +--------+-------+
+                  |                                  |
+                  v                                  v
+          +-------+--------+                +--------+-------+
+          | AWS API Gateway |                | PR Review      |
+          +-------+--------+                | Pipeline       |
+                  |                          +----------------+
+          +-------+--------+
+          | Lambda Router  |  (WI Router or PR Router)
+          | - dedupe check |
+          | - rate limit   |
+          | - queue pipeline|
+          +-------+--------+
+                  |
+                  v
+          +-------+--------+
+          | ADO Pipeline   |  (DoR, DoD, BugFix, DevAgent, etc.)
+          | - runs AI agent|
+          | - posts results|
+          +----------------+
+
+          +-------------------------------------+
+          |          Developer's Machine         |
+          |                                      |
+          |  Claude Code CLI  or  VS Code        |
+          |  /dx-req-all         @DxPRReview     |
+          |  /dx-plan            @DxCodeReview   |
+          |  /dx-step-all        @DxCommit       |
+          |                                      |
+          |  Reads: .ai/config.yaml              |
+          |  Writes: .ai/specs/<id>/             |
+          +-------------------------------------+
+```
+
+## Two Modes
+
+### Local (Interactive)
+
+The developer runs commands. The AI assists.
+
+```
+/dx-req-all <ID>  -->  skill reads config.yaml
+                       skill fetches ADO work item
+                       skill researches codebase (parallel agents)
+                       skill writes .ai/specs/<id>-<slug>/raw-story.md, explain.md, research.md
+```
+
+- **Who runs it**: Developer, in their terminal or VS Code
+- **Tools**: Claude Code CLI (`/dx-*` commands) or Copilot (`@Agent`)
+- **Config**: `.ai/config.yaml` (project settings), `.ai/me.md` (personal tone)
+- **Output**: Files in `.ai/specs/`, commits, PRs, ADO comments
+- **Control**: Developer approves each action (or runs `/dx-agent-all` for full autonomy)
+
+### Remote (Autonomous)
+
+Events trigger agents. No developer needed.
+
+```
+ADO tag added  -->  webhook fires
+                    Lambda checks dedupe + rate limit
+                    Lambda queues ADO pipeline
+                    Pipeline runs AI agent
+                    Agent posts ADO comment (or creates PR)
+```
+
+- **Who runs it**: Triggered by ADO events (tags, PR creation, PR comments)
+- **Infrastructure**: AWS Lambda + DynamoDB + SQS + S3 + API Gateway + CloudWatch
+- **Config**: Pipeline variables (API keys, ADO PAT, endpoints)
+- **Output**: ADO comments, PR review comments, branches + PRs
+- **Control**: Policy gates, rate limits, token budget, scanner
+
+## Plugin System
+
+### Hub and Consumer
+
+```
+dx-aem-ai-flow/              <-- Plugin source (Hub)
+├── dx/plugins/
+│   ├── dx-dev-experience/    <-- Core: ADO workflow (43 skills, 5 agents)
+│   ├── dx-aem/               <-- AEM: component verification, project knowledge (10 skills, 5 agents)
+│   └── dx-automation/        <-- Automation: CI/CD agents (11 skills)
+```
+
+- **Hub project** owns the plugin source, AWS infrastructure, and all work-item webhooks
+- **Consumer projects** install plugins and get PR pipelines + delegation-ready pipelines
+- A project can be both Hub and Consumer (like this one)
+
+### What Plugins Provide
+
+| Layer | Plugin source | Scaffolded to project |
+|-------|--------------|----------------------|
+| **Skills** | `skills/*/SKILL.md` | Used directly by Claude Code (not copied) |
+| **Agents** | `agents/*.md` | Used directly by Claude Code (not copied) |
+| **Rules** | `templates/rules/*.template` | `.ai/rules/` and `.claude/rules/` |
+| **Docs** | `templates/docs/*.template` | `.ai/docs/` |
+| **Config** | `templates/config.yaml.template` | `.ai/config.yaml` |
+| **Utilities** | `data/lib/`, `data/hooks/` | `.ai/lib/`, `.claude/hooks/` |
+| **Copilot agents** | `templates/agents/*.template` | `.github/agents/` |
+| **Automation** | `auto-init` scaffolds | `.ai/automation/` |
+
+### Three-Layer Override
+
+Rules resolve in priority order:
+
+```
+1. .ai/rules/<topic>.md           <-- Project override (highest priority)
+2. config.yaml overrides: section  <-- Config-level tweak
+3. Plugin defaults (rules/*.md)    <-- Plugin default (lowest priority)
+```
+
+Projects can also shadow entire skills by creating `.claude/skills/<name>/SKILL.md`.
+
+### Scaffolding Flow
+
+```
+/dx-init   -->  scaffold.sh creates .ai/ and .claude/ directories
+                copies rules from plugin templates/rules/
+                writes .ai/config.yaml from config.yaml.template
+                writes .ai/README.md, .ai/docs/*
+                optionally installs Copilot agents to .github/agents/
+
+/aem-init  -->  copies AEM convention rules to .claude/rules/
+                copies AEM instructions to .github/instructions/
+
+/aem-init  -->  (also) sets up project seed data in .ai/project/
+                (project.yaml, file-patterns.yaml, component-index, etc.)
+
+/auto-init -->  scaffolds .ai/automation/ (infra.json, prompts, roles, policy)
+                hub: full AWS + webhook setup
+                consumer: PR pipelines + delegation only
+```
+
+## AWS Infrastructure (Hub Only)
+
+| Resource | Purpose |
+|----------|---------|
+| **API Gateway** (HTTP v2) | Receives ADO webhooks |
+| **Lambda: WI Router** | Routes work-item events to the correct pipeline |
+| **Lambda: PR Router** | Routes PR comment events to PR Answer pipeline |
+| **DynamoDB** | Deduplication (1h TTL), rate limiting, token budget tracking |
+| **SQS** | Dead letter queue for failed Lambda invocations |
+| **S3** | Pipeline run bundles (inputs, outputs, decision journal) |
+| **CloudWatch** | 4 alarms: DLQ depth, WI Router errors, PR Router errors, throttles |
+| **SNS** | Alert notifications (email subscription) |
+
+## Key Design Decisions
+
+- **Config-driven**: All project-specific values in `.ai/config.yaml`. Skills never hardcode paths, branches, or URLs.
+- **Spec directory convention**: Per-ticket output in `.ai/specs/<id>-<slug>/` with predictable filenames. Skills find each other's output by convention.
+- **Fail-closed capabilities**: Agents can only do what their role explicitly allows. Unlisted actions are denied.
+- **Headless autonomy**: In pipeline mode, agents never ask questions. They make reasonable decisions and document assumptions.
+- **Shared rules**: `.ai/rules/` is read by both local skills and remote pipeline agents. One edit changes behavior everywhere.

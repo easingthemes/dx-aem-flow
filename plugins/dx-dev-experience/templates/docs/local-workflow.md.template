@@ -1,0 +1,214 @@
+# Local Workflow — CLI Commands
+
+> **Visual flow diagrams:** [Local Dev Flow](dx-dev-local-flow.md) | [Automation Flow](dx-automation-flow.md) — mermaid diagrams showing the complete pipeline end-to-end.
+
+All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot chat.
+
+## Quick Start
+
+```
+/dx-req-all <ID>    # Fetch ADO story, explain, research codebase
+/dx-plan            # Generate step-by-step implementation plan
+/dx-step-all        # Execute all steps (test + review + commit loop)
+/dx-step-build      # Build & deploy
+/dx-step-verify     # 6-phase verification
+/dx-pr              # Create pull request
+```
+
+## All Commands
+
+### Requirements
+
+| Command | What it does | Output |
+|---------|-------------|--------|
+| `/dx-req-all <ID>` | Full pipeline: fetch, dor, explain, research, share approach | All spec files + ADO comments |
+| `/dx-req-fetch <ID>` | Pull ADO work item, save faithfully | `raw-story.md` |
+| `/dx-req-dor` | Validate DoR, post interactive checkboxes to ADO. On re-run, reads checkbox state — if BA checked items, re-validates. | `dor-report.md` + ADO comment |
+| `/dx-req-explain` | Distill story into developer-focused requirements | `explain.md` |
+| `/dx-req-research` | Search codebase for related code via parallel agents | `research.md` |
+| `/dx-req-share` | Generate non-technical approach summary, post to ADO (idempotent) | `share-plan.md` + ADO comment |
+| `/dx-req-dod` | Validate Definition of Done — tests, PR, docs, build | `dod.md` |
+| `/dx-req-dod-fix` | Auto-fix failed DoD criteria, create Task WIs for the rest | Fixes + ADO tasks |
+| `/dx-req-tasks <ID>` | Create child Task work items with hour estimates | ADO tasks |
+| `/dx-estimate <ID>` | Estimate story complexity and effort | Estimate output |
+
+### Planning
+
+| Command | What it does | Output |
+|---------|-------------|--------|
+| `/dx-plan` | Generate step-by-step implementation plan | `implement.md` |
+| `/dx-plan-validate` | Verify plan covers all requirements, no extras | Warnings/OK |
+| `/dx-plan-resolve` | Research and fix risks flagged by validation | Updated `implement.md` |
+
+### Execution
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-step-all` | Execute all plan steps autonomously (step, test, review, commit loop) |
+| `/dx-step` | Execute next pending step only |
+| `/dx-step-test` | Run tests and parse results into pass/fail summary |
+| `/dx-step-review` | Review step changes against plan and conventions |
+| `/dx-step-fix` | Diagnose and fix a blocked step |
+| `/dx-step-heal` | Diagnose pipeline failures, create corrective fix steps |
+| `/dx-step-commit` | Stage and commit completed step changes |
+| `/dx-step-build` | Build and deploy, auto-fix errors iteratively |
+
+### Review & Ship
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-step-verify` | 6-phase verification: compile, lint, test, secret scan, architecture, code review |
+| `/dx-pr` | Create pull request via ADO |
+| `/dx-pr-review <PR>` | Review a PR — analyze diff, post comments |
+| `/dx-pr-answer` | Answer open PR comments with codebase context |
+| `/dx-pr-fix` | Apply agree-will-fix code changes from reviews |
+| `/dx-pr-commit` | Commit with ADO work item linking |
+| `/dx-pr-review-report <PR>` | Generate categorized report from PR review findings, post to wiki |
+| `/dx-pr-reviews-report [N]` | Batch-generate reports for last N PRs you reviewed (parallel). `--any` for all PRs |
+
+### Documentation
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-doc-gen` | Generate wiki documentation from completed spec files |
+| `/dx-doc-retro` | Generate docs retroactively for completed stories |
+
+### Bug Fix
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-bug-all <ID>` | Full bug workflow: triage, verify, fix |
+| `/dx-bug-triage <ID>` | Fetch bug from ADO, find affected component |
+| `/dx-bug-verify` | Reproduce bug via Chrome DevTools |
+| `/dx-bug-fix` | Generate fix plan from triage, execute, create PR |
+
+### Figma Design-to-Code
+
+| Command | What it does | Output |
+|---------|-------------|--------|
+| `/dx-figma-extract` | Extract design context, tokens, screenshots from Figma URL | `figma-extract.md`, `prototype/figma-reference.png` |
+| `/dx-figma-prototype` | Generate HTML/CSS prototype from extraction data | `figma-conventions.md`, `prototype/index.html` |
+| `/dx-figma-verify` | Visually verify prototype against Figma screenshot (Chrome DevTools) | `figma-gaps.md`, `prototype/prototype-screenshot.png` |
+
+### Recon & Setup
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-ticket-analyze <ID>` | Research ADO ticket, find all relevant source files |
+| `/dx-help <question>` | Answer architecture questions from local docs |
+| `/dx-init` | Set up dx workflow for a new project |
+| `/dx-doctor` | Check health of all workflow files |
+| `/dx-upgrade` | Upgrade to latest plugin versions |
+| `/dx-eject` | Eject plugin assets into consumer repo (standalone mode) |
+
+### Autonomous Agents
+
+| Command | What it does |
+|---------|-------------|
+| `/dx-agent-all <ID>` | Full autonomous pipeline: requirements → plan → execute → PR |
+| `/dx-agent-re <ID>` | RE Agent: fetch, analyze, produce structured spec |
+| `/dx-agent-dev <ID>` | Dev Agent: implement from spec, self-check, commit |
+
+## Workflow Recipes
+
+**"Just give me the requirements, I'll code myself"**
+```
+/dx-req-all <ID>
+# Review .ai/specs/<id>-*/explain.md, then code manually
+```
+
+**"Generate a plan, then execute it"**
+```
+/dx-req-all <ID>
+/dx-plan
+/dx-plan-validate
+/dx-step-all
+/dx-step-build
+/dx-pr
+```
+
+**"Step through manually, review each step"**
+```
+/dx-step        # Execute one step
+/dx-step-test   # Run tests
+/dx-step-review # Review changes
+/dx-step-commit # Commit if good
+# Repeat for each step
+```
+
+**"Answer and fix PR review comments"**
+```
+/dx-pr-answer   # Research + draft answers for open comments
+/dx-pr-fix      # Apply agree-will-fix changes, commit, push, reply
+```
+
+**"DoR → BA feedback → share plan (incremental)"**
+```
+/dx-req-fetch <ID>            # 1. Fetch story from ADO
+/dx-req-dor                   # 2. Validate DoR, post checkbox comment to ADO
+# ── wait for BA to check items in ADO comment ──
+/dx-req-dor                   # 3. Re-run: reads checkboxes, re-validates, posts update
+/dx-req-all <ID>              # 4. Skips fetch+dor (done), runs explain → research → share
+```
+
+Each step is idempotent — already-completed steps are skipped. Dependency chain:
+```
+fetch → dor → explain → research → share
+              ↻ BA checkbox loop
+```
+
+**"Full pipeline start to finish"**
+```
+/dx-agent-all <ID>
+```
+
+## Cross-Repo Tickets
+
+Some tickets require changes in multiple repos. Run the workflow in each repo independently:
+
+```
+# In first repo:
+/dx-req-all <ID>   # research.md lists other repos involved
+/dx-plan           # plans only the changes for THIS repo
+/dx-step-all
+
+# Switch to second repo, run same workflow
+/dx-req-all <ID>
+/dx-plan
+/dx-step-all
+```
+
+## Copilot Support
+
+All skills also work in VS Code Copilot chat via `@AgentName`:
+
+| Agent | Same as | Handoffs to |
+|-------|---------|-------------|
+| `@DxReqAll` | `/dx-req-all` | `@DxPlanExecutor`, `@DxFigma` |
+| `@DxStepAll` | `/dx-step-all` | `@DxCodeReview`, `@DxCommit` |
+| `@DxBugAll` | `/dx-bug-all` | `@DxCodeReview`, `@DxCommit` |
+| `@DxAgentAll` | `/dx-agent-all` | `@DxCodeReview`, `@DxCommit` |
+| `@DxFigma` | `/dx-figma-extract` → `/dx-figma-prototype` → `/dx-figma-verify` | `@DxPlanExecutor`, `@DxReqAll` |
+| `@DxPlanExecutor` | `/dx-step` (single step) | `@DxCodeReview`, `@DxCommit` |
+| `@DxCodeReview` | `/dx-step-verify` | `@DxCommit` |
+| `@DxPRReview` | `/dx-pr-review` | `@DxCodeReview`, `@DxDebug` |
+| `@DxPRAnswer` | `/dx-pr-answer` | `@DxPRFix` |
+| `@DxPRFix` | `/dx-pr-fix` | `@DxPRAnswer`, `@DxCommit` |
+| `@DxCommit` | `/dx-pr-commit` | `@DxPRReview`, `@DxCodeReview` |
+| `@DxTicket` | `/dx-ticket-analyze` | — |
+| `@DxHelp` | `/dx-help` | — |
+
+## Output Structure
+
+All per-ticket output goes to `.ai/specs/<id>-<slug>/`:
+
+```
+.ai/specs/2440808-enhance-email-verification/
+├── raw-story.md     # Faithful ADO dump
+├── explain.md       # Developer-focused requirements
+├── research.md      # Codebase research findings
+├── implement.md     # Step-by-step plan with status tracking
+├── share-plan.md    # Non-technical summary for Teams/ADO
+├── dor-report.md    # DoR scorecard + open questions (checkbox loop with BA via ADO)
+└── dod.md           # Definition of Done validation report
+```

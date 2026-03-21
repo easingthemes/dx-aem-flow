@@ -1,0 +1,148 @@
+# Figma Design Extract
+
+**URL:** <original Figma URL>
+**File Key:** <fileKey>
+**Node:** <selectedNodeId> (<node name>)
+**Extracted:** <ISO date>
+**Source:** <"Story URL" | "User-provided URL (story URL: <url>)" | "User-provided URL (no story URL)">
+**Viewports:** <"single" | count — list of names with widths>
+<!-- For multi-viewport: e.g. "2 — desktop (1440px), mobile (375px)" -->
+
+## Relevance Warning
+<!-- ONLY include if mismatch detected in Step 8. Otherwise OMIT this section entirely. -->
+
+## Screenshot
+<!-- Single viewport: -->
+Saved to: `prototype/figma-reference.png`
+<!-- Multi-viewport: list each screenshot -->
+<!-- - Desktop: `prototype/figma-reference-desktop.png`
+     - Mobile: `prototype/figma-reference-mobile.png` -->
+
+## Design Quality
+<!-- ONLY include if Step 7 detected screenshot layers. OMIT entirely for clean designs.
+     See references/design-quality.md for classification rules and output format. -->
+
+<!-- **Assessment:** <"Clean" | "Hybrid — designer used website screenshots as context with new elements overlaid">
+**Screenshot layers:** <count> nodes identified as screenshot backgrounds
+**Real designed elements:** <count> nodes with proper Figma structure
+**Hybrid elements:** <count> nodes with screenshot bg + real children
+
+### Layer Classification
+
+| Node ID | Name | Type | Classification | Action |
+|---------|------|------|----------------|--------|
+| <id> | <name> | <type> | <designed|hybrid|screenshot-context|decoration> | <action taken> |
+
+### Screenshot Regions
+
+| Node ID | Region | Existing UI described from screenshot |
+|---------|--------|---------------------------------------|
+| <id> | <position in layout> | <semantic description of what existing UI is visible> |
+-->
+
+<!-- ============================================================
+     MULTI-VIEWPORT ONLY: Per-Viewport Sections
+     For single-viewport extraction, SKIP to "Reference Code" below.
+     For multi-viewport, include one section per viewport, then SKIP
+     the single "Reference Code" section.
+     ============================================================ -->
+
+<!-- ## Desktop Variant
+**Node:** <nodeId> (<frame name>)
+**Dimensions:** <width>x<height>
+**Screenshot:** `prototype/figma-reference-desktop.png`
+
+### Reference Code
+<code from get_design_context for desktop node>
+
+### Annotations & Constraints
+<desktop-specific notes> -->
+
+<!-- ## Mobile Variant
+**Node:** <nodeId> (<frame name>)
+**Dimensions:** <width>x<height>
+**Screenshot:** `prototype/figma-reference-mobile.png`
+
+### Reference Code
+<code from get_design_context for mobile node>
+
+### Annotations & Constraints
+<mobile-specific notes> -->
+
+<!-- Repeat for additional viewports (Tablet, etc.) -->
+
+## Reference Code
+<!-- SINGLE-VIEWPORT ONLY. For multi-viewport, this section is replaced
+     by per-viewport "Reference Code" subsections above. -->
+<!-- Paste the code from get_design_context. If Step 7 detected screenshot layers,
+     use the CLEANED version (screenshot backgrounds stripped, screenshot-context nodes
+     replaced with semantic comments, decoration nodes removed).
+     If design is clean, paste the raw code as-is. -->
+
+## Dynamic Content Elements
+<!-- MANDATORY. Scan the reference code for elements with placeholder content.
+     Tag content-dependent CSS properties with ≈ throughout the rest of the document.
+     See references/dynamic-content.md for detection heuristics.
+
+     Structural properties (flex-direction, position, display) are NEVER approximate.
+     Only measured values (padding, height, font-size from placeholders) get ≈. -->
+
+> Elements with placeholder content in Figma. Values measured from these elements
+> are marked **≈** throughout this document. Downstream skills should treat ≈ values
+> as guidelines, not pixel-exact targets.
+
+| Element | Content type | Content-dependent properties |
+|---|---|---|
+<!-- | Title heading | Text (variable length) | `height`, `margin-bottom` |
+     | Body paragraph | Text (multi-line, variable) | `height`, `min-height` |
+     | CTA button label | Text (variable length) | `width`, `padding-inline` |
+     | Card image | Image (variable aspect ratio) | `height`, `aspect-ratio` |
+     | Card items | Repeated (variable count) | Container `height`, `gap` accumulation |
+     Add one row per dynamic element found. -->
+
+## Breakpoint CSS Overrides
+<!-- MULTI-VIEWPORT ONLY. OMIT for single-viewport extractions.
+     Mobile-first: narrowest viewport is the baseline (no media query).
+     Wider viewports show only properties that CHANGE from the previous breakpoint.
+     Mark content-dependent values with ≈.
+     See references/breakpoint-tables.md for format details. -->
+
+<!-- ### <Narrowest viewport> — Baseline (<<breakpoint>px)
+
+| Element | Property | Value |
+|---|---|---|
+| <element> | <property> | <value or ≈value> |
+
+### <Next viewport> — Overrides (≥<breakpoint>px)
+
+| Element | Property | <Prev> value | <This> value |
+|---|---|---|---|
+| <element> | <property> | <old> | <new or ≈new> |
+
+Repeat for each additional viewport. -->
+
+## Design Tokens
+
+### From Variable Definitions
+<!-- Structured list of tokens from get_variable_defs.
+     Format: token name → resolved value → role/usage. -->
+
+### From Design Context
+<!-- Any tokens embedded in the design context response.
+     Note viewport-specific tokens if different across viewports. -->
+
+## Annotations & Constraints
+<!-- SINGLE-VIEWPORT ONLY. For multi-viewport, annotations are per-viewport above.
+     Designer notes, component documentation, constraints from the response. -->
+
+## Asset URLs
+<!-- Download URLs for any images/icons referenced in the design.
+     Include all viewports for multi-viewport. -->
+
+### Downloaded Assets
+<!-- List of assets downloaded by hook to prototype/assets/.
+     If hook didn't trigger: "None — hook not triggered" -->
+
+## Node Hierarchy
+<!-- Simplified tree showing where the selected node sits in the Figma structure.
+     For multi-viewport: show parent node with viewport children. -->

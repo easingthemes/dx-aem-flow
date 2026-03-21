@@ -1,0 +1,392 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Automation -- 24/7 Autonomous Agents
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+<PageHero
+  title="Automation -- 24/7 Autonomous Agents"
+  subtitle="10 AI agents running as ADO pipelines, triggered by AWS Lambda webhooks. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned."
+/>
+
+<SectionHeading
+  badge="Event Flow"
+  badgeColor="error"
+  title="Event Flow Architecture"
+  subtitle="From tracker event to agent execution -- every webhook is routed, deduplicated, rate-limited, and dispatched."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Event Flow"
+    description="From ADO event to agent execution -- every webhook is routed, deduplicated, rate-limited, and dispatched."
+    steps={[
+      { title: 'Tracker Events (ADO)', subtitle: 'WI updated + tag,\nPR comment,\nPR created' },
+      { title: 'Service Hooks', subtitle: 'WI hook,\nPR Answer hook,\nPR Review policy', color: '#0891b2' },
+      { title: 'API Gateway', subtitle: 'AWS entry point', color: '#8b5cf6' },
+      { title: 'Lambda Routers', subtitle: 'Deduplicate,\nRate limit,\nToken budget', color: '#d97706' },
+      { title: 'ADO Pipelines', subtitle: '10 agent pipelines', color: '#059669' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  title="Ten Autonomous Agents"
+  subtitle="Two PR agents triggered automatically, eight work-item agents triggered by ADO tags (Jira label support planned)."
+  bg="primary"
+/>
+<Section>
+  <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-600 mb-4">PR Agents (automatic -- no tags)</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <ContentCard
+      icon="mdi:magnify"
+      iconColor="bg-amber-500"
+      title="PR Reviewer"
+      tags={[{ label: 'PR created', color: 'primary' }, { label: 'build policy', color: 'secondary' }]}
+    >
+      Build validation policy on PR creation. Runs <code>/dx-pr-review</code> -- posts inline comments
+      with severity levels, architecture checks, and standards compliance.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:chat"
+      iconColor="bg-cyan"
+      title="PR Answerer"
+      tags={[{ label: 'PR comment', color: 'primary' }, { label: 'webhook', color: 'secondary' }]}
+    >
+      Webhook on PR comment. Runs <code>/dx-pr-answer</code> + <code>/dx-pr-fix</code> -- researches
+      codebase, drafts replies, and applies agreed fixes automatically.
+    </ContentCard>
+  </div>
+
+  <h3 class="text-sm font-bold uppercase tracking-wider text-amber-500 mb-4">Work Item Agents (tag + KAI-TRIGGER)</h3>
+
+  <HighlightBox severity="info" title="How Triggers Work">
+    All work-item agents require the <code>KAI-TRIGGER</code> tag in addition to the agent-specific tag.
+    Add both tags to the ADO work item (or corresponding Jira labels) to activate the agent.
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard
+      icon="mdi:check-circle"
+      iconColor="bg-emerald-600"
+      title="DoR Checker"
+      tags={[{ label: 'KAI-DOR-AUTOMATION', color: 'success' }, { label: '/dx-agent-re', color: 'secondary' }]}
+    >
+      Validates Definition of Readiness -- checks story completeness, acceptance criteria, and technical detail.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:format-list-checks"
+      iconColor="bg-emerald-600"
+      title="DoD Checker"
+      tags={[{ label: 'KAI-DOD-AUTOMATION', color: 'success' }, { label: '/dx-req-dod', color: 'secondary' }]}
+    >
+      Validates Definition of Done -- checks completion criteria, test coverage, and documentation.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:wrench"
+      iconColor="bg-emerald-600"
+      title="DoD Fixer"
+      tags={[{ label: 'KAI-DOD-FIX-AUTOMATION', color: 'success' }, { label: '/dx-req-dod-fix', color: 'secondary' }]}
+    >
+      Fixes DoD gaps found by the checker -- adds missing tests, docs, or acceptance criteria evidence.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:bug"
+      iconColor="bg-red-500"
+      title="BugFix"
+      tags={[{ label: 'KAI-BUGFIX-AUTOMATION', color: 'error' }, { label: '/dx-bug-all', color: 'secondary' }]}
+    >
+      Analyzes the bug, finds affected code, creates a fix branch and PR. Supports cross-repo delegation.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:code-braces"
+      iconColor="bg-brand-700"
+      title="DevAgent"
+      tags={[{ label: 'KAI-DEV-AUTOMATION', color: 'primary' }, { label: '/dx-agent-all', color: 'secondary' }]}
+    >
+      Full implementation from story -- researches, plans, codes, tests, and creates PR automatically.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:camera"
+      iconColor="bg-cyan"
+      title="QA Agent"
+      tags={[{ label: 'KAI-QA-AUTOMATION', color: 'secondary' }, { label: '/aem-qa', color: 'secondary' }]}
+    >
+      Verifies AEM component implementation with browser automation, screenshots, and accessibility checks.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:book-open-variant"
+      iconColor="bg-cyan"
+      title="DOC Agent"
+      tags={[{ label: 'KAI-DOC-AUTOMATION', color: 'info' }, { label: '/dx-doc-gen + /aem-doc-gen', color: 'secondary' }]}
+    >
+      Generates wiki documentation from completed story specs. Posts to ADO Wiki or Confluence with authoring guides.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:target"
+      iconColor="bg-cyan"
+      title="Estimation"
+      tags={[{ label: 'KAI-ESTIMATION-AUTOMATION', color: 'secondary' }, { label: 'estimation', color: 'secondary' }]}
+    >
+      Estimates story points with detailed reasoning based on codebase complexity analysis.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Setup"
+  badgeColor="success"
+  title="Setup Flow"
+  subtitle="Two paths: full hub setup (7 steps) or lightweight consumer setup (3 steps)."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <HighlightBox severity="info" title="Hub (Full Setup)">
+      <code>/auto-init</code> &rarr; <code>/auto-provision</code> &rarr; <code>/auto-pipelines</code> &rarr;
+      <code>/auto-deploy</code> &rarr; <code>/auto-lambda-env</code> &rarr; <code>/auto-webhooks</code> &rarr;
+      <code>/auto-alarms</code>
+
+      Creates AWS resources, deploys Lambdas, configures all 10 pipelines, sets up monitoring.
+    </HighlightBox>
+
+    <HighlightBox severity="success" title="Consumer (Lightweight)">
+      <code>/auto-init</code> &rarr; <code>/auto-pipelines</code> (6 only) &rarr;
+      <code>/auto-webhooks</code> (PR only)
+
+      No AWS provisioning. Uses hub's Lambda. Register in hub's pipeline maps.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Cross-Repo"
+  badgeColor="secondary"
+  title="Cross-Repo Delegation"
+  subtitle="Agents automatically hand off work to the correct repository when the fix lives elsewhere."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="How It Works">
+    BugFix starts in repo A &rarr; triage discovers the fix belongs in repo B &rarr; writes
+    <code>delegate.json</code> &rarr; pipeline reads it &rarr; queues the matching pipeline in repo B.
+    The receiving agent picks up the work with full context from the original ticket.
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="BugFix">
+      Frontend bug traced to a missing Sling Model field? Delegates to Brand-Backend automatically.
+    </ContentCard>
+
+    <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="DevAgent">
+      Story requires backend + frontend changes? DevAgent delegates the backend portion to the correct repo.
+    </ContentCard>
+
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="DoD-Fix">
+      DoD gap requires a change in another repo? DoD-Fix delegates to the repo that owns the affected code.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Key Environment Variables">
+    <code>DX_PIPELINE_MODE</code> -- tells the agent it is running in pipeline context (enables delegation).
+    <code>CROSS_REPO_PIPELINE_MAP</code> -- maps repo names to pipeline IDs for cross-repo queuing.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Comparison"
+  badgeColor="info"
+  title="Hub vs Consumer"
+  subtitle="The hub owns shared infrastructure. Consumers are lightweight, relying on the hub for AWS resources."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Capability</th>
+        <th class="text-left p-3 font-semibold">Hub</th>
+        <th class="text-left p-3 font-semibold">Consumer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">AWS resources</td>
+        <td class="p-3">Creates and owns</td>
+        <td class="p-3">Uses hub's</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Pipelines</td>
+        <td class="p-3">10 (all agents)</td>
+        <td class="p-3">6 (PR Review, PR Answer, Eval, DevAgent, BugFix, DoD-Fix)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">WI hooks</td>
+        <td class="p-3">Creates (tag-filtered)</td>
+        <td class="p-3">N/A</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR Answer hook</td>
+        <td class="p-3">Creates (repo-scoped)</td>
+        <td class="p-3">Creates (points to hub's Lambda)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Lambda deployment</td>
+        <td class="p-3">/auto-deploy</td>
+        <td class="p-3">Skipped</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">CloudWatch alarms</td>
+        <td class="p-3">/auto-alarms</td>
+        <td class="p-3">Skipped</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Cross-repo delegation</td>
+        <td class="p-3">Sends to consumers</td>
+        <td class="p-3">Receives from hub</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Safety"
+  badgeColor="error"
+  title="Safety & Governance"
+  subtitle="Multiple layers of protection keep autonomous agents in check -- no runaway execution, no surprise bills."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <HighlightBox severity="warning" title="Rate Limiting">
+      Max 20-30 runs per day per agent type. Prevents runaway execution from webhook storms or misconfigured triggers.
+    </HighlightBox>
+
+    <HighlightBox severity="error" title="Token Budget">
+      Monthly cap with three states: **normal** (full execution) &rarr;
+      **suggest-only** (analysis only, no code changes) &rarr; **halted** (all agents stopped).
+    </HighlightBox>
+
+    <HighlightBox severity="success" title="Deduplication">
+      1-hour DynamoDB TTL. Duplicate webhook events are silently dropped -- no double-processing, no wasted tokens.
+    </HighlightBox>
+
+    <HighlightBox severity="info" title="Decision Journal">
+      Every agent decision logged with reasoning, evidence, and outcome. Full audit trail for every autonomous action.
+    </HighlightBox>
+
+    <HighlightBox severity="info" title="Execution Bundles in S3">
+      Every pipeline run saves its full execution context (specs, diffs, decisions) to S3 with 90-day retention.
+    </HighlightBox>
+
+    <HighlightBox severity="warning" title="CloudWatch Alarms">
+      DLQ depth, Lambda errors, and throttle alarms. SNS notifications to the team when thresholds are breached.
+    </HighlightBox>
+  </div>
+
+  <HighlightBox severity="success" title="Human Control">
+    Interactive mode for debugging, policy gates that restrict what each agent role can do, and tag-based
+    activation -- no agent runs unless explicitly triggered.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Runtime"
+  title="Pipeline Agent"
+  subtitle="pipeline-agent.js -- the universal runner that powers all 10 agents using the Claude Agent SDK."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-cyan" title="Streaming Execution">
+      Uses includePartialMessages for real-time streaming. Agent output visible in pipeline logs as it happens.
+    </ContentCard>
+
+    <ContentCard icon="mdi:timer" iconColor="bg-brand-700" title="60s Heartbeat">
+      Sends periodic heartbeat messages to keep ADO pipeline alive during long-running agent operations.
+    </ContentCard>
+
+    <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="Configurable">
+      MAX_TURNS, TIMEOUT_MINUTES, ALLOWED_TOOLS, CLAUDE_MODEL -- each agent pipeline sets its own parameters.
+    </ContentCard>
+
+    <ContentCard icon="mdi:puzzle" iconColor="bg-amber-500" title="Plugin Discovery">
+      Reads PLUGIN_BASE_DIR to discover and load dx-dev-experience, dx-aem, and dx-automation plugins at runtime.
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-document" iconColor="bg-cyan" title="Skill Dispatch">
+      Each pipeline invokes a specific skill command. The runner translates pipeline variables into the correct /dx-* invocation.
+    </ContentCard>
+
+    <ContentCard icon="mdi:stop-circle" iconColor="bg-red-500" title="Graceful Shutdown">
+      On timeout or error, the agent writes a summary of progress and posts partial results back to ADO before exiting.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Operations"
+  badgeColor="success"
+  title="Operations & Monitoring"
+  subtitle="Four skills for monitoring, diagnosing, evaluating, and testing the automation layer."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:view-dashboard"
+      iconColor="bg-emerald-600"
+      title="/auto-status"
+      tags={[{ label: 'monitoring', color: 'success' }]}
+    >
+      Live dashboard: DLQ depth, token budget remaining, rate limit counters, Lambda invocation metrics,
+      and pipeline run history.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:hospital-box"
+      iconColor="bg-amber-500"
+      title="/auto-doctor"
+      tags={[{ label: 'diagnosis', color: 'warning' }]}
+    >
+      Health check: file integrity, pipeline configuration, Lambda state, webhook connectivity,
+      DynamoDB table status.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:target"
+      iconColor="bg-cyan"
+      title="/auto-eval"
+      tags={[{ label: 'evaluation', color: 'secondary' }]}
+    >
+      Quality evaluation: runs agents against known test cases and scores output quality, accuracy,
+      and adherence to standards.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:flask"
+      iconColor="bg-brand-700"
+      title="/auto-test"
+      tags={[{ label: 'testing', color: 'primary' }]}
+    >
+      Dry-run against real data: executes the full agent flow without making changes, validates routing
+      and pre-flight checks.
+    </ContentCard>
+  </div>
+</Section>

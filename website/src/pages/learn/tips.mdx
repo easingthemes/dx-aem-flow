@@ -1,0 +1,114 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Tips & Best Practices
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Tips & Best Practices"
+  subtitle="Practical advice from building 78 skills and running 10 autonomous agents"
+/>
+
+<SectionHeading
+  badge="Tips"
+  title="Essential Tips"
+  subtitle="Lessons learned from real-world usage."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:lightbulb" iconColor="bg-amber-500" title="Context is King">
+      The AI is only as good as its context. <code>CLAUDE.md</code>, rules, and skill
+      instructions shape quality more than any prompt engineering trick. Invest time in
+      these files -- they compound in value across every session.
+    </ContentCard>
+    <ContentCard icon="mdi:play" iconColor="bg-emerald-600" title="Start Small">
+      Don't run <code>/dx-agent-all</code> on day one. Start with the building blocks:
+      <CommandBlock label="Learning path">{`/dx-req-fetch <id>    # fetch a story
+/dx-req-explain       # understand requirements
+/dx-req-research      # find affected files
+/dx-plan              # generate a plan`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:eye" iconColor="bg-cyan-dark" title="Review, Don't Trust Blindly">
+      AI makes mistakes. Code review exists for a reason. <code>/dx-step-verify</code> runs
+      6 verification phases for exactly this reason -- build check, lint check, code review,
+      test verification, accessibility scan, and visual comparison.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Config Over Code">
+      Use <code>.ai/config.yaml</code> for project-specific values. Never hardcode build
+      commands, branch names, or org URLs in skills.
+      <CommandBlock label=".ai/config.yaml">{`build:
+  command: "cd ui.frontend && npm run build"
+scm:
+  base-branch: development`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Models"
+  badgeColor="secondary"
+  title="Model Tiering"
+  subtitle="Use the cheapest model that can do the job well. Cost differs 10x between tiers."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <HighlightBox severity="error" title="Opus ($$$)">
+      Deep reasoning -- code review, implementation planning, root cause analysis.
+      Use when quality of judgment matters most.
+    </HighlightBox>
+    <HighlightBox severity="warning" title="Sonnet ($$)">
+      Execution -- step implementation, PR review, AEM inspection.
+      Good judgment at moderate cost.
+    </HighlightBox>
+    <HighlightBox severity="success" title="Haiku ($)">
+      Lookups -- file resolution, doc search, test running.
+      Speed matters more than depth.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Practical"
+  badgeColor="warning"
+  title="Tool-Specific Tips"
+  subtitle="Small details that save hours of debugging."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-red-500" title="Shell Env for Copilot CLI">
+      MCP secrets must be in <code>{"~"}/.bashrc</code> (or <code>{"~"}/.zshrc</code>). Copilot CLI
+      does not read <code>.claude/settings.local.json</code>. If your MCP connections fail
+      in Copilot but work in Claude Code, check your shell environment.
+    </ContentCard>
+    <ContentCard icon="mdi:tune" iconColor="bg-cyan" title="Dual Frontmatter in Rules">
+      Rules need both <code>paths:</code> and <code>applyTo:</code> to work in both tools.
+      Forgetting one means the rule silently doesn't load in that tool.
+      <CommandBlock label="Both required">{`---
+paths: ["**/*.js"]
+applyTo: "**/*.js"
+---`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:shield-lock" iconColor="bg-brand-700" title="allowed-tools in Skills">
+      Add <code>allowed-tools</code> to skill frontmatter to avoid excessive permission
+      prompts in Copilot CLI. Without it, every tool call asks for approval.
+      <CommandBlock label="Skill frontmatter">{`---
+allowed-tools: [read, edit, grep, bash, mcp]
+---`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:speedometer" iconColor="bg-amber-500" title="Pre-flight Checks">
+      Before running multi-step pipelines, verify: (1) all inputs exist (URLs, ticket IDs),
+      (2) MCP servers respond, (3) target branch exists. Fail fast rather than burning through
+      steps and tokens.
+    </ContentCard>
+  </div>
+</Section>

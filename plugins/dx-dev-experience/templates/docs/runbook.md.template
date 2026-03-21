@@ -1,0 +1,45 @@
+# Runbook — Ops & Troubleshooting
+
+## Quick Health Check
+
+```bash
+/auto-status     # DLQ depth, token budget, rate limit usage
+/auto-doctor     # Infrastructure health check
+```
+
+## Common Failures
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `429 Too Many Requests` | LLM rate limit | Auto-retries (3x). Check token budget if persistent. |
+| ADO API 401 | Token expired | Pipeline: re-run. Lambda: rotate `ADO_PAT` in env vars. |
+| `Token budget exhausted` | Monthly cap hit | Wait for month rollover or increase `MONTHLY_TOKEN_CAP`. |
+| `rate limit exceeded` | Daily cap hit | Resets at midnight UTC. Adjust in `rate-limiter.js`. |
+| `scanner: degraded mode` | Content Safety down | Fail-open — pipelines continue with local detection. |
+| Plugin install failure | Pipeline variables wrong | Check `ADO_ORG_URL` and `DX_MARKETPLACE_URL`. |
+| Delegation failed | Pipeline map wrong | Check `CROSS_REPO_PIPELINE_MAP` JSON. |
+| Webhooks stopped | Auto-disabled by ADO | Re-enable in Service Hooks settings. |
+
+## Investigating a Failed Run
+
+1. **Find the run** — ADO > Pipelines > select pipeline > recent runs
+2. **Check the bundle** — S3 bucket: `run.json`, `decision-journal.json`, `alerts.json`
+3. **Check DLQ** — `node .ai/automation/eval/process-dlq.js`
+
+## Quick Rollback
+
+| What | How |
+|------|-----|
+| Bad prompt | `git revert <commit>`, push, eval validates automatically |
+| Bad Lambda | `aws lambda list-versions-by-function`, roll back via `aws_lambda_deploy` |
+| Disable one agent | Remove its `TAG_GATE_*` env var from WI Router Lambda |
+| Disable all agents | Disable WI service hooks in ADO, or set rate limit to 0 |
+
+## Maintenance
+
+- **Weekly**: `/auto-status`, run eval (`node .ai/automation/eval/run.js --all`)
+- **Monthly**: Review token budget, check DLQ empty, rotate ADO PAT if expiring
+
+## Full Details
+
+For detailed procedures (bundle download commands, CloudWatch queries, subscription IDs, alert response matrix), see [automation/docs/runbook.md](../automation/docs/runbook.md).

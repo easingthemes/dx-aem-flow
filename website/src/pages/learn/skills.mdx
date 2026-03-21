@@ -1,0 +1,163 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Skills
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Skills"
+  subtitle="Instructions that tell the AI what to do -- the building blocks of every workflow"
+/>
+
+<SectionHeading
+  badge="Concept"
+  title="What is a Skill?"
+  subtitle="A markdown file with YAML frontmatter and instructions. Like giving a smart colleague a detailed checklist."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="The Idea">
+      A skill is a <strong>directory</strong> containing a <code>SKILL.md</code> file and optional supporting resources.
+      When you type <code>/dx-plan</code>, the AI reads the skill instructions and follows them step by step.
+      Skills live inside plugins and are auto-discovered by both Claude Code and Copilot CLI.
+      <CommandBlock label="Skill directory structure">{`skills/dx-init/
+├── SKILL.md                    # Instructions (required)
+├── scripts/                    # Shell helpers
+│   ├── detect-env.sh           #   Environment detection
+│   ├── scaffold.sh             #   File scaffolding
+│   └── install-copilot-agents.sh  # Agent template installer
+└── references/                 # Context docs (optional)
+    └── ...                     #   Read by skill at runtime`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:code-tags" iconColor="bg-cyan" title="More Than a Markdown File">
+      Complex skills bundle supporting resources:
+      <ul class="mt-2 text-sm list-none p-0 space-y-2">
+        <li><strong>scripts/</strong> -- Shell scripts the skill executes via <code>bash $&#123;CLAUDE_SKILL_DIR&#125;/scripts/...</code>. Deterministic operations (file copying, env detection, scaffolding) that don't need AI reasoning.</li>
+        <li><strong>references/</strong> -- Context documents the skill reads at runtime. Design guidelines, fallback patterns, quality checklists. Keeps SKILL.md focused on instructions while offloading domain knowledge.</li>
+        <li><strong>assets/</strong> -- Templates and static files (report templates, wiki formats).</li>
+      </ul>
+      <CommandBlock label="Example">/dx-plan    # AI reads skill, generates implement.md</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Anatomy"
+  badgeColor="secondary"
+  title="Anatomy of a Skill"
+  subtitle="YAML frontmatter for metadata, markdown body for instructions."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Simplified example: dx-plan/SKILL.md">{`---
+name: dx-plan
+description: Generate an implementation plan from requirements
+allowed-tools: all
+---
+# Implementation Plan Generator
+
+Read the requirements and codebase context, then produce
+a step-by-step implementation plan.
+
+## Steps
+1. Read explain.md from the spec directory
+2. Read research.md for codebase context
+3. Generate implement.md with numbered steps
+4. Each step must include: file paths, what to change, and why
+5. Save to .ai/specs/<id>/implement.md`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Skills are instructions, not personas">
+    Notice the skill says <strong>what to do</strong>, not <strong>who you are</strong>.
+    A skill runs inline in your main conversation — the AI reads these instructions
+    and follows them as itself. Compare this with agents, which define an isolated
+    worker with its own identity, model, and tools.
+  </HighlightBox>
+
+  <div class="overflow-x-auto mt-6">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">Key Frontmatter Fields</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Field</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+          <th class="text-left py-2 px-4 font-semibold">Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4">Slash command name</td><td class="py-2 px-4"><code>dx-plan</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>description</code></td><td class="py-2 px-4">What the skill does (shown in help)</td><td class="py-2 px-4"><code>Generate implementation plan</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>argument-hint</code></td><td class="py-2 px-4">Placeholder text for the argument</td><td class="py-2 px-4"><code>&lt;ticket-id&gt;</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>allowed-tools</code></td><td class="py-2 px-4">Tools the AI can use</td><td class="py-2 px-4"><code>all, or [read, edit, grep]</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>disable-model-invocation</code></td><td class="py-2 px-4">Skip AI reasoning (template-only)</td><td class="py-2 px-4"><code>true</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>context: fork</code></td><td class="py-2 px-4">Run in isolated subagent context</td><td class="py-2 px-4"><code>fork</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent:</code></td><td class="py-2 px-4">Run as a specific agent type</td><td class="py-2 px-4"><code>dx-step-executor</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Categories"
+  badgeColor="warning"
+  title="Skill Categories in KAI"
+  subtitle="78 skills organized by workflow phase."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="Requirements (/dx-req-*)">
+      Fetch work items (ADO or Jira), explain requirements, research the codebase, share plans with the team.
+      <CommandBlock label="Example">/dx-req-fetch 2467362</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:playlist-check" iconColor="bg-cyan" title="Planning (/dx-plan)">
+      Generate step-by-step implementation plans with file paths, code changes, and rationale.
+      <CommandBlock label="Example">/dx-plan</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Execution (/dx-step-*)">
+      Execute plan steps, verify changes, run build and lint checks after each step.
+      <CommandBlock label="Example">/dx-step-next</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:shape" iconColor="bg-cyan-dark" title="Review (/dx-pr-*)">
+      Review PR diffs, post inline comments with severity levels, answer reviewer questions.
+      <CommandBlock label="Example">/dx-pr-review</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Bug Fix (/dx-bug-*)">
+      Triage bugs, find affected code, create fix branches, verify the fix works.
+      <CommandBlock label="Example">/dx-bug-fix 2451742</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:database" iconColor="bg-emerald-600" title="AEM (/aem-*)">
+      Inspect AEM components, scan pages, verify dialog fields, capture screenshots.
+      <CommandBlock label="Example">/aem-component hero</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  subtitle="Deep-dive into skill authoring."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code Skills">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/en/docs/claude-code/skills
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Copilot Skills">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-skills" target="_blank" rel="noopener noreferrer">
+        docs.github.com/.../custom-skills
+      </a>
+    </ContentCard>
+  </div>
+</Section>

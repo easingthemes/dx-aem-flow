@@ -1,0 +1,151 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title?: string;
+  sidebar?: string;
+}
+
+// MDX layout: passes frontmatter via Astro.props.frontmatter
+// Direct component usage passes via Astro.props directly
+const frontmatter = (Astro.props as any).frontmatter;
+const title = frontmatter?.title ?? Astro.props.title;
+const sidebar = frontmatter?.sidebar ?? Astro.props.sidebar;
+const currentPath = Astro.url.pathname;
+
+const sidebars: Record<string, { label: string; path: string }[]> = {
+  learn: [
+    { label: 'Introduction', path: '/learn/intro/' },
+    { label: 'Skills', path: '/learn/skills/' },
+    { label: 'Agents', path: '/learn/agents/' },
+    { label: 'Hooks', path: '/learn/hooks/' },
+    { label: 'MCP Servers', path: '/learn/mcps/' },
+    { label: 'Prompts & Rules', path: '/learn/prompts/' },
+    { label: 'CLI vs Chat', path: '/learn/cli-vs-chat/' },
+    { label: 'Tips', path: '/learn/tips/' },
+    { label: 'TLDR', path: '/learn/tldr/' },
+  ],
+  workflows: [
+    { label: 'Local Workflow', path: '/workflows/local/' },
+    { label: 'Figma Pipeline', path: '/workflows/figma/' },
+    { label: 'Bug Flow', path: '/workflows/bug-flow/' },
+    { label: 'AEM Verification', path: '/workflows/aem/' },
+    { label: 'ADO Integration', path: '/workflows/ado/' },
+    { label: 'Accessibility', path: '/workflows/accessibility/' },
+    { label: 'DoR & DoD', path: '/workflows/dor-dod/' },
+  ],
+  reference: [
+    { label: 'Skill Catalog', path: '/reference/skills/' },
+    { label: 'Agent Catalog', path: '/reference/agents/' },
+    { label: 'Config Reference', path: '/reference/config/' },
+    { label: 'Command Quick Ref', path: '/reference/commands/' },
+    { label: 'Coordinators', path: '/reference/coordinators/' },
+  ],
+  architecture: [
+    { label: 'Overview', path: '/architecture/overview/' },
+    { label: 'Data Flow', path: '/architecture/data-flow/' },
+    { label: 'Self-Healing', path: '/architecture/self-healing/' },
+    { label: 'Learning & Feedback', path: '/architecture/learning/' },
+    { label: 'Automation', path: '/architecture/automation/' },
+    { label: 'Automation Infra', path: '/architecture/automation-infra/' },
+    { label: 'Cross-Repo', path: '/architecture/cross-repo/' },
+    { label: 'Cross-Agent', path: '/architecture/cross-agent/' },
+  ],
+  contributing: [
+    { label: 'Authoring Guide', path: '/contributing/authoring/' },
+    { label: 'Technical Reference', path: '/contributing/technical-ref/' },
+    { label: 'Seed Data', path: '/contributing/seed-data/' },
+    { label: 'Wiki Format', path: '/contributing/wiki-format/' },
+  ],
+  setup: [
+    { label: 'Claude Code', path: '/setup/claude-code/' },
+    { label: 'Copilot CLI', path: '/setup/copilot-cli/' },
+    { label: 'Scaffold', path: '/setup/scaffold/' },
+    { label: 'Migration', path: '/setup/migration/' },
+  ],
+  demo: [
+    { label: 'Demo Guide', path: '/demo/guide/' },
+    { label: 'Short Presentation', path: '/demo/short/' },
+    { label: 'Long Presentation', path: '/demo/long/' },
+    { label: 'Figma Demo', path: '/demo/figma/' },
+  ],
+};
+
+const links = sidebar ? sidebars[sidebar] : [];
+---
+
+<BaseLayout title={title}>
+  {links.length > 0 ? (
+    <div class="flex">
+      <aside class="hidden lg:block w-60 flex-shrink-0 border-r border-gray-200 bg-white">
+        <nav class="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-6 px-4">
+          <ul class="space-y-1">
+            {links.map((link) => (
+              <li>
+                <a
+                  href={link.path}
+                  class:list={[
+                    'block px-3 py-1.5 rounded text-sm transition-colors',
+                    currentPath === link.path
+                      ? 'bg-brand-100 text-brand-700 font-semibold'
+                      : 'text-gray-600 hover:text-brand-700 hover:bg-gray-50',
+                  ]}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="lg:hidden fixed bottom-4 right-4 z-40">
+        <button
+          id="sidebar-toggle"
+          class="bg-brand-700 text-white p-3 rounded-full shadow-lg"
+          aria-label="Toggle navigation"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+      <div id="mobile-sidebar" class="hidden lg:hidden fixed inset-0 z-30 bg-black/50">
+        <nav class="w-60 h-full bg-white overflow-y-auto py-6 px-4">
+          <ul class="space-y-1">
+            {links.map((link) => (
+              <li>
+                <a
+                  href={link.path}
+                  class:list={[
+                    'block px-3 py-1.5 rounded text-sm transition-colors',
+                    currentPath === link.path
+                      ? 'bg-brand-100 text-brand-700 font-semibold'
+                      : 'text-gray-600 hover:text-brand-700 hover:bg-gray-50',
+                  ]}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <slot />
+      </div>
+    </div>
+  ) : (
+    <slot />
+  )}
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const mobileSidebar = document.getElementById('mobile-sidebar');
+    sidebarToggle?.addEventListener('click', () => mobileSidebar?.classList.toggle('hidden'));
+    mobileSidebar?.addEventListener('click', (e) => {
+      if (e.target === mobileSidebar) mobileSidebar.classList.add('hidden');
+    });
+  </script>
+</BaseLayout>

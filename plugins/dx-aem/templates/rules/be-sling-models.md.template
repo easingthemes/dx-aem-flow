@@ -1,0 +1,71 @@
+---
+description: Sling Model conventions — interface/impl separation, Core WCM delegation
+paths: ["**/models/**/*.java", "**/internal/models/**/*.java"]
+applyTo: "**/*.java"
+---
+
+# Sling Models
+
+## Structure
+
+- **Interface** in `models/` package (public API)
+- **Implementation** in `internal/models/` (package-private)
+
+## Pattern
+
+```java
+// Interface: models/MyComponent.java
+public interface MyComponent extends Teaser {
+    default String getSubtitle() { return StringUtils.EMPTY; }
+}
+
+// Implementation: internal/models/MyComponentImpl.java
+@Model(adaptables = SlingHttpServletRequest.class,
+       adapters = { MyComponentImpl.class, MyComponent.class, ComponentExporter.class },
+       resourceType = MyComponentImpl.RESOURCE_TYPE)
+@Exporter(name = ExporterConstants.SLING_MODEL_EXPORTER_NAME,
+          extensions = ExporterConstants.SLING_MODEL_EXTENSION)
+public class MyComponentImpl extends AbstractComponentImpl implements MyComponent {
+    public static final String RESOURCE_TYPE = "myproject/components/content/mycomponent";
+
+    @Self @Via(type = ResourceSuperType.class)
+    private Teaser delegate;
+
+    @ValueMapValue(injectionStrategy = InjectionStrategy.OPTIONAL)
+    private String subtitle;
+
+    @OSGiService
+    private MyService myService;
+
+    @PostConstruct
+    private void init() { /* ... */ }
+}
+```
+
+## Key Annotations
+
+| Annotation | Purpose |
+|-----------|---------|
+| `@Self @Via(type = ResourceSuperType.class)` | Delegate to Core WCM Components |
+| `@ValueMapValue` | Read JCR property from current resource |
+| `@OSGiService` | Inject OSGi service |
+| `@SlingObject` | Inject Sling objects (ResourceResolver, Resource) |
+| `@ScriptVariable` | Inject HTL script variables (Page, Style) |
+| `@PostConstruct` | Init hook after all injections |
+| `@ChildResource` | Inject child resource as model |
+
+## Rules
+
+- Always separate interface (public) from implementation (internal)
+- Use `InjectionStrategy.OPTIONAL` for nullable properties
+- Use `RESOURCE_TYPE` constant matching the component path
+- Adapt from `SlingHttpServletRequest.class` (not `Resource.class`) for full context
+- Extend `AbstractComponentImpl` for Core WCM Component delegation pattern
+- Use `default` methods in interfaces for optional/fallback behaviour
+- Place implementations in versioned subpackage: `internal/models/v1/<component-name>/`
+- Use `DefaultInjectionStrategy.OPTIONAL` to avoid exceptions for non-mandatory fields
+- Use `RESOURCE_TYPE` constant matching the component path (from `aem.resource-type-pattern` in config)
+- Apply defensive programming to catch null on values and services
+- Since this is a headless framework, do not implement validation of business logic in the model — validation is done in the frontend client library
+- Always generate unit test classes (see `be-testing` rule)
+- Organize imports after done and check for missing dependencies

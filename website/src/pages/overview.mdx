@@ -1,0 +1,474 @@
+---
+layout: ../layouts/BaseLayout.astro
+title: Overview
+---
+
+import PageHero from '../components/PageHero.astro';
+import Section from '../components/Section.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ContentCard from '../components/ContentCard.astro';
+import HighlightBox from '../components/HighlightBox.astro';
+
+<PageHero
+  title="What is KAI?"
+  subtitle="AI agents that help software teams build, review, and ship code faster. Works with Azure DevOps and Jira -- reads tickets, reviews PRs, writes code when asked."
+/>
+
+<SectionHeading
+  badge="Two Modes"
+  badgeColor="secondary"
+  title="Two Ways to Use It"
+  subtitle="Choose the level of autonomy that fits your workflow."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Interactive">
+      Developer runs commands in their editor. AI assists step by step -- researching the codebase,
+      generating plans, writing code, and creating PRs. You stay in control and review at every stage.
+
+      - Claude Code (`/dx-*` skills)
+      - GitHub Copilot CLI (`@Agent` + `/dx-*` skills)
+      - Pause, review, and adjust at any point
+    </ContentCard>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="Autonomous">
+      AI runs automatically when you tag a ticket or create a PR. No developer intervention needed --
+      agents pick up work, execute it, and post results back to ADO or Jira.
+
+      - Triggered by ADO tags/webhooks or Jira events
+      - Runs 24/7 on ADO pipelines
+      - Rate-limited and budget-controlled
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="For Developers"
+  badgeColor="info"
+  title="What It Does -- For Developers"
+  subtitle="Interactive skills that help individual developers move faster through their sprint work."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">What</th>
+        <th class="text-left p-3 font-semibold text-brand-900">How</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <tr>
+        <td class="p-3">Understand a ticket</td>
+        <td class="p-3 text-[#4a4a5a]">AI reads the ADO or Jira story, researches the codebase, lists affected files</td>
+      </tr>
+      <tr>
+        <td class="p-3">Plan the work</td>
+        <td class="p-3 text-[#4a4a5a]">AI generates step-by-step implementation plan with file paths</td>
+      </tr>
+      <tr>
+        <td class="p-3">Write the code</td>
+        <td class="p-3 text-[#4a4a5a]">AI executes plan steps, runs tests, commits after each step</td>
+      </tr>
+      <tr>
+        <td class="p-3">Review code</td>
+        <td class="p-3 text-[#4a4a5a]">AI reviews PRs -- posts comments with severity levels</td>
+      </tr>
+      <tr>
+        <td class="p-3">Fix review comments</td>
+        <td class="p-3 text-[#4a4a5a]">AI reads reviewer feedback, applies agreed fixes, pushes and replies</td>
+      </tr>
+      <tr>
+        <td class="p-3">Fix bugs</td>
+        <td class="p-3 text-[#4a4a5a]">AI triages, finds affected code, creates fix branch</td>
+      </tr>
+      <tr>
+        <td class="p-3">Answer questions</td>
+        <td class="p-3 text-[#4a4a5a]">AI answers "how does X work?" from project docs</td>
+      </tr>
+      <tr>
+        <td class="p-3">Design to code</td>
+        <td class="p-3 text-[#4a4a5a]">AI extracts Figma context, generates prototypes, verifies implementations</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="For Teams"
+  title="What It Does -- For Teams"
+  subtitle="Autonomous agents that run 24/7. Tag a ticket or create a PR -- the agent does the rest."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="How Triggers Work">
+    All work-item agents require the <code>KAI-TRIGGER</code> tag in addition to the agent-specific tag.
+    Add both tags to the ADO work item (or use Jira labels) to activate the agent.
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:magnify" iconColor="bg-amber-500" title="PR Review" tags={[{label: "New PR created", color: "warning"}]}>
+      Reviews code quality, architecture, and standards. Posts inline comments with severity levels.
+    </ContentCard>
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="PR Answer" tags={[{label: "PR comment posted", color: "info"}]}>
+      Researches codebase to answer PR review comments. Drafts contextual replies for the author.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="DoR Check" tags={[{label: "KAI-DOR-AUTOMATION", color: "success"}]}>
+      Checks whether the story has sufficient detail for a developer to begin work.
+    </ContentCard>
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-emerald-600" title="DoD Check" tags={[{label: "KAI-DOD-AUTOMATION", color: "success"}]}>
+      Checks whether the story meets its Definition of Done and completion criteria.
+    </ContentCard>
+    <ContentCard icon="mdi:target" iconColor="bg-cyan" title="Estimation" tags={[{label: "KAI-ESTIMATION-AUTOMATION", color: "secondary"}]}>
+      Estimates story points with detailed reasoning based on codebase complexity analysis.
+    </ContentCard>
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Bug Fix" tags={[{label: "KAI-BUGFIX-AUTOMATION", color: "error"}]}>
+      Analyzes the bug, finds affected code, creates a fix branch and PR automatically.
+    </ContentCard>
+    <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="Dev Agent" tags={[{label: "KAI-DEV-AUTOMATION", color: "primary"}]}>
+      Full implementation from story -- researches, plans, codes, tests, and creates PR.
+    </ContentCard>
+    <ContentCard icon="mdi:camera" iconColor="bg-cyan" title="QA Agent" tags={[{label: "KAI-QA-AUTOMATION", color: "secondary"}]}>
+      Verifies AEM component implementation with browser automation and screenshots.
+    </ContentCard>
+    <ContentCard icon="mdi:book-open-variant" iconColor="bg-cyan-dark" title="Doc Agent" tags={[{label: "KAI-DOC-AUTOMATION", color: "info"}]}>
+      Generates wiki documentation from completed story specs and posts to ADO Wiki or Confluence.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Safety"
+  badgeColor="error"
+  title="Safety Controls"
+  subtitle="Multiple layers of protection keep autonomous agents in check."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <HighlightBox severity="warning" title="Rate Limits">
+      Daily cap per agent -- prevents runaway execution. Each agent type has its own limit tuned to expected workload.
+    </HighlightBox>
+    <HighlightBox severity="error" title="Token Budget">
+      Monthly cap with alerts at 80%, degrades at 90%, halts at 100%. No surprise bills.
+    </HighlightBox>
+    <HighlightBox severity="info" title="Policy Gates">
+      Agents can only do what their role allows. A PR reviewer cannot merge. A doc agent cannot modify code.
+    </HighlightBox>
+    <HighlightBox severity="success" title="Deduplication">
+      Duplicate webhook events are silently dropped. No double-processing, no wasted tokens.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Tools"
+  badgeColor="info"
+  title="Supported Tools"
+  subtitle="Use whichever IDE you prefer -- same skills, same quality."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Claude Code" tags={[{label: "78 skills", color: "secondary"}, {label: "13 agents", color: "secondary"}]}>
+      Run <code>/dx-*</code> skills directly in the terminal. 78 skills, 13 agents, full MCP integrations.
+    </ContentCard>
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="GitHub Copilot CLI" tags={[{label: "78 skills", color: "primary"}, {label: "25 agents", color: "primary"}]}>
+      Same 78 skills + 25 Copilot agents with <code>@AgentName</code> invocation. Same plugins, same marketplace -- install once.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Multi-Repo"
+  badgeColor="warning"
+  title="Multi-Repo Support"
+  subtitle="Four repositories, one unified AI layer. Cross-repo intelligence built in."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard title="Brand-Frontend" tags={[{label: "Frontend", color: "primary"}]}>
+      Main frontend -- AEM components, SCSS themes, build pipeline. The primary consumer repo.
+    </ContentCard>
+    <ContentCard title="Brand-Fullstack" tags={[{label: "Frontend", color: "success"}]}>
+      Brand-2 -- separate frontend repo with its own themes and component variations.
+    </ContentCard>
+    <ContentCard title="Shared-Libraries" tags={[{label: "Shared", color: "secondary"}]}>
+      Shared libraries -- reusable frontend components and utilities consumed by all experience repos.
+    </ContentCard>
+    <ContentCard title="Brand-Backend" tags={[{label: "Backend", color: "warning"}]}>
+      AEM backend -- Sling Models, OSGi services, HTL templates, content exporters.
+    </ContentCard>
+  </div>
+
+  <div class="mt-4">
+    <HighlightBox severity="info" title="Cross-Repo Intelligence">
+      Bug in the frontend that needs a backend fix? The agent detects the cross-repo dependency automatically,
+      documents it in the research spec, and delegates to the correct repository.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Costs"
+  badgeColor="warning"
+  title="Costs & Pricing"
+  subtitle="Two pricing models -- fixed subscription for developers, pay-per-token for automation."
+  bg="primary"
+/>
+
+<SectionHeading
+  badge="Pricing"
+  badgeColor="success"
+  title="Two Pricing Models"
+  subtitle="Fixed monthly subscriptions for interactive use, per-token billing for automation."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard title="Standard Developer">
+      <p class="text-2xl font-extrabold text-brand-700 my-2">$100<span class="text-sm font-normal text-gray-500">/month</span></p>
+      <p class="text-sm text-gray-500 mb-2">Claude Max 5x</p>
+
+      - Requirements analysis
+      - Planning and research
+      - Code reviews
+      - Bug triage
+      - Documentation
+    </ContentCard>
+    <ContentCard title="Power Developer">
+      <p class="text-2xl font-extrabold text-brand-700 my-2">$200<span class="text-sm font-normal text-gray-500">/month</span></p>
+      <p class="text-sm text-gray-500 mb-2">Claude Max 20x</p>
+
+      - Everything in Standard
+      - Full implementation pipelines
+      - Multiple stories per day
+      - Figma integration
+      - Heavy code generation
+    </ContentCard>
+    <ContentCard title="Automation">
+      <p class="text-2xl font-extrabold text-brand-700 my-2">Per-run<span class="text-sm font-normal text-gray-500"> (API tokens)</span></p>
+      <p class="text-sm text-gray-500 mb-2">Pay as you go</p>
+
+      - Headless agents on ADO/Jira
+      - PR review and answer
+      - DoR / DoD checks
+      - Bug fix automation
+      - QA and doc generation
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="API Pricing"
+  badgeColor="info"
+  title="API Model Pricing"
+  subtitle="Token costs vary by model. Automation uses API billing."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Model</th>
+        <th class="text-left p-3 font-semibold">Input</th>
+        <th class="text-left p-3 font-semibold">Output</th>
+        <th class="text-left p-3 font-semibold">Cache Read</th>
+        <th class="text-left p-3 font-semibold">Used For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Opus 4.6</strong></td>
+        <td class="p-3">$5/MTok</td>
+        <td class="p-3">$25/MTok</td>
+        <td class="p-3">$0.50/MTok</td>
+        <td class="p-3">Planning, code review</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Sonnet 4.6</strong></td>
+        <td class="p-3">$3/MTok</td>
+        <td class="p-3">$15/MTok</td>
+        <td class="p-3">$0.30/MTok</td>
+        <td class="p-3">Execution, PR review</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Haiku 4.5</strong></td>
+        <td class="p-3">$1/MTok</td>
+        <td class="p-3">$5/MTok</td>
+        <td class="p-3">$0.10/MTok</td>
+        <td class="p-3">File lookup, doc search</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Per Operation"
+  badgeColor="warning"
+  title="Per-Operation Costs"
+  subtitle="Estimated costs for common automation operations."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Operation</th>
+        <th class="text-left p-3 font-semibold">Est. Cost</th>
+        <th class="text-left p-3 font-semibold">Tokens (in/out)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoR / PR review / DoD</td>
+        <td class="p-3">≈$1.5-2</td>
+        <td class="p-3">≈2.4M / ≈13K</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR answer</td>
+        <td class="p-3">≈$1-1.5</td>
+        <td class="p-3">≈1.5M / ≈10K</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Full story (medium, ≈5 steps)</td>
+        <td class="p-3">≈$50-75</td>
+        <td class="p-3">≈60-80M / ≈300-500K</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Full story + self-healing</td>
+        <td class="p-3">≈$80-120</td>
+        <td class="p-3">≈100-150M / ≈500K-1M</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Breakdown"
+  title="Full Story Cost Breakdown"
+  subtitle="A typical medium story involves ≈35 agent invocations across 5 phases."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Phase</th>
+        <th class="text-left p-3 font-semibold">Invocations</th>
+        <th class="text-left p-3 font-semibold">Model</th>
+        <th class="text-left p-3 font-semibold">Est. Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Requirements</td>
+        <td class="p-3">≈5</td>
+        <td class="p-3">Sonnet + Haiku</td>
+        <td class="p-3">≈$7-10</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Planning</td>
+        <td class="p-3">≈2-3</td>
+        <td class="p-3">Opus</td>
+        <td class="p-3">≈$8-15</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Execution (5 steps)</td>
+        <td class="p-3">≈20</td>
+        <td class="p-3">Sonnet + Opus</td>
+        <td class="p-3">≈$25-35</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Build + verify</td>
+        <td class="p-3">≈2-3</td>
+        <td class="p-3">Sonnet + Opus</td>
+        <td class="p-3">≈$5-10</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR + docs</td>
+        <td class="p-3">≈2</td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3">≈$3-5</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Projections"
+  badgeColor="secondary"
+  title="Monthly Projections"
+  subtitle="Estimated monthly costs depending on usage level."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Scenario</th>
+        <th class="text-left p-3 font-semibold">Est. Monthly Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Lightweight only (DoR, PR Review, PR Answer)</td>
+        <td class="p-3">≈$200-400</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">+ Full pipeline on ≈5 stories/sprint</td>
+        <td class="p-3">≈$500-800</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Full automation on all stories</td>
+        <td class="p-3">≈$2,500-4,000</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">+ Developer subscriptions (6 devs)</td>
+        <td class="p-3">+ $600-1,200 fixed</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Why"
+  badgeColor="warning"
+  title="Why It Costs What It Does"
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Context Is Expensive">
+    High-quality code generation requires many cycles. A typical story involves ≈35 subagent invocations,
+    and each invocation loads the full context: MCP tool schemas, project rules, codebase analysis, and
+    prior spec files. Input tokens account for 99%+ of total usage -- the AI reads far more than it writes.
+    This is by design: thorough understanding of the codebase produces better, more consistent code.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Controls"
+  badgeColor="error"
+  title="Cost Controls"
+  subtitle="Multiple layers of protection prevent runaway spending."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:cash" iconColor="bg-red-500" title="Monthly Token Budget">
+      Hard cap on monthly token spend with automatic shutdown when the limit is reached. No surprise bills.
+    </ContentCard>
+    <ContentCard icon="mdi:clock-outline" iconColor="bg-amber-500" title="Per-Agent Daily Limits">
+      Each agent type has its own daily rate limit tuned to expected workload. Prevents any single agent
+      from consuming the full budget.
+    </ContentCard>
+    <ContentCard icon="mdi:alert" iconColor="bg-cyan" title="Three-State Degradation">
+      As spending approaches the cap: **Normal** (full operation) then **Suggest-only** (recommendations, no execution) then **Halted** (all agents stopped).
+    </ContentCard>
+    <ContentCard icon="mdi:trending-up" iconColor="bg-emerald-600" title="Optimization In Progress">
+      Active work on prompt caching, context pruning, and smarter tool loading to reduce per-invocation
+      costs without sacrificing quality.
+    </ContentCard>
+  </div>
+</Section>

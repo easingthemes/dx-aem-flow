@@ -1,0 +1,88 @@
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: dx-hub
+      type: git
+      name: {{ADO_PROJECT}}/{{ADO_REPO}}
+      ref: development
+
+parameters:
+  - name: workItemId
+    type: string
+  - name: dryRun
+    type: boolean
+    default: false
+  - name: eventId
+    type: string
+    default: ""
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+    persistCredentials: false
+    path: s
+
+  - checkout: dx-hub
+    fetchDepth: 1
+    path: dx-hub
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+      npm install --no-save @anthropic-ai/claude-agent-sdk
+    displayName: "Install Claude Code + Agent SDK"
+    workingDirectory: $(Build.SourcesDirectory)
+  - bash: |
+      PROMPT="/dx-doc-gen ${{ parameters.workItemId }}"
+      if [ "${{ parameters.dryRun }}" = "True" ]; then
+        PROMPT="$PROMPT (dry run — generate docs locally only, do not post to wiki)"
+      fi
+
+      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
+      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+
+      echo "prompt: $PROMPT"
+      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+    displayName: "Run dx-doc-gen"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      PIPELINE_MODE: "true"
+      MAX_TURNS: "30"
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
+    timeoutInMinutes: 15
+
+  - bash: |
+      if [ -d ".claude/skills/aem-doc-gen" ] || [ -d "plugins/dx-aem/skills/aem-doc-gen" ]; then
+        PROMPT="/aem-doc-gen ${{ parameters.workItemId }}"
+        if [ "${{ parameters.dryRun }}" = "True" ]; then
+          PROMPT="$PROMPT (dry run — capture screenshots only, do not publish)"
+        fi
+
+        PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
+        [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+        export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+
+        echo "prompt: $PROMPT"
+        node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      else
+        echo "aem-doc-gen skill not found — skipping AEM documentation"
+      fi
+    displayName: "Run aem-doc-gen (if AEM project)"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      AEM_AUTHOR_URL: $(AEM_AUTHOR_URL)
+      AEM_USER: $(AEM_USER)
+      AEM_PASS: $(AEM_PASS)
+      MAX_TURNS: "30"
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
+    timeoutInMinutes: 15
+    condition: succeededOrFailed()

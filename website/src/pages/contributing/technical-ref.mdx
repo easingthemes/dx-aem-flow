@@ -1,0 +1,341 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Technical Reference
+sidebar: contributing
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Technical Reference"
+  subtitle="Frontmatter specs, compatibility matrices, MCP tool naming, and debugging playbook"
+/>
+
+<SectionHeading
+  badge="Discovery"
+  title="File Discovery Matrix"
+  subtitle="Which platform reads which files."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">File / Folder</th>
+          <th class="text-left py-2 px-4 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-4 font-semibold">VS Code Copilot</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/agents/&#42;.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/agents/&#42;.agent.md</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/skills/&#42;/SKILL.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/rules/&#42;.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/instructions/&#42;&#42;/&#42;.instructions.md</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes (recursive since v1.111)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>CLAUDE.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes (via setting)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>AGENTS.md</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">No</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.vscode/mcp.json</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="Cross-Platform Rule">
+    VS Code reads Claude's formats. Claude does NOT read VS Code's formats. Shared agents go in <code>.claude/agents/</code>. Shared skills go in <code>.claude/skills/</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Frontmatter"
+  badgeColor="secondary"
+  title="Skill Frontmatter Spec"
+  subtitle="Every field a skill can use, with platform compatibility."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Field</th>
+          <th class="text-left py-2 px-4 font-semibold">Required</th>
+          <th class="text-left py-2 px-4 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-4 font-semibold">Copilot CLI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Slash command name</td><td class="py-2 px-4">Slash command name</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>description</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Auto-invocation matching</td><td class="py-2 px-4">Help text</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>argument-hint</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">UI placeholder</td><td class="py-2 px-4">UI placeholder</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>context: fork</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Isolated subagent</td><td class="py-2 px-4">Ignored (runs inline)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Subagent type for fork</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>disable-model-invocation</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Prevent auto-invoke</td><td class="py-2 px-4">Supported</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Frontmatter"
+  badgeColor="warning"
+  title="Agent Frontmatter Spec"
+  subtitle="Full field comparison across both platforms."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Field</th>
+          <th class="text-left py-2 px-4 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-4 font-semibold">Copilot</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4"><code>kebab-case</code></td><td class="py-2 px-4"><code>PascalCase</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools</code></td><td class="py-2 px-4">Comma string: <code>Read, Glob, Bash</code></td><td class="py-2 px-4">YAML list: <code>[read, search, execute]</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">Alias: <code>sonnet</code>, <code>opus</code></td><td class="py-2 px-4">Full string or array (fallback chain)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>memory</code></td><td class="py-2 px-4"><code>project / user / local</code></td><td class="py-2 px-4">Not supported</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>isolation</code></td><td class="py-2 px-4"><code>worktree</code></td><td class="py-2 px-4">Not supported</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agents</code></td><td class="py-2 px-4">N/A</td><td class="py-2 px-4">Subagent restriction list</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>handoffs</code></td><td class="py-2 px-4">N/A</td><td class="py-2 px-4">Workflow navigation buttons</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>hooks</code></td><td class="py-2 px-4">Supported (settings.json + frontmatter)</td><td class="py-2 px-4">Frontmatter only (v1.111+ preview)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>user-invocable</code></td><td class="py-2 px-4">N/A</td><td class="py-2 px-4">Controls visibility in agent picker</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>maxTurns</code></td><td class="py-2 px-4">Number</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>permissionMode</code></td><td class="py-2 px-4">String</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Max body</td><td class="py-2 px-4">No limit</td><td class="py-2 px-4">30,000 characters</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="MCP"
+  badgeColor="info"
+  title="MCP Tool Naming"
+  subtitle="Getting tool names right is critical -- wrong prefixes cause silent failures."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Context</th>
+          <th class="text-left py-2 px-4 font-semibold">Format</th>
+          <th class="text-left py-2 px-4 font-semibold">Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code (project-level)</td><td class="py-2 px-4"><code>{"mcp__<server>__<tool>"}</code></td><td class="py-2 px-4"><code>{"mcp__ado__wit_get_work_item"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code (plugin)</td><td class="py-2 px-4"><code>{"mcp__plugin_<plugin>_<server>__<tool>"}</code></td><td class="py-2 px-4"><code>{"mcp__plugin_dx-aem_AEM__getNodeContent"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Copilot</td><td class="py-2 px-4"><code>{"<server>/<tool>"}</code></td><td class="py-2 px-4"><code>{"ado/wit_get_work_item"}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="error" title="Plugin MCP Prefix">
+    MCP servers in a plugin's <code>.mcp.json</code> get the full prefix: <code>{"mcp__plugin_<plugin-name>_<server>__<tool>"}</code>. Using the shorthand (<code>{"mcp__AEM__"}</code> instead of <code>{"mcp__plugin_dx-aem_AEM__"}</code>) causes "tool not found" failures.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Copilot Tool Alias Mapping</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Copilot Alias</th>
+          <th class="text-left py-2 px-4 font-semibold">Claude Code Equivalent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>execute</code> / <code>shell</code></td><td class="py-2 px-4"><code>Bash</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>read</code></td><td class="py-2 px-4"><code>Read</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>edit</code></td><td class="py-2 px-4"><code>Edit</code>, <code>Write</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>search</code></td><td class="py-2 px-4"><code>Grep</code>, <code>Glob</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent</code></td><td class="py-2 px-4"><code>Task</code> (Agent tool)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>web</code></td><td class="py-2 px-4"><code>WebSearch</code>, <code>WebFetch</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Hooks"
+  badgeColor="secondary"
+  title="Hook System"
+  subtitle="Platform-separated hook architecture -- no overlap, no double-firing."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Hook Source</th>
+          <th class="text-left py-2 px-4 font-semibold">Active In</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Plugin <code>hooks/hooks.json</code></td><td class="py-2 px-4">Claude Code CLI only</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/hooks/hooks.json</code></td><td class="py-2 px-4">Copilot CLI only (v1.0.10+)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Agent frontmatter <code>hooks:</code></td><td class="py-2 px-4">VS Code Chat only (v1.111+)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Hook Events</h3>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:shield-check" iconColor="bg-brand-700" title="Pre-Tool Hooks">
+      <code>PreToolUse</code> fires before any tool invocation. Use to block dangerous operations or modify input. The branch-guard hook blocks commits on protected branches.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="Post-Tool Hooks">
+      <code>PostToolUse</code> fires after tool completion. Use for auto-formatting, logging, or result processing. <code>PostToolUseFailure</code> fires on tool errors.
+    </ContentCard>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">All Supported Events</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Event</th>
+          <th class="text-left py-2 px-4 font-semibold">When</th>
+          <th class="text-left py-2 px-4 font-semibold">Use Cases</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>PreToolUse</code></td><td class="py-2 px-4">Before tool invocation</td><td class="py-2 px-4">Block dangerous ops, modify input</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>PostToolUse</code></td><td class="py-2 px-4">After tool completes</td><td class="py-2 px-4">Formatters, logging</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>UserPromptSubmit</code></td><td class="py-2 px-4">User submits prompt</td><td class="py-2 px-4">Audit, inject context</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>SessionStart</code></td><td class="py-2 px-4">Session begins</td><td class="py-2 px-4">Context setup</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>SubagentStart / Stop</code></td><td class="py-2 px-4">Subagent lifecycle</td><td class="py-2 px-4">Tracking, result processing</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Stop</code></td><td class="py-2 px-4">Agent finishes</td><td class="py-2 px-4">Cleanup</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Debug"
+  badgeColor="warning"
+  title="Debugging Playbook"
+  subtitle="Common issues and how to fix them."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:magnify" iconColor="bg-red-500" title="Skill Not Found">
+      <ol class="mt-2 text-sm list-decimal pl-4 space-y-1">
+        <li>Check file is at correct skills path</li>
+        <li>Verify <code>name:</code> in frontmatter matches what you are typing</li>
+        <li>Check <code>description:</code> contains trigger phrases for auto-invocation</li>
+        <li>Verify no trailing spaces on <code>---</code> delimiters</li>
+      </ol>
+    </ContentCard>
+    <ContentCard icon="mdi:connection" iconColor="bg-amber-500" title="MCP Tools Not Available">
+      <ol class="mt-2 text-sm list-decimal pl-4 space-y-1">
+        <li>Check server is running</li>
+        <li>Verify config in <code>.mcp.json</code> or <code>.claude/settings.json</code></li>
+        <li>If agent, check that <code>tools:</code> is NOT set (blocks MCP inheritance)</li>
+        <li>Run <code>ToolSearch("+servername")</code> to load deferred tools</li>
+      </ol>
+    </ContentCard>
+    <ContentCard icon="mdi:eye-off" iconColor="bg-cyan-dark" title="Copilot Agent Not Appearing">
+      <ol class="mt-2 text-sm list-decimal pl-4 space-y-1">
+        <li>File must have <code>.agent.md</code> extension</li>
+        <li>Must be in <code>.github/agents/</code> directory</li>
+        <li>Check <code>user-invokable:</code> is not <code>false</code></li>
+        <li>Restart VS Code after adding new agents</li>
+        <li>Use <code>/troubleshoot</code> to inspect loaded customizations</li>
+      </ol>
+    </ContentCard>
+    <ContentCard icon="mdi:robot-off" iconColor="bg-brand-700" title="Deferred vs Pre-loaded MCP">
+      <ol class="mt-2 text-sm list-decimal pl-4 space-y-1">
+        <li>If <code>tools:</code> is omitted, MCP tools are <strong>deferred</strong> -- must ToolSearch before calling</li>
+        <li>If <code>tools:</code> lists MCP tools explicitly, they are <strong>pre-loaded</strong> -- ToolSearch returns nothing</li>
+        <li>Always try calling the tool directly first, fall back to ToolSearch</li>
+      </ol>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="The #2 Gotcha: ToolSearch False Negatives">
+    If an agent has MCP tools explicitly listed in <code>tools:</code>, those tools are pre-loaded and ToolSearch will return nothing for them. This leads agents to wrongly conclude MCP is unavailable. Always try calling the tool directly first.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Settings"
+  badgeColor="info"
+  title="Settings Reference"
+  subtitle="Configuration file hierarchy and key fields."
+  bg="alt"
+/>
+<Section>
+  <h3 class="text-base font-semibold text-brand-900 mb-3">File Hierarchy (highest priority first)</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Priority</th>
+          <th class="text-left py-2 px-4 font-semibold">Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">1 (highest)</td><td class="py-2 px-4">Enterprise managed settings</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">2</td><td class="py-2 px-4"><code>~/.claude/settings.json</code> (user)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">3</td><td class="py-2 px-4"><code>.claude/settings.json</code> (project)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">4 (lowest)</td><td class="py-2 px-4"><code>.claude/settings.local.json</code> (local, gitignored)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Permission Modes</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Mode</th>
+          <th class="text-left py-2 px-4 font-semibold">Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>default</code></td><td class="py-2 px-4">Prompts on first use of each tool</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>acceptEdits</code></td><td class="py-2 px-4">Auto-accepts file edits, prompts for other tools</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>plan</code></td><td class="py-2 px-4">Read-only, no modifications allowed</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>dontAsk</code></td><td class="py-2 px-4">Auto-denies unless pre-approved via permissions</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>bypassPermissions</code></td><td class="py-2 px-4">Skips all prompts (isolated environments only)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="External References"
+  subtitle="Official documentation for both platforms."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><a href="https://code.claude.com/docs/en/sub-agents" target="_blank" rel="noopener noreferrer">Subagents</a></li>
+        <li><a href="https://code.claude.com/docs/en/skills" target="_blank" rel="noopener noreferrer">Skills</a></li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="VS Code Copilot">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><a href="https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode" target="_blank" rel="noopener noreferrer">Custom Agents</a></li>
+        <li><a href="https://code.visualstudio.com/docs/copilot/model-context-protocol" target="_blank" rel="noopener noreferrer">MCP in VS Code</a></li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>

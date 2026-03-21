@@ -1,0 +1,70 @@
+# Agent Index — {{PROJECT_NAME}}
+
+Machine-readable entry point for AI agents. All paths relative to repo root.
+
+## Documentation
+
+| File | When to read |
+|------|-------------|
+| `.ai/docs/overview.md` | Explain KAI to someone new |
+| `.ai/docs/architecture.md` | Understand system design, plugins, infrastructure |
+| `.ai/docs/local-workflow.md` | Look up CLI commands or workflow recipes |
+| `.ai/docs/remote-agents.md` | Look up autonomous agent triggers and behavior |
+| `.ai/docs/setup.md` | Set up KAI in a new project |
+| `.ai/docs/runbook.md` | Investigate failures, alerts, rollback |
+
+## Project Config
+
+| File | When to read |
+|------|-------------|
+| `.ai/config.yaml` | Need SCM org, build commands, AEM URLs, base branch |
+| `.ai/project.yaml` | Need detected toolchain, source paths, module structure |
+| `.ai/me.md` | Need communication tone and persona |
+
+## Knowledge Base
+
+| File | When to read |
+|------|-------------|
+| `.ai/project/component-index.md` | Find a component by name |
+| `.ai/project/bff-index.md` | Find BFF component details |
+| `.ai/project/component-files.md` | Find all source files for a component |
+| `.ai/project/aem-pages.md` | Find AEM pages using a component |
+| `.ai/project/features.md` | Understand a platform feature |
+| `.ai/project/markets.md` | Look up brand/market configuration |
+| `.ai/project/reference.md` | Understand platform architecture (Legacy vs DXN) |
+| `.ai/project/research-order.md` | Analyze a ticket step-by-step |
+
+## Rules
+
+| File | When to read |
+|------|-------------|
+| `.ai/rules/pr-review.md` | Reviewing code — severity levels, what to flag |
+| `.ai/rules/pr-answer.md` | Answering PR comments — tone, categories |
+| `.ai/rules/plan-format.md` | Writing implementation plans — step format |
+| `.ai/rules/pragmatism.md` | Filtering unnecessary questions |
+| `.ai/rules/headless-autonomy.md` | Running in pipeline mode (no questions) |
+
+## Coding Conventions
+
+| File | Scope |
+|------|-------|
+| `.claude/rules/fe-javascript.md` | Component framework, lifecycle, data flow |
+| `.claude/rules/fe-styles.md` | SCSS structure, naming, responsive |
+| `.claude/rules/fe-clientlibs.md` | Gulp build pipeline, output, deploy |
+| `.claude/rules/accessibility.md` | WCAG 2.1 AA requirements |
+| `.claude/rules/naming.md` | All naming conventions |
+| `.claude/rules/reuse-first.md` | Always search before creating |
+
+## Folders
+
+| Path | What | Committed |
+|------|------|-----------|
+| `.ai/docs/` | All documentation | Yes |
+| `.ai/rules/` | Shared prompt rules — loaded by skills and automation | Yes |
+| `.ai/project/` | Knowledge base — component index, features, markets | Yes |
+| `.ai/automation/` | Prompts, agent roles, pipeline policy | Yes |
+| `.ai/lib/` | Shared utilities (audit.sh) | Yes |
+| `.ai/specs/` | Per-ticket output (raw-story, explain, research, implement) | No (gitignored) |
+| `.ai/pr-reviews/` | PR review session data | No (gitignored) |
+| `.claude/rules/` | Auto-loaded coding conventions | Yes |
+| `.claude/hooks/` | Lifecycle hooks (stop-guard) | Yes |

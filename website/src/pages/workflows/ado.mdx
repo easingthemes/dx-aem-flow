@@ -1,0 +1,529 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: ADO Integration
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+<PageHero
+  title="ADO Integration"
+  subtitle="Every skill that writes to Azure DevOps -- comments, work items, and wiki pages. A complete map of what the AI posts and where."
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="What Gets Written to ADO"
+  subtitle="Skills write three types of data to ADO: comments on work items, new work items (Bugs & Tasks), and wiki pages."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard
+      icon="mdi:comment"
+      iconColor="bg-brand-700"
+      title="Work Item Comments"
+      tags={[{ label: '8 skills', color: 'primary' }]}
+    >
+      Structured markdown comments posted to stories and bugs. Each skill uses a unique
+      signature tag (e.g., <code>[DoRAgent]</code>, <code>[DevPlan]</code>) for idempotent
+      updates -- re-running a skill updates the existing comment instead of creating duplicates.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:clipboard-check"
+      iconColor="bg-emerald-600"
+      title="Work Item Creation"
+      tags={[{ label: '4 skills', color: 'success' }]}
+    >
+      Creates child work items under stories: **Task** items for sprint planning
+      and **Bug** items from QA verification. All created items are linked as
+      children of the parent story.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:book-open-variant"
+      iconColor="bg-cyan"
+      title="Wiki Pages"
+      tags={[{ label: '4 skills', color: 'info' }]}
+    >
+      Technical documentation and PR review reports published to the ADO Wiki under
+      sprint-organized paths. Generated from spec files, retroactively from PRs, or
+      from code review findings. Also supports Confluence.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Safety Model">
+    All ADO writes use <code>format: "markdown"</code> (never HTML).
+    Comments are **append-only** -- ADO MCP doesn't support editing existing comments,
+    so skills post update comments instead. Most skills ask for **user confirmation** before
+    posting. Bug creation always requires human approval.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Comments"
+  badgeColor="info"
+  title="Work Item Comments"
+  subtitle="Each skill posts a structured comment with a unique signature tag. Signatures enable idempotent updates -- the skill checks for existing comments before posting."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:format-list-checks"
+      iconColor="bg-amber-500"
+      title="/dx-req-dor"
+      tags={[{ label: '[DoRAgent]', color: 'warning' }, { label: 'dor-check.md.template', color: 'default' }]}
+    >
+      Definition of Ready checklist with interactive checkboxes. BAs can check items directly in ADO, then re-run DoR to update the scorecard. Three modes: full post, update, or skip if unchanged.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:chat"
+      iconColor="bg-cyan"
+      title="/dx-req-share"
+      tags={[{ label: '[DevPlan]', color: 'info' }, { label: 'share-plan.md.template', color: 'default' }]}
+    >
+      Non-technical implementation plan for the team. Covers what's being built, the approach, scope (S/M/L), assumptions, and open questions. Suitable for pasting into Teams or standup notes.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:clipboard-check-outline"
+      iconColor="bg-emerald-600"
+      title="/dx-req-dod"
+      tags={[{ label: 'DoD Check:', color: 'success' }, { label: 'dod-summary.md.template', color: 'default' }]}
+    >
+      Definition of Done validation results. Checks PR status, approving reviews, resolved threads, child tasks, tests, build, secrets, and accessibility. Posts pass/fail verdict with score.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:file-document"
+      iconColor="bg-cyan"
+      title="/dx-agent-re"
+      tags={[{ label: '[RE Agent]', color: 'secondary' }, { label: 're-summary.md.template', color: 'default' }]}
+    >
+      Requirements Engineering summary. Structured requirements spec with task breakdown, identified risks, and effort estimates. Posted after the RE agent analyzes the story.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:timer"
+      iconColor="bg-amber-500"
+      title="/dx-estimate"
+      tags={[{ label: 'ai:role:estimation-agent', color: 'warning' }]}
+    >
+      Estimation results: hours per task, story points, affected AEM pages, and complexity breakdown. Uses an HTML comment signature for machine-readable detection.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:bug"
+      iconColor="bg-red-500"
+      title="/dx-bug-triage"
+      tags={[{ label: '(clarification)', color: 'error' }]}
+    >
+      Clarification questions posted when a bug description is ambiguous. Asks for missing reproduction steps, expected behavior, or environment details to unblock investigation.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:check-decagram"
+      iconColor="bg-brand-700"
+      title="/dx-bug-verify"
+      tags={[{ label: '[BugVerify]', color: 'primary' }]}
+    >
+      Bug verification evidence. Before mode: confirms the bug is reproducible on QA (screenshots, console errors). After mode: confirms the fix works on local AEM.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:handshake"
+      iconColor="bg-cyan"
+      title="/aem-qa-handoff"
+      tags={[{ label: '[QAHandoff]', color: 'secondary' }, { label: 'qa-handoff.md.template', color: 'default' }]}
+    >
+      Structured testing steps for the QA team. Two modes: lightweight (reuses /aem-doc-gen output) or full (creates own test page + screenshots). Maps acceptance criteria to numbered testing steps with expected results.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Comment Templates">
+    Templates live in <code>dx-dev-experience/data/templates/ado-comments/</code>.
+    Each template defines the markdown structure, placeholder tokens, and signature line.
+    The signature line always ends with an ISO timestamp for traceability.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Reference"
+  badgeColor="secondary"
+  title="Comment Signatures"
+  subtitle="Quick reference for all ADO comment signatures -- used for idempotent updates and traceability."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Skill</th>
+        <th class="text-left p-3 font-semibold">Signature</th>
+        <th class="text-left p-3 font-semibold">Posting Modes</th>
+        <th class="text-left p-3 font-semibold">Template</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-req-dor</code></td>
+        <td class="p-3"><code class="text-xs">[DoRAgent] Definition of Ready Check</code></td>
+        <td class="p-3 text-xs">A: full | B: update | C: skip</td>
+        <td class="p-3"><code class="text-xs">dor-check.md.template</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-req-share</code></td>
+        <td class="p-3"><code class="text-xs">[DevPlan] Development Plan</code></td>
+        <td class="p-3 text-xs">A: full | B: update</td>
+        <td class="p-3"><code class="text-xs">share-plan.md.template</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-req-dod</code></td>
+        <td class="p-3"><code class="text-xs">DoD Check: &lt;Title&gt; (ADO #&lt;id&gt;)</code></td>
+        <td class="p-3 text-xs">A: full | B: update | C: skip</td>
+        <td class="p-3"><code class="text-xs">dod-summary.md.template</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-agent-re</code></td>
+        <td class="p-3"><code class="text-xs">[RE Agent] Requirements Analysis Complete</code></td>
+        <td class="p-3 text-xs">A: full post</td>
+        <td class="p-3"><code class="text-xs">re-summary.md.template</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-estimate</code></td>
+        <td class="p-3"><code class="text-xs">&lt;!-- ai:role:estimation-agent --&gt;</code></td>
+        <td class="p-3 text-xs">A: full post</td>
+        <td class="p-3 text-xs text-gray-500">inline</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-triage</code></td>
+        <td class="p-3"><code class="text-xs">(no fixed signature)</code></td>
+        <td class="p-3 text-xs">A: full post</td>
+        <td class="p-3 text-xs text-gray-500">inline</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-verify</code></td>
+        <td class="p-3"><code class="text-xs">[BugVerify] / [BugVerifyLocal]</code></td>
+        <td class="p-3 text-xs">A: full post</td>
+        <td class="p-3 text-xs text-gray-500">inline</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/aem-qa-handoff</code></td>
+        <td class="p-3"><code class="text-xs">[QAHandoff]</code></td>
+        <td class="p-3 text-xs">A: full | B: update</td>
+        <td class="p-3"><code class="text-xs">qa-handoff.md.template</code></td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Work Items"
+  badgeColor="success"
+  title="Work Item Creation"
+  subtitle="Skills that create new Bugs and Tasks in ADO, linked as children of the parent story."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:bug"
+      iconColor="bg-red-500"
+      title="/aem-qa"
+      tags={[{ label: 'Bug', color: 'error' }, { label: '[AI-QA] prefix', color: 'error' }]}
+    >
+      Creates Bug work items when QA verification finds UI/functional issues on AEM.
+      Each bug includes: repro steps, expected vs actual behavior, severity (High/Medium),
+      screenshot evidence, and page URL. **Always asks for human confirmation** before
+      creating.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:clipboard-check"
+      iconColor="bg-emerald-600"
+      title="/dx-agent-re"
+      tags={[{ label: 'Task', color: 'success' }, { label: 'child items', color: 'success' }]}
+    >
+      The Requirements Engineering agent creates child Task work items under the parent story.
+      Each task has a title, description, type classification (FE/BE/Authoring), and is linked
+      as a child of the story.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:pencil"
+      iconColor="bg-cyan"
+      title="/dx-req-tasks"
+      tags={[{ label: 'Task (batch)', color: 'info' }, { label: 'estimates', color: 'warning' }]}
+    >
+      Batch-creates child Task work items with hour estimates. Sets Original Estimate and
+      Remaining Work fields. Useful for sprint planning -- breaks a story into FE/BE/Authoring
+      tasks with effort estimates.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:clipboard-check-outline"
+      iconColor="bg-amber-500"
+      title="/dx-req-dod-fix"
+      tags={[{ label: 'Task', color: 'warning' }, { label: 'fix items', color: 'warning' }]}
+    >
+      Creates Task work items for failed Definition of Done criteria that cannot be auto-fixed.
+      Auto-fixes what it can (tests, docs, changelog), then creates ADO Tasks for the rest.
+    </ContentCard>
+  </div>
+
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden mt-6">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Skill</th>
+        <th class="text-left p-3 font-semibold">Work Item Type</th>
+        <th class="text-left p-3 font-semibold">MCP Tool</th>
+        <th class="text-left p-3 font-semibold">Title Pattern</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/aem-qa</code></td>
+        <td class="p-3"><span class="text-red-600 font-semibold">Bug</span></td>
+        <td class="p-3"><code class="text-xs">wit_create_work_item</code></td>
+        <td class="p-3"><code class="text-xs">[AI-QA] &lt;description&gt;</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-agent-re</code></td>
+        <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
+        <td class="p-3"><code class="text-xs">wit_add_child_work_items</code></td>
+        <td class="p-3"><code class="text-xs">&lt;task title&gt;</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-req-tasks</code></td>
+        <td class="p-3"><span class="text-emerald-600 font-semibold">Task (batch)</span></td>
+        <td class="p-3"><code class="text-xs">wit_add_child_work_items + wit_update_work_items_batch</code></td>
+        <td class="p-3"><code class="text-xs">&lt;FE/BE/Authoring task&gt;</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-req-dod-fix</code></td>
+        <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
+        <td class="p-3"><code class="text-xs">wit_create_work_item</code></td>
+        <td class="p-3"><code class="text-xs">&lt;fix description&gt;</code></td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Wiki"
+  badgeColor="info"
+  title="Wiki Documentation"
+  subtitle="Skills that publish technical documentation and PR review reports to the ADO Wiki (or Confluence)."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:book-open-variant"
+      iconColor="bg-emerald-600"
+      title="/dx-doc-gen"
+      tags={[{ label: 'wiki', color: 'success' }, { label: 'post-implementation', color: 'success' }]}
+    >
+      Generates technical documentation from completed spec files -- architecture decisions,
+      usage guide, API changes. Posts to ADO Wiki under <code>&lt;wiki-doc-root&gt;/&lt;Sprint&gt;/&lt;id&gt;-&lt;slug&gt;</code>.
+      The final step in the development pipeline (Phase 7).
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:magnify"
+      iconColor="bg-cyan"
+      title="/dx-doc-retro"
+      tags={[{ label: 'wiki', color: 'info' }, { label: 'retroactive', color: 'info' }]}
+    >
+      Generates documentation retroactively for stories that shipped without docs. Fetches the
+      ADO story, finds linked PRs, searches the codebase for changes, and produces wiki-ready
+      documentation. No spec files needed.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:comment-text"
+      iconColor="bg-cyan"
+      title="/dx-pr-review-report"
+      tags={[{ label: 'wiki', color: 'secondary' }, { label: 'PR review', color: 'secondary' }]}
+    >
+      Generates a categorized report from a single PR review -- groups comments by category
+      (accessibility, bug, functionality, regression), tracks patch resolution, and posts
+      to ADO Wiki under <code>&lt;wiki-pr-review-root&gt;/&lt;ticket&gt;</code>.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:comment-text"
+      iconColor="bg-amber-500"
+      title="/dx-pr-reviews-report"
+      tags={[{ label: 'wiki', color: 'warning' }, { label: 'batch', color: 'warning' }]}
+    >
+      Generates categorized reports for multiple PR reviews in batch -- lists reviewed PRs,
+      generates a report for each, and posts all to ADO Wiki. Ideal for sprint review
+      summaries and tech lead dashboards.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Wiki Configuration">
+    Wiki paths are configured in <code>.ai/config.yaml</code>:
+    <br /><code>scm.wiki-doc-root</code> -- technical docs (used by <code>/dx-doc-gen</code>, <code>/dx-doc-retro</code>)
+    <br /><code>scm.wiki-pr-review-root</code> -- PR review reports (used by <code>/dx-pr-review-report</code>, <code>/dx-pr-reviews-report</code>)
+    <br />Both support Confluence as an alternative -- configured via <code>tracker.provider</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Updates"
+  badgeColor="warning"
+  title="Work Item Updates"
+  subtitle="Skills that modify existing work item fields (estimates, assignments)."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:timer"
+      iconColor="bg-amber-500"
+      title="/dx-req-tasks"
+      tags={[{ label: 'wit_update_work_items_batch', color: 'warning' }]}
+    >
+      After creating child Task items, updates their estimation fields: **Original Estimate** and
+      **Remaining Work**. Uses batch update for efficiency. Also sets assignment if configured.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Timeline"
+  badgeColor="secondary"
+  title="When Does Each ADO Write Happen?"
+  subtitle="ADO writes mapped to the development lifecycle -- from story pickup to QA handoff."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Development Lifecycle ADO Writes"
+    steps={[
+      { title: 'DoR Check', subtitle: 'Comment', command: '/dx-req-dor', color: '#f59e0b' },
+      { title: 'Dev Plan', subtitle: 'Comment', command: '/dx-req-share', color: '#0891b2' },
+      { title: 'RE Agent', subtitle: 'Comment + Tasks', command: '/dx-agent-re', color: '#8b5cf6' },
+      { title: 'Estimation', subtitle: 'Comment + Updates', command: '/dx-estimate', color: '#d97706' },
+      { title: 'Task Split', subtitle: 'Tasks + Estimates', command: '/dx-req-tasks', color: '#059669' },
+      { title: 'DoD Check', subtitle: 'Comment', command: '/dx-req-dod', color: '#10b981' },
+      { title: 'QA Agent', subtitle: 'Bugs', command: '/aem-qa', color: '#ef4444' },
+      { title: 'QA Handoff', subtitle: 'Comment', command: '/aem-qa-handoff', color: '#6366f1' },
+      { title: 'Docs', subtitle: 'Wiki page', command: '/dx-doc-gen', color: '#14b8a6' },
+    ]}
+  />
+
+  <h3 class="text-lg font-bold mt-8 mb-4">ADO Write Summary</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Phase</th>
+        <th class="text-left p-3 font-semibold">Skill</th>
+        <th class="text-left p-3 font-semibold">ADO Write</th>
+        <th class="text-left p-3 font-semibold">Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Requirements</td>
+        <td class="p-3"><code>/dx-req-dor</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Requirements</td>
+        <td class="p-3"><code>/dx-req-share</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Requirements</td>
+        <td class="p-3"><code>/dx-agent-re</code></td>
+        <td class="p-3">Comment + Tasks</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Planning</td>
+        <td class="p-3"><code>/dx-estimate</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Planning</td>
+        <td class="p-3"><code>/dx-req-tasks</code></td>
+        <td class="p-3">Tasks + Updates</td>
+        <td class="p-3">Story children</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Bug Triage</td>
+        <td class="p-3"><code>/dx-bug-triage</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Bug</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Bug Verify</td>
+        <td class="p-3"><code>/dx-bug-verify</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Bug</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Quality</td>
+        <td class="p-3"><code>/dx-req-dod</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Quality</td>
+        <td class="p-3"><code>/dx-req-dod-fix</code></td>
+        <td class="p-3">Tasks</td>
+        <td class="p-3">Story children</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">QA</td>
+        <td class="p-3"><code>/aem-qa</code></td>
+        <td class="p-3">Bug creation</td>
+        <td class="p-3">New Bug items</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">QA Handoff</td>
+        <td class="p-3"><code>/aem-qa-handoff</code></td>
+        <td class="p-3">Comment</td>
+        <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Documentation</td>
+        <td class="p-3"><code>/dx-doc-gen</code></td>
+        <td class="p-3">Wiki page</td>
+        <td class="p-3">ADO Wiki</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Documentation</td>
+        <td class="p-3"><code>/dx-doc-retro</code></td>
+        <td class="p-3">Wiki page</td>
+        <td class="p-3">ADO Wiki</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR Reports</td>
+        <td class="p-3"><code>/dx-pr-review-report</code></td>
+        <td class="p-3">Wiki page</td>
+        <td class="p-3">ADO Wiki</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR Reports</td>
+        <td class="p-3"><code>/dx-pr-reviews-report</code></td>
+        <td class="p-3">Wiki page</td>
+        <td class="p-3">ADO Wiki</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>

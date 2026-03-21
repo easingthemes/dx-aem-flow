@@ -1,0 +1,44 @@
+---
+description: Infrastructure audit rule — all mutating AWS/Azure CLI commands must use wrappers from .ai/lib/audit.sh
+paths: ["**/*.sh", "**/scripts/**/*"]
+applyTo: "**/*.sh, **/scripts/**/*"
+---
+
+# Remote Change Audit (Azure/AWS) — MANDATORY
+
+**CRITICAL: Every mutating remote operation (Azure or AWS) MUST be audit-logged. This is NON-NEGOTIABLE.**
+
+**NEVER run bare `aws` or `az` mutating commands directly.** Always use the wrappers from `.ai/lib/audit.sh`. If you cannot source the audit file, STOP and ask the user — do not proceed without logging.
+
+## The rule
+
+Any `aws` or `az` command that **creates, updates, deletes, or deploys** a remote resource MUST go through a wrapper. No exceptions, no new services exempt.
+
+- **AWS — any service, any mutating verb**: `aws_resource "<service>/<target>" aws <service> <verb> ...`
+- **Azure pipelines**: `az_pipelines <verb> ...` / `az_pipelines_variable <verb> ...`
+- **Azure — any other service**: `az_resource "<service>/<target>" az <service> <verb> ...`
+
+## Convenience shortcuts
+
+| Shortcut | Equivalent to |
+|---|---|
+| `aws_lambda_deploy <func> <zip>` | `aws_resource "lambda/<func>" aws lambda update-function-code ...` |
+| `aws_lambda_config <func> [args]` | `aws_resource "lambda/<func>/config" aws lambda update-function-configuration ...` |
+| `aws_iam_put_role_policy <role> <policy> [args]` | `aws_resource "iam/<role>/policy/<policy>" aws iam put-role-policy ...` |
+
+## Required steps for every mutating operation
+
+1. **Source audit helpers FIRST** (once per shell session):
+   - Defined flows (skills/subagents): `source .ai/lib/audit.sh`
+   - Ad-hoc chat commands: `export AUDIT_LOG_PREFIX=agent && source .ai/lib/audit.sh`
+2. **Use the wrapper** — never the raw CLI command.
+3. **Verify the log was written**: `tail -1 .ai/logs/*.jsonl` after the operation.
+
+Read-only commands (`show`, `list`, `get`, `describe`, `s3 ls`) do NOT require wrappers.
+
+## Log routing
+
+| Context | Prefix | Log file |
+|---|---|---|
+| Skills / subagents / automation scripts | `infra` (default) | `.ai/logs/infra.<monday>--<sunday>.jsonl` |
+| Ad-hoc chat-driven commands | `agent` | `.ai/logs/agent.<monday>--<sunday>.jsonl` |

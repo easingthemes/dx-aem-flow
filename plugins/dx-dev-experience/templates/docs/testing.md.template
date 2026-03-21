@@ -1,0 +1,32 @@
+# Testing
+
+## Local (Developer Skills)
+
+| Flow | Command | Pass when |
+|------|---------|-----------|
+| Story workflow | `/dx-req-all <ID>` then `/dx-plan` then `/dx-agent-all` | Spec files created, steps executed, PR created |
+| Bug fix | `/dx-bug-all <ID>` | Triage + fix, no `[ALERT:CRITICAL]` |
+| PR review | `/dx-pr-review <PR>` then `/dx-pr-answer` | Review posted, answers drafted |
+| AEM verify | `/aem-snapshot <comp>` then `/aem-verify <comp>` | Before/after snapshots captured |
+| Dry run | `/auto-test dor <ID> --dryRun` | Agent runs, nothing posted to ADO |
+| Eval gates | `/auto-eval --all` | All fixtures pass |
+| Unit tests | `node --test .ai/automation/agents/lib/__tests__/*.test.mjs` | All green |
+| Health check | `/dx-doctor` and `/auto-doctor` | All checks pass |
+
+## Remote (Autonomous Agents)
+
+| Step | Action | Pass when |
+|------|--------|-----------|
+| Health | `/auto-doctor` + `/auto-status` | All green, DLQ = 0 |
+| DoR trigger | Add `KAI-DOR-AUTOMATION` + `KAI-TRIGGER` tags | Comment within 1-2 min |
+| PR Review | Create PR targeting base branch | Review comments posted |
+| PR Answer | Post comment on your PR | Reply in thread |
+| Dedupe | Re-apply same tag | Lambda returns `status: skipped` |
+| Monitoring | Check CloudWatch alarms | 4 alarms in `OK` state |
+
+## Full Details
+
+For detailed test procedures, prerequisites, and troubleshooting:
+- [automation/docs/test-plan-local.md](../automation/docs/test-plan-local.md)
+- [automation/docs/test-plan-remote.md](../automation/docs/test-plan-remote.md)
+- [automation/docs/test-plan-shared.md](../automation/docs/test-plan-shared.md)

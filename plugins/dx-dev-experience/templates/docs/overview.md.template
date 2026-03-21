@@ -1,0 +1,78 @@
+# KAI — AI-Assisted Development
+
+## What It Is
+
+KAI is a set of AI agents that help software teams build, review, and ship code faster. It works with Azure DevOps — reading your tickets, reviewing your pull requests, and writing code when you ask it to.
+
+There are two ways to use it:
+
+- **Interactive** — a developer runs commands in their editor and the AI assists step by step
+- **Autonomous** — the AI runs automatically when you tag a ticket or create a pull request
+
+Both modes produce the same kind of output: analysis comments on tickets, review comments on PRs, or branches with code changes.
+
+## What It Does
+
+### For Developers (Interactive)
+
+| What | How |
+|------|-----|
+| Understand a ticket | AI reads the ADO story, researches the codebase, lists affected files |
+| Plan the work | AI generates a step-by-step implementation plan with file paths |
+| Write the code | AI executes plan steps, runs tests, commits after each step |
+| Review code | AI reviews your PR or someone else's — posts comments with severity levels |
+| Fix review comments | AI reads reviewer feedback, applies agreed fixes, pushes and replies |
+| Fix bugs | AI triages the bug, finds affected code, creates a fix branch |
+| Answer questions | AI answers architecture and "how does X work?" questions from project docs |
+
+### For Teams (Autonomous)
+
+These agents run automatically — no developer action needed beyond adding a tag.
+
+| Agent | Trigger | What it does |
+|-------|---------|-------------|
+| **PR Review** | New PR created | Reviews code, posts comments with severity levels |
+| **PR Answer** | Someone comments on your PR | Researches codebase, drafts a reply |
+| **DoR Check** | Tag: `KAI-DOR-AUTOMATION` | Checks if a User Story has enough detail to start |
+| **DoD Check** | Tag: `KAI-DOD-AUTOMATION` | Checks if a story meets completion criteria |
+| **Estimation** | Tag: `KAI-ESTIMATION-AUTOMATION` | Estimates story points with reasoning |
+| **Bug Fix** | Tag: `KAI-BUGFIX-AUTOMATION` | Analyzes bug, creates fix branch + PR |
+| **Dev Agent** | Tag: `KAI-DEV-AUTOMATION` | Full implementation — reads story, codes, creates PR |
+| **QA Agent** | Tag: `KAI-QA-AUTOMATION` | Verifies component on AEM, captures screenshots |
+| **Doc Agent** | Tag: `KAI-DOC-AUTOMATION` | Generates wiki documentation from completed story |
+
+All work-item agents require the `KAI-TRIGGER` tag in addition to the agent-specific tag.
+
+## How It Works (Simple Version)
+
+```
+Developer tags a ticket          Someone creates a PR
+        |                                |
+        v                                v
+   ADO webhook fires              ADO build policy runs
+        |                                |
+        v                                v
+   AWS Lambda routes              PR Review pipeline
+   to the right pipeline          analyzes the diff
+        |                                |
+        v                                v
+   ADO Pipeline runs              Posts review comments
+   the AI agent                   on the PR
+        |
+        v
+   Agent posts results
+   as ADO comments (or creates a PR)
+```
+
+## Safety
+
+- **Rate limits** — each agent has a daily cap (e.g., 50 PR reviews/day, 20 DoR checks/day)
+- **Token budget** — monthly spending cap on AI API calls; alerts at 80%, degrades at 90%, halts at 100%
+- **Policy gates** — agents can only do what their role allows (read-only agents can't push code)
+- **Push policy** — code changes require 4 checks to pass before pushing (correct thread, unique match, lint passes, no injection detected)
+- **Deduplication** — duplicate webhook events are silently dropped (DynamoDB with 1h TTL)
+
+## Supported Tools
+
+- **Claude Code** (CLI) — primary interface. Run `/dx-*` commands in terminal.
+- **VS Code with GitHub Copilot** — same skills available as `@AgentName` in Copilot chat (e.g., `@DxPRReview`, `@DxCodeReview`).

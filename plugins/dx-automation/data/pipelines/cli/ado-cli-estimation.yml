@@ -1,0 +1,63 @@
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: dx-hub
+      type: git
+      name: {{ADO_PROJECT}}/{{ADO_REPO}}
+      ref: development
+# Claude Agent SDK pipeline — Estimation Agent via /dx-estimate skill.
+# Triggered by Lambda webhook on work item tag KAI-ESTIMATION-AUTOMATION.
+# Read-only: analyzes story + codebase, posts estimation comment to ADO.
+
+parameters:
+  - name: workItemId
+    displayName: "ADO Work Item ID"
+    type: string
+  - name: dryRun
+    displayName: "Dry run (analyze only, don't post ADO comments)"
+    type: boolean
+    default: false
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+    path: s
+
+  - checkout: dx-hub
+    fetchDepth: 1
+    path: dx-hub
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+      npm install --no-save @anthropic-ai/claude-agent-sdk
+    displayName: "Install Claude Code + Agent SDK"
+    workingDirectory: $(Build.SourcesDirectory)
+  - bash: |
+      PROMPT="/dx-estimate ${{ parameters.workItemId }}"
+      if [ "${{ parameters.dryRun }}" = "True" ]; then
+        PROMPT="$PROMPT (dry run — analyze only, do NOT post comments to ADO)"
+      fi
+
+      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
+      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+
+      echo "prompt: $PROMPT"
+      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+    displayName: "AI Estimation Agent"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      MAX_TURNS: "40"
+      ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Agent"
+    timeoutInMinutes: 15

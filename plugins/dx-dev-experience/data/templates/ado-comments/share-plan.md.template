@@ -1,0 +1,26 @@
+### [DevPlan] Development Plan
+
+**Summary**
+<!-- 2 sentences max: what the story asks for, in plain language. -->
+
+**What's Planned**
+<!-- 3-5 bullets max. One sentence each. Plain language only. -->
+
+**Scope:** <!-- Small / Medium / Large — one sentence justification -->
+
+**Assumptions**
+<!-- From dor-report.md Assumptions section. These are things assumed to be true
+based on the story content — confirm or correct.
+OMIT if no assumptions.
+
+- Assumption 1
+- Assumption 2
+-->
+
+**Open Questions**
+<!-- Top 3 max from dor-report.md. OMIT if none.
+- ❓ Question text
+-->
+
+---
+_[DevPlan] | <ISO timestamp>_

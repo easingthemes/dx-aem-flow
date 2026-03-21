@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* =====================================================================
+       Prototype scaffold — comparison layout (not part of real component)
+       ===================================================================== */
+    .prototype-wrapper {
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .prototype-compare {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Row layout: side by side — use for narrow designs (≤600px) */
+    .prototype-compare--row {
+      flex-direction: row;
+    }
+
+    .prototype-compare-col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .prototype-compare-col__header {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #666;
+      padding: 8px 0;
+      border-bottom: 2px solid #222;
+      margin-bottom: 16px;
+    }
+
+    .prototype-component {
+      /* Component content renders here */
+    }
+
+    .prototype-figma-ref {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #e0e0e0;
+    }
+
+    .prototype-figma-ref-label {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .prototype-section {
+      border: 1px dashed #dedede;
+      padding: 12px;
+      margin-bottom: 24px;
+    }
+
+    .prototype-section-label {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #969696;
+      margin: 0 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f1f1;
+      letter-spacing: 0.5px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="prototype-wrapper">
+  <div class="prototype-compare prototype-compare--row">
+
+    <!-- Column 1: Prototype -->
+    <div class="prototype-compare-col">
+      <div class="prototype-compare-col__header">Prototype</div>
+      <div class="prototype-component">
+
+        <!-- {{PROTOTYPE_CONTENT}} -->
+
+      </div>
+    </div>
+
+    <!-- Column 2: Figma Reference -->
+    <div class="prototype-compare-col prototype-compare-col--reference">
+      <div class="prototype-compare-col__header">Figma Reference</div>
+
+      <!-- {{FIGMA_REFERENCES}} -->
+
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

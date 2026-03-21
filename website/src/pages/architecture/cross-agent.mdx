@@ -1,0 +1,364 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Cross-Agent Communication
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Cross-Agent Communication"
+  subtitle="How agents from different plugins interact across Claude Code and GitHub Copilot CLI. Single-source conventions, dual-platform skills, and unified hooks."
+/>
+
+<SectionHeading
+  badge="Rules"
+  title="Convention Architecture"
+  subtitle="Coding conventions live in .claude/rules/ -- a single source read by both Claude Code and Copilot CLI."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Dual Frontmatter">
+      Each rule file has dual frontmatter: <code>paths:</code> (Claude Code) and <code>applyTo:</code>
+      (Copilot CLI). Both tools read their own key and ignore the other.
+      <CommandBlock label="Example: fe-javascript.md">
+{`# paths: ["**/*.js"]
+# applyTo: "**/*.js"
+
+## Component Structure
+[Rules, patterns, conventions...]`}
+      </CommandBlock>
+    </ContentCard>
+
+    <ContentCard icon="mdi:sync" iconColor="bg-cyan" title="How Each Tool Reads Rules">
+      <table class="w-full text-xs mt-2">
+        <thead>
+          <tr>
+            <th class="text-left pb-1">Tool</th>
+            <th class="text-left pb-1">Mechanism</th>
+            <th class="text-left pb-1">Key</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claude Code</td>
+            <td>Auto-loads natively</td>
+            <td><code>paths:</code></td>
+          </tr>
+          <tr>
+            <td>Copilot CLI</td>
+            <td><code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code></td>
+            <td><code>applyTo:</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="History">
+    Before v2.43.0, rules were copied to both <code>.claude/rules/</code> and <code>.github/instructions/</code>.
+    The <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code> env var (Copilot CLI v1.0.6+) eliminated this duplication.
+    <code>.github/instructions/</code> is no longer generated.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  badgeColor="secondary"
+  title="Agent Mapping"
+  subtitle="Each Claude Code agent has a Copilot counterpart. Same logic, different format."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Claude Agent</th>
+        <th class="text-left p-3 font-semibold">Copilot Agent</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-code-reviewer</code></td>
+        <td class="p-3">DxCodeReview</td>
+        <td class="p-3">Full branch code review</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-pr-reviewer</code></td>
+        <td class="p-3">DxPRReview</td>
+        <td class="p-3">ADO PR review with comment posting</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-step-executor</code></td>
+        <td class="p-3">DxPlanExecutor</td>
+        <td class="p-3">Execute implementation plan steps</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-file-resolver</code></td>
+        <td class="p-3">DxComponent</td>
+        <td class="p-3">Component/module file lookup</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-doc-searcher</code></td>
+        <td class="p-3">DxHelp</td>
+        <td class="p-3">Project Q&amp;A from .ai/ docs</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-inspector</code></td>
+        <td class="p-3">AEMBefore / AEMAfter / AEMSnapshot</td>
+        <td class="p-3">Pre/post deployment capture, inspection</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-demo-capture</code></td>
+        <td class="p-3">AEMDemo</td>
+        <td class="p-3">Dialog screenshots + authoring guide</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-page-finder</code></td>
+        <td class="p-3">AEMComponent</td>
+        <td class="p-3">AEM page lookup</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-bug-executor</code></td>
+        <td class="p-3">AEMVerify</td>
+        <td class="p-3">Bug verification on AEM</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Handoffs"
+  badgeColor="warning"
+  title="Cross-Plugin Handoffs"
+  subtitle="AEM Copilot agents hand off to DX agents for shared workflows."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="AEM to DX Handoffs"
+    description="AEM agents delegate to DX agents when they need workflow capabilities beyond AEM scope."
+    steps={[
+      { title: 'AEMBefore', subtitle: 'Baseline\ncapture', color: '#0891b2' },
+      { title: 'DxPlanExecutor', subtitle: 'Start\nimplementation', color: '#059669' },
+    ]}
+  />
+  <PipelineBlock
+    steps={[
+      { title: 'AEMAfter', subtitle: 'Post-deploy\nverify', color: '#0891b2' },
+      { title: 'DxCodeReview', subtitle: 'Review\nchanges', color: '#8b5cf6' },
+    ]}
+  />
+  <PipelineBlock
+    steps={[
+      { title: 'AEMComponent', subtitle: 'Component\nlookup', color: '#0891b2' },
+      { title: 'DxTicket', subtitle: 'Research\nticket', color: '#d97706' },
+    ]}
+  />
+  <PipelineBlock
+    steps={[
+      { title: 'AEMVerify', subtitle: 'Bug\nreproduction', color: '#0891b2' },
+      { title: 'DxDebug', subtitle: 'Diagnose\nissue', color: '#dc2626' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Coordinators"
+  badgeColor="error"
+  title="Coordinator Agents"
+  subtitle="Coordinator skills become Copilot agents with handoffs: for multi-step orchestration."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Copilot Agent</th>
+        <th class="text-left p-3 font-semibold">Replaces Skill</th>
+        <th class="text-left p-3 font-semibold">Chain</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DxReqAll</td>
+        <td class="p-3"><code>/dx-req-all</code></td>
+        <td class="p-3">fetch &rarr; dor &rarr; explain &rarr; research &rarr; share</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DxStepAll</td>
+        <td class="p-3"><code>/dx-step-all</code></td>
+        <td class="p-3">step &rarr; test &rarr; review &rarr; commit (loop)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DxBugAll</td>
+        <td class="p-3"><code>/dx-bug-all</code></td>
+        <td class="p-3">triage &rarr; fix</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DxAgentAll</td>
+        <td class="p-3"><code>/dx-agent-all</code></td>
+        <td class="p-3">DxReqAll &rarr; plan &rarr; DxStepAll &rarr; DxCommit</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DxFigma</td>
+        <td class="p-3"><code>/dx-figma-&#42;</code></td>
+        <td class="p-3">extract &rarr; prototype &rarr; verify</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="warning" title="Copilot CLI Limitation">
+    The <code>handoffs:</code> field is parsed but does NOT execute in Copilot CLI yet. Templates include
+    it so they auto-activate when CLI adds support. CLI users invoke coordinator skills sequentially
+    or use <code>/fleet</code> mode.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Format"
+  badgeColor="info"
+  title="Format Differences"
+  subtitle="Same logic, different file formats and tool names across platforms."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Aspect</th>
+        <th class="text-left p-3 font-semibold">Claude Code</th>
+        <th class="text-left p-3 font-semibold">Copilot CLI</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Agent location</td>
+        <td class="p-3"><code>plugins/&#42;/agents/&#42;.md</code></td>
+        <td class="p-3"><code>.github/agents/&#42;.agent.md</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Tool format</td>
+        <td class="p-3"><code>Read, Glob, Grep, Bash</code></td>
+        <td class="p-3"><code>read, edit, search</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">MCP tools</td>
+        <td class="p-3"><code>mcp__server__tool</code></td>
+        <td class="p-3"><code>'server/tool'</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Sub-agents</td>
+        <td class="p-3">Flat (no nesting)</td>
+        <td class="p-3"><code>agents:</code> field</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Navigation</td>
+        <td class="p-3">N/A</td>
+        <td class="p-3"><code>handoffs:</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Per-agent model</td>
+        <td class="p-3">Yes</td>
+        <td class="p-3">Yes</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Hooks in frontmatter</td>
+        <td class="p-3">Yes</td>
+        <td class="p-3">No</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="success"
+  title="Skill Discovery"
+  subtitle="Both platforms auto-discover plugin skills. No copying or transformation needed."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Claude Code">
+      Loads plugin skills directly via the plugin system. Skills with <code>context: fork</code>
+      spawn isolated subagents. Coordinator skills use <code>agent:</code> dispatch frontmatter
+      for delegation.
+    </ContentCard>
+
+    <ContentCard icon="mdi:monitor" iconColor="bg-cyan" title="Copilot CLI">
+      Auto-discovers plugin skills directly -- no copying to <code>.github/skills/</code> needed.
+      Coordinator skills become Copilot agents with <code>handoffs:</code> for orchestration
+      (parsing works since v0.0.402, execution pending).
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Hooks"
+  badgeColor="warning"
+  title="Unified Hook System"
+  subtitle="A single hooks.json file works across both Claude Code and Copilot CLI."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:webhook" iconColor="bg-red-500" title="SessionStart">
+      Validates <code>.ai/config.yaml</code> exists and Node version matches <code>.nvmrc</code>.
+      Runs on both platforms.
+    </ContentCard>
+
+    <ContentCard icon="mdi:shield" iconColor="bg-amber-500" title="PreToolUse">
+      Blocks commits on protected branches (main, master, development, develop). Branch guard
+      deployed to both plugin hooks and <code>.github/hooks/hooks.json</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:stop-circle" iconColor="bg-cyan" title="Stop">
+      Session stop guard -- checks for secrets, abandoned steps, and uncommitted changes.
+      Prompts for confirmation before terminating.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Platform Separation">
+    Plugin <code>hooks/hooks.json</code> is active in Claude Code only. <code>.github/hooks/hooks.json</code>
+    is active in Copilot CLI only. Both use the same <code>version: 1</code> format with PascalCase events.
+    <code>/dx-init</code> deploys hooks to both locations.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Plugins"
+  badgeColor="secondary"
+  title="Plugin System"
+  subtitle="Same plugin.json manifest works for both tools from the same marketplace repo."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-emerald-600" title="Single Manifest">
+      <code>plugin.json</code> is read by both Claude Code and Copilot CLI. Install from the same
+      marketplace with <code>/plugin install</code>. Both tools auto-discover agents and skills
+      from default directories.
+    </ContentCard>
+
+    <ContentCard icon="mdi:shield-lock" iconColor="bg-brand-700" title="Permissions">
+      Claude Code uses <code>.claude/settings.json</code> with <code>permissions.allow</code>.
+      Copilot CLI uses <code>--allow-tool</code> flags per invocation. Each platform handles
+      auto-approval independently.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Summary: Single Source, Dual Output">
+    Same plugins, same marketplace, same skills. Rules use dual frontmatter. Hooks use a single format.
+    Agent templates generate both Claude Code and Copilot <code>.agent.md</code> files with platform-specific
+    tool name transforms.
+  </HighlightBox>
+</Section>

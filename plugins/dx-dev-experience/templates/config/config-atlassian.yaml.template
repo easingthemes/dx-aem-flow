@@ -1,0 +1,26 @@
+# Atlassian configuration sections
+# Added to .ai/config.yaml when tracker.provider = jira
+
+tracker:
+  provider: jira                             # ado (default) | jira
+
+jira:
+  url: {{JIRA_URL}}                          # e.g., https://jira.example.com
+  deployment: server                         # server | cloud — affects description format and API behavior
+  project-key: {{JIRA_PROJECT_KEY}}          # e.g., PROJ
+  # board-id: {{JIRA_BOARD_ID}}             # Optional — for sprint queries
+  child-issue-type: Sub-task                 # Issue type for child tasks (Sub-task or Task)
+  custom-fields:
+    acceptance-criteria: ''                  # e.g., customfield_10100 — discover via jira_search_fields
+    story-points: story_points               # e.g., customfield_10106
+    # business-benefits: ''                  # Add custom fields as needed
+
+confluence:
+  url: {{CONFLUENCE_URL}}                    # e.g., https://wiki.example.com
+  space-key: {{CONFLUENCE_SPACE_KEY}}        # e.g., PROJ
+  doc-root: {{CONFLUENCE_DOC_ROOT}}          # Parent page title for technical docs
+  # doc-root-id: ''                         # Numeric page ID (optional — discovered automatically)
+  pr-review-root: {{CONFLUENCE_PR_ROOT}}     # Parent page title for PR review reports
+  # pr-review-root-id: ''                   # Numeric page ID (optional)
+  dor-page-title: ''                       # Confluence page title for Definition of Ready checklist
+  dod-page-title: ''                       # Confluence page title for Definition of Done checklist

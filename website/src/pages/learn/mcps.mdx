@@ -1,0 +1,178 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: MCP Servers
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="MCP Servers"
+  subtitle="How AI connects to external systems -- ADO, AEM, Figma, Chrome, and more"
+/>
+
+<SectionHeading
+  badge="Concept"
+  title="What is MCP?"
+  subtitle="Model Context Protocol -- a standard way for AI to call external APIs."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:hub" iconColor="bg-brand-700" title="Direct API Access, Not Guessing">
+    Instead of the AI guessing about your AEM instance, it queries it directly. Instead of
+    parsing ADO or Jira web pages, it calls the tracker API through MCP. MCP is a standard protocol --
+    any tool that implements it can be used by any AI that supports it.
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="Servers"
+  badgeColor="secondary"
+  title="KAI's MCP Servers"
+  subtitle="Six servers connecting AI to your entire development ecosystem."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard
+      icon="mdi:format-list-bulleted"
+      iconColor="bg-brand-700"
+      title="ADO MCP"
+      tags={[{ label: '@azure-devops/mcp', color: 'primary' }]}
+    >
+      Work items, pull requests, repos, wiki, pipelines. Uses browser OAuth for authentication.
+      <CommandBlock label="Tools">{`wit_get_work_item, repo_create_pull_request,
+search_code, pipelines_run_pipeline`}</CommandBlock>
+    </ContentCard>
+    <ContentCard
+      icon="mdi:database"
+      iconColor="bg-amber-500"
+      title="AEM MCP"
+      tags={[{ label: 'aem-mcp-server', color: 'warning' }]}
+    >
+      JCR content, components, dialogs, pages. Multi-instance support (local + QA).
+      <CommandBlock label="Tools">{`getNodeContent, scanPageComponents,
+createPage, updateComponent`}</CommandBlock>
+    </ContentCard>
+    <ContentCard
+      icon="mdi:earth"
+      iconColor="bg-cyan-dark"
+      title="Chrome DevTools MCP"
+      tags={[{ label: 'stdio', color: 'info' }]}
+    >
+      Browser automation -- navigate, screenshot, click, evaluate JavaScript. Used for visual
+      verification of AEM components.
+      <CommandBlock label="Tools">{`navigate_page, take_screenshot,
+click, evaluate_script`}</CommandBlock>
+    </ContentCard>
+    <ContentCard
+      icon="mdi:palette"
+      iconColor="bg-cyan"
+      title="Figma MCP"
+      tags={[{ label: 'HTTP', color: 'secondary' }]}
+    >
+      Design extraction -- tokens, screenshots, component context. Powers the
+      Figma-to-code pipeline.
+      <CommandBlock label="Tools">{`get_design_context, get_screenshot,
+get_variable_defs`}</CommandBlock>
+    </ContentCard>
+    <ContentCard
+      icon="mdi:format-list-bulleted"
+      iconColor="bg-emerald-600"
+      title="Atlassian MCP"
+      tags={[{ label: 'Jira + Confluence', color: 'success' }]}
+    >
+      Work items, sprints, wiki pages. Uses personal access token (PAT) for authentication.
+      <CommandBlock label="Tools">{`jira_get_issue, jira_search,
+confluence_create_page, jira_add_comment`}</CommandBlock>
+    </ContentCard>
+    <ContentCard
+      icon="mdi:human-handsup"
+      iconColor="bg-emerald-600"
+      title="axe MCP"
+      tags={[{ label: 'Docker', color: 'success' }]}
+    >
+      Accessibility testing -- WCAG violations and remediation guidance from the Deque axe engine.
+      <CommandBlock label="Tools">{`analyze -- scan for violations
+remediate -- suggest fixes`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Flow"
+  badgeColor="warning"
+  title="How It Works"
+  subtitle="Skill instructs AI, AI calls MCP, MCP queries the system, AI reasons about the result."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Example Flow">
+    Skill tells AI "check this component" → AI calls <code>AEM/scanPageComponents</code> →
+    MCP server queries AEM JCR → returns JSON → AI reasons about the result and reports findings.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="info"
+  title="Configuration"
+  subtitle="Two locations: project-level and plugin-level."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Project .mcp.json">
+      Shared by both Claude Code and Copilot CLI. For servers that apply to the whole project.
+      <CommandBlock label=".mcp.json (ADO example)">{`{
+  "mcpServers": {
+    "ado": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "batdigital"]
+    }
+  }
+}`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Plugin .mcp.json">
+      Auto-loaded when the plugin is installed. For servers bundled with a specific plugin
+      (AEM, Chrome DevTools, Figma, axe).
+      <CommandBlock label="Tool naming convention">{`# Project-level:
+mcp__ado__wit_get_work_item
+
+# Plugin-level (dx-aem plugin):
+mcp__plugin_dx-aem_AEM__getNodeContent`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="MCP Protocol">
+      <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">
+        modelcontextprotocol.io
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Claude Code MCP">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/mcp-servers" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/.../mcp-servers
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-emerald-600" title="Copilot MCP">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers" target="_blank" rel="noopener noreferrer">
+        docs.github.com/.../add-mcp-servers
+      </a>
+    </ContentCard>
+  </div>
+</Section>

@@ -1,0 +1,43 @@
+---
+interface Props {
+  badge?: string;
+  badgeColor?: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+  title: string;
+  subtitle?: string;
+  bg?: 'default' | 'alt' | 'primary';
+}
+
+const { badge, badgeColor = 'primary', title, subtitle, bg = 'default' } = Astro.props;
+
+const bgClasses: Record<string, string> = {
+  default: 'bg-white text-gray-800',
+  alt: 'bg-brand-100 text-gray-800',
+  primary: 'bg-brand-700 text-white',
+};
+
+const badgeColors: Record<string, string> = {
+  primary: 'bg-brand-700 text-white',
+  secondary: 'bg-cyan text-brand-900',
+  success: 'bg-emerald-600 text-white',
+  warning: 'bg-amber-500 text-white',
+  error: 'bg-red-500 text-white',
+};
+---
+
+<div class:list={['pt-12 md:pt-16 pb-4 px-4 md:px-6 text-center', bgClasses[bg]]}>
+  <div class="max-w-3xl mx-auto">
+    {badge && (
+      <span class:list={['inline-block px-3 py-1 rounded text-xs font-semibold tracking-wider uppercase mb-3', badgeColors[badgeColor]]}>
+        {badge}
+      </span>
+    )}
+    <h2 class:list={['text-[2rem] font-bold leading-[1.2] mb-3', bg === 'primary' ? 'text-white' : 'text-brand-900']}>
+      {title}
+    </h2>
+    {subtitle && (
+      <p class:list={['text-[0.95rem] leading-[1.7]', bg === 'primary' ? 'text-white/80' : 'text-[#4a4a5a]']}>
+        {subtitle}
+      </p>
+    )}
+  </div>
+</div>

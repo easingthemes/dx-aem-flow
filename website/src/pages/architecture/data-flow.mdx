@@ -1,0 +1,241 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Data Flow
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Data Flow"
+  subtitle="How skills communicate through convention-based file discovery. No data is passed directly between skills -- every input and output lives in the spec directory."
+/>
+
+<SectionHeading
+  badge="Shared Memory"
+  title="The Spec Directory"
+  subtitle="All skills in a pipeline communicate through files in .ai/specs/. Each skill reads predecessor output by filename convention."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Spec Directory Structure">
+    <CommandBlock>
+{`.ai/specs/<ticket-id>-<slug>/
+  .branch                   -- ensure-feature-branch.sh
+  raw-story.md              -- dx-req-fetch
+  explain.md                -- dx-req-explain (reads: raw-story.md)
+  research.md               -- dx-req-research (reads: raw-story.md + explain.md)
+  ticket-research.md        -- dx-ticket-analyze
+  share-plan.md             -- dx-req-share (reads: explain + research + dor-report)
+  dor-report.md             -- dx-req-dor (reads: raw-story.md)
+  figma-extract.md          -- dx-figma-extract (optional)
+  figma-conventions.md      -- dx-figma-prototype Phase A (optional)
+  prototype/
+    figma-reference.png     -- dx-figma-extract (Figma screenshot)
+    index.html              -- dx-figma-prototype Phase B
+    styles.css              -- dx-figma-prototype Phase B
+    script.js               -- dx-figma-prototype Phase B (optional)
+  implement.md              -- dx-plan (reads: research + explain + raw-story)
+  dev-all-progress.md       -- coordinator progress tracking (optional)
+  verification.md           -- dx-bug-verify (for bugs)
+  docs/
+    wiki-page.md            -- dx-doc-gen (reads: all spec files)
+  demo/
+    dialog-*.png            -- aem-demo
+    authoring-guide.md      -- aem-demo
+  images/                   -- dx-req-fetch (ADO attachments)
+  screenshots/              -- dx-bug-verify (browser screenshots)`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="No Direct Data Passing">
+    Skills never pass data to each other through function arguments, environment variables, or shared memory.
+    Every skill reads its inputs from files and writes its outputs to files. This makes every intermediate
+    state inspectable and debuggable.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Chain"
+  badgeColor="secondary"
+  title="Dependency Chain"
+  subtitle="Each file depends on predecessors. The chain flows from raw story through to PR creation."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Primary Pipeline"
+    description="Main data flow from story fetch through to code delivery."
+    steps={[
+      { title: 'raw-story.md', subtitle: 'dx-req-fetch', color: '#0891b2' },
+      { title: 'dor-report.md', subtitle: 'dx-req-dor', color: '#0891b2' },
+      { title: 'explain.md', subtitle: 'dx-req-explain', color: '#8b5cf6' },
+      { title: 'research.md', subtitle: 'dx-req-research', color: '#8b5cf6' },
+      { title: 'implement.md', subtitle: 'dx-plan', color: '#d97706' },
+      { title: 'Code Changes', subtitle: 'dx-step', color: '#059669' },
+      { title: 'Pull Request', subtitle: 'dx-pr', color: '#059669' },
+    ]}
+  />
+
+  <PipelineBlock
+    label="ADO Comment Chain"
+    description="Work item comments posted at key milestones. Each is idempotent -- skip if unchanged, minimal update if changed."
+    steps={[
+      { title: '[DoRAgent]', subtitle: 'BA checks\ncheckboxes', color: '#0891b2' },
+      { title: '[DevPlan]', subtitle: 'Assumptions\n+ plan', color: '#d97706' },
+      { title: '[DoD]', subtitle: 'Completion\ncriteria', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Optional Figma Branch">
+      When a story includes a Figma URL, the pipeline adds a parallel branch:
+      <code>figma-extract.md</code> and <code>figma-conventions.md</code> feed into
+      <code>prototype/</code>, which then informs <code>implement.md</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:refresh" iconColor="bg-amber-500" title="Idempotent ADO Comments">
+      DoR, DevPlan, and DoD comments are posted with markers. Re-running the same skill detects
+      existing comments and either skips or posts a minimal update. No duplicate spam.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="State Machine"
+  badgeColor="warning"
+  title="implement.md as State Machine"
+  subtitle="The only file that tracks execution state. Each step has a status that drives the coordinator loop."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Step Format">
+    <CommandBlock label="implement.md">
+{`### Step 3: Add ExporterModel
+**Status:** done
+**Files:** core/.../FooExporter.java
+**What:** Create the Sling Model exporter
+**Why:** Expose component data as JSON
+**Test:** mvn test -pl core
+
+### Step 3h: Fix missing import          -- added by dx-step-heal
+**Status:** done
+**Files:** core/.../FooExporter.java
+**What:** Corrective fix for compilation error
+
+### Step 4: Add template
+**Status:** blocked                       -- updated by dx-step-fix
+**Blocked:** HTL compilation error: missing data-sly-use
+**Files:** ui.apps/.../template.html`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:state-machine" iconColor="bg-brand-700" title="Status Values">
+      Each step transitions through a fixed set of states:
+
+      - **pending** -- not yet started
+      - **in-progress** -- currently executing
+      - **done** -- completed successfully
+      - **blocked** -- failed, with diagnosis attached
+    </ContentCard>
+
+    <ContentCard icon="mdi:medical-bag" iconColor="bg-red-500" title="Corrective Steps">
+      When a step fails and the healer intervenes, it inserts new corrective steps with distinctive
+      numbering: <code>Step 3h</code> (first heal), <code>Step 3h2</code> (second heal),
+      <code>R1</code> / <code>R2</code> (review fixes).
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="success"
+  title="Config as Global Context"
+  subtitle=".ai/config.yaml is read by many skills for project-specific values -- the single source of truth for branches, URLs, and commands."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Config Key</th>
+        <th class="text-left p-3 font-semibold">Used By</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>scm.base-branch</code></td>
+        <td class="p-3">dx-pr, ensure-feature-branch.sh</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>scm.org</code></td>
+        <td class="p-3">dx-req-fetch (ADO URLs)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>build.command</code></td>
+        <td class="p-3">dx-step, dx-step-build</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem.url</code></td>
+        <td class="p-3">aem-verify, aem-snapshot, aem-demo</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>preferences.auto_commit</code></td>
+        <td class="p-3">dx-agent-all</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>preferences.auto_pr</code></td>
+        <td class="p-3">dx-agent-all</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Knowledge"
+  badgeColor="info"
+  title="Knowledge Base as Read-Only Context"
+  subtitle="Init skills populate project knowledge. All other skills read but never write to these files."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">File</th>
+        <th class="text-left p-3 font-semibold">Populated By</th>
+        <th class="text-left p-3 font-semibold">Read By</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>.ai/project/&#42;.md</code></td>
+        <td class="p-3">Init skills (aem-init, aem-refresh)</td>
+        <td class="p-3">AEM agents, dx skills</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>.ai/rules/&#42;.md</code></td>
+        <td class="p-3">dx-init / aem-init + manual</td>
+        <td class="p-3">dx-code-reviewer, automation agents</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>.claude/rules/&#42;.md</code></td>
+        <td class="p-3">dx-init + manual</td>
+        <td class="p-3">Every Claude interaction (auto-loaded)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="success" title="Convention Over Configuration">
+    The entire data flow relies on naming conventions, not configuration. A skill that writes
+    <code>research.md</code> does not need to know who will read it. A skill that reads
+    <code>research.md</code> does not need to know who wrote it. The filename IS the contract.
+  </HighlightBox>
+</Section>

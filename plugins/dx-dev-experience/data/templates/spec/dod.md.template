@@ -1,0 +1,49 @@
+# Definition of Done: <Title> (ADO #<id>)
+
+**Checked:** <today's date>
+**Overall:** <PASS if all automated criteria pass, FAIL if any fail>
+**Score:** <N>/<total automated criteria> passed
+**DoD Source:** <wiki URL>
+
+## Results
+
+<!-- Build this table dynamically from the wiki-parsed sections.
+     Number criteria sequentially across all sections.
+     Group by section with section header rows.
+     Evidence comes from actual project state (ADO, codebase, PR) — NOT from agent workflow files. -->
+
+| # | Section | Criterion | Status | Evidence |
+|---|---------|-----------|--------|----------|
+| | **1. Code Review** | | | |
+| 1 | | PR created | ✅ PASS | PR #NNN linked to work item |
+| 2 | | PR approved | ✅ PASS | N approved votes |
+| 3 | | All PR threads resolved | ✅ PASS | 0 active threads |
+| 4 | | Review feedback addressed | ✅ PASS | No pending "will fix" comments |
+| | **2. Testing** | | | |
+| 5 | | Tests written | ✅ PASS | N test files found |
+| 6 | | Tests pass | ✅ PASS | Build/test command succeeded |
+<!-- ... continue for all sections from wiki ... -->
+
+<!-- Status values: ✅ PASS, ❌ FAIL, ⚠️ WARN, ⊘ SKIP
+     Evidence must cite specific proof (PR vote count, thread status, file paths, test results)
+     Human/Advisory criteria always show ⚠️ WARN with advisory message -->
+
+## Failures
+
+<!-- Only if any FAIL — list each with actionable fix description -->
+
+### <N>. <Criterion Name> — FAIL
+
+**What's missing:** <!-- specific description -->
+**How to fix:** <!-- actionable instruction -->
+
+## Warnings
+
+<!-- Only if any WARN — non-blocking observations (human criteria, advisory items) -->
+
+---
+
+**Verdict:** <!-- One of:
+- "Ready for QA — all automated DoD criteria met (N human/advisory items pending verification)"
+- "Not ready — N criteria failed. Run `/dx-req-dod-fix <id>` to auto-fix what's possible"
+- "Mostly ready — N warnings, 0 failures. Review warnings before proceeding" -->

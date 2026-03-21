@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# session-start.sh — Validate project setup on session start
+# Returns warnings via additionalContext if issues found.
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+WARNINGS=""
+
+# Check .ai/config.yaml exists
+if [ ! -f "$PROJECT_DIR/.ai/config.yaml" ]; then
+  WARNINGS="$WARNINGS\n⚠ .ai/config.yaml not found — run /dx-init first"
+fi
+
+# Check Node version if .nvmrc exists
+if [ -f "$PROJECT_DIR/.nvmrc" ]; then
+  EXPECTED=$(cat "$PROJECT_DIR/.nvmrc" | tr -d '[:space:]')
+  ACTUAL=$(node -v 2>/dev/null | sed 's/^v//')
+  if [ -n "$ACTUAL" ] && [ "${ACTUAL%%.*}" != "${EXPECTED%%.*}" ]; then
+    WARNINGS="$WARNINGS\n⚠ Node version mismatch: expected v$EXPECTED, got v$ACTUAL — run nvm use"
+  fi
+fi
+
+if [ -n "$WARNINGS" ]; then
+  echo -e "$WARNINGS" | jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}'
+fi

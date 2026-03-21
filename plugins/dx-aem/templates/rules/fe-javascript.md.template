@@ -1,0 +1,104 @@
+---
+description: Frontend JavaScript patterns — ES classes, component lifecycle
+paths: ["**/frontend/**/*.js", "**/clientlibs/**/*.js"]
+applyTo: "**/*.js"
+---
+
+# JavaScript Components
+
+## Component Structure
+
+Each component has JS, config, and SCSS files co-located in its directory.
+
+```javascript
+// Main class + registration
+import { register } from '@netcentric/component-loader';
+import config from './component-name.config';
+
+class ComponentName {
+  constructor(el, params) {
+    this.el = el;
+    this.config = { ...config, ...params };
+    this.selectors = config.selectors;
+    this.classes = config.classes;
+    this.init();
+  }
+
+  init() { /* setup logic */ }
+  setRefs() { /* query DOM children using this.selectors */ }
+  setEventListeners() { /* bind events */ }
+}
+
+register({ ComponentName });
+```
+
+```javascript
+// Config file — selectors, CSS classes, defaults
+export default {
+  selectors: {
+    button: '.cmp-accordion__button',
+    panel: '.cmp-accordion__panel',
+  },
+  classes: {
+    expanded: 'cmp-accordion__button--expanded',
+  },
+};
+```
+
+## Data Flow
+
+- AEM server-renders HTL → HTML with `data-component` attribute
+- Component-loader scans DOM, instantiates matching class
+- `params` come from data attributes (JSON from AEM dialog)
+- No client-side templating — all HTML is server-rendered
+
+## Rules
+
+- Externalize all DOM selectors and CSS classes into the config file — never hardcode in class body
+- Use ES module imports (`import`/`export`)
+- Check shared utils before writing new helpers
+- No `console.log` in production code
+- Use PubSub for cross-component communication, not custom DOM events
+
+## Build System
+
+- **Primary Build Tool**: `@netcentric/fe-build`
+- **Bundler**: Webpack
+- **Linting**: ESLint with Airbnb Base and Prettier
+- **Component Loader**: `@netcentric/component-loader`
+
+## Naming Conventions
+
+- **Component JS**: `{prefix}-{name}.clientlibs.js`
+- **Config JS**: `{prefix}-{name}.config.js`
+- **Component Classes**: PascalCase (e.g., `Countdown`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `API_ENDPOINTS`)
+- **Variables**: camelCase
+- **Event Handlers**: `handle` + Event (e.g., `handleSubmit`)
+- **PubSub Events**: UPPER_SNAKE_CASE (e.g., `FLYOUT_OPEN`)
+
+## ESLint Rules
+
+- **`no-param-reassign`**: Never reassign function parameters directly
+- **`comma-dangle`**: Always-multiline for arrays and objects
+- **`no-underscore-dangle`**: Disallow dangling underscores
+- **`default-case`**: Require default case in switch statements
+
+## Performance
+
+- **Debounce** expensive operations
+- **Throttle** scroll/resize events
+- Use `requestAnimationFrame` for animations
+- **Clean up** all event listeners, timers, and observers in `destroy()`
+
+## Security
+
+- Always use `encodeURIComponent()` for URL parameters
+- Use `textContent` instead of `innerHTML` for user data
+- Sanitize data from cookies and localStorage
+
+## Anti-Duplication
+
+- **Search first**: Always search existing utils before creating new functions
+- **Extract common**: If a pattern appears twice, extract to utility
+- **Config driven**: Replace hardcoded values with configuration objects

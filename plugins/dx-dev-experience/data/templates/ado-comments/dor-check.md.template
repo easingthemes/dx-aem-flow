@@ -1,0 +1,61 @@
+### [DoRAgent] Definition of Ready Check
+
+**Story:** <story title>
+**Score:** <passes>/<total applicable> (<percentage>%)
+**Verdict:** ✅ Ready for Development / ⚠️ Can proceed — expect clarification questions / ❌ Needs more detail before development
+
+#### DoR Checklist
+<!-- Each item is a checkbox. BA can check items after updating the story.
+Agent reads checkbox state on re-run to detect what was addressed.
+
+Use:
+- [x] for items that pass (pre-checked by agent)
+- [ ] for items that need BA action (unchecked — BA checks after fixing)
+- ~item~ (strikethrough) for items not applicable
+
+Format: `- [x] **Section** — notes` or `- [ ] **Section** — what's missing`
+-->
+
+- [x] **Story Basics** — <notes: what was found>
+- [x] **Change Type** — <notes>
+- [ ] **Component Details** — <what's missing, e.g., "no AEM page URL">
+- [x] **Authoring Changes** — <notes>
+- [ ] **Design & Visual** — <what's missing, e.g., "Figma link missing node-id">
+- [ ] **Content & Testing** — <what's missing, e.g., "no QA page URL">
+- [x] **Scope & Boundaries** — <notes>
+- ~~Accessibility~~ — not applicable (<reason>)
+- [x] **Related Items** — <notes>
+
+#### What's Missing
+<!-- Only items that the BA should address. Each is an actionable ask.
+Keep it short — the BA should be able to scan in 30 seconds.
+OMIT this section if everything passes.
+
+- <emoji> **<item>** — <one-sentence ask with expected deliverable>
+-->
+
+#### Open Questions
+<!-- Only genuine ambiguities — not just missing DoR fields.
+These go beyond the checklist — business logic questions, contradictions, scope clarity.
+OMIT if no questions.
+
+- ❓ <question>
+-->
+
+#### Extracted Data
+<!-- Compact summary of what the BA provided. Agent uses this to skip discovery.
+Only include non-empty sections. Use inline format, not tables.
+
+**Component:** <name> (<New/Existing>)
+**Dialog:** <field summary or "no changes">
+**Scope:** <brands> / <markets>
+**Figma:** <URL or "not provided">
+-->
+
+#### Agent Impact
+<!-- How BA-provided data affects agent efficiency.
+**Research reduction:** <percentage>% (<N> of <total> steps skippable)
+-->
+
+---
+_[DoRAgent] Run | <ISO date> · Check items above after updating the story, then re-run DoR._

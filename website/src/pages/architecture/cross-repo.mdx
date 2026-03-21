@@ -1,0 +1,389 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Cross-Repo Architecture
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Cross-Repo Architecture"
+  subtitle="Multi-repo strategy, delegation patterns, and delegate.json -- how pipelines hand off work to the correct repository when the fix lives elsewhere."
+/>
+
+<SectionHeading
+  badge="Problem"
+  title="The Multi-Repo Problem"
+  subtitle="ADO pipelines run with checkout: self -- each pipeline only has access to the repo where its YAML file lives. But work items frequently span multiple repos."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Bug Reports">
+      A bug report's root cause may be in the backend repo, but the pipeline runs in the frontend repo.
+    </ContentCard>
+
+    <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="User Stories">
+      A story may need changes in both frontend and backend repos. Implementation must happen
+      in the repo that owns the affected code.
+    </ContentCard>
+
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="DoD Checks">
+      DoD checks can span all repos that contribute to a story. Fixing a DoD gap may require
+      changes in a different repo than where the check runs.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Each Repo Has Its Own">
+    <code>CLAUDE.md</code>, <code>.claude/rules/</code>, <code>.ai/config.yaml</code> (project conventions),
+    pipeline instances (different YAML, bound to the correct repo), and installed plugins (same dx plugins
+    but configured per-project).
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Solution"
+  badgeColor="success"
+  title="The Solution"
+  subtitle="Each agent type exists as a separate pipeline in each repo. When a pipeline discovers work belongs elsewhere, it delegates."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Pipeline Layout Per Repo">
+    <CommandBlock>
+{`Repo A (e.g. Frontend)          Repo B (e.g. Backend)
+  BugFix-Agent                    BugFix-Agent
+  DevAgent                        DevAgent
+  DOD-Fix-Agent                   DOD-Fix-Agent
+  DOD-Agent                       DOD-Agent
+  QA-Agent                        QA-Agent
+  DOCAgent                        DOCAgent
+  DOR-Agent                       (no DOR -- single repo)
+  PR-Review                       PR-Review
+  PR-Answer                       PR-Answer`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Which Agents Support Cross-Repo?</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Agent</th>
+        <th class="text-left p-3 font-semibold">Cross-Repo?</th>
+        <th class="text-left p-3 font-semibold">Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">BugFix</td>
+        <td class="p-3">Yes (delegation)</td>
+        <td class="p-3">Bug may be in any repo</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DevAgent</td>
+        <td class="p-3">Yes (delegation)</td>
+        <td class="p-3">Story implementation may target any repo</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoD Fix</td>
+        <td class="p-3">Yes (delegation)</td>
+        <td class="p-3">DoD failures may require fixes in another repo</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR Answer</td>
+        <td class="p-3">Multi-repo routing</td>
+        <td class="p-3">Lambda routes to correct repo based on PR repo name</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoD / QA / DOCAgent / DoR / PR Review</td>
+        <td class="p-3">No</td>
+        <td class="p-3">Read-only, repo-independent, or same-repo only</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Pattern 1"
+  badgeColor="warning"
+  title="Cross-Repo Delegation"
+  subtitle="Pipeline starts, Claude discovers work targets another repo, writes delegate.json, YAML step queues the target pipeline."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Delegation Flow"
+    description="From triage to delegate.json to target pipeline -- the full cross-repo handoff."
+    steps={[
+      { title: 'Pipeline A', subtitle: 'Claude runs\ntriage/research', color: '#0891b2' },
+      { title: 'Detection', subtitle: 'Cross-Repo\nScope found', color: '#d97706' },
+      { title: 'delegate.json', subtitle: 'Claude writes\nhandoff file', color: '#8b5cf6' },
+      { title: 'YAML Step', subtitle: 'Reads JSON,\nqueues pipeline', color: '#dc2626' },
+      { title: 'Pipeline B', subtitle: 'Target repo\nfull context', color: '#059669' },
+    ]}
+  />
+
+  <h3 class="text-lg font-bold mt-8 mb-4">delegate.json Format</h3>
+  <HighlightBox severity="info" title="Written by Claude to .ai/run-context/delegate.json">
+    <CommandBlock label="delegate.json">
+{`{
+  "targetRepo": "My-Backend-Repo",
+  "pipelineId": "789",
+  "reason": "Bug root cause is in backend Sling models",
+  "templateParameters": {
+    "bugId": "12345",
+    "eventId": "evt-001"
+  }
+}`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden mt-6">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Field</th>
+        <th class="text-left p-3 font-semibold">Type</th>
+        <th class="text-left p-3 font-semibold">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>targetRepo</code></td>
+        <td class="p-3">string</td>
+        <td class="p-3">Name of the target repository</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>pipelineId</code></td>
+        <td class="p-3">string</td>
+        <td class="p-3">Pipeline definition ID from <code>CROSS_REPO_PIPELINE_MAP</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>reason</code></td>
+        <td class="p-3">string</td>
+        <td class="p-3">Human-readable explanation of why delegation is needed</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>templateParameters</code></td>
+        <td class="p-3">object</td>
+        <td class="p-3">Parameters passed to the target pipeline run</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Where Detection Happens</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Coordinator</th>
+        <th class="text-left p-3 font-semibold">When</th>
+        <th class="text-left p-3 font-semibold">What It Reads</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-bug-all</code></td>
+        <td class="p-3">After Step 1 (triage)</td>
+        <td class="p-3"><code>triage.md</code> &rarr; Cross-Repo Scope section</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-agent-all</code></td>
+        <td class="p-3">After Phase 1 (requirements)</td>
+        <td class="p-3"><code>research.md</code> &rarr; Cross-Repo Scope section</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-req-dod-fix</code></td>
+        <td class="p-3">After Step 1 (DoD read)</td>
+        <td class="p-3"><code>research.md</code> &rarr; Cross-Repo Scope (if exists)</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Pattern 2"
+  badgeColor="info"
+  title="Lambda-Level Routing (PR Answer)"
+  subtitle="A different pattern where the target repo is known before Claude starts -- from the webhook payload itself."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="PR Answer Routing"
+    description="The Lambda picks the right pipeline based on which repo the PR belongs to. No Claude involvement for routing."
+    steps={[
+      { title: 'ADO PR Comment', subtitle: 'Repo-scoped\nhook fires', color: '#0891b2' },
+      { title: 'PR Router', subtitle: 'Extract repo\nfrom payload', color: '#d97706' },
+      { title: 'Pipeline Map', subtitle: 'Look up repo\npipeline ID', color: '#8b5cf6' },
+      { title: 'Queue', subtitle: 'Correct repo\npipeline', color: '#059669' },
+    ]}
+  />
+
+  <HighlightBox severity="warning" title="Key Difference from Delegation">
+    No Claude involvement needed for routing. The Lambda itself picks the right pipeline using
+    <code>ADO_PR_ANSWER_PIPELINE_MAP</code> -- a JSON object mapping repo names to PR Answer pipeline IDs.
+    Each repo creates its own repo-scoped ADO service hook filtered to that repository + base branch.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Design"
+  badgeColor="secondary"
+  title="Design Decisions"
+  subtitle="Why delegate.json, why System.AccessToken, and why not route at the Lambda level."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Why delegate.json?">
+      Claude writes a JSON file; a YAML step makes the API call. This avoids giving Claude
+      <code>curl</code> permissions, keeps auth details out of the AI context, and produces
+      a simple, auditable shell script that only runs if the file exists.
+    </ContentCard>
+
+    <ContentCard icon="mdi:key" iconColor="bg-emerald-600" title="Why System.AccessToken?">
+      Automatically available in every ADO pipeline. Has read access to all repos in the same
+      project/collection. Has "Queue builds" permission. No secrets to manage -- rotates automatically.
+    </ContentCard>
+
+    <ContentCard icon="mdi:help-circle" iconColor="bg-cyan" title="Why Not Lambda Routing?">
+      For BugFix/DevAgent/DoD-Fix, the target repo is not known until AFTER Claude runs triage/research.
+      The Lambda only knows the work item ID -- it does not know which repo the fix should go to.
+      Delegation happens mid-pipeline, not at invocation time.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Why Exit After Writing delegate.json?">
+    The pipeline in Repo A does not have the target repo's codebase, conventions, or plugins.
+    Running the fix there would produce wrong results. Better to delegate to Repo B's pipeline
+    which has everything set up correctly.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Local"
+  badgeColor="success"
+  title="Local Developer Flow"
+  subtitle="Cross-repo detection still runs locally, but delegation is manual."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:laptop" iconColor="bg-cyan" title="What Happens Locally">
+      When a developer runs <code>/dx-bug-all 12345</code> locally:
+
+      - <code>DX_PIPELINE_MODE</code> is not set
+      - Cross-repo detection still runs (triage/research)
+      - Cross-repo scope appears in the summary
+      - No automatic delegation -- developer decides
+    </ContentCard>
+
+    <ContentCard icon="mdi:arrow-right" iconColor="bg-amber-500" title="Manual Handoff">
+      The summary tells the developer: "Also affects My-Backend-Repo -- run
+      <code>/dx-bug-all 12345</code> there." The developer manually switches to the other repo
+      and runs the command. No <code>delegate.json</code> is created.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="warning"
+  title="Configuration Required"
+  subtitle="Environment variables needed for cross-repo delegation and PR routing."
+  bg="alt"
+/>
+<Section>
+  <h3 class="text-lg font-bold mb-4">Per Code-Writing Pipeline (BugFix, DevAgent, DoD Fix)</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Variable</th>
+        <th class="text-left p-3 font-semibold">Value</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3"><code>{'{"My-Backend-Repo":"789"}'}</code></td>
+        <td class="p-3">Maps repo names to pipeline IDs of the same agent type</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>SOURCE_REPO_NAME</code></td>
+        <td class="p-3"><code>$(Build.Repository.Name)</code></td>
+        <td class="p-3">Set automatically -- tells Claude which repo it is in</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>DX_PIPELINE_MODE</code></td>
+        <td class="p-3"><code>true</code></td>
+        <td class="p-3">Enables delegation behavior</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Per PR Router Lambda</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Variable</th>
+        <th class="text-left p-3 font-semibold">Value</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>ADO_PR_ANSWER_PIPELINE_MAP</code></td>
+        <td class="p-3"><code>{'{"Frontend":"123","Backend":"456"}'}</code></td>
+        <td class="p-3">Routes PR comments to correct repo's pipeline</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>ADO_ORG_URL</code></td>
+        <td class="p-3">org URL</td>
+        <td class="p-3">For ADO REST API calls</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="New Repo"
+  badgeColor="info"
+  title="Adding a New Repo"
+  subtitle="Six steps to bring a new repository into the multi-repo automation."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="1. Install Plugins">
+      Run <code>/dx-init</code> and <code>/aem-init</code> in the new repo. This sets up
+      <code>.ai/config.yaml</code>, rules, and project knowledge.
+    </ContentCard>
+
+    <ContentCard icon="mdi:pipe" iconColor="bg-cyan" title="2. Import Pipelines">
+      Import pipeline YAMLs into ADO, bound to the new repo. Set pipeline variables
+      (same as existing repos).
+    </ContentCard>
+
+    <ContentCard icon="mdi:sync" iconColor="bg-emerald-600" title="3. Update Maps">
+      Update <code>CROSS_REPO_PIPELINE_MAP</code> on all existing code-writing pipelines --
+      add the new repo's pipeline IDs. Update <code>ADO_PR_ANSWER_PIPELINE_MAP</code> on the
+      PR Router Lambda.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Error Handling">
+    <ul class="text-sm space-y-1 mt-2">
+      <li><code>CROSS_REPO_PIPELINE_MAP</code> not set: no delegation -- continue locally with warning</li>
+      <li>Target repo not in the map: log warning, continue locally</li>
+      <li>ADO API call fails: pipeline step fails -- visible in ADO logs</li>
+      <li>Target pipeline paused/disabled: ADO queues the run but it will not execute</li>
+      <li><code>DX_PIPELINE_MODE</code> not set: skip delegation entirely (local mode)</li>
+    </ul>
+  </HighlightBox>
+</Section>

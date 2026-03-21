@@ -1,0 +1,206 @@
+---
+description: AEM HTL template language — comments, data attributes, conditionals, loops, security
+paths: ["**/*.html"]
+applyTo: "**/*.html"
+---
+
+# AEM HTL (HTML Template Language) Rules
+
+Best practices and rules for writing HTL templates in AEM components. HTL is the preferred templating language for AEM and provides a secure, server-side rendering approach.
+
+## 1. Comment Usage
+
+### Use HTL Comments Instead of HTML Comments
+
+```html
+<!--/* This is an HTL comment that won't appear in final output */-->
+```
+
+- **HTL Comments (`<!--/* */-->`)**: Use for development notes, TODO items, and any comments that should not appear in the final rendered HTML.
+- **HTML Comments (`<!-- -->`)**: Use only when you specifically need the comment to appear in the final HTML output (rare cases).
+
+## 2. Data Attributes and Component Initialization
+
+**Always use** the `data-nc` attribute for component initialization and `data-nc-params-ComponentName` for passing data:
+
+```html
+<div class="{prefix}-countdown"
+     data-nc="Countdown"
+     data-nc-params-Countdown='{
+         "endDate": "${countdownModel.endDate}",
+         "showDays": ${countdownModel.showDays},
+         "format": "${countdownModel.format}"
+     }'>
+</div>
+```
+
+### JSON Parameter Formatting
+
+- Use single quotes for the outer attribute value
+- Use double quotes for JSON property names and string values
+- Boolean and numeric values should not be quoted
+- Format JSON for readability with proper indentation
+
+## 3. Conditional Rendering
+
+Use HTL conditionals, not JavaScript:
+
+```html
+<!--/* Server-side conditional rendering */-->
+<div class="component" data-sly-test="${model.isValid}">
+    <h2>${model.title}</h2>
+</div>
+
+<!--/* Conditional CSS classes */-->
+<div class="{prefix}-countdown ${model.isExpired ? '{prefix}-countdown--expired' : ''}">
+
+<!--/* Conditional attributes */-->
+<button data-sly-attribute.disabled="${model.isExpired}">Submit</button>
+```
+
+## 4. Loops and Iteration
+
+```html
+<!--/* Server-side list processing */-->
+<div data-sly-list.item="${model.items}" class="item">
+    <h3>${item.title}</h3>
+    <p>${item.description}</p>
+</div>
+
+<!--/* With index and first/last detection */-->
+<div data-sly-list.item="${model.items}">
+    <div class="item ${itemList.first ? 'item--first' : ''} ${itemList.last ? 'item--last' : ''}">
+        <span class="item-index">${itemList.index + 1}</span>
+        <h3>${item.title}</h3>
+    </div>
+</div>
+```
+
+## 5. Text and Content Rendering
+
+```html
+<!--/* Always use data-sly-text for dynamic content */-->
+<h1 data-sly-text="${model.title}">Default Title</h1>
+
+<!--/* For HTML content (use with caution) */-->
+<div data-sly-unescape="${model.htmlContent}"></div>
+
+<!--/* Provide meaningful default values */-->
+<h2 data-sly-text="${model.title || 'Default Title'}">Default Title</h2>
+```
+
+## 6. Client Library Inclusion
+
+```html
+<!--/* Include component-specific client libraries */-->
+<sly data-sly-use.clientlibs="${'com.adobe.cq.wcm.core.components.models.ClientLibraries' @
+    categories='{project}.components.{prefix}-component', defer=true}">
+    ${clientlibs.jsAndCssIncludes @ context="unsafe"}
+</sly>
+```
+
+## 7. Accessibility and Semantic HTML
+
+```html
+<article class="{prefix}-countdown"
+         data-nc="Countdown"
+         data-sly-attribute.aria-label="${model.ariaLabel || 'Countdown timer'}">
+
+    <header class="{prefix}-countdown__header">
+        <h2 data-sly-text="${model.title}">Title</h2>
+    </header>
+
+    <div class="{prefix}-countdown__content"
+         data-sly-attribute.aria-live="${model.ariaLive || 'polite'}">
+    </div>
+</article>
+```
+
+### ARIA Attributes
+
+```html
+<div data-sly-attribute.aria-expanded="${model.isExpanded}"
+     data-sly-attribute.aria-hidden="${!model.isVisible}"
+     data-sly-attribute.role="${model.role || 'timer'}">
+</div>
+```
+
+## 8. Security Best Practices
+
+```html
+<!--/* Always use data-sly-text for user content to prevent XSS */-->
+<h2 data-sly-text="${model.userTitle}">Safe Title</h2>
+
+<!--/* Only use data-sly-unescape for trusted content */-->
+<div data-sly-unescape="${model.trustedHtmlContent}"></div>
+
+<!--/* Never use context="unsafe" with user input */-->
+```
+
+## 9. Performance and Optimization
+
+```html
+<!--/* Lazy loading for images */-->
+<img data-sly-test="${model.image}"
+     src="${model.image.src}"
+     alt="${model.image.alt}"
+     loading="lazy"
+     decoding="async" />
+```
+
+## 10. Integration with Sling Models
+
+```html
+<div data-sly-use.model="com.example.project.models.MyComponent"
+     class="{prefix}-component"
+     data-nc="Component"
+     data-nc-params-Component='{
+         "endDate": "${model.endDate}",
+         "showDays": ${model.showDays}
+     }'>
+
+    <div class="{prefix}-component__content"
+         data-sly-test="${model.isActive}">
+        <span data-sly-text="${model.title}">Title</span>
+    </div>
+</div>
+```
+
+## 11. Common Anti-Patterns
+
+### Don't Do These
+
+- Don't use regular HTML comments for development notes
+- Don't mix server-side and client-side logic unnecessarily
+- Don't use inline styles — use CSS classes
+- Don't hardcode values that should come from Sling Model
+- Don't call Java methods with parameters directly in HTL
+
+### Do These Instead
+
+- Use HTL comments for development notes
+- Keep logic in Sling Model
+- Use CSS classes for styling
+- Use dynamic content from Sling Model
+- Use `data-sly-call` for reusable template blocks
+
+## 12. File Organization
+
+### Component Structure
+
+```
+{prefix}-component/
+├── v1/
+│   └── {prefix}-component/
+│       ├── {prefix}-component.html          # Main HTL template
+│       └── _cq_dialog/
+│           └── .content.xml               # Dialog configuration
+└── .content.xml                           # Component definition
+```
+
+### Naming Conventions
+
+- **HTL files**: Use kebab-case (e.g., `{prefix}-countdown.html`)
+- **CSS classes**: Use BEM methodology (e.g., `{prefix}-countdown__timer`)
+- **Data attributes**: Use kebab-case (e.g., `data-nc-params-Countdown`)
+- **Sling Model references**: Use camelCase (e.g., `countdownModel`)

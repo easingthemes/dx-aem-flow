@@ -1,0 +1,23 @@
+---
+interface Props {
+  severity?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  class?: string;
+}
+
+const { severity = 'info', title, class: className = '' } = Astro.props;
+
+const bgColors: Record<string, string> = {
+  info:    'bg-sky-50',
+  success: 'bg-emerald-50',
+  warning: 'bg-amber-50',
+  error:   'bg-red-50',
+};
+---
+
+<div class:list={['rounded p-5 my-4', bgColors[severity], className]}>
+  {title && <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-2">{title}</h3>}
+  <div class="text-[0.9rem] text-[#4a4a5a] leading-[1.6]">
+    <slot />
+  </div>
+</div>

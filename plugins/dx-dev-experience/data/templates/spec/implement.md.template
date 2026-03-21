@@ -1,0 +1,58 @@
+# Implementation Plan: <Title>
+
+**Repo:** <current repo name, detected from folder or git remote>
+<!-- If research.md has a "Cross-Repo Scope" section, add the line below: -->
+**Other repos required:** <repo name(s)> (<brief description> — run `/dx-req-all <id>` there)
+
+## Approach
+<!-- 2-3 sentences: overall strategy — what's being modified vs created new,
+which existing patterns to follow. Reference specific files from research.md.
+Only plan steps for files in the current repo.
+
+If research.md has an "Existing Implementation Check" section, reference it here:
+- State which requirements are already covered by existing code (reuse, don't rebuild)
+- State which requirements need new code and what existing patterns to follow
+- If a feature is already implemented, state "Extend existing <path>" not "Create new" -->
+
+## Steps
+
+### Step 1: <Short imperative description>
+**Status:** pending
+**Files:** `path/to/File.ext`, `path/to/other.ext`
+**What:**
+<!-- Concrete, specific instructions:
+- "Add `podCount` property with type String and default value `'one'`
+  following the same pattern as `layoutType` on line 45 of the existing model"
+- "Add a dropdown field to the config with options `'one'` and `'two'`,
+  following the select pattern in `card/config.xml:28`"
+Be specific about property names, types, default values, structures.
+Include code snippets when helpful. -->
+**Why:** <!-- One sentence connecting to a requirement from explain.md -->
+**Test:** <!-- Specific test command or "compile check only" -->
+
+<!-- Continue for all steps. Order by implementation dependency.
+Each step MUST have a **Status:** line with one of:
+- pending — not yet started (initial state)
+- in-progress — currently being worked on
+- done — completed and verified
+- blocked — cannot proceed, with reason -->
+
+## Testing Plan
+
+### Unit Tests
+<!-- Specific test classes to create or modify:
+- **TestClassName** — test `<method>` with fixture `<fixture>`
+  - Assert: <what to verify>
+  - Mock: <what services to mock>
+  - Pattern: follow `<ExistingTest>` from research.md -->
+
+### Manual Verification
+<!-- Step-by-step verification -->
+
+## Risks
+<!-- Only REAL technical risks that affect implementation.
+Apply pragmatism rules:
+- Configuration/template-only changes do NOT need design specs
+- Only flag risks where the developer needs a non-obvious technical decision
+  or a known platform limitation applies
+OMIT this section entirely if no meaningful risks identified. -->

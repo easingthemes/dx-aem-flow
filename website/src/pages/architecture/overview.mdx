@@ -1,0 +1,781 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Architecture & Internals
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+
+<PageHero
+  title="Architecture & Internals"
+  subtitle="Plugin system, config-driven design, subagent architecture, model tier strategy, and MCP integration."
+/>
+
+<SectionHeading
+  badge="Plugins"
+  title="Three-Plugin Architecture"
+  subtitle="All skills, agents, and rules are organized into three self-contained plugins."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Plugin Directory Structure">
+    <CommandBlock>
+{`dx-aem-ai-flow/dx/plugins/
+  dx-dev-experience/   55 skills, 7 agents -- ADO/Jira workflow (any stack)
+  dx-aem/              12 skills, 6 agents -- AEM verification & QA
+  dx-automation/       11 skills -- autonomous 24/7 agents`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+    <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Plugin Contents">
+      Each plugin contains:
+
+      - `plugin.json` manifest
+      - `.mcp.json` server config
+      - `agents/` subagent definitions
+      - `skills/` slash commands
+      - `rules/` conventions
+      - `hooks/` lifecycle hooks
+      - `data/` seed data
+      - `shared/` reusable logic
+      - `templates/` scaffolding
+    </ContentCard>
+
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="Template Scaffolding">
+      Templates scaffold project-level files to:
+
+      - `.claude/rules/` -- conventions (both tools)
+      - `.github/agents/` -- 25 Copilot agents
+      - `AGENTS.md` -- agent inventory
+    </ContentCard>
+
+    <ContentCard icon="mdi:puzzle" iconColor="bg-emerald-600" title="Install Flow">
+      Each consumer repo runs <code>/dx-init</code> once. The installer reads <code>plugin.json</code>,
+      copies templates, and configures <code>.ai/config.yaml</code> for the repo.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="secondary"
+  title="Config-Driven Design"
+  subtitle="Skills read configuration at runtime -- never hardcode paths, branches, or URLs."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title=".ai/config.yaml Structure">
+    <CommandBlock>
+{`project:
+  name: Brand-Frontend
+  type: frontend
+
+scm:
+  base-branch: development
+  remote: origin
+
+tracker:
+  provider: ado          # or "jira"
+
+ado:
+  project: Customer Project
+  repository-id: xxxxxxxx-xxxx-...
+
+jira:                      # when provider: jira
+  base-url: https://myorg.atlassian.net
+  project-key: PROJ
+
+build:
+  command: "cd ui.frontend && npm run build:new"
+  lint: "cd ui.frontend && npm run lintcheck"
+
+aem:
+  author-url-qa: https://...
+  active-markets: [gb, de, fr]`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+    <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Project .ai/rules/">
+      Highest priority. Project-specific overrides that take precedence over everything else.
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-document" iconColor="bg-cyan" title="config.yaml Overrides">
+      Middle layer. Per-repo settings for branches, URLs, ADO/Jira project, build commands.
+    </ContentCard>
+
+    <ContentCard icon="mdi:puzzle" iconColor="bg-cyan" title="Plugin Defaults">
+      Lowest priority. Sensible defaults shipped with each plugin. Used when no override exists.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Conventions"
+  badgeColor="warning"
+  title="Convention Architecture"
+  subtitle="Two layers of convention files, auto-loaded by their respective tools."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:wrench" iconColor="bg-brand-700" title=".claude/rules/">
+      Auto-loaded by Claude Code. Concise, path-scoped rules. Claude reads these automatically when
+      working on matching files.
+      <CommandBlock label="Example: fe-javascript.md">
+{`# paths: ["**/*.js"]
+
+- Use ES module imports
+- Externalize selectors to config
+- No console.log in production`}
+      </CommandBlock>
+    </ContentCard>
+
+    <ContentCard icon="mdi:book-open-variant" iconColor="bg-emerald-600" title=".claude/rules/ (dual frontmatter)">
+      Single source for both tools. Claude Code reads <code>paths:</code>, Copilot CLI reads <code>applyTo:</code> via <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code>.
+      <CommandBlock label="Example: fe-javascript.md">
+{`# paths: ["**/*.js"]
+# applyTo: "**/*.js"
+
+## Component Structure
+[Rules, patterns, conventions...]`}
+      </CommandBlock>
+    </ContentCard>
+  </div>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Convention Rules Catalog (15 rules)</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Rule</th>
+        <th class="text-left p-3 font-semibold">Plugin</th>
+        <th class="text-left p-3 font-semibold">Scope</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>plan-format.md</code></td>
+        <td class="p-3">dx</td>
+        <td class="p-3">Implementation plan structure</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>pr-review.md</code></td>
+        <td class="p-3">dx</td>
+        <td class="p-3">PR review standards (80%+ confidence)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>pr-answer.md</code></td>
+        <td class="p-3">dx</td>
+        <td class="p-3">PR reply tone and conventions</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>pragmatism.md</code></td>
+        <td class="p-3">dx</td>
+        <td class="p-3">Practical question filtering</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>universal-reuse-first.md</code></td>
+        <td class="p-3">dx</td>
+        <td class="p-3">Reuse existing code before creating new</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>fe-javascript.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Frontend JS conventions (*.js)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>fe-styles.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">SCSS/CSS patterns (*.scss, *.css)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>fe-clientlibs.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">AEM clientlib organization</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>be-components.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Backend component definitions (*.xml)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>be-sling-models.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Sling Model patterns (*.java)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>be-testing.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Java unit testing conventions</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>naming.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Component and file naming</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>accessibility.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">WCAG, ARIA, semantic HTML</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>audit.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">Remote change audit detection</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>qa-basic-auth.md</code></td>
+        <td class="p-3">aem</td>
+        <td class="p-3">QA/Stage HTTP auth handling</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="info" title="Superpowers Soft-Dependency">
+    Six skills optionally invoke superpowers methodology (brainstorming, TDD, systematic debugging,
+    verification) with inline fallback when superpowers is not installed.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Subagents"
+  badgeColor="error"
+  title="Subagent Architecture"
+  subtitle="Coordinator delegates to specialized subagents. Each runs in isolated context with the right model tier."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <HighlightBox severity="warning" title="Coordinator Never Sees File Contents">
+      The coordinator only receives compact summaries -- file lists, status codes, and diffs.
+      This keeps context windows small and costs low.
+    </HighlightBox>
+
+    <HighlightBox severity="info" title="Isolated Contexts">
+      Each subagent runs in its own context. Skills with <code>context: fork</code> are automatically
+      isolated -- no shared state leaks between steps.
+    </HighlightBox>
+
+    <HighlightBox severity="error" title="Agent Type Naming">
+      Always use the full prefixed name: <code>dx-dev-experience:dx-step-executor</code>, NOT just
+      <code>dx-step-executor</code>. The short name fails with "Agent type not found".
+    </HighlightBox>
+
+    <HighlightBox severity="success" title="Fork Auto-Isolation">
+      Skills marked with <code>context: fork</code> spawn a new Claude instance. The parent skill
+      continues after the fork completes, receiving only the summary.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Models"
+  badgeColor="success"
+  title="Model Tier Strategy"
+  subtitle="Three tiers matched to task complexity -- use the cheapest model that can do the job well."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:star" iconColor="bg-red-500" title="Opus ($$$, slower)">
+      Deep reasoning tasks that require understanding complex interactions across files and systems.
+
+      - Implementation plans
+      - Code review
+      - Root cause analysis
+    </ContentCard>
+
+    <ContentCard icon="mdi:diamond" iconColor="bg-amber-500" title="Sonnet ($$, balanced)">
+      Execution tasks that need good judgment but not maximum reasoning depth.
+
+      - Step execution
+      - PR review
+      - AEM inspection
+    </ContentCard>
+
+    <ContentCard icon="mdi:circle" iconColor="bg-emerald-600" title="Haiku ($, fast)">
+      Simple lookups and searches where speed matters more than depth.
+
+      - File resolution
+      - Doc search
+      - Test running
+    </ContentCard>
+  </div>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Token Budget -- Typical Full Pipeline</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Phase</th>
+        <th class="text-left p-3 font-semibold">~Tokens</th>
+        <th class="text-left p-3 font-semibold">Model</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Requirements (4 steps)</strong></td>
+        <td class="p-3">50K</td>
+        <td class="p-3">Sonnet</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Planning + validation</strong></td>
+        <td class="p-3">80K</td>
+        <td class="p-3">Opus</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Execution (5 steps)</strong></td>
+        <td class="p-3">150K</td>
+        <td class="p-3">Sonnet</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Build</strong></td>
+        <td class="p-3">20K</td>
+        <td class="p-3">Sonnet</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Code review</strong></td>
+        <td class="p-3">60K</td>
+        <td class="p-3">Opus</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Commit + PR</strong></td>
+        <td class="p-3">10K</td>
+        <td class="p-3">Haiku/Sonnet</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Total</strong></td>
+        <td class="p-3">~370K</td>
+        <td class="p-3"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="warning" title="With Failures">
+    Build failures, lint errors, and retry loops can push a single story to **500K-800K tokens**.
+    The self-learning system reduces retries over time.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="MCP"
+  badgeColor="info"
+  title="MCP Integration"
+  subtitle="Six MCP servers provide external tool access -- ADO, Atlassian (Jira/Confluence), Figma, axe (dx), AEM, and Chrome DevTools (aem)."
+  bg="primary"
+/>
+<Section>
+  <h3 class="text-lg font-bold mb-4">dx-dev-experience MCP Servers</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="ADO MCP">
+      Project-level (not in a plugin)
+
+      - `wit_get_work_item`
+      - `repo_create_pull_request`
+      - `search_code`
+      - `pipelines_run_pipeline`
+    </ContentCard>
+
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-emerald-600" title="Atlassian MCP">
+      Project-level (not in a plugin)
+
+      - `jira_get_issue`
+      - `jira_search`
+      - `confluence_create_page`
+      - `jira_add_comment`
+    </ContentCard>
+
+    <ContentCard icon="mdi:palette" iconColor="bg-cyan" title="Figma MCP">
+      HTTP -- local Figma desktop app
+
+      - `get_design_context`
+      - `get_screenshot`
+      - `get_variable_defs`
+      - `get_metadata`
+    </ContentCard>
+
+    <ContentCard icon="mdi:human" iconColor="bg-emerald-600" title="axe MCP">
+      Docker -- Deque axe accessibility engine
+
+      - `analyze` -- scan for violations
+      - `remediate` -- suggest fixes
+    </ContentCard>
+  </div>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">dx-aem MCP Servers</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="AEM MCP">
+      HTTP -- live AEM JCR instance
+
+      - `getNodeContent`
+      - `scanPageComponents`
+      - `createPage`
+      - `updateComponent`
+    </ContentCard>
+
+    <ContentCard icon="mdi:web" iconColor="bg-cyan" title="Chrome DevTools MCP">
+      stdio -- real browser automation
+
+      - `navigate_page`
+      - `take_screenshot`
+      - `click`
+      - `evaluate_script`
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Deferred Tools">
+    MCP tools are deferred -- they appear by name only until explicitly loaded. Skills must call
+    <code>ToolSearch</code> to fetch the full schema before invoking any MCP tool.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  title="Agents Summary"
+  subtitle="13 specialized agents, each matched to the right model tier for its task."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Agent</th>
+        <th class="text-left p-3 font-semibold">Model</th>
+        <th class="text-left p-3 font-semibold">Invoked By</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-step-executor</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>coordinators</code></td>
+        <td class="p-3">Execute single skill</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-pr-reviewer</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>/dx-pr-review</code></td>
+        <td class="p-3">PR diff analysis</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-code-reviewer</code></td>
+        <td class="p-3">Opus</td>
+        <td class="p-3"><code>/dx-step-verify</code></td>
+        <td class="p-3">Deep code review</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-file-resolver</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/dx-ticket-analyze</code></td>
+        <td class="p-3">File lookup</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-figma-styles</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/dx-figma-prototype</code></td>
+        <td class="p-3">CSS conventions</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-figma-markup</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/dx-figma-prototype</code></td>
+        <td class="p-3">HTML conventions</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-doc-searcher</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/dx-help</code></td>
+        <td class="p-3">Doc search</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-inspector</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>/aem-snapshot</code></td>
+        <td class="p-3">Dialog/page operations</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-page-finder</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/aem-component</code></td>
+        <td class="p-3">Page search</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-demo-capture</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>/aem-demo</code></td>
+        <td class="p-3">Browser screenshots</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-file-resolver</code></td>
+        <td class="p-3">Haiku</td>
+        <td class="p-3"><code>/aem-component</code></td>
+        <td class="p-3">Component files</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-fe-verifier</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>/aem-fe-verify</code></td>
+        <td class="p-3">AEM vs Figma visual</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-bug-executor</code></td>
+        <td class="p-3">Sonnet</td>
+        <td class="p-3"><code>/dx-bug-verify</code></td>
+        <td class="p-3">Bug reproduction</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Learning"
+  badgeColor="success"
+  title="Self-Learning System"
+  subtitle="Agents improve over time by recording fix patterns and promoting successful ones to rules."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:school" iconColor="bg-emerald-600" title="Fix Pattern Logging">
+      Every build/lint fix is logged to <code>.ai/learning/raw/fixes.jsonl</code> with the error,
+      fix applied, and component name.
+    </ContentCard>
+
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Rule Promotion">
+      3+ successful fixes for the same pattern get promoted to <code>.claude/rules/learned-fix-*.md</code>
+      -- auto-loaded on future runs.
+    </ContentCard>
+
+    <ContentCard icon="mdi:trending-up" iconColor="bg-amber-500" title="Metrics & Retro">
+      Run metrics logged to <code>runs.jsonl</code>. Bug hotspot detection per component. Weekly
+      retrospective aggregation.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Copilot"
+  badgeColor="info"
+  title="Copilot Compatibility"
+  subtitle="Same skills available in two environments -- full plugin system and portable Copilot format."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:wrench"
+      iconColor="bg-cyan"
+      title="Claude Code"
+      tags={[{ label: '78 skills', color: 'secondary' }, { label: '13 agents', color: 'secondary' }]}
+    >
+      Full plugin system with MCP servers, subagents, hooks, and shared libraries.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:monitor"
+      iconColor="bg-brand-700"
+      title="GitHub Copilot CLI"
+      tags={[{ label: '78 skills', color: 'primary' }, { label: '25 agents', color: 'primary' }]}
+    >
+      Same 78 skills auto-discovered from plugins. 25 Copilot agents with <code>allowed-tools</code> for auto-approval
+      and <code>handoffs:</code> for navigation.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Single Source, Dual Output">
+    Same plugins, same marketplace, same skills. Hooks use a single <code>hooks.json</code> with
+    <code>version: 1</code> read by both tools. Rules use dual frontmatter in <code>.claude/rules/</code>.
+    Agent templates in <code>.github/agents/</code> are generated with Copilot-specific transforms (tool names, allowed-tools).
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Hooks"
+  badgeColor="warning"
+  title="Hooks Architecture"
+  subtitle="Shell commands that execute in response to Claude Code lifecycle events."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:webhook" iconColor="bg-red-500" title="Stop Guard">
+      <code>stop-guard.sh</code> -- prevents accidental <code>/stop</code> during long-running
+      operations. Prompts for confirmation before terminating.
+    </ContentCard>
+
+    <ContentCard icon="mdi:webhook" iconColor="bg-cyan" title="Figma Screenshot Cache">
+      PostToolUse hook on <code>get_screenshot</code> -- auto-saves Figma screenshots to disk,
+      avoiding repeated MCP calls for the same design.
+    </ContentCard>
+
+    <ContentCard icon="mdi:webhook" iconColor="bg-cyan" title="Figma Context Cache">
+      PostToolUse hook on <code>get_design_context</code> -- caches design context responses
+      locally so repeat lookups are instant.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Templates"
+  badgeColor="secondary"
+  title="Template System"
+  subtitle="Pre-built templates for spec files, work item comments (ADO/Jira), and wiki pages ensure consistent, predictable output."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:content-copy" iconColor="bg-brand-700" title="Spec File Templates (7)">
+      - `explain.md` -- developer requirements
+      - `research.md` -- codebase research
+      - `implement.md` -- implementation plan
+      - `figma-extract.md` -- design tokens
+      - `figma-gaps.md` -- design vs code gaps
+      - `prototype/` -- HTML prototype
+      - `dod.md` -- definition of done
+    </ContentCard>
+
+    <ContentCard icon="mdi:content-copy" iconColor="bg-amber-500" title="Work Item Comment Templates (5)">
+      - `dor-check` -- Definition of Ready
+      - `dod-summary` -- Definition of Done
+      - `re-summary` -- requirements summary
+      - `pr-review-summary` -- review report
+      - `share-plan` -- team share format
+    </ContentCard>
+
+    <ContentCard icon="mdi:content-copy" iconColor="bg-emerald-600" title="Wiki Page Templates (2)">
+      - `feature-doc` -- feature documentation
+      - `authoring-guide` -- AEM component guide
+
+      Templates ensure every output follows the same structure, making it safe to rely on
+      AI-generated documentation.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Setup"
+  badgeColor="secondary"
+  title="Setup Flow"
+  subtitle="One-time initialization and ongoing maintenance commands."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-cyan" title="/dx-init">
+      Core setup -- installs plugin templates, creates <code>.ai/config.yaml</code>, scaffolds
+      rules and instructions.
+    </ContentCard>
+
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="/aem-init">
+      AEM-specific seed data -- component index, file patterns, content paths, architecture docs
+      in <code>.ai/project/</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="/auto-init">
+      Autonomous agent setup -- ADO service hooks, pipeline configs, Lambda routing for webhook events.
+    </ContentCard>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+    <HighlightBox severity="success" title="/dx-doctor">
+      Health check -- validates config, checks MCP connections, verifies rules are up to date.
+    </HighlightBox>
+
+    <HighlightBox severity="info" title="/dx-upgrade">
+      Updates plugin version -- re-runs template scaffolding with <code>--force</code> to overwrite
+      stale files.
+    </HighlightBox>
+
+    <HighlightBox severity="warning" title="/dx-adapt">
+      Auto-detect project type, structure, and build commands. Saves <code>.ai/project.yaml</code>
+      for non-AEM projects or when <code>/dx-init</code> needs help detecting the stack.
+    </HighlightBox>
+
+    <HighlightBox severity="error" title="/dx-eject">
+      Eject all plugin assets into the consumer repo -- copies skills, agents, rules, templates,
+      hooks, and MCP config. Full ownership without plugin dependency.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Decisions"
+  title="Design Decisions"
+  subtitle="Key architectural choices and the reasoning behind them."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Three Plugins, One Repo">
+      Three independently installable plugins in a single monorepo. Non-AEM projects only need
+      <code>dx-dev-experience</code>; AEM projects add <code>dx-aem</code>; any project wanting
+      24/7 autonomous agents adds <code>dx-automation</code>. Single repo simplifies maintenance.
+    </ContentCard>
+
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Config-Driven Over Hardcoded">
+      All project-specific values read from <code>.ai/config.yaml</code> at runtime. The original
+      skills had 50+ hardcoded values (org URLs, component paths, repo names). Replacing each with
+      a config lookup makes skills reusable across any project.
+    </ContentCard>
+
+    <ContentCard icon="mdi:merge" iconColor="bg-emerald-600" title="Merged Step Executors">
+      <code>ado-step-executor</code> and <code>bug-step-executor</code> merged into one
+      <code>dx-step-executor</code>. Both did the same thing -- receive a skill name, execute it,
+      return a compact summary. Merging eliminates duplication.
+    </ContentCard>
+
+    <ContentCard icon="mdi:layers" iconColor="bg-amber-500" title="Three-Layer Override System">
+      <code>file override &gt; config override &gt; plugin default</code>. Config overrides for
+      quick tweaks, file overrides for deep customization, plugin defaults as sensible starting points.
+      Projects can also shadow entire skills.
+    </ContentCard>
+
+    <ContentCard icon="mdi:eye-off" iconColor="bg-red-500" title="Skill Shadowing via Platform">
+      Relies on Claude Code built-in skill precedence (project <code>.claude/skills/</code> &gt;
+      plugin skills) rather than custom override logic. No custom code needed -- just create a
+      file with the same name.
+    </ContentCard>
+
+    <ContentCard icon="mdi:currency-usd" iconColor="bg-cyan" title="Haiku for Lookup Agents">
+      <code>dx-file-resolver</code>, <code>dx-doc-searcher</code>, and <code>aem-page-finder</code>
+      use Haiku. These agents do simple lookups -- glob files, grep docs, call MCP search. Haiku is
+      10x faster and cheaper than Sonnet with no quality loss.
+    </ContentCard>
+
+    <ContentCard icon="mdi:star" iconColor="bg-red-500" title="Opus for Code Review Only">
+      Only <code>dx-code-reviewer</code> uses Opus. Code review is the one task where deep reasoning
+      directly impacts quality (catching subtle bugs, understanding architectural implications).
+      Other tasks are well-served by Sonnet.
+    </ContentCard>
+
+    <ContentCard icon="mdi:folder" iconColor="bg-brand-700" title="Spec Directory Convention">
+      All per-ticket output goes to <code>.ai/specs/&lt;id&gt;-&lt;slug&gt;/</code> with predictable
+      file names. Skills find each other's output by convention -- no data passing needed.
+    </ContentCard>
+
+    <ContentCard icon="mdi:school" iconColor="bg-emerald-600" title="Self-Learning in Coordinators">
+      Learning (run logging, fix patterns, pattern promotion) lives in coordinator skills, not leaf
+      skills. Coordinators see the full picture -- how many fixes, which heals worked. JSONL for
+      machine data, promoted rules for proven patterns (3+ successes, 0 failures).
+    </ContentCard>
+
+    <ContentCard icon="mdi:console" iconColor="bg-amber-500" title="Scripts Stay Simple">
+      Shell scripts for common operations, not Node.js or Python. Shared functions in
+      <code>dx-common.sh</code> eliminated 26+ copies of duplicated helper scripts. No runtime
+      dependencies -- works everywhere Claude Code runs.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Automation as a Separate Plugin">
+    The autonomous agent infrastructure (Lambda + ADO pipelines + AWS resources) lives in its own
+    <code>dx-automation</code> plugin, not in <code>dx-dev-experience</code>. Interactive skills
+    run when you ask and respond to you. Automation agents run 24/7 without you. They have completely
+    different lifecycles -- separate plugin, separate install, separate operational skills.
+  </HighlightBox>
+</Section>

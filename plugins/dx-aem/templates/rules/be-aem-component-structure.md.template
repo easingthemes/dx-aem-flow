@@ -1,0 +1,136 @@
+---
+description: AEM component structure — folder layout, versioning, definitions, templates, dialogs, HTL
+paths: ["**/*.java", "**/.content.xml", "**/*.html"]
+applyTo: "**/*.java, **/.content.xml, **/*.html"
+---
+
+# AEM Component Structure
+
+Standard structure for creating AEM components, ensuring consistency and maintainability. Component paths come from `aem.component-path` and `aem.component-prefix` in `.ai/config.yaml`.
+
+## 1. Component Folder Structure
+
+AEM components are organized within a versioned folder structure. This approach allows for future updates without affecting existing component instances.
+
+-   **Path Pattern**: `{apps-path}/components/{component-name}/v1/{component-name}`
+-   **Example**: The Hero component files under `{apps-path}/components/{prefix}-hero/v1/{prefix}-hero/`
+
+```
+{prefix}-hero
+├── .content.xml  (Defines the component folder)
+└── v1
+    ├── .content.xml  (Defines the version folder)
+    └── {prefix}-hero
+        ├── .content.xml  (Main component definition)
+        ├── _cq_dialog
+        │   └── .content.xml (Authoring dialog)
+        ├── {prefix}-hero.html (Main HTL script)
+        ├── title.html (Supporting HTL template)
+        ├── subtitle.html (Supporting HTL template)
+        ├── description.html (Supporting HTL template)
+        └── actions.html (Supporting HTL template)
+```
+
+## 2. Component Definition (`.content.xml`)
+
+This file defines the core properties of the component.
+
+-   **Key Properties**:
+    -   `jcr:primaryType="cq:Component"`: Identifies the node as an AEM component.
+    -   `jcr:title`: The name displayed to authors in the component browser.
+    -   `componentGroup`: The group under which the component is listed (from `aem.component-group` in config).
+    -   `sling:resourceSuperType`: Specifies the parent component from which to inherit functionality. Crucial for leveraging AEM Core Components.
+
+### Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    jcr:description="Hero component allows a combination of an image, title, subtitle, rich text description and actions/links."
+    jcr:primaryType="cq:Component"
+    jcr:title="Hero"
+    sling:resourceSuperType="core/wcm/components/teaser/v2/teaser"
+    componentGroup="My Project General"/>
+```
+
+## 3. Component Template Definition (`_cq_template/.content.xml`)
+
+The `_cq_template` defines the initial content structure when a component is added to a page. Optional but useful for components that contain child components.
+
+-   **CRITICAL**: The folder name `_cq_template` translates to a JCR node named `cq:template`, which **requires** the `cq` namespace declaration.
+-   **Required Namespaces**: Always include these namespace declarations:
+    -   `xmlns:cq="http://www.day.com/jcr/cq/1.0"` (REQUIRED for `_cq_template` folder)
+    -   `xmlns:sling="http://sling.apache.org/jcr/sling/1.0"` (REQUIRED for `sling:resourceType`)
+    -   `xmlns:jcr="http://www.jcp.org/jcr/1.0"` (REQUIRED for JCR properties)
+    -   `xmlns:nt="http://www.jcp.org/jcr/nt/1.0"` (REQUIRED for `nt:unstructured`)
+
+### Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="nt:unstructured">
+    <button
+        jcr:primaryType="nt:unstructured"
+        sling:resourceType="{project}/base/components/{prefix}-button/v1/{prefix}-button"/>
+</jcr:root>
+```
+
+**Common Mistake**: Omitting the `cq` or `sling` namespace declarations will cause Maven build failures with validation errors like:
+
+```
+ValidationViolation: "jackrabbit-docviewparser: Invalid XML found: Given root node name 'cq:template'
+(implicitly given via filename) cannot be resolved..."
+```
+
+## 4. Dialog Definition (`_cq_dialog/.content.xml`)
+
+The `_cq_dialog` defines the authoring interface for the component. It's constructed using Granite UI components. See `be-dialog` rule for detailed dialog rules.
+
+## 5. HTL Script (`<component-name>.html`)
+
+The HTL file is responsible for rendering the component's markup. See `be-htl` rule for detailed HTL rules.
+
+-   **Best Practices**:
+    -   Use `data-sly-use` to instantiate a Sling Model
+    -   Access model data using expressions like `${model.property}`
+    -   Do not call Java methods with params directly in HTL
+    -   Use `data-sly-test` for conditional rendering
+    -   Use `data-sly-call` to include reusable template blocks from other HTL files
+    -   Include client libraries using `com.adobe.cq.wcm.core.components.models.ClientLibraries`
+    -   CSS classes should follow BEM methodology
+    -   Wrap the component HTML in a main `<sly>` tag for `data-sly-use` declarations
+    -   Inside top level `sly` tag, wrap the component HTML in a main `<div>` tag
+    -   Include placeholder at the bottom for empty-state handling
+
+### Example
+
+```html
+<!-- Include clientlibrary at the top -->
+<sly data-sly-use.clientlibs="${'com.adobe.cq.wcm.core.components.models.ClientLibraries' @
+    categories='{project}.components.{prefix}-hero', defer=true}">
+    ${clientlibs.jsAndCssIncludes @ context="unsafe"}
+</sly>
+
+<div data-sly-use.hero="com.example.project.models.MyHero"
+     data-sly-use.templates="core/wcm/components/commons/v1/templates.html"
+     data-sly-test.hasContent="${hero.imageResource || hero.title}"
+     id="${hero.id}"
+     class="cmp-hero"
+     data-nc="Hero">
+
+    <div class="cmp-hero__content">
+        <h2 class="cmp-hero__title" data-sly-text="${hero.title}">Title</h2>
+    </div>
+</div>
+<!-- Include placeholder at the bottom -->
+<sly data-sly-call="${templates.placeholder @ isEmpty=!hasContent}"></sly>
+```
+
+### Sub-Template Example: `title.html`
+
+```html
+<sly data-sly-template.title="${@ hero}">
+    <h2 class="cmp-hero__title" data-sly-text="${hero.title}">Title</h2>
+</sly>
+```

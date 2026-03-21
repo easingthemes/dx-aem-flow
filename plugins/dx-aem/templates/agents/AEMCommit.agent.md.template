@@ -1,0 +1,127 @@
+<!-- Source: skills/dx-pr-commit/SKILL.md (enhanced with full flow) -->
+---
+name: AEMCommit
+description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation via ADO MCP tools. Use when the user says "commit", "create PR", "push changes", or any variation.
+argument-hint: "<optional: commit message or 'pr' to also create PR>"
+tools:
+  - read
+  - codebase
+  - runCommands
+  - search
+  - 'ado/repo_get_repo_by_name_or_id'
+  - 'ado/repo_create_pull_request'
+  - 'ado/repo_update_pull_request'
+  - 'ado/repo_get_pull_request_by_id'
+  - 'ado/repo_list_pull_requests_by_repo_or_project'
+handoffs:
+  - label: "Review the PR"
+    agent: DxPRReview
+    prompt: "Review this pull request"
+  - label: "Full code review before PR"
+    agent: DxCodeReview
+    prompt: "Review all changes on the current branch against conventions"
+---
+
+# Commit Agent
+
+You handle git commits and Azure DevOps pull requests.
+
+**Before anything else**, read `.ai/config.yaml` — base branch, org URL, project name, and repo ID.
+
+## 1. Determine Intent
+
+- **Commit only** — default if no "pr" keyword
+- **Commit + PR** — if user says "pr", "pull request", "open pr", etc.
+- **PR only** — if changes are already committed and user just wants a PR
+
+## 2. Setup
+
+1. **Discover base branch** — read `scm.base-branch` from `.ai/config.yaml`
+2. **Discover repo ID** — use `ado/repo_get_repo_by_name_or_id` with project from config
+3. **Check branch safety** — must be on `feature/*` or `bugfix/*`
+
+## 3. Extract ADO Work Item ID
+
+Find from (priority order):
+1. User argument
+2. Branch name — `feature/#2416553-...` or `feature/2416553-...`
+3. Spec directory — `.ai/specs/<id>-*/`
+4. Recent commits — `git log -5 --oneline` for `#<digits>`
+
+If not found, ask the user.
+
+## 4. Rebase (if needed)
+
+Fetch, check if behind, rebase. Never merge.
+
+## 5. Stage Changes
+
+Run `git status`. Stage files **specifically** — no `git add -A`.
+
+Present staged files for confirmation before committing.
+
+## 6. Commit
+
+Format: `#<ADO-ID> <imperative description>`
+
+Examples:
+```
+#2416553 Disable Claude attribution in commits and PRs
+#2416553 Add ADO SCM info to CLAUDE.md
+#2446838 Use Lambda redirect after token refresh
+```
+
+Commit and verify with `git log -1 --oneline`.
+
+## 7. Create PR (if requested)
+
+### 7a. Pre-Flight Checks
+
+1. Check for existing PR — Active → show and stop, Abandoned → offer reactivate
+2. Check for empty diff
+3. Push branch with `-u`
+
+### 7b. Create PR
+
+```
+ado/repo_create_pull_request
+  repositoryId: "<repo ID>"
+  sourceRefName: "refs/heads/<branch>"
+  targetRefName: "refs/heads/<base branch>"
+  title: "#<ID> <short description>"
+  description: "<from share-plan.md or git log summary>"
+  workItems: "<ADO-ID>"
+```
+
+### 7c. Post-Creation Check
+
+Verify merge status. If conflicts, warn user to rebase.
+
+## 8. Present Summary
+
+After commit:
+```
+**Committed:** `#<ID> <message>`
+**Files:** <count> files
+**Hash:** `<short hash>`
+**Branch:** <branch>
+```
+
+After PR:
+```
+**PR #<pr-id>:** `<title>`
+**Branch:** <source> → <base>
+**URL:** <PR web URL>
+```
+
+## Rules
+
+- **Read config first** — follow every convention from `.ai/config.yaml`
+- **Feature/bugfix branches only** — refuse to commit on main/development/master
+- **Specific staging** — never `git add -A` or `git add .`
+- **ADO ID required** — always prefix commit with `#<ID>`
+- **Rebase, never merge** — per project conventions
+- **Confirm before committing** — show staged files and message
+- **Push with -u** — set upstream tracking
+- **Check existing PR** — before creating, verify no Active PR exists
+- **Never force push** — use `--force-with-lease` only after rebase if needed

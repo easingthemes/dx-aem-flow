@@ -1,0 +1,428 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Automation Infrastructure
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Automation Infrastructure"
+  subtitle="Lambda handler architecture, API Gateway routing, and the complete pipeline variable reference for all 11 ADO pipelines."
+/>
+
+<SectionHeading
+  badge="Architecture"
+  title="Lambda Handler Architecture"
+  subtitle="Two AWS Lambda functions handle all webhook events from ADO, routing them through deduplication and rate limiting before dispatching pipelines."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Webhook Flow"
+    description="From ADO event to pipeline dispatch -- every webhook is validated, deduplicated, and rate-limited."
+    steps={[
+      { title: 'ADO Event', subtitle: 'Service Hook\nfires', color: '#0891b2' },
+      { title: 'API Gateway', subtitle: 'POST /wi or\nPOST /pr-answer', color: '#8b5cf6' },
+      { title: 'Lambda', subtitle: 'Auth + parse\npayload', color: '#d97706' },
+      { title: 'DynamoDB', subtitle: 'Dedupe +\nrate limit', color: '#d97706' },
+      { title: 'Decision', subtitle: 'run or\nskip', color: '#dc2626' },
+      { title: 'ADO Pipeline', subtitle: 'Queue agent\nrun', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:router" iconColor="bg-brand-700" title="WI Router (POST /wi)">
+      Handles all <code>workitem.updated</code> events. Scans work item tags against configured
+      agents to determine which pipeline to queue. Single Lambda, single route, multiple agents.
+
+      <strong>Processing flow:</strong>
+      1. Validate webhook (Basic Auth + secret header)
+      2. Parse payload -- extract work item ID, tags, type
+      3. Scan AGENTS array -- match tag gate + work item type
+      4. First matching agent wins (tags should be mutually exclusive)
+      5. Deduplicate (DynamoDB, 1-hour TTL)
+      6. Rate limit (DynamoDB atomic counter)
+      7. Queue ADO pipeline with templateParameters
+    </ContentCard>
+
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan" title="PR Router (POST /pr-answer)">
+      Handles <code>git.pullrequest.comment-event</code> -- triggered when someone comments on a PR.
+
+      <strong>Five gates:</strong>
+      1. Event type includes "comment"
+      2. PR is active
+      3. PR is mine (createdBy matches <code>MY_IDENTITIES</code>)
+      4. Comment is NOT from me (avoid loop)
+      5. Comment is NOT from bot (avoid loop)
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  badgeColor="secondary"
+  title="WI Router Agent Config"
+  subtitle="Seven agents routed by a single Lambda. Adding a new agent requires only environment variable changes."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Agent</th>
+        <th class="text-left p-3 font-semibold">WI Type</th>
+        <th class="text-left p-3 font-semibold">Tag Gate Env Var</th>
+        <th class="text-left p-3 font-semibold">Pipeline ID Env Var</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoR</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_DOR</code></td>
+        <td class="p-3"><code>ADO_DOR_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoD</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_DOD</code></td>
+        <td class="p-3"><code>ADO_DOD_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">BugFix</td>
+        <td class="p-3">Bug</td>
+        <td class="p-3"><code>TAG_GATE_BUGFIX</code></td>
+        <td class="p-3"><code>ADO_BUGFIX_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">QA</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_QA</code></td>
+        <td class="p-3"><code>ADO_QA_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DevAgent</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_DEV</code></td>
+        <td class="p-3"><code>ADO_DEV_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DOCAgent</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_DOC</code></td>
+        <td class="p-3"><code>ADO_DOC_PIPELINE_ID</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Estimation</td>
+        <td class="p-3">User Story</td>
+        <td class="p-3"><code>TAG_GATE_ESTIMATION</code></td>
+        <td class="p-3"><code>ADO_ESTIMATION_PIPELINE_ID</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="success" title="Adding a New Agent">
+    No new API Gateway route or ADO service hook needed. Just add <code>TAG_GATE_&lt;NAME&gt;</code> and
+    <code>ADO_&lt;NAME&gt;_PIPELINE_ID</code> env vars to the Lambda, add an entry to the AGENTS array
+    in <code>wi-router.mjs</code>, and deploy with <code>lambda/deploy.sh wi-router</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Design"
+  badgeColor="warning"
+  title="Design Decisions"
+  subtitle="Why tag-based routing and why two separate Lambdas."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:tag" iconColor="bg-brand-700" title="Why Tag-Based Routing?">
+      The original design used 6 API Gateway routes (<code>/dor</code>, <code>/dod</code>, etc.)
+      mapped to one Lambda. Adding a new agent required a new route, a new service hook, and a code change.
+
+      Tag-based routing eliminates this -- the Lambda scans work item tags to find the matching agent.
+      Adding a new agent only requires Lambda env vars. No new route, no new hook.
+    </ContentCard>
+
+    <ContentCard icon="mdi:call-split" iconColor="bg-cyan" title="Why 2 Lambdas?">
+      PR Router handles a fundamentally different event type (<code>git.pullrequest.comment-event</code>)
+      with different gates (identity checking, bot loop prevention) and different queue parameters.
+      Keeping it separate reduces complexity in both handlers.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Libraries"
+  badgeColor="info"
+  title="Shared Libraries"
+  subtitle="Deployed in the same zip as each Lambda -- reusable utilities for event processing."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:content-duplicate" iconColor="bg-amber-500" title="dedupe.js">
+      DynamoDB conditional put for event deduplication. 1-hour TTL prevents duplicate webhook
+      processing from ADO retry storms.
+    </ContentCard>
+
+    <ContentCard icon="mdi:speedometer" iconColor="bg-red-500" title="rate-limiter.js">
+      DynamoDB atomic counters for per-pipeline and per-identity rate limits.
+      Prevents runaway execution (max 20-30 runs per day per agent type).
+    </ContentCard>
+
+    <ContentCard icon="mdi:refresh" iconColor="bg-cyan" title="retry.js">
+      Exponential backoff with jitter (3 retries). Used for ADO pipeline queue API calls
+      and DynamoDB operations.
+    </ContentCard>
+
+    <ContentCard icon="mdi:key" iconColor="bg-emerald-600" title="aws-sig.js">
+      AWS Signature V4 for ADO pipeline queue API calls. Handles auth header generation
+      for cross-service communication.
+    </ContentCard>
+
+    <ContentCard icon="mdi:alert" iconColor="bg-red-500" title="dlq.js">
+      Sends failed events to SQS Dead Letter Queue for later investigation.
+      Ensures no events are silently dropped.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Hooks"
+  badgeColor="secondary"
+  title="ADO Service Hooks"
+  subtitle="Only 3 hooks needed -- tag-based routing consolidates work item events."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Hook</th>
+        <th class="text-left p-3 font-semibold">Event</th>
+        <th class="text-left p-3 font-semibold">Filter</th>
+        <th class="text-left p-3 font-semibold">Agents</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">WI User Story</td>
+        <td class="p-3">workitem.updated</td>
+        <td class="p-3">workItemType: User Story</td>
+        <td class="p-3">DoR, DoD, QA, DevAgent, DOCAgent, Estimation</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">WI Bug</td>
+        <td class="p-3">workitem.updated</td>
+        <td class="p-3">workItemType: Bug</td>
+        <td class="p-3">BugFix</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">PR Answer</td>
+        <td class="p-3">git.pullrequest.comment-event</td>
+        <td class="p-3">--</td>
+        <td class="p-3">PR Answer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="info" title="PR Review">
+    PR Review uses a build validation policy, not a service hook. It triggers automatically
+    when a PR is created, running as part of the PR build validation.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Variables"
+  badgeColor="error"
+  title="Pipeline Variable Reference"
+  subtitle="Complete reference for all ADO pipeline variables across 11 pipelines (10 CLI + 1 Eval)."
+  bg="primary"
+/>
+<Section>
+  <h3 class="text-lg font-bold mb-4">Common Variables (all CLI pipelines)</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Variable</th>
+        <th class="text-left p-3 font-semibold">Secret</th>
+        <th class="text-left p-3 font-semibold">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>ANTHROPIC_API_KEY</code></td>
+        <td class="p-3">Yes</td>
+        <td class="p-3">Claude API key for Claude Code CLI</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>ADO_ORG_URL</code></td>
+        <td class="p-3">No</td>
+        <td class="p-3">ADO org URL for plugin marketplace auth and cross-repo delegation</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>DX_MARKETPLACE_URL</code></td>
+        <td class="p-3">No</td>
+        <td class="p-3">Git URL for plugin marketplace (used when local plugins unavailable)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Per-Pipeline Additional Variables</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Pipeline</th>
+        <th class="text-left p-3 font-semibold">Additional Variables</th>
+        <th class="text-left p-3 font-semibold">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>DoR</strong></td>
+        <td class="p-3"><code>DOR_WIKI_URL</code></td>
+        <td class="p-3">4</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>PR Review</strong></td>
+        <td class="p-3"><code>REVIEWER_IDENTITIES</code></td>
+        <td class="p-3">4</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>PR Answer</strong></td>
+        <td class="p-3"><code>MY_IDENTITIES</code></td>
+        <td class="p-3">4</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>DoD</strong></td>
+        <td class="p-3">--</td>
+        <td class="p-3">3</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>DoD Fix</strong></td>
+        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3">4</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>BugFix</strong></td>
+        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3">4</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>QA</strong></td>
+        <td class="p-3"><code>AEM_AUTHOR_URL</code>, <code>AEM_PUBLISH_URL</code>, <code>AEM_USER</code>, <code>AEM_PASS</code></td>
+        <td class="p-3">7</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>DevAgent</strong></td>
+        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code>, <code>FIGMA_PERSONAL_ACCESS_TOKEN</code></td>
+        <td class="p-3">5</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>DOCAgent</strong></td>
+        <td class="p-3"><code>AEM_AUTHOR_URL</code>, <code>AEM_PUBLISH_URL</code>, <code>AEM_USER</code>, <code>AEM_PASS</code></td>
+        <td class="p-3">7</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Estimation</strong></td>
+        <td class="p-3">--</td>
+        <td class="p-3">3</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>Eval</strong></td>
+        <td class="p-3">--</td>
+        <td class="p-3">0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Implicit Variables (set automatically)</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="DX_PIPELINE_MODE">
+      Hardcoded <code>'true'</code>. Gates automation-only behavior like cross-repo delegation.
+      All CLI pipelines set this.
+    </ContentCard>
+
+    <ContentCard icon="mdi:source-repository" iconColor="bg-cyan" title="SOURCE_REPO_NAME">
+      Set from <code>$(Build.Repository.Name)</code>. Tells Claude which repo it is running in,
+      enabling cross-repo comparison during triage.
+    </ContentCard>
+
+    <ContentCard icon="mdi:key" iconColor="bg-amber-500" title="SYSTEM_ACCESSTOKEN">
+      Set from <code>$(System.AccessToken)</code>. Used for plugin install and cross-repo delegation.
+      Auto-rotates, no secrets to manage.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="CROSS_REPO"
+  badgeColor="warning"
+  title="CROSS_REPO_PIPELINE_MAP"
+  subtitle="JSON object mapping repo names to pipeline IDs of the same agent type in that repo."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Format">
+    <CommandBlock label="Pipeline Variable Value">
+{`{"My-Backend-Repo": "789", "My-Config-Repo": "790"}`}
+    </CommandBlock>
+    Each code-writing pipeline has its own map. The BugFix pipeline's map points to BugFix pipelines
+    in other repos. The DevAgent pipeline's map points to DevAgent pipelines in other repos.
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="Setting Variables">
+    Recommended: use <code>/auto-pipelines</code> skill which reads <code>infra.json</code> and sets all
+    variables via <code>az pipelines variable create</code>. Manual option: Azure CLI or ADO UI
+    (Pipelines &gt; select pipeline &gt; Edit &gt; Variables &gt; New variable).
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Deploy"
+  badgeColor="success"
+  title="Deployment"
+  subtitle="Lambda deployment and API Gateway configuration."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Deploy Commands">
+    <CommandBlock label="Lambda Deployment">
+{`# Deploy both Lambdas
+cd .ai/automation
+lambda/deploy.sh all
+
+# Deploy individually
+lambda/deploy.sh wi-router
+lambda/deploy.sh pr-router`}
+    </CommandBlock>
+    The deploy script reads <code>infra.json</code> for function names and source files, copies shared
+    libs from <code>agents/lib/</code>, creates a flat zip, and calls
+    <code>aws lambda update-function-code</code>.
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:server" iconColor="bg-brand-700" title="API Gateway Routes">
+      HTTP API v2 (API Gateway). Single API Gateway, 2 routes, 2 Lambda targets:
+
+      - <code>POST /wi</code> &rarr; WI Router
+      - <code>POST /pr-answer</code> &rarr; PR Router
+    </ContentCard>
+
+    <ContentCard icon="mdi:database" iconColor="bg-cyan" title="DynamoDB Tables">
+      Two tables shared by both Lambdas:
+
+      - **Dedupe table** -- conditional put with 1-hour TTL
+      - **Rate limit table** -- atomic counters per pipeline/identity
+    </ContentCard>
+  </div>
+</Section>

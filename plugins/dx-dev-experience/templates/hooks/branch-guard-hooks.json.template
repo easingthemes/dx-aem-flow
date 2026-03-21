@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ] || [ \"$BRANCH\" = \"development\" ] || [ \"$BRANCH\" = \"develop\" ]; then echo \"BLOCKED: Do not commit on $BRANCH. Create a feature/* or bugfix/* branch first.\" >&2; exit 1; fi'"
+          }
+        ]
+      }
+    ]
+  }
+}

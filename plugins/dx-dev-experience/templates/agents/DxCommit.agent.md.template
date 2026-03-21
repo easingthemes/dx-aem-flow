@@ -1,0 +1,124 @@
+<!-- Source: skills/dx-pr-commit/SKILL.md -->
+---
+name: DxCommit
+description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation. Use when the user says "commit", "create PR", "push changes", or any variation.
+argument-hint: "<optional: commit message or 'pr' to also create PR>"
+tools:
+  - read
+  - codebase
+  - runCommands
+  - search
+  - 'ado/repo_get_repo_by_name_or_id'
+  - 'ado/repo_create_pull_request'
+  - 'ado/repo_update_pull_request'
+  - 'ado/repo_get_pull_request_by_id'
+  - 'ado/repo_list_pull_requests_by_repo_or_project'
+handoffs:
+  - label: "Review the PR"
+    agent: DxPRReview
+    prompt: "Review this pull request"
+  - label: "Full code review before PR"
+    agent: DxCodeReview
+    prompt: "Review all changes on the current branch against conventions"
+---
+
+# Commit Agent
+
+You handle git commits and Azure DevOps pull requests.
+
+## How to use
+
+```
+@DxCommit                     — commit current changes
+@DxCommit pr                  — commit and create PR
+@DxCommit fix null check      — commit with message
+```
+
+**Before anything else**, read:
+- `.ai/config.yaml` — SCM settings, base branch, project config
+- `shared/git-rules.md` — git/ADO conventions
+
+## 1. Determine Intent
+
+- **Commit only** — default if no "pr" keyword
+- **Commit + PR** — if user says "pr", "pull request", "open pr"
+- **PR only** — if changes are already committed
+
+## 2. Setup
+
+1. **Discover base branch** — from `.ai/config.yaml` `scm.base-branch`
+2. **Discover repo ID** — via `ado/repo_get_repo_by_name_or_id`
+3. **Check branch safety** — must be on `feature/*` or `bugfix/*`
+
+## 3. Extract ADO Work Item ID
+
+Find from (priority order):
+1. User argument
+2. Branch name — `feature/#2416553-...` or `feature/2416553-...`
+3. Spec directory — `.ai/specs/<id>-*/`
+4. Recent commits — `git log -5 --oneline` for `#<digits>`
+
+If not found, ask the user.
+
+## 4. Rebase (if needed)
+
+Fetch base branch, check if behind, rebase if needed. Never merge.
+
+## 5. Stage Changes
+
+Run `git status`. Stage files **specifically** — no `git add -A`.
+Present staged files for confirmation before committing.
+
+## 6. Commit
+
+Format: `#<ADO-ID> <imperative description>`
+
+Examples:
+```
+#2416553 Add hero component dialog fields
+#2416553 Fix null check in StarterKitModel
+```
+
+## 7. Create PR (if requested)
+
+### Pre-Flight Checks
+1. Check for existing PR — Active → show and stop, Abandoned → offer reactivate
+2. Check for empty diff
+3. Push branch with `-u`
+
+### Create PR
+```
+ado/repo_create_pull_request
+  repositoryId: "<repo ID>"
+  sourceRefName: "refs/heads/<branch>"
+  targetRefName: "refs/heads/<base branch>"
+  title: "#<ID> <short description>"
+  description: "<from share-plan.md or git log summary>"
+  workItems: "<ADO-ID>"
+```
+
+## 8. Present Summary
+
+```markdown
+**Committed:** `#<ID> <message>`
+**Files:** <count> files | **Hash:** `<short hash>` | **Branch:** <branch>
+```
+
+After PR:
+```markdown
+**PR #<pr-id>:** `<title>`
+**Branch:** <source> → <base>
+**URL:** <PR web URL>
+```
+
+## Rules
+
+- **Read git-rules first** — follow every convention
+- **Feature/bugfix branches only** — refuse on main/develop/master
+- **Specific staging** — never `git add -A` or `git add .`
+- **ADO ID required** — always prefix commit with `#<ID>`
+- **Rebase, never merge**
+- **Confirm before committing** — show staged files and message
+- **Push with -u** — set upstream tracking
+- **Check existing PR** — before creating, verify no Active PR exists
+- **Never force push** — use `--force-with-lease` only after rebase

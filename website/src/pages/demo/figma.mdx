@@ -1,0 +1,319 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Design to Deployment Demo
+sidebar: demo
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Design to Deployment in a Single Conversation"
+  subtitle="Multi-agent orchestration turns a Figma URL into a verified, production-ready AEM component — live, end to end."
+/>
+
+{/* Platform Overview */}
+<SectionHeading
+  badge="Agentic Development Platform"
+  title="Specialized Agents, Unified Orchestration"
+  subtitle="Today we demo one workflow. The platform is a full agent orchestration layer — 78 composable skills, 13 specialized agents, and 4 live MCP tool integrations across three independently installable plugins."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard
+      icon="mdi:wrench"
+      iconColor="bg-brand-700"
+      title="dx-dev-experience"
+      tags={[
+        { label: '55 skills' },
+        { label: '7 agents', color: 'secondary' },
+        { label: 'Figma + ADO/Jira MCP', color: 'success' },
+      ]}
+    >
+      <strong>The orchestration core.</strong> Full sprint lifecycle: agentic requirements analysis,
+      repository intelligence for codebase research, plan-iterate-recover-deliver execution loop,
+      multi-agent code review, and autonomous PR creation.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:sitemap"
+      iconColor="bg-amber-500"
+      title="dx-aem"
+      tags={[
+        { label: '12 skills', color: 'warning' },
+        { label: '6 agents', color: 'secondary' },
+        { label: 'AEM + Chrome MCP', color: 'info' },
+      ]}
+    >
+      <strong>Domain-specific tool use.</strong> Agents that query a live AEM instance via MCP,
+      automate browser-based QA through Chrome DevTools, inspect component dialogs, and capture
+      deployment evidence. Not mocked — observed.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:lightning-bolt"
+      iconColor="bg-red-500"
+      title="dx-automation"
+      tags={[
+        { label: '11 skills', color: 'error' },
+        { label: '10 agents', color: 'warning' },
+        { label: 'AWS Lambda + ADO/Jira' },
+      ]}
+    >
+      <strong>Bounded autonomy at scale.</strong> Same skills, zero humans. 10 autonomous agents
+      running 24/7 as pipelines — event-driven via ADO/Jira webhooks, budget-controlled, rate-limited,
+      with full audit trails and deterministic guardrails.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Enterprise-Grade Agentic Architecture">
+    - **Multi-Agent Orchestration** — coordinator agents chain specialized skills via isolated subagents, each with its own context window
+    - **Parallel Reasoning** — multiple agents reason simultaneously across separate context windows, results merged by the orchestrator
+    - **Context Engineering** — convention-based file handoff (.md files on disk) replaces fragile data buses; each skill curates exactly what the next agent needs
+    - **Live Tool Use via MCP** — Figma, Chrome DevTools, AEM JCR, Azure DevOps, Jira/Confluence — agents interact with real production systems, not mocks
+    - **Self-Healing Execution** — deterministic guardrails between steps, auto-retry on failure, corrective fix loops with escalation paths
+    - **Model Routing** — Opus for deep reasoning, Sonnet for execution, Haiku for lookups. Cost scales with complexity, not volume
+  </HighlightBox>
+</Section>
+
+{/* Demo Setup */}
+<SectionHeading
+  badge="Demo Setup"
+  badgeColor="secondary"
+  title="What We're Building"
+  subtitle="A mobile flight listing component from a free Figma community file. The user story and requirements are pre-written so we can focus on the Figma-to-Code pipeline."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:pencil" iconColor="bg-cyan" title="Figma Design">
+      Air Tours listing from the <strong>Flights - Free App UI Kit</strong> community file.
+      Mobile cards with hero images, rating badges, airfield tags, passenger count, favorites,
+      and bottom tab navigation.
+
+      <img src="/images/figma-demo/air-tours-reference.png" alt="Air Tours Figma design" class="rounded border border-gray-200 w-full mt-4" />
+    </ContentCard>
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Pre-Written Specs">
+      In a real sprint, <code>/dx-req-all</code> fetches the ticket, validates Definition of Ready,
+      distills requirements, and researches the codebase — all automatically. For this demo,
+      those files are pre-written so we jump straight into the design pipeline.
+
+      <CommandBlock label="Spec folder">
+        .ai/specs/DEMO-flights-air-tours/
+      </CommandBlock>
+
+      - ✓ <code>raw-story.md</code> — User story with acceptance criteria
+      - ✓ <code>explain.md</code> — Developer requirements
+      - ✓ <code>research.md</code> — Codebase research findings
+      - ✓ <code>figma-reference.png</code> — Design screenshot
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Agent Orchestration */}
+<SectionHeading
+  badge="Agent Orchestration in Action"
+  badgeColor="info"
+  title="One Prompt. Multiple Agents. Production-Ready Output."
+  subtitle="/dx-figma-all is a coordinator agent. It orchestrates three specialized skills via isolated subagents, validates between each step, and reports progress."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Run in Claude Code">
+    /dx-figma-all https://www.figma.com/design/bQmIeudg9VuIVXMitrvulC/Flights-•-Free-App-UI-Kit--Community-?node-id=97-8157&m=dev
+  </CommandBlock>
+
+  <HighlightBox severity="warning" title="Multi-Agent Orchestration Under the Hood">
+    The coordinator dispatches a <code>dx-step-executor</code> subagent for each phase — a composable
+    microservice pattern applied to AI agents. Each subagent runs in its own isolated context window,
+    performing deep repository intelligence without polluting the orchestrator's context. Only a compact
+    summary propagates upward. This is <strong>context engineering</strong> in practice.
+  </HighlightBox>
+
+  <div class="flex flex-col gap-4 mt-6">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="Phase 1: Extract — /dx-figma-extract" horizontal>
+      Live <strong>tool use</strong> via Figma MCP — pulls the node tree, design tokens, and screenshots
+      directly from the running Figma desktop app. Classifies each layer using adaptive intelligence.
+      Downloads image assets locally.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-extract.md + figma-reference.png + assets/</p>
+    </ContentCard>
+
+    <ContentCard icon="mdi:account-group" iconColor="bg-cyan" title="Phase 2: Prototype — /dx-figma-prototype" horizontal>
+      <strong>Parallel reasoning</strong> across two specialized agents: <code>dx-figma-styles</code> performs
+      repository intelligence on your CSS/SCSS conventions while <code>dx-figma-markup</code> simultaneously
+      discovers HTML/accessibility patterns. The orchestrator merges both results into a standalone prototype
+      that uses your project's actual design tokens.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-conventions.md + prototype/index.html + styles.css + script.js</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">Figma Source</p>
+          <img src="/images/figma-demo/air-tours-reference.png" alt="Figma Source" class="rounded border border-gray-200 w-full" />
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">Generated Prototype</p>
+          <img src="/images/figma-demo/prototype-screenshot.png" alt="Generated Prototype" class="rounded border border-gray-200 w-full" />
+        </div>
+      </div>
+    </ContentCard>
+
+    <ContentCard icon="mdi:camera" iconColor="bg-emerald-600" title="Phase 3: Verify — /dx-figma-verify" horizontal>
+      <strong>Closed-loop verification</strong> via Chrome DevTools MCP — the agent opens a real browser,
+      renders the prototype, takes a clean screenshot, and compares it against the Figma reference.
+      If visual gaps are detected, the self-healing loop patches CSS/HTML and re-verifies — up to 2 iterations.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-gaps.md + prototype-screenshot.png</p>
+    </ContentCard>
+  </div>
+
+  <div class="mt-6 border border-gray-200 rounded overflow-hidden">
+    <video src="/videos/figma-all-speed.mp4" controls class="w-full"></video>
+    <div class="p-3 bg-gray-50">
+      <h4 class="font-semibold text-brand-900">See It in Action</h4>
+      <p class="text-sm text-[#4a4a5a]">/dx-figma-all running end to end — extract, prototype, verify — in a single conversation.</p>
+    </div>
+  </div>
+
+  <HighlightBox severity="success" title="Human-in-the-Loop: Manual Step-by-Step">
+    Every phase can also be run individually: <code>/dx-figma-extract</code>, <code>/dx-figma-prototype</code>,
+    <code>/dx-figma-verify</code>. The developer stays in control — inspect, adjust, iterate between steps.
+    Same composable skills, two modes: <strong>bounded autonomy</strong> or <strong>supervised execution</strong>.
+  </HighlightBox>
+</Section>
+
+{/* Plan + Implement */}
+<SectionHeading
+  badge="Agentic Execution"
+  badgeColor="warning"
+  title="Plan, Iterate, Recover, Deliver"
+  subtitle="The Figma pipeline produces a verified prototype. Now the plan-iterate-recover-deliver execution loop takes over."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-amber-500" title="Step 4: Plan">
+      <CommandBlock label="Run in Claude Code">/dx-plan</CommandBlock>
+
+      The planner performs <strong>context engineering</strong>: it reads <code>prototype/</code>,
+      <code>figma-conventions.md</code>, <code>explain.md</code>, and <code>research.md</code> —
+      working from concrete HTML and CSS, not abstract descriptions.
+    </ContentCard>
+    <ContentCard icon="mdi:play-circle-outline" iconColor="bg-brand-700" title="Step 5: Execute">
+      <CommandBlock label="Run in Claude Code">/dx-step-all</CommandBlock>
+
+      Agentic execution with a <strong>plan-iterate-recover</strong> loop: write code → build →
+      test → review → commit. Self-healing on compilation errors. Convention continuity from
+      Figma through to production.
+    </ContentCard>
+  </div>
+
+  <ContentCard icon="mdi:anchor" iconColor="bg-emerald-600" title="Step 6: Verify on AEM" horizontal>
+    <CommandBlock label="Run in Claude Code">/aem-fe-verify</CommandBlock>
+
+    Deploys to local AEM, opens the page via Chrome DevTools MCP, screenshots the rendered component,
+    and compares against the Figma reference. <strong>Closed-loop verification</strong> — from Figma URL
+    to production-verified AEM component.
+  </ContentCard>
+
+  <ContentCard title="AEM Verification Screenshots">
+    Captured by <code>/aem-fe-verify</code> — the agent creates a test page and configures the component
+    via AEM MCP (JCR writes), sourcing matching images and text content from the DAM automatically.
+    Screenshots are taken via Chrome DevTools MCP to verify the rendered output against the Figma reference.
+
+    <div class="grid md:grid-cols-2 gap-4 mt-4">
+      <div>
+        <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">AEM Component Dialog</p>
+        <img src="/images/aem/aem-dialog.png" alt="AEM Component Dialog" class="rounded border border-gray-200 w-full" />
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">AEM Rendered Page</p>
+        <img src="/images/aem/aem-page.png" alt="AEM Rendered Page" class="rounded border border-gray-200 w-full" />
+      </div>
+    </div>
+  </ContentCard>
+</Section>
+
+{/* Summary Flow */}
+<SectionHeading
+  badge="Summary"
+  badgeColor="secondary"
+  title="End-to-End Flow"
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Demo Pipeline"
+    command="/dx-agent-all <ADO-Story-ID>"
+    description="End-to-end flow from pre-written specs to verified AEM component."
+    steps={[
+      { title: 'Pre-written', subtitle: 'Story + Requirements' },
+      { title: 'Figma Pipeline', subtitle: 'Extract, Prototype, Verify', command: '/dx-figma-all', color: '#0891b2' },
+      { title: 'Plan', subtitle: 'Implementation plan', command: '/dx-plan', color: '#d97706' },
+      { title: 'Execute', subtitle: 'AEM component', command: '/dx-step-all', color: '#7c3aed' },
+      { title: 'AEM Verify', subtitle: 'AEM vs Figma', command: '/aem-fe-verify', color: '#059669' },
+    ]}
+  />
+</Section>
+
+{/* What Makes This Different */}
+<SectionHeading
+  badge="Beyond Vibe Coding"
+  badgeColor="success"
+  title="Orchestrate, Don't Just Automate"
+  subtitle="This isn't 'paste a prompt, get code.' It's an agentic operating system where specialized agents coordinate, verify, and deliver — with full traceability."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:account-group" iconColor="bg-cyan" title="Multi-Agent Orchestration">
+      Composable agent teams, not a monolithic AI. Each skill runs in an isolated subagent with its own context window. The coordinator sees only compact summaries.
+    </ContentCard>
+    <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="Live Tool Use via MCP">
+      Not mocked, not simulated. Figma MCP reads the design file. Chrome DevTools opens a real browser. AEM MCP queries the live JCR repository.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Repository Intelligence">
+      Agents don't generate generic code. They perform deep codebase analysis — your SCSS variables, BEM naming, breakpoints, ARIA patterns.
+    </ContentCard>
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="Deterministic Guardrails">
+      Validation gates between every step. If extract fails, the chain stops — no "hallucinated" downstream output.
+    </ContentCard>
+    <ContentCard icon="mdi:file" iconColor="bg-brand-700" title="Context Engineering via Files">
+      Skills curate context through predictable .md files on disk. No orchestration bus, no fragile state. Survives session crashes.
+    </ContentCard>
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-red-500" title="Three Delivery Modes">
+      Same skills run locally in Claude Code, in GitHub Copilot CLI, or autonomously on ADO pipelines 24/7.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Demo Tips */}
+<SectionHeading
+  badge="Presenter Notes"
+  badgeColor="warning"
+  title="Demo Checklist"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <HighlightBox severity="warning" title="Before You Start">
+      - <code>watch:new</code> running in a separate terminal
+      - Figma desktop app open with the Flights file loaded
+      - Chrome open (for DevTools MCP)
+      - AEM running locally on :4502
+      - Clean if re-running: <code>rm -rf .ai/specs/DEMO-flights-air-tours/figma-* .ai/specs/DEMO-flights-air-tours/prototype</code>
+    </HighlightBox>
+    <HighlightBox severity="info" title="Timing">
+      - **Platform overview:** ~2 min (this page)
+      - **/dx-figma-all:** moderate (extract + prototype + verify)
+      - **/dx-plan:** very fast
+      - **/dx-step-all:** longest phase (executes all plan steps)
+      - **/aem-fe-verify:** fast
+    </HighlightBox>
+  </div>
+</Section>

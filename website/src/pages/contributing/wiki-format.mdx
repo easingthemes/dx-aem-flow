@@ -1,0 +1,264 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Wiki Format
+sidebar: contributing
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Wiki Checklist Format"
+  subtitle="How DoR and DoD wiki pages are structured for automated parsing"
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="How It Works"
+  subtitle="Skills fetch checklist criteria from ADO wiki pages at runtime -- the wiki is the single source of truth."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:book-open" iconColor="bg-brand-700" title="Wiki as Config">
+      The <code>/dx-req-dor</code> and <code>/dx-req-dod</code> skills fetch criteria from ADO wiki pages configured in <code>.ai/config.yaml</code>. Editing the wiki page immediately changes what the skill checks -- no code changes needed.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Config Keys">
+      <CommandBlock>{`scm:
+  wiki-dor-url: "https://myorg.visualstudio.com/..."
+  wiki-dod-url: "https://myorg.visualstudio.com/..."`}</CommandBlock>
+      <p class="text-xs text-gray-500 mt-2">Both URLs are required. Skills error if not configured.</p>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Structure"
+  badgeColor="secondary"
+  title="Page Structure"
+  subtitle="Both DoR and DoD wiki pages follow the same structure."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Wiki page template">{`# Title -- Checklist
+
+> **Purpose:** ...
+> **Who validates:** ...
+> **When:** ...
+
+---
+
+## 1. Section Name
+
+Description paragraph.
+
+| Criterion | Who checks | What to verify |
+|-----------|-----------|----------------|
+| Criterion name | Agent | What the agent checks |
+| Another criterion | Human | What a human verifies |
+| Optional criterion | Advisory | Advisory check -- never fails |
+
+**Skip trigger:** When this section can be skipped.
+
+---
+
+## 2. Next Section
+
+...
+
+---
+
+## Completion Summary
+
+| # | Section | Automated | Human |
+|---|---------|-----------|-------|
+| 1 | Section Name | description | -- |
+
+**Scoring:**
+- All automated criteria pass -> pass verdict
+- 1-2 automated failures -> partial verdict
+- 3+ automated failures -> fail verdict`}</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="Format"
+  badgeColor="warning"
+  title="Required Elements"
+  subtitle="Section headings, criteria tables, and scoring rules."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:format-header-pound" iconColor="bg-brand-700" title="Section Headings">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>Use <code>## N. Section Title</code> format (numbered, with period)</li>
+        <li>Sections are parsed in order -- numbering defines the sequence</li>
+        <li>Non-numbered <code>##</code> headings (like <code>## Completion Summary</code>) are metadata, not checklist sections</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:table" iconColor="bg-cyan" title="Criteria Tables">
+      Each section MUST have a markdown table with exactly three columns:
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><strong>Criterion</strong> -- human-readable criterion name</li>
+        <li><strong>Who checks</strong> -- <code>Agent</code>, <code>Human</code>, or <code>Advisory</code></li>
+        <li><strong>What to verify</strong> -- free-text description</li>
+      </ul>
+    </ContentCard>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">"Who checks" Values</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Value</th>
+          <th class="text-left py-2 px-4 font-semibold">Meaning</th>
+          <th class="text-left py-2 px-4 font-semibold">Skill Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Agent</code></td><td class="py-2 px-4">Automated check</td><td class="py-2 px-4">Evaluates programmatically -- PASS or FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Human</code></td><td class="py-2 px-4">Requires human judgment</td><td class="py-2 px-4">Always WARN (advisory) -- agent cannot verify</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Advisory</code></td><td class="py-2 px-4">Nice-to-have check</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Features"
+  badgeColor="info"
+  title="Skip Triggers and Scoring"
+  subtitle="Conditional skipping and verdict thresholds."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:skip-next" iconColor="bg-amber-500" title="Skip Triggers">
+      Optional <code>&#42;&#42;Skip trigger:&#42;&#42;</code> paragraphs after a criteria table define when criteria in that section can be skipped (marked SKIP). The text is parsed as natural language. Common patterns:
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>"Pure configuration or content-only changes"</li>
+        <li>"Backend-only or infrastructure changes"</li>
+        <li>"Change type is X or Y"</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:counter" iconColor="bg-emerald-600" title="Scoring Rules">
+      Skills look for a <code>&#42;&#42;Scoring:&#42;&#42;</code> block with bullet points defining verdicts:
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>"All automated criteria pass" -- pass verdict</li>
+        <li>"1-2 automated failures" -- partial verdict</li>
+        <li>"3+ automated failures" -- fail verdict</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="DoR"
+  badgeColor="secondary"
+  title="DoR-Specific Patterns"
+  subtitle="Detection patterns and sub-criteria unique to Definition of Ready."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:clipboard-check" iconColor="bg-brand-700" title="Detection Patterns">
+    The "What to verify" column contains instructions the skill interprets:
+    <ul class="mt-2 text-sm list-none p-0 space-y-1">
+      <li><code>Title non-empty, Description non-empty</code> -- check specific fields</li>
+      <li><code>Figma URL with node-id= parameter</code> -- look for URL patterns</li>
+      <li><code>Dialog field table with columns (Field, Type, Options)</code> -- look for table patterns</li>
+    </ul>
+    <p class="text-sm mt-2">Sub-criteria are comma-separated within one criterion. The skill evaluates each sub-check individually.</p>
+  </ContentCard>
+
+  <CommandBlock label="Minimal DoR section example">{`## 1. Story Basics
+
+| Criterion | Who checks | What to verify |
+|-----------|-----------|----------------|
+| Title and description | Agent | Title non-empty, Description non-empty |
+| Acceptance criteria | Agent | AC section exists with at least 1 testable condition |`}</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="DoD"
+  badgeColor="warning"
+  title="DoD-Specific Patterns"
+  subtitle="Evidence checks unique to Definition of Done."
+  bg="primary"
+/>
+<Section>
+  <ContentCard icon="mdi:check-decagram" iconColor="bg-cyan-dark" title="Evidence Checks">
+    The DoD "What to verify" column describes evidence the skill looks for:
+    <ul class="mt-2 text-sm list-none p-0 space-y-1">
+      <li>File existence checks: <code>explain.md exists</code></li>
+      <li>ADO state checks: <code>At least one linked PR exists in ADO</code></li>
+      <li>Codebase checks: <code>Test files exist for changed components</code></li>
+      <li>Step status checks: <code>All steps in implement.md marked done</code></li>
+    </ul>
+  </ContentCard>
+
+  <CommandBlock label="DoD section with skip trigger">{`## 2. Testing
+
+| Criterion | Who checks | What to verify |
+|-----------|-----------|----------------|
+| Tests written | Agent | Test files exist for changed components |
+| Tests pass | Agent | Build step completed successfully |
+
+**Skip trigger:** Pure configuration or content-only changes may not require tests.`}</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="Maintenance"
+  badgeColor="info"
+  title="Maintaining Wiki Pages"
+  subtitle="Edit directly in ADO -- changes take effect immediately."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:pencil" iconColor="bg-emerald-600" title="How to Edit">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>Edit wiki pages directly in ADO -- changes take effect immediately</li>
+        <li>Skills fetch the latest wiki content on every run (no caching)</li>
+        <li>Adding new sections or criteria automatically extends what the skill checks</li>
+        <li>Removing criteria removes them from the check -- no code changes needed</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:alert" iconColor="bg-red-500" title="Common Pitfalls">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>Keep table format exact: pipe-separated, header + separator + data rows</li>
+        <li>The <code>Who checks</code> column controls automation -- choose carefully</li>
+        <li>Use <code>## N. Title</code> format for checklist sections (numbered with period)</li>
+        <li>Non-numbered headings are treated as metadata, not sections</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Troubleshooting"
+  badgeColor="error"
+  title="Troubleshooting"
+  subtitle="Common issues when skills cannot parse wiki pages."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <HighlightBox severity="error" title='"wiki-dor-url not configured"'>
+      Add the URL to <code>.ai/config.yaml</code> under the <code>scm:</code> section. Both <code>wiki-dor-url</code> and <code>wiki-dod-url</code> are required.
+    </HighlightBox>
+    <HighlightBox severity="warning" title="Skill does not recognize a criterion">
+      Check that the table format is exact: three columns, pipe-separated, with the header row matching <code>Criterion | Who checks | What to verify</code>.
+    </HighlightBox>
+    <HighlightBox severity="warning" title="New section not being checked">
+      Ensure the heading uses the <code>## N. Title</code> format (numbered, with period after the number). Non-numbered headings are metadata.
+    </HighlightBox>
+    <HighlightBox severity="info" title='"Could not fetch wiki page"'>
+      Verify the URL is correct -- it should be a full URL including the wiki identifier and page path.
+    </HighlightBox>
+  </div>
+</Section>

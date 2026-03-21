@@ -1,0 +1,103 @@
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: dx-hub
+      type: git
+      name: {{ADO_PROJECT}}/{{ADO_REPO}}
+      ref: development
+# Claude Agent SDK pipeline — DoD Fix via /dx-req-dod-fix skill.
+# Chained trigger: Lambda fires this after DoD check reports failures.
+
+parameters:
+  - name: workItemId
+    displayName: "ADO Work Item ID"
+    type: string
+  - name: dryRun
+    displayName: "Dry run (analyze only, don't apply fixes or create tasks)"
+    type: boolean
+    default: false
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+  - name: sourceRepoName
+    displayName: "Source repo name (for cross-repo delegation)"
+    type: string
+    default: ""
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+    path: s
+
+  - checkout: dx-hub
+    fetchDepth: 1
+    path: dx-hub
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+      npm install --no-save @anthropic-ai/claude-agent-sdk
+    displayName: "Install Claude Code + Agent SDK"
+    workingDirectory: $(Build.SourcesDirectory)
+  - bash: |
+      PROMPT="/dx-req-dod-fix ${{ parameters.workItemId }}"
+      if [ "${{ parameters.dryRun }}" = "True" ]; then
+        PROMPT="$PROMPT (dry run — analyze and draft fixes but do NOT apply changes, create tasks, or push code)"
+      fi
+
+      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
+      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+
+      echo "prompt: $PROMPT"
+      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+    displayName: "AI DoD Fix"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      DX_PIPELINE_MODE: "true"
+      SOURCE_REPO_NAME: $(Build.Repository.Name)
+      CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
+      MAX_TURNS: "40"
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
+    timeoutInMinutes: 20
+
+  - bash: |
+      DELEGATION_FILE="$(Build.SourcesDirectory)/.ai/run-context/delegate.json"
+      if [ ! -f "$DELEGATION_FILE" ]; then
+        echo "No delegation needed — work stays in this repo."
+        exit 0
+      fi
+      echo "Cross-repo delegation file found:"
+      cat "$DELEGATION_FILE"
+      PIPELINE_ID=$(jq -r '.pipelineId' "$DELEGATION_FILE")
+      TARGET_REPO=$(jq -r '.targetRepo' "$DELEGATION_FILE")
+      PARAMS=$(jq -c '.templateParameters' "$DELEGATION_FILE")
+      PROJECT="$(System.TeamProject)"
+      API_URL="${ADO_ORG_URL}/$(printf '%s' "$PROJECT" | jq -sRr @uri)/_apis/pipelines/${PIPELINE_ID}/runs?api-version=7.1-preview.1"
+      BODY=$(jq -n --argjson params "$PARAMS" '{templateParameters: $params}')
+      echo "##[section]Delegating DoD-Fix to $TARGET_REPO (pipeline $PIPELINE_ID)"
+      HTTP_CODE=$(curl -s -o /tmp/queue-response.json -w '%{http_code}' \
+        -X POST "$API_URL" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" \
+        -d "$BODY")
+      if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+        RUN_ID=$(jq -r '.id // "unknown"' /tmp/queue-response.json)
+        echo "Pipeline queued successfully. Run ID: $RUN_ID"
+      else
+        echo "##[warning]Pipeline delegation failed with HTTP $HTTP_CODE"
+        cat /tmp/queue-response.json 2>/dev/null || true
+      fi
+    displayName: "Cross-repo delegation (if needed)"
+    condition: not(canceled())
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      ADO_ORG_URL: $(ADO_ORG_URL)

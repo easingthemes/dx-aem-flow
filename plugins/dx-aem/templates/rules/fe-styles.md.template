@@ -1,0 +1,116 @@
+---
+description: Frontend SCSS patterns — Dart Sass, @use/@forward, CSS custom properties
+paths: ["**/frontend/**/*.scss", "**/clientlibs/**/*.scss"]
+applyTo: "**/*.scss, **/*.css"
+---
+
+# Styles (SCSS)
+
+## Module System
+
+**Dart Sass with `@use`/`@forward`** — NOT `@import`.
+
+```scss
+// Component SCSS
+@charset 'UTF-8';
+@use 'abstracts' as *;
+
+.cmp-component { /* ... */ }
+```
+
+```scss
+// abstracts.scss — @forward all shared modules
+@forward 'abstracts/breakpoints';
+@forward 'abstracts/colours';
+@forward 'mixins/mediaqueries';
+@forward 'mixins/typography';
+```
+
+## Naming
+
+- Component styles target AEM Core Component classes: `.cmp-{name}__*`
+- Wrapper modifier classes: `.project-{name}--{variant}`
+- Design tokens via CSS custom properties: `var(--project-color-*)`, `var(--project-spacing-*)`
+
+## Rules
+
+- Use `@use 'abstracts' as *` — never `@import`
+- Use existing shared mixins for breakpoints, typography, focus states
+- Use CSS custom properties for design tokens — don't hardcode colours or spacing
+- New component styles co-locate with component JS
+- Use the shared focus mixin for consistent focus indicators
+
+## Build System
+
+- **Primary Build Tool**: `@netcentric/fe-build`
+- **CSS Processing**: PostCSS with SCSS support
+- **Linting**: Stylelint with SCSS plugin
+
+## BEM Methodology
+
+```scss
+.{prefix}-button {
+  &__label { }    // Element
+  &--primary { }  // Modifier
+  &--is-loading { }  // State
+}
+```
+
+## CSS Variables
+
+```scss
+.{prefix}-component {
+  --{prefix}-component-color: #333;
+  --{prefix}-component-background: #fff;
+
+  &--primary {
+    --{prefix}-component-color: #fff;
+    --{prefix}-component-background: #007bff;
+  }
+
+  &__content {
+    color: var(--{prefix}-component-color);
+    background-color: var(--{prefix}-component-background);
+  }
+}
+```
+
+## AEM Style System Integration
+
+```scss
+// CORRECT: Modifier at root, descendant selectors for elements
+.{prefix}-component--variation {
+  .{prefix}-component {
+    &__element { ... }
+  }
+}
+
+// WRONG: Hybrid Block-Modifier__Element pattern
+.{prefix}-component--variation {
+  &__element { ... }  // Creates .{prefix}-component--variation__element — WRONG
+}
+```
+
+## Stylelint Rules
+
+- **`max-nesting-depth`**: 8 levels maximum
+- **`media-feature-range-notation`**: Use prefix notation
+- **Font size units**: Only `rem`, `px`, `em` allowed
+
+## Focus Management
+
+Always use the shared focus mixin from `commons/sass/mixins/_focus.scss`:
+
+```scss
+@use 'abstracts' as *;
+.{prefix}-button { @include focus; }
+```
+
+- Never use `outline: none` on `:focus` without `:focus-visible` replacement
+- Never hardcode hex values for focus colors — use CSS variables
+
+## Market-Specific Styles
+
+- **Never use `html[lang]` selectors** — they are fragile
+- Create `_{component}-{brand}-{market}.scss` partials for market overrides
+- Add `@use` to the brand's main `*.clientlibs.scss` entry file

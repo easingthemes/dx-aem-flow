@@ -1,0 +1,42 @@
+---
+description: AEM component conventions — versioned paths, dialogs, HTL templates
+paths: ["**/.content.xml", "**/_cq_dialog/**", "**/*.html"]
+applyTo: "**/.content.xml, **/_cq_dialog/**, **/*.html"
+---
+
+# AEM Component Structure
+
+## Path Pattern
+
+```
+/apps/<prefix>/components/<name>/
+├── .content.xml             # jcr:primaryType=cq:Component, sling:resourceSuperType, componentGroup
+├── _cq_dialog/.content.xml  # Granite UI authoring dialog
+├── _cq_template/.content.xml  # Initial child content (optional)
+├── <name>.html              # Main HTL template
+└── *.html                   # Supporting HTL templates
+```
+
+## Component Definition
+
+```xml
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+          xmlns:cq="http://www.day.com/jcr/cq/1.0"
+          xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    jcr:primaryType="cq:Component"
+    jcr:title="My Component"
+    sling:resourceSuperType="core/wcm/components/teaser/v2/teaser"
+    componentGroup="My Project"/>
+```
+
+## Dialog Properties
+
+- Prefix: `./` (e.g., `name="./title"`, `name="./ctaText"`)
+- `_cq_template` requires `cq`, `sling`, `jcr`, `nt` namespace declarations
+
+## Rules
+
+- `sling:resourceSuperType` must reference the correct Core WCM Component version
+- Dialog property names use `./` prefix
+- All namespace declarations required in `_cq_template/.content.xml` to avoid Maven validation errors
+- Dialog property names must match Sling Model `@Inject`/`@ValueMapValue` field names

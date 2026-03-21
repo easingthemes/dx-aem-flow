@@ -1,0 +1,447 @@
+<style>
+.mermaid { max-width: 800px; width: 100%; margin: 0 auto; display: block; }
+</style>
+
+# DX Automation Flow (dx-automation)
+
+Autonomous agent infrastructure — 10 AI agents running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. No user interaction required after setup.
+
+### Color Legend — steps that change a remote platform or project source code
+
+```mermaid
+flowchart LR
+    L1["ADO work items"] --- L2["PR-related"] --- L3["AEM local"]
+    L4["AEM QA remote"] --- L5["ADO wiki"] --- L6["Source code"]
+    style L1 fill:#bbdefb,stroke:#1565c0,color:#000
+    style L2 fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style L3 fill:#ffe0b2,stroke:#e65100,color:#000
+    style L4 fill:#ffcdd2,stroke:#c62828,color:#000
+    style L5 fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style L6 fill:#fff9c4,stroke:#f9a825,color:#000
+    linkStyle 0,1,2,3 stroke:#ccc,stroke-width:1px
+```
+
+---
+
+## Full Infrastructure Flow
+
+```mermaid
+flowchart TD
+    subgraph SETUP["One-Time Setup (Sequential)"]
+        INIT["/auto-init<br/>Hub or Consumer?<br/>Generate infra.json, repos.json"]
+        PROVISION["/auto-provision<br/>(hub only)<br/>Create DynamoDB, SQS, S3,<br/>SNS, IAM, Lambda, API GW"]
+        PIPELINES["/auto-pipelines<br/>Import 10 (hub) or 6 (consumer)<br/>pipeline YAMLs + set vars"]
+        DEPLOY["/auto-deploy<br/>(hub only)<br/>Package and upload Lambda code"]
+        LAMBDA_ENV["/auto-lambda-env<br/>(hub only)<br/>Set ADO PAT, secrets,<br/>pipeline IDs, tag gates"]
+        WEBHOOKS["/auto-webhooks<br/>Create ADO service hooks +<br/>PR Review build policy"]
+        ALARMS["/auto-alarms<br/>(hub only)<br/>Create 4 CloudWatch alarms +<br/>SNS email subscription"]
+
+        INIT --> PROVISION --> PIPELINES --> DEPLOY --> LAMBDA_ENV --> WEBHOOKS --> ALARMS
+    end
+
+    subgraph RUNTIME["Runtime (24/7 Autonomous)"]
+        ADO_EVENT["ADO Event<br/>(WI update, PR comment,<br/>PR created)"]
+        APIGW["API Gateway<br/>POST /wi or /pr"]
+        LAMBDA["Lambda Router<br/>(WI-Router or PR-Router)"]
+        DEDUP["DynamoDB dedupe check"]
+        RATE["Rate limit check"]
+        PIPELINE["ADO Pipeline<br/>Claude Code CLI"]
+        AGENT["Agent executes<br/>(review, answer, fix, etc.)"]
+        RESULT["Posts to ADO<br/>(comments, PRs, bugs)"]
+
+        ADO_EVENT --> APIGW --> LAMBDA --> DEDUP
+        DEDUP -->|new| RATE
+        DEDUP -->|duplicate| SKIP1((Skip))
+        RATE -->|under limit| PIPELINE
+        RATE -->|over limit| SKIP2((Skip))
+        PIPELINE --> AGENT --> RESULT
+    end
+
+    subgraph MONITOR["Ongoing Operations"]
+        DOCTOR["/auto-doctor<br/>Health check"]
+        STATUS["/auto-status<br/>DLQ depth, tokens, rates"]
+        EVAL["/auto-eval<br/>Test agent quality"]
+        TEST["/auto-test<br/>Dry-run against real data"]
+    end
+
+    ALARMS --> ADO_EVENT
+    RESULT -.-> DOCTOR
+
+    style SETUP fill:none,stroke:#90a4ae
+    style RUNTIME fill:none,stroke:#90a4ae
+    style MONITOR fill:none,stroke:#90a4ae
+    style RESULT fill:#bbdefb,stroke:#1565c0,color:#000
+```
+
+---
+
+## Setup Flow (Hub Profile)
+
+**Developer types:** `/auto-init` then follow sequential steps
+
+```mermaid
+flowchart TD
+    subgraph STEP1["1. /auto-init"]
+        Q1["Hub or Consumer?"]
+        HUB["full-hub profile"]
+        CONS["consumer profile"]
+        FILES1["infra.json<br/>repos.json<br/>.env.template"]
+        Q1 -->|hub| HUB --> FILES1
+        Q1 -->|consumer| CONS --> FILES1
+    end
+
+    subgraph STEP2["2. /auto-provision (hub only)"]
+        DDB["DynamoDB<br/>3 tables: dedupe,<br/>rate-limits, token-budget"]
+        SQS["SQS<br/>Dead-letter queue<br/>(14-day retention)"]
+        S3["S3<br/>Agent output bundles<br/>(90-day lifecycle)"]
+        SNS["SNS<br/>Alert topic"]
+        IAM["IAM<br/>Lambda execution role"]
+        LAMBDA_PH["Lambda<br/>2 placeholder functions:<br/>WI-Router, PR-Router"]
+        APIGW_R["API Gateway<br/>HTTP API: /wi, /pr routes"]
+    end
+
+    subgraph STEP3["3. /auto-pipelines"]
+        P1["ado-cli-dor.yml"]
+        P2["ado-cli-dod.yml"]
+        P3["ado-cli-dod-fix.yml"]
+        P4["ado-cli-pr-review.yml"]
+        P5["ado-cli-pr-answer.yml"]
+        P6["ado-cli-bug-fix.yml"]
+        P7["ado-cli-qa.yml"]
+        P8["ado-cli-dev-agent.yml"]
+        P9["ado-cli-doc-agent.yml"]
+        P10["ado-cli-estimation.yml"]
+        VARS["Pipeline variables:<br/>ANTHROPIC_API_KEY<br/>MONTHLY_TOKEN_CAP<br/>LLM_MODEL"]
+    end
+
+    subgraph STEP4["4. /auto-deploy (hub only)"]
+        PKG["Package wi-router +<br/>pr-router + shared libs"]
+        UPLOAD["aws_lambda_deploy<br/>(audit-wrapped)"]
+        PKG --> UPLOAD
+    end
+
+    subgraph STEP5["5. /auto-lambda-env (hub only)"]
+        ENV_VARS["ADO_PAT<br/>WEBHOOK_SECRET<br/>TAG_GATE per agent<br/>Pipeline IDs<br/>PR_ANSWER_PIPELINE_MAP"]
+    end
+
+    subgraph STEP6["6. /auto-webhooks"]
+        WH_WI["WI hooks - hub only<br/>workitem.updated + tag filter"]
+        WH_PR["PR Answer hook - all repos<br/>pullrequest-comment-event<br/>per-repo + per-branch"]
+        WH_POLICY["PR Review policy (all)<br/>Build validation on base branch"]
+    end
+
+    subgraph STEP7["7. /auto-alarms (hub only)"]
+        A1["DLQ depth > 5"]
+        A2["WI-Router errors > 3/hr"]
+        A3["PR-Router errors > 3/hr"]
+        A4["Lambda throttles"]
+        SNS_SUB["SNS email subscription"]
+    end
+
+    FILES1 --> DDB
+    APIGW_R --> P1
+    VARS --> PKG
+    UPLOAD --> ENV_VARS
+    ENV_VARS --> WH_WI
+    WH_POLICY --> A1
+
+    style STEP1 fill:none,stroke:#90a4ae
+    style STEP2 fill:none,stroke:#90a4ae
+    style STEP3 fill:none,stroke:#90a4ae
+    style STEP4 fill:none,stroke:#90a4ae
+    style STEP5 fill:none,stroke:#90a4ae
+    style STEP6 fill:none,stroke:#90a4ae
+    style STEP7 fill:none,stroke:#90a4ae
+```
+
+---
+
+## Setup Flow (Consumer Profile)
+
+**Developer types:** `/auto-init` (choose consumer)
+
+```mermaid
+flowchart TD
+    INIT["/auto-init<br/>consumer profile"]
+    PIPES["/auto-pipelines<br/>6 pipelines only"]
+    HOOKS["/auto-webhooks<br/>PR hooks only"]
+    REG["Register repo in hub's<br/>ADO_PR_ANSWER_PIPELINE_MAP<br/>+ CROSS_REPO_PIPELINE_MAP"]
+
+    INIT --> PIPES --> HOOKS --> REG
+
+    subgraph CONSUMER_PIPES["Consumer Pipelines (6)"]
+        CP1["PR Review"]
+        CP2["PR Answer"]
+        CP3["Eval"]
+        CP4["DevAgent"]
+        CP5["BugFix"]
+        CP6["DoD-Fix"]
+    end
+
+    subgraph SKIPPED["Skipped (hub only)"]
+        S1["/auto-provision"]
+        S2["/auto-deploy"]
+        S3["/auto-lambda-env"]
+        S4["/auto-alarms"]
+    end
+
+    PIPES --> CP1
+    INIT -.->|skips| S1
+
+    style CONSUMER_PIPES fill:none,stroke:#90a4ae
+    style SKIPPED fill:none,stroke:#90a4ae,stroke-dasharray: 5 5
+```
+
+---
+
+## Runtime Event Routing
+
+```mermaid
+flowchart TD
+    subgraph ADO_EVENTS["ADO Events"]
+        WI_US["User Story updated<br/>+ KAI-* tag"]
+        WI_BUG["Bug updated<br/>+ KAI-* tag"]
+        PR_COMMENT["PR comment created"]
+        PR_CREATED["PR created/updated"]
+    end
+
+    subgraph WEBHOOKS["ADO Service Hooks"]
+        WH1["WI hook<br/>(Work Item Project)"]
+        WH2["PR Answer hook<br/>(per-repo)"]
+        WH3["PR Review policy<br/>(build validation)"]
+    end
+
+    subgraph AWS["AWS Infrastructure"]
+        APIGW_WI["API GW: POST /wi"]
+        APIGW_PR["API GW: POST /pr"]
+        WI_ROUTER["WI-Router Lambda"]
+        PR_ROUTER["PR-Router Lambda"]
+
+        subgraph CHECKS["Pre-flight Checks"]
+            DD["DynamoDB<br/>Deduplicate"]
+            RL["DynamoDB<br/>Rate limit"]
+            TB["DynamoDB<br/>Token budget"]
+        end
+    end
+
+    subgraph AGENTS["ADO Pipelines (Claude Code CLI)"]
+        A_DOR["DoR Checker"]
+        A_DOD["DoD Checker"]
+        A_DOD_FIX["DoD Fixer"]
+        A_BUGFIX["BugFix Agent"]
+        A_QA["QA Agent"]
+        A_DEV["DevAgent"]
+        A_DOC["DOCAgent"]
+        A_EST["Estimation"]
+        A_PR_REV["PR Reviewer"]
+        A_PR_ANS["PR Answerer"]
+    end
+
+    WI_US --> WH1
+    WI_BUG --> WH1
+    WH1 --> APIGW_WI --> WI_ROUTER
+    PR_COMMENT --> WH2 --> APIGW_PR --> PR_ROUTER
+    PR_CREATED --> WH3 --> A_PR_REV
+
+    WI_ROUTER --> CHECKS
+    PR_ROUTER --> CHECKS
+
+    CHECKS -->|TAG_GATE_DOR| A_DOR
+    CHECKS -->|TAG_GATE_DOD| A_DOD
+    CHECKS -->|TAG_GATE_DOD_FIX| A_DOD_FIX
+    CHECKS -->|TAG_GATE_BUGFIX| A_BUGFIX
+    CHECKS -->|TAG_GATE_QA| A_QA
+    CHECKS -->|TAG_GATE_DEV| A_DEV
+    CHECKS -->|TAG_GATE_DOC| A_DOC
+    CHECKS -->|TAG_GATE_ESTIMATION| A_EST
+    CHECKS -->|repo-pipeline map| A_PR_ANS
+
+    style ADO_EVENTS fill:none,stroke:#90a4ae
+    style WEBHOOKS fill:none,stroke:#90a4ae
+    style AWS fill:none,stroke:#90a4ae
+    style CHECKS fill:none,stroke:#90a4ae
+    style AGENTS fill:none,stroke:#90a4ae
+    style A_DOR fill:#bbdefb,stroke:#1565c0,color:#000
+    style A_DOD fill:#bbdefb,stroke:#1565c0,color:#000
+    style A_DOD_FIX fill:#fff9c4,stroke:#f9a825,color:#000
+    style A_BUGFIX fill:#fff9c4,stroke:#f9a825,color:#000
+    style A_QA fill:#ffcdd2,stroke:#c62828,color:#000
+    style A_DEV fill:#fff9c4,stroke:#f9a825,color:#000
+    style A_DOC fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style A_EST fill:#bbdefb,stroke:#1565c0,color:#000
+    style A_PR_REV fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style A_PR_ANS fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+---
+
+## Agent Capabilities
+
+```mermaid
+flowchart TD
+    subgraph WI_AGENTS["Work Item Agents (tag-triggered)"]
+        DOR["DoR Checker<br/>KAI-DOR-AUTOMATION<br/>Post pass/fail comment"]
+        DOD["DoD Checker<br/>KAI-DOD-AUTOMATION<br/>Post pass/fail report"]
+        DOD_FIX["DoD Fixer<br/>(chained after DoD fail)<br/>Auto-fix + create Tasks + PR"]
+        BUGFIX["BugFix Agent<br/>KAI-BUGFIX-AUTOMATION<br/>Triage + fix + PR"]
+        QA_A["QA Agent<br/>KAI-QA-AUTOMATION<br/>FE+BE verify + Bug tickets"]
+        DEV["DevAgent<br/>KAI-DEV-AUTOMATION<br/>Analyze + plan + implement + PR"]
+        DOC["DOCAgent<br/>KAI-DOC-AUTOMATION<br/>Wiki docs + authoring guide"]
+        EST["Estimation<br/>KAI-ESTIMATION-AUTOMATION<br/>Story points + hours"]
+    end
+
+    subgraph PR_AGENTS["PR Agents (event-triggered)"]
+        PR_REV["PR Reviewer<br/>(build validation policy)<br/>Structured review comments"]
+        PR_ANS["PR Answerer<br/>(comment webhook)<br/>Context-aware replies"]
+    end
+
+    subgraph CROSS_REPO["Cross-Repo Delegation"]
+        XREPO["CROSS_REPO_PIPELINE_MAP<br/>Hub queues consumer pipelines<br/>for: DevAgent, BugFix, DoD-Fix"]
+    end
+
+    DEV --> XREPO
+    BUGFIX --> XREPO
+    DOD_FIX --> XREPO
+
+    style WI_AGENTS fill:none,stroke:#90a4ae
+    style PR_AGENTS fill:none,stroke:#90a4ae
+    style CROSS_REPO fill:none,stroke:#90a4ae
+    style DOR fill:#bbdefb,stroke:#1565c0,color:#000
+    style DOD fill:#bbdefb,stroke:#1565c0,color:#000
+    style DOD_FIX fill:#fff9c4,stroke:#f9a825,color:#000
+    style BUGFIX fill:#fff9c4,stroke:#f9a825,color:#000
+    style QA_A fill:#ffcdd2,stroke:#c62828,color:#000
+    style DEV fill:#fff9c4,stroke:#f9a825,color:#000
+    style DOC fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style EST fill:#bbdefb,stroke:#1565c0,color:#000
+    style PR_REV fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style PR_ANS fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+---
+
+## AWS Resource Architecture
+
+```mermaid
+flowchart TD
+    subgraph API["API Gateway (HTTP)"]
+        ROUTE_WI["POST /wi"]
+        ROUTE_PR["POST /pr"]
+    end
+
+    subgraph LAMBDA["Lambda Functions"]
+        WI_R["WI-Router<br/>Node.js 20.x"]
+        PR_R["PR-Router<br/>Node.js 20.x"]
+    end
+
+    subgraph DYNAMO["DynamoDB Tables"]
+        T_DEDUP["prefix-dedupe<br/>(TTL-enabled)"]
+        T_RATE["prefix-rate-limits<br/>(daily per-agent)"]
+        T_TOKEN["prefix-token-budget<br/>(monthly usage)"]
+    end
+
+    subgraph STORAGE["Storage"]
+        SQS_DLQ["SQS DLQ<br/>(14-day retention)"]
+        S3_BUCKET["S3 Bucket<br/>(90-day lifecycle)"]
+    end
+
+    subgraph MONITORING["Monitoring"]
+        SNS_TOPIC["SNS Topic<br/>(email alerts)"]
+        CW1["Alarm: DLQ depth > 5"]
+        CW2["Alarm: WI errors > 3/hr"]
+        CW3["Alarm: PR errors > 3/hr"]
+        CW4["Alarm: Lambda throttles"]
+    end
+
+    subgraph IAM_ROLE["IAM"]
+        ROLE["Lambda execution role<br/>DynamoDB + SQS + S3 +<br/>CloudWatch Logs access"]
+    end
+
+    ROUTE_WI --> WI_R
+    ROUTE_PR --> PR_R
+    WI_R --> T_DEDUP
+    WI_R --> T_RATE
+    WI_R --> T_TOKEN
+    PR_R --> T_DEDUP
+    PR_R --> T_RATE
+    PR_R --> T_TOKEN
+    WI_R -->|failures| SQS_DLQ
+    PR_R -->|failures| SQS_DLQ
+    WI_R -->|outputs| S3_BUCKET
+    PR_R -->|outputs| S3_BUCKET
+    SQS_DLQ --> CW1
+    WI_R --> CW2
+    PR_R --> CW3
+    WI_R --> CW4
+    PR_R --> CW4
+    CW1 --> SNS_TOPIC
+    CW2 --> SNS_TOPIC
+    CW3 --> SNS_TOPIC
+    CW4 --> SNS_TOPIC
+    ROLE --> WI_R
+    ROLE --> PR_R
+
+    style API fill:none,stroke:#90a4ae
+    style LAMBDA fill:none,stroke:#90a4ae
+    style DYNAMO fill:none,stroke:#90a4ae
+    style STORAGE fill:none,stroke:#90a4ae
+    style MONITORING fill:none,stroke:#90a4ae
+    style IAM_ROLE fill:none,stroke:#90a4ae
+```
+
+---
+
+## Monitoring and Operations (standalone, on-demand)
+
+```mermaid
+flowchart TD
+    subgraph HEALTH["/auto-doctor"]
+        D1["File integrity<br/>(infra.json, repos.json)"]
+        D2["ADO pipeline status<br/>(enabled/disabled)"]
+        D3["Lambda state<br/>(hub only)"]
+        D4["Webhook status"]
+    end
+
+    subgraph DASHBOARD["/auto-status (hub only)"]
+        S1["SQS DLQ depth"]
+        S2["Monthly token budget<br/>utilization"]
+        S3["Daily rate limit<br/>usage per agent"]
+    end
+
+    subgraph QUALITY["/auto-eval"]
+        E1["Tier-1: fixture format tests<br/>(no API calls)"]
+        E2["Tier-2: LLM quality tests<br/>(optional)"]
+    end
+
+    subgraph DRYRUN["/auto-test"]
+        T1["Run agent against<br/>real ADO data"]
+        T2["--dryRun: no posts,<br/>verify connectivity"]
+    end
+
+    HEALTH --> DASHBOARD
+    DASHBOARD --> QUALITY
+    QUALITY --> DRYRUN
+
+    style HEALTH fill:none,stroke:#90a4ae
+    style DASHBOARD fill:none,stroke:#90a4ae
+    style QUALITY fill:none,stroke:#90a4ae
+    style DRYRUN fill:none,stroke:#90a4ae
+```
+
+---
+
+## Hub vs Consumer Comparison
+
+| Capability | Hub | Consumer |
+|-----------|-----|----------|
+| AWS resources (DynamoDB, SQS, S3, Lambda, API GW) | Creates and owns | Uses hub's |
+| Pipelines | 10 (all agents) | 6 (PR Review, PR Answer, Eval, DevAgent, BugFix, DoD-Fix) |
+| WI service hooks | Creates (tag-filtered) | N/A (hub handles) |
+| PR Answer hook | Creates (repo-scoped) | Creates (points to hub's Lambda) |
+| PR Review policy | Creates | Creates |
+| Lambda deployment | `/auto-deploy` | Skipped |
+| Lambda env vars | `/auto-lambda-env` | Skipped |
+| CloudWatch alarms | `/auto-alarms` | Skipped |
+| Cross-repo delegation | Sends to consumers | Receives from hub |
+| `/auto-status` dashboard | Full (DLQ, tokens, rates) | N/A |
+| `/auto-doctor` scope | Full (files + infra + Lambda) | Files + pipelines only |

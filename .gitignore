@@ -1,0 +1,32 @@
+# General
+.DS_Store
+
+# IDE
+.idea/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/subagent-log.txt
+
+# Website build artifacts
+website/dist/
+website/.astro/
+
+# Runtime output (not source)
+.ai/specs/
+.ai/research/
+.ai/pr-answers/
+.ai/pr-reviews/
+.ai/logs/
+.ai/me.md

@@ -1,0 +1,256 @@
+# Pipeline Policy — Agent Capability and Risk Gating
+# Version: 1.0
+# Hashed into config_hash for every pipeline run.
+# Changes to this file trigger eval re-run.
+#
+# After installation, update:
+#   deduplication.table      — must match your RESOURCE_PREFIX in infra.json (e.g. "myproject-dedupe")
+#   break_glass.approver_group — ADO group that can approve policy overrides (create if needed)
+#   rate_limits               — tune after 4-6 weeks of production data
+#   token_budget.monthly_cap  — set after observing real usage
+
+version: "1.1"
+
+# Risk levels assigned by runtime scanner (Azure Prompt Shields or fallback).
+# Policy gate uses these to decide what actions are allowed.
+risk_levels:
+  low:
+    description: "Scanner found no concerning patterns"
+    action: "proceed"
+  medium:
+    description: "Scanner flagged potential injection or ambiguous content"
+    action: "reduce_capability"
+  high:
+    description: "Scanner flagged likely injection or dangerous content"
+    action: "skip_and_alert"
+
+# Per-pipeline agent capabilities.
+# Each agent has a fixed set of allowed actions.
+# Actions not listed are denied (fail-closed).
+pipelines:
+  dor:
+    display_name: "Definition of Ready Agent"
+    allowed_actions:
+      - readWorkItem
+      - readWiki
+      - postComment
+      - updateComment
+    forbidden_actions:
+      - pushCode
+      - castVote
+      - deleteComment
+      - createWorkItem
+    risk_overrides:
+      medium: "proceed"  # DoR output is advisory, low damage potential
+      high: "skip_and_alert"
+
+  pr-review:
+    display_name: "PR Review Agent"
+    allowed_actions:
+      - readPR
+      - readFiles
+      - readDiff
+      - postThread
+      - castVote
+    forbidden_actions:
+      - pushCode
+      - mergepr
+      - deleteThread
+    vote_policy:
+      max_vote: "wait"  # Never "reject" or "approve" — human decides
+      blocker_implies: "wait"
+    risk_overrides:
+      medium: "proceed"  # Review output is advisory
+      high: "skip_and_alert"
+
+  pr-answer:
+    display_name: "PR Answer Agent"
+    allowed_actions:
+      - readPR
+      - readFiles
+      - readThread
+      - replyToThread
+      - pushCode  # Gated — see push_policy below
+    forbidden_actions:
+      - castVote
+      - mergePR
+      - deleteThread
+      - createBranch
+    push_policy:
+      # All conditions must be true for pushCode to execute.
+      requires:
+        - thread_category: "agree-will-fix"
+        - old_code_unique: true       # oldCode exists exactly once in target file
+        - lint_passes: true           # Lint check on modified file
+        - scanner_risk: "low"         # No scanner flags
+      on_lint_failure: "suggest_only"  # Post suggestion comment instead of pushing
+      on_scanner_medium: "suggest_only"
+      on_scanner_high: "skip_and_alert"
+    risk_overrides:
+      medium: "suggest_only"  # Never push when scanner flags medium
+      high: "skip_and_alert"
+
+  estimation:
+    display_name: "Estimation Agent"
+    allowed_actions:
+      - readWorkItem
+      - readCode
+      - postComment
+      - updateComment
+    forbidden_actions:
+      - pushCode
+      - castVote
+      - createWorkItem
+      - deleteComment
+    risk_overrides:
+      medium: "proceed"  # Estimation is advisory — low damage potential
+      high: "skip_and_alert"
+
+  orchestrator:
+    display_name: "Orchestrator"
+    description: "Multi-role pipeline: RE → Dev"
+    allowed_actions:
+      - readWorkItem
+      - readWiki
+      - readCode
+      - writeCode
+      - runTests
+      - runLint
+      - runBuild
+      - createBranch
+      - pushCode
+      - postComment
+      - updateWorkItem
+      - createWorkItem
+      - delegatePipeline  # Write delegate.json for cross-repo handoff (YAML step executes)
+    forbidden_actions:
+      - castVote
+      - mergePR
+      - deleteThread
+      - deleteWorkItem
+    risk_overrides:
+      medium: "reduce_capability"  # Orchestrator handles sensitive operations
+      high: "skip_and_alert"
+
+# Agent role capabilities (used by orchestrator and local skills).
+# Defines what each role can do — fail-closed for unlisted capabilities.
+roles:
+  re-agent:
+    capabilities:
+      - readWorkItem
+      - readWiki
+      - readCode
+      - postComment
+      - updateWorkItem
+      - createChildWorkItems
+    canModifyCode: false
+    adoActions: [updateStory, createTasks]
+    runtimes: [pipeline, local]
+
+  dev-agent:
+    capabilities:
+      - readCode
+      - writeCode
+      - runTests
+      - runLint
+      - runBuild
+      - createBranch
+      - pushCode
+      - readWorkItem
+      - updateWorkItem
+    canModifyCode: true
+    requiresPolicyGate: true
+    adoActions: [updateTask, resolveBug]
+    runtimes: [pipeline, local]
+
+  qa-agent:
+    capabilities:
+      - readCode
+      - readDiff
+      - captureScreenshots
+      - navigateAEM
+      - readWorkItem
+      - createWorkItem
+    canModifyCode: false
+    adoActions: [createBug, closeBug, addScreenshots]
+    runtimes: [local]   # Requires running AEM instance — not available in pipeline
+    requiresAEM: true
+
+# Redaction policy for run-trace bundles.
+redaction:
+  mode: "allowlist"  # Only explicitly allowed content is stored
+  allowlist:
+    - file_paths
+    - line_ranges
+    - function_signatures  # First line only (e.g., "public String getSubtitle()")
+    - class_interface_names
+    - import_statements
+    - content_hashes  # SHA-256
+    - token_counts
+    - latency_ms
+    - timestamps
+    - outcome_codes
+    - skip_reasons
+  denylist_patterns:
+    - pattern: "password|secret|token|key|apikey"
+      context: "string literals, config values"
+    - pattern: "\\S+@\\S+\\.\\S+"
+      context: "email addresses"
+    - pattern: "^[A-Z_]+=.+"
+      context: "environment variable assignments"
+    - pattern: "https?://[^\\s]*[?&](token|key|auth|secret)="
+      context: "URLs with authentication parameters"
+    - pattern: "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+      context: "JWT tokens (three base64url segments)"
+    - pattern: "-----BEGIN (RSA |EC |)PRIVATE KEY-----"
+      context: "PEM private key blocks"
+    - pattern: "(jdbc:|mongodb(\\+srv)?://|redis://|amqp://)"
+      context: "connection strings (JDBC, MongoDB, Redis, AMQP)"
+  max_method_body_lines: 10  # Truncate after 10 lines
+  uuid_treatment: "keep"     # Set to "hash" if your policy treats UUIDs as PII
+
+# Break-glass override.
+# Allows a human to override the policy gate for a specific run.
+# Override ONLY changes risk-level gating (e.g., medium → allow push).
+# Override NEVER bypasses:
+#   - Capability allowlist (can't grant actions not in allowed_actions)
+#   - Idempotency checks (duplicate detection still runs)
+#   - Branch protection rules (ADO branch policies still enforced)
+#   - Rate limits and token budget caps (cost controls not overridable)
+break_glass:
+  requires:
+    - pr_label: "ai-policy-override"
+    - approver_group: "ai-admins"  # ← Update: ADO group with override permission (create if needed)
+  logging:
+    override: true                 # Always logged in run bundle
+    fields: ["actor", "reason", "timestamp", "relaxed_rules"]
+  scope: "single_run"              # Override applies to one run only, not persistent
+
+# Rate limits (enforced by Lambda). Tune after 4-6 weeks of production data.
+rate_limits:
+  per_pipeline_per_day:
+    dor: 20
+    pr-review: 50
+    pr-answer: 30
+    estimation: 20
+    orchestrator: 10    # Lower limit — multi-role runs consume more tokens
+  per_identity_per_day: 10
+
+# Deduplication.
+# AWS DynamoDB for persistent state.
+deduplication:
+  store: "dynamodb"
+  table: "my-project-dedupe"  # ← Update: must match your RESOURCE_PREFIX + "-dedupe" in infra.json
+  key: "event_id"
+  retention_seconds: 3600     # 1-hour retention window, enforced by cleanup function
+  on_store_failure: "proceed" # Fail-open — duplicates are handled by idempotent comments
+
+# Monthly token budget (hard cap).
+# Prevents runaway cost from verbose model responses or event storms.
+token_budget:
+  monthly_cap: "TBD"            # ← Update: set after 4-6 weeks of production data
+  alert_threshold: 0.80         # Alert at 80% utilization
+  degrade_threshold: 0.90       # At 90%: suggest-only mode (no push, no vote)
+  halt_threshold: 1.00          # At 100%: pause DoR + PR Answer; PR Review continues suggest-only
+  reset: "monthly"
+  not_overridable: true         # Break-glass cannot bypass budget caps

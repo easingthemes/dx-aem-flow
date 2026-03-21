@@ -1,0 +1,55 @@
+---
+description: WCAG 2.1 AA accessibility requirements
+paths: ["**/*.html", "**/*.scss", "**/*.css", "**/*.js"]
+applyTo: "**/*.html, **/*.scss, **/*.css, **/*.js"
+---
+
+# Accessibility (WCAG 2.1 AA)
+
+## Semantics
+
+- Use semantic HTML: `<nav>`, `<main>`, `<button>`, `<a>`, `<header>`, `<footer>`
+- Never use `<div>` for clickable elements — use `<button>` or `<a>`
+- Use ARIA only when native semantics are insufficient
+- Add `role` attribute for custom widgets
+
+## Keyboard
+
+- All interactive elements must be keyboard accessible
+- Logical tab order (never `tabindex > 0`)
+- Visible focus indicators (never `outline: none` without a `:focus-visible` replacement)
+- Support: Tab, Shift+Tab, Enter, Escape, Arrow keys for widgets
+
+## Images & Media
+
+- All images: `alt` text (empty `alt=""` for decorative)
+- No auto-playing media
+- Captions for video content
+
+## Forms
+
+- Every input needs a visible `<label>` or `aria-label`
+- Clear error messages tied to fields via `aria-describedby`
+- Use `autocomplete` attribute where applicable
+
+## Visual
+
+- Color contrast: 4.5:1 normal text, 3:1 large text
+- Don't rely on color alone to convey information
+- Support `prefers-reduced-motion`
+
+## Custom Dropdowns / Combobox
+
+- **Choose one focus pattern** — never mix real DOM focus (`.focus()`) with `aria-activedescendant`. Pick one:
+  - **DOM focus:** Move focus to `<li role="option">` directly. VoiceOver reads the focused element. Do NOT set `aria-activedescendant`.
+  - **Virtual focus:** Keep focus on the combobox, set `aria-activedescendant` to the active option ID. Update it on every arrow key press.
+- **Label the combobox** — add `aria-label` or `aria-labelledby` so VoiceOver announces the purpose (not `combobox ""`)
+- **Hide trigger content** — add `aria-hidden="true"` to the visual trigger/selected-item display inside the combobox, so VoiceOver doesn't re-read it as combobox context when navigating options
+- **Decorative option images** — if the option text span already names the item, set `alt=""` and `aria-hidden="true"` on the image span to prevent double-read (e.g., "Mango – Pro One Mango – Kit Name")
+- **Prevent scroll on arrow keys** — call `e.preventDefault()` on ArrowUp/ArrowDown inside the listbox
+
+## HTL-Specific
+
+- Use `data-sly-attribute.aria-label` for dynamic ARIA
+- Include `aria-live` regions for dynamic content updates
+- Never hide focusable elements with `display: none` without `aria-hidden`
