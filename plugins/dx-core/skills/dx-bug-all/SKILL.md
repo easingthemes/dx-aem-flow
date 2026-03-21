@@ -12,11 +12,24 @@ allowed-tools: ["read", "edit", "search", "write", "agent"]
 
 You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step to the `dx-step-executor` agent via the Task tool, then report progress.
 
+## Progress Tracking
+
+If `TaskCreate` is available, create these tasks before starting execution and update each (`in_progress` → `completed`) as you go. Delete skipped tasks.
+
+1. Triage bug
+2. Verify reproduction
+3. Fix bug
+
+If `TaskCreate` is not available, the `Step N/3 done —` messages below provide progress.
+
 ## Flow
 
 ```dot
 digraph bug_all {
     "Parse argument" [shape=box];
+    "Hub dispatch?" [shape=diamond];
+    "Hub dispatch" [shape=box];
+    "Hub results summary" [shape=doublecircle];
     "Dispatch triage" [shape=box];
     "Triage succeeded?" [shape=diamond];
     "Dispatch verify" [shape=box];
@@ -31,7 +44,10 @@ digraph bug_all {
     "Retry fix succeeded?" [shape=diamond];
     "Report FAIL (fix)" [shape=doublecircle];
 
-    "Parse argument" -> "Dispatch triage";
+    "Parse argument" -> "Hub dispatch?";
+    "Hub dispatch?" -> "Hub dispatch" [label="hub mode active"];
+    "Hub dispatch?" -> "Dispatch triage" [label="not hub mode"];
+    "Hub dispatch" -> "Hub results summary";
     "Dispatch triage" -> "Triage succeeded?";
     "Triage succeeded?" -> "Dispatch verify" [label="success"];
     "Triage succeeded?" -> "Retry triage" [label="FAIL"];
@@ -60,6 +76,44 @@ The argument is the ADO work item ID — a numeric value (e.g., `2453532`).
 If the user provides a full ADO URL, extract the numeric ID.
 
 If no argument is provided, ask the user for the work item ID.
+
+### Hub dispatch?
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+Check if hub mode is active:
+1. `DX_PIPELINE_MODE` is NOT set (pipeline mode takes precedence)
+2. `.ai/config.yaml` has `hub.enabled: true`
+3. Current working directory is a `.hub/` directory
+
+If all three conditions are met → proceed to "Hub dispatch"
+Otherwise → proceed to "Dispatch triage" (existing flow)
+
+### Hub dispatch
+
+Read `shared/hub-dispatch.md` for the full protocol.
+
+1. Read `.ai/config.yaml` → `repos:` list
+2. Determine which repos need the bug fix:
+   - If a spec directory exists with `triage.md` → `## Cross-Repo Scope`, use repo resolution
+   - If no triage yet, dispatch triage first to detect scope, then dispatch fix per repo
+3. Check `hub.auto-dispatch` — if `false`, confirm with user
+4. Write `state/<ticket-id>/dispatch.json`
+5. For each target repo:
+   - Build and execute: `claude -p "/dx-bug-all <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Collect result, write state
+   - Print progress: `✓ <repo> — <status>`
+6. Rebuild `state/active.json`
+
+### Hub results summary
+
+Present hub dispatch results:
+
+| Repo | Status | PR | Cost | Duration |
+|------|--------|----|------|----------|
+| <repo> | ✓ done | #<id> | $<cost> | <time> |
+
+If any repo failed: "Use `/dx-hub-status <ticket-id>` for details. Failed repos can be re-dispatched."
 
 ### Dispatch triage
 

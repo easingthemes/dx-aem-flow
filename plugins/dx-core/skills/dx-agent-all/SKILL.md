@@ -129,6 +129,25 @@ If `superpowers:executing-plans` is available, invoke it before starting Phase 1
 - Mark phases in_progress → completed for tracking.
 - Never start on main/master without explicit user consent.
 
+## Progress Tracking
+
+If `TaskCreate` is available, create tasks for each applicable phase before starting execution and update each (`in_progress` → `completed`) as you go. Delete tasks for phases that get skipped at runtime.
+
+Use the phase table above to determine which phases apply. Example tasks for a typical run:
+
+1. Requirements (fetch, DoR, explain, research, share)
+2. Planning (plan, validate, resolve)
+3. Feature branch
+4. Execution (dx-step-all)
+5. Build
+6. Code review
+7. Commit
+8. Pull request
+
+Add conditional phases (Figma, AEM baseline, AEM verify, demo capture, docs) only when their conditions are met. Delete them if conditions turn out false mid-run.
+
+If `TaskCreate` is not available, the `Phase N: <name> — (X/Y)` messages and progress file provide tracking.
+
 ## Flow
 
 ```dot
@@ -142,6 +161,8 @@ digraph agent_all {
     "Figma URL in story?" [shape=diamond];
     "Phase 1.5: Figma Design-to-Code" [shape=box];
     "Phase 1.5a: Cross-Repo Check (pipeline mode)" [shape=box];
+    "Phase 1.5b: Hub Dispatch" [shape=box];
+    "Hub dispatch complete — collect results" [shape=box];
     "Phase 2: Planning (plan - validate - resolve)" [shape=box];
     "Plan valid?" [shape=diamond];
     "STOP: Plan validation failed" [shape=doublecircle];
@@ -171,7 +192,10 @@ digraph agent_all {
     "project.yaml exists?" -> "Phase 1.5-enrich: Project Enrichment" [label="yes"];
     "project.yaml exists?" -> "Phase 1.5a: Cross-Repo Check (pipeline mode)" [label="no"];
     "Phase 1.5-enrich: Project Enrichment" -> "Phase 1.5a: Cross-Repo Check (pipeline mode)";
-    "Phase 1.5a: Cross-Repo Check (pipeline mode)" -> "Figma URL in story?";
+    "Phase 1.5a: Cross-Repo Check (pipeline mode)" -> "Phase 1.5b: Hub Dispatch";
+    "Phase 1.5b: Hub Dispatch" -> "Figma URL in story?" [label="not hub mode or single repo"];
+    "Phase 1.5b: Hub Dispatch" -> "Hub dispatch complete — collect results" [label="hub dispatched"];
+    "Hub dispatch complete — collect results" -> "Final Summary";
     "Figma URL in story?" -> "Phase 1.5: Figma Design-to-Code" [label="yes"];
     "Figma URL in story?" -> "Phase 2: Planning (plan - validate - resolve)" [label="no"];
     "Phase 1.5: Figma Design-to-Code" -> "Phase 2: Planning (plan - validate - resolve)";
@@ -345,6 +369,55 @@ If the environment variable `DX_PIPELINE_MODE` is set (check via Bash: `echo "$D
 If `DX_PIPELINE_MODE` is not set: skip this phase entirely (local mode).
 
 Read `shared/repo-discovery.md` for full protocol details.
+
+### Phase 1.5b: Hub Dispatch
+
+Read `shared/hub-dispatch.md` for the full protocol.
+
+**Skip this phase if:**
+- `DX_PIPELINE_MODE` is set (pipeline mode took precedence in Phase 1.5a)
+- Hub mode is not active (no `hub.enabled: true` or cwd is not `.hub/`)
+
+**If hub mode is active:**
+
+1. Read `.ai/config.yaml` → `hub:` and `repos:` sections
+2. Find the spec directory: `.ai/specs/<id>-*/`
+3. Read `research.md` → `## Cross-Repo Scope` section
+4. If cross-repo scope detected:
+   a. Use repo resolution from `shared/hub-dispatch.md` to map scope to repo configs
+   b. Check `hub.auto-dispatch` — if `false`, show dispatch plan and ask for confirmation
+   c. Create state directory: `state/<ticket-id>/`
+   d. Write `state/<ticket-id>/dispatch.json` with dispatch metadata
+   e. For each target repo (per `hub.dispatch-mode`):
+      - Build command: `claude -p "/dx-agent-all <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+      - Execute via Bash tool
+      - Collect result, write `state/<ticket-id>/results/<repo>.json`
+      - Print: `✓ <repo> — <status> (<duration>, $<cost>)`
+   f. Rebuild `state/active.json`
+   g. Go to → "Hub dispatch complete — collect results"
+5. If no cross-repo scope: continue to next phase (single-repo, execute locally)
+
+Print: `Phase 1.5b: Hub Dispatch — (<N>/<total>) <dispatched to M repos|skipped (single repo)|skipped (not hub mode)>.`
+
+### Hub dispatch complete — collect results
+
+After all dispatches complete, present a summary:
+
+```markdown
+## Hub Dispatch Complete
+
+| Repo | Status | PR | Cost | Duration |
+|------|--------|----|------|----------|
+| <repo> | ✓ done | #<pr> | $<cost> | <duration> |
+| <repo> | ✗ failed | — | $<cost> | <duration> |
+
+**Total cost:** $<sum>
+**Failed repos:** <list or "none">
+
+Use `/dx-hub-status <ticket-id>` for details.
+```
+
+If any repo failed, do NOT proceed to local execution. The hub has handled dispatch — go to Final Summary with the hub results.
 
 ### Figma URL in story?
 

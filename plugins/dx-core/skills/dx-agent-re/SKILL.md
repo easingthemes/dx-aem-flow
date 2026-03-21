@@ -32,6 +32,21 @@ Read `.ai/config.yaml`:
 - **Project Key:** `jira.project-key`
 - **Custom Fields:** `jira.custom-fields.*`
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Read `.ai/config.yaml` → `repos:` list
+2. If a specific repo is needed (from ticket context or user hint), resolve to config entry
+3. If multiple repos might be involved, dispatch to each:
+   - Build: `claude -p "/dx-agent-re <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Collect results per repo
+4. Write state files, print summary
+5. STOP — do not continue with local execution
+
+If hub mode is not active: continue with normal flow below.
+
 ## 1. Parse Input
 
 The argument is the ADO work item ID (e.g., `2435084`).

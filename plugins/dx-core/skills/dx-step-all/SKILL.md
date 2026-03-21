@@ -12,6 +12,17 @@ allowed-tools: ["read", "edit", "search", "write", "agent"]
 
 You are a coordinator. You run the step-* pipeline for each step in implement.md, delegating to subagents.
 
+## Progress Tracking
+
+If `TaskCreate` is available, create tasks dynamically as you iterate through plan steps. For each step in `implement.md`:
+
+1. Create a task with the step title (e.g., "Step 1: Create dialog XML")
+2. Mark `in_progress` when executing, `completed` when committed
+3. On fix attempts, update the task subject (e.g., "Step 1: Create dialog XML (fix 1)")
+4. On heal cycles, add a task: "Healing: <corrective action>"
+
+If `TaskCreate` is not available, the step-by-step log messages provide progress.
+
 ## Flow
 
 ```dot
