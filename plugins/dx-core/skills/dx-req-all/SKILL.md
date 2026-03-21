@@ -8,6 +8,18 @@ allowed-tools: ["read", "edit", "search", "write", "agent"]
 
 You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step to the `dx-step-executor` agent via the Agent tool, then report progress.
 
+## Progress Tracking
+
+If `TaskCreate` is available, create these tasks before starting execution and update each (`in_progress` → `completed`) as you go:
+
+1. Fetch story
+2. DoR check
+3. Explain requirements
+4. Research codebase
+5. Share findings
+
+If `TaskCreate` is not available, the `Step N/5 done —` messages below provide progress.
+
 ## Flow
 
 ```dot

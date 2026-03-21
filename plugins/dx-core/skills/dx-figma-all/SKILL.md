@@ -28,6 +28,16 @@ Parse `$ARGUMENTS` into two optional parts (any order):
 
 Build a combined argument string from whatever was provided (e.g., `2416553 https://figma.com/...`, or just `2416553`, or just the URL, or empty).
 
+## Progress Tracking
+
+If `TaskCreate` is available, create these tasks before starting execution and update each (`in_progress` → `completed`) as you go:
+
+1. Extract design from Figma
+2. Generate prototype
+3. Verify against design
+
+If `TaskCreate` is not available, the `Step N/3 done —` messages below provide progress.
+
 ## Execution Order
 
 ```
