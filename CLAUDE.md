@@ -183,15 +183,7 @@ Full schema and compatibility matrix: see the docs site (`website/`) → "Plugin
 - Config fields documented if new ones are introduced
 - Update `docs/reference/skill-catalog.md` or `docs/reference/agent-catalog.md`
 - Shell scripts are `chmod +x`
-- **Bump version** in ALL FOUR version files after non-trivial changes. All three plugins share the same version. Files to update:
-  1. `plugins/dx-core/.claude-plugin/plugin.json`
-  2. `plugins/dx-aem/.claude-plugin/plugin.json`
-  3. `plugins/dx-automation/.claude-plugin/plugin.json`
-  4. **Consumer repo** `.claude-plugin/marketplace.json` (3 entries — one per plugin)
-  Follow semver:
-  - **Patch** (`1.4.1`) — bug fixes, typo corrections, broken path fixes
-  - **Minor** (`1.5.0`) — new skills, new agents, new features, new config fields
-  - **Major** (`2.0.0`) — breaking changes: renamed/removed skills, changed config schema, changed output file conventions, anything that could break existing projects (even potentially)
+- **Versioning is automated** — semantic-release bumps all 4 version files on push to `main` based on conventional commit prefixes. Use `feat:` for minor, `fix:` for patch, `BREAKING CHANGE:` in body for major. `chore:`, `docs:`, `ci:` do not trigger releases. Do NOT manually edit version numbers.
 
 ### Superpowers Soft-Dependency Pattern
 
