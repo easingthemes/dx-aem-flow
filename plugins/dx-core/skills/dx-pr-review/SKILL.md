@@ -52,6 +52,22 @@ ToolSearch("+ado pull request thread")
 
 If the PR is from a **different repo** than the current working directory, note this — you'll handle it in step 4.
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. The PR URL or ID determines the target repo:
+   - If URL provided: extract repo name from URL path
+   - If ID only: cannot determine repo — ask user which repo
+2. Match repo name to `repos:` config entry
+3. Dispatch: `claude -p "/dx-pr-review <pr-url-or-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+4. Collect result (review findings)
+5. Print review summary from the dispatched session
+6. STOP
+
+If hub mode is not active: continue with normal flow below.
+
 ## 2. Fetch PR Details
 
 Resolve the repo ID first:
