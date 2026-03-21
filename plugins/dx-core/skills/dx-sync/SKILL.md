@@ -1,11 +1,11 @@
 ---
 name: dx-sync
 description: Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options. Use when you say "sync plugins", "update consumers", "push to all repos".
-argument-hint: "[--dry-run] [--parallel] [--skip-hub] [repo1 repo2 ...] — repos: hub, backend, brand-b"
+argument-hint: "[--dry-run] [--parallel] [repo1 repo2 ...] — repo names from .ai/config.yaml repos:"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-You sync plugin updates from the dx-aem-flow source to consumer AEM repos using the `sync-consumers.sh` script.
+You sync plugin updates to consumer AEM repos using the `sync-consumers.sh` script. Any consumer repo can run this skill — there is no hub. Repos are listed in `.ai/config.yaml` under `repos:`.
 
 ## 1. Locate Sync Script
 
@@ -20,30 +20,29 @@ If it doesn't exist, try the repo root fallback:
 SYNC_SCRIPT="$(git rev-parse --show-toplevel)/internal/sync-consumers.sh"
 ```
 
-If neither exists, STOP: "sync-consumers.sh not found. This skill requires the dx-aem-flow source repo."
+If neither exists, STOP: "sync-consumers.sh not found."
 
 ## 2. Show Consumer Repo Table
 
-Present the available repos and their capabilities:
+Read `repos:` from `.ai/config.yaml`. Present the available repos and their capabilities:
 
 ```markdown
 | Repo | Path | Base Branch | Work Branch | FE | BE |
 |------|------|-------------|-------------|:--:|:--:|
-| hub | Brand-A-Project | development | feature/ai-sync | Yes | No |
-| backend | AEM-Backend | develop | feature/ai-sync | Yes | Yes |
-| brand-b | Brand-B-Project | development | feature/ai-sync | Yes | No |
+| Platform-Core | ../Platform-Core | development | feature/ai-sync | Yes | Yes |
+| Brand-B | ../Brand-B | development | feature/ai-sync | Yes | No |
 ```
 
-> The hub repo is always included automatically. Sibling repos come from the `repos:` section in `.ai/config.yaml`.
+> All repos come from the `repos:` section in `.ai/config.yaml`. The current repo is excluded (you don't sync to yourself).
 
 ## 3. Parse Arguments
 
 From `$ARGUMENTS`, extract:
-- **Flags:** `--dry-run`, `--parallel`, `--no-git`, `--no-pr`, `--skip-hub`
+- **Flags:** `--dry-run`, `--parallel`, `--no-git`, `--no-pr`
 - **Repos:** Repo names from `.ai/config.yaml` `repos:` section
 - If no repos specified, defaults to all configured repos
 
-If no arguments at all, ask: "Sync all repos? Or specify which ones (e.g., `hub brand-b`). Add `--dry-run` to preview."
+If no arguments at all, ask: "Sync all repos? Or specify which ones (e.g., `Platform-Core Brand-B`). Add `--dry-run` to preview."
 
 ## 4. Run Sync
 
@@ -75,9 +74,8 @@ After the script completes, present:
 
 | Repo | Status | PR |
 |------|--------|-----|
-| hub | synced | PR #<id> |
-| backend | synced | PR #<id> |
-| brand-b | synced | PR #<id> |
+| Platform-Core | synced | PR #<id> |
+| Brand-B | synced | PR #<id> |
 ```
 
 If `--dry-run` was used, note: "Dry run — no changes were made."
@@ -88,4 +86,4 @@ If `--dry-run` was used, note: "Dry run — no changes were made."
 - **Use --no-pr when needed** — pass `--no-pr` to skip PR creation for specific runs
 - **Dry-run first on uncertainty** — if unsure about scope, suggest `--dry-run` first
 - **Read script output** — the script reports per-step status; relay any errors to the user
-- **This skill only runs from the Hub repo** (the repo containing `dx-aem-flow/`) since it hosts the plugin source
+- **Runs from any consumer repo** — reads repos from `.ai/config.yaml`, syncs to sibling repos via relative paths
