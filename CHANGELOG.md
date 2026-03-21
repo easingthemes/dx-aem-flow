@@ -1,3 +1,22 @@
+# [2.52.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.51.0...v2.52.0) (2026-03-21)
+
+
+### Features
+
+* **dx-core:** add dx-hub-config skill for hub settings management ([3bb21af](https://github.com/easingthemes/dx-aem-flow/commit/3bb21afa6d385a2a1d5ff958975d4de6adaa24b3))
+* **dx-core:** add dx-hub-init skill for hub directory setup ([f80fe9c](https://github.com/easingthemes/dx-aem-flow/commit/f80fe9cd5f79e4d8da0fc13dc1e66f92551522fe))
+* **dx-core:** add dx-hub-status skill for dispatch dashboard ([e5ede5b](https://github.com/easingthemes/dx-aem-flow/commit/e5ede5b2031069cd28aefc9806d73a006d1aa87c))
+* **dx-core:** add hub dispatch phase to dx-agent-all ([8108065](https://github.com/easingthemes/dx-aem-flow/commit/8108065b07e56e60ff279fb4306fe4a68ea69f07))
+* **dx-core:** add hub dispatch to dx-agent-re and dx-agent-dev ([af1c408](https://github.com/easingthemes/dx-aem-flow/commit/af1c40820b0b4afd2bf74f0be280f3aefccd835a))
+* **dx-core:** add hub dispatch to dx-bug-all ([46dbf05](https://github.com/easingthemes/dx-aem-flow/commit/46dbf0595724d5553d7a27d1826e9cad0d5545ea))
+* **dx-core:** add hub dispatch to dx-bug-fix cross-repo gate ([fce59a2](https://github.com/easingthemes/dx-aem-flow/commit/fce59a2a2976a8b067ebf5fc0c1ed13b5020225e))
+* **dx-core:** add hub dispatch to dx-plan and dx-step ([eff3524](https://github.com/easingthemes/dx-aem-flow/commit/eff3524edbbad348ea20d5474776f8afd8a8a007))
+* **dx-core:** add hub dispatch to dx-pr and dx-pr-review ([8355489](https://github.com/easingthemes/dx-aem-flow/commit/83554897d2c969422b548b75a0c35de1b3ea1cd6))
+* **dx-core:** add hub dispatch to dx-req-fetch ([ae7e0a3](https://github.com/easingthemes/dx-aem-flow/commit/ae7e0a353e6cbd3b752d196ca9a3c4f5ed4ad35b))
+* **dx-core:** add hub mode section to repo-discovery shared module ([a2d9469](https://github.com/easingthemes/dx-aem-flow/commit/a2d946945675df56cea4164b8d5a595ecc5e72ec))
+* **dx-core:** add hub-dispatch shared module for multi-repo orchestration ([fc777d7](https://github.com/easingthemes/dx-aem-flow/commit/fc777d74bae2de0bc4e2605658b5934e30aa3b75))
+* **dx-core:** add visual task progress tracking to coordinator skills ([b6325a4](https://github.com/easingthemes/dx-aem-flow/commit/b6325a47b94c6119c267755541432380ff0c6c0e))
+
 # [2.51.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.5...v2.51.0) (2026-03-21)
 
 
