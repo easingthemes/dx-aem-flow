@@ -1,0 +1,26 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - 'scripts/validate-*.sh'
+      - '.github/workflows/validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - 'scripts/validate-*.sh'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate skills
+        run: bash scripts/validate-skills.sh
+      - name: Validate agents
+        run: bash scripts/validate-agents.sh
+      - name: Validate structure
+        run: bash scripts/validate-structure.sh

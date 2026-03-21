@@ -6,7 +6,12 @@ interface Props {
 }
 
 const { title = 'KAI' } = Astro.props;
+const base = import.meta.env.BASE_URL;
 const currentPath = Astro.url.pathname;
+
+function url(path: string): string {
+  return base + path;
+}
 
 const navItems = [
   { label: 'Home', path: '/' },
@@ -21,9 +26,10 @@ const navItems = [
 ];
 
 function isActive(item: any): boolean {
-  if (item.path === '/') return currentPath === '/';
-  if (item.path === '/overview/') return currentPath === '/overview/';
-  const section = item.path.split('/').slice(0, 2).join('/') + '/';
+  const fullPath = url(item.path);
+  if (item.path === '/') return currentPath === fullPath;
+  if (item.path === '/overview/') return currentPath === fullPath;
+  const section = url(item.path.split('/').slice(0, 2).join('/') + '/');
   return currentPath.startsWith(section);
 }
 ---
@@ -33,7 +39,7 @@ function isActive(item: any): boolean {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -44,7 +50,7 @@ function isActive(item: any): boolean {
     <header class="fixed top-0 inset-x-0 z-50 bg-brand-700">
       <nav class="flex items-center gap-1 px-4 h-16">
         <!-- Logo -->
-        <a href="/" class="flex items-center gap-2 mr-6 no-underline">
+        <a href={url('/')} class="flex items-center gap-2 mr-6 no-underline">
           <span class="w-9 h-9 rounded-md bg-cyan text-brand-700 flex items-center justify-center font-bold text-lg">K</span>
           <span class="text-white font-bold text-xl">KAI</span>
         </a>
@@ -53,7 +59,7 @@ function isActive(item: any): boolean {
         <div class="hidden md:flex items-center gap-0.5 flex-1">
           {navItems.map((item) => (
             <a
-              href={item.path}
+              href={url(item.path)}
               class:list={[
                 'px-3 py-2 text-sm font-medium rounded-md transition-colors',
                 isActive(item) ? 'text-cyan' : 'text-white/75 hover:text-white',
@@ -79,7 +85,7 @@ function isActive(item: any): boolean {
         <div class="py-2 px-4">
           {navItems.map((item) => (
             <a
-              href={item.path}
+              href={url(item.path)}
               class:list={[
                 'block px-2 py-2 text-sm transition-colors',
                 isActive(item) ? 'text-cyan' : 'text-white/75 hover:text-white',

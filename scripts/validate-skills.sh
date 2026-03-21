@@ -6,6 +6,7 @@
 # 2. Name format: lowercase, numbers, hyphens only, max 64 chars
 # 3. No collisions across plugins (including automation)
 # 4. No collisions with known Claude Code built-in commands
+# 5. description: field exists and is non-empty
 
 set -euo pipefail
 
@@ -44,6 +45,13 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//')
   if [ "$file_name" != "$skill_name" ]; then
     echo "ERROR: $rel_path — name: '$file_name' does not match directory '$skill_name'"
+    ERRORS=$((ERRORS + 1))
+  fi
+
+  # Check description: exists
+  file_desc=$(grep "^description:" "$skill_file" | head -1 | sed 's/^description: *//')
+  if [ -z "$file_desc" ]; then
+    echo "ERROR: $rel_path — missing or empty description: field"
     ERRORS=$((ERRORS + 1))
   fi
 
