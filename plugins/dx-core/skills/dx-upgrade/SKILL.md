@@ -287,8 +287,8 @@ Copilot CLI's `/plugin marketplace update` may fail for local marketplaces with 
 ```bash
 /plugin uninstall dx-core
 /plugin uninstall dx-aem
-/plugin install dx-core@dx-aem-ai-flow
-/plugin install dx-aem@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-flow
+/plugin install dx-aem@dx-aem-flow
 ```
 
 This picks up the latest version from the local marketplace source.

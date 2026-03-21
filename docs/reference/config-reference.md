@@ -248,7 +248,7 @@ These environment variables are set on ADO pipeline runs and read by skills at r
 | `ANTHROPIC_API_KEY` | Claude API key for Claude Code CLI authentication. |
 | `ADO_ORG_URL` | ADO org URL (e.g. `https://yourorg.visualstudio.com`). Used for plugin marketplace auth and cross-repo delegation. |
 | `ADO_ORG_NAME` | Short ADO org name (e.g. `myorg`). Read by `pipeline-agent.js` for org identification. Falls back to `"myorg"` if not set. |
-| `DX_MARKETPLACE_URL` | Git URL with ref for the plugin marketplace repo. Only used when `dx-aem-ai-flow/` is not available locally (cross-repo pipelines). |
+| `DX_MARKETPLACE_URL` | Git URL with ref for the plugin marketplace repo. Only used when `dx-aem-flow/` is not available locally (cross-repo pipelines). |
 
 ### Code-Writing Pipelines (BugFix, DevAgent, DoD-Fix)
 

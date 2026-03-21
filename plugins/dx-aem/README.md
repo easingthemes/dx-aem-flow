@@ -7,14 +7,14 @@ AEM-specific tools for Adobe Experience Manager projects: component verification
 Install the `dx-core` plugin first:
 
 ```bash
-/plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-core@dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
 ```
 
 ## Installation
 
 ```bash
-/plugin install dx-aem@dx-aem-ai-flow
+/plugin install dx-aem@dx-aem-flow
 ```
 
 ## Quick Start

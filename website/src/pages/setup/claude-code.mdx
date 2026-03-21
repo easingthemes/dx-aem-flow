@@ -44,15 +44,15 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <CommandBlock label="Add marketplace and install plugins">{`# Add the shared marketplace (one-time)
-/plugin marketplace add easingthemes/dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
 
 # Install plugins (project scope)
-/plugin install dx-core@dx-aem-ai-flow
-/plugin install dx-aem@dx-aem-ai-flow          # AEM projects only`}</CommandBlock>
+/plugin install dx-core@dx-aem-flow
+/plugin install dx-aem@dx-aem-flow          # AEM projects only`}</CommandBlock>
 
   <HighlightBox severity="info" title="Updating Plugins">
     To update all plugins to the latest version:
-    <CommandBlock>/plugin marketplace update dx-aem-ai-flow</CommandBlock>
+    <CommandBlock>/plugin marketplace update dx-aem-flow</CommandBlock>
   </HighlightBox>
 </Section>
 
@@ -194,8 +194,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       If plugins are not appearing after install, check <code>.claude/settings.json</code> for <code>enabledPlugins</code>. Recreate the file if needed:
       <CommandBlock>{`{
   "enabledPlugins": [
-    "dx-core@dx-aem-ai-flow",
-    "dx-aem@dx-aem-ai-flow"
+    "dx-core@dx-aem-flow",
+    "dx-aem@dx-aem-flow"
   ]
 }`}</CommandBlock>
     </HighlightBox>

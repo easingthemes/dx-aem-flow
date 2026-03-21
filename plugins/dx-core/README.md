@@ -5,8 +5,8 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 ## Installation
 
 ```bash
-/plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-core@dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
 ```
 
 ## Quick Start

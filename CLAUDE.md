@@ -16,11 +16,11 @@ AEM project knowledge (seed data) is now built into dx-aem — no separate plugi
 
 ```bash
 # Add local marketplace (once)
-/plugin marketplace add /path/to/dx-aem-ai-flow
+/plugin marketplace add /path/to/dx-aem-flow
 
 # Install plugins from marketplace
-/plugin install dx-core@dx-aem-ai-flow
-/plugin install dx-aem@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-flow
+/plugin install dx-aem@dx-aem-flow
 
 # Test a skill
 /dx-init

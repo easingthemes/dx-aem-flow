@@ -6,7 +6,7 @@ import icon from 'astro-icon';
 export default defineConfig({
   integrations: [mdx(), tailwind(), icon()],
   site: 'https://easingthemes.github.io',
-  base: '/dx-aem-ai-flow',
+  base: '/dx-aem-flow',
   redirects: {
     '/local-workflow/': '/workflows/local/',
     '/figma/': '/workflows/figma/',

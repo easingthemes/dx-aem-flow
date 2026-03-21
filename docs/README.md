@@ -1,6 +1,6 @@
 # Documentation
 
-Full documentation is available on the [KAI website](https://easingthemes.github.io/dx-aem-ai-flow/).
+Full documentation is available on the [KAI website](https://easingthemes.github.io/dx-aem-flow/).
 
 To run locally: `cd website && npm install && npm run dev`
 

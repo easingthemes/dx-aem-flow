@@ -9,14 +9,14 @@ Deploys ten autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD che
 - Azure CLI configured (`az account show` works)
 
 ```bash
-/plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-core@dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
 ```
 
 ## Installation
 
 ```bash
-/plugin install dx-automation@dx-aem-ai-flow
+/plugin install dx-automation@dx-aem-flow
 ```
 
 ## Quick Start

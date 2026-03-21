@@ -227,8 +227,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     Add to <code>.vscode/settings.json</code> to expose plugin skills to VS Code Chat:
     <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
   ".claude/skills": true,
-  "dx-aem-ai-flow/dx/plugins/dx-core/skills": true,
-  "dx-aem-ai-flow/dx/plugins/dx-aem/skills": true
+  "dx-aem-flow/dx/plugins/dx-core/skills": true,
+  "dx-aem-flow/dx/plugins/dx-aem/skills": true
 }`}</CommandBlock>
     VS Code Chat also defaults to reading <code>.claude/rules/</code> and <code>.github/agents/</code> --
     the same files Claude Code and Copilot CLI use. No duplication needed.

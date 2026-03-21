@@ -92,7 +92,7 @@ ADO tag added  -->  webhook fires
 ### Hub and Consumer
 
 ```
-dx-aem-ai-flow/              <-- Plugin source (Hub)
+dx-aem-flow/              <-- Plugin source (Hub)
 ├── dx/plugins/
 │   ├── dx-core/    <-- Core: ADO workflow (43 skills, 5 agents)
 │   ├── dx-aem/               <-- AEM: component verification, project knowledge (10 skills, 5 agents)

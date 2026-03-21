@@ -29,13 +29,13 @@ const targetDir = path.resolve(
 );
 
 // Resolve plugins directory relative to this CLI tool
-// CLI is at: dx-aem-ai-flow/dx/cli/bin/dx-scaffold.js
-// Plugins:   dx-aem-ai-flow/dx/plugins/
+// CLI is at: dx-aem-flow/dx/cli/bin/dx-scaffold.js
+// Plugins:   dx-aem-flow/dx/plugins/
 const pluginsDir = path.resolve(__dirname, '..', '..', 'plugins');
 
 if (flags.help) {
   console.log(`
-dx-scaffold — Standalone scaffolding for dx-aem-ai-flow plugin ecosystem
+dx-scaffold — Standalone scaffolding for dx-aem-flow plugin ecosystem
 
 Creates the same project structure as /dx-init + /aem-init Claude Code skills,
 configured with auto-detected or default values. No Claude Code required.
@@ -92,7 +92,7 @@ After scaffolding, edit .ai/config.yaml to set your actual values.
 // --- Validate ---
 if (!fs.existsSync(pluginsDir)) {
   console.error(`ERROR: Plugin directory not found: ${pluginsDir}`);
-  console.error('This tool must be run from within the dx-aem-ai-flow repository.');
+  console.error('This tool must be run from within the dx-aem-flow repository.');
   process.exit(1);
 }
 

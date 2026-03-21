@@ -73,7 +73,7 @@ The scaffold output is identical to what `/dx-init` + `/aem-init` produce. Runni
 ## Requirements
 
 - Node.js >= 14
-- Must be run from within a clone of dx-aem-ai-flow (reads templates from `../plugins/`)
+- Must be run from within a clone of dx-aem-flow (reads templates from `../plugins/`)
 - Zero npm dependencies
 
 ## Architecture

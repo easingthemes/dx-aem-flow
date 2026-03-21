@@ -188,7 +188,7 @@ az_pipelines_variable create \
 >
 > Format: `https://<org>.visualstudio.com/<project>/_git/<repo>.git#<branch>`
 >
-> Only needed for cross-repo pipelines. If `dx-aem-ai-flow/` exists in the checkout (same repo), local path is used automatically.
+> Only needed for cross-repo pipelines. If `dx-aem-flow/` exists in the checkout (same repo), local path is used automatically.
 
 ```bash
 az_pipelines_variable create \

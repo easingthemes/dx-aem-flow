@@ -46,8 +46,8 @@ steps:
         PROMPT="$PROMPT (dry run — analyze only, do NOT post comments to ADO)"
       fi
 
-      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
-      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-flow/dx/plugins"
+      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-flow/dx/plugins"
       export PLUGIN_BASE_DIR="$PLUGIN_DIR"
 
       echo "prompt: $PROMPT"

@@ -1,4 +1,4 @@
-# dx-aem-ai-flow
+# dx-aem-flow
 
 Three Claude Code plugins for AI-assisted Azure DevOps and Jira/Confluence development workflows.
 
@@ -8,19 +8,19 @@ Add the marketplace, then install the plugins you need:
 
 ```bash
 # Add the marketplace (once)
-/plugin marketplace add easingthemes/dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
 
 # Install plugins
-/plugin install dx-core@dx-aem-ai-flow   # Core workflow (all projects)
-/plugin install dx-aem@dx-aem-ai-flow              # AEM tools (AEM projects)
-/plugin install dx-automation@dx-aem-ai-flow        # Autonomous agents (24/7 pipelines)
+/plugin install dx-core@dx-aem-flow   # Core workflow (all projects)
+/plugin install dx-aem@dx-aem-flow              # AEM tools (AEM projects)
+/plugin install dx-automation@dx-aem-flow        # Autonomous agents (24/7 pipelines)
 ```
 
 From a local clone:
 
 ```bash
-/plugin marketplace add /path/to/dx-aem-ai-flow
-/plugin install dx-core@dx-aem-ai-flow
+/plugin marketplace add /path/to/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
 ```
 
 ## Plugins
@@ -45,7 +45,7 @@ Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answe
 
 ## Client-Specific Plugins
 
-Client-specific plugins can live alongside these plugins for project-specific enrichment (market data, brand config, etc.). See the [authoring guide](https://easingthemes.github.io/dx-aem-ai-flow/reference/authoring/) for how to create them.
+Client-specific plugins can live alongside these plugins for project-specific enrichment (market data, brand config, etc.). See the [authoring guide](https://easingthemes.github.io/dx-aem-flow/reference/authoring/) for how to create them.
 
 ## Quick Start
 
@@ -53,8 +53,8 @@ Client-specific plugins can live alongside these plugins for project-specific en
 
 ```bash
 # 1. Install
-/plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-core@dx-aem-ai-flow
+/plugin marketplace add easingthemes/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
 
 # 2. Initialize your project
 /dx-init
@@ -83,13 +83,13 @@ Auto-detects git remote, SCM provider, project type, and base branch. Outputs ~1
 
 ## Documentation
 
-Full documentation: [KAI Website](https://easingthemes.github.io/dx-aem-ai-flow/)
+Full documentation: [KAI Website](https://easingthemes.github.io/dx-aem-flow/)
 
-- [Learn](https://easingthemes.github.io/dx-aem-ai-flow/learn/intro/) — AI fundamentals, skills, agents, hooks
-- [Workflows](https://easingthemes.github.io/dx-aem-ai-flow/workflows/local/) — Step-by-step guides
-- [Reference](https://easingthemes.github.io/dx-aem-ai-flow/reference/skills/) — Skills, agents, config schema
-- [Architecture](https://easingthemes.github.io/dx-aem-ai-flow/architecture/overview/) — System design
-- [Setup](https://easingthemes.github.io/dx-aem-ai-flow/setup/claude-code/) — Installation guides
+- [Learn](https://easingthemes.github.io/dx-aem-flow/learn/intro/) — AI fundamentals, skills, agents, hooks
+- [Workflows](https://easingthemes.github.io/dx-aem-flow/workflows/local/) — Step-by-step guides
+- [Reference](https://easingthemes.github.io/dx-aem-flow/reference/skills/) — Skills, agents, config schema
+- [Architecture](https://easingthemes.github.io/dx-aem-flow/architecture/overview/) — System design
+- [Setup](https://easingthemes.github.io/dx-aem-flow/setup/claude-code/) — Installation guides
 
 ### Run docs locally
 

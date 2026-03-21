@@ -17,7 +17,7 @@
  *                           ToolSearch is always added (subagents need it).
  *                           MCP wildcards are auto-added for configured servers.
  *   CLAUDE_MODEL          - optional model override
- *   PLUGIN_BASE_DIR       - path to plugins dir, default: ./dx-aem-ai-flow/dx/plugins
+ *   PLUGIN_BASE_DIR       - path to plugins dir, default: ./dx-aem-flow/dx/plugins
  */
 
 const { query } = require("@anthropic-ai/claude-agent-sdk");
@@ -47,7 +47,7 @@ const timer = setTimeout(() => {
 timer.unref();
 
 // --- Discover plugins ---
-const pluginBaseDir = process.env.PLUGIN_BASE_DIR || "./dx-aem-ai-flow/dx/plugins";
+const pluginBaseDir = process.env.PLUGIN_BASE_DIR || "./dx-aem-flow/dx/plugins";
 const pluginNames = ["dx-core", "dx-aem", "dx-automation"];
 const plugins = pluginNames
   .map((name) => path.resolve(pluginBaseDir, name))

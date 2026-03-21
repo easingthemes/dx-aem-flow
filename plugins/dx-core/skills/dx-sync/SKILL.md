@@ -5,7 +5,7 @@ argument-hint: "[--dry-run] [--parallel] [--skip-hub] [repo1 repo2 ...] — repo
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-You sync plugin updates from the dx-aem-ai-flow source to consumer AEM repos using the `sync-consumers.sh` script.
+You sync plugin updates from the dx-aem-flow source to consumer AEM repos using the `sync-consumers.sh` script.
 
 ## 1. Locate Sync Script
 
@@ -20,7 +20,7 @@ If it doesn't exist, try the repo root fallback:
 SYNC_SCRIPT="$(git rev-parse --show-toplevel)/internal/sync-consumers.sh"
 ```
 
-If neither exists, STOP: "sync-consumers.sh not found. This skill requires the dx-aem-ai-flow source repo."
+If neither exists, STOP: "sync-consumers.sh not found. This skill requires the dx-aem-flow source repo."
 
 ## 2. Show Consumer Repo Table
 
@@ -88,4 +88,4 @@ If `--dry-run` was used, note: "Dry run — no changes were made."
 - **Use --no-pr when needed** — pass `--no-pr` to skip PR creation for specific runs
 - **Dry-run first on uncertainty** — if unsure about scope, suggest `--dry-run` first
 - **Read script output** — the script reports per-step status; relay any errors to the user
-- **This skill only runs from the Hub repo** (the repo containing `dx-aem-ai-flow/`) since it hosts the plugin source
+- **This skill only runs from the Hub repo** (the repo containing `dx-aem-flow/`) since it hosts the plugin source

@@ -98,6 +98,6 @@ Old URLs redirect to new locations (configured in `astro.config.mjs`). When movi
 
 ## Content Source
 
-Plugin docs at `dx-aem-ai-flow/dx/docs/` are the source of truth for reference content. The website should be kept in sync when plugin docs change.
+Plugin docs at `dx-aem-flow/dx/docs/` are the source of truth for reference content. The website should be kept in sync when plugin docs change.
 
 The original React + MUI version is at `internal/presentations/web copy/` for visual reference only.

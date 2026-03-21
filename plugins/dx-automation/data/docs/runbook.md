@@ -102,7 +102,7 @@ All tools require AWS credentials (`AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY`
 
 **Resolution:**
 - Check `ADO_ORG_URL` and `DX_MARKETPLACE_URL` pipeline variables are set correctly
-- If same-repo: verify `dx-aem-ai-flow/` directory exists in the checkout
+- If same-repo: verify `dx-aem-flow/` directory exists in the checkout
 - If cross-repo: `System.AccessToken` needs read access to the marketplace repo — check "Limit job authorization scope" in ADO project settings
 - Re-run the pipeline after fixing variables
 
