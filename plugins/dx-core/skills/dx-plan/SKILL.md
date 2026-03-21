@@ -32,6 +32,22 @@ Also check for Figma prototype files (from `/dx-figma-prototype`):
 
 If prototype files exist, the plan MUST reference them. Implementation steps should adapt the prototype into project-native code rather than building from scratch.
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Read `research.md` → `## Cross-Repo Scope` for per-repo scope
+2. If cross-repo scope detected:
+   a. Resolve target repos from config
+   b. For each repo, dispatch planning: `claude -p "/dx-plan <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   c. Each repo generates its own `implement.md` locally
+   d. Collect and summarize: "Plans generated in <N> repos"
+3. Write state files
+4. STOP — do not continue with local planning
+
+If hub mode is not active: continue with normal flow below.
+
 ## 2. Check Existing Output
 
 1. Check if `implement.md` exists in the spec directory

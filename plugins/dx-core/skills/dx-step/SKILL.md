@@ -12,6 +12,7 @@ You execute the next pending step from implement.md — read the instructions, i
 ```dot
 digraph step {
     "Locate spec directory" [shape=box];
+    "Hub mode check" [shape=diamond];
     "Find next step" [shape=diamond];
     "All done" [shape=doublecircle];
     "Step status?" [shape=diamond];
@@ -27,7 +28,9 @@ digraph step {
     "Mark done + present summary" [shape=doublecircle];
     "Mark blocked + present summary" [shape=doublecircle];
 
-    "Locate spec directory" -> "Find next step";
+    "Locate spec directory" -> "Hub mode check";
+    "Hub mode check" -> "Find next step" [label="not hub mode"];
+    "Hub mode check" -> "All done" [label="hub dispatched"];
     "Find next step" -> "All done" [label="none pending"];
     "Find next step" -> "Step status?" [label="found"];
     "Step status?" -> "Mark in-progress" [label="pending"];
@@ -59,6 +62,22 @@ SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir $ARGUMENTS)
 ```
 
 Read `implement.md` from `$SPEC_DIR`.
+
+### Hub mode check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Determine which repo owns this step:
+   - Read `implement.md` step instructions for file paths
+   - Match file paths to repo capabilities from config
+   - Or: if step specifies a repo tag (from cross-repo plan), use that
+2. Dispatch to the correct repo: `claude -p "/dx-step <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+3. Collect result, write state
+4. Print: `✓ <repo> — step <N> <status>`
+5. Go to → "All done" (step executed in target repo)
+
+If hub mode is not active: continue to "Find next step" (normal flow).
 
 ### Find next step
 

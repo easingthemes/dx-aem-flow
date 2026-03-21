@@ -13,6 +13,29 @@ You create a pull request for the completed implementation.
 
 Follow every rule in `git-rules.md`. The steps below assume you have read it.
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Read `.ai/config.yaml` → `repos:` list
+2. Determine which repos have completed work for this ticket:
+   - Check `state/<ticket-id>/results/` for repos with `status: completed`
+   - Or: check each repo for a feature branch matching the ticket ID
+3. For each repo with completed work:
+   - If `repos[].no-pr: true` → skip, print: `<repo> — pushed (no PR)`
+   - Otherwise: dispatch `claude -p "/dx-pr <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Collect PR URLs from results
+4. Write state, print summary:
+   ```
+   PRs created:
+     - Repo-A: #38001 (https://...)
+     - Repo-B: pushed (no PR)
+   ```
+5. STOP
+
+If hub mode is not active: continue with normal flow below.
+
 ## Persona (optional)
 
 If `.ai/me.md` exists, read it. Use it to shape the PR description text. PR format constraints (summary + changes + test plan) always apply. If `.ai/me.md` doesn't exist, use defaults.

@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 55 skills
+## dx-core plugin — 58 skills
 
 ### Estimation — 1 skill
 
@@ -105,7 +105,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-sync | `/dx-sync` | `[--dry-run] [--parallel] [repo1 repo2 ...]` | Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options | Sync report |
 
-### Utility — 7 skills
+### Utility — 10 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -116,6 +116,9 @@
 | dx-ticket-analyze | `/dx-ticket-analyze` | `<work-item-id or URL>` | Research ADO/Jira ticket, find all relevant source files | Research report |
 | dx-eject | `/dx-eject` | `[dx\|aem\|auto\|all]` | Eject plugin assets into local repo — copies all skills, agents, rules, templates so project works without plugins | `.claude/skills/`, `.ai/ejected/` |
 | dx-help | `/dx-help` | `<question>` | Answer architecture questions from local .ai/ docs | Answer |
+| dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
+| dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
+| dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| dispatch-mode \| auto-dispatch]` | View and edit hub configuration | Config update |
 
 ---
 
