@@ -26,7 +26,7 @@ import HighlightBox from '../../components/HighlightBox.astro';
   <HighlightBox severity="info" title="Plugin Directory Structure">
     <CommandBlock>
 {`dx-aem-ai-flow/dx/plugins/
-  dx-dev-experience/   55 skills, 7 agents -- ADO/Jira workflow (any stack)
+  dx-core/   55 skills, 7 agents -- ADO/Jira workflow (any stack)
   dx-aem/              12 skills, 6 agents -- AEM verification & QA
   dx-automation/       11 skills -- autonomous 24/7 agents`}
     </CommandBlock>
@@ -263,7 +263,7 @@ aem:
     </HighlightBox>
 
     <HighlightBox severity="error" title="Agent Type Naming">
-      Always use the full prefixed name: <code>dx-dev-experience:dx-step-executor</code>, NOT just
+      Always use the full prefixed name: <code>dx-core:dx-step-executor</code>, NOT just
       <code>dx-step-executor</code>. The short name fails with "Agent type not found".
     </HighlightBox>
 
@@ -370,7 +370,7 @@ aem:
   bg="primary"
 />
 <Section>
-  <h3 class="text-lg font-bold mb-4">dx-dev-experience MCP Servers</h3>
+  <h3 class="text-lg font-bold mb-4">dx-core MCP Servers</h3>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="ADO MCP">
       Project-level (not in a plugin)
@@ -714,7 +714,7 @@ aem:
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Three Plugins, One Repo">
       Three independently installable plugins in a single monorepo. Non-AEM projects only need
-      <code>dx-dev-experience</code>; AEM projects add <code>dx-aem</code>; any project wanting
+      <code>dx-core</code>; AEM projects add <code>dx-aem</code>; any project wanting
       24/7 autonomous agents adds <code>dx-automation</code>. Single repo simplifies maintenance.
     </ContentCard>
 
@@ -774,7 +774,7 @@ aem:
 
   <HighlightBox severity="info" title="Automation as a Separate Plugin">
     The autonomous agent infrastructure (Lambda + ADO pipelines + AWS resources) lives in its own
-    <code>dx-automation</code> plugin, not in <code>dx-dev-experience</code>. Interactive skills
+    <code>dx-automation</code> plugin, not in <code>dx-core</code>. Interactive skills
     run when you ask and respond to you. Automation agents run 24/7 without you. They have completely
     different lifecycles -- separate plugin, separate install, separate operational skills.
   </HighlightBox>

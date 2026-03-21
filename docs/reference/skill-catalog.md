@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-dev-experience plugin — 55 skills
+## dx-core plugin — 55 skills
 
 ### Estimation — 1 skill
 
@@ -201,7 +201,7 @@ dx-req-dod-fix ── dx-req-dod (needs dod.md), optionally invokes dx-doc-gen +
 
 ## dx-automation plugin (11 skills)
 
-> Requires: `dx-dev-experience` plugin installed. Also requires AWS CLI and Azure CLI configured.
+> Requires: `dx-core` plugin installed. Also requires AWS CLI and Azure CLI configured.
 >
 > Sets up ten autonomous agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running as ADO pipelines triggered by AWS Lambda webhooks. All agents use Claude Code CLI (reuses dx skills directly in pipelines).
 >

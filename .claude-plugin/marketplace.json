@@ -5,8 +5,8 @@
   },
   "plugins": [
     {
-      "name": "dx-dev-experience",
-      "source": "./plugins/dx-dev-experience",
+      "name": "dx-core",
+      "source": "./plugins/dx-core",
       "description": "Full-stack development workflow for Azure DevOps projects — requirements, planning, execution, review, bug fixes, and PR management",
       "version": "2.48.0",
       "author": { "name": "Dragan Filipovic" }

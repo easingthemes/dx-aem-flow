@@ -27,7 +27,7 @@ slackText: |
   
   *The version bump trap:*
   When bumping plugin versions, you must update 4 files:
-  1. `dx-dev-experience/plugin.json`
+  1. `dx-core/plugin.json`
   2. `dx-aem/plugin.json`
   3. `dx-automation/plugin.json`
   4. `.claude-plugin/marketplace.json` (consumer repo root)
@@ -46,7 +46,7 @@ slackText: |
 
 ```
 # Version lives in 4 files:
-# 1. dx-dev-experience/plugin.json
+# 1. dx-core/plugin.json
 # 2. dx-aem/plugin.json
 # 3. dx-automation/plugin.json
 # 4. .claude-plugin/marketplace.json

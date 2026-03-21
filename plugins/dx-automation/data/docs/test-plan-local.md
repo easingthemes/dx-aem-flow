@@ -5,7 +5,7 @@ Test the AI workflows as a developer would use them — via Claude Code skills. 
 ## Prerequisites
 
 - Claude Code CLI installed and authenticated
-- dx plugins installed (`/plugin install dx-dev-experience`, `dx-aem`, `dx-automation`)
+- dx plugins installed (`/plugin install dx-core`, `dx-aem`, `dx-automation`)
 - `/dx-init` and `/aem-init` run (`.ai/config.yaml` exists)
 - ADO PAT set in environment or `.env`
 - LLM key set (`ANTHROPIC_API_KEY`)

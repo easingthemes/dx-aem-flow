@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Three Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
 
-- **dx-dev-experience** (`plugins/dx-dev-experience/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. 53 skills (`dx-*`), 7 agents. 15 Copilot agent templates (incl. coordinators).
+- **dx-core** (`plugins/dx-core/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. 53 skills (`dx-*`), 7 agents. 15 Copilot agent templates (incl. coordinators).
 - **dx-aem** (`plugins/dx-aem/`) — AEM-specific verification, QA, and demo capture. Includes AEM project knowledge (seed data). Requires dx. 10 skills (`aem-*`), 5 agents.
 - **dx-automation** (`plugins/dx-automation/`) — Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. Requires dx. 11 skills (`auto-*`).
 
@@ -19,7 +19,7 @@ AEM project knowledge (seed data) is now built into dx-aem — no separate plugi
 /plugin marketplace add /path/to/dx-aem-ai-flow
 
 # Install plugins from marketplace
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 /plugin install dx-aem@dx-aem-ai-flow
 
 # Test a skill
@@ -100,8 +100,8 @@ MCP servers in a plugin's `.mcp.json` get a prefixed tool name: `mcp__plugin_<pl
 |--------|--------|-----------------|-----------------|
 | ADO | *(project-level)* | `mcp__ado__` | *(n/a — no prefix)* |
 | Atlassian | *(project-level)* | `mcp__atlassian__` | *(n/a — no prefix)* |
-| Figma | dx-dev-experience | `mcp__plugin_dx-dev-experience_figma__` | `mcp__figma__` |
-| axe | dx-dev-experience | `mcp__plugin_dx-dev-experience_axe-mcp-server__` | `mcp__axe-mcp-server__` |
+| Figma | dx-core | `mcp__plugin_dx-core_figma__` | `mcp__figma__` |
+| axe | dx-core | `mcp__plugin_dx-core_axe-mcp-server__` | `mcp__axe-mcp-server__` |
 | AEM | dx-aem | `mcp__plugin_dx-aem_AEM__` | `mcp__AEM__` |
 | Chrome DevTools | dx-aem | `mcp__plugin_dx-aem_chrome-devtools-mcp__` | `mcp__chrome-devtools-mcp__` |
 
@@ -133,7 +133,7 @@ agent: agent-name      # optional
 ---
 ```
 
-- Skills go in `plugins/{dx-dev-experience,dx-aem,dx-automation}/skills/<name>/SKILL.md`
+- Skills go in `plugins/{dx-core,dx-aem,dx-automation}/skills/<name>/SKILL.md`
 - Helper scripts go in `skills/<name>/scripts/*.sh`
 - Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-req-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
 
@@ -168,7 +168,7 @@ model: sonnet
 ---
 ```
 
-- Agents go in `plugins/{dx-dev-experience,dx-aem}/agents/<name>.md`
+- Agents go in `plugins/{dx-core,dx-aem}/agents/<name>.md`
 - Naming: plugin prefix + descriptive role (`dx-code-reviewer`, `aem-inspector`)
 
 ### Plugin Manifest (Dual-Platform)
@@ -184,7 +184,7 @@ Full schema and compatibility matrix: see the docs site (`website/`) → "Plugin
 - Update `docs/reference/skill-catalog.md` or `docs/reference/agent-catalog.md`
 - Shell scripts are `chmod +x`
 - **Bump version** in ALL FOUR version files after non-trivial changes. All three plugins share the same version. Files to update:
-  1. `plugins/dx-dev-experience/.claude-plugin/plugin.json`
+  1. `plugins/dx-core/.claude-plugin/plugin.json`
   2. `plugins/dx-aem/.claude-plugin/plugin.json`
   3. `plugins/dx-automation/.claude-plugin/plugin.json`
   4. **Consumer repo** `.claude-plugin/marketplace.json` (3 entries — one per plugin)

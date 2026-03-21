@@ -48,7 +48,7 @@ timer.unref();
 
 // --- Discover plugins ---
 const pluginBaseDir = process.env.PLUGIN_BASE_DIR || "./dx-aem-ai-flow/dx/plugins";
-const pluginNames = ["dx-dev-experience", "dx-aem", "dx-automation"];
+const pluginNames = ["dx-core", "dx-aem", "dx-automation"];
 const plugins = pluginNames
   .map((name) => path.resolve(pluginBaseDir, name))
   .filter((p) => fs.existsSync(p))

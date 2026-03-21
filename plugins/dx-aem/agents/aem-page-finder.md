@@ -29,7 +29,7 @@ If a direct call fails with "tool not found", fall back to ToolSearch:
 ToolSearch("+AEM")
 ```
 
-See `shared/pre-flight-checks.md` in dx-dev-experience for the standard pattern.
+See `shared/pre-flight-checks.md` in dx-core for the standard pattern.
 
 ## What You Receive
 

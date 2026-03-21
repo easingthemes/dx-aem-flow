@@ -3,7 +3,7 @@ title: "Plugin = Skills + Agents + Hooks in a Box"
 category: "Plugins — Full Package"
 focus: "Claude Code"
 tags: ["Plugin","Bundle","Reusable"]
-overview: "A plugin bundles skills, agents, hooks, MCP configs, and rules into a single installable package. Install once, available in every project. Our three plugins (dx-dev-experience, dx-aem, dx-automation) contain 74 skills, 13 agents, and 4 hooks — all distributed from a single source."
+overview: "A plugin bundles skills, agents, hooks, MCP configs, and rules into a single installable package. Install once, available in every project. Our three plugins (dx-core, dx-aem, dx-automation) contain 74 skills, 13 agents, and 4 hooks — all distributed from a single source."
 codeLabel: "Plugin anatomy"
 screenshot: null
 week: 8
@@ -31,7 +31,7 @@ slackText: |
   
   *Our setup:*
   Three plugins, 74 skills, 13 agents, distributed to 4 consumer repos:
-  • `dx-dev-experience` — universal development workflow
+  • `dx-core` — universal development workflow
   • `dx-aem` — AEM-specific tools
   • `dx-automation` — autonomous CI/CD agents
   
@@ -42,7 +42,7 @@ slackText: |
 
 ```
 # Plugin structure:
-dx-dev-experience/
+dx-core/
 ├── .claude-plugin/
 │   └── plugin.json    # manifest
 ├── .mcp.json          # MCP servers

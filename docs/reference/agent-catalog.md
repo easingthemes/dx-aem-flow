@@ -7,7 +7,7 @@
 | Property | Value |
 |----------|-------|
 | **Model** | Opus |
-| **File** | `plugins/dx-dev-experience/agents/dx-code-reviewer.md` |
+| **File** | `plugins/dx-core/agents/dx-code-reviewer.md` |
 | **Used by** | `/dx-step-verify` |
 | **Tools** | All (read, write, edit, bash, glob, grep) |
 | **Permission mode** | `plan` (read-only by default) |
@@ -28,7 +28,7 @@ Deep code review with confidence-based filtering. Only reports issues at confide
 | Property | Value |
 |----------|-------|
 | **Model** | Sonnet |
-| **File** | `plugins/dx-dev-experience/agents/dx-pr-reviewer.md` |
+| **File** | `plugins/dx-core/agents/dx-pr-reviewer.md` |
 | **Used by** | `/dx-pr-review`, `/dx-pr-reviews` |
 | **Tools** | Read, Glob, Grep, Bash, Write, Edit |
 | **Permission mode** | `plan` (read-only by default) |
@@ -42,7 +42,7 @@ PR diff analysis with structured findings. Fetches PR diff, loads project conven
 | Property | Value |
 |----------|-------|
 | **Model** | Haiku |
-| **File** | `plugins/dx-dev-experience/agents/dx-file-resolver.md` |
+| **File** | `plugins/dx-core/agents/dx-file-resolver.md` |
 | **Used by** | `/dx-ticket-analyze` |
 | **Tools** | Glob, Grep, Read, mcp__ado__search_code |
 
@@ -55,7 +55,7 @@ Resolves all source files for a component or module across project repos. Return
 | Property | Value |
 |----------|-------|
 | **Model** | Haiku |
-| **File** | `plugins/dx-dev-experience/agents/dx-doc-searcher.md` |
+| **File** | `plugins/dx-core/agents/dx-doc-searcher.md` |
 | **Used by** | `/dx-help`, `/dx-ticket-analyze` |
 | **Tools** | Glob, Grep, Read |
 
@@ -68,7 +68,7 @@ Searches `.ai/` index and reference files for components, architecture patterns,
 | Property | Value |
 |----------|-------|
 | **Model** | Haiku |
-| **File** | `plugins/dx-dev-experience/agents/dx-figma-styles.md` |
+| **File** | `plugins/dx-core/agents/dx-figma-styles.md` |
 | **Used by** | `/dx-figma-prototype` |
 | **Tools** | Read, Glob, Grep |
 
@@ -81,7 +81,7 @@ Discovers CSS/SCSS conventions from the consumer project — variables, breakpoi
 | Property | Value |
 |----------|-------|
 | **Model** | Haiku |
-| **File** | `plugins/dx-dev-experience/agents/dx-figma-markup.md` |
+| **File** | `plugins/dx-core/agents/dx-figma-markup.md` |
 | **Used by** | `/dx-figma-prototype` |
 | **Tools** | Read, Glob, Grep |
 
@@ -94,7 +94,7 @@ Discovers HTML and accessibility conventions from the consumer project — seman
 | Property | Value |
 |----------|-------|
 | **Model** | Sonnet |
-| **File** | `plugins/dx-dev-experience/agents/dx-step-executor.md` |
+| **File** | `plugins/dx-core/agents/dx-step-executor.md` |
 | **Used by** | `/dx-step-all`, `/dx-agent-all`, `/dx-bug-all`, `/dx-req-all` |
 | **Tools** | Read, Write, Edit, Bash, Glob, Grep, Task, ToolSearch |
 | **Permission mode** | `acceptEdits` (auto-approves file edits) |
@@ -217,7 +217,7 @@ Copilot agents are seeded into `.github/agents/` when Copilot support is enabled
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxCodeReview.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxCodeReview.agent.md.template` |
 | **Claude equivalent** | dx-code-reviewer |
 | **Invoke** | `@DxCodeReview` |
 
@@ -231,7 +231,7 @@ Full branch code review with confidence-based filtering (≥80). Read-only — n
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxPRReview.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxPRReview.agent.md.template` |
 | **Claude equivalent** | dx-pr-reviewer |
 | **Invoke** | `@DxPRReview <PR-ID>` |
 
@@ -245,7 +245,7 @@ Fetches ADO PR diff, analyzes with project conventions, posts findings as PR com
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxPlanExecutor.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxPlanExecutor.agent.md.template` |
 | **Claude equivalent** | dx-step-executor |
 | **Invoke** | `@DxPlanExecutor <step-number>` |
 
@@ -259,7 +259,7 @@ Executes implementation plan steps from `implement.md`. Reads spec directory, ru
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxComponent.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxComponent.agent.md.template` |
 | **Claude equivalent** | dx-file-resolver |
 | **Invoke** | `@DxComponent <name>` |
 
@@ -274,7 +274,7 @@ Resolves all source files for a component or module. Returns file paths with ADO
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxHelp.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxHelp.agent.md.template` |
 | **Claude equivalent** | dx-doc-searcher |
 | **Invoke** | `@DxHelp <question>` |
 
@@ -289,7 +289,7 @@ Project Q&A from `.ai/` documentation, component index, and architecture docs.
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxTicket.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxTicket.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-ticket-analyze) |
 | **Invoke** | `@DxTicket <ADO-ID>` |
 
@@ -304,7 +304,7 @@ ADO ticket research — fetches work item, identifies related files, checks link
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxPRAnswer.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxPRAnswer.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-pr-answer) |
 | **Invoke** | `@DxPRAnswer <PR-ID>` |
 
@@ -318,7 +318,7 @@ Answers PR review comments — reads pending threads, drafts responses, posts re
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxPRFix.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxPRFix.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-pr-fix) |
 | **Invoke** | `@DxPRFix <PR-ID>` |
 
@@ -332,7 +332,7 @@ Applies "agree-will-fix" PR review changes. Reads threads, applies code changes,
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxCommit.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxCommit.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-pr-commit) |
 | **Invoke** | `@DxCommit` |
 
@@ -346,7 +346,7 @@ Smart commit with conventional message. Optionally creates ADO pull request with
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxDebug.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxDebug.agent.md.template` |
 | **Claude equivalent** | — |
 | **Invoke** | `@DxDebug <error or symptom>` |
 
@@ -360,7 +360,7 @@ Systematic error diagnosis. Read-only — traces errors through code, identifies
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxReqAll.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxReqAll.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-req-all) |
 | **Invoke** | `@DxReqAll <work-item-id>` |
 
@@ -374,7 +374,7 @@ Full requirements pipeline coordinator. Chains `/dx-req-fetch` → `/dx-req-dor`
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxStepAll.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxStepAll.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-step-all) |
 | **Invoke** | `@DxStepAll <work-item-id>` |
 
@@ -388,7 +388,7 @@ Execution loop coordinator. Runs `/dx-step` → `/dx-step-test` → `/dx-step-re
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxBugAll.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxBugAll.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-bug-all) |
 | **Invoke** | `@DxBugAll <bug-id>` |
 
@@ -402,7 +402,7 @@ Full bug workflow coordinator. Chains `/dx-bug-triage` → `/dx-bug-fix`.
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxAgentAll.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxAgentAll.agent.md.template` |
 | **Claude equivalent** | (skill: /dx-agent-all) |
 | **Invoke** | `@DxAgentAll <work-item-id>` |
 
@@ -416,7 +416,7 @@ End-to-end delivery coordinator. Full pipeline: Requirements → Planning → Ex
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-dev-experience/templates/agents/DxFigma.agent.md.template` |
+| **Template** | `plugins/dx-core/templates/agents/DxFigma.agent.md.template` |
 | **Claude equivalent** | (skills: /dx-figma-extract, /dx-figma-prototype, /dx-figma-verify) |
 | **Invoke** | `@DxFigma <work-item-id or Figma URL>` |
 

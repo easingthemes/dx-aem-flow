@@ -36,19 +36,19 @@ AEM is auto-enabled when the project has AEM markers (`pom.xml` + `ui.apps`/`ui.
 
 | Directory | Files | Source |
 |-----------|-------|--------|
-| `.ai/config.yaml` | Project config (SCM, build, AEM) | `dx-dev-experience/templates/config.yaml.template` |
+| `.ai/config.yaml` | Project config (SCM, build, AEM) | `dx-core/templates/config.yaml.template` |
 | `.ai/project.yaml` | Detected project profile | Generated from detection |
-| `.ai/rules/` | 4 shared AI rules | `dx-dev-experience/templates/rules/` |
-| `.ai/docs/` | 10 documentation files | `dx-dev-experience/templates/docs/` |
-| `.ai/lib/` | 7 shell utility scripts | `dx-dev-experience/data/lib/` |
-| `.ai/templates/` | 14 output templates | `dx-dev-experience/data/templates/` |
+| `.ai/rules/` | 4 shared AI rules | `dx-core/templates/rules/` |
+| `.ai/docs/` | 10 documentation files | `dx-core/templates/docs/` |
+| `.ai/lib/` | 7 shell utility scripts | `dx-core/data/lib/` |
+| `.ai/templates/` | 14 output templates | `dx-core/data/templates/` |
 | `.ai/project/` | 5 AEM seed data files | Generated with defaults |
-| `.claude/rules/` | 11 coding convention rules | `dx-dev-experience` + `dx-aem` templates |
-| `.claude/hooks/` | 1 lifecycle hook | `dx-dev-experience/data/hooks/` |
-| `.github/agents/` | 25 Copilot agents | `dx-dev-experience` + `dx-aem` templates |
+| `.claude/rules/` | 11 coding convention rules | `dx-core` + `dx-aem` templates |
+| `.claude/hooks/` | 1 lifecycle hook | `dx-core/data/hooks/` |
+| `.github/agents/` | 25 Copilot agents | `dx-core` + `dx-aem` templates |
 | `.github/instructions/` | 8 AEM instruction docs | `dx-aem/templates/instructions/` |
 | `.mcp.json` | MCP server config | Generated |
-| `agent.index.md` | Machine-readable doc map | `dx-dev-experience/templates/INDEX.md.template` |
+| `agent.index.md` | Machine-readable doc map | `dx-core/templates/INDEX.md.template` |
 
 ## Auto-Detection
 

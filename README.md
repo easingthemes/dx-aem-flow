@@ -11,7 +11,7 @@ Add the marketplace, then install the plugins you need:
 /plugin marketplace add easingthemes/dx-aem-ai-flow
 
 # Install plugins
-/plugin install dx-dev-experience@dx-aem-ai-flow   # Core workflow (all projects)
+/plugin install dx-core@dx-aem-ai-flow   # Core workflow (all projects)
 /plugin install dx-aem@dx-aem-ai-flow              # AEM tools (AEM projects)
 /plugin install dx-automation@dx-aem-ai-flow        # Autonomous agents (24/7 pipelines)
 ```
@@ -20,12 +20,12 @@ From a local clone:
 
 ```bash
 /plugin marketplace add /path/to/dx-aem-ai-flow
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 ```
 
 ## Plugins
 
-### [dx-dev-experience](plugins/dx-dev-experience/) — Development Workflow
+### [dx-core](plugins/dx-core/) — Development Workflow
 
 Full-stack development workflow for Azure DevOps and Jira projects: requirements gathering, implementation planning, step-by-step execution with testing and review, code review, bug fixes, and PR management.
 
@@ -54,7 +54,7 @@ Client-specific plugins can live alongside these plugins for project-specific en
 ```bash
 # 1. Install
 /plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 
 # 2. Initialize your project
 /dx-init

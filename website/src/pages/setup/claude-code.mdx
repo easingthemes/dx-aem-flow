@@ -47,7 +47,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 /plugin marketplace add easingthemes/dx-aem-ai-flow
 
 # Install plugins (project scope)
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 /plugin install dx-aem@dx-aem-ai-flow          # AEM projects only`}</CommandBlock>
 
   <HighlightBox severity="info" title="Updating Plugins">
@@ -178,7 +178,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <CommandBlock label="Check installed skills">claude skills list | grep "dx-"</CommandBlock>
 
   <HighlightBox severity="success" title="Expected Output">
-    You should see 78 skills listed (55 from dx-dev-experience, 12 from dx-aem, plus 11 automation skills if installed).
+    You should see 78 skills listed (55 from dx-core, 12 from dx-aem, plus 11 automation skills if installed).
   </HighlightBox>
 </Section>
 
@@ -194,7 +194,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       If plugins are not appearing after install, check <code>.claude/settings.json</code> for <code>enabledPlugins</code>. Recreate the file if needed:
       <CommandBlock>{`{
   "enabledPlugins": [
-    "dx-dev-experience@dx-aem-ai-flow",
+    "dx-core@dx-aem-ai-flow",
     "dx-aem@dx-aem-ai-flow"
   ]
 }`}</CommandBlock>

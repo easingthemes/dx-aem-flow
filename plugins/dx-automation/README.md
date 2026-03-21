@@ -1,16 +1,16 @@
 # dx-automation — Autonomous Agent Infrastructure Plugin for Claude Code
 
-Deploys ten autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) that run 24/7 as Azure DevOps pipelines triggered by AWS Lambda webhooks. Unlike `dx-dev-experience`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+Deploys ten autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) that run 24/7 as Azure DevOps pipelines triggered by AWS Lambda webhooks. Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
 
 ## Prerequisites
 
-- `dx-dev-experience` plugin installed
+- `dx-core` plugin installed
 - AWS CLI configured (`aws sts get-caller-identity` works)
 - Azure CLI configured (`az account show` works)
 
 ```bash
 /plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 ```
 
 ## Installation

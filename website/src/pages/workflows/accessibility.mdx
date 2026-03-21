@@ -43,7 +43,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Setup"
   badgeColor="secondary"
   title="Prerequisites"
-  subtitle="Docker, an API key, and the dx-dev-experience plugin."
+  subtitle="Docker, an API key, and the dx-core plugin."
   bg="primary"
 />
 <Section>
@@ -58,7 +58,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Docker running</td><td class="py-2 px-4">axe MCP Server runs as a Docker container</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Axe DevTools API key</td><td class="py-2 px-4">Required by the axe MCP Server for analysis</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">dx-dev-experience plugin</td><td class="py-2 px-4">The skill and MCP config live in this plugin</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">dx-core plugin</td><td class="py-2 px-4">The skill and MCP config live in this plugin</td></tr>
       </tbody>
     </table>
   </div>
@@ -70,7 +70,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <CommandBlock label="3. Export the API key (add to ~/.zshrc or ~/.bashrc)">export AXE_API_KEY="your-key-here"</CommandBlock>
 
-  <CommandBlock label="4. Reinstall the plugin to pick up MCP config">/plugin install dx-dev-experience@dx-aem-ai-flow</CommandBlock>
+  <CommandBlock label="4. Reinstall the plugin to pick up MCP config">/plugin install dx-core@dx-aem-ai-flow</CommandBlock>
 
   <HighlightBox severity="success" title="Verify Setup">
     Run any <code>/dx-axe</code> command. If axe MCP tools load successfully, setup is complete. If you see "axe MCP Server setup" instructions, revisit the steps above.

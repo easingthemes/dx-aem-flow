@@ -48,7 +48,7 @@ Claude Code agents (`agents/*.md`): PascalCase tools, `model:` alias, no `handof
 
 ### ~~2. Marketplace registration for Copilot CLI~~ (resolved)
 
-Copilot CLI reads `extraKnownMarketplaces` from `.claude/settings.json` — same as Claude Code. ADO SSH URLs work. `/plugin marketplace browse dx-aem-ai-flow` shows all 3 plugins. `/plugin install dx-dev-experience@dx-aem-ai-flow` installs 55 skills. Documented in `docs/usage/installation.md`.
+Copilot CLI reads `extraKnownMarketplaces` from `.claude/settings.json` — same as Claude Code. ADO SSH URLs work. `/plugin marketplace browse dx-aem-ai-flow` shows all 3 plugins. `/plugin install dx-core@dx-aem-ai-flow` installs 55 skills. Documented in `docs/usage/installation.md`.
 
 ### 3. MCP tool names in agent frontmatter
 

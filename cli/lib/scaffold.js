@@ -11,7 +11,7 @@ class Scaffold {
   constructor(targetDir, pluginsDir, options = {}) {
     this.targetDir = targetDir;
     this.pluginsDir = pluginsDir;
-    this.dxPlugin = path.join(pluginsDir, 'dx-dev-experience');
+    this.dxPlugin = path.join(pluginsDir, 'dx-core');
     this.aemPlugin = path.join(pluginsDir, 'dx-aem');
     this.autoPlugin = path.join(pluginsDir, 'dx-automation');
     this.options = options; // { aem, copilot, force }
@@ -465,7 +465,7 @@ Each feature should include: what it does, which components are involved, key co
   // =============================================================
 
   installCopilotAgents() {
-    // dx-dev-experience agents
+    // dx-core agents
     this.copyCopilotAgents(this.dxPlugin);
     // dx-aem agents (if AEM mode)
     if (this.options.aem) {

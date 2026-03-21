@@ -1,14 +1,14 @@
 # dx-aem — AEM Plugin for Claude Code
 
-AEM-specific tools for Adobe Experience Manager projects: component verification, dialog inspection, demo capture, and QA automation. Built on top of the [dx-dev-experience](https://github.com/yourorg/claude-dx) development workflow plugin.
+AEM-specific tools for Adobe Experience Manager projects: component verification, dialog inspection, demo capture, and QA automation. Built on top of the [dx-core](https://github.com/yourorg/claude-dx) development workflow plugin.
 
 ## Prerequisites
 
-Install the `dx-dev-experience` plugin first:
+Install the `dx-core` plugin first:
 
 ```bash
 /plugin marketplace add easingthemes/dx-aem-ai-flow
-/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-core@dx-aem-ai-flow
 ```
 
 ## Installation

@@ -10,7 +10,7 @@ Bump the version across all 4 version files in one step.
 
 ## Files to update
 
-1. `plugins/dx-dev-experience/.claude-plugin/plugin.json` → `"version": "<new>"`
+1. `plugins/dx-core/.claude-plugin/plugin.json` → `"version": "<new>"`
 2. `plugins/dx-aem/.claude-plugin/plugin.json` → `"version": "<new>"`
 3. `plugins/dx-automation/.claude-plugin/plugin.json` → `"version": "<new>"`
 4. `.claude-plugin/marketplace.json` → all 3 `"version": "<new>"` entries
@@ -26,7 +26,7 @@ Bump the version across all 4 version files in one step.
 
 ### If no argument — auto-detect from git history
 
-1. Read current version from `plugins/dx-dev-experience/.claude-plugin/plugin.json`
+1. Read current version from `plugins/dx-core/.claude-plugin/plugin.json`
 2. Find the last version bump commit:
    ```bash
    git log --oneline --all --grep="bump.*version\|bump.*[0-9]\+\.[0-9]\+\.[0-9]\+" -1 --format="%H"
@@ -91,7 +91,7 @@ Reason: New features added (agent preloading, explicit convention loading)
 Version bumped: <old> → <new>
 
 Updated:
-  - plugins/dx-dev-experience/.claude-plugin/plugin.json
+  - plugins/dx-core/.claude-plugin/plugin.json
   - plugins/dx-aem/.claude-plugin/plugin.json
   - plugins/dx-automation/.claude-plugin/plugin.json
   - .claude-plugin/marketplace.json

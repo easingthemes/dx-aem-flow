@@ -305,7 +305,7 @@ If an existing `[QAHandoff]` comment was found, take the "yes" path. If no exist
 
 ### Post new comment to ADO
 
-Read the template from `dx-aem-ai-flow/dx/plugins/dx-dev-experience/data/templates/ado-comments/qa-handoff.md.template` (or use inline knowledge of the template structure).
+Read the template from `dx-aem-ai-flow/dx/plugins/dx-core/data/templates/ado-comments/qa-handoff.md.template` (or use inline knowledge of the template structure).
 
 **ADO markdown note:** Use only basic markdown (headers, lists, bold, links, code blocks). No nested tables, no HTML tags beyond comments. ADO's renderer has quirks with complex markdown.
 

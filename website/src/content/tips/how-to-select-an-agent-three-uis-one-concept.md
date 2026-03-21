@@ -48,7 +48,7 @@ slackText: |
 /agents
 # → full list with details:
 # dx-aem:aem-inspector · sonnet
-# dx-dev-experience:dx-code-reviewer
+# dx-core:dx-code-reviewer
 #   · opus · project memory
 
 # Auto-dispatch (most common):
