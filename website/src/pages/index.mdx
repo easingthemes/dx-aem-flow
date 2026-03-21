@@ -10,6 +10,8 @@ import ContentCard from '../components/ContentCard.astro';
 import HighlightBox from '../components/HighlightBox.astro';
 import PipelineBlock from '../components/PipelineBlock.astro';
 
+export const base = import.meta.env.BASE_URL;
+
 <PageHero
   title="AI-Powered Development Platform"
   subtitle="From ticket to production -- how AI transforms sprint delivery with 78 skills, 10 autonomous agents, and self-learning capabilities across your entire development lifecycle."
@@ -91,7 +93,7 @@ import PipelineBlock from '../components/PipelineBlock.astro';
   </div>
 
   <p class="text-center mt-4">
-    <a href="/figma/" class="text-brand-700 font-semibold hover:text-cyan transition-colors">
+    <a href={`${base}/figma/`} class="text-brand-700 font-semibold hover:text-cyan transition-colors">
       See the full Figma-to-Code pipeline →
     </a>
   </p>
@@ -363,28 +365,28 @@ import PipelineBlock from '../components/PipelineBlock.astro';
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
-    <a href="/overview/" class="no-underline">
+    <a href={`${base}/overview/`} class="no-underline">
       <ContentCard icon="mdi:star" iconColor="bg-brand-700" title="Overview">What KAI does, who it's for, and how it works at a high level.</ContentCard>
     </a>
-    <a href="/figma/" class="no-underline">
+    <a href={`${base}/figma/`} class="no-underline">
       <ContentCard icon="mdi:pencil" iconColor="bg-brand-700" title="Figma-to-Code">The full design-to-code pipeline: extract, auto-map tokens, generate prototypes, verify visually.</ContentCard>
     </a>
-    <a href="/local-workflow/" class="no-underline">
+    <a href={`${base}/local-workflow/`} class="no-underline">
       <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Local Workflow">Requirements, planning, execution, review -- the full sprint lifecycle.</ContentCard>
     </a>
-    <a href="/bug-flow/" class="no-underline">
+    <a href={`${base}/bug-flow/`} class="no-underline">
       <ContentCard icon="mdi:bug" iconColor="bg-brand-700" title="Bug Flow">Triage, reproduce with browser automation, fix, and PR -- end to end.</ContentCard>
     </a>
-    <a href="/automation/" class="no-underline">
+    <a href={`${base}/automation/`} class="no-underline">
       <ContentCard icon="mdi:lightning-bolt" iconColor="bg-brand-700" title="Automation">10 autonomous agents, AWS infrastructure, event routing, cross-repo delegation.</ContentCard>
     </a>
-    <a href="/architecture/" class="no-underline">
+    <a href={`${base}/architecture/`} class="no-underline">
       <ContentCard icon="mdi:sitemap" iconColor="bg-brand-700" title="Architecture">Plugin system, config, conventions, subagents, model tiers, MCP integration.</ContentCard>
     </a>
-    <a href="/costs/" class="no-underline">
+    <a href={`${base}/costs/`} class="no-underline">
       <ContentCard icon="mdi:currency-usd" iconColor="bg-brand-700" title="Costs">Two pricing models, per-operation costs, safety controls, cost optimization.</ContentCard>
     </a>
-    <a href="/demo-guide/" class="no-underline">
+    <a href={`${base}/demo-guide/`} class="no-underline">
       <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Demo Guide">Step-by-step live demo scripts for business and developer audiences.</ContentCard>
     </a>
   </div>

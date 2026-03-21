@@ -11,7 +11,12 @@ interface Props {
 const frontmatter = (Astro.props as any).frontmatter;
 const title = frontmatter?.title ?? Astro.props.title;
 const sidebar = frontmatter?.sidebar ?? Astro.props.sidebar;
+const base = import.meta.env.BASE_URL;
 const currentPath = Astro.url.pathname;
+
+function url(path: string): string {
+  return base + path;
+}
 
 const sidebars: Record<string, { label: string; path: string }[]> = {
   learn: [
@@ -83,10 +88,10 @@ const links = sidebar ? sidebars[sidebar] : [];
             {links.map((link) => (
               <li>
                 <a
-                  href={link.path}
+                  href={url(link.path)}
                   class:list={[
                     'block px-3 py-1.5 rounded text-sm transition-colors',
-                    currentPath === link.path
+                    currentPath === url(link.path)
                       ? 'bg-brand-100 text-brand-700 font-semibold'
                       : 'text-gray-600 hover:text-brand-700 hover:bg-gray-50',
                   ]}
@@ -116,10 +121,10 @@ const links = sidebar ? sidebars[sidebar] : [];
             {links.map((link) => (
               <li>
                 <a
-                  href={link.path}
+                  href={url(link.path)}
                   class:list={[
                     'block px-3 py-1.5 rounded text-sm transition-colors',
-                    currentPath === link.path
+                    currentPath === url(link.path)
                       ? 'bg-brand-100 text-brand-700 font-semibold'
                       : 'text-gray-600 hover:text-brand-700 hover:bg-gray-50',
                   ]}
