@@ -1,0 +1,297 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Seed Data
+sidebar: contributing
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Seed Data Guide"
+  subtitle="Teach the AI about your project -- components, architecture, file conventions, and markets"
+/>
+
+<SectionHeading
+  badge="Why"
+  title="Why Seed Data Matters"
+  subtitle="Without seed data, agents guess. With it, they know."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:brain" iconColor="bg-brand-700" title="Project Knowledge">
+    Without seed data, agents have only the auto-scanned component list. They do not know your architecture, features, file conventions, markets, or AEM content structure. Every skill -- component lookup, ticket analysis, planning, help -- produces significantly better output when agents have project context.
+  </ContentCard>
+
+  <div class="overflow-x-auto mt-6">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Seed Data Level</th>
+          <th class="text-left py-2 px-4 font-semibold">Quality Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>component-index.md</code> only</td><td class="py-2 px-4">Component names exist. Agents guess at everything else.</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">+ <code>project.yaml</code></td><td class="py-2 px-4">Agents know brands, markets, AEM paths, platform prefixes, QA URL.</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">+ <code>file-patterns.yaml</code></td><td class="py-2 px-4">Agents find source files reliably instead of using generic globs.</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">+ <code>architecture.md</code> + <code>features.md</code></td><td class="py-2 px-4"><code>/help</code> answers from docs instead of guessing. Better planning.</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">+ <code>content-paths.yaml</code></td><td class="py-2 px-4">Page search uses correct content tree patterns and language defaults.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Files"
+  badgeColor="secondary"
+  title="File Reference"
+  subtitle="All files live in .ai/project/. Every file is optional -- missing file means that capability is skipped."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">File</th>
+          <th class="text-left py-2 px-4 font-semibold">Format</th>
+          <th class="text-left py-2 px-4 font-semibold">Created By</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>component-index.md</code></td><td class="py-2 px-4">Markdown table</td><td class="py-2 px-4"><code>aem-init</code> (auto)</td><td class="py-2 px-4">Local repo components</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>component-index-project.md</code></td><td class="py-2 px-4">Markdown + sections</td><td class="py-2 px-4">You</td><td class="py-2 px-4">Cross-repo components, detailed specs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>project.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">You</td><td class="py-2 px-4">Repos, brands, markets, platforms</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>file-patterns.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">You</td><td class="py-2 px-4">How to find source files per repo</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>content-paths.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">You</td><td class="py-2 px-4">AEM content tree structure</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>architecture.md</code></td><td class="py-2 px-4">Free-form Markdown</td><td class="py-2 px-4">You</td><td class="py-2 px-4">Rendering pipelines, key libs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>features.md</code></td><td class="py-2 px-4">Free-form Markdown</td><td class="py-2 px-4">You</td><td class="py-2 px-4">Domain features (auth, commerce, forms)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="YAML"
+  badgeColor="warning"
+  title="project.yaml"
+  subtitle="Structured project configuration -- repos, brands, markets, platforms."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Minimal example (single repo, single brand)">{`ado:
+  org: myorg.visualstudio.com
+
+brands:
+  - name: MySite
+    markets:
+      - code: US
+        platform: [DXN]
+        aem-paths: ["/content/mysite/us/en"]
+        languages: [en]
+        default-language: en
+        commerce: none
+
+repos:
+  - name: MySite-AEM
+    platform: DXN
+    ado-project: My Project
+    base-branch: develop
+
+platforms:
+  - id: DXN
+    resource-type-prefix: mysite/components
+    css-prefix: mysite-
+    component-prefixes: [mysite-]
+
+defaults:
+  qa-author-url: https://qa-author.mysite.com`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Rules">
+    <ul class="text-sm list-none p-0 space-y-1">
+      <li><code>ado.org</code> -- domain only, no <code>https://</code> prefix</li>
+      <li><code>brands[].markets[].code</code> -- 2-letter country codes, used as keys everywhere</li>
+      <li><code>brands[].markets[].aem-paths</code> -- must match actual AEM content tree</li>
+      <li><code>platforms[].id</code> -- referenced by repos and markets, must match exactly</li>
+    </ul>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="YAML"
+  badgeColor="info"
+  title="file-patterns.yaml"
+  subtitle="Tells agents how to find source files for a component."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Example: DXN platform file patterns">{`DXN:
+  backend:
+    repo: My-Platform-Repo
+    resolve-from: component-index-project
+    files:
+      - label: HTL template
+        path: "{basePath}/{name}.html"
+      - label: Dialog
+        path: "{basePath}/_cq_dialog/.content.xml"
+      - label: Component def
+        path: "{basePath}/.content.xml"
+    java-search:
+      module: "my-core-module"
+      patterns: ["{Name}Model.java", "{Name}ModelImpl.java"]
+  frontend:
+    - repo: My-Platform-Repo
+      base-path: "my-clientlibs/frontend/publish/components/{name}/"
+      extensions: [.clientlibs.js, .config.js, .clientlibs.scss]
+      flat: true`}</CommandBlock>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <ContentCard icon="mdi:code-braces" iconColor="bg-cyan" title="Placeholders">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><code>{'{name}'}</code> -- lowercase component name as-is</li>
+        <li><code>{'{Name}'}</code> -- PascalCase (derived from name)</li>
+        <li><code>{'{basePath}'}</code> -- extracted from component-index Source Link</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:alert-circle" iconColor="bg-amber-500" title="Fallback">
+      If <code>file-patterns.yaml</code> does not exist, agents fall back to generic AEM Glob patterns like <code>&#42;&#42;/components/&#42;&#42;/{'{name}'}/</code>.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="YAML"
+  badgeColor="secondary"
+  title="content-paths.yaml"
+  subtitle="Tells agents how to find AEM pages that use a component."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Example content-paths.yaml">{`content-roots:
+  pages: "/content/{brand}/{country}/{language}"
+  experience-fragments: "/content/experience-fragments/{brand}/{country}/{language}"
+
+author-url-pattern: "{qa-author-url}/editor.html{pagePath}.html"
+
+search:
+  tool: mcp__AEM__searchContent
+  limit-per-path: 5
+  always-search-xf: true
+  primary-language-only: true
+
+language-defaults:
+  US: en
+  CA: en
+  MX: es
+  DE: de`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Placeholders">
+    <code>{'{brand}'}</code>, <code>{'{country}'}</code>, and <code>{'{language}'}</code> are substituted from <code>project.yaml</code> brand/market definitions. <code>{'{qa-author-url}'}</code> comes from <code>defaults.qa-author-url</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Markdown"
+  badgeColor="warning"
+  title="architecture.md and features.md"
+  subtitle="Free-form Markdown that agents search by keyword."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:sitemap" iconColor="bg-brand-700" title="architecture.md">
+      <p class="text-sm">Suggested sections:</p>
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><strong>Rendering Pipeline</strong> -- how components render (HTL, JS, hybrid)</li>
+        <li><strong>Module Structure</strong> -- directory tree, Maven modules, FE build</li>
+        <li><strong>Key Libraries</strong> -- shared libs, base classes, utilities</li>
+        <li><strong>Key Patterns</strong> -- component anatomy, data flow, config patterns</li>
+        <li><strong>Platform Differences</strong> -- Legacy vs DXN, if applicable</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:puzzle" iconColor="bg-cyan" title="features.md">
+      <p class="text-sm">One <code>##</code> section per feature. Include:</p>
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><strong>Component names</strong> -- agents cross-reference with component index</li>
+        <li><strong>Config details</strong> -- CAC, OSGi, environment variables</li>
+        <li><strong>Page paths</strong> -- where the feature is authored in AEM</li>
+        <li><strong>Practical focus</strong> -- what a developer needs to modify the feature</li>
+      </ul>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Rules for Free-Form Files">
+    Be specific -- include actual class names, file paths, config keys. Agents grep for these. Section headings (<code>##</code>) help agents return matching sections with context. Do not duplicate structured data -- repo lists and file paths belong in the YAML files.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Usage"
+  badgeColor="info"
+  title="How Agents Use Each File"
+  subtitle="Which agents read which files, and what happens when files are missing."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Agent</th>
+          <th class="text-left py-2 px-4 font-semibold">File</th>
+          <th class="text-left py-2 px-4 font-semibold">If Missing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">doc-searcher</td><td class="py-2 px-4"><code>component-index.md</code>, <code>architecture.md</code>, <code>features.md</code></td><td class="py-2 px-4">Skip search</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">file-resolver</td><td class="py-2 px-4"><code>file-patterns.yaml</code>, <code>project.yaml</code></td><td class="py-2 px-4">Fall back to generic Glob</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">page-finder</td><td class="py-2 px-4"><code>content-paths.yaml</code>, <code>project.yaml</code></td><td class="py-2 px-4">Ask user for paths</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">&#42;-component</td><td class="py-2 px-4">All above (orchestrates sub-agents)</td><td class="py-2 px-4">Degrades per missing file</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">&#42;-help</td><td class="py-2 px-4"><code>architecture.md</code>, <code>features.md</code></td><td class="py-2 px-4">Code search only</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Setup"
+  badgeColor="success"
+  title="Setup Levels"
+  subtitle="Start minimal and grow."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-emerald-600" title="Bare Minimum">
+      <CommandBlock>{`.ai/project/
+└── component-index.md  # auto-generated`}</CommandBlock>
+      <p class="text-xs text-gray-500 mt-2">Run <code>/aem-init</code> only. Agents know component names but guess everything else.</p>
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-amber-500" title="Recommended">
+      <CommandBlock>{`.ai/project/
+├── component-index.md
+├── project.yaml
+├── file-patterns.yaml
+├── architecture.md
+└── features.md`}</CommandBlock>
+      <p class="text-xs text-gray-500 mt-2">Agents know your project. Lookups find the right files. Help answers from docs.</p>
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-brand-700" title="Full Setup">
+      <CommandBlock>{`.ai/project/
+├── component-index.md
+├── component-index-project.md
+├── project.yaml
+├── file-patterns.yaml
+├── content-paths.yaml
+├── architecture.md
+└── features.md`}</CommandBlock>
+      <p class="text-xs text-gray-500 mt-2">Full capabilities. Multi-repo, multi-brand, detailed component specs.</p>
+    </ContentCard>
+  </div>
+</Section>

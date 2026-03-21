@@ -1,0 +1,258 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Authoring Guide
+sidebar: contributing
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Authoring Guide"
+  subtitle="Build skills and agents that work across Claude Code and Copilot CLI"
+/>
+
+<SectionHeading
+  badge="Platforms"
+  title="Two Agent Systems"
+  subtitle="One plugin, two platforms -- Claude Code and VS Code Copilot consume the same files differently."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Aspect</th>
+          <th class="text-left py-2 px-4 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-4 font-semibold">Copilot CLI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">File naming</td><td class="py-2 px-4"><code>kebab-case.md</code></td><td class="py-2 px-4"><code>PascalCase.agent.md</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Invocation</td><td class="py-2 px-4"><code>Task(subagent_type: "name")</code></td><td class="py-2 px-4"><code>@AgentName</code> in chat</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Tools format</td><td class="py-2 px-4"><code>Read, Glob, Grep, Bash</code></td><td class="py-2 px-4"><code>read, search, codebase, agent</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">MCP format</td><td class="py-2 px-4"><code>mcp__server__tool_name</code></td><td class="py-2 px-4"><code>'server/tool_name'</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Model</td><td class="py-2 px-4"><code>sonnet / opus / haiku</code></td><td class="py-2 px-4">Full model string or array</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Sub-agents</td><td class="py-2 px-4">Flat (no nesting)</td><td class="py-2 px-4"><code>agents:</code> field</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Handoffs</td><td class="py-2 px-4">N/A</td><td class="py-2 px-4"><code>handoffs:</code> buttons</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Memory</td><td class="py-2 px-4"><code>memory: project</code></td><td class="py-2 px-4">Not supported</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="Key Insight">
+    VS Code reads Claude's formats (<code>.claude/agents/</code>, <code>.claude/skills/</code>). Claude does NOT read VS Code's formats. Put shared agents in <code>.claude/agents/</code> for both platforms.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="secondary"
+  title="Skill Authoring"
+  subtitle="YAML frontmatter + markdown body = a reusable command."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Complete skill frontmatter">{`---
+name: my-skill                    # Required. Becomes /plugin:my-skill command
+description: What it does...      # Required. Used for auto-invocation matching
+argument-hint: "<expected args>"  # Optional. UI placeholder text
+context: fork                     # Optional. "fork" = isolated subagent execution
+agent: my-agent                   # Optional. Agent for the fork
+disable-model-invocation: false   # Optional. Prevent auto-invocation
+---`}</CommandBlock>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    <ContentCard icon="mdi:play-circle" iconColor="bg-brand-700" title="Inline Skill">
+      No <code>context:</code> or <code>agent:</code>. Runs directly in the user's conversation. Good for most skills.
+    </ContentCard>
+    <ContentCard icon="mdi:source-fork" iconColor="bg-cyan" title="Forked Skill">
+      Uses <code>context: fork</code> + <code>agent:</code>. Creates an isolated subagent. Main context stays clean from large MCP output.
+    </ContentCard>
+    <ContentCard icon="mdi:sitemap" iconColor="bg-emerald-600" title="Coordinator Skill">
+      Uses Task tool in the body. Delegates to executor agents. Should ONLY delegate -- never implement directly.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="$ARGUMENTS">
+    <code>$ARGUMENTS</code> is replaced with whatever the user typed after the command. Example: <code>/dx-req-fetch 2416553</code> sets <code>$ARGUMENTS = "2416553"</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  badgeColor="warning"
+  title="Agent Authoring"
+  subtitle="Define who does the work -- model tier, tools, and permissions."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Claude Code agent frontmatter">{`---
+name: my-agent
+description: What it does
+model: sonnet              # sonnet | opus | haiku | inherit
+tools: Read, Write, Bash   # OMIT to inherit ALL tools (recommended for MCP)
+disallowedTools: Write     # Block specific tools while inheriting rest
+permissionMode: default    # default | acceptEdits | bypassPermissions
+maxTurns: 30
+memory: project            # user | project | local
+isolation: worktree        # Isolated git worktree
+---`}</CommandBlock>
+
+  <HighlightBox severity="error" title="The #1 Gotcha: Tool Inheritance">
+    If you specify <code>tools:</code>, the agent can ONLY use those listed tools. MCP tools are BLOCKED unless explicitly listed. Either <strong>omit tools: entirely</strong> to inherit everything (recommended for MCP-dependent agents), or use <code>disallowedTools:</code> to block specific tools while keeping everything else.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Model Tier Strategy</h3>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard
+      icon="mdi:star"
+      iconColor="bg-red-500"
+      title="Opus -- Deep Reasoning"
+      tags={[{ label: 'T1', color: 'error' }]}
+    >
+      Architecture, planning, code review, security analysis, root cause diagnosis. Cost: ≈15x haiku.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:diamond-stone"
+      iconColor="bg-amber-500"
+      title="Sonnet -- Standard Work"
+      tags={[{ label: 'T2', color: 'warning' }]}
+    >
+      Implementation, MCP coordination, PR review, AEM inspection. Cost: ≈5x haiku.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:circle"
+      iconColor="bg-emerald-600"
+      title="Haiku -- Fast Ops"
+      tags={[{ label: 'T3', color: 'success' }]}
+    >
+      File lookups, doc search, git commits, config reads. Cost: 1x (baseline).
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Structure"
+  badgeColor="info"
+  title="File Structure and Naming"
+  subtitle="Where files live and how they are discovered."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Plugin directory layout">{`plugin/
+├── .claude-plugin/plugin.json   # Plugin manifest (both platforms)
+├── .mcp.json                    # MCP server config
+├── agents/                      # Agent definitions (*.md with YAML frontmatter)
+├── skills/                      # Skill directories (*/SKILL.md)
+├── rules/                       # Default prompt templates
+├── hooks/                       # Plugin hooks (hooks.json)
+├── data/                        # Seed files copied to project by init
+├── shared/                      # Reference files read by skills
+└── templates/                   # Init-time file templates
+    ├── rules/                   #   Convention rules -> .claude/rules/
+    ├── instructions/            #   Detailed docs -> .github/instructions/
+    └── agents/                  #   Copilot agents -> .github/agents/`}</CommandBlock>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Agent File Naming">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li><strong>Claude Code:</strong> <code>agents/dx-code-reviewer.md</code></li>
+        <li><strong>Copilot (.github):</strong> <code>DxCodeReview.agent.md</code></li>
+        <li><strong>Copilot CLI (plugin):</strong> Reads Claude format directly</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan-dark" title="Plugin Manifest">
+      <strong>Never</strong> add <code>agents</code> or <code>skills</code> fields for default directories -- this breaks Claude Code with a Zod validation error. Both platforms auto-discover <code>agents/</code> and <code>skills/</code> when these fields are omitted.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="secondary"
+  title="Config-Driven Development"
+  subtitle="Skills never hardcode project-specific values."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Instead of</th>
+          <th class="text-left py-2 px-4 font-semibold">Use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>https://myorg.visualstudio.com/</code></td><td class="py-2 px-4"><code>scm.org</code> from config</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>mvn clean install</code></td><td class="py-2 px-4"><code>build.command</code> from config</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/apps/myproject/components/</code></td><td class="py-2 px-4"><code>aem.component-path</code> from config</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>http://localhost:4502</code></td><td class="py-2 px-4"><code>aem.author-url</code> from config</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>develop</code></td><td class="py-2 px-4"><code>scm.base-branch</code> from config</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="Three-Layer Override System">
+    <code>.ai/rules/&lt;topic&gt;.md</code> (full replacement) &gt; <code>config.yaml overrides:</code> (quick tweaks) &gt; plugin defaults (<code>rules/&#42;.md</code>). Projects can also shadow entire skills by creating <code>.claude/skills/&lt;name&gt;/SKILL.md</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Copilot"
+  badgeColor="warning"
+  title="Copilot Agent Templates"
+  subtitle="Translating Claude agents for VS Code Chat."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-4 font-semibold">Copilot Template</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name: dx-code-reviewer</code></td><td class="py-2 px-4"><code>name: DxCodeReview</code> (PascalCase)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model: opus</code></td><td class="py-2 px-4">Omit (VS Code selects model)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools: Read, Glob, Grep, Bash</code></td><td class="py-2 px-4"><code>tools: [read, search, search/codebase]</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>mcp__ado__search_code</code></td><td class="py-2 px-4"><code>'ado/search_code'</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Task tool delegation</td><td class="py-2 px-4"><code>agents: ['sub-agent-name']</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>ToolSearch("+AEM")</code></td><td class="py-2 px-4">Remove -- Copilot auto-loads MCP tools</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ContentCard icon="mdi:swap-horizontal" iconColor="bg-cyan" title="Handoffs" class="mt-4">
+    Copilot agents support <code>handoffs:</code> for workflow navigation buttons. Design them to follow natural workflow progression. Cross-plugin handoffs are supported -- AEM agents can hand off to DX agents.
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="Checklist"
+  badgeColor="info"
+  title="PR Checklist"
+  subtitle="Verify before merging a new skill or agent."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:checkbox-marked" iconColor="bg-emerald-600" title="Before You Merge">
+    <ul class="mt-2 text-sm list-none p-0 space-y-1">
+      <li>Skill has <code>SKILL.md</code> with proper frontmatter</li>
+      <li>No hardcoded project values (grep for org URLs, paths, names)</li>
+      <li>Config fields documented if new ones are introduced</li>
+      <li>Skill/agent catalog docs updated</li>
+      <li>Shell scripts are executable (<code>chmod +x</code>)</li>
+      <li>Tested with a real project</li>
+      <li>Copilot template added if user-facing</li>
+    </ul>
+  </ContentCard>
+</Section>

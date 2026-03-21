@@ -1,0 +1,629 @@
+<style>
+.mermaid { max-width: 800px; width: 100%; margin: 0 auto; display: block; }
+</style>
+
+# DX Dev Local Flow (dx-dev-experience + dx-aem)
+
+Interactive developer workflow for feature development and bug fixing. Both dx-dev-experience and dx-aem plugins are installed.
+
+### Color Legend — steps that change a remote platform or project source code
+
+```mermaid
+flowchart LR
+    L1["ADO work items"] --- L2["PR-related"] --- L3["AEM local"]
+    L4["AEM QA remote"] --- L5["ADO wiki"] --- L6["Source code"]
+    style L1 fill:#bbdefb,stroke:#1565c0,color:#000
+    style L2 fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style L3 fill:#ffe0b2,stroke:#e65100,color:#000
+    style L4 fill:#ffcdd2,stroke:#c62828,color:#000
+    style L5 fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style L6 fill:#fff9c4,stroke:#f9a825,color:#000
+    linkStyle 0,1,2,3 stroke:#ccc,stroke-width:1px
+```
+
+---
+
+## Full Feature Flow (/dx-agent-all)
+
+**Developer types:** `/dx-agent-all <ADO-Story-ID>`
+
+This is the master orchestrator. It chains all phases end-to-end, from ADO story to merged PR. Each phase is strictly sequential. Sub-skills run via `dx-step-executor` agents or Skill tool with `context: fork`.
+
+```mermaid
+flowchart TD
+    subgraph P1["Phase 1: Requirements"]
+        START["ADO Story ID"]
+        FETCH["1.1 /dx-req-fetch<br/>Fetch story from ADO"]
+        DOR["1.1b /dx-req-dor<br/>Validate Definition of Ready"]
+        DOR_GATE{"DoR score 70+?"}
+        EXPLAIN["1.2 /dx-req-explain<br/>Simplify story into<br/>dev requirements"]
+        RESEARCH["1.3 /dx-req-research<br/>Search codebase for<br/>related files"]
+        SHARE["1.4 /dx-req-share<br/>Post team summary<br/>to ADO"]
+        START --> FETCH --> DOR --> DOR_GATE
+        DOR_GATE -->|pass| EXPLAIN
+        EXPLAIN --> RESEARCH --> SHARE
+    end
+
+    DOR_FAIL(("PAUSE<br/>Resolve questions"))
+    DOR_GATE -->|fail| DOR_FAIL
+
+    subgraph P1E["Phase 1.5: Enrichment"]
+        TICKET["/dx-ticket-analyze<br/>Deep-dive: components,<br/>files, pages"]
+        FIGMA["/dx-figma-extract<br/>Extract design context,<br/>tokens, screenshots"]
+        TICKET --> FIGMA
+    end
+
+    subgraph P2F["Phase 2: Figma Prototype"]
+        PROTO["/dx-figma-prototype<br/>2 Haiku agents discover<br/>CSS + HTML conventions<br/>→ generate HTML/CSS prototype"]
+    end
+
+    subgraph P2["Phase 2b: Planning"]
+        PLAN["2b.1 /dx-plan<br/>Generate step-by-step<br/>implementation plan<br/>(references prototype/)"]
+        VALIDATE["2b.2 /dx-plan-validate<br/>Check coverage, scope,<br/>deps, reuse"]
+        RESOLVE["2b.3 /dx-plan-resolve<br/>Fix flagged risks"]
+        BRANCH["2b.5 ensure-feature-branch.sh<br/>Create or switch to<br/>feature branch"]
+        PLAN --> VALIDATE
+        VALIDATE -->|issues| RESOLVE --> VALIDATE
+        VALIDATE -->|pass| BRANCH
+    end
+
+    subgraph P3["Phase 3: Execution"]
+        STEP_ALL["/dx-step-all<br/>For each plan step:<br/>implement, test, review,<br/>fix, commit"]
+    end
+
+    subgraph P4["Phase 4: Build + Review"]
+        BUILD["4.0 /dx-step-build<br/>Compile and deploy locally"]
+        VERIFY["4.5 /dx-step-verify<br/>Lint, test, secret scan,<br/>architecture, code review"]
+        HEAL["4.5-heal /dx-step-heal<br/>Auto-fix review issues<br/>max 2 cycles"]
+        BUILD --> VERIFY
+        VERIFY -->|fail| HEAL
+        HEAL -->|fixed| VERIFY
+        BUILD_FAIL["Final Summary<br/>Pipeline stops"]
+        BUILD -.->|"fail"| BUILD_FAIL
+    end
+
+    subgraph P5["Phase 5: Commit + AEM"]
+        COMMIT_ALL["5a /dx-step-commit<br/>Stage and commit all changes<br/>(if auto_commit enabled)"]
+        SNAPSHOT["5 /aem-snapshot<br/>Record dialog fields and pages<br/>to aem-before.md"]
+        AEM_VERIFY["5+ /aem-verify<br/>Compare dialog changes,<br/>create demo page"]
+        COMMIT_ALL --> SNAPSHOT --> AEM_VERIFY
+    end
+
+    subgraph P6["Phase 6: Pull Request"]
+        PR["6.0 /dx-pr<br/>Push branch, create<br/>ADO pull request<br/>(if auto_pr enabled)"]
+    end
+
+    subgraph P6H["Phase 6.5: Demo Capture"]
+        AEM_DEMO["6.5 /aem-demo<br/>Screenshot dialog,<br/>write authoring guide"]
+    end
+
+    subgraph P7["Phase 7: Documentation"]
+        DOC_AEM["7a /aem-doc-gen<br/>Full AEM documentation<br/>with screenshots"]
+        DOC_GEN["7b /dx-doc-gen<br/>Generate and post<br/>wiki page"]
+        SUMMARY["Final Summary<br/>Progress table"]
+        DOC_AEM --> DOC_GEN --> SUMMARY
+    end
+
+    SHARE --> TICKET
+    FIGMA --> PROTO
+    PROTO --> PLAN
+    BRANCH --> STEP_ALL
+    STEP_ALL --> BUILD
+    HEAL -->|pass| COMMIT_ALL
+    AEM_VERIFY --> PR
+    PR --> AEM_DEMO --> DOC_AEM
+
+    style P1 fill:none,stroke:#90a4ae
+    style P1E fill:none,stroke:#90a4ae
+    style P2F fill:none,stroke:#90a4ae
+    style P2 fill:none,stroke:#90a4ae
+    style P3 fill:none,stroke:#90a4ae
+    style P4 fill:none,stroke:#90a4ae
+    style P5 fill:none,stroke:#90a4ae
+    style P6 fill:none,stroke:#90a4ae
+    style P6H fill:none,stroke:#90a4ae
+    style P7 fill:none,stroke:#90a4ae
+    style DOR fill:#bbdefb,stroke:#1565c0,color:#000
+    style SHARE fill:#bbdefb,stroke:#1565c0,color:#000
+    style STEP_ALL fill:#fff9c4,stroke:#f9a825,color:#000
+    style HEAL fill:#fff9c4,stroke:#f9a825,color:#000
+    style COMMIT_ALL fill:#fff9c4,stroke:#f9a825,color:#000
+    style AEM_VERIFY fill:#ffe0b2,stroke:#e65100,color:#000
+    style PR fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style DOC_AEM fill:#ffcdd2,stroke:#c62828,color:#000
+    style DOC_GEN fill:#c8e6c9,stroke:#2e7d32,color:#000
+```
+
+**Key gates:**
+- DoR score below 70% pauses pipeline (interactive mode)
+- Plan validation FAIL = hard stop
+- Build FAIL = skip review + commit + PR, jump to summary
+- Verify FAIL after 2 heal cycles = skip commit, continue to summary
+
+---
+
+## Requirements Flow (/dx-req-all)
+
+**Developer types:** `/dx-req-all <ADO-Story-ID>` (or individual skills: `/dx-req-fetch`, `/dx-req-dor`, etc.)
+
+Chains 5 skills sequentially via `dx-step-executor` agents. Each step must complete before the next starts.
+
+```mermaid
+flowchart TD
+    ADO_ID["ADO Story ID"]
+
+    subgraph S1["Step 1"]
+        FETCH["/dx-req-fetch<br/>Fetch story, create<br/>spec dir and branch"]
+        RAW["raw-story.md<br/>.branch, .sprint"]
+        FETCH --> RAW
+    end
+
+    subgraph S2["Step 2"]
+        DOR["/dx-req-dor<br/>Validate readiness,<br/>post checklist to ADO"]
+        DOR_OUT["dor-report.md<br/>+ ADO comment"]
+        DOR --> DOR_OUT
+    end
+
+    subgraph S3["Step 3"]
+        EXPLAIN["/dx-req-explain<br/>Distill story into<br/>8-12 dev requirements"]
+        EXPLAIN_OUT["explain.md"]
+        EXPLAIN --> EXPLAIN_OUT
+    end
+
+    subgraph S4["Step 4"]
+        RESEARCH["/dx-req-research<br/>Search codebase with<br/>4 parallel Explore agents"]
+        RESEARCH_OUT["research.md"]
+        RESEARCH --> RESEARCH_OUT
+    end
+
+    subgraph S5["Step 5"]
+        SHARE["/dx-req-share<br/>Plain-language summary<br/>for team and BA"]
+        SHARE_OUT["share-plan.md<br/>+ ADO comment"]
+        SHARE --> SHARE_OUT
+    end
+
+    ADO_ID --> FETCH
+    RAW --> DOR
+    DOR_OUT -->|"GATE: no blocking questions"| EXPLAIN
+    EXPLAIN_OUT --> RESEARCH
+    RESEARCH_OUT --> SHARE
+
+    style S1 fill:none,stroke:#90a4ae
+    style S2 fill:none,stroke:#90a4ae
+    style S3 fill:none,stroke:#90a4ae
+    style S4 fill:none,stroke:#90a4ae
+    style S5 fill:none,stroke:#90a4ae
+    style DOR fill:#bbdefb,stroke:#1565c0,color:#000
+    style SHARE fill:#bbdefb,stroke:#1565c0,color:#000
+```
+
+**Idempotent:** Each skill checks if its output file exists and is current before regenerating. Re-running skips up-to-date files.
+
+---
+
+## Planning Flow (/dx-plan)
+
+**Developer types:** `/dx-plan <ADO-Story-ID>`
+
+```mermaid
+flowchart TD
+    subgraph INPUTS["Input Files (created by /dx-req-all + /dx-figma-*)"]
+        EXP["explain.md (required)"]
+        RES["research.md (recommended)"]
+        RAW["raw-story.md (reference)"]
+        CONV["figma-conventions.md (optional)"]
+        PROTO_IN["prototype/ (optional)"]
+    end
+
+    subgraph PLANNING["Planning"]
+        PLAN["/dx-plan<br/>Reason about dependencies,<br/>order, and file changes"]
+        IMPL["implement.md<br/>Steps with Status: pending"]
+        PLAN --> IMPL
+    end
+
+    subgraph VALIDATION["Validation"]
+        VAL["/dx-plan-validate<br/>Check: requirement coverage,<br/>scope creep, dependency order,<br/>file existence, tests, reuse"]
+        VERDICT{Verdict}
+        RESOLVE["/dx-plan-resolve<br/>Search codebase for solutions,<br/>patch implement.md"]
+        VAL --> VERDICT
+        VERDICT -->|"PASS"| READY((Plan Ready))
+        VERDICT -->|"FAIL or WARNINGS"| RESOLVE
+        RESOLVE --> VAL
+    end
+
+    EXP --> PLAN
+    RES --> PLAN
+    RAW -.-> PLAN
+    CONV -.-> PLAN
+    PROTO_IN -.-> PLAN
+    IMPL --> VAL
+
+    style PLANNING fill:none,stroke:#90a4ae
+    style VALIDATION fill:none,stroke:#90a4ae
+```
+
+**Note:** `/dx-plan-validate` does NOT modify `implement.md` -- it only reports. `/dx-plan-resolve` reads the validation output and applies fixes to `implement.md`.
+
+---
+
+## Implementation Flow (/dx-step-all)
+
+**Developer types:** `/dx-step-all <ADO-Story-ID>` (or `/dx-step` to execute one step at a time)
+
+Loops through each pending step in `implement.md`. All steps are strictly sequential.
+
+```mermaid
+flowchart TD
+    IMPL["implement.md<br/>(created by /dx-plan)"]
+
+    subgraph LOOP["Per-Step Loop"]
+        direction TB
+        PICK["Pick next pending step"]
+        CODE["2a /dx-step<br/>Write code for one<br/>plan step"]
+        TEST["2b /dx-step-test<br/>Run project test suite"]
+        REVIEW["2c /dx-step-review<br/>AI code review against<br/>plan and conventions"]
+        FIX["2d /dx-step-fix<br/>Diagnose failure,<br/>apply correction"]
+        HEAL["2d-heal /dx-step-heal<br/>Root-cause analysis,<br/>insert corrective steps"]
+        COMMIT_S["2e /dx-step-commit<br/>Git commit with<br/>work item link"]
+
+        PICK --> CODE --> TEST
+        TEST -->|pass| REVIEW
+        TEST -->|fail| FIX
+        REVIEW -->|pass| COMMIT_S
+        REVIEW -->|changes requested| FIX
+        FIX -->|"fixed, attempt 1-2"| TEST
+        FIX -->|"failed 2x"| HEAL
+        HEAL -->|"healed, new steps"| PICK
+        HEAL -->|"unrecoverable after 2 cycles"| STOP((STOP))
+        COMMIT_S -->|"more pending"| PICK
+        COMMIT_S -->|"all done"| DONE((All Steps Done))
+    end
+
+    IMPL --> PICK
+
+    LEARNING["Learning System<br/>runs.jsonl, fixes.jsonl<br/>Auto-promote to rules after 3+ successes"]
+    DONE --> LEARNING
+
+    style LOOP fill:none,stroke:#90a4ae
+    style CODE fill:#fff9c4,stroke:#f9a825,color:#000
+    style FIX fill:#fff9c4,stroke:#f9a825,color:#000
+    style HEAL fill:#fff9c4,stroke:#f9a825,color:#000
+    style COMMIT_S fill:#fff9c4,stroke:#f9a825,color:#000
+```
+
+**Fix rules:** Max 2 consecutive fix attempts per step, then heal. Max 2 healing cycles per original step, then STOP.
+
+---
+
+## AEM Verification Flow (standalone skills)
+
+**Developer types:** `/aem-snapshot`, `/aem-verify`, `/aem-demo`, `/aem-qa` individually as needed.
+
+These are standalone skills invoked manually. They are NOT chained -- each reads/writes spec files independently.
+
+```mermaid
+flowchart TD
+    subgraph BEFORE_DEV["Before Development (manual)"]
+        SNAPSHOT["/aem-snapshot<br/>Capture current dialog fields,<br/>find pages using component"]
+        SNAP_OUT["aem-before.md<br/>Baseline: fields, pages,<br/>authored values"]
+        SNAPSHOT --> SNAP_OUT
+    end
+
+    DEV["Developer implements changes<br/>and deploys to AEM"]
+
+    subgraph AFTER_DEV["After Deployment (manual)"]
+        VERIFY_AEM["/aem-verify<br/>Walk dialog, compare with<br/>baseline, create demo page"]
+        VERIFY_IN["Reads aem-before.md<br/>(from /aem-snapshot)"]
+        VERIFY_OUT["aem-after.md<br/>ADDED/REMOVED fields,<br/>demo page URL"]
+        VERIFY_IN -.-> VERIFY_AEM
+        VERIFY_AEM --> VERIFY_OUT
+    end
+
+    subgraph DEMO_DOC["Documentation (manual)"]
+        DEMO_SKILL["/aem-demo<br/>Open AEM editor, screenshot<br/>dialog, write authoring guide"]
+        DEMO_IN["Reads aem-after.md<br/>(from /aem-verify)"]
+        DEMO_OUT["demo/authoring-guide.md<br/>demo/dialog-name.png"]
+        DEMO_IN -.-> DEMO_SKILL
+        DEMO_SKILL --> DEMO_OUT
+    end
+
+    subgraph QA_CHECK["QA (manual, requires running AEM)"]
+        QA_SKILL["/aem-qa<br/>Automated QA: verify dialog,<br/>rendering, interactions"]
+        BE["BE: dialog fields,<br/>JCR properties<br/>via AEM MCP"]
+        FE["FE: page rendering,<br/>layout, interactions<br/>via Chrome DevTools"]
+        QA_OUT["qa.json + Bug tickets<br/>if issues found"]
+        QA_SKILL --> BE
+        QA_SKILL --> FE
+        BE --> QA_OUT
+        FE --> QA_OUT
+    end
+
+    SNAP_OUT -.->|"baseline input"| VERIFY_AEM
+    DEV --> VERIFY_AEM
+    VERIFY_OUT -.->|"reads for page/component"| DEMO_SKILL
+    QA_OUT -->|"bugs found, max 2 cycles"| DEV
+
+    style BEFORE_DEV fill:none,stroke:#90a4ae
+    style AFTER_DEV fill:none,stroke:#90a4ae
+    style DEMO_DOC fill:none,stroke:#90a4ae
+    style QA_CHECK fill:none,stroke:#90a4ae
+    style VERIFY_AEM fill:#ffe0b2,stroke:#e65100,color:#000
+    style QA_SKILL fill:#ffcdd2,stroke:#c62828,color:#000
+    style QA_OUT fill:#bbdefb,stroke:#1565c0,color:#000
+```
+
+**Key:** Dashed arrows show optional file reads, not execution chains. In `/dx-agent-all`, phases 5/5+/6.5 call these skills automatically.
+
+---
+
+## PR Flow (/dx-pr)
+
+**Developer types:** `/dx-pr <ADO-Story-ID>` or `/dx-pr-commit`
+
+```mermaid
+flowchart TD
+    subgraph CREATE["PR Creation (/dx-pr)"]
+        PR_CMD["/dx-pr<br/>Create pull request<br/>from completed plan"]
+        CHECK_STEPS["Verify ALL implement.md steps<br/>are Status: done"]
+        PUSH["Push branch with -u<br/>to remote"]
+        CREATE_PR["Create ADO PR<br/>Auto-link work item"]
+        PR_CMD --> CHECK_STEPS
+        CHECK_STEPS -->|"all done"| PUSH --> CREATE_PR
+        CHECK_STEPS -->|"incomplete"| BLOCKED((Blocked))
+    end
+
+    style CREATE fill:none,stroke:#90a4ae
+    style CREATE_PR fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+### Reviewing Others' PRs (separate lifecycle)
+
+**Developer types:** `/dx-pr-review <PR-URL>`
+
+```mermaid
+flowchart TD
+    PR_REVIEW["/dx-pr-review<br/>Spawn dx-pr-reviewer agent<br/>to analyze PR diff"]
+    FIRST{"First review<br/>or follow-up?"}
+    FIRST_R["Analyze full diff,<br/>save findings to<br/>pr-ID-findings.md"]
+    FOLLOWUP_R["Compare old vs new commits,<br/>classify: FIXED / ARGUED / IGNORED"]
+    PATCHES["Generate fix patches<br/>via worktree agent<br/>(user chooses)"]
+    POST_INLINE["Post review comments<br/>to ADO threads"]
+    VOTE["Set vote: Approve /<br/>Approve with suggestions /<br/>Changes requested"]
+
+    PR_REVIEW --> FIRST
+    FIRST -->|first| FIRST_R
+    FIRST -->|"session exists"| FOLLOWUP_R
+    FIRST_R --> PATCHES --> POST_INLINE --> VOTE
+
+    style POST_INLINE fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style VOTE fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+**Note:** Posting happens inline within `/dx-pr-review` (Step 8) — it does NOT call `/dx-pr-post`. The standalone `/dx-pr-post` skill is only for deferred posting of previously saved findings.
+
+### Handling Feedback on Your PR (separate lifecycle)
+
+**Developer types:** `/dx-pr-answer <PR-URL>`
+
+```mermaid
+flowchart TD
+    ANSWER["/dx-pr-answer<br/>Research codebase context,<br/>draft replies to open threads"]
+    CATEGORIZE["Categorize each thread:<br/>agree-will-fix / question /<br/>disagree / skip"]
+    DETECT["Detect proposed patches<br/>in reviewer comments"]
+    POST_REPLIES["Post approved replies<br/>to ADO threads"]
+    FIX_PR["/dx-pr-fix<br/>Apply agree-will-fix changes,<br/>lint, commit, push"]
+    REPLY_FIXED["Reply to fixed threads:<br/>Fixed. / Updated."]
+
+    ANSWER --> CATEGORIZE --> DETECT --> POST_REPLIES
+    POST_REPLIES -->|"agree-will-fix threads exist"| FIX_PR --> REPLY_FIXED
+
+    style POST_REPLIES fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style FIX_PR fill:#fff9c4,stroke:#f9a825,color:#000
+    style REPLY_FIXED fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+### Standalone PR-Related Skills
+
+- **`/dx-pr-commit`** — Alternative to `/dx-pr`: commit + create PR in one command
+- **`/dx-pr-post`** — Post previously saved review findings to ADO (deferred posting)
+- **`/dx-doc-gen`** — Generate wiki page from spec files, post to ADO wiki
+- **`/dx-req-dod`** — Check Definition of Done: PR approved? Tasks done?
+
+**Key:** Three independent lifecycles — PR creation, reviewing others' PRs, and handling feedback on your own PR. `/dx-pr-commit` is an alternative to `/dx-pr`.
+
+---
+
+## Bug Fix Flow (/dx-bug-all)
+
+**Developer types:** `/dx-bug-all <ADO-Bug-ID>`
+
+Chains 3 steps via `dx-step-executor`. Step 2 (verify) can fail without blocking step 3 (fix).
+
+```mermaid
+flowchart TD
+    BUG_ID["ADO Bug ID"]
+
+    subgraph S1["Step 1: Triage"]
+        TRIAGE["/dx-bug-triage<br/>Fetch bug, identify<br/>affected component"]
+        FETCH_BUG["Fetch bug details<br/>from ADO"]
+        FIND_COMP["Find affected files<br/>via Explore subagents"]
+        TRIAGE_OUT["raw-bug.md + triage.md"]
+        TRIAGE --> FETCH_BUG --> FIND_COMP --> TRIAGE_OUT
+    end
+
+    subgraph XREPO["Step 1.5: Cross-Repo Check"]
+        XREPO_CHECK["Read triage.md<br/>Does fix belong to<br/>another repo?"]
+        DELEGATE["Delegate to other repo<br/>STOP in this repo"]
+    end
+
+    subgraph S2["Step 2: Verify"]
+        VERIFY_BUG["/dx-bug-verify<br/>Reproduce bug in browser"]
+        AEM_BUG["aem-bug-executor agent<br/>Navigate AEM, follow<br/>repro steps"]
+        CHROME["Chrome DevTools<br/>Screenshot evidence"]
+        VERIFY_OUT["verification.md<br/>+ screenshots"]
+        VERIFY_BUG --> AEM_BUG --> CHROME --> VERIFY_OUT
+    end
+
+    subgraph S3["Step 3: Fix"]
+        BUG_FIX["/dx-bug-fix<br/>Plan and apply fix"]
+        PLAN_BUG["Generate implement.md<br/>from triage context"]
+        EXEC_BUG["Run /dx-step-all<br/>Execute fix steps"]
+        PR_BUG["Run /dx-pr<br/>Create pull request"]
+        BUG_FIX --> PLAN_BUG --> EXEC_BUG --> PR_BUG
+    end
+
+    subgraph LEARN["Learning"]
+        BUGS_LOG[".ai/learning/raw/bugs.jsonl<br/>Bug history"]
+        HOTSPOT["Hotspot detection<br/>Alert if 3+ bugs<br/>in same component"]
+    end
+
+    BUG_ID --> TRIAGE
+    TRIAGE_OUT --> XREPO_CHECK
+    XREPO_CHECK -->|"same repo"| VERIFY_BUG
+    XREPO_CHECK -->|"other repo, pipeline mode"| DELEGATE
+    VERIFY_OUT -->|"pass or fail"| BUG_FIX
+    TRIAGE_OUT -->|"verify failed, use triage only"| BUG_FIX
+    PR_BUG --> BUGS_LOG
+
+    style S1 fill:none,stroke:#90a4ae
+    style XREPO fill:none,stroke:#90a4ae
+    style S2 fill:none,stroke:#90a4ae
+    style S3 fill:none,stroke:#90a4ae
+    style LEARN fill:none,stroke:#90a4ae,stroke-dasharray: 5 5
+    style EXEC_BUG fill:#fff9c4,stroke:#f9a825,color:#000
+    style PR_BUG fill:#e1bee7,stroke:#6a1b9a,color:#000
+```
+
+**Key:** Verify failure is non-blocking -- fix proceeds with triage data alone. Cross-repo delegation only applies in `DX_PIPELINE_MODE`.
+
+---
+
+## Data Flow (Spec Directory)
+
+```mermaid
+flowchart LR
+    subgraph SPEC[".ai/specs/ID-SLUG/"]
+        RAW["raw-story.md"]
+        BRANCH[".branch"]
+        SPRINT[".sprint"]
+        DOR_F["dor-report.md"]
+        EXP_F["explain.md"]
+        RES_F["research.md"]
+        SHARE_F["share-plan.md"]
+        FIGMA_EXT["figma-extract.md"]
+        FIGMA_CONV["figma-conventions.md"]
+        IMPL_F["implement.md"]
+        AEM_B["aem-before.md"]
+        AEM_A["aem-after.md"]
+        DOD_F["dod-report.md"]
+
+        subgraph PROTO_DIR["prototype/"]
+            FIGMA_REF["figma-reference.png"]
+            INDEX_HTML["index.html"]
+            STYLES_CSS["styles.css"]
+            SCRIPT_JS["script.js (optional)"]
+        end
+
+        subgraph DEMO["demo/"]
+            GUIDE_F["authoring-guide.md"]
+            DIALOG_PNG["dialog-name.png"]
+            RENDER_PNG["rendered-name.png"]
+        end
+
+        subgraph DOCS_DIR["docs/"]
+            WIKI["wiki-page.md"]
+        end
+    end
+
+    FETCH_S["/dx-req-fetch"] --> RAW
+    FETCH_S --> BRANCH
+    FETCH_S --> SPRINT
+    DOR_S["/dx-req-dor"] --> DOR_F
+    EXP_S["/dx-req-explain"] --> EXP_F
+    RES_S["/dx-req-research"] --> RES_F
+    SHARE_S["/dx-req-share"] --> SHARE_F
+    FIGMA_EXT_S["/dx-figma-extract"] --> FIGMA_EXT
+    FIGMA_EXT_S --> FIGMA_REF
+    FIGMA_PROTO_S["/dx-figma-prototype"] --> FIGMA_CONV
+    FIGMA_PROTO_S --> INDEX_HTML
+    FIGMA_PROTO_S --> STYLES_CSS
+    PLAN_S["/dx-plan"] --> IMPL_F
+    SNAP_S["/aem-snapshot"] --> AEM_B
+    VER_S["/aem-verify"] --> AEM_A
+    DEMO_S["/aem-demo or /aem-doc-gen"] --> GUIDE_F
+    DEMO_S --> DIALOG_PNG
+    DOC_S["/dx-doc-gen"] --> WIKI
+    DOD_S["/dx-req-dod"] --> DOD_F
+
+    style SPEC fill:none,stroke:#90a4ae
+```
+
+---
+
+## Agents Summary
+
+| Agent | Model | Invoked By | Purpose |
+|-------|-------|------------|---------|
+| `dx-step-executor` | Sonnet | Coordinators: req-all, step-all, bug-all, agent-all, estimate | Execute single skill in isolated context |
+| `dx-pr-reviewer` | Sonnet | /dx-pr-review | Analyze PR diff, return findings with confidence 80+ filter |
+| `dx-code-reviewer` | Opus | /dx-step-verify Phase 6 | Deep code review for plan alignment and quality |
+| `dx-file-resolver` | Haiku | /dx-ticket-analyze, /aem-component | Find source files across repos via file-patterns.yaml |
+| `dx-figma-styles` | Haiku | /dx-figma-prototype Phase A | Discover CSS/SCSS conventions (colors, breakpoints, typography, spacing) |
+| `dx-figma-markup` | Haiku | /dx-figma-prototype Phase A | Discover HTML/accessibility conventions (component structure, ARIA, keyboard) |
+| `dx-doc-searcher` | Haiku | /dx-help | Search .ai/ docs for architecture answers |
+| `aem-inspector` | Sonnet | /aem-snapshot, /aem-verify, /aem-doc-gen | Walk dialogs, create pages, configure components via AEM MCP |
+| `aem-page-finder` | Haiku | /aem-component, /aem-page-search | Find pages using a component via AEM MCP |
+| `aem-demo-capture` | Sonnet | /aem-demo, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
+| `aem-file-resolver` | Haiku | /aem-component, /dx-ticket-analyze | Resolve component files using file-patterns.yaml |
+| `aem-bug-executor` | Sonnet | /dx-bug-verify | Reproduce bugs on AEM via Chrome DevTools |
+
+---
+
+## Project Setup (one-time, standalone)
+
+**Developer types:** `/dx-init` once per repo. Not part of the feature flow.
+
+```mermaid
+flowchart LR
+    subgraph INIT_FLOW["Initial Setup"]
+        INIT["/dx-init<br/>Detect project type,<br/>scaffold .ai/ directory,<br/>generate config.yaml"]
+        AEM_INIT["/aem-init<br/>Detect AEM structure,<br/>set component paths,<br/>build component index"]
+        AUTO_INIT["/auto-init<br/>Scaffold automation<br/>infra for CI agents"]
+        INIT --> AEM_INIT
+        INIT --> AUTO_INIT
+    end
+
+    subgraph SEED["Seed Data (standalone)"]
+        AEM_REFRESH["/aem-refresh<br/>Sync project knowledge<br/>from docs repo"]
+    end
+
+    style INIT_FLOW fill:none,stroke:#90a4ae
+    style SEED fill:none,stroke:#90a4ae
+```
+
+**Key:** `/dx-init` calls `/aem-init` inline (step 7) when AEM is detected. `/aem-refresh` is standalone -- user runs it when seed data needs updating. It is NOT called by `/aem-init`.
+
+---
+
+## Health and Maintenance (standalone, on-demand)
+
+**Developer types:** `/dx-doctor`, `/aem-doctor`, or `/dx-upgrade` as needed.
+
+```mermaid
+flowchart LR
+    subgraph HEALTH["Diagnostics"]
+        DOCTOR["/dx-doctor<br/>Validate config, rules,<br/>scripts, MCP, seed data"]
+        AEM_DOC["/aem-doctor<br/>Check component defs,<br/>OSGi, dispatcher, content"]
+    end
+
+    subgraph MAINT["Maintenance"]
+        UPGRADE["/dx-upgrade<br/>Update stale plugin files,<br/>install missing deps"]
+    end
+
+    UPGRADE -->|"calls as step 0"| DOCTOR
+
+    style HEALTH fill:none,stroke:#90a4ae
+    style MAINT fill:none,stroke:#90a4ae
+```
+
+**Key:** `/dx-upgrade` calls `/dx-doctor` as step 0 to diagnose before fixing. `/aem-doctor` is fully standalone.

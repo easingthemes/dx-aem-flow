@@ -1,0 +1,17 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+const { title, subtitle = 'This page is being migrated from the React version.' } = Astro.props;
+---
+
+<div class="relative bg-gradient-to-br from-brand-900 via-brand-700 to-brand-900 py-16 md:py-20 px-6 text-center">
+  <div class="relative max-w-3xl mx-auto">
+    <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-3">{title}</h1>
+    <p class="text-lg text-white/80">{subtitle}</p>
+  </div>
+</div>
+<div class="py-16 px-6 text-center">
+  <p class="text-gray-500">Content coming soon. See the <a href="/" class="text-brand-700 hover:text-cyan">Home page</a> for the full experience.</p>
+</div>

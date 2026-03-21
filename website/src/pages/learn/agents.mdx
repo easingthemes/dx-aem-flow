@@ -1,0 +1,227 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Agents
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Agents"
+  subtitle="Specialized AI workers with focused roles and tool access"
+/>
+
+<SectionHeading
+  badge="Concept"
+  title="What is an Agent?"
+  subtitle="A markdown file defining a specialized AI persona -- what model, which tools, what role."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:robot" iconColor="bg-brand-700" title="Personas, Not Prompts">
+      While skills tell the AI <strong>what</strong> to do, agents define <strong>who</strong> does
+      it. Think of agents as team members with different expertise. A code reviewer agent uses Opus
+      for deep reasoning. A file lookup agent uses Haiku for speed. Each agent has exactly the tools
+      it needs -- nothing more.
+    </ContentCard>
+    <ContentCard icon="mdi:arrow-decision" iconColor="bg-cyan" title="The Key Difference: Isolation">
+      A skill runs <strong>inline</strong> in your main conversation -- same AI, same context window,
+      same tools. An agent runs in a <strong>separate context</strong> -- fresh context window, its own
+      system prompt, possibly a different model. The agent does its work independently and returns a
+      summary. This is why agents are used for heavy tasks that would bloat your main conversation.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Comparison"
+  badgeColor="secondary"
+  title="Agent vs Skill"
+  subtitle="Complementary concepts -- skills define tasks, agents define workers."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Aspect</th>
+          <th class="text-left py-2 px-4 font-semibold">Skill</th>
+          <th class="text-left py-2 px-4 font-semibold">Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Metaphor</td><td class="py-2 px-4">A recipe card</td><td class="py-2 px-4">A team member</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Defines</td><td class="py-2 px-4"><strong>What</strong> to do (instructions)</td><td class="py-2 px-4"><strong>Who</strong> does it (persona)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Invoked by</td><td class="py-2 px-4">User types <code>/command</code></td><td class="py-2 px-4">Skills spawn via <code>Agent</code> tool</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Runs in</td><td class="py-2 px-4">Main conversation (inline)</td><td class="py-2 px-4">Isolated subprocess (own context)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Context window</td><td class="py-2 px-4">Shares yours</td><td class="py-2 px-4">Gets its own (fresh)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Model</td><td class="py-2 px-4">Uses current model</td><td class="py-2 px-4">Can pick a different model</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Tool access</td><td class="py-2 px-4">Inherits session tools</td><td class="py-2 px-4">Explicit allowlist</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-medium">Lifecycle</td><td class="py-2 px-4">One-shot execution</td><td class="py-2 px-4">Multi-turn capable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="The Orchestration Pattern">
+    In practice, <strong>skills orchestrate and agents execute</strong>.
+    When you type <code>/dx-plan</code>, the skill loads into the main conversation.
+    The skill may then spawn a <code>dx-code-reviewer</code> agent (Opus, read-only tools, fresh context)
+    to do heavy analysis. The agent returns a summary, and the skill continues with the result.
+    Users interact with skills; agents work behind the scenes.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Decision"
+  badgeColor="warning"
+  title="When to Use Which?"
+  subtitle="A quick guide for plugin authors."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Create a Skill when...">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li>The user invokes it directly (<code>/command</code>)</li>
+        <li>It's a reusable workflow or process</li>
+        <li>It teaches conventions or domain knowledge</li>
+        <li>Results should stay in the main conversation</li>
+        <li>It bundles scripts or templates</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Create an Agent when...">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li>You need a different model (Haiku for speed, Opus for depth)</li>
+        <li>You need to restrict tools (read-only, no file edits)</li>
+        <li>Heavy output would bloat the main context</li>
+        <li>Other skills should delegate work to it</li>
+        <li>You want parallel execution (multiple agents at once)</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Examples"
+  badgeColor="info"
+  title="Real Examples from KAI"
+  subtitle="13 agents, each matched to the right model tier."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard
+      icon="mdi:star"
+      iconColor="bg-red-500"
+      title="dx-code-reviewer"
+      tags={[{ label: 'Opus', color: 'error' }]}
+    >
+      Deep code review with 80%+ confidence filtering. Runs in an isolated worktree so it
+      cannot accidentally modify your working tree.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:diamond-stone"
+      iconColor="bg-amber-500"
+      title="dx-step-executor"
+      tags={[{ label: 'Sonnet', color: 'warning' }]}
+    >
+      Executes implementation plan steps. Has 22 preloaded skills and
+      <code>acceptEdits</code> permission for autonomous file changes.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:circle"
+      iconColor="bg-emerald-600"
+      title="dx-doc-searcher"
+      tags={[{ label: 'Haiku', color: 'success' }]}
+    >
+      Fast project knowledge lookup. <code>user-invocable: false</code> -- it is a worker
+      agent only, called by other skills when they need documentation context.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="info"
+  title="Key Frontmatter"
+  subtitle="Agent definition fields."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Field</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+          <th class="text-left py-2 px-4 font-semibold">Values</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4">Agent identifier</td><td class="py-2 px-4"><code>dx-code-reviewer</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">AI model tier</td><td class="py-2 px-4"><code>opus / sonnet / haiku</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools</code></td><td class="py-2 px-4">Available tool list</td><td class="py-2 px-4"><code>[read, edit, grep, bash, ...]</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>memory</code></td><td class="py-2 px-4">Persistent memory access</td><td class="py-2 px-4"><code>true / false</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>permissionMode</code></td><td class="py-2 px-4">Auto-approve tool calls</td><td class="py-2 px-4"><code>acceptEdits / bypassPermissions</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>isolation</code></td><td class="py-2 px-4">Run in worktree</td><td class="py-2 px-4"><code>worktree</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>maxTurns</code></td><td class="py-2 px-4">Conversation turn limit</td><td class="py-2 px-4"><code>10, 20, 50</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>user-invocable</code></td><td class="py-2 px-4">Can user call directly?</td><td class="py-2 px-4"><code>true / false</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Copilot"
+  badgeColor="secondary"
+  title="Copilot Agents"
+  subtitle="Different format, same concept."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Claude Code Agents">
+      Live in plugin <code>agents/</code> directory. YAML frontmatter with
+      <code>model</code>, <code>tools</code>, <code>isolation</code>.
+      <p class="text-xs font-semibold mt-1">13 agents total</p>
+    </ContentCard>
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Copilot CLI Agents">
+      Live in <code>.github/agents/</code>. Use <code>allowed-tools</code> and
+      <code>handoffs</code> for navigation. Invoked with <code>@AgentName</code>.
+      <p class="text-xs font-semibold mt-1">25 agents total</p>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Agent Type Naming">
+    Always use the full prefixed name: <code>dx-dev-experience:dx-step-executor</code>, NOT
+    just <code>dx-step-executor</code>. The short name fails with "Agent type not found".
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code Agents">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/sub-agents" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/en/docs/claude-code/sub-agents
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Copilot Agents">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-agents" target="_blank" rel="noopener noreferrer">
+        docs.github.com/.../custom-agents
+      </a>
+    </ContentCard>
+  </div>
+</Section>

@@ -1,0 +1,72 @@
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: dx-hub
+      type: git
+      name: {{ADO_PROJECT}}/{{ADO_REPO}}
+      ref: development
+# Claude Agent SDK pipeline — PR Review via /dx-pr-review skill.
+# Triggered via Branch Policy > Build Validation on the target branch.
+
+parameters:
+  - name: prUrl
+    displayName: "PR URL (full ADO PR URL)"
+    type: string
+    default: ""
+  - name: dryRun
+    displayName: "Dry run (log results, don't post threads)"
+    type: boolean
+    default: false
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+    path: s
+
+  - checkout: dx-hub
+    fetchDepth: 1
+    path: dx-hub
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+      npm install --no-save @anthropic-ai/claude-agent-sdk @azure-devops/mcp
+    displayName: "Install Claude Code + Agent SDK"
+    workingDirectory: $(Build.SourcesDirectory)
+  - bash: |
+      PR_URL="${{ parameters.prUrl }}"
+      if [ -z "$PR_URL" ]; then
+        PR_URL="$(System.CollectionUri)$(System.TeamProject)/_git/$(Build.Repository.Name)/pullrequest/$(System.PullRequest.PullRequestId)"
+      fi
+
+      PROMPT="/dx-pr-review $PR_URL (analyze only, save results)"
+      if [ "${{ parameters.dryRun }}" = "True" ]; then
+        PROMPT="$PROMPT (dry run — analyze but do NOT post comments or vote)"
+      else
+        PROMPT="$PROMPT. Then run /dx-pr-post $PR_URL to post the review comments to ADO."
+      fi
+
+      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-ai-flow/dx/plugins"
+      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-ai-flow/dx/plugins"
+      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+
+      echo "prompt: $PROMPT"
+      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+    displayName: "AI PR Review"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      MAX_TURNS: "30"
+      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      GENERATE_PATCHES: "true"
+      ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Bash(git diff*),Bash(git log*),Bash(git fetch*),Bash(git show*),Bash(git worktree*),Bash(git checkout*),Bash(git -C*),Agent"
+    timeoutInMinutes: 30

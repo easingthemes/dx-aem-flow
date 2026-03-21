@@ -1,0 +1,251 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: AI Crash Course
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="AI Crash Course"
+  subtitle="Everything you need to understand AI-assisted development in 15 minutes"
+/>
+
+<SectionHeading
+  badge="Fundamentals"
+  title="Model, Agent, Context"
+  subtitle="Three concepts you must understand before everything else."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:head-cog" iconColor="bg-brand-700" title="What is a Model?">
+      A model (Claude, GPT, Gemini) is a pre-trained neural network. You send it text, it returns text.
+      <strong> It has no memory.</strong> After each request/response, it forgets everything.
+      Every new request starts from zero -- the model only knows what you include in that specific request.
+
+      <div class="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600">
+        Think of it as a brilliant expert with amnesia. Incredibly capable, but needs to be briefed from scratch every single time.
+      </div>
+    </ContentCard>
+    <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="What is an Agent?">
+      An agent is <strong>software that wraps the model</strong>. It collects context, manages conversation history,
+      reads files, calls APIs, executes commands -- and assembles all of this into the next request to the model.
+
+      <div class="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600">
+        Claude Code and Copilot CLI are agents. They read your codebase, load rules, invoke MCP tools,
+        and pack all that context into each model request so the model can give useful answers about <em>your</em> project.
+      </div>
+    </ContentCard>
+    <ContentCard icon="mdi:code-json" iconColor="bg-amber-500" title="What is Context?">
+      Context is <strong>everything the model sees in a single request</strong> -- your message, conversation history,
+      file contents, tool results, rules, and instructions. The model can only reason about what's in the context.
+
+      <div class="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600">
+        Context has a size limit measured in tokens (~1 token = 4 characters).
+        More context = better answers, but there's a ceiling.
+      </div>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Context"
+  badgeColor="warning"
+  title="The Context Window"
+  subtitle="What the model sees -- and how the agent fills it."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:memory" iconColor="bg-amber-500" title="Context Size">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>GPT-4</strong> -- 128k tokens (~300 pages)</li>
+        <li><strong>Claude Sonnet</strong> -- 200k tokens (~500 pages)</li>
+        <li><strong>Claude Opus</strong> -- 1M tokens (~2,500 pages)</li>
+      </ul>
+
+      <p class="text-xs text-gray-500 mt-2">
+        Bigger context = the agent can show the model more files, more history, more rules before asking it to reason.
+        A 1M context means the model can "see" your entire codebase in one request.
+      </p>
+    </ContentCard>
+    <ContentCard icon="mdi:code-json" iconColor="bg-cyan-dark" title="What Fills the Context">
+      The agent automatically packs the context with layers of information:
+      <ul class="mt-2 list-none p-0 text-xs space-y-1">
+        <li><strong>System prompt</strong> (0.6%) -- base behavior rules</li>
+        <li><strong>System tools</strong> (1.1%) -- tool definitions (Read, Edit, Bash, etc.)</li>
+        <li><strong>MCP tools</strong> (0.0%) -- external tool schemas (loaded on demand)</li>
+        <li><strong>Custom agents</strong> (0.3%) -- agent descriptions for dispatch</li>
+        <li><strong>Memory files</strong> (0.5%) -- CLAUDE.md, rules, project memory</li>
+        <li><strong>Skills</strong> (0.7%) -- skill descriptions for discovery</li>
+        <li><strong>Messages</strong> (39%) -- your conversation + file reads + tool results</li>
+        <li><strong>Free space</strong> (54%) -- room for more work</li>
+        <li><strong>Autocompact buffer</strong> (3%) -- safety margin before compression kicks in</li>
+      </ul>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Why Context Matters for You">
+    When a skill reads 10 files and calls 5 MCP tools, all those results go into the context. If context fills up,
+    the agent <strong>compresses older messages</strong> (autocompact) -- which means the model may lose early conversation details.
+    This is why KAI uses <strong>subagents</strong>: each subagent gets a fresh context, does focused work, and returns only a summary.
+    The parent conversation stays lean.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Connection"
+  badgeColor="success"
+  title="How They Connect"
+  subtitle="Model + Agent + Context = AI-assisted development."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="success" title="The Loop">
+    <ol class="mt-2 pl-5 text-sm space-y-1">
+      <li>You type <code>/dx-plan</code></li>
+      <li>The <strong>agent</strong> reads the skill instructions, loads rules, reads your spec files</li>
+      <li>The agent packs all this into the <strong>context</strong> and sends it to the <strong>model</strong></li>
+      <li>The model generates a response (an implementation plan)</li>
+      <li>The agent writes the plan to disk, shows you the result</li>
+      <li>Next command: the agent packs the <em>updated</em> context (now including the plan) and sends again</li>
+    </ol>
+    <p class="text-xs text-gray-500 mt-2 italic">
+      The model never remembers previous requests. The agent creates the illusion of memory by re-sending relevant context each time.
+    </p>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Building Blocks"
+  title="The Plugin System"
+  subtitle="Skills, agents, hooks, and MCP servers -- the four building blocks that make it all work."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Skills + Agents = What & Who">
+      <strong>Skills</strong> tell the AI <em>what</em> to do (instructions, steps, expected output).
+      <strong> Agents</strong> define <em>who</em> does it (which model, which tools, what persona).
+      A skill like <code>/dx-step-all</code> delegates each step to the <code>dx-step-executor</code> agent.
+    </ContentCard>
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Hooks + MCP = Automation & Data">
+      <strong>Hooks</strong> fire automatically on events (validate before commit, log after subagent).
+      <strong> MCP servers</strong> connect to external systems (ADO/Jira for tickets, AEM for content, Figma for designs).
+      Together they give the AI real data and safety guardrails.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Flow"
+  badgeColor="secondary"
+  title="How It Works"
+  subtitle="From developer command to finished output in four steps."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="The Execution Flow">
+    Developer invokes skill (<code>/dx-plan</code>) → AI reads skill instructions →
+    AI uses tools (read files, run commands, call APIs) → AI produces output (code, PRs, comments).
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-red-500" title="Without AI">
+      <ol class="mt-2 pl-5 text-sm space-y-1">
+        <li>Open ADO or Jira, read the story</li>
+        <li>Manually search codebase for related files</li>
+        <li>Write PR description by hand</li>
+        <li>Reviewer reads every line of diff</li>
+        <li>Author replies to each comment manually</li>
+      </ol>
+      <p class="text-xs text-gray-500 mt-2 italic">~2-4 hours for a typical PR review cycle</p>
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="With AI">
+      <ol class="mt-2 pl-5 text-sm space-y-1">
+        <li><code>/dx-req-fetch 12345</code> -- AI reads the story</li>
+        <li><code>/dx-req-research</code> -- AI finds affected files</li>
+        <li><code>/dx-pr-review</code> -- AI reviews the diff</li>
+        <li><code>/dx-pr-answer</code> -- AI drafts replies to comments</li>
+      </ol>
+      <p class="text-xs text-gray-500 mt-2 italic">~15-30 minutes with AI assistance</p>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Plugins"
+  badgeColor="warning"
+  title="What's a Plugin?"
+  subtitle="A package of skills + agents + hooks + MCP configs. Install once, get everything."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard
+      icon="mdi:puzzle"
+      iconColor="bg-brand-700"
+      title="dx-dev-experience"
+      tags={[{ label: '55 skills', color: 'primary' }, { label: '7 agents', color: 'primary' }]}
+    >
+      Core development workflow -- requirements, planning, execution, review, bug fix.
+      Works with any tech stack.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:puzzle"
+      iconColor="bg-cyan"
+      title="dx-aem"
+      tags={[{ label: '12 skills', color: 'secondary' }, { label: '6 agents', color: 'secondary' }]}
+    >
+      AEM-specific -- component inspection, page verification, dialog analysis,
+      browser automation.
+    </ContentCard>
+    <ContentCard
+      icon="mdi:puzzle"
+      iconColor="bg-amber-500"
+      title="dx-automation"
+      tags={[{ label: '11 skills', color: 'warning' }]}
+    >
+      Autonomous 24/7 agents -- PR review, bug fix, estimation, documentation.
+      Triggered by ADO webhooks (Jira planned).
+    </ContentCard>
+  </div>
+
+  <CommandBlock label="Install all plugins">/dx-init   # one-time setup per repo</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  subtitle="Bookmark these -- the authoritative references for each tool."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code">
+      <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/en/docs/claude-code
+      </a>
+      <p class="text-xs text-gray-500 mt-1">Skills, agents, hooks, MCP, memory, settings.</p>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Copilot CLI">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli" target="_blank" rel="noopener noreferrer">
+        docs.github.com/en/copilot/how-tos/copilot-cli
+      </a>
+      <p class="text-xs text-gray-500 mt-1">Skills, agents, hooks, MCP -- GitHub's CLI tool.</p>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-emerald-600" title="Open Plugins Spec">
+      <a href="https://agentskills.io" target="_blank" rel="noopener noreferrer">
+        agentskills.io
+      </a>
+      <p class="text-xs text-gray-500 mt-1">The open standard for portable AI agent plugins.</p>
+    </ContentCard>
+  </div>
+</Section>

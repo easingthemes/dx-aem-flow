@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "uvx",
+      "args": ["mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "{{JIRA_URL}}",
+        "JIRA_PERSONAL_TOKEN": "${JIRA_PERSONAL_TOKEN}",
+        "CONFLUENCE_URL": "{{CONFLUENCE_URL}}",
+        "CONFLUENCE_PERSONAL_TOKEN": "${CONFLUENCE_PERSONAL_TOKEN}",
+        "TOOLSETS": "jira_issues,jira_comments,jira_transitions,jira_projects,jira_agile,jira_fields,jira_links,confluence_pages,confluence_comments,confluence_labels"
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+# <Title> (ADO #<id>)
+
+## What & Why
+<!-- 2-3 sentences: what this feature/change is + why it matters.
+Combine the "what" and "why" into one tight paragraph. -->
+
+## Requirements
+<!-- Flat numbered list of concrete, testable requirements. One sentence each.
+Combine and deduplicate from description + acceptance criteria + comments.
+This is the CORE of the document — everything else is supplementary.
+
+  1. Dialog shows a dropdown with options: "One Pod", "Two Pod"
+  2. When podCount is "two", render side-by-side layout
+  3. Default behavior (no selection) shows single pod layout
+
+Each requirement = one testable statement. No sub-bullets.
+Target 8-12 items for a medium story.
+
+REUSE FLAG: If any requirement sounds like something the codebase
+might already support (similar component, existing helper, known pattern),
+add a note: "(check: may overlap with existing <name>)". This flags it
+for /dx-req-research to verify. Don't suppress the requirement — just tag it. -->
+
+## Changes by Area
+<!-- ONLY include areas that have non-obvious changes. Use a compact format:
+
+**Authoring:** bullet list of dialog/config changes
+**UI:** bullet list of visual changes + Figma link
+**Data:** bullet list of exporter/API changes
+
+OMIT any area that's already fully covered by Requirements.
+OMIT the entire section if Requirements says it all. -->
+
+## Out of Scope
+<!-- 1-3 bullets of things explicitly excluded or easily confused as in-scope.
+OMIT if the scope is unambiguous. -->
+
+## Repos Required
+<!-- If research.md exists and has a "Cross-Repo Scope" section, list all
+repos that need changes. Otherwise detect from the raw story.
+
+- **Backend-Repo** — model, exporter (this repo)
+- **Frontend-Repo** — FE template, styles, JS
+
+OMIT if all work is in the current repo.
+OMIT if research.md hasn't been generated yet. -->
+
+## BA-Provided Context
+<!-- ONLY include this section if dor-report.md exists in the spec directory.
+Pull structured data from dor-report.md's "Extracted BA Data" section.
+
+- **Component:** <name> (<New/Existing>)
+- **Dialog Fields:** <summary of fields from DoR report>
+- **Figma:** <URL with node-id from DoR report>
+- **Scope:** <brands> / <markets>
+
+OMIT this section entirely if dor-report.md doesn't exist. -->
+
+## References
+- ADO: [#<id>](<work item URL>)
+- Figma: <links if present>
+- Parent: [#<parent-id>] (if present)

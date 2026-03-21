@@ -1,0 +1,402 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: KAI Development Platform (Long)
+sidebar: demo
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+<PageHero
+  title="KAI Development Platform"
+  subtitle="From ticket to production -- automated. Posts to ADO or Jira, creates AEM pages, verifies against Figma, reviews PRs, and runs 24/7 on pipelines. Built on enterprise tools, not custom code."
+/>
+
+{/* Full Lifecycle Flow */}
+<SectionHeading
+  badge="Full Lifecycle"
+  badgeColor="success"
+  title="From Ticket to Product -- End to End"
+  subtitle="One ticket goes in -- deployed code, configured AEM pages, and documentation come out. Ready to use."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    steps={[
+      { title: 'Ticket', subtitle: 'ADO/Jira story assigned' },
+      { title: 'DoR & Requirements', subtitle: 'Validate readiness, analyze & research', color: '#059669' },
+      { title: 'Plan & Implement', subtitle: 'Step-by-step plan, code generation', color: '#0891b2' },
+      { title: 'Figma & AEM', subtitle: 'Design verification, page creation', color: '#8b5cf6' },
+      { title: 'Test & Verify', subtitle: 'Local + remote, browser automation', color: '#d97706' },
+      { title: 'PR Flow', subtitle: 'Submit, review, answer, merge', color: '#ef4444' },
+      { title: 'Docs & Wiki', subtitle: 'Wiki pages, editorial guidelines', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-amber-500" title="Fully Autonomous" horizontal>
+      One ticket triggers the entire pipeline. No manual steps between the assignment
+      and a deployed, verified result. Can run unattended.
+    </ContentCard>
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-emerald-600" title="Real Deliverables" horizontal>
+      Not code suggestions -- real output. Deployed AEM pages, configured components,
+      reviewed pull requests, and structured documentation. Ready to use, not ready to start.
+    </ContentCard>
+    <ContentCard icon="mdi:trending-up" iconColor="bg-cyan-dark" title="Team Visibility" horizontal>
+      Every step posts back to Azure DevOps or Jira -- requirements, plans, reviews, and results.
+      The team tracks progress in tools they already use. Nothing hidden, nothing new to learn.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ADO Integration */}
+<SectionHeading
+  badge="ADO / Jira"
+  badgeColor="success"
+  title="Automated Tracker Workflow"
+  subtitle="Comments, tasks, summaries, and status updates -- posted directly to Azure DevOps or Jira. Visible to the entire team in existing tools."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    steps={[
+      { title: 'Ticket', subtitle: 'ADO or Jira story/bug' },
+      { title: 'DoR Check', subtitle: 'Validates readiness, posts comment', color: '#059669' },
+      { title: 'Requirements', subtitle: 'Analysis posted back to ticket', command: '/dx-req-all', color: '#0891b2' },
+      { title: 'Tasks Created', subtitle: 'Child tasks with estimates', color: '#8b5cf6' },
+      { title: 'PR + Review', subtitle: 'PR created, reviewed, results in ADO', color: '#d97706' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:play" iconColor="bg-emerald-600" title="Automated Comments" horizontal>
+      Requirements analysis, implementation plans, DoR validation, and review summaries --
+      all posted as structured comments directly to the ADO or Jira ticket.
+    </ContentCard>
+    <ContentCard icon="mdi:code-tags" iconColor="bg-cyan-dark" title="Task Creation" horizontal>
+      AI breaks down stories into child tasks with hour estimates, creates them in ADO or Jira,
+      and links them to the parent story. Management tracks progress in existing boards.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-amber-500" title="PR with Full Review" horizontal>
+      Pull requests created with structured descriptions, linked to work items. Every PR
+      reviewed automatically with inline patches and fix suggestions.
+    </ContentCard>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/dor-comment-real-example.png" alt="DoR Check Comment in ADO" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">DoR Check Comment in ADO</p>
+    </div>
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/ado-development-plan-team-share.png" alt="Development Plan -- Team Share in ADO" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">Development Plan -- Team Share in ADO</p>
+    </div>
+  </div>
+</Section>
+
+{/* AEM + Figma */}
+<SectionHeading
+  badge="AEM + Figma"
+  badgeColor="warning"
+  title="AEM Pages & Figma Verification"
+  subtitle="AI creates real AEM pages, configures components, and verifies the result against Figma designs in a real browser."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="AEM Page Creation" horizontal>
+      AI creates AEM pages, configures component dialogs, sets content properties, and verifies
+      the result on a running AEM instance. Not a code generator -- it works with the live CMS.
+    </ContentCard>
+    <ContentCard icon="mdi:palette" iconColor="bg-cyan" title="Figma-to-Code with Browser QA" horizontal>
+      One command extracts a Figma design, generates a prototype, opens it in a real browser,
+      takes a screenshot, compares it against the Figma reference, and auto-fixes differences.
+    </ContentCard>
+  </div>
+
+  <PipelineBlock
+    label="One Command"
+    command="/dx-figma-all <figma-url>"
+    steps={[
+      { title: 'Extract', subtitle: 'Design tokens from Figma', command: '/dx-figma-extract' },
+      { title: 'Prototype', subtitle: 'HTML/CSS with project conventions', command: '/dx-figma-prototype', color: '#0891b2' },
+      { title: 'Verify', subtitle: 'Browser screenshot vs Figma reference', command: '/dx-figma-verify', color: '#d97706' },
+      { title: 'Implement', subtitle: 'Production AEM component', command: '/dx-plan + /dx-step-all', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <HighlightBox severity="info" title="Design Fidelity">
+      Design fidelity is verified before production code starts. AI maps Figma tokens to existing SCSS variables,
+      uses the project's BEM naming, and generates WCAG-compliant patterns.
+    </HighlightBox>
+    <HighlightBox severity="success" title="Works with Any Figma">
+      Works exceptionally with well-structured Figma files, adapts intelligently to hybrid designs,
+      and even handles screenshot-based files -- every team's Figma workflow is supported.
+    </HighlightBox>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/aem-real-page-configured-component.png" alt="AEM Page -- Component Dialog & Rendered Page" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">AEM Page -- Component Dialog & Rendered Page</p>
+    </div>
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/figma-prototype.png" alt="Figma Source vs Generated Prototype" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">Figma Source vs Generated Prototype</p>
+    </div>
+  </div>
+</Section>
+
+{/* Quality Gates */}
+<SectionHeading
+  badge="Quality"
+  badgeColor="info"
+  title="Quality Gates -- From Code to PR"
+  subtitle="Multiple verification layers ensure code quality before a PR is ever created."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    steps={[
+      { title: 'Build', subtitle: 'Compile + lint check' },
+      { title: 'Test', subtitle: 'Automated test suite', color: '#059669' },
+      { title: 'Security', subtitle: 'Secret scan + vulnerability check', color: '#ef4444' },
+      { title: 'Code Review', subtitle: 'AI review with confidence scores', color: '#0891b2' },
+      { title: 'PR Submission', subtitle: 'Structured PR linked to tracker', color: '#8b5cf6' },
+      { title: 'PR Review', subtitle: 'Automated review with patches', color: '#d97706' },
+      { title: 'PR Answer', subtitle: 'AI answers own review comments', command: '/dx-pr-answer', color: '#059669' },
+    ]}
+  />
+
+  <HighlightBox severity="info" title="Self-Healing">
+    When a build or test fails, the agent detects the error, generates a fix, and retries automatically --
+    up to 3 layers of recovery before escalating. Code reaches the PR stage already verified.
+  </HighlightBox>
+</Section>
+
+{/* PR Review */}
+<SectionHeading
+  badge="PR Review"
+  badgeColor="secondary"
+  title="Autonomous PR Review"
+  subtitle="Every PR gets reviewed automatically. The agent adapts its response based on what it finds."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    steps={[
+      { title: 'PR Created', subtitle: 'By developer or DevAgent' },
+      { title: 'Auto-Review', subtitle: 'AI reviews code, finds issues', command: '/dx-pr-review', color: '#059669' },
+      { title: 'Patch', subtitle: 'Inline fix suggestion', color: '#0891b2' },
+      { title: 'Question', subtitle: 'Asks for clarification', color: '#8b5cf6' },
+      { title: 'Follow-up', subtitle: 'Ongoing discussion', color: '#d97706' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:code-tags" iconColor="bg-cyan-dark" title="Review with Patches" horizontal>
+      When the agent finds issues, it provides inline code patches -- not just comments.
+      The developer sees exactly what to change, with the fix ready to apply.
+    </ContentCard>
+    <ContentCard icon="mdi:comment-question" iconColor="bg-cyan" title="Adaptive Responses" horizontal>
+      Not every finding is a patch. Sometimes the agent asks for clarification, flags a potential concern,
+      or follows up on a previous discussion thread. It adapts to the context.
+    </ContentCard>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/pr-review-with-patch.png" alt="PR Review -- Inline Code Patch" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">PR Review -- Inline Code Patch</p>
+    </div>
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <img src="/images/demo/pr-review-follow-up.png" alt="PR Review -- Follow-up Discussion" class="w-full" />
+      <p class="text-xs text-gray-500 text-center py-2">PR Review -- Follow-up Discussion</p>
+    </div>
+  </div>
+</Section>
+
+{/* Bug Flow */}
+<SectionHeading
+  badge="Bug Flow"
+  badgeColor="error"
+  title="Bug Triage with Browser Automation"
+  subtitle="The agent opens a browser, reproduces the bug, captures evidence, analyzes root cause, writes the fix."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    steps={[
+      { title: 'Bug Ticket', subtitle: 'Tagged for triage' },
+      { title: 'Reproduce', subtitle: 'Browser automation, real screenshots', command: '/dx-bug-triage', color: '#ef4444' },
+      { title: 'Root Cause', subtitle: 'Code analysis with evidence', color: '#0891b2' },
+      { title: 'Fix + PR', subtitle: 'Code fix and pull request', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Real Browser Testing" horizontal>
+      The agent opens Chrome, navigates to the page, follows reproduction steps, and captures
+      screenshots as evidence. No mocks, no simulations.
+    </ContentCard>
+    <ContentCard icon="mdi:file-document" iconColor="bg-amber-500" title="Evidence-Based Triage" horizontal>
+      Root cause analysis posted back to ADO or Jira with screenshot proof, affected code paths,
+      and a proposed fix -- before a developer even looks at the ticket.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="Fix and Verify" horizontal>
+      After writing the fix, the agent can verify it by re-running the reproduction steps
+      and confirming the bug no longer occurs.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Enterprise Foundation */}
+<SectionHeading
+  badge="Enterprise"
+  badgeColor="error"
+  title="Built on Enterprise Tools"
+  subtitle="No custom agent framework. Everything runs on Claude Code CLI and GitHub Copilot CLI -- enterprise-grade, auditable, supported."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="Enterprise Runtime" horizontal>
+      All execution happens via Claude Code CLI or GitHub Copilot CLI -- enterprise products with security certifications, not custom agent code.
+    </ContentCard>
+    <ContentCard icon="mdi:shield-lock" iconColor="bg-red-500" title="Security & Cost Logs" horizontal>
+      Every agent run produces security logs, cost tracking, and audit trails. Full traceability -- what was accessed, what was changed, what it cost.
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-cyan-dark" title="One Codebase, Two Modes" horizontal>
+      Same skills run locally in the developer's IDE and autonomously on pipelines (ADO or Jira-triggered). One system to build, maintain, and govern.
+    </ContentCard>
+    <ContentCard icon="mdi:sitemap" iconColor="bg-cyan" title="Config-Driven" horizontal>
+      One configuration file runs across connected multi repos. Same plugin codebase, zero code changes per project. Teams customize by adding a file.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Architecture */}
+<SectionHeading
+  badge="Architecture"
+  badgeColor="secondary"
+  title="Three-Layer Architecture"
+  subtitle="Modular layers that work independently or together, from foundation to full autonomy."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="border border-red-400 rounded-lg p-5 bg-white h-full">
+      <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 3: Automation (24/7)</h3>
+      <p class="text-sm text-gray-500">10 autonomous agents as ADO pipelines -- triggered by webhooks, no human needed</p>
+    </div>
+    <div class="border border-brand-700 rounded-lg p-5 bg-white h-full">
+      <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 2: Local Workflow (Claude Code + Copilot CLI)</h3>
+      <p class="text-sm text-gray-500">78 skills on both IDEs -- requirements, planning, execution, review, PR</p>
+    </div>
+    <div class="border border-emerald-600 rounded-lg p-5 bg-white h-full">
+      <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 1: Foundation</h3>
+      <p class="text-sm text-gray-500">Project config, coding standards, ADO/Jira integration, self-learning, plugin architecture</p>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Plugin System" horizontal>
+      3 plugins, each independently installable. dx-dev-experience (55 skills, 7 agents),
+      dx-aem (12 skills, 6 agents), dx-automation (11 skills, 10 pipeline agents).
+    </ContentCard>
+    <ContentCard icon="mdi:earth" iconColor="bg-cyan-dark" title="Live MCP Integrations" horizontal>
+      Connected to AEM, Chrome DevTools, Figma, ADO, Jira/Confluence, axe. Agents query live systems --
+      they verify, they don't guess.
+    </ContentCard>
+    <ContentCard icon="mdi:timer" iconColor="bg-amber-500" title="Rate Limiting & Budgets" horizontal>
+      Token budgets per agent, per run. Rate limiting on API calls. Graceful degradation
+      when limits are hit -- never runaway costs.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* Impact */}
+<SectionHeading
+  badge="Impact"
+  badgeColor="success"
+  title="Before & After"
+  subtitle="Measurable improvement across every phase of delivery."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-3 px-4 font-semibold">Dimension</th>
+          <th class="text-left py-3 px-4 font-semibold">Before</th>
+          <th class="text-left py-3 px-4 font-semibold">After</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Requirements analysis</td><td class="py-3 px-4">1-2 hours manual</td><td class="py-3 px-4 text-emerald-600 font-semibold">2-3 minutes automated</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Implementation planning</td><td class="py-3 px-4">Informal, in developer's head</td><td class="py-3 px-4 text-emerald-600 font-semibold">Structured, validated, tracked</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Code review first pass</td><td class="py-3 px-4">Hours (async, waiting)</td><td class="py-3 px-4 text-emerald-600 font-semibold">Instant (automated)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">PR comment resolution</td><td class="py-3 px-4">Days of back-and-forth</td><td class="py-3 px-4 text-emerald-600 font-semibold">Minutes (AI answers + fixes)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Documentation</td><td class="py-3 px-4">Often skipped</td><td class="py-3 px-4 text-emerald-600 font-semibold">Always generated</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">AEM page creation & config</td><td class="py-3 px-4">Manual -- dialogs, properties, templates</td><td class="py-3 px-4 text-emerald-600 font-semibold">Automated -- pages created and configured</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Bug triage</td><td class="py-3 px-4">Manual detective work</td><td class="py-3 px-4 text-emerald-600 font-semibold">Automated with evidence</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-3 px-4">Knowledge transfer</td><td class="py-3 px-4">Tribal, undocumented</td><td class="py-3 px-4 text-emerald-600 font-semibold">Captured in specs and wiki</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="10 Agents, 24/7" horizontal>
+      DoR validation, PR review, bug triage, DevAgent, QA, estimation, documentation -- all triggered automatically via ADO pipelines and AWS Lambda. Jira webhook support planned.
+    </ContentCard>
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="Multiple Projects" horizontal>
+      Runs daily across several BAT projects. DevAgent implements real stories. QA agent files real bugs. Production infrastructure.
+    </ContentCard>
+    <ContentCard icon="mdi:puzzle" iconColor="bg-cyan-dark" title="Project-Agnostic" horizontal>
+      3 plugins, independently installable. AEM logic stays in its own plugin. Works with any tech stack across connected multi repos.
+    </ContentCard>
+    <ContentCard icon="mdi:account-group" iconColor="bg-emerald-600" title="AthenAI Convergence" horizontal>
+      The AthenAI team builds a complementary human-in-the-loop approach. Planning to merge both platforms. Two roads to the same destination.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* What's Next */}
+<SectionHeading
+  badge="Next Steps"
+  badgeColor="warning"
+  title="Where This Goes"
+  subtitle="Scaling from BAT to company-wide -- with the right investment."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-amber-500" title="How It Was Built" horizontal>
+      <ul class="m-0 pl-4 text-sm">
+        <li>Built over 6 months on personal time -- evenings and weekends</li>
+        <li>Alongside full project load, PSL (7 protegees), and community roles</li>
+        <li>AI Champion role gave direction but no time allocation</li>
+        <li>Scaling requires dedicated time and organizational mandate</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:school" iconColor="bg-cyan-dark" title="Roadmap" horizontal>
+      <ul class="m-0 pl-4 text-sm">
+        <li>Company-wide rollout beyond BAT</li>
+        <li>Training and workshops -- from basic prompts to agentic workflows</li>
+        <li>AI governance and standards framework</li>
+        <li>Continuous evolution -- AI moves daily</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:account-group" iconColor="bg-emerald-600" title="AthenAI Convergence" horizontal>
+      The AthenAI team builds a complementary human-in-the-loop approach. Planning to merge both platforms.
+      Two roads to the same destination -- full lifecycle automation with the right level of human control.
+    </ContentCard>
+  </div>
+</Section>

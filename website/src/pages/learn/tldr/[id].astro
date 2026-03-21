@@ -1,0 +1,109 @@
+---
+import SidebarLayout from '../../../layouts/SidebarLayout.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Section from '../../../components/Section.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const tips = await getCollection('tips');
+  return tips.map((tip) => ({
+    params: { id: tip.id.replace(/\.md$/, '') },
+    props: { tip },
+  }));
+}
+
+const { tip } = Astro.props;
+const { Content } = await render(tip);
+---
+
+<SidebarLayout title={tip.data.title} sidebar="learn">
+  <PageHero title={tip.data.title} subtitle={`Day ${tip.data.order ?? '?'} · Week ${tip.data.week ?? '?'} · ${tip.data.category}`} />
+
+  <Section>
+    <!-- Meta badges -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      {tip.data.order && (
+        <span class="inline-block px-3 py-1 bg-brand-700 text-white rounded text-xs font-mono font-bold">
+          #{tip.data.order}
+        </span>
+      )}
+      <span class="inline-block px-3 py-1 bg-brand-100 rounded text-xs font-semibold text-brand-700">
+        {tip.data.category}
+      </span>
+      {tip.data.focus && (
+        <span class="inline-block px-3 py-1 bg-cyan/10 rounded text-xs font-semibold text-cyan-dark">
+          {tip.data.focus}
+        </span>
+      )}
+      {tip.data.tags.map((tag) => (
+        <span class="inline-block px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-600">
+          {tag}
+        </span>
+      ))}
+    </div>
+
+    <!-- Overview -->
+    <div class="bg-brand-100 rounded p-5 mb-6">
+      <p class="text-[0.95rem] text-[#1a1a2e] leading-relaxed">{tip.data.overview}</p>
+    </div>
+
+    <!-- Main content (code examples, explanation) -->
+    <div class="prose prose-lg max-w-none mb-8">
+      <Content />
+    </div>
+
+    <!-- Slack message (copy-paste ready) -->
+    {tip.data.slackText && (
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <div class="flex justify-between items-center px-5 py-3 bg-gray-50 border-b border-gray-200">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Slack Message — copy & paste</span>
+          <button
+            id="copy-slack"
+            class="px-3 py-1 text-xs font-medium bg-brand-700 text-white rounded hover:bg-brand-500 transition-colors"
+          >
+            Copy
+          </button>
+        </div>
+        <div class="p-5">
+          <pre id="slack-text" class="text-[0.8rem] text-gray-600 leading-relaxed whitespace-pre-wrap font-sans bg-transparent p-0 m-0">{tip.data.slackText}</pre>
+        </div>
+      </div>
+    )}
+
+    <!-- Screenshot -->
+    {tip.data.screenshot && (
+      <div class="mt-6">
+        <img src={tip.data.screenshot} alt={`${tip.data.title} example`} class="rounded border border-gray-200 w-full" />
+      </div>
+    )}
+
+    <!-- Navigation -->
+    <div class="mt-8 pt-4 border-t border-gray-200">
+      <a href="/learn/tldr/" class="text-brand-700 font-medium hover:text-cyan transition-colors">
+        ← Back to all tips
+      </a>
+    </div>
+  </Section>
+
+  <script>
+    const btn = document.getElementById('copy-slack');
+    const text = document.getElementById('slack-text');
+    btn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text?.textContent ?? '');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text?.textContent ?? '';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      }
+    });
+  </script>
+</SidebarLayout>

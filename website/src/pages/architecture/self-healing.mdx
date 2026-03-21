@@ -1,0 +1,376 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Self-Healing
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Self-Healing"
+  subtitle="Three layers of automated recovery -- from quick one-shot fixes to deep root-cause analysis. Up to 6 fix attempts and 2 healing cycles before requesting human intervention."
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="Three Layers of Recovery"
+  subtitle="Each layer escalates from the previous. Most failures resolve at Layer 1. Complex issues reach Layer 2. Only persistent failures hit Layer 3."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Recovery Layers"
+    description="Escalation path from first-responder fix to deep healing to coordinator retry."
+    steps={[
+      { title: 'Layer 1', subtitle: 'dx-step-fix\nOne-shot fixer', color: '#059669' },
+      { title: 'Layer 2', subtitle: 'dx-step-heal\nDeep analysis', color: '#d97706' },
+      { title: 'Layer 3', subtitle: 'Coordinator\nRetry loop', color: '#dc2626' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="Layer 1: dx-step-fix">
+      First responder. ONE fix attempt per invocation -- apply a minimal fix, re-run the test command,
+      report success or failure. No refactoring, no exploration.
+    </ContentCard>
+
+    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Layer 2: dx-step-heal">
+      Triggered after 2 consecutive fix failures. Uses extended thinking (ultrathink) for deep
+      root-cause analysis. Creates corrective steps with a DIFFERENT approach.
+    </ContentCard>
+
+    <ContentCard icon="mdi:refresh" iconColor="bg-red-500" title="Layer 3: Coordinator">
+      The coordinator loop (dx-step-all, dx-agent-all) orchestrates the retry cadence: fix, fix,
+      heal, execute corrective steps, repeat up to 2 healing cycles.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Layer 1"
+  badgeColor="success"
+  title="dx-step-fix -- First Responder"
+  subtitle="One-shot fix attempt. Read the error, apply a minimal correction, re-verify, report."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:target" iconColor="bg-emerald-600" title="Strategy">
+      - Read the blocked step's error from implement.md
+      - Apply a minimal fix (not refactoring)
+      - Re-run the step's test command
+      - Success: mark step as <code>done</code>
+      - Failure: mark step as <code>blocked</code> with diagnosis, STOP
+    </ContentCard>
+
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-cyan" title="Superpowers Integration">
+      Optionally invokes <code>superpowers:systematic-debugging</code> for structured 4-phase
+      diagnosis (Observe, Hypothesize, Test, Fix) when the error is ambiguous or multi-layered.
+      Falls back to inline diagnosis when superpowers is not installed.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="One Attempt Only">
+    dx-step-fix makes exactly ONE attempt per invocation. If the fix does not resolve the error,
+    it marks the step as <code>blocked</code> and stops. The coordinator decides what happens next.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Layer 2"
+  badgeColor="warning"
+  title="dx-step-heal -- Deep Root-Cause Analysis"
+  subtitle="After 2 consecutive fix failures, the healer takes over with extended thinking and a fundamentally different approach."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <HighlightBox severity="info" title="Type A: Step Blocked">
+      Step has <code>Status: blocked</code> with a diagnosis. Heal creates ONE corrective step
+      with distinctive numbering: <code>Step 3h</code> (first cycle), <code>Step 3h2</code> (second cycle).
+      The corrective step MUST use a different strategy from the original.
+    </HighlightBox>
+
+    <HighlightBox severity="info" title="Type B: Review Failed">
+      Full code review (dx-step-verify) failed after 3 cycles. Heal groups remaining Critical/Important
+      issues by file and creates numbered corrective steps: <code>R1</code>, <code>R2</code>, etc.
+      Second iteration uses <code>b</code> suffix.
+    </HighlightBox>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard icon="mdi:brain" iconColor="bg-amber-500" title="Extended Thinking">
+      Uses ultrathink mode for deep reasoning about the root cause. The healer sees the full
+      error context, previous fix attempts, and the original step intent.
+    </ContentCard>
+
+    <ContentCard icon="mdi:pencil-off" iconColor="bg-red-500" title="Never Writes Code">
+      The healer NEVER writes source code directly. It only creates new steps in implement.md.
+      The coordinator then executes those steps normally through dx-step.
+    </ContentCard>
+
+    <ContentCard icon="mdi:directions-fork" iconColor="bg-cyan" title="Different Strategy">
+      If the first fix failed, the corrective step MUST use a fundamentally different approach.
+      Returns <code>healed</code> (continue) or <code>unrecoverable</code> (stop).
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Layer 3"
+  badgeColor="error"
+  title="Coordinator Loop"
+  subtitle="The full recovery flow orchestrated by dx-step-all and dx-agent-all."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Recovery Flow"
+    description="Execute, fix (x2), heal, execute corrective steps, repeat. Maximum 2 healing cycles before human intervention."
+    steps={[
+      { title: 'Execute', subtitle: 'dx-step\nRun step', color: '#059669' },
+      { title: 'Fix #1', subtitle: 'dx-step-fix\nFirst attempt', color: '#d97706' },
+      { title: 'Fix #2', subtitle: 'dx-step-fix\nSecond attempt', color: '#d97706' },
+      { title: 'Heal #1', subtitle: 'dx-step-heal\nNew strategy', color: '#dc2626' },
+      { title: 'Execute', subtitle: 'Corrective\nsteps', color: '#059669' },
+      { title: 'Heal #2', subtitle: 'Last resort\nor STOP', color: '#dc2626' },
+    ]}
+  />
+
+  <HighlightBox severity="error" title="Maximum Recovery Attempts Per Step">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+      <div>
+        <strong>Execution failures:</strong>
+        <ul class="mt-1 text-sm">
+          <li>2 fix attempts (dx-step-fix)</li>
+          <li>2 healing cycles (dx-step-heal)</li>
+          <li>Each healing cycle: corrective step + 2 more fix attempts</li>
+          <li>Total: up to 6 fix attempts + 2 heal analyses</li>
+        </ul>
+      </div>
+      <div>
+        <strong>Code review failures:</strong>
+        <ul class="mt-1 text-sm">
+          <li>3 review-fix cycles (dx-step-verify)</li>
+          <li>2 healing cycles (dx-step-heal in coordinator)</li>
+          <li>Each healing: corrective steps + rebuild + re-review</li>
+          <li>Total: up to 9 review cycles</li>
+        </ul>
+      </div>
+    </div>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Verification"
+  badgeColor="info"
+  title="dx-step-verify -- The 6-Phase Gate"
+  subtitle="Runs after all steps complete, before commit. Five pre-review checks followed by deep code review."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Verification Phases"
+    description="Sequential quality gates. Each phase has max 2 fix attempts before escalating."
+    steps={[
+      { title: '1. Compile', subtitle: 'Build command\nfrom config', color: '#059669' },
+      { title: '2. Lint', subtitle: 'Lint command\nauto-fix', color: '#059669' },
+      { title: '3. Test', subtitle: 'Test command', color: '#059669' },
+      { title: '4. Secrets', subtitle: 'IMMEDIATE\nSTOP', color: '#dc2626' },
+      { title: '5. Architecture', subtitle: 'Convention\nchecks', color: '#d97706' },
+      { title: '6. Code Review', subtitle: 'Opus reviewer\n80%+ confidence', color: '#8b5cf6' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:shield-check" iconColor="bg-red-500" title="Secret Scan (Phase 4)">
+      IMMEDIATE STOP if secrets are found. No override, no retry, no healing. The pipeline
+      halts and requires human intervention to remove the leaked secret.
+    </ContentCard>
+
+    <ContentCard icon="mdi:eye" iconColor="bg-brand-700" title="Code Review (Phase 6)">
+      Uses dx-code-reviewer agent (Opus model). Confidence threshold of 80 on a 0-100 scale.
+      Only reports issues the reviewer is CERTAIN about. Severity: Critical &gt; Important &gt; Minor.
+      Review-fix loop runs max 3 cycles.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Final Verification Gate">
+    After the review-fix loop concludes, dx-step-verify optionally invokes
+    <code>superpowers:verification-before-completion</code> for a final cross-cutting check --
+    confirming all acceptance criteria are met before marking the step done.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Data"
+  badgeColor="secondary"
+  title="Healing Data Captured"
+  subtitle="What gets recorded during recovery and where it lives."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Data Point</th>
+        <th class="text-left p-3 font-semibold">Where Stored</th>
+        <th class="text-left p-3 font-semibold">Used For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Step status (done/blocked)</td>
+        <td class="p-3">implement.md</td>
+        <td class="p-3">Flow control</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Block diagnosis</td>
+        <td class="p-3">implement.md (<code>&#42;&#42;Blocked:&#42;&#42;</code>)</td>
+        <td class="p-3">Step-heal input</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Fix attempts count</td>
+        <td class="p-3">Coordinator memory (not persisted)</td>
+        <td class="p-3">Strike counting</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Healing cycles count</td>
+        <td class="p-3">Coordinator memory (not persisted)</td>
+        <td class="p-3">Max cycle enforcement</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Review issues</td>
+        <td class="p-3">step-verify output (transient)</td>
+        <td class="p-3">Fix prioritization</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Corrective step numbering</td>
+        <td class="p-3">implement.md (3h, R1, etc.)</td>
+        <td class="p-3">Audit trail</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <HighlightBox severity="warning" title="Known Gaps">
+    Fix/heal counts are only in coordinator memory -- lost between sessions. No pattern aggregation,
+    no success rate tracking, and no cross-story learning. These gaps are addressed by the
+    self-learning system (see Learning and Feedback page).
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Statistics                                                              */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Statistics"
+  badgeColor="info"
+  title="Recovery Statistics"
+  subtitle="Maximum recovery attempts before requesting human intervention."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:counter" iconColor="bg-brand-700" title="Per-Step Execution Failures">
+      <ul class="text-sm space-y-1 mt-2">
+        <li>2 fix attempts (dx-step-fix)</li>
+        <li>2 healing cycles (dx-step-heal)</li>
+        <li>Each healing cycle: new corrective step + 2 more fix attempts</li>
+        <li><strong>Total: up to 6 fix attempts + 2 heal analyses</strong></li>
+      </ul>
+    </ContentCard>
+
+    <ContentCard icon="mdi:counter" iconColor="bg-cyan-dark" title="Code Review Failures">
+      <ul class="text-sm space-y-1 mt-2">
+        <li>3 review-fix cycles (dx-step-verify)</li>
+        <li>2 healing cycles (dx-step-heal in coordinator)</li>
+        <li>Each healing: corrective steps + rebuild + re-review</li>
+        <li><strong>Total: up to 9 review cycles</strong></li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Superpowers Integration                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Superpowers"
+  badgeColor="secondary"
+  title="Superpowers Integration"
+  subtitle="Optional structured methodology hooks that enhance debugging and verification."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="systematic-debugging (dx-step-fix)">
+      When the error is ambiguous or multi-layered, dx-step-fix optionally invokes
+      <code>superpowers:systematic-debugging</code> for a structured 4-phase diagnosis:
+      <ol class="mt-2 text-sm list-decimal list-inside space-y-1">
+        <li><strong>Observe</strong> -- gather all error context</li>
+        <li><strong>Hypothesize</strong> -- form candidate root causes</li>
+        <li><strong>Test</strong> -- verify each hypothesis</li>
+        <li><strong>Fix</strong> -- apply the validated correction</li>
+      </ol>
+      Falls back to inline diagnosis when superpowers is not installed.
+    </ContentCard>
+
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="verification-before-completion (dx-step-verify)">
+      After the review-fix loop concludes, dx-step-verify optionally invokes
+      <code>superpowers:verification-before-completion</code> for a final cross-cutting check --
+      confirming all acceptance criteria are met before marking the step done. This acts as a
+      last safety net before commit.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Soft Dependency">
+    All superpowers hooks use a soft-dependency pattern: if the superpowers plugin is installed,
+    the structured methodology is invoked via the Skill tool. If not installed, the skill falls back
+    to condensed inline guidance. No configuration needed -- detection is automatic.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Gaps Identified                                                        */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Gaps"
+  badgeColor="warning"
+  title="Gaps Identified"
+  subtitle="Self-learning opportunities discovered through healing analysis."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">#</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Gap</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Impact</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">1</td><td class="p-3">Fix/heal counts not persisted</td><td class="p-3">Only in coordinator memory, lost between sessions</td></tr>
+        <tr><td class="p-3">2</td><td class="p-3">No pattern aggregation</td><td class="p-3">Same fix types applied repeatedly without learning</td></tr>
+        <tr><td class="p-3">3</td><td class="p-3">No success rate tracking</td><td class="p-3">Cannot identify which fix strategies work vs fail</td></tr>
+        <tr><td class="p-3">4</td><td class="p-3">No cross-story learning</td><td class="p-3">Healing insights from Story A not available for Story B</td></tr>
+        <tr><td class="p-3">5</td><td class="p-3">Corrective step quality not measured</td><td class="p-3">Cannot tell if heal creates better or worse steps</td></tr>
+        <tr><td class="p-3">6</td><td class="p-3">Review issue patterns not tracked</td><td class="p-3">Same issues may recur across stories</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="success" title="Addressed by Self-Learning">
+    These gaps are the motivation for the self-learning architecture. The <code>.ai/learning/</code> directory,
+    <code>/dx-learn</code>, and <code>/dx-retro</code> skills address gaps 1-6 by persisting fix patterns,
+    aggregating success rates, and enabling cross-story knowledge transfer. See the Learning and Feedback page.
+  </HighlightBox>
+</Section>

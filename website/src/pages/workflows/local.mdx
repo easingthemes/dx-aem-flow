@@ -1,0 +1,524 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Local Workflow
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Local Developer Workflow"
+  subtitle="From ticket to merged PR -- the interactive development workflow using /dx-* skills in your IDE. Works with ADO and Jira."
+/>
+
+<SectionHeading
+  badge="Full Pipeline"
+  title="The Full Pipeline"
+  subtitle="One command runs the entire sprint lifecycle. Or use individual skills for just the phase you need."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Pipeline Overview"
+    command="/dx-agent-all <ID or JIRA-KEY>"
+    description="One command runs the entire sprint lifecycle. Or use individual skills for just the phase you need."
+    steps={[
+      { title: "Phase 1", subtitle: "Requirements", command: "/dx-req-*" },
+      { title: "Phase 1.5", subtitle: "Enrichment", command: "/dx-ticket-analyze", color: "#0891b2" },
+      { title: "Phase 2", subtitle: "Figma", command: "/dx-figma-*", color: "#8b5cf6" },
+      { title: "Phase 2b", subtitle: "Planning", command: "/dx-plan", color: "#d97706" },
+      { title: "Phase 3", subtitle: "Execution", command: "/dx-step-*", color: "#059669" },
+      { title: "Phase 4", subtitle: "Build + Review", command: "/dx-step-verify", color: "#f59e0b" },
+      { title: "Phase 5", subtitle: "Commit & Push", command: "/dx-step-commit", color: "#ec4899" },
+      { title: "Phase 6", subtitle: "Pull Request", command: "/dx-pr", color: "#3b82f6" },
+      { title: "Phase 6.5", subtitle: "Editorial Guide", command: "/aem-demo", color: "#6366f1" },
+      { title: "Phase 7", subtitle: "Feature Documentation", command: "/dx-doc-gen", color: "#14b8a6" },
+      { title: "Phase 7.5", subtitle: "QA Handoff", command: "/aem-qa-handoff", color: "#f43f5e" },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Phase 1"
+  badgeColor="info"
+  title="Requirements"
+  subtitle="Pull the work item (ADO or Jira), validate readiness, distill requirements, research codebase, and share with the team."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="One Command"
+    command="/dx-req-all <ID or JIRA-KEY>"
+    steps={[
+      { title: "Fetch", subtitle: "Pull work item (ADO/Jira)", command: "/dx-req-fetch" },
+      { title: "DoR", subtitle: "Validate readiness", command: "/dx-req-dor", color: "#f59e0b" },
+      { title: "Explain", subtitle: "Dev requirements", command: "/dx-req-explain", color: "#8b5cf6" },
+      { title: "Research", subtitle: "Codebase search", command: "/dx-req-research", color: "#059669" },
+      { title: "Share", subtitle: "Post summary to ADO/Jira", command: "/dx-req-share", color: "#0891b2" },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:download" iconColor="bg-brand-700" title="/dx-req-fetch" tags={[{label: "raw-story.md", color: "primary"}]}>
+      Pulls the work item (ADO or Jira) -- description, acceptance criteria, attachments. Creates a spec directory and saves the raw story.
+    </ContentCard>
+    <ContentCard icon="mdi:clipboard-check" iconColor="bg-amber-500" title="/dx-req-dor" tags={[{label: "dor-report.md", color: "warning"}]}>
+      Validates against the Definition of Ready checklist. Posts an interactive checkbox comment to the ADO work item or Jira issue.
+    </ContentCard>
+    <ContentCard icon="mdi:lightbulb" iconColor="bg-cyan" title="/dx-req-explain" tags={[{label: "explain.md", color: "secondary"}]}>
+      Distills the story into developer-focused requirements -- what to build, not how. Clarifies ambiguities and flags missing context.
+    </ContentCard>
+    <ContentCard icon="mdi:magnify" iconColor="bg-emerald-600" title="/dx-req-research" tags={[{label: "research.md", color: "success"}]}>
+      Searches the codebase with parallel AI agents to find relevant files, existing patterns, reusable utilities, and related components.
+    </ContentCard>
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="/dx-req-share" tags={[{label: "share-plan.md", color: "info"}]}>
+      Non-technical summary for the team -- paste into Teams. Covers what is being built, the approach, scope, and estimated impact.
+    </ContentCard>
+  </div>
+
+  <div class="mt-4">
+    <HighlightBox severity="info" title="Output">
+      5 documents in <code>.ai/specs/&lt;id&gt;-&lt;slug&gt;/</code>. Each skill is <strong>idempotent</strong> --
+      it checks if its output already exists before regenerating, so you can re-run safely.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Phase 2"
+  title="Planning"
+  subtitle="A structured, validated implementation plan with dependency tracking and risk resolution."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="No orchestrator — run individually"
+    steps={[
+      { title: "Plan", subtitle: "Generate impl plan", command: "/dx-plan", color: "#d97706" },
+      { title: "Validate", subtitle: "Check against reqs", command: "/dx-plan-validate", color: "#f59e0b" },
+      { title: "Resolve", subtitle: "Fix flagged risks", command: "/dx-plan-resolve", color: "#059669" },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan" title="/dx-plan" tags={[{label: "implement.md", color: "secondary"}]}>
+      Uses the Opus model with extended thinking for deep reasoning. Produces a step-by-step implementation
+      plan where each step has: description, files to modify, dependencies, verification criteria, and status.
+    </ContentCard>
+    <ContentCard icon="mdi:file-find" iconColor="bg-amber-500" title="/dx-plan-validate">
+      Cross-checks the plan against requirements. Every requirement covered? No extras? Dependencies correct?
+      Flags risks and gaps for resolution.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="/dx-plan-resolve">
+      Fixes flagged risks by researching the codebase. Resolves ambiguities, fills gaps, and updates the plan.
+      Loops with validate until the plan passes.
+    </ContentCard>
+  </div>
+
+  <div class="mt-4">
+    <HighlightBox severity="info" title="Plan Structure">
+      Each step in <code>implement.md</code> includes: description, files to modify, dependencies on other steps,
+      verification criteria to confirm success, and a status field (<code>pending</code> to <code>done</code>).
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Phase 3"
+  badgeColor="success"
+  title="Execution"
+  subtitle="Execute plan steps with a test, review, commit loop. Self-healing on failure."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Run All Steps"
+    command="/dx-step-all"
+    steps={[
+      { title: "Execute", subtitle: "Run plan step", command: "/dx-step <n>", color: "#059669" },
+      { title: "Fix", subtitle: "Targeted correction", command: "/dx-step-fix", color: "#f59e0b" },
+      { title: "Heal", subtitle: "Root cause analysis", command: "/dx-step-heal", color: "#ef4444" },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-amber-500" title="/dx-step-fix">
+      <strong>Single targeted fix.</strong> When a test or review fails, this skill applies a focused correction
+      to the specific problem. If the same fix fails twice, it escalates to heal.
+    </ContentCard>
+    <ContentCard icon="mdi:hospital" iconColor="bg-red-500" title="/dx-step-heal">
+      <strong>Root cause analysis.</strong> When targeted fixes fail, heal investigates the root cause,
+      potentially restructures the approach, and creates new corrective steps in the plan.
+    </ContentCard>
+  </div>
+
+  <div class="mt-4">
+    <HighlightBox severity="success" title="Fix Memory">
+      Every fix is logged to <code>fixes.jsonl</code>. When a fix pattern succeeds 3+ times, it is promoted
+      to a permanent rule -- the system learns from its own mistakes.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Phase 4"
+  badgeColor="warning"
+  title="Build & Verify"
+  subtitle="Compile, deploy, and run a 6-phase verification gate before proceeding to PR."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="No orchestrator — run individually"
+    steps={[
+      { title: "Build", subtitle: "Compile & deploy", command: "/dx-step-build", color: "#f59e0b" },
+      { title: "Verify", subtitle: "6-phase gate", command: "/dx-step-verify", color: "#2d308d" },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:construction" iconColor="bg-amber-500" title="/dx-step-build">
+      Compile and deploy the project. Automatically detects build failures and applies up to
+      <strong> 6 auto-fix attempts</strong> before stopping.
+    </ContentCard>
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-brand-700" title="/dx-step-verify">
+      Runs 6 verification phases in sequence. Each phase can auto-fix and retry. The code review
+      phase uses Opus for high-confidence analysis.
+    </ContentCard>
+  </div>
+
+  <div class="mt-4">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead>
+        <tr class="bg-brand-100">
+          <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
+          <th class="text-left p-3 font-semibold text-brand-900">What</th>
+          <th class="text-left p-3 font-semibold text-brand-900">Fail Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr>
+          <td class="p-3"><strong>Compile</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>config.build.command</code></td>
+          <td class="p-3 text-[#4a4a5a]">Auto-fix, retry</td>
+        </tr>
+        <tr>
+          <td class="p-3"><strong>Lint</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>config.lint.command</code></td>
+          <td class="p-3 text-[#4a4a5a]">Auto-fix, retry</td>
+        </tr>
+        <tr>
+          <td class="p-3"><strong>Test</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>config.test.command</code></td>
+          <td class="p-3 text-[#4a4a5a]">Auto-fix, retry</td>
+        </tr>
+        <tr>
+          <td class="p-3"><strong>Secret Scan</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>Pattern match (keys, tokens, passwords)</code></td>
+          <td class="p-3 text-[#4a4a5a]">Immediate fix</td>
+        </tr>
+        <tr>
+          <td class="p-3"><strong>Architecture</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>Convention check (naming, structure, patterns)</code></td>
+          <td class="p-3 text-[#4a4a5a]">Log warning</td>
+        </tr>
+        <tr>
+          <td class="p-3"><strong>Code Review</strong></td>
+          <td class="p-3 text-[#4a4a5a]"><code>dx-code-reviewer (Opus model)</code></td>
+          <td class="p-3 text-[#4a4a5a]">Fix, rebuild, re-review</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4">
+    <HighlightBox severity="warning" title="Review-Fix Loop">
+      The code review phase runs up to <strong>3 cycles</strong> of review, fix, rebuild, re-review. If issues
+      persist after 3 cycles, it escalates to <code>/dx-step-heal</code>. If heal also fails, the pipeline
+      <strong> stops</strong> and asks for human input.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Phase 4b"
+  badgeColor="secondary"
+  title="Accessibility & Quality Gates"
+  subtitle="WCAG compliance testing, Definition of Done validation, and estimation -- standalone skills that complement the build pipeline."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:human" iconColor="bg-cyan" title="/dx-axe" tags={[{label: "WCAG", color: "secondary"}, {label: "axe MCP", color: "secondary"}]}>
+      Runs axe accessibility analysis on a URL via the axe MCP server (Docker).
+      Detects WCAG violations, generates remediation suggestions, and can auto-fix
+      common issues like missing alt text and ARIA attributes.
+    </ContentCard>
+    <ContentCard icon="mdi:clipboard-check-outline" iconColor="bg-emerald-600" title="Definition of Done" tags={[{label: "/dx-req-dod", color: "success"}, {label: "/dx-req-dod-fix", color: "success"}]}>
+      <code>/dx-req-dod</code> validates your work against the story's acceptance criteria and posts
+      a checklist to ADO. <code>/dx-req-dod-fix</code> auto-fixes failing items and re-checks.
+    </ContentCard>
+    <ContentCard icon="mdi:timer" iconColor="bg-amber-500" title="/dx-estimate" tags={[{label: "Estimation", color: "warning"}]}>
+      Analyzes a story and produces structured estimation: hours per task, story points,
+      affected AEM pages, and complexity breakdown. Useful for sprint planning.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Phases 5-7"
+  badgeColor="error"
+  title="PR, AEM Verification, Docs & QA Handoff"
+  subtitle="Commit, verify on AEM, create the PR, capture demo, generate documentation, and post testing steps for QA."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="No orchestrator — run individually"
+    steps={[
+      { title: "Commit", subtitle: "Stage & push", command: "/dx-step-commit", color: "#ec4899" },
+      { title: "Pull Request", subtitle: "Create PR", command: "/dx-pr", color: "#3b82f6" },
+      { title: "Editorial Guide", subtitle: "Dialog screenshots", command: "/aem-demo", color: "#6366f1" },
+      { title: "Feature Docs", subtitle: "Wiki + authoring guide", command: "/dx-doc-gen", color: "#14b8a6" },
+      { title: "QA Handoff", subtitle: "Testing steps → ADO", command: "/aem-qa-handoff", color: "#f43f5e" },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-red-500" title="Pull Request" tags={[{label: "/dx-pr", color: "secondary"}]}>
+      Creates a PR from <code>share-plan.md</code> with auto-generated description, linked
+      work item (ADO or Jira), and branch management.
+    </ContentCard>
+    <ContentCard icon="mdi:camera" iconColor="bg-cyan-dark" title="AEM Verification" tags={[{label: "/aem-snapshot", color: "primary"}, {label: "/aem-verify", color: "primary"}, {label: "/aem-demo", color: "primary"}]}>
+      Takes a before/after snapshot of AEM pages, verifies component rendering, and captures a demo
+      with browser automation.
+    </ContentCard>
+    <ContentCard icon="mdi:book-open-variant" iconColor="bg-emerald-600" title="Documentation" tags={[{label: "/dx-doc-gen", color: "success"}, {label: "/dx-doc-retro", color: "info"}]}>
+      <code>/dx-doc-gen</code> generates wiki pages from spec files. <code>/dx-doc-retro</code> generates
+      docs retroactively from a work item + linked PRs -- no spec files needed. Posts to ADO Wiki or Confluence.
+    </ContentCard>
+    <ContentCard icon="mdi:handshake" iconColor="bg-red-500" title="QA Handoff" tags={[{label: "/aem-qa-handoff", color: "error"}]}>
+      Generates structured testing steps and posts them as an ADO comment for the QA team.
+      Reuses <code>/aem-doc-gen</code> output (lightweight) or creates its own test page (full mode).
+      Run after <code>/aem-doc-gen</code> for best results.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Modular"
+  badgeColor="secondary"
+  title="Pick What You Need"
+  subtitle="You don't have to run the full pipeline. Use individual skills for just the phase you need."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Command</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
+        <th class="text-left p-3 font-semibold text-brand-900">What It Does</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <tr>
+        <td class="p-3"><code>/dx-req-all &lt;id&gt;</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Full requirements pipeline (fetch + DoR + explain + research + share)</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-fetch &lt;id&gt;</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Pull work item (ADO or Jira)</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-dor</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Definition of Ready validation only</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-explain</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Developer requirements summary only</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-research</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Codebase research only</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-share</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Team summary only</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-import</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Validate external requirements (non-ADO/Jira), generate explain.md</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-tasks</code></td>
+        <td class="p-3">Requirements</td>
+        <td class="p-3 text-[#4a4a5a]">Create child Task work items under a story with hour estimates</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-dod</code></td>
+        <td class="p-3">Quality</td>
+        <td class="p-3 text-[#4a4a5a]">Validate work against acceptance criteria, post checklist to ADO/Jira</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-req-dod-fix</code></td>
+        <td class="p-3">Quality</td>
+        <td class="p-3 text-[#4a4a5a]">Auto-fix failing DoD items and re-check</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-estimate</code></td>
+        <td class="p-3">Planning</td>
+        <td class="p-3 text-[#4a4a5a]">Structured estimation: hours, story points, complexity</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-ticket-analyze &lt;id&gt;</code></td>
+        <td class="p-3">Enrichment</td>
+        <td class="p-3 text-[#4a4a5a]">Work item (ADO/Jira) to components, files, pages</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-plan</code></td>
+        <td class="p-3">Planning</td>
+        <td class="p-3 text-[#4a4a5a]">Generate implementation plan</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-plan-validate</code></td>
+        <td class="p-3">Planning</td>
+        <td class="p-3 text-[#4a4a5a]">Validate plan against requirements</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-step-all</code></td>
+        <td class="p-3">Execution</td>
+        <td class="p-3 text-[#4a4a5a]">Execute all pending plan steps</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-step &lt;n&gt;</code></td>
+        <td class="p-3">Execution</td>
+        <td class="p-3 text-[#4a4a5a]">Execute a single plan step</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-step-build</code></td>
+        <td class="p-3">Build</td>
+        <td class="p-3 text-[#4a4a5a]">Compile and deploy with auto-fix</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-step-verify</code></td>
+        <td class="p-3">Build</td>
+        <td class="p-3 text-[#4a4a5a]">6-phase verification gate</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-pr</code></td>
+        <td class="p-3">PR</td>
+        <td class="p-3 text-[#4a4a5a]">Create pull request</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-pr-commit</code></td>
+        <td class="p-3">PR</td>
+        <td class="p-3 text-[#4a4a5a]">Stage, commit, and push changes</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-pr-reviews</code></td>
+        <td class="p-3">PR</td>
+        <td class="p-3 text-[#4a4a5a]">Batch review multiple PRs</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-pr-review-report</code></td>
+        <td class="p-3">PR</td>
+        <td class="p-3 text-[#4a4a5a]">Generate categorized report from review, post to wiki</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-axe</code></td>
+        <td class="p-3">Accessibility</td>
+        <td class="p-3 text-[#4a4a5a]">WCAG compliance check + auto-remediation via axe MCP</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-doc-gen</code></td>
+        <td class="p-3">Docs</td>
+        <td class="p-3 text-[#4a4a5a]">Generate wiki + authoring guide</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/dx-doc-retro</code></td>
+        <td class="p-3">Docs</td>
+        <td class="p-3 text-[#4a4a5a]">Retroactive docs from ADO story + linked PRs (no spec files)</td>
+      </tr>
+      <tr>
+        <td class="p-3"><code>/aem-qa-handoff</code></td>
+        <td class="p-3">QA Handoff</td>
+        <td class="p-3 text-[#4a4a5a]">Generate testing steps, post to ADO for QA team (uses /aem-doc-gen output)</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Convention"
+  badgeColor="success"
+  title="Spec Directory"
+  subtitle="Every ticket gets a dedicated directory with all generated artifacts."
+  bg="primary"
+/>
+<Section>
+  <div class="border border-gray-200 rounded p-5 bg-white font-mono text-sm">
+    <span class="block text-[0.7rem] uppercase tracking-wider text-gray-400 font-medium mb-3">Directory structure</span>
+    <div class="border-b border-gray-50 py-1"><span class="font-semibold text-cyan-dark">.ai/specs/&lt;id&gt;-&lt;slug&gt;/</span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">raw-story.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-fetch</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">dor-report.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-dor</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">explain.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-explain</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">research.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-research</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">share-plan.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-share</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">implement.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-plan</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">prototype/</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-figma-prototype</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-12"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">index.html</span></div>
+    <div class="border-b border-gray-50 py-1 pl-12"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">styles.css</span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">dod.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-dod</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">aem-before.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-snapshot</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">aem-after.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-verify</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">qa-handoff.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-qa-handoff</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">demo/</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-demo</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">docs/</span></div>
+    <div class="py-1 pl-12"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">wiki-page.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-doc-gen</code></span></div>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="PR Lifecycle"
+  badgeColor="info"
+  title="PR Workflow"
+  subtitle="Three independent lifecycles that cover every aspect of pull request management."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Creating PRs" tags={[{label: "/dx-pr", color: "primary"}, {label: "/dx-pr-commit", color: "primary"}]}>
+      Generate the PR from your spec files with a structured description, linked work item, and proper branch setup.
+    </ContentCard>
+    <ContentCard icon="mdi:eye" iconColor="bg-cyan" title="Reviewing Others' PRs" tags={[{label: "/dx-pr-review", color: "secondary"}]}>
+      AI-powered code review on a teammate's PR -- architecture, correctness, accessibility, performance.
+      Posts structured comments with inline code patches that can be applied directly.
+    </ContentCard>
+    <ContentCard icon="mdi:comment-check" iconColor="bg-emerald-600" title="Handling Feedback" tags={[{label: "/dx-pr-answer", color: "success"}, {label: "/dx-pr-fix", color: "success"}]}>
+      When reviewers leave comments on your PR, AI reads them, applies fixes, and posts replies --
+      resolving feedback in minutes instead of days.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Applying Patches" tags={[{label: "/dx-pr-apply", color: "warning"}]}>
+      Review comments include ready-to-apply code patches. Run <code>/dx-pr-apply</code> to apply
+      all suggested patches from a PR review, build, verify, and commit in one step.
+    </ContentCard>
+    <ContentCard icon="mdi:chart-multiple" iconColor="bg-cyan-dark" title="Batch Review & Reports" tags={[{label: "/dx-pr-reviews", color: "info"}, {label: "/dx-pr-review-report", color: "info"}]}>
+      <code>/dx-pr-reviews</code> reviews multiple PRs in batch. <code>/dx-pr-review-report</code> generates
+      a categorized report from reviews and posts it to ADO Wiki or Confluence. Ideal for tech leads and sprint reviews.
+    </ContentCard>
+  </div>
+</Section>

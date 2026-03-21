@@ -1,0 +1,39 @@
+# Costs & API Limits
+
+## What It Costs
+
+| Pipeline | Estimated cost/run |
+|----------|-------------------|
+| PR Review | $4-6 |
+| PR Answer | $3-5 |
+| DoR / Estimation | $2-6 |
+| Bug Fix | $11-15 |
+| Dev Agent | $21-30 |
+
+## Monthly Projections
+
+| Scenario | Opus only | Mixed models |
+|----------|----------|--------------|
+| 5 PR reviews/week | ~$100 | ~$60 |
+| + 3 DoR + Estimation/week | ~$150 | ~$80 |
+| + 2 BugFix/week | ~$250 | ~$160 |
+| Full (all agents active) | $400-550 | $300-420 |
+
+## Built-in Safety
+
+| Control | Setting |
+|---------|---------|
+| Daily rate limits | DoR: 20, PR Review: 50, PR Answer: 30, per-identity: 10 |
+| Monthly token budget | Alerts at 80%, degrades at 90%, halts at 100% |
+| Limits reset | Daily caps: midnight UTC. Monthly: 1st of month. |
+| Config | Rate limits in `rate-limiter.js`. Token cap via `MONTHLY_TOKEN_CAP` pipeline variable. |
+
+## Cost Optimization
+
+- Use Sonnet/Haiku for read-only agents (DoR, Estimation, PR Review)
+- Opus only for code-writing agents (BugFix, DevAgent)
+- Prompt caching reduces input costs by 90% for cached context
+
+## Full Details
+
+For complete pricing tables, tier advancement, concurrency analysis, and cache pricing, see [automation/docs/api-limits-and-pricing.md](../automation/docs/api-limits-and-pricing.md).

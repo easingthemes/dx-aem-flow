@@ -1,0 +1,391 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: CLI vs Chat
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="CLI vs Chat"
+  subtitle="Three ways to use AI for development -- two terminal CLIs and IDE chat. Same plugins power all of them."
+/>
+
+<SectionHeading
+  badge="Claude Code"
+  title="Claude Code CLI"
+  subtitle="Terminal-based AI development tool from Anthropic."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Claude Code">
+    Terminal-based. You type <code>/dx-plan</code>, it executes. Full subagent architecture,
+    hooks, persistent memory, worktree isolation. Anthropic API (pay-per-token or Max subscription).
+    <CommandBlock label="Invocation">{`claude
+> /dx-plan`}</CommandBlock>
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="Copilot"
+  badgeColor="secondary"
+  title="GitHub Copilot CLI"
+  subtitle="GitHub's terminal AI tool -- same skills, different runtime."
+  bg="primary"
+/>
+<Section>
+  <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Copilot CLI">
+    Also terminal-based. Same <code>/dx-plan</code> skills plus <code>@DxPlanExecutor</code> agent
+    invocation. GitHub subscription. Multi-model support (Claude, GPT, Gemini).
+    <CommandBlock label="Invocation">{`copilot-cli
+> /dx-plan
+> @DxPrReviewer review this PR`}</CommandBlock>
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="VS Code"
+  badgeColor="info"
+  title="VS Code Copilot Chat (Agent Mode)"
+  subtitle="IDE-integrated AI that edits files, runs terminal commands, and iterates on errors -- all inside VS Code."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="What It Is">
+      The AI chat panel built into VS Code. In <strong>Agent Mode</strong>, it can autonomously edit files,
+      run terminal commands, and iterate until a task is complete. It uses VS Code's language server
+      for deep code understanding (symbols, references, diagnostics).
+      <CommandBlock label="How to access">VS Code → Chat panel → select "Agent" mode</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="vs Copilot CLI">
+      <strong>Chat panel</strong> = visual, integrated with VS Code UI, accesses editor context (open files, selections, diagnostics).
+
+      <strong>Copilot CLI</strong> = terminal-based, supports plugins/skills/hooks/MCP natively, sessions persist independently.
+
+      You can start a Copilot CLI session <em>from</em> the Chat panel and hand off conversations between them.
+    </ContentCard>
+  </div>
+  <HighlightBox severity="info" title="File Discovery -- Three Platforms">
+    <strong>VS Code Chat</strong> reads <code>.github/agents/</code> natively, <code>.claude/rules/</code> via <code>chat.instructionsFilesLocations</code>,
+    and skills via <code>chat.agentSkillsLocations</code> (defaults include <code>.claude/skills/</code>).
+    MCP servers come from <code>.vscode/mcp.json</code>.
+
+    <strong>Copilot CLI</strong> reads <code>.github/agents/</code> natively, <code>.claude/rules/</code> via <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code> env var,
+    and plugin skills automatically.
+
+    <strong>Claude Code</strong> reads everything from <code>.claude/</code> natively plus plugin agents, skills, hooks, and MCP servers.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Comparison"
+  badgeColor="warning"
+  title="The Full Picture"
+  subtitle="Three interfaces, one plugin system."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Feature</th>
+          <th class="text-left py-2 px-3 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-3 font-semibold">Copilot CLI</th>
+          <th class="text-left py-2 px-3 font-semibold">VS Code Chat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Interface</td><td class="py-2 px-3">Terminal</td><td class="py-2 px-3">Terminal</td><td class="py-2 px-3">IDE chat panel</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">KAI plugins</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">No plugin system</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Skills</td><td class="py-2 px-3">78 via /dx-&#42;</td><td class="py-2 px-3">78 via /dx-&#42;</td><td class="py-2 px-3">38 of 78 (via settings)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Agents</td><td class="py-2 px-3">13 (plugin agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">MCP servers</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.vscode/mcp.json</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Hooks</td><td class="py-2 px-3">18 events + prompt hooks</td><td class="py-2 px-3">8 events</td><td class="py-2 px-3">Preview (agent-scoped)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Subagents</td><td class="py-2 px-3">Worktree isolation</td><td class="py-2 px-3">Nesting allowed</td><td class="py-2 px-3">Not supported</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">context: fork</td><td class="py-2 px-3">Skill → subagent</td><td class="py-2 px-3">Ignored (#1169)</td><td class="py-2 px-3">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Memory</td><td class="py-2 px-3">Persistent across sessions</td><td class="py-2 px-3">Session-only</td><td class="py-2 px-3">Session-only</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Models</td><td class="py-2 px-3">Anthropic only</td><td class="py-2 px-3">Claude, GPT, Gemini</td><td class="py-2 px-3">Claude, GPT, Gemini</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Context window</td><td class="py-2 px-3">1M tokens</td><td class="py-2 px-3">32k-128k</td><td class="py-2 px-3">32k-128k</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Auth</td><td class="py-2 px-3">Anthropic API / Max</td><td class="py-2 px-3">GitHub subscription</td><td class="py-2 px-3">GitHub subscription</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Best for</td><td class="py-2 px-3">Full workflows, automation</td><td class="py-2 px-3">Full workflows, multi-model</td><td class="py-2 px-3">Visual edits, exploration</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="success" title="CLI Sessions Inside VS Code">
+    You can start a <strong>Copilot CLI session from the VS Code Chat panel</strong> (Session Target → "Copilot CLI").
+    This gives you CLI features (skills, hooks, plugins) with the visual convenience of the Chat panel.
+    Sessions persist even when VS Code closes. You can also hand off a Chat conversation to a CLI session.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Same"
+  badgeColor="success"
+  title="What's Shared Across All Three"
+  subtitle="Write once, discovered by all three platforms."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Feature</th>
+          <th class="text-left py-2 px-3 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-3 font-semibold">Copilot CLI</th>
+          <th class="text-left py-2 px-3 font-semibold">VS Code Chat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Rules (.claude/rules/)</td><td class="py-2 px-3">paths: (native)</td><td class="py-2 px-3">applyTo: (env var)</td><td class="py-2 px-3">paths: (settings)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Agents (.github/agents/)</td><td class="py-2 px-3">--</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">Native</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Skills (SKILL.md)</td><td class="py-2 px-3">Plugin auto-discover</td><td class="py-2 px-3">Plugin auto-discover</td><td class="py-2 px-3">via settings path</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">MCP Servers</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.vscode/mcp.json</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">CLAUDE.md</td><td class="py-2 px-3">Native + nested + @import</td><td class="py-2 px-3">Read (flat only)</td><td class="py-2 px-3">Optional (chat.useClaudeMdFile)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Plugin manifest</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">--</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Different"
+  badgeColor="warning"
+  title="What's Different"
+  subtitle="Each tool has unique strengths."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Feature</th>
+          <th class="text-left py-2 px-3 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-3 font-semibold">Copilot CLI</th>
+          <th class="text-left py-2 px-3 font-semibold">VS Code Chat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Agents source</td><td class="py-2 px-3">13 (plugin agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Parallel agents</td><td class="py-2 px-3">Worktrees (isolated)</td><td class="py-2 px-3">/fleet + /tasks</td><td class="py-2 px-3">--</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Memory</td><td class="py-2 px-3">Persistent (MEMORY.md)</td><td class="py-2 px-3">Session-only</td><td class="py-2 px-3">Session-only</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Context window</td><td class="py-2 px-3">1M tokens</td><td class="py-2 px-3">32k-128k</td><td class="py-2 px-3">32k-128k</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Model choice</td><td class="py-2 px-3">Anthropic only</td><td class="py-2 px-3">Multi (Claude, GPT, Gemini)</td><td class="py-2 px-3">Multi (Claude, GPT, Gemini)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Cloud delegation</td><td class="py-2 px-3">--</td><td class="py-2 px-3">/delegate, & prefix</td><td class="py-2 px-3">--</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">LSP / Diagnostics</td><td class="py-2 px-3">--</td><td class="py-2 px-3">/lsp, .lsp.json</td><td class="py-2 px-3">Native</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">File editing</td><td class="py-2 px-3">Terminal diffs</td><td class="py-2 px-3">Terminal diffs</td><td class="py-2 px-3">Inline in editor</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Env vars config</td><td class="py-2 px-3">.claude/settings.local.json</td><td class="py-2 px-3">~/.bashrc</td><td class="py-2 px-3">VS Code settings</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Pricing</td><td class="py-2 px-3">Pay-per-token / Max</td><td class="py-2 px-3">GitHub subscription</td><td class="py-2 px-3">GitHub subscription</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="info"
+  title="VS Code Chat -- Skill Compatibility"
+  subtitle="38 of 78 skills work. 17 need context:fork or agent: dispatch (Claude Code-only features)."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:check" iconColor="bg-emerald-600" title="Works Well (38 skills)" tags={[{ label: 'No changes needed', color: 'success' }]}>
+      Skills that use codebase reading, file editing, and terminal commands.
+      MCP-dependent skills work if servers are mirrored in <code>.vscode/mcp.json</code>.
+
+      <strong>Best candidates:</strong> <code>dx-help</code>, <code>dx-doctor</code>, <code>dx-plan</code>,
+      <code>dx-req-explain</code>, <code>dx-req-research</code>, <code>dx-step</code>,
+      <code>dx-step-review</code>, <code>aem-component</code>, <code>aem-doctor</code>
+
+      <strong>With MCP:</strong> <code>dx-req-fetch</code>, <code>dx-bug-triage</code>,
+      <code>dx-pr-commit</code>, <code>dx-pr-review</code>, <code>dx-ticket-analyze</code>
+    </ContentCard>
+    <ContentCard icon="mdi:alert" iconColor="bg-amber-500" title="Limited (17 skills)" tags={[{ label: 'Degraded', color: 'warning' }]}>
+      Skills using <code>context: fork</code> + <code>agent:</code> (subagent dispatch) or
+      <code>disable-model-invocation</code> (coordinator pattern).
+      VS Code Chat ignores these fields -- skills load but can't orchestrate subagents.
+
+      <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req-all</code>,
+      <code>dx-step-all</code>, <code>dx-bug-all</code>, <code>dx-figma-all</code>
+
+      <strong>AEM (need inspector agent):</strong> <code>aem-snapshot</code>, <code>aem-verify</code>,
+      <code>aem-demo</code>, <code>aem-doc-gen</code>, <code>aem-fe-verify</code>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Setup -- One Setting">
+    Add to <code>.vscode/settings.json</code> to expose plugin skills to VS Code Chat:
+    <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
+  ".claude/skills": true,
+  "dx-aem-ai-flow/dx/plugins/dx-dev-experience/skills": true,
+  "dx-aem-ai-flow/dx/plugins/dx-aem/skills": true
+}`}</CommandBlock>
+    VS Code Chat also defaults to reading <code>.claude/rules/</code> and <code>.github/agents/</code> --
+    the same files Claude Code and Copilot CLI use. No duplication needed.
+  </HighlightBox>
+
+  <div class="overflow-x-auto mt-4">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Frontmatter Field</th>
+          <th class="text-left py-2 px-3 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-3 font-semibold">Copilot CLI</th>
+          <th class="text-left py-2 px-3 font-semibold">VS Code Chat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>name, description</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>argument-hint</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>disable-model-invocation</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>context: fork</code></td><td class="py-2 px-3">Runs in subagent</td><td class="py-2 px-3">Ignored (#1169)</td><td class="py-2 px-3">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>agent: &lt;name&gt;</code></td><td class="py-2 px-3">Routes to agent</td><td class="py-2 px-3">Ignored</td><td class="py-2 px-3">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>$ARGUMENTS / $1</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>Supporting files (scripts/)</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Agents"
+  badgeColor="warning"
+  title="Agent Frontmatter (.agent.md)"
+  subtitle="Agent files are shared across Copilot CLI and VS Code Chat. Claude Code uses a different format in plugin agents/."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Frontmatter Field</th>
+          <th class="text-left py-2 px-3 font-semibold">Claude Code</th>
+          <th class="text-left py-2 px-3 font-semibold">Copilot CLI</th>
+          <th class="text-left py-2 px-3 font-semibold">VS Code Chat</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>name, description</code></td><td class="py-2 px-3">filename-based</td><td class="py-2 px-3">Required</td><td class="py-2 px-3">Required</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>tools:</code></td><td class="py-2 px-3">Read, Glob, Bash</td><td class="py-2 px-3">read, edit, search</td><td class="py-2 px-3">codebase, editFiles, runCommands</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>model:</code></td><td class="py-2 px-3">Alias (sonnet, opus)</td><td class="py-2 px-3">Full name or array</td><td class="py-2 px-3">Full name or array</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>handoffs:</code></td><td class="py-2 px-3">--</td><td class="py-2 px-3">Parsed, not executed</td><td class="py-2 px-3">Interactive buttons</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>mcp-servers: (inline)</code></td><td class="py-2 px-3">Uses .mcp.json</td><td class="py-2 px-3">YAML in frontmatter</td><td class="py-2 px-3">YAML in frontmatter</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>memory:</code></td><td class="py-2 px-3">project/user/local</td><td class="py-2 px-3">Ignored</td><td class="py-2 px-3">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>isolation: worktree</code></td><td class="py-2 px-3">Yes</td><td class="py-2 px-3">Ignored</td><td class="py-2 px-3">--</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3"><code>Max body size</code></td><td class="py-2 px-3">No limit</td><td class="py-2 px-3">30,000 chars</td><td class="py-2 px-3">30,000 chars</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="warning" title="Cross-Platform Gotchas">
+    <strong>Tool names differ:</strong> Copilot CLI uses <code>read, edit, search</code>. VS Code Chat uses <code>codebase, editFiles, runCommands</code>.
+    Agent templates include <strong>both</strong> -- unrecognized names are ignored on each platform.
+
+    <strong>Spelling:</strong> Claude Code uses <code>user-invocable</code>, Copilot CLI uses <code>user-invokable</code> (different spelling!).
+
+    <strong>MCP config:</strong> Claude Code / Copilot CLI read <code>.mcp.json</code> (<code>mcpServers:</code>).
+    VS Code Chat reads <code>.vscode/mcp.json</code> (<code>servers:</code>). Different file, different root key.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Guidance"
+  badgeColor="info"
+  title="When to Use Which"
+  subtitle="They coexist -- use whichever fits the task."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Key Insight">
+    Claude Code and Copilot CLI are <strong>nearly identical in capability</strong> -- both are terminal-based, both run the same 78 skills, both load plugins and MCP servers.
+    The real difference is between <strong>terminal CLIs</strong> (Claude Code + Copilot CLI) and <strong>VS Code Chat</strong> (IDE-integrated, visual, different file discovery).
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:console" iconColor="bg-cyan" title="Terminal CLIs (Claude Code / Copilot CLI)" tags={[{ label: 'Full power', color: 'secondary' }]}>
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>All 78 skills</strong> via /dx-&#42; commands</li>
+        <li>Full plugin system (hooks, MCP, agents)</li>
+        <li>Subagent orchestration</li>
+        <li>CI/CD pipeline automation (headless -p mode)</li>
+        <li>Persistent sessions across VS Code restarts</li>
+        <li>Deep multi-step workflows (plan → execute → verify → PR)</li>
+      </ul>
+      <p class="text-xs text-gray-500 mt-2 italic">
+        Choose Claude Code for worktree isolation + persistent memory. Choose Copilot CLI for multi-model support + GitHub subscription.
+      </p>
+    </ContentCard>
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="VS Code Chat (Agent Mode)" tags={[{ label: 'Visual', color: 'info' }]}>
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>IDE-native</strong> -- edits files in the editor</li>
+        <li>Deep code understanding via language server</li>
+        <li>Visual diff review, inline suggestions</li>
+        <li>Attach files, selections, diagnostics as context</li>
+        <li>Great for focused editing tasks and exploration</li>
+        <li>Can start CLI sessions from the Chat panel</li>
+      </ul>
+      <p class="text-xs text-gray-500 mt-2 italic">
+        Best for visual code editing, exploring unfamiliar code, and quick inline fixes.
+      </p>
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="Use Together" tags={[{ label: 'Recommended', color: 'success' }]}>
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>CLI</strong> for structured workflows (/dx-req-all → /dx-plan → /dx-step-all)</li>
+        <li><strong>Chat</strong> for "fix this function", "explain this file"</li>
+        <li><strong>CLI</strong> for PR review, ticket analysis, AEM verification</li>
+        <li><strong>Chat</strong> for visual diff review and inline edits</li>
+        <li>Hand off Chat conversations → CLI sessions</li>
+        <li>Same plugins power all three</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Claude Code">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener noreferrer">Claude Code Docs</a></li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer">Skills</a></li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/sub-agents" target="_blank" rel="noopener noreferrer">Sub-agents</a></li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/hooks" target="_blank" rel="noopener noreferrer">Hooks</a></li>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code/mcp-servers" target="_blank" rel="noopener noreferrer">MCP Servers</a></li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="GitHub Copilot CLI">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><a href="https://docs.github.com/en/copilot/how-tos/copilot-cli" target="_blank" rel="noopener noreferrer">Copilot CLI Docs</a></li>
+        <li><a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-skills" target="_blank" rel="noopener noreferrer">Custom Skills</a></li>
+        <li><a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-agents" target="_blank" rel="noopener noreferrer">Custom Agents</a></li>
+        <li><a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers" target="_blank" rel="noopener noreferrer">MCP Servers</a></li>
+        <li><a href="https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent" target="_blank" rel="noopener noreferrer">Coding Agent (Cloud)</a></li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="VS Code Copilot Chat">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><a href="https://code.visualstudio.com/docs/copilot/customization/custom-agents" target="_blank" rel="noopener noreferrer">Custom Agents</a></li>
+        <li><a href="https://code.visualstudio.com/docs/copilot/customization/agent-skills" target="_blank" rel="noopener noreferrer">Agent Skills</a></li>
+        <li><a href="https://code.visualstudio.com/docs/copilot/customization/custom-instructions" target="_blank" rel="noopener noreferrer">Custom Instructions</a></li>
+        <li><a href="https://code.visualstudio.com/docs/copilot/customization/overview" target="_blank" rel="noopener noreferrer">Customization Overview</a></li>
+        <li><a href="https://code.visualstudio.com/docs/copilot/reference/copilot-settings" target="_blank" rel="noopener noreferrer">Settings Reference</a></li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>

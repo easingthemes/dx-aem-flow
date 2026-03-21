@@ -1,0 +1,121 @@
+# Research: <Title> (ADO #<id>)
+
+## Existing Components
+<!-- List of directly related components found, with file paths and
+brief description of what each does currently.
+Format: `path/to/component/` — description -->
+
+## Component Config (Authoring/Dialog)
+<!-- Current config/dialog fields, structure, and resource type.
+List each field with its name, type, and current options.
+If no config exists, note that. -->
+
+## Backing Code
+
+### Models
+<!-- For each related model/entity:
+- **ClassName** (`full/path/to/ClassName.ext`)
+  - Key properties: list with types
+  - Service dependencies: list
+  - Key logic: summary -->
+
+### Services
+<!-- For each related service:
+- **ServiceName** (`full/path/to/ServiceName.ext`)
+  - Interface: `path/to/interface`
+  - Implementation: `path/to/impl`
+  - Config properties: list
+  - Key methods: signatures and purpose -->
+
+### Exporters / Serializers
+<!-- For each related exporter:
+- **ExporterName** (`full/path/to/ExporterName.ext`)
+  - Output format: JSON / XML / etc.
+  - Output fields: list
+  - Dependencies: list -->
+
+### API Endpoints
+<!-- If applicable:
+- **EndpointName** (`full/path/to/Endpoint.ext`)
+  - Path: `/api/...`
+  - Method: GET/POST
+  - Purpose: summary -->
+
+## Frontend (Templates + Assets)
+<!-- Template structure, data-binding patterns, framework usage,
+asset categories and what they include.
+Include relevant code snippets (10 lines max each). -->
+
+## Test Coverage
+<!-- Existing tests:
+- **TestClassName** (`full/path/to/TestClassName.ext`)
+  - Tests: list of test methods and what they verify
+  - Fixtures: list of fixture files used
+
+Coverage gaps:
+- What's NOT currently tested that would be relevant -->
+
+## Related Components
+<!-- Other components that interact with, extend, or are similar to
+this one. Useful as reference patterns for implementation.
+Briefly note WHY each is relevant. -->
+
+## Existing Implementation Check
+<!-- CRITICAL section — MANDATORY.
+
+**Already implemented?**
+- Is the requested feature (or very similar functionality) already present in the codebase?
+- Does an existing component, service, or helper already do what the story asks for?
+- If yes → list what exists, where, and how close it is to what's requested.
+  Flag: "Feature may already be implemented — verify before planning new work."
+
+**Reusable code found:**
+- List every existing utility, helper, service, mixin, or pattern that can be reused
+  for this story — with file paths and what each provides.
+- For each requirement from explain.md, note whether existing code already covers it
+  (fully, partially, or not at all).
+
+**Must be created new:**
+- Only list things that genuinely don't exist after thorough search.
+- For each new item, note what existing pattern to follow (file, line number).
+
+Format:
+- ✅ REQ N — fully covered by existing `path/to/file.ext:line`
+- ⚡ REQ N — partially covered by `path/to/file.ext` (needs: <what's missing>)
+- 🆕 REQ N — no existing implementation found (follow pattern in `path/to/similar.ext`) -->
+
+## Key Findings
+<!-- Bullet list of the most important discoveries that affect
+implementation — the things a developer MUST know:
+- "Component X already has property Y that could be reused"
+- "No existing exporter — would need to create one"
+- "Service Z uses config factory — new config needed per variant"
+- "Current model doesn't support property inheritance" -->
+
+## Files Inventory
+<!-- Markdown table of all files that will likely need modification
+or serve as reference:
+
+| File | Type | Action |
+|------|------|--------|
+| `path/to/file` | Model | Modify — add new property |
+| `path/to/file` | Config/Dialog | Modify — add dropdown field |
+| `path/to/file` | Template | Modify — add conditional rendering |
+| `path/to/file` | Test class | Reference — similar test pattern | -->
+
+## Cross-Repo Scope
+<!-- Detect current repo from git remote or folder name.
+
+If ticket data or file searches found files in OTHER repos, list them:
+
+**Current repo:** <detected repo name> (this plan covers only this repo)
+
+| Repo | What's needed | Key files |
+|------|--------------|-----------|
+| Frontend-Repo | FE template + styles for new layout | `src/components/{name}/` |
+
+> Run the same workflow (`/dx-req-all <id>`) in each repo above to plan
+> and execute those changes.
+
+OMIT this section entirely if all files belong to the current repo.
+Only include repos where files were actually found — don't speculatively list repos. -->

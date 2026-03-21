@@ -1,0 +1,208 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: DoR & DoD
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="DoR & DoD Workflows"
+  subtitle="Automated Definition of Ready and Definition of Done checklist validation"
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="Two Quality Gates"
+  subtitle="DoR validates story readiness before work begins. DoD validates deliverables after work completes."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Definition of Ready (DoR)">
+      Validates that a user story has all the information needed to begin implementation. Checks title, description, acceptance criteria, design links, dialog fields, and more.
+      <CommandBlock>/dx-req-dor</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:clipboard-check" iconColor="bg-emerald-600" title="Definition of Done (DoD)">
+      Validates that actual deliverables (code, tests, PR, build) meet completion criteria. Works the same whether the story was implemented manually or via the AI workflow.
+      <CommandBlock>/dx-req-dod</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Wiki-Driven Criteria">
+    Both checklists are maintained as ADO wiki pages configured in <code>.ai/config.yaml</code>. Skills fetch criteria at runtime -- editing the wiki immediately changes what gets checked. No code changes needed.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="secondary"
+  title="Configuration"
+  subtitle="Wiki URLs in .ai/config.yaml."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Required config keys">{`scm:
+  wiki-dor-url: "https://myorg.visualstudio.com/MyProject/_wiki/wikis/MyWiki/12345/My-DoR-Page"
+  wiki-dod-url: "https://myorg.visualstudio.com/MyProject/_wiki/wikis/MyWiki/12346/My-DoD-Page"`}</CommandBlock>
+
+  <HighlightBox severity="warning" title="Both URLs Required">
+    Skills will error if the corresponding URL is not configured. Add both to the <code>scm:</code> section of your config.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="DoR"
+  badgeColor="warning"
+  title="Definition of Ready Workflow"
+  subtitle="Iterative collaboration between the agent and the BA."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="Agent Posts">
+      <code>/dx-req-dor</code> evaluates the story against wiki criteria and posts a <code>[DoRAgent]</code> comment with interactive checkboxes. Passing items are pre-checked, failing items are unchecked.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-cyan" title="BA Updates">
+      The BA reads the comment, updates the story with missing data, and checks the corresponding checkboxes in the ADO comment.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-amber-500" title="Agent Re-validates">
+      On re-run, the skill reads the ADO comment's checkbox state. If new items are checked, it re-fetches the story, re-validates against the wiki, and posts a short update (not a full re-post).
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-4-circle" iconColor="bg-emerald-600" title="Repeat">
+      The loop continues until all items pass or remaining gaps are accepted.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Interactive Checkboxes">
+    ADO comment checkboxes (<code>- [x]</code> / <code>- [ ]</code>) are interactive -- any user can click to check or uncheck them, and the comment text updates accordingly.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">What Gets Checked</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Check Type</th>
+          <th class="text-left py-2 px-4 font-semibold">Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Agent</code> criteria</td><td class="py-2 px-4">Evaluated programmatically -- PASS or FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Human</code> criteria</td><td class="py-2 px-4">Always WARN (advisory) -- agent cannot verify</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Advisory</code> criteria</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Output</h3>
+  <p class="text-sm text-gray-600">The skill produces <code>dor-report.md</code> in the spec directory and posts a formatted comment to the ADO work item.</p>
+</Section>
+
+<SectionHeading
+  badge="DoD"
+  badgeColor="info"
+  title="Definition of Done Workflow"
+  subtitle="Validates actual deliverables -- code, tests, PR, and build status."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="What It Checks">
+      The DoD validates <strong>real project state</strong>, not workflow artifacts:
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>File existence (e.g., <code>explain.md</code> exists)</li>
+        <li>ADO state (at least one linked PR exists)</li>
+        <li>Codebase checks (test files exist for changed components)</li>
+        <li>Step status (all steps in <code>implement.md</code> marked done)</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:auto-fix" iconColor="bg-cyan" title="Auto-Fix">
+      <code>/dx-req-dod-fix</code> reads <code>dod.md</code> failures and auto-fixes what is possible -- creates missing files, updates statuses, and fixes formatting issues.
+      <CommandBlock>/dx-req-dod-fix</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Manual vs AI Implementation">
+    The DoD works the same whether a story was implemented manually or via the AI workflow. It checks actual deliverables, not how they were created.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Scoring"
+  badgeColor="secondary"
+  title="Scoring and Verdicts"
+  subtitle="How pass/fail is determined from individual criteria results."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Condition</th>
+          <th class="text-left py-2 px-4 font-semibold">Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">All automated criteria pass</td><td class="py-2 px-4 text-emerald-600 font-semibold">PASS</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">1-2 automated failures</td><td class="py-2 px-4 text-amber-600 font-semibold">PARTIAL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">3+ automated failures</td><td class="py-2 px-4 text-red-600 font-semibold">FAIL</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="Skip Triggers">
+    Sections can define skip conditions (e.g., "Pure configuration or content-only changes"). When triggered, criteria in that section are marked SKIP instead of FAIL.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Wiki"
+  badgeColor="warning"
+  title="Maintaining the Checklists"
+  subtitle="Edit wiki pages directly in ADO to change criteria."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:pencil" iconColor="bg-emerald-600" title="How to Update">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>Edit the wiki page directly in ADO</li>
+        <li>Changes take effect on the next skill run (no caching)</li>
+        <li>Adding sections or criteria extends the check automatically</li>
+        <li>Removing criteria removes them from the check</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan-dark" title="Wiki Format">
+      Both pages use the same format: numbered sections (<code>## N. Title</code>), criteria tables with three columns (<code>Criterion | Who checks | What to verify</code>), and optional skip triggers. See the <a href="/contributing/wiki-format">Wiki Format</a> page for full details.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Pipeline"
+  badgeColor="info"
+  title="Automation Pipeline"
+  subtitle="DoR and DoD also run as automated ADO pipeline agents."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:robot" iconColor="bg-brand-700" title="Automated DoR">
+      Triggered by Lambda webhooks when work items are updated. Posts DoR results as comments and can transition work item state based on pass/fail.
+    </ContentCard>
+    <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Automated DoD">
+      Triggered when PRs are created or updated. Validates deliverables and posts results. <code>/dx-req-dod-fix</code> can auto-remediate failures.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Same Criteria, Two Modes">
+    Both the interactive skills (<code>/dx-req-dor</code>, <code>/dx-req-dod</code>) and the automation pipelines read from the same wiki pages. Updating the wiki changes behavior for both local development and automated pipelines.
+  </HighlightBox>
+</Section>

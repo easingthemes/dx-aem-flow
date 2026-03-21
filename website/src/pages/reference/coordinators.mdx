@@ -1,0 +1,508 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Coordinators
+sidebar: reference
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Coordinators"
+  subtitle="Four coordinator skills that orchestrate multi-step workflows end to end"
+/>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Overview                                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Overview"
+  title="Four Coordinators"
+  subtitle="Each coordinator delegates to subagents -- it never writes code itself."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Coordinator</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Phases</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Scope</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Model Strategy</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>dx-req-all</code></td><td class="p-3">4 steps</td><td class="p-3">Requirements gathering</td><td class="p-3">Sonnet + Opus (checklist)</td></tr>
+        <tr><td class="p-3"><code>dx-step-all</code></td><td class="p-3">N steps (dynamic)</td><td class="p-3">Plan execution loop</td><td class="p-3">Sonnet + Opus (fix/heal) + Haiku (test/commit)</td></tr>
+        <tr><td class="p-3"><code>dx-bug-all</code></td><td class="p-3">3 steps</td><td class="p-3">Bug triage, verify, fix</td><td class="p-3">Sonnet + Opus (fix planning)</td></tr>
+        <tr><td class="p-3"><code>dx-agent-all</code></td><td class="p-3">12 phases (max 13)</td><td class="p-3">Full story to PR pipeline</td><td class="p-3">All tiers</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Common Patterns                                                         */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Architecture"
+  badgeColor="secondary"
+  title="Common Patterns"
+  subtitle="Shared design principles across all coordinators."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:robot-off" iconColor="bg-brand-700" title="Coordinator-Only Architecture">
+      All coordinators use <code>disable-model-invocation: true</code> -- they NEVER write code themselves.
+      Every phase is delegated to <code>dx-step-executor</code> agent via the Task tool, keeping the main
+      context lean (approximately 10 tokens per status update vs approximately 200 for full file reads).
+    </ContentCard>
+    <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Isolated Context Management">
+      Task tool calls use isolated subagents. Skills invoked via Skill tool have <code>context: fork</code>.
+      The main orchestrator only sees compact return summaries, never reads spec files.
+      Prevents context compaction in long-running pipelines.
+    </ContentCard>
+    <ContentCard icon="mdi:refresh" iconColor="bg-emerald-600" title="Idempotent Execution">
+      Every skill checks if its output file already exists and is still valid before regenerating.
+      Steps report one of: <strong>created</strong>, <strong>updated</strong>, or <strong>skipped</strong>.
+    </ContentCard>
+    <ContentCard icon="mdi:file-link" iconColor="bg-amber-500" title="Convention-Based Data Flow">
+      No data is passed between skills. All skills find each other's output by predictable filenames
+      in <code>.ai/specs/&lt;id&gt;-&lt;slug&gt;/</code>.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-red-500" title="Self-Healing Architecture">
+      <strong>step-fix</strong> (first responder): one attempt to fix compilation/test/review failures.
+      <strong>step-heal</strong> (deep analysis): creates corrective steps after 2 consecutive fix failures.
+      <strong>3-cycle review loop</strong>: code review, auto-fix, rebuild, re-review (max 3 cycles).
+      <strong>2 healing cycles max</strong>: if healing fails twice, stop for human intervention.
+    </ContentCard>
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Cross-Repo Delegation">
+      When <code>DX_PIPELINE_MODE</code> is set, code-writing coordinators check if the work targets
+      another repo. If so, they write <code>delegate.json</code> and STOP -- the YAML step reads it
+      and queues the equivalent pipeline in the target repo.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-req-all                                                              */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Coordinator"
+  badgeColor="primary"
+  title="dx-req-all"
+  subtitle="Requirements gathering pipeline -- 4 steps"
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Requirements Pipeline"
+    command="/dx-req-all <work-item-id>"
+    steps={[
+      { title: 'fetch', subtitle: 'Pull ADO story', command: '/dx-req-fetch' },
+      { title: 'dor', subtitle: 'DoR validation', command: '/dx-req-dor', color: '#ef4444' },
+      { title: 'explain', subtitle: 'Dev requirements', command: '/dx-req-explain' },
+      { title: 'research', subtitle: 'Codebase search', command: '/dx-req-research' },
+      { title: 'share', subtitle: 'Post to ADO', command: '/dx-req-share' },
+    ]}
+  />
+
+  <HighlightBox severity="warning" title="DoR Gate">
+    The DoR step is a gate -- if blocking questions exist, the pipeline pauses. The BA checks items
+    in the ADO comment. Re-running <code>/dx-req-dor</code> reads the checkbox state and re-validates.
+    Already-completed steps are skipped on re-run.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-step-all                                                             */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Coordinator"
+  badgeColor="primary"
+  title="dx-step-all"
+  subtitle="Plan execution loop -- dynamic number of steps"
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Execution Loop (per step)"
+    command="/dx-step-all"
+    steps={[
+      { title: 'dx-step', subtitle: 'Execute step', command: '/dx-step' },
+      { title: 'dx-step-test', subtitle: 'Run tests', command: '/dx-step-test' },
+      { title: 'dx-step-review', subtitle: 'Review changes', command: '/dx-step-review' },
+      { title: 'dx-step-commit', subtitle: 'Commit step', command: '/dx-step-commit' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="On Failure: step-fix">
+      If a step fails (compile error, test failure, review rejection), <code>dx-step-fix</code> makes
+      one attempt to diagnose and fix the issue.
+    </ContentCard>
+    <ContentCard icon="mdi:hospital" iconColor="bg-red-500" title="On 2 Consecutive Failures: step-heal">
+      After 2 consecutive fix failures, <code>dx-step-heal</code> performs deep diagnosis and creates
+      corrective steps in <code>implement.md</code>. Maximum 2 healing cycles before stopping for human intervention.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Self-Learning">
+    <code>dx-step-all</code> logs fix patterns to <code>.ai/learning/raw/fixes.jsonl</code>. When a
+    pattern reaches 3+ successes with 0 failures, it is promoted to
+    <code>.claude/rules/learned-fix-&#42;.md</code> -- auto-loaded on every future run.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-bug-all                                                              */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Coordinator"
+  badgeColor="primary"
+  title="dx-bug-all"
+  subtitle="Bug fix pipeline -- 3 steps"
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Bug Fix Pipeline"
+    command="/dx-bug-all <bug-id>"
+    steps={[
+      { title: 'triage', subtitle: 'Fetch + identify', command: '/dx-bug-triage' },
+      { title: 'verify', subtitle: 'Reproduce via browser', command: '/dx-bug-verify' },
+      { title: 'fix', subtitle: 'Plan + execute + PR', command: '/dx-bug-fix' },
+    ]}
+  />
+
+  <HighlightBox severity="info" title="Hotspot Detection">
+    <code>dx-bug-all</code> logs bug patterns to <code>.ai/learning/raw/bugs.jsonl</code>. When a
+    component has 3+ bugs, it warns about a hotspot -- helping identify fragile areas in the codebase.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-agent-all                                                            */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Coordinator"
+  badgeColor="error"
+  title="dx-agent-all"
+  subtitle="The most comprehensive coordinator -- up to 13 phases from ticket to PR"
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Pipeline"
+    command="/dx-agent-all <work-item-id>"
+    description="Interactive by default -- pauses after requirements. Add 'autonomous' to skip pauses."
+    steps={[
+      { title: 'Phase 1', subtitle: 'Requirements', command: 'dx-req-all' },
+      { title: 'Phase 1.5', subtitle: 'Figma extract', command: 'dx-figma-extract' },
+      { title: 'Phase 2', subtitle: 'Figma prototype', command: 'dx-figma-prototype' },
+      { title: 'Phase 2b', subtitle: 'Planning', command: 'dx-plan' },
+      { title: 'Phase 3', subtitle: 'Execution', command: 'dx-step-all' },
+      { title: 'Phase 4', subtitle: 'Build', command: 'dx-step-build' },
+    ]}
+  />
+  <PipelineBlock
+    steps={[
+      { title: 'Phase 4.5', subtitle: 'Code review', command: 'dx-step-verify' },
+      { title: 'Phase 5a', subtitle: 'Commit', command: 'dx-step-commit' },
+      { title: 'Phase 5', subtitle: 'AEM verify', command: 'aem-verify' },
+      { title: 'Phase 6', subtitle: 'Create PR', command: 'dx-pr' },
+      { title: 'Phase 7', subtitle: 'Documentation', command: 'dx-doc-gen' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Deep Dive"
+  badgeColor="warning"
+  title="Phase Details"
+  subtitle="Each phase of dx-agent-all explained."
+  bg="alt"
+/>
+<Section>
+  <div class="space-y-4">
+    <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Phase 1: Requirements (dx-req-all)">
+      Subagent runs the full requirements pipeline: fetch, dor, explain, research, share.
+      <strong>Interactive:</strong> Pauses for human review of dor-report.md and explain.md.
+      <strong>Autonomous:</strong> Continues immediately.
+      <strong>Fail condition:</strong> ADO fetch fails = ABORT.
+    </ContentCard>
+
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Phase 1.5a: Cross-Repo Check (pipeline mode only)">
+      Only runs when <code>DX_PIPELINE_MODE</code> is set. Reads <code>research.md</code> for cross-repo scope.
+      If current repo is not the target: writes <code>delegate.json</code> and STOPS. Skipped in local mode.
+    </ContentCard>
+
+    <ContentCard icon="mdi:palette" iconColor="bg-amber-500" title="Phase 1.5 + 2: Figma (optional)">
+      Scans raw-story.md for Figma URLs. If found, extracts design context (Phase 1.5) and generates a
+      standalone HTML/CSS prototype using 2 parallel Haiku agents for convention discovery (Phase 2).
+      <strong>Non-blocking:</strong> If Figma MCP fails, continues with a warning.
+    </ContentCard>
+
+    <ContentCard icon="mdi:map" iconColor="bg-brand-700" title="Phase 2b: Planning">
+      Runs dx-plan, dx-plan-validate, and optionally dx-plan-resolve. Uses Opus with ultrathink
+      for deep reasoning about dependencies.
+      <strong>Fail condition:</strong> Validation FAIL = STOP.
+    </ContentCard>
+
+    <ContentCard icon="mdi:play" iconColor="bg-emerald-600" title="Phase 3: Execution (dx-step-all)">
+      For each pending step: execute, test, review, commit. Self-healing: step-fix (1 attempt),
+      step-heal (corrective steps, max 2 cycles). Commits deferred to after build verification.
+    </ContentCard>
+
+    <ContentCard icon="mdi:hammer" iconColor="bg-cyan-dark" title="Phase 4: Build Verification">
+      Max 6 fix attempts. One error at a time, minimal fixes.
+      <strong>Fail condition:</strong> Still broken after 6 = skip review/commit, continue to summary.
+    </ContentCard>
+
+    <ContentCard icon="mdi:shield-check" iconColor="bg-red-500" title="Phase 4.5: Full Code Review (dx-step-verify)">
+      6-phase gate: compile, lint, test, secret scan, architecture, code review. Code review uses
+      dx-code-reviewer (Opus, 80%+ confidence). Review-fix loop: max 3 cycles. If FAILED after 3 cycles,
+      step-heal creates corrective steps, rebuilds, and re-reviews (max 2 healing cycles).
+    </ContentCard>
+
+    <ContentCard icon="mdi:git" iconColor="bg-brand-700" title="Phase 5a + 6: Commit + PR">
+      Only if build AND review passed. Reads <code>auto_commit</code> and <code>auto_pr</code> from config preferences.
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-document" iconColor="bg-amber-500" title="Phase 7: Documentation (optional)">
+      Only if PR created. <code>aem-doc-gen</code> runs first (AEM projects), then <code>dx-doc-gen</code>
+      reads its output and posts wiki page to sprint subfolder.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Model Usage                                                             */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Models"
+  badgeColor="secondary"
+  title="Model Usage Per Phase"
+  subtitle="Each phase uses the right model tier for cost and quality."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Model</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Reasoning</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">Requirements (fetch/explain/research)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Execution tasks</td></tr>
+        <tr><td class="p-3">Requirements (checklist)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-red-500 text-red-500">Opus</span></td><td class="p-3">Deep analysis of ambiguities</td></tr>
+        <tr><td class="p-3">Figma extract</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">MCP data extraction</td></tr>
+        <tr><td class="p-3">Figma prototype (conventions)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-emerald-600 text-emerald-600">Haiku</span></td><td class="p-3">CSS/HTML convention discovery</td></tr>
+        <tr><td class="p-3">Figma prototype (generation)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Standalone HTML/CSS prototype</td></tr>
+        <tr><td class="p-3">Planning (plan/validate/resolve)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-red-500 text-red-500">Opus</span></td><td class="p-3">Deep reasoning, ultrathink</td></tr>
+        <tr><td class="p-3">Step execution</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Code writing</td></tr>
+        <tr><td class="p-3">Step testing</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-emerald-600 text-emerald-600">Haiku</span></td><td class="p-3">Simple command execution</td></tr>
+        <tr><td class="p-3">Step review</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-red-500 text-red-500">Opus</span></td><td class="p-3">Code quality analysis</td></tr>
+        <tr><td class="p-3">Step fix / heal</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-red-500 text-red-500">Opus</span></td><td class="p-3">Root cause analysis, strategy change</td></tr>
+        <tr><td class="p-3">Step commit</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-emerald-600 text-emerald-600">Haiku</span></td><td class="p-3">Simple git operations</td></tr>
+        <tr><td class="p-3">Build</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Error diagnosis</td></tr>
+        <tr><td class="p-3">Code review (full)</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-red-500 text-red-500">Opus</span></td><td class="p-3">Confidence-based quality filter</td></tr>
+        <tr><td class="p-3">PR creation</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Summary writing</td></tr>
+        <tr><td class="p-3">Documentation</td><td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td><td class="p-3">Content generation</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Token Budget                                                            */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Cost"
+  badgeColor="warning"
+  title="Token Budget Estimate"
+  subtitle="Typical story without healing or failures."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Estimated Tokens</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Notes</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">req-all</td><td class="p-3">≈50K</td><td class="p-3">4 sub-steps, parallel agents</td></tr>
+        <tr><td class="p-3">plan + validate</td><td class="p-3">≈80K</td><td class="p-3">Ultrathink, deep codebase analysis</td></tr>
+        <tr><td class="p-3">step-all (5 steps)</td><td class="p-3">≈150K</td><td class="p-3">Most expensive phase</td></tr>
+        <tr><td class="p-3">build</td><td class="p-3">≈20K</td><td class="p-3">Quick fix loops</td></tr>
+        <tr><td class="p-3">code review</td><td class="p-3">≈60K</td><td class="p-3">Full diff review, Opus</td></tr>
+        <tr><td class="p-3">commit + PR</td><td class="p-3">≈10K</td><td class="p-3">Lightweight</td></tr>
+        <tr class="font-semibold"><td class="p-3">Total</td><td class="p-3">≈370K</td><td class="p-3">Without healing/fixes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="With Failures">
+    With failures and healing, a story can reach 500K-800K tokens. The self-healing architecture
+    trades tokens for autonomy -- most issues resolve without human intervention.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Phase Comparison                                                        */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Comparison"
+  badgeColor="secondary"
+  title="Phase Comparison"
+  subtitle="Which coordinator covers which phases."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
+        <th class="text-left p-3 font-semibold text-brand-900">dx-req-all</th>
+        <th class="text-left p-3 font-semibold text-brand-900">dx-step-all</th>
+        <th class="text-left p-3 font-semibold text-brand-900">dx-bug-all</th>
+        <th class="text-left p-3 font-semibold text-brand-900">dx-agent-all</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">Fetch / Triage</td><td class="p-3">fetch</td><td class="p-3">--</td><td class="p-3">triage</td><td class="p-3">req-all</td></tr>
+        <tr><td class="p-3">Explain</td><td class="p-3">yes</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">via req-all</td></tr>
+        <tr><td class="p-3">Research</td><td class="p-3">yes</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">via req-all</td></tr>
+        <tr><td class="p-3">Figma</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">optional</td></tr>
+        <tr><td class="p-3">Planning</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">plan+validate+resolve</td></tr>
+        <tr><td class="p-3">Feature Branch</td><td class="p-3">--</td><td class="p-3">yes</td><td class="p-3">--</td><td class="p-3">yes</td></tr>
+        <tr><td class="p-3">Bug Verify</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">browser</td><td class="p-3">--</td></tr>
+        <tr><td class="p-3">Step Execution</td><td class="p-3">--</td><td class="p-3">loop</td><td class="p-3">via bug-fix</td><td class="p-3">via step-all</td></tr>
+        <tr><td class="p-3">Build</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">via bug-fix</td><td class="p-3">step-build</td></tr>
+        <tr><td class="p-3">Code Review</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">step-verify</td></tr>
+        <tr><td class="p-3">Commit</td><td class="p-3">--</td><td class="p-3">per step</td><td class="p-3">via bug-fix</td><td class="p-3">step-commit</td></tr>
+        <tr><td class="p-3">PR Creation</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">via bug-fix</td><td class="p-3">dx-pr</td></tr>
+        <tr><td class="p-3">Documentation</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">--</td><td class="p-3">doc-gen</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Interactive vs Autonomous                                               */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Modes"
+  badgeColor="success"
+  title="Interactive vs Autonomous"
+  subtitle="Only dx-agent-all pauses by default."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Coordinator</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Interactive (default)</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Autonomous</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>dx-req-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
+        <tr><td class="p-3"><code>dx-step-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
+        <tr><td class="p-3"><code>dx-bug-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
+        <tr><td class="p-3"><code>dx-agent-all</code></td><td class="p-3">Pause after requirements, auto-continue after planning</td><td class="p-3">Straight through</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <CommandBlock label="Autonomous mode">
+{`/dx-agent-all 2416553 autonomous`}
+  </CommandBlock>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Superpowers Integration                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Superpowers"
+  badgeColor="secondary"
+  title="Superpowers Integration"
+  subtitle="Optional structured methodology hooks that enhance planning, debugging, and verification."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:lightbulb" iconColor="bg-brand-700" title="Design Exploration (Planning)">
+      <code>dx-plan</code> supports an optional pre-planning step that invokes
+      <code>superpowers:brainstorming</code> to surface alternative approaches before committing
+      to an implementation strategy. Helps avoid tunnel vision on complex stories.
+    </ContentCard>
+    <ContentCard icon="mdi:shield-check" iconColor="bg-emerald-600" title="Verification Gate (Review)">
+      After the review-fix loop concludes, <code>dx-step-verify</code> optionally invokes
+      <code>superpowers:verification-before-completion</code> for a final cross-cutting check --
+      confirming all acceptance criteria are met before marking the step done.
+    </ContentCard>
+    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Systematic Debugging (Fix)">
+      <code>dx-step-fix</code> optionally invokes <code>superpowers:systematic-debugging</code>
+      for structured 4-phase diagnosis (Observe, Hypothesize, Test, Fix) when the error is
+      ambiguous or multi-layered.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Execution Methodology">
+    Before Phase 1 begins, <code>dx-agent-all</code> runs an "Execution Methodology" setup step
+    that optionally invokes <code>superpowers:executing-plans</code> to bootstrap structured
+    plan-execution behaviour. All superpowers hooks fall back gracefully when the plugin is not installed.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Extended Thinking                                                      */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Reasoning"
+  badgeColor="warning"
+  title="Extended Thinking / Ultrathink"
+  subtitle="Deep reasoning modes used in planning and healing phases."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:brain" iconColor="bg-brand-700" title="Planning Phase (Opus)">
+      <code>dx-plan</code> and <code>dx-plan-validate</code> use ultrathink mode for deep reasoning
+      about dependencies, step ordering, and risk assessment. This is the most token-intensive
+      phase (≈80K tokens) but produces higher-quality plans with fewer downstream failures.
+    </ContentCard>
+    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Healing Phase (Opus)">
+      <code>dx-step-heal</code> uses extended thinking for deep root-cause analysis when 2
+      consecutive fix attempts fail. The healer sees the full error context, previous fix attempts,
+      and the original step intent to devise a fundamentally different approach.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Token Budget with Healing">
+    The base token budget of ≈370K assumes no failures. With healing and fix cycles, a story can
+    reach 500K-800K tokens. Each healing cycle adds ≈40-80K tokens for deep analysis plus the
+    cost of executing corrective steps. The system trades tokens for autonomy -- most issues
+    resolve without human intervention.
+  </HighlightBox>
+</Section>

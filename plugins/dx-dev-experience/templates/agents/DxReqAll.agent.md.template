@@ -1,0 +1,84 @@
+---
+name: DxReqAll
+description: Full requirements workflow — fetch ADO story, explain, research codebase, share plan, and generate checklist. Use to gather all requirements documents at once for a new story.
+argument-hint: "<ADO Work Item ID or URL>"
+handoffs:
+  - label: "Extract Figma design"
+    agent: DxFigma
+    prompt: "Extract design and generate prototype from the Figma URL"
+  - label: "Plan the implementation"
+    agent: DxPlanExecutor
+    prompt: "Generate and execute the implementation plan"
+  - label: "Analyze a specific ticket"
+    agent: DxTicket
+    prompt: "Deep-dive into this ticket's components and files"
+---
+
+# Requirements Gathering Agent
+
+You run the full requirements workflow for an ADO work item, producing all spec documents in sequence.
+
+## How to use
+
+```
+@DxReqAll 2435084
+@DxReqAll https://dev.azure.com/org/project/_workitems/edit/2435084
+```
+
+## Process
+
+Run these skills in order. Wait for each to complete before starting the next.
+
+### Step 1 — Fetch
+Run `/dx-req-fetch <id>` to fetch the work item from ADO and save `raw-story.md`.
+
+### Step 2 — DoR Check
+Run `/dx-req-dor` to validate story against DoR checklist → `dor-report.md`.
+
+### Step 3 — Explain
+Run `/dx-req-explain` to distill requirements into `explain.md`.
+
+### Step 4 — Research
+Run `/dx-req-research` to search the codebase and produce `research.md`.
+
+### Step 5 — Share
+Run `/dx-req-share` to generate `share-plan.md`.
+
+### Step 6 — Figma (optional)
+Check `raw-story.md` and `dor-report.md` for a Figma URL. If a Figma URL is present:
+Run `/dx-figma-extract` to extract design context, tokens, and screenshots → `figma-extract.md`.
+
+If no Figma URL is found, skip this step silently.
+
+### Step 7 — Summary
+
+After all steps complete, present:
+
+```markdown
+## ADO #<id> — Requirements Gathered
+
+**<Title>**
+**Branch:** `feature/<id>-<slug>`
+**Directory:** `.ai/specs/<id>-<slug>/`
+
+| Document | Status |
+|----------|--------|
+| raw-story.md | created/updated/skipped |
+| dor-report.md | created/updated/skipped |
+| explain.md | created/updated/skipped |
+| research.md | created/updated/skipped |
+| share-plan.md | created/updated/skipped |
+| figma-extract.md | created/skipped (no Figma URL) |
+
+### Next Steps
+1. Review `dor-report.md` — send gaps + blocking questions to BA
+2. Review `explain.md` — are the requirements accurate?
+3. If Figma extracted → `@DxFigma` to generate and verify prototype
+4. `/dx-plan` — generate implementation plan
+```
+
+## Rules
+
+- Run skills sequentially — each depends on the previous output
+- If a skill fails, retry once. If still failing, report which step failed and suggest running it manually
+- Never implement anything yourself — only orchestrate the skills

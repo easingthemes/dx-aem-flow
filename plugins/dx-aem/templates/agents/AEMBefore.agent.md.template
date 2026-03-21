@@ -1,0 +1,102 @@
+<!-- Source: agents/aem-inspector.md -->
+---
+name: AEMBefore
+description: Snapshot a component's AEM state before development — dialog fields, properties, and pages where it's used. Saves baseline to specs for later comparison. Use before starting implementation on a component.
+argument-hint: "<component-name> (e.g., hero, banner, card)"
+tools:
+  - read
+  - codebase
+  - editFiles
+  - search
+  - 'AEM/getNodeContent'
+  - 'AEM/listChildren'
+  - 'AEM/executeJCRQuery'
+  - 'AEM/searchContent'
+  - 'AEM/enhancedPageSearch'
+  - 'AEM/scanPageComponents'
+handoffs:
+  - label: "Create implementation plan"
+    agent: DxPlanExecutor
+    prompt: "Create and execute the implementation plan from the specs directory"
+---
+
+# AEM Before — Baseline Snapshot
+
+Capture a baseline snapshot of an AEM component before development begins.
+
+## How to use
+
+```
+@AemBefore hero
+@AemBefore starterkit
+```
+
+## Configuration
+
+Read `.ai/config.yaml` for:
+- `aem.component-path` — component definitions root (e.g., `/apps/myproject/components/content/`)
+- `aem.resource-type-pattern` — resource type format
+- `aem.author-url` — AEM author URL (defaults to `http://localhost:4502`)
+- `aem.content-paths` — configured content paths for page searches
+
+## Steps
+
+### 1. Locate the component
+
+Use `AEM/getNodeContent` on `<aem.component-path>/<name>` to check if it exists.
+If not found: "Component not found on AEM. Not deployed yet. Nothing to snapshot." — stop.
+Extract: `jcr:title`, `componentGroup`.
+
+### 2. Walk the dialog
+
+1. `AEM/listChildren` on the tabs path to get tab nodes
+2. For each tab, `AEM/getNodeContent` with depth 6 to get all fields
+3. For multifields, recurse into `field/items` children
+4. For each field extract: **nodeName**, **fieldType** (last segment of sling:resourceType), **fieldLabel**, **name** (JCR property path)
+
+### 3. Find pages using this component
+
+Search configured content paths:
+1. Exact resourceType query via `AEM/executeJCRQuery`
+2. If 0 results — LIKE query with component name
+3. If still 0 — `AEM/searchContent` with component name as keyword
+4. Also search Experience Fragments
+
+**Never report "0 pages found" after trying only one query.**
+
+### 4. Save baseline
+
+Write `<spec-dir>/aem-before.md`:
+
+```markdown
+# AEM Baseline: <component-name>
+
+**Component:** `<resource-type>`
+**Title:** <jcr:title>
+**Group:** <componentGroup>
+**Snapshot date:** <ISO date>
+
+## Dialog Fields
+
+### Tab: <tab-name>
+| Field | Type | Label | Property |
+|-------|------|-------|----------|
+| ... | ... | ... | ... |
+
+## Pages Using Component
+
+| Page | Author URL |
+|------|-----------|
+| <name> | [Open](<author-url>/editor.html<path>.html) |
+```
+
+### 5. Return summary
+
+Report field count, page count, and spec file path.
+
+## Rules
+
+- **Config-driven** — read all paths from `.ai/config.yaml`, never hardcode
+- **Multiple search strategies** — try at least 3 approaches before reporting 0 pages
+- **Compact output** — summarize, never dump raw JSON
+- **Always include links** — clickable author URLs for all pages

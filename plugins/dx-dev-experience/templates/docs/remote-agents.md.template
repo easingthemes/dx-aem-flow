@@ -1,0 +1,63 @@
+# Remote Agents
+
+AI agents that run automatically in response to Azure DevOps events. No developer action needed beyond adding a tag or creating a PR.
+
+## How It Works
+
+1. You add a **tag** to a work item in ADO (or create a PR)
+2. ADO fires a webhook to AWS Lambda
+3. Lambda checks for duplicates and rate limits, then queues an ADO Pipeline
+4. The pipeline runs the AI agent
+5. The agent posts results as **ADO comments** on the work item or PR
+
+## Work Item Agents
+
+All work-item agents require **two tags**: the agent-specific tag AND `KAI-TRIGGER`. Add the agent tag first, then `KAI-TRIGGER` when ready.
+
+| Agent | Tag | Works on | Result |
+|-------|-----|----------|--------|
+| DoR Check | `KAI-DOR-AUTOMATION` | User Story | Readiness checklist — what's clear, what's missing |
+| DoD Check | `KAI-DOD-AUTOMATION` | User Story | Pass/fail completion checklist |
+| Estimation | `KAI-ESTIMATION-AUTOMATION` | User Story | Story points with reasoning |
+| Bug Fix | `KAI-BUGFIX-AUTOMATION` | Bug | Triage analysis; may create branch + PR |
+| Dev Agent | `KAI-DEV-AUTOMATION` | User Story | Branch + PR with implementation |
+| QA Agent | `KAI-QA-AUTOMATION` | User Story | Screenshots and verification findings |
+| Doc Agent | `KAI-DOC-AUTOMATION` | User Story | Wiki page with authoring guide |
+
+## Pull Request Agents
+
+These trigger automatically — no tags needed.
+
+| Agent | Trigger | Result |
+|-------|---------|--------|
+| PR Review | PR created targeting base branch | Review comments with severity levels |
+| PR Answer | Someone comments on your PR | Reply in the PR thread |
+
+## Tracking Progress
+
+- **Pipeline runs** — ADO > Pipelines > select the agent pipeline > recent runs
+- **Work item comments** — the agent posts directly on the ticket
+- **PR comments** — PR agents post directly on the pull request
+
+## Troubleshooting
+
+| Problem | Check |
+|---------|-------|
+| Tag added but nothing happened | `KAI-TRIGGER` tag also present? |
+| Agent ran but no comment | Pipeline run logs for errors |
+| PR Review didn't run | PR must target the base branch (usually `development`) |
+| Was working, now stopped | ADO disables webhooks after 7 consecutive failures — re-enable in Service Hooks settings |
+| Webhook delivered but no pipeline | Lambda logs in CloudWatch |
+
+For detailed ops troubleshooting, see [runbook.md](runbook.md). For project-specific pipeline links and webhook details, see [automation/docs/how-to-trigger.md](../automation/docs/how-to-trigger.md).
+
+## Safety Controls
+
+| Control | What it does |
+|---------|-------------|
+| Rate limits | Per-pipeline daily cap (e.g., 50 PR reviews/day) |
+| Token budget | Monthly spending cap; alerts at 80%, halts at 100% |
+| Deduplication | Duplicate webhook events silently dropped (1h TTL) |
+| Policy gates | Agents can only do what their role allows |
+| Push policy | Code changes need 4 checks before pushing |
+| Scanner | Prompt injection detection on all inputs |

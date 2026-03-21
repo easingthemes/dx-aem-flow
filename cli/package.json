@@ -1,0 +1,14 @@
+{
+  "name": "dx-scaffold",
+  "version": "1.0.0",
+  "description": "Standalone scaffolding utility for dx-aem-ai-flow plugin ecosystem — creates the same project structure as /dx-init + /aem-init without requiring Claude Code",
+  "bin": {
+    "dx-scaffold": "./bin/dx-scaffold.js"
+  },
+  "main": "./lib/index.js",
+  "engines": {
+    "node": ">=14"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

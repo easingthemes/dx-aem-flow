@@ -1,0 +1,71 @@
+---
+description: Java test patterns — JUnit 5, wcm.io AEM Mock, AssertJ
+paths: ["**/test/**/*.java"]
+applyTo: "**/*Test.java"
+---
+
+# Java Testing
+
+## Framework
+
+JUnit 5 + wcm.io AEM Mock + Mockito + AssertJ
+
+## Pattern
+
+```java
+@ExtendWith({ AemContextExtension.class, MockitoExtension.class })
+class MyComponentImplTest {
+    private final AemContext context = new AemContext(ResourceResolverType.JCR_MOCK);
+
+    @Mock
+    private MyService myService;
+
+    @BeforeEach
+    void setUp() {
+        context.load().json("/com/example/models/component-content.json", "/content/myproject");
+        context.registerService(MyService.class, myService);
+        context.addModelsForClasses(MyComponentImpl.class);
+    }
+
+    @Test
+    void getTitle() {
+        context.currentResource("/content/myproject/component1");
+        MyComponentImpl model = context.request().adaptTo(MyComponentImpl.class);
+        assertEquals("Expected", model.getTitle());
+    }
+}
+```
+
+## Rules
+
+- Always use both `AemContextExtension` and `MockitoExtension`
+- Load JCR content from JSON fixture files (in `src/test/resources/`)
+- Register all OSGi services the model depends on before adapting
+- Use `context.currentResource()` then `context.request().adaptTo()` to test models
+- Use AssertJ for assertions, `@ParameterizedTest` + `@CsvSource` for data-driven tests
+- Test fixture JSON files live alongside test classes in resources
+- Every new Sling Model or service gets a test
+- Use BDD-style method names: `shouldDoSomethingWhenCondition()`
+- Use AssertJ fluent assertions: `assertThat(result).isEqualTo(expected)`
+- Use BDDMockito: `given(...).willReturn(...)` and `then(...).should()`
+- Test null safety: verify graceful handling of null inputs and services
+- Test JSON export: validate component export structure for headless delivery
+- Don't test Core WCM Components — they are tested by Adobe
+- Don't test simple getters unless they contain transformation logic
+- Don't hardcode test resource paths — use constants or variables
+- Skip for simple getter/setter methods or configuration-only classes
+
+## File Organization
+
+```
+src/test/
+├── java/com/example/project/
+│   ├── internal/models/v1/
+│   │   └── component/
+│   │       └── MyComponentImplTest.java
+│   └── services/
+│       └── MyServiceImplTest.java
+└── resources/com/example/project/
+    └── models/
+        └── component-content.json
+```

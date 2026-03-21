@@ -1,0 +1,145 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Hooks
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Hooks"
+  subtitle="Automated reactions to events -- validation gates and workflow triggers"
+/>
+
+<SectionHeading
+  badge="Concept"
+  title="What is a Hook?"
+  subtitle="A shell script that runs automatically when something happens during an AI session."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:webhook" iconColor="bg-brand-700" title="Event-Driven Automation">
+    Hooks are like git hooks but for AI sessions. They fire on lifecycle events:
+    <ul class="mt-2 list-none p-0 text-sm space-y-1">
+      <li><strong>SessionStart</strong> -- when the AI session begins</li>
+      <li><strong>PreToolUse</strong> -- before the AI calls a tool (can block it)</li>
+      <li><strong>PostToolUse</strong> -- after the AI finishes calling a tool</li>
+      <li><strong>SessionStop</strong> -- when the AI session ends</li>
+    </ul>
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="Examples"
+  badgeColor="secondary"
+  title="Real Examples from KAI"
+  subtitle="Hooks that run in production every day."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:play-circle" iconColor="bg-emerald-600" title="SessionStart: Environment Validation">
+      Validates <code>.ai/config.yaml</code> exists and Node version matches <code>.nvmrc</code>. Fails fast if the environment is misconfigured.
+    </ContentCard>
+    <ContentCard icon="mdi:cancel" iconColor="bg-red-500" title="PreToolUse: Branch Guard">
+      Blocks <code>git commit</code> on protected branches (main, master, development, develop).
+      Prevents accidental commits to the wrong branch.
+    </ContentCard>
+    <ContentCard icon="mdi:camera" iconColor="bg-cyan" title="PostToolUse: Figma Screenshot">
+      Automatically saves screenshots from the Figma MCP to disk. Avoids repeated MCP calls
+      for the same design during a session.
+    </ContentCard>
+    <ContentCard icon="mdi:timer" iconColor="bg-cyan-dark" title="PostToolUse: Subagent Log">
+      Logs a timestamp every time a subagent completes. Useful for debugging long-running
+      autonomous pipelines.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Format"
+  badgeColor="warning"
+  title="Hook File Format"
+  subtitle="A single hooks.json file defines all hooks for the project."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="hooks.json (simplified)">{`{
+  "version": 1,
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "bash session-start.sh"
+      }]
+    }],
+    "PreToolUse": [{
+      "matcher": "Bash(git commit*)",
+      "hooks": [{
+        "type": "command",
+        "command": "bash branch-guard.sh"
+      }]
+    }]
+  }
+}`}</CommandBlock>
+
+  <HighlightBox severity="info" title="version: 1">
+    Setting <code>version: 1</code> makes the hooks file work in both Claude Code and
+    Copilot CLI (v1.0.6+). A single file, dual compatibility.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="When to Use"
+  badgeColor="info"
+  title="When to Use Hooks vs Skills"
+  subtitle="Different tools for different jobs."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:webhook" iconColor="bg-amber-500" title="Hooks">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>Automatic</strong> -- fire without user input</li>
+        <li><strong>Deterministic</strong> -- shell scripts, no AI reasoning</li>
+        <li><strong>Fast</strong> -- milliseconds, no token cost</li>
+        <li>Best for: validation gates, caching, logging</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-brand-700" title="Skills">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><strong>Interactive</strong> -- user invokes with /command</li>
+        <li><strong>AI-driven</strong> -- reasoning and judgment</li>
+        <li><strong>Flexible</strong> -- adapts to context</li>
+        <li>Best for: complex tasks, code generation, analysis</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code Hooks">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/hooks" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/en/docs/claude-code/hooks
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Copilot Hooks">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-hooks" target="_blank" rel="noopener noreferrer">
+        docs.github.com/.../custom-hooks
+      </a>
+    </ContentCard>
+  </div>
+</Section>

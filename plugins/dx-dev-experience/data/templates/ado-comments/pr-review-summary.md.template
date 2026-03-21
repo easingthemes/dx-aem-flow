@@ -1,0 +1,15 @@
+### [PRReviewAgent] Summary
+
+<!-- 1-2 sentence summary of the review -->
+
+**Findings:** <!-- N must-fix, N suggestions -->
+
+<!-- For each finding:
+- ❌ **path/to/file.ext**:line — first line of comment (if must-fix)
+- 💡 **path/to/file.ext**:line — first line of comment (if suggestion) -->
+
+<!-- If no findings:
+**No issues found.** Code looks good. -->
+
+---
+_[PRReviewAgent] Run #<build-id> | <ISO timestamp>_

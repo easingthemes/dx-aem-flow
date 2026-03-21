@@ -1,0 +1,61 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  icon?: string;
+  iconColor?: string;
+  title?: string;
+  tags?: { label: string; color?: string }[];
+  horizontal?: boolean;
+  class?: string;
+}
+
+const { icon, iconColor = 'bg-brand-700', title, tags, horizontal = false, class: className = '' } = Astro.props;
+
+const tagColors: Record<string, string> = {
+  primary: 'border-brand-700 text-brand-700',
+  secondary: 'border-cyan text-cyan-dark',
+  success: 'border-emerald-600 text-emerald-600',
+  warning: 'border-amber-500 text-amber-600',
+  error: 'border-red-500 text-red-500',
+  info: 'border-cyan-dark text-cyan-dark',
+  default: 'border-gray-300 text-gray-600',
+};
+---
+
+<div class:list={['border border-gray-200 rounded-lg bg-white h-full transition-shadow hover:shadow-md', className]}>
+  <div class="p-5">
+    {horizontal ? (
+      <div class="flex gap-4 items-start">
+        {icon && (
+          <div class:list={['w-10 h-10 rounded-md flex items-center justify-center text-white flex-shrink-0', iconColor]}>
+            <Icon name={icon} class="w-5 h-5" />
+          </div>
+        )}
+        <div class="flex-1">
+          {title && <h3 class="text-base font-semibold text-brand-900 mb-1">{title}</h3>}
+          <div class="text-sm text-gray-600 leading-relaxed"><slot /></div>
+        </div>
+      </div>
+    ) : (
+      <>
+        {icon && (
+          <div class:list={['w-10 h-10 rounded-md flex items-center justify-center text-white mb-3', iconColor]}>
+            <Icon name={icon} class="w-5 h-5" />
+          </div>
+        )}
+        {title && <h3 class="text-base font-semibold text-brand-900 mb-1">{title}</h3>}
+        <div class="text-sm text-gray-600 leading-relaxed"><slot /></div>
+      </>
+    )}
+    {tags && tags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mt-3">
+        {tags.map((tag) => (
+          <span class:list={['inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold', tagColors[tag.color || 'default']]}>
+            {tag.label}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</div>

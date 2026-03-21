@@ -1,0 +1,110 @@
+---
+description: Frontend build pipeline — clientlib structure, build commands
+paths: ["**/frontend/**", "**/clientlibs/**"]
+applyTo: "**/*.js, **/*.css, **/*.scss"
+---
+
+# Build & Clientlibs
+
+## Build Pipeline
+
+Frontend build typically uses Webpack or similar bundler:
+
+1. **JS** → per-component bundles + shared chunks
+2. **SCSS** → Dart Sass per-component CSS
+3. **Clientlibs** → assembled into AEM clientlib structure under `/apps/`
+
+## Common Commands
+
+```bash
+cd <frontend-dir>
+
+npm run build              # Full production build
+npm run lint:js            # ESLint
+npm run lint:css           # Stylelint
+```
+
+## Maven Deploy
+
+```bash
+mvn clean install -PautoInstallPackage           # Full build + deploy
+mvn clean install -PautoInstallPackage -pl <module>  # Single module
+```
+
+## Adding New Components
+
+1. Create component folder in the frontend directory
+2. Add JS file (class + registration)
+3. Add config file (selectors, classes)
+4. Add SCSS file (component styles)
+5. Run `npm run build` to verify
+
+## Rules
+
+- Never modify build output directly — edit source and rebuild
+- Each component gets its own bundle
+- Shared code goes in commons — bundler extracts what's used
+- Use `npm run build` to test changes before Maven deploy
+- Always use `@netcentric/component-loader` for registering JS components
+- Run linters immediately after creating or modifying files
+- Remove unused imports
+
+## Source File Structure
+
+Frontend source directory (from `aem.frontend-dir` in config) is divided by context:
+
+-   `author`: Styles and scripts for AEM authoring interface
+-   `commons`: Shared utilities, base styles, scripts used across components
+-   `publish`: Component-specific styles and scripts for the published site
+
+### Component Source Files
+
+-   **Location**: `{frontend-dir}/publish/components/{prefix}-{name}/`
+-   **JS**: `{prefix}-{name}.clientlibs.js`
+-   **SCSS**: `{prefix}-{name}.clientlibs.scss`
+-   **Config**: `{prefix}-{name}.config.js`
+
+## Compiled Client Library
+
+### `.content.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    jcr:primaryType="cq:ClientLibraryFolder"
+    allowProxy="{Boolean}true"
+    categories="[{project}.components.{prefix}-accordion]"
+    dependencies="[core.wcm.components.accordion.v1]"/>
+```
+
+Category naming: `{project}.components.{prefix}-{name}`
+
+### Sling Model → HTL → JavaScript Mapping
+
+```
+Sling Model Method          HTL Expression                   JS Constructor Param
+==================          ===============                  ====================
+getParam1String()     ->    model.param1String          ->   params.param1String
+isParam2Boolean()     ->    model.param2Boolean         ->   params.param2Boolean
+
+DATA TYPES & SYNTAX:
+- String:  "key": "${model.stringProperty}"     (needs quotes in JSON)
+- Boolean: "key": ${model.booleanProperty}      (no quotes - outputs true/false)
+- Number:  "key": ${model.numberProperty}       (no quotes)
+```
+
+## BEM with AEM Style System
+
+```scss
+// CORRECT: Modifier at root, descendant selectors for elements
+.{prefix}-component--variation {
+  .{prefix}-component {
+    &__element { ... }
+  }
+}
+
+// WRONG: Hybrid Block-Modifier__Element pattern
+.{prefix}-component--variation {
+  &__element { ... }  // Creates .{prefix}-component--variation__element — WRONG
+}
+```

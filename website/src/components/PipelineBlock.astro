@@ -1,0 +1,57 @@
+---
+interface Step {
+  title: string;
+  subtitle?: string;
+  command?: string;
+  color?: string;
+}
+
+interface Props {
+  label?: string;
+  command?: string;
+  description?: string;
+  steps?: Step[];
+}
+
+const { label, command, description, steps = [] } = Astro.props;
+---
+
+<div class="border border-gray-200 rounded-lg overflow-hidden my-4">
+  {(command || label) && (
+    <div class:list={['bg-gray-50 px-5', command ? 'py-4' : 'py-2', steps.length > 0 && 'border-b border-gray-200']}>
+      {label && <span class="block text-[0.7rem] uppercase tracking-wider text-gray-400 font-medium mb-1">{label}</span>}
+      {command && <code class="text-base font-semibold text-brand-700 bg-transparent p-0">{command}</code>}
+      {description && <p class="text-sm text-gray-500 mt-2">{description}</p>}
+    </div>
+  )}
+
+  {steps.length > 0 && (
+    <div class="flex flex-wrap items-stretch gap-3 p-4">
+      {steps.map((step, i) => (
+        <div class="flex items-center">
+          <div
+            class="border rounded-lg text-center w-[130px] bg-white h-full flex flex-col overflow-hidden"
+            style={step.color ? `border-color: ${step.color}` : ''}
+          >
+            <span class="text-[0.8rem] font-bold text-brand-700 px-3 pt-2 pb-1">{step.title}</span>
+            {step.subtitle && (
+              <span class="text-[0.7rem] text-gray-500 leading-snug flex-1 flex items-center justify-center px-3 pb-2">
+                {step.subtitle}
+              </span>
+            )}
+            {step.command && (
+              <div class="border-t border-dashed border-gray-200 py-1 px-1">
+                <code class="text-[0.65rem] text-cyan-dark bg-transparent p-0 block">{step.command}</code>
+              </div>
+            )}
+          </div>
+          {i < steps.length - 1 && (
+            <svg class="w-4 h-4 ml-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+</div>

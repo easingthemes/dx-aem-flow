@@ -1,0 +1,205 @@
+<!-- Source: skills/aem-component/SKILL.md -->
+---
+name: AEMComponent
+description: Find all source files, AEM pages, and dialog fields for an AEM component. Use when asking "where is component X?", "what files for hero?", or any component lookup question.
+argument-hint: "<component name (e.g., hero, banner, accordion)>"
+tools:
+  - read
+  - codebase
+  - search
+  - search/codebase
+  - agent
+  - 'AEM/getNodeContent'
+  - 'AEM/searchContent'
+  - 'AEM/enhancedPageSearch'
+  - 'AEM/scanPageComponents'
+agents: ['aem-page-finder', 'aem-file-resolver']
+handoffs:
+  - label: "Research a ticket for this component"
+    agent: AEMTicket
+    prompt: "Find the ADO ticket and all related files for this component"
+  - label: "Snapshot AEM baseline"
+    agent: AEMBefore
+    prompt: "Capture the AEM baseline for this component before development"
+  - label: "Find source files in codebase"
+    agent: DxComponent
+    prompt: "Find all source files for this component"
+---
+
+# AEM Component Lookup
+
+You receive a component name and produce a complete developer reference — every source file, AEM page, and dialog field for that component.
+
+**Performance target:** ~10-15 tool calls total. Minimize MCP calls.
+
+## Prerequisites
+
+`.ai/` must exist (created by `/aem-init`). Read:
+- `.ai/project/component-index.md` — local repo component scan
+- `.ai/project/component-index-project.md` — enriched catalog with platform, FE, source links
+- `.ai/config.yaml` — project configuration
+
+## 1. Parse Input & Normalize
+
+The argument is a component name. Accept any format and generate all search variations.
+
+### Step 1a: Extract base name
+
+Strip resource type prefixes:
+- `project/components/content/hero` → `hero`
+- `myapp/base/components/myapp-banner` → `myapp-banner`
+
+Read `.ai/config.yaml` for `aem.component-prefix` to know the project's naming prefix.
+
+### Step 1b: Generate search variations
+
+From the base name, generate a **regex pattern** for grep covering all naming conventions:
+
+Given input `{name}`:
+1. **As-is**: `{name}`
+2. **Remove hyphens/spaces**: `my-component` → `mycomponent`
+3. **Add hyphens at word boundaries**: `mycomponent` → `my-component`
+4. **Project prefix**: `<prefix>-{name}` (from `aem.component-prefix`)
+5. **Strip prefixes**: `prefix-hero` → also search `hero`
+
+**If `.ai/project/project.yaml` exists:** Read `platforms[].component-prefixes` for additional prefix variations. For each prefix, generate `{prefix}{name}` as an additional variation.
+
+Build a single grep regex covering all variations.
+
+If no argument provided, ask the user for the component name.
+
+## 2. Search Local Docs (DIRECT — no agent)
+
+**Do NOT spawn an agent for this.** Use direct search/read calls — it's just 2-4 files.
+
+Run these searches **in parallel** (all variations in one regex pattern):
+
+1. Search `.ai/project/component-index.md` for all variations — local repo component index
+2. Search `.ai/project/component-index-project.md` for all variations — enriched cross-repo catalog (if exists)
+3. Read `.ai/config.yaml` for project structure — repos, component paths, SCM URLs
+
+From `component-index-project.md` extract (if found):
+- **Platform** column — Legacy, DXN, or both
+- **FE** column — B, C, B C, Yes, N/A
+- **Source Link** — ADO URL with exact component path
+- **Repo** column — which repo the component lives in
+- **Notes** — category info
+
+**If Component Details section exists** for this component: extract dialog fields as fallback when AEM MCP is unavailable.
+
+## 3. Build Source File URLs
+
+### With file-patterns.yaml (preferred — data-driven)
+
+If `.ai/project/file-patterns.yaml` exists, use the **aem-file-resolver** agent with:
+- `component_name` — the confirmed component name from step 2
+- `platform` — detected platform(s) from the index match
+- `fe_locations` — FE column value from index
+
+The agent reads `file-patterns.yaml`, resolves all files per platform, and returns a structured file table with ADO URLs.
+
+**Multi-platform support:** If the component exists on multiple platforms, the agent resolves files for EACH platform separately and returns separate Backend sections.
+
+### Without file-patterns.yaml (convention-based fallback)
+
+Read `.ai/config.yaml` for `aem.component-path`, `aem.frontend-dir`, `scm.org`, `scm.project`. Use conventions to build file paths and verify with search.
+
+## 4. Find AEM Pages
+
+### With project.yaml (market-scoped search)
+
+If `.ai/project/project.yaml` exists:
+- Read active brands/markets for AEM content paths
+- Pass `primary_language_only: true` to aem-page-finder
+- If the component has a market-specific prefix, scope search to matching markets only
+
+### Without project.yaml (config-based search)
+
+Read `.ai/config.yaml` `aem.content-paths` for configured content paths.
+
+### Spawn aem-page-finder
+
+Use the **aem-page-finder** agent. Pass the exact component name(s), content paths, author URL, and `primary_language_only: true`.
+
+Run this agent in parallel with source file resolution (step 3).
+
+## 5. Inspect Dialog (optional)
+
+### Primary: AEM MCP (live dialog)
+
+If AEM MCP is reachable, use `AEM/getNodeContent` on the `_cq_dialog` path with depth 6. Extract field names, types, labels, default values. Present as a compact table.
+
+### Fallback: Component Details from index
+
+If AEM is not reachable BUT Component Details section exists in `component-index-project.md` (from step 2): display those dialog fields as fallback.
+
+If neither source is available, note "Dialog fields not available."
+
+## 6. Present Results
+
+```markdown
+## Component: <name>
+
+**Resource type:** `<resource-type>`
+**Platform:** <Legacy | DXN | both>
+**FE:** <B | C | B C | Yes | N/A>
+
+---
+
+### Source Files
+
+**Backend — <repo> (<platform>)**
+| File | Purpose | Link |
+|------|---------|------|
+| `<name>.html` | HTL template | [link](url) |
+| `_cq_dialog/.content.xml` | Author dialog | [link](url) |
+| `<Name>Model.java` | Sling Model | [link](url) |
+
+<If multi-platform, show separate Backend sections per platform>
+
+**Frontend — <repo> (<brand|core>)**
+| File | Purpose | Link |
+|------|---------|------|
+| `<name>.js` | Component logic | [link](url) |
+| `<name>.scss` | Styles | [link](url) |
+
+### Dialog Fields
+| Field | Type | Label | JCR Property |
+|-------|------|-------|-------------|
+| ... | ... | ... | ... |
+
+<Note source: "(from AEM MCP)" or "(from Component Details fallback)">
+
+### AEM Pages
+| Page | Market | Author URL |
+|------|--------|-----------|
+| <page-name> | <market> | [Open in Author](url) |
+
+<Group by market/language when market-scoped search was used>
+
+### Notes
+<Naming mismatches, shared FE, missing files, edge cases>
+
+---
+
+**Save results to a file?** (suggested: `.ai/research/<name>.md`)
+```
+
+## 7. Save (if user confirms)
+
+If the user says yes:
+- **Default location:** `.ai/research/<name>.md`
+- Create the directory if it doesn't exist
+- Confirm path after saving
+
+## Rules
+
+- **Docs first** — always check both `component-index.md` AND `component-index-project.md` before any MCP call
+- **Data-driven when possible** — use file-patterns.yaml via aem-file-resolver when available
+- **Every seed data file is optional** — missing file = skip that capability gracefully
+- **TWO agents max** — aem-file-resolver + aem-page-finder. Everything else is direct tool calls
+- **Multi-platform** — if component exists on multiple platforms, resolve files for EACH separately
+- **Clickable links** — all file paths as SCM/ADO URLs, all pages as AEM author URLs
+- **No guessing** — if a file isn't found, say "Not found"
+- **Dialog fallback** — use Component Details from index when AEM MCP is unavailable
+- **Ask to save** — always ask before writing files

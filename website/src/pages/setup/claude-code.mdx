@@ -1,0 +1,362 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: "Setup: Claude Code"
+sidebar: setup
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Setup: Claude Code"
+  subtitle="Install dx plugins and start using AI-assisted development with Claude Code CLI."
+/>
+
+<SectionHeading
+  badge="Prerequisites"
+  title="Before You Start"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="Claude Code CLI">
+      Claude Code must be installed and authenticated. Verify with:
+      <CommandBlock label="Check installation">claude --version</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="Tracker Access (ADO or Jira)">
+      <strong>ADO:</strong> The ADO MCP server uses browser-based OAuth -- no PAT needed. On first use, it opens a browser window to authenticate.
+
+      <strong>Jira:</strong> Set <code>JIRA_PERSONAL_TOKEN</code> and <code>JIRA_BASE_URL</code> in your environment or <code>.claude/settings.local.json</code>.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Step 1"
+  badgeColor="secondary"
+  title="Add Marketplace & Install Plugins"
+  subtitle="Plugins are distributed via a shared marketplace hosted in a git repository."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Add marketplace and install plugins">{`# Add the shared marketplace (one-time)
+/plugin marketplace add easingthemes/dx-aem-ai-flow
+
+# Install plugins (project scope)
+/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-aem@dx-aem-ai-flow          # AEM projects only`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Updating Plugins">
+    To update all plugins to the latest version:
+    <CommandBlock>/plugin marketplace update dx-aem-ai-flow</CommandBlock>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Step 2"
+  badgeColor="secondary"
+  title="Run Init Skills"
+  subtitle="Initialize the project with dx conventions, config, rules, and seed data."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="/dx-init">
+      Core initialization -- creates config, rules, instructions, agent templates, and MCP configuration.
+      <CommandBlock label="Run in Claude Code">/dx-init</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="/aem-init">
+      AEM-specific seed data -- component index, file patterns, content paths, architecture docs.
+      <CommandBlock label="Run in Claude Code">/aem-init</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <div class="overflow-x-auto mt-6">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">What /dx-init Creates</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Path</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/config.yaml</code></td><td class="py-2 px-4">Project configuration (branches, ADO/Jira, build commands)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/rules/</code></td><td class="py-2 px-4">Convention rules with dual frontmatter (Claude + Copilot)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4">MCP server configuration (ADO, Jira/Confluence, Figma, axe)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>AGENTS.md</code></td><td class="py-2 px-4">Agent inventory for discoverability</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/agents/</code></td><td class="py-2 px-4">25 Copilot agent templates</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/templates/</code></td><td class="py-2 px-4">Spec file and work item comment templates</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/rules/</code></td><td class="py-2 px-4">Domain-specific override rules</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Step 3"
+  badgeColor="secondary"
+  title="Configure MCP Environment Variables"
+  subtitle="ADO MCP is auto-configured. Jira and AEM MCPs need manual setup."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="success" title="ADO MCP -- Auto-Configured">
+    The ADO MCP server uses browser-based OAuth. On first use, it opens a browser to authenticate with your ADO account. No PAT or env var needed for regular development.
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="Jira/Confluence MCP -- Manual Configuration">
+    If using Jira instead of ADO, set the following env vars in <code>.claude/settings.local.json</code> and your shell profile:
+    <code>JIRA_PERSONAL_TOKEN</code>, <code>JIRA_BASE_URL</code> (e.g., <code>https://myorg.atlassian.net</code>),
+    and <code>JIRA_USER_EMAIL</code>.
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="AEM MCP -- Manual Configuration Required">
+    AEM MCP requires <code>AEM_INSTANCES</code> to be set in <strong>two places</strong>:
+    <ol class="mt-2 text-sm">
+      <li><code>{"~"}/.bashrc</code> or <code>{"~"}/.zshrc</code> -- for Claude Code CLI and Copilot CLI</li>
+      <li><code>.claude/settings.local.json</code> -- for Claude Code session env</li>
+    </ol>
+    <p class="text-xs text-gray-500 mt-2">Why both? Copilot CLI does not read <code>settings.local.json</code> -- it only inherits shell environment variables.</p>
+  </HighlightBox>
+
+  <CommandBlock label="~/.bashrc or ~/.zshrc">{`export AEM_INSTANCES='[{"name":"local","url":"http://localhost:4502","auth":"admin:admin"}]'`}</CommandBlock>
+
+  <CommandBlock label=".claude/settings.local.json">{`{
+  "env": {
+    "AEM_INSTANCES": "[{\\"name\\":\\"local\\",\\"url\\":\\"http://localhost:4502\\",\\"auth\\":\\"admin:admin\\"}]"
+  }
+}`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Chrome DevTools MCP">
+    Chrome DevTools MCP auto-launches a Chrome instance via stdio. No manual setup required -- just ensure Chrome is installed.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Step 4"
+  badgeColor="secondary"
+  title="Start Using Skills"
+  subtitle="Common workflows to get started with."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">Common Workflows</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Command</th>
+          <th class="text-left py-2 px-4 font-semibold">What It Does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-req-fetch &lt;id&gt;</code></td><td class="py-2 px-4">Fetch work item (ADO or Jira) and save raw spec</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-plan</code></td><td class="py-2 px-4">Generate implementation plan from specs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-step &lt;n&gt;</code></td><td class="py-2 px-4">Execute a single plan step</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-step-all</code></td><td class="py-2 px-4">Execute all plan steps with self-healing</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-pr-review</code></td><td class="py-2 px-4">Review a PR with inline comments</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-pr-commit</code></td><td class="py-2 px-4">Commit changes and create PR</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/aem-snapshot</code></td><td class="py-2 px-4">Capture AEM component state (AEM only)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/aem-verify</code></td><td class="py-2 px-4">Verify component against spec (AEM only)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Verify"
+  badgeColor="success"
+  title="Verify Installation"
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Check installed skills">claude skills list | grep "dx-"</CommandBlock>
+
+  <HighlightBox severity="success" title="Expected Output">
+    You should see 78 skills listed (55 from dx-dev-experience, 12 from dx-aem, plus 11 automation skills if installed).
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Troubleshooting"
+  badgeColor="error"
+  title="Troubleshooting"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <HighlightBox severity="error" title="Plugins Not Visible?">
+      If plugins are not appearing after install, check <code>.claude/settings.json</code> for <code>enabledPlugins</code>. Recreate the file if needed:
+      <CommandBlock>{`{
+  "enabledPlugins": [
+    "dx-dev-experience@dx-aem-ai-flow",
+    "dx-aem@dx-aem-ai-flow"
+  ]
+}`}</CommandBlock>
+    </HighlightBox>
+    <HighlightBox severity="warning" title="MCP Connection Issues">
+      Run <code>/dx-doctor</code> to validate MCP connections, config, and rule files.
+      This checks all integrations and reports what is missing or misconfigured.
+      <CommandBlock>/dx-doctor</CommandBlock>
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Details"
+  badgeColor="info"
+  title="Configuration Details"
+  subtitle="Auto-configured by /dx-init but documented here for manual setup or troubleshooting."
+  bg="primary"
+/>
+<Section>
+  <h3 class="text-base font-semibold text-brand-900 mb-4">Co-authored Commit Footer</h3>
+  <p class="text-sm text-gray-600 mb-2">Disable Claude's default co-author footer in <code>.claude/settings.json</code>:</p>
+  <CommandBlock label=".claude/settings.json">{`{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}`}</CommandBlock>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-4">MCP Server Enablement</h3>
+  <p class="text-sm text-gray-600 mb-2">Enable only the servers your project uses -- unused servers consume tokens:</p>
+  <CommandBlock label=".claude/settings.json">{`{
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": ["ado"]
+}`}</CommandBlock>
+  <p class="text-sm text-gray-500 mt-2">Add <code>"AEM"</code> and <code>"chrome-devtools-mcp"</code> for AEM projects.</p>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-4">Permissions</h3>
+  <p class="text-sm text-gray-600 mb-2">Start minimal, expand as needed -- Claude prompts for anything not in the allow list:</p>
+  <CommandBlock label=".claude/settings.json">{`{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(mvn*)",
+      "mcp__ado__wit_get_work_item",
+      "mcp__ado__wit_list_work_item_comments",
+      "mcp__ado__search_code"
+    ]
+  }
+}`}</CommandBlock>
+  <HighlightBox severity="warning" title="Avoid Wildcards">
+    Do not use wildcards like <code>{"mcp__ado__*"}</code> -- they send full tool schemas on every request, wasting tokens.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Scope"
+  badgeColor="secondary"
+  title="Installation Scope"
+  subtitle="Choose where to store plugin settings based on sharing needs."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Scope</th>
+        <th class="text-left p-3 font-semibold">Stored In</th>
+        <th class="text-left p-3 font-semibold">Shared via Git</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>project</strong> (recommended)</td>
+        <td class="p-3"><code>.claude/settings.json</code></td>
+        <td class="p-3">Yes</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>user</strong></td>
+        <td class="p-3"><code>{"~"}/.claude/settings.json</code></td>
+        <td class="p-3">No</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>local</strong></td>
+        <td class="p-3"><code>.claude/settings.local.json</code></td>
+        <td class="p-3">No (gitignored)</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Customization"
+  badgeColor="warning"
+  title="Customization"
+  subtitle="Adjust agent behavior, override config, or shadow entire skills."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:pencil" iconColor="bg-brand-700" title="Shared Rules">
+      Edit files in <code>.ai/rules/</code> to change review criteria, answer tone, or pragmatism filters.
+      Changes apply to both local skills and automation agents.
+
+      - `pr-review.md` -- severity, confidence
+      - `pr-answer.md` -- response tone
+      - `pragmatism.md` -- question filtering
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Config Overrides">
+      Add an <code>overrides:</code> section to <code>.ai/config.yaml</code>:
+      <CommandBlock>{`overrides:
+  pr-review:
+    tone: "direct, no praise"
+    severity-threshold: 80
+  pr-answer:
+    persona: "senior developer"`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:content-copy" iconColor="bg-amber-500" title="Skill Shadowing">
+      Override any plugin skill by creating one with the same name in your project.
+      Project-level skills take precedence over plugin skills automatically.
+      <CommandBlock>{`mkdir -p .claude/skills/commit
+# Write your own SKILL.md`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Standalone"
+  badgeColor="info"
+  title="Standalone Scaffold"
+  subtitle="Set up project structure without Claude Code or Copilot CLI."
+  bg="alt"
+/>
+<Section>
+  <p class="text-sm text-gray-600 mb-4">A zero-dependency Node.js utility that replicates <code>/dx-init</code> + <code>/aem-init</code> output:</p>
+  <CommandBlock label="Scaffold without AI tools">{`node dx/cli/bin/dx-scaffold.js /path/to/your-project --all`}</CommandBlock>
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard title="Available Flags">
+      - `--aem` -- AEM rules + seed data
+      - `--copilot` -- Copilot agent templates
+      - `--all` -- both AEM and Copilot
+      - `--force` -- overwrite existing files
+    </ContentCard>
+    <HighlightBox severity="info" title="When to Use">
+      Use the standalone scaffold when you need to set up project structure in CI/CD pipelines
+      or for teammates who have not yet installed Claude Code.
+    </HighlightBox>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Uninstall"
+  badgeColor="error"
+  title="Uninstall"
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Remove plugins">{`claude plugin uninstall dx
+claude plugin uninstall aem`}</CommandBlock>
+  <HighlightBox severity="info" title="Project Files Preserved">
+    Project files in <code>.ai/</code> are not removed -- they belong to the project, not the plugin.
+  </HighlightBox>
+</Section>

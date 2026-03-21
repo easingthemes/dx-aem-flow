@@ -1,0 +1,149 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Prompts & Rules
+sidebar: learn
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Prompts & Rules"
+  subtitle="How to shape AI behavior without writing code"
+/>
+
+<SectionHeading
+  badge="Concept"
+  title="The Prompt Stack"
+  subtitle="AI doesn't just see your question -- it sees layers of context that shape its behavior."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:layers" iconColor="bg-brand-700" title="Five Layers of Context">
+    Each layer adds more specificity. The AI sees all of them combined:
+    <ol class="mt-2 pl-5 text-sm space-y-1">
+      <li><strong>System prompt</strong> -- built into the AI tool (Claude Code / Copilot CLI)</li>
+      <li><strong>CLAUDE.md</strong> -- project instructions at the repo root</li>
+      <li><strong>.claude/rules/</strong> -- path-scoped conventions (auto-loaded per file type)</li>
+      <li><strong>Skill instructions</strong> -- the SKILL.md being executed</li>
+      <li><strong>Your message</strong> -- what you typed</li>
+    </ol>
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="CLAUDE.md"
+  badgeColor="secondary"
+  title="CLAUDE.md"
+  subtitle="The project's main instructions file -- like a README for the AI."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="What Goes in CLAUDE.md">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li>Build and deploy commands</li>
+        <li>Project structure overview</li>
+        <li>Key conventions and patterns</li>
+        <li>Branch strategy and CI info</li>
+        <li>Links to setup guides</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:file-document" iconColor="bg-cyan" title="Both Tools Read It">
+      Claude Code reads <code>CLAUDE.md</code> at the repo root. Copilot CLI also reads it
+      (since v1.0.4). One file, universal context for both tools.
+      <CommandBlock label="Location">/repo-root/CLAUDE.md</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Rules"
+  badgeColor="warning"
+  title="Rules (.claude/rules/)"
+  subtitle="Path-scoped convention files that auto-load when you edit matching files."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Example: .claude/rules/fe-javascript.md">{`---
+paths: ["**/*.js"]
+applyTo: "**/*.js"
+---
+# JavaScript Conventions
+- Use BATComponent custom elements (extends HTMLElement)
+- Lifecycle: options() -> beforeLoad() -> afterLoad()
+- No ES modules -- use Gulp concat pipeline
+- Externalize selectors to component config`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Dual Frontmatter">
+    Rules need both <code>paths:</code> (Claude Code) and <code>applyTo:</code> (Copilot CLI)
+    to work in both tools. Single file, dual format.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Shared"
+  badgeColor="info"
+  title="Shared Rules (.ai/rules/)"
+  subtitle="Cross-tool rules read by both local skills and CI/CD automation agents."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:share" iconColor="bg-brand-700" title="pr-review.md">
+      PR review standards -- 80%+ confidence threshold, severity levels, constructive tone.
+    </ContentCard>
+    <ContentCard icon="mdi:share" iconColor="bg-cyan" title="pr-answer.md">
+      How to reply to PR comments -- cite code, be concise, acknowledge valid points.
+    </ContentCard>
+    <ContentCard icon="mdi:share" iconColor="bg-amber-500" title="pragmatism.md">
+      Filter for practical questions -- skip theoretical debates, focus on actionable feedback.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="Edit Once, Changes Everywhere">
+    Shared rules in <code>.ai/rules/</code> are read by local interactive sessions AND autonomous
+    CI/CD agents. Update the rule once and every agent picks up the change.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="AGENTS.md"
+  badgeColor="secondary"
+  title="AGENTS.md"
+  subtitle="Agent inventory at repo root -- Copilot CLI reads it for context about available agents."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:account-group" iconColor="bg-cyan-dark" title="Agent Registry">
+    <code>AGENTS.md</code> at the repo root lists all available agents with their names,
+    descriptions, and capabilities. Copilot CLI uses this to understand which agents are
+    available for <code>@AgentName</code> invocation. Claude Code agents are defined in
+    plugin <code>agents/</code> directories instead.
+  </ContentCard>
+</Section>
+
+<SectionHeading
+  badge="Docs"
+  badgeColor="info"
+  title="Official Documentation"
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:link" iconColor="bg-brand-700" title="Claude Code Instructions">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/memory" target="_blank" rel="noopener noreferrer">
+        docs.anthropic.com/en/docs/claude-code/memory
+      </a>
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan" title="Copilot Instructions">
+      <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/custom-instructions" target="_blank" rel="noopener noreferrer">
+        docs.github.com/.../custom-instructions
+      </a>
+    </ContentCard>
+  </div>
+</Section>

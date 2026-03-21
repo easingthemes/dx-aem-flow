@@ -1,0 +1,257 @@
+{
+  "_comment": "Infrastructure registry for AI automation agents. Copy this to infra.json and fill in all {{PLACEHOLDER}} values. See docs/setup-new-project.md for step-by-step instructions.",
+
+  "region": "{{AWS_REGION}}",
+  "_region_comment": "AWS region where your Lambda functions and DynamoDB tables live (e.g. us-east-1)",
+
+  "adoOrg": "{{ADO_ORG_URL}}",
+  "_adoOrg_comment": "Your Azure DevOps organization URL (e.g. https://yourorg.visualstudio.com). No trailing slash.",
+
+  "adoProject": "{{ADO_PROJECT}}",
+  "_adoProject_comment": "Primary ADO project name where pipelines are registered (e.g. My Engineering Platform)",
+
+  "pipelineFolder": "{{PIPELINE_FOLDER}}",
+  "_pipelineFolder_comment": "Optional ADO pipeline folder path (e.g. \\\\MyFolder). Pipelines are created inside this folder for organization. Leave empty or omit for root folder.",
+
+  "pipelines": {
+    "_comment": "Pipeline IDs are assigned by ADO when you import the YAML files. Record them here after import.",
+    "dor": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-DOR-Agent",
+      "_name_comment": "Hub: KAI (from pipelineFolder). Consumer: KAI-<RepoShortName> (e.g. KAI-MyApp). Names must be unique across repos in the same ADO project.",
+      "id": "{{DOR_PIPELINE_ID}}",
+      "_id_comment": "ADO pipeline definition ID. Find it in ADO > Pipelines > pipeline > Edit > URL (?definitionId=XXXX)",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-dor.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "DOR_WIKI_URL"]
+    },
+    "pr-review": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-PR-Review-Agent",
+      "id": "{{PR_REVIEW_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-pr-review.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "REVIEWER_IDENTITIES"]
+    },
+    "eval": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-Eval-Gates",
+      "id": "{{EVAL_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/eval/ado-eval-pipeline.yml",
+      "variables": [],
+      "note": "Tier 1 eval gates — no external API calls, all data from fixtures. Triggers on .ai/rules, agents, eval, policy changes."
+    },
+    "pr-answer": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-PR-Answer-Agent",
+      "id": "{{PR_ANSWER_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-pr-answer.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "MY_IDENTITIES"],
+      "note": "Separate from pr-review — this one responds to comments on YOUR PRs"
+    },
+    "dod": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-DOD-Agent",
+      "id": "{{DOD_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-dod.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+    },
+    "dod-fix": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-DOD-Fix-Agent",
+      "id": "{{DOD_FIX_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-dod-fix.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+    },
+    "bugfix": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-BugFix-Agent",
+      "id": "{{BUGFIX_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-bug-fix.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+    },
+    "qa": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-QA-Agent",
+      "id": "{{QA_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-qa.yml",
+      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+    },
+    "devagent": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-DevAgent",
+      "id": "{{DEV_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-dev-agent.yml",
+      "variables": ["ANTHROPIC_API_KEY", "FIGMA_PERSONAL_ACCESS_TOKEN", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+    },
+    "docagent": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-DOCAgent",
+      "id": "{{DOC_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-doc-agent.yml",
+      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+    },
+    "estimation": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-Estimation-Agent",
+      "id": "{{ESTIMATION_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-estimation.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+    }
+  },
+
+  "lambdas": {
+    "_comment": "Two Lambda functions handle all webhook traffic. WI Router handles all workitem.updated events (1 route: POST /wi), PR Router handles PR comment events (1 route: POST /pr-answer). Deployed via lambda/deploy.sh.",
+    "wi-router": {
+      "functionName": "{{PIPELINE_NAME_PREFIX}}-WI-Router",
+      "_functionName_comment": "Single Lambda for all work item webhooks. Single API Gateway route POST /wi points here. Tag-based routing determines which agent to invoke.",
+      "files": ["wi-router.mjs", "package.json"],
+      "sharedLibs": ["dedupe.js", "dlq.js", "rate-limiter.js", "aws-sig.js", "retry.js"],
+      "envVars": [
+        "BASIC_USER",
+        "BASIC_PASS",
+        "WEBHOOK_SECRET",
+        "ADO_PAT",
+        "ADO_DOR_PIPELINE_ID",
+        "ADO_DOD_PIPELINE_ID",
+        "ADO_BUGFIX_PIPELINE_ID",
+        "ADO_QA_PIPELINE_ID",
+        "ADO_DEV_PIPELINE_ID",
+        "ADO_DOC_PIPELINE_ID",
+        "ADO_ESTIMATION_PIPELINE_ID",
+        "ADO_PIPELINE_PROJECT",
+        "TAG_GATE_DOR",
+        "TAG_GATE_DOD",
+        "TAG_GATE_BUGFIX",
+        "TAG_GATE_QA",
+        "TAG_GATE_DEV",
+        "TAG_GATE_DOC",
+        "TAG_GATE_ESTIMATION",
+        "DYNAMODB_DEDUPE_TABLE",
+        "DYNAMODB_RATE_LIMIT_TABLE",
+        "SQS_DLQ_URL"
+      ]
+    },
+    "pr-router": {
+      "functionName": "{{PIPELINE_NAME_PREFIX}}-PR-Router",
+      "_functionName_comment": "Handles PR comment webhooks. API Gateway route /pr-answer points here.",
+      "files": ["pr-router.mjs", "queuePrAnswerPipeline.mjs", "package.json"],
+      "sharedLibs": ["dedupe.js", "dlq.js", "rate-limiter.js", "aws-sig.js", "retry.js"],
+      "envVars": [
+        "BASIC_USER",
+        "BASIC_PASS",
+        "WEBHOOK_SECRET",
+        "ADO_PAT",
+        "ADO_ORG_URL",
+        "ADO_PR_ANSWER_PIPELINE_MAP",
+        "MY_IDENTITIES",
+        "DYNAMODB_DEDUPE_TABLE",
+        "DYNAMODB_RATE_LIMIT_TABLE",
+        "SQS_DLQ_URL"
+      ]
+    }
+  },
+
+  "storage": {
+    "_comment": "AWS resource names. Convention: use your PIPELINE_NAME_PREFIX in lowercase as a resource name prefix (e.g. myai-dedupe).",
+    "dynamodb": {
+      "dedupe": {
+        "tableName": "{{RESOURCE_PREFIX}}-dedupe",
+        "_tableName_comment": "DynamoDB table for webhook event deduplication. TTL-based (1 hour).",
+        "arn": "arn:aws:dynamodb:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:table/{{RESOURCE_PREFIX}}-dedupe",
+        "ttl": { "enabled": true, "attribute": "ttl" }
+      },
+      "rateLimits": {
+        "tableName": "{{RESOURCE_PREFIX}}-rate-limits",
+        "_tableName_comment": "DynamoDB table for daily per-pipeline rate limit counters.",
+        "arn": "arn:aws:dynamodb:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:table/{{RESOURCE_PREFIX}}-rate-limits"
+      },
+      "tokenBudget": {
+        "tableName": "{{RESOURCE_PREFIX}}-token-budget",
+        "_tableName_comment": "DynamoDB table for monthly token usage tracking.",
+        "arn": "arn:aws:dynamodb:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:table/{{RESOURCE_PREFIX}}-token-budget"
+      }
+    },
+    "sqs": {
+      "dlq": {
+        "queueName": "{{RESOURCE_PREFIX}}-dlq",
+        "_queueName_comment": "SQS dead letter queue for failed Lambda events. 14-day retention.",
+        "queueUrl": "https://sqs.{{AWS_REGION}}.amazonaws.com/{{AWS_ACCOUNT_ID}}/{{RESOURCE_PREFIX}}-dlq",
+        "arn": "arn:aws:sqs:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:{{RESOURCE_PREFIX}}-dlq",
+        "retentionDays": 14
+      }
+    },
+    "s3": {
+      "bundles": {
+        "bucketName": "{{RESOURCE_PREFIX}}-bundles-{{AWS_ACCOUNT_ID}}",
+        "_bucketName_comment": "S3 bucket for run bundle artifacts. Bucket name must be globally unique — appending account ID ensures this.",
+        "arn": "arn:aws:s3:::{{RESOURCE_PREFIX}}-bundles-{{AWS_ACCOUNT_ID}}",
+        "lifecycleDays": 90
+      }
+    },
+    "iamPolicy": {
+      "policyName": "{{RESOURCE_PREFIX}}-storage-access",
+      "_policyName_comment": "IAM policy name granting Lambda access to DynamoDB, SQS, S3.",
+      "attachedTo": "{{LAMBDA_EXECUTION_ROLE_NAME}}",
+      "_attachedTo_comment": "IAM role that Lambda functions run under. Find in AWS Console > Lambda > function > Configuration > Permissions."
+    }
+  },
+
+  "monitoring": {
+    "snsTopic": {
+      "name": "{{RESOURCE_PREFIX}}-alerts",
+      "_name_comment": "SNS topic for CloudWatch alarm notifications.",
+      "arn": "arn:aws:sns:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:{{RESOURCE_PREFIX}}-alerts"
+    },
+    "alarms": [
+      "{{RESOURCE_PREFIX}}-dlq-depth",
+      "{{RESOURCE_PREFIX}}-lambda-errors-wi-router",
+      "{{RESOURCE_PREFIX}}-lambda-errors-pr-router",
+      "{{RESOURCE_PREFIX}}-lambda-throttles"
+    ],
+    "_alarms_comment": "CloudWatch alarm names — must match what is defined in lambda/cloudwatch/alarms.json",
+    "alarmsConfig": "lambda/cloudwatch/alarms.json",
+    "setupScript": "lambda/cloudwatch/setup-alarms.sh"
+  },
+
+  "apiGateway": {
+    "_comment": "HTTP API Gateway that routes webhook traffic to Lambda. Created once by your infra team. URL never changes after creation.",
+    "name": "{{PIPELINE_NAME_PREFIX}}-Agent",
+    "id": "{{API_GATEWAY_ID}}",
+    "_id_comment": "10-char API Gateway ID. Find in AWS Console > API Gateway > your API > ID column.",
+    "stage": "prod",
+    "url": "https://{{API_GATEWAY_ID}}.execute-api.{{AWS_REGION}}.amazonaws.com/prod",
+    "routes": {
+      "wi": "POST /wi",
+      "pr-answer": "POST /pr-answer"
+    }
+  },
+
+  "webhooks": {
+    "_comment": "ADO Service Hooks. WI hooks (User Story + Bug) are project-scoped (hub only). PR Answer hook is per-repo (hub + each consumer) — filtered to repository + base branch to avoid firing on all repos.",
+    "wi-userstory": {
+      "event": "workitem.updated",
+      "filter": "workItemType: User Story, tag: KAI-TRIGGER",
+      "route": "POST /wi",
+      "url": "https://{{API_GATEWAY_ID}}.execute-api.{{AWS_REGION}}.amazonaws.com/prod/wi",
+      "target": "API Gateway → {{PIPELINE_NAME_PREFIX}}-WI-Router",
+      "agents": ["dor", "dod", "qa", "devagent", "docagent", "estimation"],
+      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks",
+      "status": "not-configured"
+    },
+    "wi-bug": {
+      "event": "workitem.updated",
+      "filter": "workItemType: Bug, tag: KAI-TRIGGER",
+      "route": "POST /wi",
+      "url": "https://{{API_GATEWAY_ID}}.execute-api.{{AWS_REGION}}.amazonaws.com/prod/wi",
+      "target": "API Gateway → {{PIPELINE_NAME_PREFIX}}-WI-Router",
+      "agents": ["bugfix"],
+      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks",
+      "status": "not-configured"
+    },
+    "pr-answer": {
+      "event": "git.pullrequest.comment-event",
+      "_scope_comment": "Per-repo hook — each repo (hub + consumers) creates its own, filtered to repository + base branch. Avoids firing on all PR comments across the ADO project.",
+      "filter": "repository: <this-repo-id>, branch: <base-branch>",
+      "route": "POST /pr-answer",
+      "url": "https://{{API_GATEWAY_ID}}.execute-api.{{AWS_REGION}}.amazonaws.com/prod/pr-answer",
+      "target": "API Gateway → {{PIPELINE_NAME_PREFIX}}-PR-Router",
+      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks",
+      "status": "not-configured"
+    }
+  },
+
+  "_dependencies": {
+    "code-change":        "Run deploy.sh → Lambda updated (URL stays same)",
+    "lambda-name-change": "Update lambdas.*.functionName here → redeploy → re-link in API Gateway",
+    "gateway-change":     "Update apiGateway here → update ADO Service Hook URL",
+    "webhook-change":     "Update in ADO Service Hooks console (no local file to change)"
+  }
+}

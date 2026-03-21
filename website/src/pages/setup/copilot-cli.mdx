@@ -1,0 +1,216 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: "Setup: GitHub Copilot CLI"
+sidebar: setup
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Setup: GitHub Copilot CLI"
+  subtitle="Same plugins, same skills -- install from the shared marketplace."
+/>
+
+<SectionHeading
+  badge="Prerequisites"
+  title="Before You Start"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="GitHub Copilot CLI">
+      GitHub Copilot CLI must be installed and authenticated. Verify with:
+      <CommandBlock label="Check installation">copilot --version</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="Tracker Access (ADO or Jira)">
+      <strong>ADO:</strong> Browser-based OAuth -- no PAT needed. On first use, opens a browser to authenticate.
+
+      <strong>Jira:</strong> Set <code>JIRA_PERSONAL_TOKEN</code>, <code>JIRA_BASE_URL</code>, and <code>JIRA_USER_EMAIL</code> in your shell profile.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Step 1"
+  badgeColor="secondary"
+  title="Install Plugins"
+  subtitle="Same marketplace, same commands as Claude Code."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Install plugins from marketplace">{`# Check if marketplace is already added
+/plugin marketplace list
+
+# Browse available plugins
+/plugin marketplace browse dx-aem-ai-flow
+
+# Install plugins
+/plugin install dx-dev-experience@dx-aem-ai-flow
+/plugin install dx-aem@dx-aem-ai-flow          # AEM projects only`}</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="Step 2"
+  badgeColor="secondary"
+  title="Run Init Skills"
+  subtitle="Same initialization as Claude Code -- /dx-init and /aem-init."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="/dx-init">
+      Core initialization -- config, rules, instructions, agent templates, MCP configuration.
+      <CommandBlock label="Run">/dx-init</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="/aem-init">
+      AEM seed data -- component index, file patterns, content paths, architecture docs.
+      <CommandBlock label="Run">/aem-init</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Step 3"
+  badgeColor="secondary"
+  title="Configure MCP Environment Variables"
+  subtitle="Critical difference: Copilot CLI only reads shell environment variables."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="error" title="Copilot CLI Environment Variable Limitation">
+    Copilot CLI does <strong>not</strong> expand custom env vars from config files -- only <code>HOME</code>, <code>TMPDIR</code>, <code>PWD</code>. Plugin MCP configs using <code>$&#123;AEM_INSTANCES&#125;</code> work in Claude Code but <strong>fail silently</strong> in Copilot CLI unless the variable is set in your shell profile.
+  </HighlightBox>
+
+  <CommandBlock label="~/.bashrc (REQUIRED for Copilot CLI -- AEM projects only)">{`export AEM_INSTANCES="local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
+export AXE_API_KEY="your-axe-api-key"  # optional, for accessibility testing`}</CommandBlock>
+
+  <HighlightBox severity="info" title="After Editing Shell Profile">
+    Restart your terminal or run <code>source ~/.bashrc</code> / <code>source ~/.zshrc</code> for changes to take effect.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Step 4"
+  badgeColor="secondary"
+  title="Start Using Skills"
+  subtitle="Same /dx-* skills plus @Agent invocation for Copilot agents."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">Skills (same as Claude Code)</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Command</th>
+          <th class="text-left py-2 px-4 font-semibold">What It Does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-req-fetch &lt;id&gt;</code></td><td class="py-2 px-4">Fetch work item (ADO or Jira) and save raw spec</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-plan</code></td><td class="py-2 px-4">Generate implementation plan from specs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-step-all</code></td><td class="py-2 px-4">Execute all plan steps with self-healing</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-pr-review</code></td><td class="py-2 px-4">Review a PR with inline comments</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-pr-commit</code></td><td class="py-2 px-4">Commit changes and create PR</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overflow-x-auto mt-6">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">Copilot Agents (@Agent Invocation)</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Agent</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxPRReview</code></td><td class="py-2 px-4">Review PRs with inline patches and severity levels</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxCodeReview</code></td><td class="py-2 px-4">Deep code review with architecture analysis</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@AEMComponent</code></td><td class="py-2 px-4">Inspect and verify AEM components</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxHelp</code></td><td class="py-2 px-4">Answer architecture questions from project docs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxReqAll</code></td><td class="py-2 px-4">Full requirements pipeline (fetch, explain, research, share)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxPlan</code></td><td class="py-2 px-4">Generate and validate implementation plans</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxStepAll</code></td><td class="py-2 px-4">Execute all plan steps with recovery loops</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxBugTriage</code></td><td class="py-2 px-4">Bug triage with browser automation evidence</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="What You Get"
+  badgeColor="success"
+  title="Full Platform Features"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Feature</th>
+          <th class="text-left py-2 px-4 font-semibold">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Skills</td><td class="py-2 px-4">78 skills auto-discovered from plugins</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Copilot Agents</td><td class="py-2 px-4">25 agents with allowed-tools for auto-approval</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">MCP Servers</td><td class="py-2 px-4">AEM, Chrome DevTools, Figma, axe, ADO, Jira/Confluence</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Hooks</td><td class="py-2 px-4">SessionStart, branch guard, Figma caching</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Rules</td><td class="py-2 px-4">Dual frontmatter (.claude/rules/) -- works in both tools</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Verify"
+  badgeColor="success"
+  title="Verify Installation"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <CommandBlock label="List skills">/skills list</CommandBlock>
+    <CommandBlock label="Check MCP servers">/mcp</CommandBlock>
+    <CommandBlock label="List plugins">/plugin list</CommandBlock>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Comparison"
+  badgeColor="info"
+  title="Differences from Claude Code"
+  subtitle="What is shared and what differs between the two tools."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Aspect</th>
+          <th class="text-left py-2 px-4 font-semibold">Shared</th>
+          <th class="text-left py-2 px-4 font-semibold">Differs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Skills</td><td class="py-2 px-4">78 skills, same commands</td><td class="py-2 px-4"></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Marketplace</td><td class="py-2 px-4">Same git URL</td><td class="py-2 px-4"></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Hooks</td><td class="py-2 px-4">Same hooks.json (version: 1)</td><td class="py-2 px-4"></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">MCP Servers</td><td class="py-2 px-4">Same servers and tools</td><td class="py-2 px-4"></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Rules</td><td class="py-2 px-4">Same .claude/rules/ files</td><td class="py-2 px-4">Dual frontmatter (paths: + applyTo:)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Agents</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: 13 subagents | Copilot: 25 agents with allowed-tools</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Env Vars</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: settings.local.json + shell | Copilot: shell only</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4 font-semibold">Tool Permissions</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: permissions prompt | Copilot: allowed-tools allowlist</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>

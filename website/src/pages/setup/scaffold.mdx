@@ -1,0 +1,172 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: "Setup: Standalone Scaffold"
+sidebar: setup
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Setup: Standalone Scaffold"
+  subtitle="No AI tool needed -- a Node.js utility creates the same project structure."
+/>
+
+<SectionHeading
+  badge="When to Use"
+  title="Use Cases"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="No AI Tool Available">
+      Neither Claude Code nor Copilot CLI is installed or accessible.
+      The scaffold creates the full project structure without any AI runtime.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Quick Initial Setup">
+      Rapidly bootstrap a new project with all conventions, rules, and templates
+      in place. Edit config values later.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="CI/CD Environments">
+      Scaffold from a pipeline or automation context where interactive AI tools
+      are not available.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Prerequisites"
+  badgeColor="secondary"
+  title="What You Need"
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="Node.js >= 14">
+      The scaffold utility is a Node.js script. Any version from 14 onward works.
+      <CommandBlock label="Check version">node --version</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:folder" iconColor="bg-cyan-dark" title="dx-aem-ai-flow Repository">
+      Git clone of the plugin source repository containing the scaffold CLI.
+      <CommandBlock label="Clone">git clone https://dev.azure.com/org/project/_git/dx-aem-ai-flow</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Run"
+  badgeColor="secondary"
+  title="Run the Scaffold"
+  subtitle="One command creates the full project structure."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Scaffold a project">node dx/cli/bin/dx-scaffold.js /path/to/your-project --all</CommandBlock>
+
+  <div class="overflow-x-auto mt-6">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">CLI Flags</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Flag</th>
+          <th class="text-left py-2 px-4 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--all</code></td><td class="py-2 px-4">Create everything: config, rules, templates, agents, docs, lib scripts</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--aem</code></td><td class="py-2 px-4">Include AEM-specific files (seed data, AEM rules, AEM agents)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--copilot</code></td><td class="py-2 px-4">Include Copilot agent templates in .github/agents/</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--force</code></td><td class="py-2 px-4">Overwrite existing files (useful for upgrades)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--quiet</code></td><td class="py-2 px-4">Suppress output (for CI/CD use)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Output"
+  badgeColor="success"
+  title="What It Creates"
+  subtitle="Approximately 144 files across config, rules, templates, docs, and lib scripts."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:folder" iconColor="bg-brand-700" title="Project Structure">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li><code>.ai/config.yaml</code> -- project configuration</li>
+        <li><code>.ai/rules/</code> -- domain-specific override rules</li>
+        <li><code>.ai/templates/</code> -- spec and ADO comment templates</li>
+        <li><code>.ai/lib/</code> -- shared shell scripts</li>
+        <li><code>.claude/rules/</code> -- convention rules (dual frontmatter)</li>
+        <li><code>.github/agents/</code> -- 25 Copilot agent templates</li>
+        <li><code>AGENTS.md</code> -- agent inventory</li>
+        <li><code>.mcp.json</code> -- MCP server configuration</li>
+      </ul>
+    </ContentCard>
+    <div>
+      <HighlightBox severity="info" title="TODO Placeholders">
+        Values that cannot be auto-detected (ADO/Jira project, repository GUID, build commands)
+        are filled with <code>TODO</code> placeholders. Edit <code>.ai/config.yaml</code> after
+        scaffolding to replace these with real values.
+      </HighlightBox>
+
+      <HighlightBox severity="warning" title="AEM Seed Data">
+        With <code>--aem</code>, the scaffold also creates <code>.ai/project/</code> with empty
+        seed data files. Run <code>/aem-init</code> later (when an AI tool is available) to
+        populate them from the live AEM instance.
+      </HighlightBox>
+    </div>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Next Steps"
+  badgeColor="warning"
+  title="After Scaffolding"
+  subtitle="Edit configuration and finalize setup."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:pencil" iconColor="bg-brand-700" title="Edit .ai/config.yaml">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li>Set <code>scm.org</code> and <code>scm.base-branch</code></li>
+        <li>Set <code>build.command</code> and <code>build.lint</code></li>
+        <li>Set <code>ado.repository-id</code> (GUID) or <code>jira.project-key</code></li>
+        <li>Set <code>ado.project</code> or <code>jira.base-url</code></li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="AEM Configuration">
+      <ul class="mt-2 list-none p-0 text-sm space-y-1">
+        <li>Set <code>aem.author-url-qa</code></li>
+        <li>Set <code>aem.publish-url-qa</code></li>
+        <li>Configure QA credentials (env vars)</li>
+        <li>Set <code>aem.active-markets</code></li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="Automation Setup">
+      If using autonomous agents, continue with <code>/auto-init</code> to configure
+      service hooks (ADO or Jira webhooks), pipeline configs, and Lambda routing.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Relationship"
+  badgeColor="info"
+  title="Relationship to Init Skills"
+  subtitle="The scaffold output is identical to what /dx-init + /aem-init produce."
+  bg="primary"
+/>
+<Section>
+  <ContentCard icon="mdi:swap-horizontal" iconColor="bg-cyan-dark" title="Same Output, Different Mechanism" horizontal>
+    The scaffold utility creates the exact same file structure as <code>/dx-init</code> and <code>/aem-init</code>. The difference is the mechanism: the scaffold runs as a plain Node.js script without any AI runtime, while the init skills run inside Claude Code or Copilot CLI and can auto-detect project values.
+
+    You can run init skills later to re-detect and update values that the scaffold left as TODO placeholders. The init skills will not overwrite files that already have real values.
+  </ContentCard>
+</Section>

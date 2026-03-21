@@ -1,0 +1,515 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Skill Catalog
+sidebar: reference
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Skill Catalog"
+  subtitle="All slash commands across the three plugins -- 78 skills total"
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="Skill Inventory"
+  subtitle="Skills grouped by plugin and category."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-dev-experience" tags={[{ label: '55 skills', color: 'primary' }]}>
+      Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR, bug fix, documentation, and utility.
+    </ContentCard>
+    <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: '12 skills', color: 'secondary' }]}>
+      AEM-specific verification, QA, documentation, and component reconnaissance.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="dx-automation" tags={[{ label: '11 skills', color: 'warning' }]}>
+      Autonomous agent infrastructure: AWS Lambda, ADO pipelines, CloudWatch alarms.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-dev-experience                                                       */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Estimation"
+  subtitle="1 skill"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-estimate</code></td><td class="p-3"><code>&lt;work-item-id or URL&gt;</code></td><td class="p-3">Analyze ADO/Jira User Story and produce structured estimation -- hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment.</td><td class="p-3">ADO/Jira comment</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Requirements (dx-req-&#42;)"
+  subtitle="11 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-req-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full pipeline: fetch, dor, explain, research, share. Gates on DoR blocking questions. Logs run metrics.</td><td class="p-3">All spec files + ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-req-fetch</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Pull work item from Azure DevOps or Jira via MCP, save faithfully.</td><td class="p-3"><code>raw-story.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-dor</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Validate story against DoR wiki checklist, extract BA data, generate open questions. Posts interactive checkbox comment to ADO/Jira (idempotent). On re-run, reads checkbox state -- if BA checked items, re-fetches and re-validates.</td><td class="p-3"><code>dor-report.md</code> + ADO/Jira comment</td></tr>
+        <tr><td class="p-3"><code>/dx-req-explain</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Distill story into developer-focused requirements. Reads DoR report for BA context.</td><td class="p-3"><code>explain.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-research</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Search codebase for related code via parallel agents. Skips discovery when DoR data available.</td><td class="p-3"><code>research.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-share</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Generate non-technical summary with assumptions from DoR. Posts to ADO/Jira (idempotent).</td><td class="p-3"><code>share-plan.md</code> + ADO/Jira comment</td></tr>
+        <tr><td class="p-3"><code>/dx-req-checklist</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Deprecated -- use <code>/dx-req-dor</code> instead. Kept for backward compatibility.</td><td class="p-3"><code>checklist.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Create child Task work items with hour estimates.</td><td class="p-3">ADO/Jira tasks</td></tr>
+        <tr><td class="p-3"><code>/dx-req-dod</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Check Definition of Done against ADO/Jira wiki checklist -- validates actual deliverables: PR, tests, build, docs, child tasks.</td><td class="p-3"><code>dod.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-dod-fix</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Fix DoD failures: auto-fix what is possible, create tasks for the rest.</td><td class="p-3">Updated <code>dod.md</code> + tasks</td></tr>
+        <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path-to-file&gt;</code></td><td class="p-3">Validate external (non-ADO) requirements document.</td><td class="p-3"><code>explain.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Figma (dx-figma-&#42;)"
+  subtitle="4 skills"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-figma-all</code></td><td class="p-3"><code>[ADO ID] [Figma URL]</code> -- both optional</td><td class="p-3">Full Figma workflow: extract, prototype, verify. Coordinator skill.</td><td class="p-3">All sub-skill outputs</td></tr>
+        <tr><td class="p-3"><code>/dx-figma-extract</code></td><td class="p-3"><code>[ADO ID] [Figma URL]</code> -- both optional</td><td class="p-3">Extract design context, tokens, screenshots from Figma URL. Screenshot layer analysis, relevance check.</td><td class="p-3"><code>figma-extract.md</code>, <code>prototype/figma-reference.png</code></td></tr>
+        <tr><td class="p-3"><code>/dx-figma-prototype</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Research project conventions (2 parallel agents) + generate high-fidelity standalone HTML/CSS prototype.</td><td class="p-3"><code>figma-conventions.md</code>, <code>prototype/index.html</code>, <code>prototype/styles.css</code></td></tr>
+        <tr><td class="p-3"><code>/dx-figma-verify</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Visually verify prototype against Figma reference screenshot. Compares, fixes gaps (max 2 rounds).</td><td class="p-3"><code>figma-gaps.md</code>, <code>prototype/prototype-screenshot.png</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Planning (dx-plan-&#42;)"
+  subtitle="3 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-plan</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Generate step-by-step implementation plan with status tracking. Optionally invokes <code>superpowers:brainstorming</code> for design exploration.</td><td class="p-3"><code>implement.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-plan-validate</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Verify plan covers all requirements, no extras, dependencies correct.</td><td class="p-3">Warnings / OK</td></tr>
+        <tr><td class="p-3"><code>/dx-plan-resolve</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Research and fix risks flagged by validation.</td><td class="p-3">Updated <code>implement.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Execution (dx-step-&#42;)"
+  subtitle="9 skills"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-step-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute all plan steps autonomously (step, test, review, commit loop). Loads fix memory, logs fix patterns, promotes proven fixes to <code>.claude/rules/</code>.</td><td class="p-3">All steps done</td></tr>
+        <tr><td class="p-3"><code>/dx-step</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute next pending step from implement.md. Optionally invokes <code>superpowers:test-driven-development</code>.</td><td class="p-3">Code changes</td></tr>
+        <tr><td class="p-3"><code>/dx-step-test</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Run tests and parse results into pass/fail summary.</td><td class="p-3">Test report</td></tr>
+        <tr><td class="p-3"><code>/dx-step-review</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Review step changes against plan and conventions.</td><td class="p-3">Review verdict</td></tr>
+        <tr><td class="p-3"><code>/dx-step-fix</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Diagnose and fix a blocked step (compile error, test failure, review rejection). Optionally invokes <code>superpowers:systematic-debugging</code>.</td><td class="p-3">Fix applied</td></tr>
+        <tr><td class="p-3"><code>/dx-step-commit</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Stage and commit completed step changes.</td><td class="p-3">Git commit</td></tr>
+        <tr><td class="p-3"><code>/dx-step-heal</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Diagnose pipeline failures, create corrective fix steps in implement.md.</td><td class="p-3">New fix steps</td></tr>
+        <tr><td class="p-3"><code>/dx-step-build</code></td><td class="p-3">none</td><td class="p-3">Build and deploy using config build command, auto-fix errors iteratively.</td><td class="p-3">Build pass/fail</td></tr>
+        <tr><td class="p-3"><code>/dx-step-verify</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Optionally invokes <code>superpowers:verification-before-completion</code>.</td><td class="p-3">Verdict</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Pull Request (dx-pr-&#42;)"
+  subtitle="8 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-pr</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Create pull request via ADO MCP, generate description from share-plan.md. Optionally invokes <code>superpowers:finishing-a-development-branch</code>.</td><td class="p-3">PR URL</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-commit</code></td><td class="p-3"><code>[pr]</code></td><td class="p-3">Commit changes with ADO work item linking; add <code>pr</code> to also create a PR.</td><td class="p-3">Git commit [+ PR]</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-review</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Review a single PR -- analyze diff, save findings, optionally propose fix patches.</td><td class="p-3">Findings file</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-post</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Post saved PR review findings to ADO -- threads with optional fix patches + vote.</td><td class="p-3">ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-reviews</code></td><td class="p-3">none</td><td class="p-3">Batch-review multiple open PRs assigned to you.</td><td class="p-3">Multiple reviews</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Answer open PR comments with codebase context, detect proposed patches.</td><td class="p-3">ADO replies</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-fix</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Apply agree-will-fix code changes from reviews, commit, push, reply to threads.</td><td class="p-3">Code + replies</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Generate categorized report from PR review -- groups by category, tracks patch resolution, posts to wiki.</td><td class="p-3">Report + wiki page</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count]</code></td><td class="p-3">Generate categorized reports for multiple PR reviews -- batch reports posted to ADO Wiki or Confluence.</td><td class="p-3">Batch reports + wiki</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Bug Fix (dx-bug-&#42;)"
+  subtitle="4 skills"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-bug-all</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Full bug workflow: triage, verify, fix. Logs bug patterns, detects component hotspots.</td><td class="p-3">Bug fixed</td></tr>
+        <tr><td class="p-3"><code>/dx-bug-triage</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Fetch bug from ADO/Jira, find affected component, save triage.</td><td class="p-3"><code>raw-bug.md</code>, <code>triage.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (optional)</td><td class="p-3">Reproduce bug via Chrome DevTools, capture screenshots.</td><td class="p-3"><code>verification.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-bug-fix</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (optional)</td><td class="p-3">Generate fix plan from triage, execute, create PR.</td><td class="p-3"><code>implement.md</code> + PR</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Agent Roles (dx-agent-&#42;)"
+  subtitle="3 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-agent-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full pipeline: RE, plan, develop, review, PR with checkpoints. Optionally invokes <code>superpowers:executing-plans</code>.</td><td class="p-3">End-to-end delivery</td></tr>
+        <tr><td class="p-3"><code>/dx-agent-re</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">RE Agent -- analyze story, produce structured requirements spec, post ADO/Jira comment.</td><td class="p-3"><code>re.json</code></td></tr>
+        <tr><td class="p-3"><code>/dx-agent-dev</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Dev Agent -- implement from RE spec, self-check (build/test/lint), commit.</td><td class="p-3">Code changes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Documentation"
+  subtitle="2 skills"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate wiki docs from spec files (after development). Reads aem-doc-gen output for Authoring/Website sections. Posts to sprint-specific ADO Wiki/Confluence subfolder.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Retroactive wiki docs for completed stories -- fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-dev-experience"
+  badgeColor="primary"
+  title="Quality + Utility"
+  subtitle="8 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-axe</code></td><td class="p-3"><code>&lt;URL&gt; [--fix] [--standard wcag2aa|wcag21aa]</code></td><td class="p-3">Accessibility testing using axe MCP Server -- analyze violations, remediate, verify. Requires Docker + Axe DevTools API key.</td><td class="p-3">Violation report, fixes</td></tr>
+        <tr><td class="p-3"><code>/dx-init</code></td><td class="p-3">none (interactive)</td><td class="p-3">Configure project -- detect environment, generate <code>.ai/config.yaml</code>, README, rule templates.</td><td class="p-3"><code>.ai/</code> directory</td></tr>
+        <tr><td class="p-3"><code>/dx-adapt</code></td><td class="p-3"><code>[aem-fullstack|aem-frontend|frontend]</code></td><td class="p-3">Auto-detect project type, structure, and build commands. Saves <code>.ai/project.yaml</code>.</td><td class="p-3"><code>.ai/project.yaml</code></td></tr>
+        <tr><td class="p-3"><code>/dx-doctor</code></td><td class="p-3"><code>[dx|aem|seed-data|auto|all]</code></td><td class="p-3">Check health of all dx workflow files across installed plugins -- config, rules, scripts, seed data, MCP, settings.</td><td class="p-3">Status report</td></tr>
+        <tr><td class="p-3"><code>/dx-upgrade</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Fix all issues found by dx-doctor -- updates stale files, installs missing files, reports manual actions.</td><td class="p-3">Upgrade report</td></tr>
+        <tr><td class="p-3"><code>/dx-ticket-analyze</code></td><td class="p-3"><code>&lt;work-item-id or URL&gt;</code></td><td class="p-3">Research ADO/Jira ticket, find all relevant source files.</td><td class="p-3">Research report</td></tr>
+        <tr><td class="p-3"><code>/dx-eject</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Eject plugin assets into local repo -- copies all skills, agents, rules, templates so project works without plugins.</td><td class="p-3"><code>.claude/skills/</code>, <code>.ai/ejected/</code></td></tr>
+        <tr><td class="p-3"><code>/dx-help</code></td><td class="p-3"><code>&lt;question&gt;</code></td><td class="p-3">Answer architecture questions from local <code>.ai/</code> docs.</td><td class="p-3">Answer</td></tr>
+        <tr><td class="p-3"><code>/dx-sync</code></td><td class="p-3"><code>[--dry-run] [--parallel] [repo1 repo2 ...]</code></td><td class="p-3">Sync plugin updates to consumer repos -- runs sync script with selected repos and options.</td><td class="p-3">Sync report</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-aem                                                                  */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="dx-aem"
+  badgeColor="secondary"
+  title="Verification + Demo"
+  subtitle="4 skills"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-snapshot</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Baseline component state before development -- dialog fields, properties, pages.</td><td class="p-3"><code>aem-before.md</code></td></tr>
+        <tr><td class="p-3"><code>/aem-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Check component after deployment, compare against baseline, create test page.</td><td class="p-3"><code>aem-after.md</code></td></tr>
+        <tr><td class="p-3"><code>/aem-fe-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Screenshot component in wcmmode=disabled, compare against Figma/requirements, fix loop.</td><td class="p-3"><code>aem-fe-verify.md</code></td></tr>
+        <tr><td class="p-3"><code>/aem-demo</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Open AEM editor, screenshot dialog, write authoring guide.</td><td class="p-3"><code>demo/</code> folder</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-aem"
+  badgeColor="secondary"
+  title="QA + Documentation"
+  subtitle="3 skills"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-qa</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Full QA agent -- navigate pages, check rendering/dialogs, screenshot, create Bug tickets.</td><td class="p-3"><code>qa.json</code></td></tr>
+        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team, post to ADO. Reuses <code>/aem-doc-gen</code> output or creates own test page.</td><td class="p-3"><code>qa-handoff.md</code></td></tr>
+        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate AEM demo docs -- find existing pages, create docs page, capture dialog + website screenshots on QA, write authoring guide with Authoring/Website sections.</td><td class="p-3"><code>demo/authoring-guide.md</code>, <code>demo/&#42;.png</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-aem"
+  badgeColor="secondary"
+  title="Recon"
+  subtitle="5 skills -- project knowledge and component discovery"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-init</code></td><td class="p-3">none (interactive)</td><td class="p-3">Detect AEM structure, append <code>aem:</code> section to <code>.ai/config.yaml</code>, set up project seed data.</td><td class="p-3">Config update</td></tr>
+        <tr><td class="p-3"><code>/aem-component</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Find all source files, AEM pages, and dialog fields for a component (multi-platform, data-driven).</td><td class="p-3">Component report</td></tr>
+        <tr><td class="p-3"><code>/aem-page-search</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Find all AEM pages using a specific component.</td><td class="p-3">Page list</td></tr>
+        <tr><td class="p-3"><code>/aem-refresh</code></td><td class="p-3">none</td><td class="p-3">Update <code>.ai/project/</code> seed data from plugin, external docs repo, or manual sources.</td><td class="p-3">Seed data files</td></tr>
+        <tr><td class="p-3"><code>/aem-doctor</code></td><td class="p-3"><code>[components|osgi|dispatcher|all]</code></td><td class="p-3">Check AEM project infrastructure health.</td><td class="p-3">Status report</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-automation                                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="dx-automation"
+  badgeColor="warning"
+  title="Setup Sequence"
+  subtitle="7 skills -- run once in order to provision infrastructure"
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Automation Setup Order"
+    steps={[
+      { title: 'auto-init', subtitle: 'Scaffold .ai/automation/', command: '/auto-init' },
+      { title: 'auto-provision', subtitle: 'AWS resources', command: '/auto-provision' },
+      { title: 'auto-pipelines', subtitle: 'ADO pipelines', command: '/auto-pipelines' },
+      { title: 'auto-deploy', subtitle: 'Lambda code', command: '/auto-deploy' },
+      { title: 'auto-lambda-env', subtitle: 'Env vars', command: '/auto-lambda-env' },
+      { title: 'auto-webhooks', subtitle: 'Service hooks', command: '/auto-webhooks' },
+      { title: 'auto-alarms', subtitle: 'CloudWatch', command: '/auto-alarms' },
+    ]}
+  />
+
+  <div class="overflow-x-auto mt-6">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/auto-init</code></td><td class="p-3">Scaffold <code>.ai/automation/</code> -- generates <code>infra.json</code>, <code>repos.json</code>, <code>.env.template</code>. Prereq check, config questions, data bundle copy.</td></tr>
+        <tr><td class="p-3"><code>/auto-provision</code></td><td class="p-3">Create all AWS resources: DynamoDB tables, SQS DLQ, S3 bucket, SNS topic, IAM role, Lambda functions (placeholder), API Gateway.</td></tr>
+        <tr><td class="p-3"><code>/auto-pipelines</code></td><td class="p-3">Import ADO pipeline YAMLs into Azure DevOps and set all pipeline variables (LLM credentials, wiki URL, identities).</td></tr>
+        <tr><td class="p-3"><code>/auto-deploy</code></td><td class="p-3">Package and deploy Lambda code for DoR, DoD, PR Answer, BugFix, QA, DevAgent, and/or DOCAgent. Wraps <code>lambda/deploy.sh</code> with audit logging.</td></tr>
+        <tr><td class="p-3"><code>/auto-lambda-env</code></td><td class="p-3">Set Lambda environment variables interactively (ADO PAT, webhook secrets, DynamoDB table names, etc.).</td></tr>
+        <tr><td class="p-3"><code>/auto-webhooks</code></td><td class="p-3">Configure ADO service hooks and PR Review build validation policy. WI hooks (project-scoped, hub only) + PR Answer hook (per-repo, all profiles) + PR Review build policy (per-repo).</td></tr>
+        <tr><td class="p-3"><code>/auto-alarms</code></td><td class="p-3">Create CloudWatch alarms (DLQ depth, Lambda errors, throttles) and subscribe email to SNS alerts topic.</td></tr>
+        <tr><td class="p-3"><code>/auto-test</code></td><td class="p-3">Run a local dry-run of an automation agent against real ADO data (no posts/commits). Verify connectivity and output before going live.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="dx-automation"
+  badgeColor="warning"
+  title="Ongoing Operations"
+  subtitle="4 skills -- monitoring, health, testing"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/auto-deploy</code></td><td class="p-3"><code>[dor|dod|pr-answer|bugfix|qa|devagent|docagent|all]</code></td><td class="p-3">Redeploy Lambda after code changes. Safe to re-run at any time.</td></tr>
+        <tr><td class="p-3"><code>/auto-doctor</code></td><td class="p-3">none</td><td class="p-3">Full health check: file integrity, ADO pipeline state, Lambda function state, env var coverage.</td></tr>
+        <tr><td class="p-3"><code>/auto-status</code></td><td class="p-3">none</td><td class="p-3">Operational dashboard: DLQ depth, monthly token budget utilization, daily rate limit usage.</td></tr>
+        <tr><td class="p-3"><code>/auto-eval</code></td><td class="p-3"><code>[--all | --agent X | --tier2 | --fixture name]</code></td><td class="p-3">Run evaluation framework against test fixtures. Use after changing prompts or agent steps.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Dependency Graph                                                        */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Dependencies"
+  badgeColor="error"
+  title="Skill Dependencies"
+  subtitle="How skills chain together."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="dx-req-all chain">
+    <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-req-all
+  ├─ dx-req-fetch
+  ├─ dx-req-dor (needs fetch) → posts checkbox comment to ADO
+  │    GATE: blocks if blocking questions exist
+  │    BA checks items → re-run reads state → re-validates
+  ├─ dx-req-explain (needs fetch, reads dor-report.md)
+  ├─ dx-req-research (needs explain, reads dor-report.md)
+  └─ dx-req-share (needs explain, reads dor-report.md)`}</code>
+  </ContentCard>
+
+  <ContentCard icon="mdi:source-branch" iconColor="bg-cyan-dark" title="dx-agent-all chain" class="mt-4">
+    <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-agent-all
+  ├─ dx-agent-re
+  ├─ dx-plan → dx-plan-validate → dx-plan-resolve
+  ├─ dx-step-all
+  │    ├─ dx-step → dx-step-test → dx-step-review
+  │    ├─ dx-step-fix
+  │    └─ dx-step-commit
+  ├─ dx-step-build
+  ├─ dx-step-verify
+  ├─ dx-pr
+  ├─ aem-doc-gen (optional)
+  └─ dx-doc-gen (optional)`}</code>
+  </ContentCard>
+
+  <ContentCard icon="mdi:source-branch" iconColor="bg-red-500" title="dx-bug-all chain" class="mt-4">
+    <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-bug-all
+  ├─ dx-bug-triage
+  ├─ dx-bug-verify (needs triage)
+  └─ dx-bug-fix (needs triage + verify)`}</code>
+  </ContentCard>
+</Section>

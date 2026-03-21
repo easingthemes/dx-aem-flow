@@ -1,0 +1,278 @@
+---
+description: AEM dialog creation — Granite UI structure, field types, multifield, best practices
+paths: ["**/*.xml", "**/_cq_dialog/**"]
+applyTo: "**/*.xml"
+---
+
+# AEM Dialog Creation Rules
+
+Comprehensive rules and best practices for creating AEM component dialogs. These rules ensure consistent, accessible, and maintainable dialog configurations.
+
+## 1. Dialog Structure and Organization
+
+### Basic Dialog Structure
+
+Every dialog must follow this hierarchical structure:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+          xmlns:granite="http://www.adobe.com/jcr/granite/1.0"
+          xmlns:cq="http://www.day.com/jcr/cq/1.0"
+          xmlns:jcr="http://www.jcp.org/jcr/1.0"
+          xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+    jcr:primaryType="nt:unstructured"
+    jcr:title="Component Name"
+    sling:resourceType="cq/gui/components/authoring/dialog"
+    extraClientlibs="[required.clientlibs]">
+    <content
+        jcr:primaryType="nt:unstructured"
+        sling:resourceType="granite/ui/components/coral/foundation/container">
+        <items jcr:primaryType="nt:unstructured">
+            <!-- Dialog content goes here -->
+        </items>
+    </content>
+</jcr:root>
+```
+
+### Required Namespace Declarations
+
+**Always** include these namespaces in the root element:
+- `xmlns:sling="http://sling.apache.org/jcr/sling/1.0"`
+- `xmlns:granite="http://www.adobe.com/jcr/granite/1.0"`
+- `xmlns:cq="http://www.day.com/jcr/cq/1.0"`
+- `xmlns:jcr="http://www.jcp.org/jcr/1.0"`
+- `xmlns:nt="http://www.jcp.org/jcr/nt/1.0"`
+
+## 2. Tab Organization
+
+### Tab Structure
+
+Use tabs to organize dialog content logically:
+
+```xml
+<tabs
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+    maximized="{Boolean}true">
+    <items jcr:primaryType="nt:unstructured">
+        <!-- Tab items -->
+    </items>
+</tabs>
+```
+
+### Standard Tab Content Structure
+
+**IMPORTANT:** By default, tab content should use **direct nesting** without column wrappers:
+
+```xml
+<settings
+    jcr:primaryType="nt:unstructured"
+    jcr:title="Settings"
+    sling:resourceType="granite/ui/components/coral/foundation/container"
+    margin="{Boolean}true">
+    <items jcr:primaryType="nt:unstructured">
+        <!-- Fields go directly here - NO columns wrapper needed -->
+        <fieldGroup
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/well">
+            <items jcr:primaryType="nt:unstructured">
+                <field1 ... />
+                <field2 ... />
+            </items>
+        </fieldGroup>
+    </items>
+</settings>
+```
+
+**Do NOT add unnecessary column wrappers (common mistake).**
+
+### Standard Tab Names
+
+- `actions` - For links and call-to-action buttons
+- `text` - For text content (title, subtitle, description)
+- `image` or `asset` - For image and media content
+- `settings` - For component-specific settings
+- `extraStyles` - For custom styling options
+
+## 3. Form Field Types
+
+### Text Fields
+
+```xml
+<fieldName
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+    fieldDescription="Description of the field"
+    fieldLabel="Field Label"
+    name="./fieldName"
+    required="{Boolean}true"
+    emptyText="Placeholder text"/>
+```
+
+### Rich Text Editor
+
+```xml
+<title
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="cq/gui/components/authoring/dialog/richtext"
+    fieldDescription="Title"
+    fieldLabel="Title"
+    name="./title"
+    removeSingleParagraphContainer="{Boolean}true"
+    useFixedInlineToolbar="{Boolean}true">
+    <rtePlugins jcr:primaryType="nt:unstructured" ... />
+    <uiSettings jcr:primaryType="nt:unstructured" ... />
+</title>
+```
+
+### Dropdown Select
+
+```xml
+<style
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/form/select"
+    fieldDescription="Choose style"
+    fieldLabel="Style"
+    name="./style">
+    <items jcr:primaryType="nt:unstructured">
+        <default jcr:primaryType="nt:unstructured" text="Default" value=""/>
+        <primary jcr:primaryType="nt:unstructured" text="Primary" value="primary"/>
+    </items>
+</style>
+```
+
+### Checkbox
+
+```xml
+<checkboxField
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+    fieldDescription="Description of what this checkbox does"
+    name="./checkboxField"
+    text="Checkbox Label"
+    uncheckedValue="false"
+    value="{Boolean}true"/>
+```
+
+### File Upload (Image)
+
+```xml
+<file
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="cq/gui/components/authoring/dialog/fileupload"
+    allowUpload="{Boolean}false"
+    class="cq-droptarget"
+    fileNameParameter="./fileName"
+    fileReferenceParameter="./fileReference"
+    mimeTypes="[image/gif,image/jpeg,image/png,image/tiff,image/svg+xml]"
+    name="./file"
+    required="true"/>
+```
+
+## 4. Field Grouping
+
+### Well Containers
+
+Use well containers to group related fields:
+
+```xml
+<titleGroup
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/well">
+    <items jcr:primaryType="nt:unstructured">
+        <title ... />
+        <titleFromLinkedPage ... />
+    </items>
+</titleGroup>
+```
+
+### Column Layout (Use Only When Needed)
+
+**IMPORTANT:** Only use columns when you specifically need side-by-side layout (e.g., desktop image next to mobile image). Most dialogs DO NOT need columns.
+
+## 5. Multifield Components
+
+For repeatable content (like call-to-action buttons):
+
+```xml
+<actions
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+    composite="{Boolean}true"
+    fieldDescription="Allows to link to multiple destinations."
+    fieldLabel="Call-to-actions">
+    <field
+        jcr:primaryType="nt:unstructured"
+        sling:resourceType="granite/ui/components/coral/foundation/container"
+        layout="fixed"
+        name="./actions">
+        <items jcr:primaryType="nt:unstructured">
+            <link ... />
+            <text ... />
+            <style ... />
+        </items>
+    </field>
+</actions>
+```
+
+## 6. Image and Asset Handling
+
+Always provide separate fields for desktop and mobile images when responsive images are needed. Always include accessibility fields (alt text, decorative checkbox).
+
+## 7. Design Integration
+
+Use design properties to show/hide fields based on design configuration:
+
+```xml
+<titleGroup
+    granite:hide="${cqDesign.titleHidden}"
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/well">
+    <!-- Content -->
+</titleGroup>
+```
+
+## 8. Best Practices
+
+### Do's
+
+1. Use semantic field names that clearly indicate their purpose
+2. Group related fields using well containers
+3. Provide helpful descriptions for all fields
+4. Include accessibility fields for images and media
+5. Use design-aware fields when appropriate
+6. Validate required fields and input constraints
+7. Include both desktop and mobile image fields
+8. Use consistent naming conventions throughout
+9. Provide meaningful default values and placeholders
+
+### Don'ts
+
+1. Don't use generic field names like `field1`, `field2`
+2. Don't skip accessibility fields for images
+3. Don't hardcode values that should be configurable
+4. Don't add column wrappers to tabs by default — use direct nesting
+5. Don't use columns unless you need side-by-side layout
+6. Don't use overly complex nested structures unnecessarily
+7. Don't skip field descriptions — they help content authors
+
+## 9. Naming Conventions
+
+### Field Names
+
+- Use descriptive, camelCase names: `./titleFromLinkedPage`
+- Use consistent prefixes: `./file`, `./fileMobile`
+- Use meaningful suffixes: `./linkTarget`, `./altValueFromDAM`
+
+### Dialog File Location
+
+```
+{prefix}-[component-name]/
+├── v1/
+│   └── {prefix}-[component-name]/
+│       ├── {prefix}-[component-name].html
+│       └── _cq_dialog/
+│           └── .content.xml          # Dialog configuration
+└── .content.xml                      # Component definition
+```

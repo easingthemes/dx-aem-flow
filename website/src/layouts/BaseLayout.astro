@@ -1,0 +1,119 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'KAI' } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { label: 'Home', path: '/' },
+  { label: 'Overview', path: '/overview/' },
+  { label: 'Learn', path: '/learn/intro/' },
+  { label: 'Workflows', path: '/workflows/local/' },
+  { label: 'Reference', path: '/reference/skills/' },
+  { label: 'Architecture', path: '/architecture/overview/' },
+  { label: 'Contributing', path: '/contributing/authoring/' },
+  { label: 'Setup', path: '/setup/claude-code/' },
+  { label: 'Demo', path: '/demo/guide/' },
+];
+
+function isActive(item: any): boolean {
+  if (item.path === '/') return currentPath === '/';
+  if (item.path === '/overview/') return currentPath === '/overview/';
+  const section = item.path.split('/').slice(0, 2).join('/') + '/';
+  return currentPath.startsWith(section);
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <title>{title} — KAI</title>
+  </head>
+  <body class="min-h-screen flex flex-col bg-white text-gray-800 font-sans">
+    <!-- Nav -->
+    <header class="fixed top-0 inset-x-0 z-50 bg-brand-700">
+      <nav class="flex items-center gap-1 px-4 h-16">
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-2 mr-6 no-underline">
+          <span class="w-9 h-9 rounded-md bg-cyan text-brand-700 flex items-center justify-center font-bold text-lg">K</span>
+          <span class="text-white font-bold text-xl">KAI</span>
+        </a>
+
+        <!-- Desktop nav -->
+        <div class="hidden md:flex items-center gap-0.5 flex-1">
+          {navItems.map((item) => (
+            <a
+              href={item.path}
+              class:list={[
+                'px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                isActive(item) ? 'text-cyan' : 'text-white/75 hover:text-white',
+              ]}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <!-- Mobile toggle -->
+        <button
+          id="mobile-toggle"
+          class="md:hidden ml-auto text-white p-2"
+          aria-label="Open menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </nav>
+
+      <!-- Mobile drawer -->
+      <div id="mobile-drawer" class="hidden md:hidden bg-brand-700 border-t border-white/10 max-h-[80vh] overflow-y-auto">
+        <div class="py-2 px-4">
+          {navItems.map((item) => (
+            <a
+              href={item.path}
+              class:list={[
+                'block px-2 py-2 text-sm transition-colors',
+                isActive(item) ? 'text-cyan' : 'text-white/75 hover:text-white',
+              ]}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="mt-16 flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-700 py-5 text-center text-white/60 text-sm" data-print="hide">
+      KAI — AI-Powered Development Platform
+    </footer>
+
+    <!-- Side badge -->
+    <div
+      data-print="hide"
+      class="fixed -right-[83px] top-1/2 -translate-y-1/2 rotate-[-90deg] z-[9999] bg-brand-700 text-white py-1 px-3 text-xs font-semibold tracking-wider rounded-md shadow-lg whitespace-nowrap"
+    >
+      KAI <span class="text-cyan">by</span> Dragan Filipovic
+    </div>
+
+    <script>
+      const toggle = document.getElementById('mobile-toggle');
+      const drawer = document.getElementById('mobile-drawer');
+      toggle?.addEventListener('click', () => drawer?.classList.toggle('hidden'));
+    </script>
+  </body>
+</html>

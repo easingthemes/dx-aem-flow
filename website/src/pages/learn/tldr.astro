@@ -1,0 +1,95 @@
+---
+import SidebarLayout from '../../layouts/SidebarLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { getCollection } from 'astro:content';
+
+const tips = await getCollection('tips');
+
+// Sort by order field (fallback to title)
+tips.sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+
+// Group by week
+const weekLabels: Record<number, string> = {
+  1: 'Meet Your AI Tools',
+  2: 'Meet Your AI Tools',
+  3: 'Context — The Secret Sauce',
+  4: 'Context — The Secret Sauce',
+  5: 'Skills — Recipe Book',
+  6: 'Skills — Recipe Book',
+  7: 'Skills — Advanced',
+  8: 'Skills — Advanced',
+  9: 'Agents — AI Personas',
+  10: 'Agents — AI Personas',
+  11: 'MCP — System Integration',
+  12: 'MCP — System Integration',
+  13: 'Hooks — Guardrails',
+  14: 'Hooks — Guardrails',
+  15: 'Plugins — Full Package',
+  16: 'Plugins — Full Package',
+  17: 'Real-World Workflows',
+  18: 'Real-World Workflows',
+  19: 'Mastery',
+  20: 'Mastery',
+};
+
+// Group by weekLabel
+const grouped = tips.reduce((acc, tip) => {
+  const week = tip.data.week ?? 0;
+  const label = tip.data.weekLabel ?? weekLabels[week] ?? 'Other';
+  if (!acc[label]) acc[label] = [];
+  acc[label].push(tip);
+  return acc;
+}, {} as Record<string, typeof tips>);
+
+const badgeColors = ['primary', 'secondary', 'warning', 'error', 'success', 'info'] as const;
+---
+
+<SidebarLayout title="TLDR" sidebar="learn">
+  <PageHero
+    title={`TLDR — ${tips.length} Agentic AI Tips`}
+    subtitle="One tip per day. From basics to production patterns. Built from 78 skills and 3 plugins."
+  />
+
+  {Object.entries(grouped).map(([weekLabel, weekTips], groupIdx) => (
+    <>
+      <SectionHeading
+        badge={`Week ${weekTips[0]?.data.week ?? '?'}`}
+        badgeColor={badgeColors[groupIdx % badgeColors.length]}
+        title={weekLabel}
+        subtitle={`${weekTips.length} tips`}
+        bg={groupIdx % 2 === 0 ? 'alt' : 'default'}
+      />
+      <Section>
+        <div class="grid md:grid-cols-2 gap-4">
+          {weekTips.map((tip) => (
+            <a href={`/learn/tldr/${tip.id.replace(/\.md$/, '')}/`} class="no-underline">
+              <div class="border border-gray-200 rounded-lg bg-white p-5 hover:shadow-md transition-shadow h-full">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="inline-block px-2 py-0.5 bg-brand-700 text-white rounded text-xs font-mono font-bold">
+                    #{tip.data.order ?? '?'}
+                  </span>
+                  {tip.data.focus && (
+                    <span class="inline-block px-2 py-0.5 border border-cyan rounded text-xs font-mono text-cyan-dark">
+                      {tip.data.focus}
+                    </span>
+                  )}
+                </div>
+                <h3 class="font-semibold text-brand-900 mb-1 text-[1.1rem]">{tip.data.title}</h3>
+                <p class="text-sm text-gray-600 leading-relaxed mb-2">{tip.data.overview}</p>
+                <div class="flex flex-wrap gap-1">
+                  {tip.data.tags.map((tag) => (
+                    <span class="inline-block px-2 py-0.5 border border-gray-200 rounded text-[0.65rem] font-mono text-gray-500">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </Section>
+    </>
+  ))}
+</SidebarLayout>

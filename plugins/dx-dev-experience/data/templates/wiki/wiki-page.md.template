@@ -1,0 +1,73 @@
+# <Title> (ADO #<id>)
+
+**Sprint:** <sprint name>
+**ADO:** [#<id>](<work item URL>)
+**Branch:** `<branch from .branch file>`
+
+## Acceptance Criteria
+
+<!-- Copy the acceptance criteria from raw-story.md verbatim.
+If raw-story.md has separate A11Y criteria, include those under a ### A11Y sub-heading. -->
+
+## Implementation
+
+<!-- 2-3 sentence overview of what was implemented and the approach taken.
+Pull from share-plan.md and explain.md. Write for a tech lead audience. -->
+
+### What Changed
+
+<!-- Bullet list from implement.md steps — translated to clear technical language.
+Group by area if mixed (Frontend, Backend, Configuration).
+Include the actual technique/pattern used (e.g., "CSS position: sticky", "new component lifecycle hook"). -->
+
+### Architecture Decisions
+
+<!-- Only if research.md or implement.md reveals meaningful design choices.
+OMIT this section entirely if no architecture decisions were made. -->
+
+### API Changes
+
+<!-- Only if implement.md steps involve new/modified endpoints, parameters, or data models.
+OMIT this section entirely if no API changes. -->
+
+### Configuration
+
+<!-- Only if new config values, environment variables, feature flags,
+or AEM dialog fields were introduced.
+OMIT this section entirely if no configuration changes. -->
+
+## Usage
+
+<!-- How to use the feature from an author/editor/developer perspective.
+Pull from explain.md requirements and translate to "how do I use this?"
+Include any prerequisites, steps, or expected behavior. -->
+
+## Files Changed
+
+<!-- Grouped list from implement.md:
+
+**Frontend:**
+- `path/to/file.js` — brief description of change
+
+**Backend:**
+- `path/to/file.java` — brief description
+
+**Tests:**
+- `path/to/test.js`
+
+**Config:**
+- `path/to/config.xml`
+
+Use short relative paths. Skip generated files, lock files, etc. -->
+
+## Result
+
+<!-- Bullet list of outcomes — what the user/author sees after this change.
+Pull from acceptance criteria + implementation details.
+Write in past tense: "The filter panel now remains visible while scrolling." -->
+
+## Related
+
+- ADO: [#<id>](<work item URL from config>)
+- Branch: `<branch>`
+- PR: [#<pr-number>](<pr-url>) _(if PR link available from implement.md or .pr file)_

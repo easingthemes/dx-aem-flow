@@ -1,0 +1,90 @@
+# {{PROJECT_NAME}} — AI Development Workflow
+
+## Start Here
+
+| For | Read |
+|-----|------|
+| **Everyone** — what is this, how it helps | [docs/overview.md](docs/overview.md) |
+| **Everyone** — autonomous agents triggered from ADO | [docs/remote-agents.md](docs/remote-agents.md) |
+| **Developers** — CLI commands and step-by-step flows | [docs/local-workflow.md](docs/local-workflow.md) |
+| **Developers** — system design, plugins, local vs remote | [docs/architecture.md](docs/architecture.md) |
+
+## Quick Start
+
+```
+/dx-req-all <ID>    # Fetch work item (ADO/Jira), explain, research codebase
+/dx-plan            # Generate step-by-step implementation plan
+/dx-step-all        # Execute all steps (test + review + commit loop)
+/dx-step-build      # Build & deploy
+/dx-step-verify     # 6-phase verification
+/dx-pr              # Create pull request
+```
+
+## Directory Structure
+
+```
+.ai/
+├── README.md              <-- this file
+├── docs/                  <-- all documentation
+│   ├── overview.md            what is KAI, how it helps
+│   ├── architecture.md        system design, plugins, infrastructure
+│   ├── local-workflow.md      CLI commands and workflow recipes
+│   ├── remote-agents.md       autonomous agents and ADO triggers
+│   ├── setup.md               adopt KAI in a new project
+│   ├── runbook.md             ops: failures, alerts, rollback
+│   ├── testing.md             local and remote test plans
+│   └── costs.md               API pricing and token budgets
+├── agent-index.md         <-- machine-readable doc map for AI agents
+├── config.yaml            <-- project settings (SCM, build, AEM)
+├── project.yaml           <-- detected project profile (toolchain, paths)
+├── me.md                  <-- personal communication style (gitignored)
+├── rules/                 <-- shared AI rules (edit to customize)
+│   ├── pr-review.md
+│   ├── pr-answer.md
+│   ├── plan-format.md
+│   └── pragmatism.md
+├── project/               <-- knowledge base (component index, features, markets)
+├── automation/            <-- prompts, agent roles, pipeline policy
+│   ├── prompts/
+│   ├── agents/roles/
+│   └── policy/
+├── lib/                   <-- shared utilities (audit.sh)
+└── specs/                 <-- per-ticket output (gitignored)
+    └── <id>-<slug>/
+        ├── raw-story.md
+        ├── explain.md
+        ├── research.md
+        ├── implement.md
+        ├── share-plan.md
+        └── dor-report.md
+```
+
+## Configuration
+
+Edit `.ai/config.yaml` to adjust project settings. Key fields:
+
+```yaml
+project:
+  name: "{{PROJECT_NAME}}"
+scm:
+  org: "yourorg"
+  project: "YourProject"
+  base-branch: "development"
+build:
+  command: "mvn clean install"
+  lint: "npm run lint"
+```
+
+## Customization
+
+**Tweak behavior** — add to `.ai/config.yaml`:
+```yaml
+overrides:
+  pr-review:
+    tone: "direct, no praise"
+    severity-threshold: 80
+```
+
+**Replace a rule** — edit `.ai/rules/<topic>.md` directly.
+
+**Override a skill** — create `.claude/skills/<name>/SKILL.md` (takes precedence over plugin).

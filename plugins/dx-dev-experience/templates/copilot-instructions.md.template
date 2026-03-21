@@ -1,0 +1,126 @@
+# GitHub Copilot Instructions
+
+This file configures GitHub Copilot to follow project-specific coding standards for {{PROJECT_NAME}}.
+
+## Custom Instruction Files
+
+Coding standards and conventions are available from multiple sources:
+
+- **`.claude/rules/`** — Domain-specific rules, auto-applied by file pattern
+- **`.github/instructions/`** — Detailed implementation patterns (if present)
+- **`CLAUDE.md`** — Project-wide conventions and architecture
+
+### Organization
+
+Rule and instruction files follow a naming convention:
+- **Backend**: Prefixed with `be.` or `be-` (e.g., `be-sling-models.md`, `be.testing.instructions.md`)
+- **Frontend**: Prefixed with `fe.` or `fe-` (e.g., `fe-javascript.md`, `fe.css-styles.instructions.md`)
+- **Shared**: No prefix (e.g., `accessibility.md`) — apply to both frontend and backend
+
+## AI Development Workflow
+
+This project uses dx agents for AI-assisted development via Azure DevOps or Jira:
+
+### Code Review & PR Agents
+
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
+| DxCodeReview | Full branch code review (confidence >= 80) | `@DxCodeReview` |
+| DxPRReview | ADO PR review with comment posting | `@DxPRReview <PR URL or ID>` |
+| DxPRAnswer | Answer open PR review comments | `@DxPRAnswer <PR URL or ID>` |
+| DxPRFix | Apply agree-will-fix code changes | `@DxPRFix <PR ID>` |
+
+### Development Agents
+
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
+| DxPlanExecutor | Execute plan steps from implement.md | `@DxPlanExecutor` |
+| DxCommit | Smart commit + optional PR creation | `@DxCommit` or `@DxCommit pr` |
+| DxDebug | Systematic error diagnosis (read-only) | `@DxDebug <error description>` |
+
+### Lookup & Research Agents
+
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
+| DxComponent | Find all source files for a component | `@DxComponent <name>` |
+| DxTicket | Research an ADO work item | `@DxTicket <ID or URL>` |
+| DxHelp | Project architecture Q&A | `@DxHelp <question>` |
+
+### Workflow Coordinators
+
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
+| DxReqAll | Full requirements pipeline (fetch → explain → research → share → checklist) | `@DxReqAll <work-item-id>` |
+| DxStepAll | Execution loop (step → test → review → fix → commit) | `@DxStepAll <work-item-id>` |
+| DxBugAll | Full bug workflow (triage → fix) | `@DxBugAll <bug-id>` |
+| DxAgentAll | End-to-end delivery (requirements → plan → execute → PR) | `@DxAgentAll <work-item-id>` |
+
+### Dev Workflow Skills (slash commands)
+
+Skills are available as `/dx-*` slash commands in Copilot chat:
+
+| Skill | Purpose |
+|-------|---------|
+| `/dx-req-fetch` | Fetch ADO work item |
+| `/dx-req-explain` | Distill requirements |
+| `/dx-req-research` | Search codebase for related code |
+| `/dx-plan` | Generate implementation plan |
+| `/dx-step` | Execute next plan step |
+| `/dx-step-test` | Run tests |
+| `/dx-step-review` | Review step changes |
+| `/dx-step-commit` | Commit step changes |
+| `/dx-pr-review` | Review a PR |
+| `/dx-pr-answer` | Answer PR comments |
+| `/dx-bug-triage` | Triage a bug |
+| `/dx-bug-fix` | Fix a bug |
+| `/dx-doctor` | Check dx workflow health |
+
+MCP configuration (ADO, AEM) is managed via `.mcp.json` at the project root. See `.ai/config.yaml` for project-specific settings.
+
+## VS Code Settings for Agents
+
+### Autopilot Mode (VS Code 1.111+)
+
+Coordinator agents (`@DxAgentAll`, `@DxStepAll`, `@DxBugAll`, `@DxReqAll`) run multi-step workflows with many tool calls. **Autopilot mode** lets them run autonomously without manual approval at each step.
+
+To enable, add to VS Code `settings.json`:
+```json
+{
+  "chat.autopilot.enabled": true
+}
+```
+
+| Mode | Best for | Behavior |
+|------|----------|----------|
+| **Default** | Individual skills, review agents | Confirms each tool call |
+| **Autopilot** | Coordinator agents, multi-step workflows | Auto-approves, auto-retries, runs until completion |
+
+> **Caution:** Autopilot skips ALL approval prompts, including destructive actions (file deletes, force pushes). Use with trusted agents on feature branches.
+
+### Agent-Scoped Hooks (VS Code 1.111+)
+
+Some agents may include `hooks:` in their frontmatter for auto-formatting or validation. To enable:
+```json
+{
+  "chat.useCustomAgentHooks": true
+}
+```
+
+### Troubleshooting Agents
+
+If an agent isn't picking up instructions or behaving unexpectedly, use the `/troubleshoot` command in agent chat to inspect loaded customizations, token usage, and event logs.
+
+## Configuration
+
+Project config lives in `.ai/config.yaml`. All agents and skills read this file for:
+- SCM settings (organization, project, base branch)
+- Build commands (build, test, lint)
+- Project structure and paths
+
+## General Guidelines
+
+1. **Always check relevant rule/instruction files** before implementing changes
+2. **Follow established patterns** found in similar code
+3. **Maintain consistency** with existing code structure
+4. **Read `.ai/config.yaml`** for build commands, base branch, and project settings
+5. **Test thoroughly** according to project testing conventions

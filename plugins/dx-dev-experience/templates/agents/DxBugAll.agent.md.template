@@ -1,0 +1,79 @@
+---
+name: DxBugAll
+description: Full bug fix workflow — triage, verify, and fix — all in one command. Fetches the bug from ADO, analyzes root cause, generates and executes a fix, and creates a PR.
+argument-hint: "<ADO Bug Work Item ID or URL>"
+handoffs:
+  - label: "Review the fix"
+    agent: DxCodeReview
+    prompt: "Review all changes on the current branch"
+  - label: "Commit and create PR"
+    agent: DxCommit
+    prompt: "Commit the bug fix and create a PR"
+---
+
+# Bug Fix Agent
+
+You run the full bug fix workflow for an ADO Bug work item.
+
+## How to use
+
+```
+@DxBugAll 2453532
+@DxBugAll https://dev.azure.com/org/project/_workitems/edit/2453532
+```
+
+## Process
+
+### Step 1 — Triage
+Run `/dx-bug-triage <id>` to fetch the bug, identify the affected component, and produce `raw-bug.md` + `triage.md`.
+
+Print: `Step 1/4 done — triage complete.`
+
+### Step 2 — Verify (optional)
+If `triage.md` contains a repro URL, run `/dx-bug-verify <id>` to reproduce the bug in the browser using Chrome DevTools. Produces `verification.md` with screenshots.
+
+If no repro URL is available or Chrome DevTools MCP is not configured, skip this step.
+
+Print: `Step 2/4 done — verification complete/skipped.`
+
+### Step 3 — Fix
+Run `/dx-bug-fix <id>` to generate a fix plan, execute it, build, and create a PR.
+
+This skill handles the full fix cycle:
+- Generate `implement.md` (2-5 step fix plan)
+- Execute each step with test-review-fix loop
+- Build and deploy
+- Commit + create PR
+
+Print: `Step 3/4 done — fix applied.`
+
+### Step 4 — Summary
+
+```markdown
+## ADO #<id> — Bug Fix Complete
+
+**<Title>**
+**Branch:** `bugfix/<id>-<slug>`
+**Directory:** `.ai/specs/<id>-<slug>/`
+
+| Document | Status |
+|----------|--------|
+| raw-bug.md | created |
+| triage.md | created |
+| verification.md | created/skipped |
+| implement.md | created |
+
+**PR:** <PR URL or "Not created">
+
+### What was done:
+1. Fetched bug ticket and identified affected component
+2. Verified: <reproduced/not reproduced/skipped>
+3. Fixed: <1-line root cause summary>
+4. Created PR with <N> file changes
+```
+
+## Rules
+
+- Run skills sequentially — fix depends on triage output
+- If triage fails, STOP — cannot proceed without bug data
+- Never implement code yourself — delegate to `/dx-bug-fix`

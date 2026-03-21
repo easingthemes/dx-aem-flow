@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "AEM": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "aem-mcp-server", "-t", "stdio", "-I", "${AEM_INSTANCES}"]
+    },
+    "chrome-devtools-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["chrome-devtools-mcp@latest"]
+    }
+  }
+}

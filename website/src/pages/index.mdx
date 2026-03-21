@@ -1,0 +1,391 @@
+---
+layout: ../layouts/BaseLayout.astro
+title: Home
+---
+
+import PageHero from '../components/PageHero.astro';
+import Section from '../components/Section.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ContentCard from '../components/ContentCard.astro';
+import HighlightBox from '../components/HighlightBox.astro';
+import PipelineBlock from '../components/PipelineBlock.astro';
+
+<PageHero
+  title="AI-Powered Development Platform"
+  subtitle="From ticket to production -- how AI transforms sprint delivery with 78 skills, 10 autonomous agents, and self-learning capabilities across your entire development lifecycle."
+/>
+
+<Section>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 text-center">
+    <div>
+      <div class="text-4xl font-extrabold text-cyan">78</div>
+      <div class="text-sm text-gray-500">Skills</div>
+    </div>
+    <div>
+      <div class="text-4xl font-extrabold text-cyan">25</div>
+      <div class="text-sm text-gray-500">Copilot Agents</div>
+    </div>
+    <div>
+      <div class="text-4xl font-extrabold text-cyan">3</div>
+      <div class="text-sm text-gray-500">Plugins</div>
+    </div>
+    <div>
+      <div class="text-4xl font-extrabold text-cyan">4</div>
+      <div class="text-sm text-gray-500">Repos Supported</div>
+    </div>
+    <div>
+      <div class="text-4xl font-extrabold text-cyan">13</div>
+      <div class="text-sm text-gray-500">Specialized Agents</div>
+    </div>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Architecture"
+  title="Three-Layer Architecture"
+  subtitle="Modular layers that work independently or together, from foundation to full autonomy."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="border border-red-500 rounded p-5 bg-white">
+      <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-1">Layer 3: Automation (24/7)</h3>
+      <p class="text-[0.9rem] text-[#4a4a5a]">10 autonomous agents as ADO pipelines -- triggered by webhooks, no human needed</p>
+    </div>
+    <div class="border border-brand-700 rounded p-5 bg-white">
+      <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-1">Layer 2: Local Workflow (Claude Code + Copilot CLI)</h3>
+      <p class="text-[0.9rem] text-[#4a4a5a]">78 skills on both IDEs -- /dx-req-all, /dx-plan, /dx-step-all, /dx-pr</p>
+    </div>
+    <div class="border border-emerald-500 rounded p-5 bg-white">
+      <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-1">Layer 1: Foundation</h3>
+      <p class="text-[0.9rem] text-[#4a4a5a]">Project config, Coding standards, ADO/Jira integration, Self-learning, Plugin architecture</p>
+    </div>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Design-to-Code"
+  title="Figma to Production Code"
+  subtitle="One command turns a Figma URL into a production AEM component that matches the design."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="One Command"
+    command="/dx-figma-all <figma-url>"
+    steps={[
+      { title: 'Extract', subtitle: 'Design context, tokens, screenshots from Figma via MCP', command: '/dx-figma-extract' },
+      { title: 'Prototype', subtitle: 'HTML/CSS using your project conventions and tokens', command: '/dx-figma-prototype', color: '#0891b2' },
+      { title: 'Verify', subtitle: 'Chrome screenshot, compare against Figma, auto-fix', command: '/dx-figma-verify', color: '#d97706' },
+      { title: 'Implement', subtitle: 'Production AEM component from verified prototype', command: '/dx-plan + /dx-step-all', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <HighlightBox severity="info" title="For Designers & PMs">
+      Design fidelity is verified before production code starts. Works with well-structured Figma files, adapts to hybrid designs, and even handles screenshot-based files.
+    </HighlightBox>
+    <HighlightBox severity="success" title="For Developers">
+      No manual pixel-matching. AI maps Figma tokens to your project's existing SCSS variables, uses your BEM naming conventions, and generates WCAG-compliant ARIA patterns.
+    </HighlightBox>
+  </div>
+
+  <p class="text-center mt-4">
+    <a href="/figma/" class="text-brand-700 font-semibold hover:text-cyan transition-colors">
+      See the full Figma-to-Code pipeline →
+    </a>
+  </p>
+</Section>
+
+<SectionHeading
+  badge="Sprint Lifecycle"
+  badgeColor="secondary"
+  title="Every Phase Covered"
+  subtitle="AI assistance from ticket assignment through documentation -- no phase left behind."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:file-document-outline" iconColor="bg-brand-700" title="Requirements" tags={[{ label: '/dx-req-all', color: 'primary' }]}>
+      Fetch ticket (ADO or Jira), validate DoR, distill dev requirements, research codebase, generate team summary. Hours to minutes.
+    </ContentCard>
+    <ContentCard icon="mdi:pencil-ruler" iconColor="bg-cyan" title="Design-to-Code" tags={[{ label: '/dx-figma-all', color: 'secondary' }]}>
+      Extract Figma designs, generate convention-aware prototypes, verify against reference. Design to implementation-ready code.
+    </ContentCard>
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan-dark" title="Planning" tags={[{ label: '/dx-plan', color: 'info' }]}>
+      Step-by-step implementation plan with dependency tracking, validation against requirements, and risk resolution.
+    </ContentCard>
+    <ContentCard icon="mdi:code-braces" iconColor="bg-emerald-600" title="Execution" tags={[{ label: '/dx-step-all', color: 'success' }]}>
+      Execute plan steps with test, review, commit loop. Self-healing with corrective steps on failure.
+    </ContentCard>
+    <ContentCard icon="mdi:magnify" iconColor="bg-amber-500" title="Code Review" tags={[{ label: '/dx-step-verify', color: 'warning' }]}>
+      6-phase verification gate: compile, lint, test, secret scan, architecture, AI code review with 80%+ confidence.
+    </ContentCard>
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-red-500" title="Pull Request" tags={[{ label: '/dx-pr', color: 'error' }]}>
+      Auto-generated PR description from team summary, work item linking (ADO/Jira), branch management.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Real-World Example"
+  badgeColor="success"
+  title="From Story to Tasks -- Automated"
+  subtitle="A single tag triggers the full requirements flow: validate readiness, distill requirements, generate an implementation plan, and create tracked tasks."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Automation Trigger"
+    description="Tag a story with KAI-DOR-AUTOMATION + KAI-TRIGGER in ADO (or corresponding Jira labels) to activate."
+    steps={[
+      { title: 'User Story', subtitle: 'Work item tagged' },
+      { title: 'DoR Validation', subtitle: 'Readiness check', command: '/dx-agent-re', color: '#0891b2' },
+      { title: 'Implementation Plan', subtitle: 'Posted as comment', command: '/dx-plan', color: '#d97706' },
+      { title: 'Tasks Created', subtitle: 'Child tasks in ADO/Jira', color: '#059669' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Real-World Example"
+  badgeColor="warning"
+  title="Autonomous PR Review"
+  subtitle="Every PR triggers an AI review automatically. The agent adapts its response based on what it finds."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Automatic — triggered by PR creation"
+    description="Build validation policy triggers AI review on every PR. The agent adapts its response based on findings."
+    steps={[
+      { title: 'Review with Patch', subtitle: 'Inline code fix', command: '/dx-pr-review' },
+      { title: 'Question Only', subtitle: 'Clarification needed', command: '/dx-pr-answer', color: '#0891b2' },
+      { title: 'Lower Acceptance', subtitle: 'Reduced threshold', color: '#d97706' },
+      { title: 'Follow-up Comment', subtitle: 'Ongoing discussion', command: '/dx-pr-fix', color: '#059669' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Plugins"
+  badgeColor="success"
+  title="Three Plugins, Independently Installable"
+  subtitle="Non-AEM projects only need dx. AEM-specific logic never pollutes a pure frontend project."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:wrench" iconColor="bg-brand-700" title="dx-dev-experience" tags={[{ label: '55 skills' }, { label: '7 agents', color: 'secondary' }]}>
+      Full development lifecycle -- requirements, planning, execution, review, PR, accessibility, documentation. Works with any stack.
+    </ContentCard>
+    <ContentCard icon="mdi:cube-outline" iconColor="bg-amber-500" title="dx-aem" tags={[{ label: '12 skills', color: 'warning' }, { label: '6 agents', color: 'secondary' }]}>
+      AEM-specific -- component verification, QA with browser automation, demo capture, project knowledge (seed data).
+    </ContentCard>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="dx-automation" tags={[{ label: '11 skills', color: 'error' }]}>
+      24/7 autonomous agents -- DoR, PR review, bug fix, DevAgent, QA, estimation. AWS Lambda + ADO pipelines.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Two Modes"
+  badgeColor="secondary"
+  title="Interactive & Autonomous"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Local / Interactive">
+      Developer runs commands in their IDE. AI assists step by step. Full control, pause and review at any point.
+
+      - Claude Code (`/dx-*` skills)
+      - GitHub Copilot CLI (`@Agent` + `/dx-*` skills)
+      - Files in `.ai/specs/`, commits, PRs
+      - $100-200/month subscription
+    </ContentCard>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="Remote / Autonomous">
+      Events trigger agents. No developer needed. Same skills, same quality -- running 24/7 on ADO pipelines.
+
+      - Triggered by ADO webhooks (Jira planned)
+      - AWS Lambda to ADO Pipeline
+      - Rate-limited, budget-controlled
+      - Pay-per-token API pricing
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Impact"
+  badgeColor="success"
+  title="Before & After"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-brand-100">
+          <th class="text-left p-3 font-semibold text-brand-900">Dimension</th>
+          <th class="text-left p-3 font-semibold text-brand-900">Before</th>
+          <th class="text-left p-3 font-semibold text-brand-900">After</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">Requirements analysis</td><td class="p-3 text-gray-600">1-2 hours manual</td><td class="p-3 text-gray-600">2-3 minutes automated</td></tr>
+        <tr><td class="p-3">Implementation planning</td><td class="p-3 text-gray-600">Informal, in developer's head</td><td class="p-3 text-gray-600">Structured, validated, tracked</td></tr>
+        <tr><td class="p-3">Code review first pass</td><td class="p-3 text-gray-600">Hours (async, waiting)</td><td class="p-3 text-gray-600">Instant (automated)</td></tr>
+        <tr><td class="p-3">PR comment resolution</td><td class="p-3 text-gray-600">Days of back-and-forth</td><td class="p-3 text-gray-600">Minutes (AI answers + fixes)</td></tr>
+        <tr><td class="p-3">Documentation</td><td class="p-3 text-gray-600">Often skipped</td><td class="p-3 text-gray-600">Always generated</td></tr>
+        <tr><td class="p-3">Bug triage</td><td class="p-3 text-gray-600">Manual detective work</td><td class="p-3 text-gray-600">Automated with evidence</td></tr>
+        <tr><td class="p-3">Cross-repo coordination</td><td class="p-3 text-gray-600">Manual Slack messages</td><td class="p-3 text-gray-600">Automatic delegation</td></tr>
+        <tr><td class="p-3">Knowledge transfer</td><td class="p-3 text-gray-600">Tribal, undocumented</td><td class="p-3 text-gray-600">Captured in specs and wiki</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Live Integrations"
+  badgeColor="warning"
+  title="Connected to Real Systems -- Not Mocked"
+  subtitle="AI agents query live AEM, open a real browser, take actual screenshots, and read production content -- all through MCP servers running locally."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="AEM MCP">
+      Query the JCR repository directly. Read component dialogs, page properties, content nodes, template structures. All live data from a running AEM instance.
+    </ContentCard>
+    <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="Chrome DevTools MCP">
+      Open pages in a real browser, navigate, click, fill forms, and take screenshots. Used for bug verification with visual evidence.
+    </ContentCard>
+    <ContentCard icon="mdi:palette" iconColor="bg-cyan" title="Figma MCP">
+      Extract design context, tokens, component metadata, and screenshots directly from Figma files. Maps them to your project's existing SCSS variables.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Why This Matters">
+    Most AI coding tools operate in a vacuum -- they read source code but can't see the running application.
+    KAI agents connect to live systems: they verify a bug exists before writing a fix, confirm a component
+    renders correctly after deployment, and check that dialog fields match the spec.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Engineering"
+  title="Best Practices & Innovative Ideas"
+  subtitle="Production-grade patterns that make this enterprise-ready -- not a prototype, not a demo, but a system built for real teams shipping real code."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan" title="Templates for Predictive Outcome" horizontal>
+      Every skill outputs to a structured template -- explain.md, implement.md, research.md. Templates encode domain knowledge and guarantee consistent output.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="Hooks to Offload LLM Usage" horizontal>
+      Shell hooks intercept tool calls before the LLM sees them. Figma screenshot hooks auto-cache assets. Pre-commit hooks validate without burning tokens.
+    </ContentCard>
+    <ContentCard icon="mdi:brain" iconColor="bg-brand-700" title="Subagents to Protect Context" horizontal>
+      Heavy operations run in isolated subagents that return compact summaries. The coordinator's context window stays clean. Right model for the job.
+    </ContentCard>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-emerald-600" title="Step Executor -- Skill Chaining Engine" horizontal>
+      One agent that can execute any of 41 skills. Coordinators chain skills in sequence. Self-healing with 3 layers: fix, heal, retry loop.
+    </ContentCard>
+    <ContentCard icon="mdi:lock" iconColor="bg-red-500" title="Explicit Tool Allowlists" horizontal>
+      Every agent declares exactly which tools it can use. A PR reviewer cannot run Bash. Optional tools are discovered at runtime via ToolSearch.
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan-dark" title="Convention-Based Discovery" horizontal>
+      Skills write to predictable paths: .ai/specs/&lt;id&gt;-&lt;slug&gt;/explain.md. The next skill finds its predecessor's output by convention.
+    </ContentCard>
+    <ContentCard icon="mdi:folder" iconColor="bg-red-500" title="The .ai/ Folder -- Clean Separation" horizontal>
+      All AI artifacts live in .ai/ -- specs, config, templates, rules, learning data. Project source stays untouched.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Config-Driven, Never Hardcoded" horizontal>
+      One config.yaml holds all project values. Same plugin codebase runs across 4 repos and 50+ potential projects without a code change.
+    </ContentCard>
+    <ContentCard icon="mdi:layers" iconColor="bg-amber-500" title="Three-Layer Override System" horizontal>
+      Plugin defaults, .ai/rules/ domain overrides, .claude/rules/ permanent conventions. Teams customize behavior by adding a file.
+    </ContentCard>
+    <ContentCard icon="mdi:memory" iconColor="bg-red-500" title="Memory via Markdown -- Between Steps" horizontal>
+      Each skill writes findings to a .md file. No database, no API, no shared memory bus -- just files on disk. Survives session crashes.
+    </ContentCard>
+    <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Subagent Memory Isolation" horizontal>
+      Subagents run in their own context window. The parent never sees the 500 files the subagent searched. Context cost doesn't propagate upward.
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="Cross-Repo Intelligence" horizontal>
+      Frontend bug that needs a backend fix? The agent detects the cross-repo dependency and delegates to the correct repository's pipeline.
+    </ContentCard>
+    <ContentCard icon="mdi:target" iconColor="bg-cyan" title="Model Tier Strategy" horizontal>
+      Opus for deep code review. Sonnet for execution. Haiku for simple lookups. Cost scales with complexity, not volume.
+    </ContentCard>
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-brand-700" title="Dual-IDE: Claude Code + GitHub Copilot" horizontal>
+      Skills written for Claude Code, auto-discovered by Copilot CLI. Agent templates generated for Copilot orchestration. Core workflows work in both IDEs.
+    </ContentCard>
+  </div>
+
+  <ContentCard icon="mdi:account" iconColor="bg-cyan" title="The Human Behind the Machine" class="mt-4">
+    Every project has a `me.md` persona file. It defines how the AI communicates -- tone,
+    language style, PR comment voice. Not a gimmick: PR comments read like a real teammate wrote them.
+    Teams codify their voice without touching agent code.
+  </ContentCard>
+
+  <HighlightBox severity="info" title="Beyond Anthropic's Official Skill Guide">
+    <ul class="list-none p-0 m-0">
+      <li class="py-0.5"><strong>Plugin architecture</strong> -- the guide has standalone skills; KAI has versioned, installable plugin packages with marketplace</li>
+      <li class="py-0.5"><strong>Coordinator + Step Executor</strong> -- the guide shows sequential orchestration; KAI chains 41 skills through a single executor agent with self-healing</li>
+      <li class="py-0.5"><strong>Memory via files</strong> -- the guide mentions MCP data passing; KAI uses convention-based .md files that persist across sessions</li>
+      <li class="py-0.5"><strong>Model tiering</strong> -- the guide doesn't address cost optimization per agent; KAI assigns Opus/Sonnet/Haiku per capability</li>
+      <li class="py-0.5"><strong>Persona system</strong> -- not in the guide; KAI's me.md makes AI output indistinguishable from human teammates</li>
+      <li class="py-0.5"><strong>Hooks for LLM offloading</strong> -- the guide focuses on skill instructions; KAI uses shell hooks for deterministic work</li>
+      <li class="py-0.5"><strong>24/7 autonomous agents</strong> -- the guide covers interactive use; KAI runs the same skills unattended on ADO pipelines</li>
+      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same 78 skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
+    </ul>
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:sitemap" iconColor="bg-cyan" title="Generic by Design">
+      Any project, any stack. AEM logic lives in its own plugin -- pure frontend projects never see it.
+    </ContentCard>
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Future-Proof">
+      Plugin architecture with versioned marketplace. New capabilities ship as plugin updates -- no migration scripts.
+    </ContentCard>
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="Enterprise-Ready">
+      Token budgets, rate limits, audit trails, role-scoped tools, deduplication, graceful degradation.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Explore"
+  title="Dive Deeper"
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <a href="/overview/" class="no-underline">
+      <ContentCard icon="mdi:star" iconColor="bg-brand-700" title="Overview">What KAI does, who it's for, and how it works at a high level.</ContentCard>
+    </a>
+    <a href="/figma/" class="no-underline">
+      <ContentCard icon="mdi:pencil" iconColor="bg-brand-700" title="Figma-to-Code">The full design-to-code pipeline: extract, auto-map tokens, generate prototypes, verify visually.</ContentCard>
+    </a>
+    <a href="/local-workflow/" class="no-underline">
+      <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Local Workflow">Requirements, planning, execution, review -- the full sprint lifecycle.</ContentCard>
+    </a>
+    <a href="/bug-flow/" class="no-underline">
+      <ContentCard icon="mdi:bug" iconColor="bg-brand-700" title="Bug Flow">Triage, reproduce with browser automation, fix, and PR -- end to end.</ContentCard>
+    </a>
+    <a href="/automation/" class="no-underline">
+      <ContentCard icon="mdi:lightning-bolt" iconColor="bg-brand-700" title="Automation">10 autonomous agents, AWS infrastructure, event routing, cross-repo delegation.</ContentCard>
+    </a>
+    <a href="/architecture/" class="no-underline">
+      <ContentCard icon="mdi:sitemap" iconColor="bg-brand-700" title="Architecture">Plugin system, config, conventions, subagents, model tiers, MCP integration.</ContentCard>
+    </a>
+    <a href="/costs/" class="no-underline">
+      <ContentCard icon="mdi:currency-usd" iconColor="bg-brand-700" title="Costs">Two pricing models, per-operation costs, safety controls, cost optimization.</ContentCard>
+    </a>
+    <a href="/demo-guide/" class="no-underline">
+      <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Demo Guide">Step-by-step live demo scripts for business and developer audiences.</ContentCard>
+    </a>
+  </div>
+</Section>

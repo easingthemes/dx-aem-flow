@@ -1,0 +1,222 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Accessibility Testing
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Accessibility Testing"
+  subtitle="Automated WCAG testing with axe MCP -- analyze, remediate, fix, and verify"
+/>
+
+<SectionHeading
+  badge="Overview"
+  title="What It Does"
+  subtitle="Runs Deque axe analysis via MCP, provides remediation guidance, optionally auto-fixes source code."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-4 gap-4">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="1. Analyze">
+      Runs axe <code>analyze</code> on the URL. Produces a violation table with rule IDs, impact levels, affected elements, and WCAG criteria.
+    </ContentCard>
+    <ContentCard icon="mdi:lightbulb" iconColor="bg-cyan" title="2. Remediate">
+      Calls axe <code>remediate</code> for each violation to get Deque's recommended fix -- not a guess, but axe's own guidance.
+    </ContentCard>
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="3. Fix">
+      With <code>--fix</code>, locates source files (HTL, JS, SCSS) and applies fixes following axe guidance and project accessibility patterns.
+    </ContentCard>
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="4. Verify">
+      Re-runs analysis after fixes and produces a before/after comparison table.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Setup"
+  badgeColor="secondary"
+  title="Prerequisites"
+  subtitle="Docker, an API key, and the dx-dev-experience plugin."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Requirement</th>
+          <th class="text-left py-2 px-4 font-semibold">Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Docker running</td><td class="py-2 px-4">axe MCP Server runs as a Docker container</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Axe DevTools API key</td><td class="py-2 px-4">Required by the axe MCP Server for analysis</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">dx-dev-experience plugin</td><td class="py-2 px-4">The skill and MCP config live in this plugin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Step-by-Step Setup</h3>
+  <CommandBlock label="1. Pull the Docker image (one-time)">docker pull dequesystems/axe-mcp-server:latest</CommandBlock>
+
+  <CommandBlock label="2. Get an API key">{"# Go to https://axe.deque.com/settings\n# Copy your API key"}</CommandBlock>
+
+  <CommandBlock label="3. Export the API key (add to ~/.zshrc or ~/.bashrc)">export AXE_API_KEY="your-key-here"</CommandBlock>
+
+  <CommandBlock label="4. Reinstall the plugin to pick up MCP config">/plugin install dx-dev-experience@dx-aem-ai-flow</CommandBlock>
+
+  <HighlightBox severity="success" title="Verify Setup">
+    Run any <code>/dx-axe</code> command. If axe MCP tools load successfully, setup is complete. If you see "axe MCP Server setup" instructions, revisit the steps above.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Usage"
+  badgeColor="warning"
+  title="Running Accessibility Tests"
+  subtitle="Analyze pages, auto-fix violations, and test against specific WCAG standards."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="Command syntax">/dx-axe &lt;URL&gt; [--fix] [--standard wcag2aa|wcag21aa|best-practice]</CommandBlock>
+
+  <div class="overflow-x-auto mt-4">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Argument</th>
+          <th class="text-left py-2 px-4 font-semibold">Required</th>
+          <th class="text-left py-2 px-4 font-semibold">Default</th>
+          <th class="text-left py-2 px-4 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>&lt;URL&gt;</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">--</td><td class="py-2 px-4">Page URL to test</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--fix</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">off</td><td class="py-2 px-4">Auto-apply fixes after analysis</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>--standard</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4"><code>wcag2aa</code></td><td class="py-2 px-4">WCAG standard to test against</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Examples</h3>
+  <CommandBlock label="Analyze a page (report only)">/dx-axe http://localhost:4502/content/mysite/en/home.html?wcmmode=disabled</CommandBlock>
+  <CommandBlock label="Analyze and auto-fix">/dx-axe http://localhost:4502/content/mysite/en/home.html?wcmmode=disabled --fix</CommandBlock>
+  <CommandBlock label="Test against WCAG 2.1 AA">/dx-axe https://qa.example.com/en/products.html --standard wcag21aa</CommandBlock>
+</Section>
+
+<SectionHeading
+  badge="Pages"
+  badgeColor="info"
+  title="Accessing Different Environments"
+  subtitle="Local AEM, QA/Stage with basic auth, and public URLs."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <ContentCard icon="mdi:laptop" iconColor="bg-brand-700" title="Local AEM">
+      Embed admin credentials in the URL. The Docker container uses <code>--add-host</code> to reach your host machine.
+      <CommandBlock>{`/dx-axe http://admin:admin@localhost:4502/content/mysite/en/home.html?wcmmode=disabled`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:cloud" iconColor="bg-cyan" title="QA / Stage">
+      Protected with HTTP Basic Auth. Embed credentials or configure in <code>.ai/config.yaml</code> under <code>aem.qa-basic-auth</code>.
+      <CommandBlock>{`/dx-axe https://user:pass@qa.example.com/content/mysite/en/home.html`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:web" iconColor="bg-emerald-600" title="Public URLs">
+      No special handling needed.
+      <CommandBlock>{`/dx-axe https://www.example.com/products`}</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Docker Networking">
+    Inside Docker, <code>localhost</code> refers to the container, not your host. If <code>localhost</code> does not resolve, use <code>host.docker.internal:4502</code> instead. The plugin's <code>--add-host</code> flag enables this. Add <code>?wcmmode=disabled</code> to test published rendering.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Fix"
+  badgeColor="secondary"
+  title="Fix Priorities"
+  subtitle="How the skill chooses what to fix and how."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:priority-high" iconColor="bg-red-500" title="Fix Strategy">
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>Semantic HTML over ARIA workarounds</li>
+        <li>Existing SCSS mixins for focus states</li>
+        <li>Project design tokens for color contrast</li>
+        <li>Third-party/vendor code is flagged, not modified</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:file-document" iconColor="bg-cyan-dark" title="Output Report">
+      Saves <code>a11y-report.md</code> to the spec directory with:
+      <ul class="mt-2 text-sm list-none p-0 space-y-1">
+        <li>URL tested and date</li>
+        <li>WCAG standard used</li>
+        <li>Full violation table</li>
+        <li>Remediation actions taken (if <code>--fix</code>)</li>
+        <li>Before/after verification results</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="info"
+  title="MCP Server Configuration"
+  subtitle="The plugin handles Docker startup automatically."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Plugin .mcp.json (auto-configured)">{`{
+  "mcpServers": {
+    "axe-mcp-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--add-host=host.docker.internal:host-gateway",
+        "-i", "--rm",
+        "-e", "AXE_API_KEY",
+        "dequesystems/axe-mcp-server:latest"
+      ]
+    }
+  }
+}`}</CommandBlock>
+
+  <HighlightBox severity="info" title="How It Works">
+    Docker's <code>-e AXE_API_KEY</code> passes the env var from your shell into the container via normal environment inheritance -- no <code>"env"</code> block needed in <code>.mcp.json</code>. The <code>--add-host</code> flag lets the container reach <code>localhost</code> services on your host machine.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Help"
+  badgeColor="error"
+  title="Troubleshooting"
+  subtitle="Common issues and fixes."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <HighlightBox severity="error" title='"axe MCP Server setup" message'>
+      Docker is not running, the image is not pulled, or <code>AXE_API_KEY</code> is not exported. Follow the setup steps and verify with <code>docker run --rm -e AXE_API_KEY dequesystems/axe-mcp-server:latest --help</code>.
+    </HighlightBox>
+    <HighlightBox severity="warning" title="Docker cannot reach localhost:4502">
+      Inside Docker, <code>localhost</code> is the container. Use <code>host.docker.internal:4502</code> instead.
+    </HighlightBox>
+    <HighlightBox severity="warning" title="QA URL returns 401">
+      Environment requires Basic Auth. Embed credentials in the URL or configure in <code>.ai/config.yaml</code> under <code>aem.qa-basic-auth</code>.
+    </HighlightBox>
+    <HighlightBox severity="info" title="API key error">
+      Verify: <code>echo $AXE_API_KEY</code>. If empty, re-export and restart your terminal. If expired, get a new key from <a href="https://axe.deque.com/settings" target="_blank" rel="noopener noreferrer">axe.deque.com/settings</a>.
+    </HighlightBox>
+  </div>
+</Section>

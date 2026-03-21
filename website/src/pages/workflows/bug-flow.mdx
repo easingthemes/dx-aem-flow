@@ -1,0 +1,218 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Bug Fix Flow
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+<PageHero
+  title="Bug Fix Flow"
+  subtitle="From bug ticket to merged PR -- triage, reproduce with browser automation, fix, and ship. Works with ADO and Jira."
+/>
+
+<SectionHeading
+  badge="One Command"
+  badgeColor="error"
+  title="End-to-End Bug Fix"
+  subtitle="A single command chains all three phases together."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Run in Claude Code"
+    command="/dx-bug-all <ID or JIRA-KEY>"
+    description="Chains Triage, Verify, and Fix automatically. Or run each phase individually for more control."
+    steps={[
+      { title: 'Triage', subtitle: 'Fetch bug, identify component', command: '/dx-bug-triage', color: '#f97316' },
+      { title: 'Verify', subtitle: 'Reproduce in browser', command: '/dx-bug-verify', color: '#06b6d4' },
+      { title: 'Fix', subtitle: 'Plan, implement, PR', command: '/dx-bug-fix', color: '#22c55e' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Three Phases"
+  badgeColor="warning"
+  title="Bug Fix Phases"
+  subtitle="Each phase produces structured output that feeds into the next."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard
+      icon="mdi:magnify"
+      iconColor="bg-amber-500"
+      title="1. Triage"
+      tags={[{ label: 'raw-bug.md', color: 'warning' }, { label: 'triage.md', color: 'warning' }]}
+    >
+      <code>/dx-bug-triage</code>
+
+      Fetches the bug from ADO or Jira, identifies the affected component and source files, checks for
+      cross-repo dependencies.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:camera"
+      iconColor="bg-cyan"
+      title="2. Verify"
+      tags={[{ label: 'verification.md', color: 'info' }, { label: 'screenshots', color: 'info' }]}
+    >
+      <code>/dx-bug-verify</code>
+
+      Chrome DevTools MCP navigates to the affected page, follows repro steps, takes screenshots
+      to confirm the bug exists.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:wrench"
+      iconColor="bg-emerald-600"
+      title="3. Fix"
+      tags={[{ label: 'implement.md', color: 'success' }, { label: 'PR', color: 'success' }]}
+    >
+      <code>/dx-bug-fix</code>
+
+      Generates implementation plan, executes fix steps, runs the same test/review/commit loop
+      as features, creates PR.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Flow"
+  title="Bug Fix Flow Diagram"
+  subtitle="The full decision tree from bug ID to learning."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Full Bug Fix Flow"
+    command="/dx-bug-all <ID or JIRA-KEY>"
+    description="The full decision tree from bug ID to learning."
+    steps={[
+      { title: 'Bug ID', subtitle: 'ADO or Jira', color: '#ef4444' },
+      { title: 'Triage', subtitle: 'Fetch, identify component', command: '/dx-bug-triage', color: '#f97316' },
+      { title: 'Cross-repo?', subtitle: 'Same or delegate', color: '#a855f7' },
+      { title: 'Verify', subtitle: 'Reproduce in browser', command: '/dx-bug-verify', color: '#06b6d4' },
+      { title: 'Fix', subtitle: 'Plan + implement + PR', command: '/dx-bug-fix', color: '#22c55e' },
+      { title: 'Learning', subtitle: 'Bug history + hotspots', color: '#3b82f6' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Browser"
+  badgeColor="secondary"
+  title="Browser Automation"
+  subtitle="Chrome DevTools MCP provides real browser interaction for bug reproduction."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:web" iconColor="bg-brand-700" title="Page Navigation">
+      Navigates to the affected page, handles QA Basic Auth, waits for page load, and interacts
+      with elements.
+
+      - Navigate to URL
+      - Click elements, fill forms
+      - Take screenshots at each step
+      - Evaluate JavaScript in page context
+    </ContentCard>
+
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="AEM Component Dialog">
+      For AEM bugs, the <code>aem-bug-executor</code> agent interacts directly with the component
+      dialog in the AEM author environment.
+
+      - Open component dialog
+      - Inspect field values
+      - Compare with expected state
+      - Screenshot dialog panels
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Cross-Repo"
+  title="Cross-Repo Detection"
+  subtitle="Bugs don't always live in the repo where they're reported."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="warning" title="Automatic Delegation">
+    If triage discovers the fix belongs in another repository (e.g., a frontend bug caused by a backend
+    issue in Brand-Backend), it writes a <code>delegate.json</code> file. The automation pipeline reads
+    this and routes the bug fix to the correct repo's pipeline.
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Same Repo">
+      Bug and fix are in the same repo. Proceed directly to verify and fix phases.
+    </ContentCard>
+
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="Other Repo">
+      Bug reported in frontend but fix needed in backend. Agent writes <code>delegate.json</code>
+      and the pipeline routes to the correct repo.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Learning"
+  badgeColor="success"
+  title="Bug Pattern Detection"
+  subtitle="Bug history is tracked per component to identify hotspots."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="error" title="Hotspot Alerts">
+    When 3 or more bugs are filed against the same component, a hotspot alert is triggered. This flags the
+    component for deeper review -- recurring bugs in the same area often indicate a systemic issue rather
+    than isolated defects.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Commands"
+  badgeColor="info"
+  title="Individual Commands"
+  subtitle="Run each phase separately for more control."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Command</th>
+        <th class="text-left p-3 font-semibold">Phase</th>
+        <th class="text-left p-3 font-semibold">Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-triage &lt;ID&gt;</code></td>
+        <td class="p-3">Triage</td>
+        <td class="p-3">raw-bug.md, triage.md</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-verify</code></td>
+        <td class="p-3">Verify</td>
+        <td class="p-3">verification.md, screenshots</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-fix</code></td>
+        <td class="p-3">Fix</td>
+        <td class="p-3">implement.md, commits, PR</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>/dx-bug-all &lt;ID&gt;</code></td>
+        <td class="p-3">All three</td>
+        <td class="p-3">Everything above, end-to-end</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>

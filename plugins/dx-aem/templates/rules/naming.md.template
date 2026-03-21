@@ -1,0 +1,41 @@
+---
+description: Naming conventions for frontend, backend, and general project files
+paths: ["**/*.java", "**/*.js", "**/*.scss", "**/*.html"]
+applyTo: "**/*.java, **/*.js, **/*.scss, **/*.html"
+---
+
+# Naming Conventions
+
+## Frontend
+
+| Type | Convention | Examples |
+|------|-----------|----------|
+| Component folders | `<prefix>-{name}` | `myproject-accordion` |
+| Component JS files | `<prefix>-{name}.clientlibs.js` | `myproject-accordion.clientlibs.js` |
+| Component config | `<prefix>-{name}.config.js` | `myproject-accordion.config.js` |
+| Component SCSS | `<prefix>-{name}.clientlibs.scss` | `myproject-accordion.clientlibs.scss` |
+| JS classes | PascalCase | `Accordion`, `NavigationHeader` |
+| CSS classes (AEM Core) | `.cmp-{name}__*` | `.cmp-accordion__button` |
+| CSS wrapper classes | `.<prefix>-{name}--{variant}` | `.myproject-accordion--meganav` |
+| CSS custom properties | `--<prefix>-{token}` | `--myproject-color-primary` |
+
+## Backend (Java)
+
+| Type | Convention | Examples |
+|------|-----------|----------|
+| Model interfaces | `models/{Name}.java` | `Hero`, `Button` |
+| Model implementations | `internal/models/{Name}Impl.java` | `HeroImpl` |
+| Service interfaces | `services/{Name}Service.java` | `PlaceholdersService` |
+| Service implementations | `internal/services/{Name}ServiceImpl.java` | `PlaceholdersServiceImpl` |
+| Resource types | `<prefix>/components/content/{name}` | `myproject/components/content/hero` |
+| HTL templates | `{name}.html` | `hero.html` |
+| Dialog definitions | `_cq_dialog/.content.xml` | Granite UI XML |
+| Test classes | `{Impl}Test.java` | `HeroImplTest` |
+| Test fixtures | `{name}-content.json` | `hero-content.json` |
+
+## General
+
+| Type | Convention | Examples |
+|------|-----------|----------|
+| Branches | `feature/*`, `bugfix/*` | `feature/hero-component`, `bugfix/12345-fix-dialog` |
+| OSGi configs | `config.{runmode}/` | `config.author.dev`, `config.publish.prod` |

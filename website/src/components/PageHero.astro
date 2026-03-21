@@ -1,0 +1,17 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+---
+
+<div class="relative bg-gradient-to-br from-brand-900 via-brand-700 to-brand-900 py-16 md:py-20 px-6 text-center overflow-hidden">
+  <!-- Glow -->
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(54,192,207,0.12)_0%,transparent_60%)] pointer-events-none"></div>
+  <div class="relative max-w-3xl mx-auto">
+    <h1 class="text-[2.5rem] font-extrabold text-white leading-[1.15] mb-3">{title}</h1>
+    {subtitle && <p class="text-[0.95rem] text-white/80 leading-[1.7]">{subtitle}</p>}
+  </div>
+</div>

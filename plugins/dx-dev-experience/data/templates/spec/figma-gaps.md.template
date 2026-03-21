@@ -1,0 +1,91 @@
+# Figma Prototype Verification Report
+
+**Prototype:** prototype/index.html
+**Verified:** <ISO date>
+**Result:** <PASS | PASS WITH MINOR GAPS | NEEDS ATTENTION>
+**Viewports verified:** <count> (<list, e.g. "desktop 1440px, mobile 375px"> or "single 1440x900")
+<!-- Overall result = worst result across all viewports.
+     If desktop is PASS but mobile is NEEDS ATTENTION → overall is NEEDS ATTENTION. -->
+
+<!-- ============================================================
+     Per-Viewport Sections
+     Include one section per verified viewport.
+     For single-viewport, include one section with the viewport name "Default".
+     ============================================================ -->
+
+## <Viewport Name> (<width>x<height>)
+
+**Figma reference:** `prototype/figma-reference<-viewport>.png`
+**Prototype screenshot:** `prototype/prototype-screenshot<-viewport>.png`
+<!-- For single viewport use figma-reference.png / prototype-screenshot.png -->
+**Result:** <PASS | PASS WITH MINOR GAPS | NEEDS ATTENTION>
+**Iterations:** <N> fix rounds
+
+### Fixed Issues
+<!-- One row per issue that was fixed during the verify loop.
+     If no issues were fixed, write: "No issues found — prototype matched on first comparison." -->
+
+| # | Category | Description | Iteration |
+|---|----------|-------------|-----------|
+<!-- | 1 | Spacing  | Padding between cards was 16px, should be 24px | 1 |
+     | 2 | Colors   | Button background was #333, should be #1a1a1a | 1 | -->
+
+### Remaining Issues
+<!-- One row per issue that remains after max iterations.
+     If no remaining issues: "No remaining issues — prototype matches Figma reference for this viewport." -->
+
+| # | Category | Severity | Description |
+|---|----------|----------|-------------|
+<!-- | 1 | Typography | minor | Font weight slightly heavier than Figma (500 vs 400) |
+     Severity: major (structural/layout wrong, missing element) or minor (cosmetic).
+     Properties marked ≈ in figma-extract.md have tolerance — only flag if >30% off. -->
+
+<!-- Repeat the viewport section for each additional viewport -->
+
+## Summary
+
+- **Total gaps found:** <count across all viewports>
+- **Fixed:** <count>
+- **Remaining:** <count> (<major-count> major, <minor-count> minor)
+
+## Visual Acceptance Checklist
+<!-- MANDATORY. Binary pass/fail assertions for QA verification without Figma access.
+     Generated from Figma design data + prototype verification results.
+     See references/acceptance-checklist.md for format rules.
+
+     Rules:
+     - One property per assertion when possible
+     - ≈ prefix for content-dependent values (from Dynamic Content Elements table)
+     - Structural assertions are never approximate
+     - Include concrete values: hex colors, pixel sizes, not "dark" or "large"
+     - [x] = verified during comparison, [ ] = not verified or manual check needed
+     - Group by category: Layout, Typography, Colors, Spacing, Interactive States
+     - Skip embedded component internals — only assert container/slot styling -->
+
+> Binary pass/fail assertions for QA verification without Figma access.
+> Assertions marked ≈ have tolerance for dynamic content.
+> Generated from Figma design data + prototype verification.
+
+### <Viewport Name> (<width>px)
+<!-- Repeat for each viewport -->
+
+#### Layout
+<!-- - [x] Cards container: flex-direction row, gap 24px
+     - [x] Main content: flex 1, cards: fixed 372px
+     - [ ] Component spans full viewport width -->
+
+#### Typography
+<!-- - [x] Title: font-size 56px / line-height 60px / weight 700 / color #ffffff
+     - [x] Body: font-size 16px / line-height 22px / weight 400 -->
+
+#### Colors
+<!-- - [x] Card background: #1a1a1a
+     - [x] Button primary: background #ffffff, color #272626 -->
+
+#### Spacing
+<!-- - [x] ≈ Container padding: ≈96px 120px (content-dependent)
+     - [x] Cards gap: 24px -->
+
+#### Interactive States
+<!-- - [ ] Primary button hover: background changes to #333 (verify manually)
+     - [ ] Focus ring: 2px solid, visible on keyboard navigation -->

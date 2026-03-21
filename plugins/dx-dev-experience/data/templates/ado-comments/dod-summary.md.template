@@ -1,0 +1,14 @@
+### DoD Check: <Title> (ADO #<id>)
+
+**Verdict:** <PASS/FAIL>
+**Score:** <N>/<total automated criteria>
+
+<!-- If any failures, list them:
+**Failures:**
+- ❌ Criterion name — what's missing
+
+If any warnings:
+**Warnings:**
+- ⚠️ Warning description -->
+
+<!-- Link to full dod.md in the branch -->

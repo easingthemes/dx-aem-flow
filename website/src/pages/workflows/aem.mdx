@@ -1,0 +1,240 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: AEM Verification & QA
+sidebar: workflows
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+<PageHero
+  title="AEM Verification & QA"
+  subtitle="Component snapshots, dialog verification, automated QA with browser automation, and demo capture."
+/>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="info"
+  title="Core AEM Skills"
+  subtitle="From pre-development baseline to post-deployment QA, visual verification, and documentation."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard
+      icon="mdi:camera"
+      iconColor="bg-brand-700"
+      title="/aem-snapshot"
+      tags={[{ label: 'Pre-Dev', color: 'primary' }, { label: 'aem-before.md', color: 'primary' }]}
+    >
+      Before development -- capture a baseline of dialog fields, JCR properties, and find pages
+      using the component.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:check-circle"
+      iconColor="bg-emerald-600"
+      title="/aem-verify"
+      tags={[{ label: 'Post-Dev', color: 'success' }, { label: 'aem-after.md', color: 'success' }]}
+    >
+      After deployment -- walk the dialog, compare fields with the baseline snapshot, create a test page
+      on AEM with the component configured and demo data populated.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:camera"
+      iconColor="bg-cyan"
+      title="/aem-demo"
+      tags={[{ label: 'Documentation', color: 'secondary' }, { label: 'demo/', color: 'secondary' }]}
+    >
+      Screenshot the component dialog, capture rendered output, and write an authoring guide for
+      content authors.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:bug"
+      iconColor="bg-red-500"
+      title="/aem-qa"
+      tags={[{ label: 'QA', color: 'error' }, { label: 'qa.json', color: 'error' }]}
+    >
+      Full QA -- verify dialog fields (BE via AEM MCP) and page rendering (FE via Chrome DevTools).
+      Creates bug tickets (ADO or Jira) if issues are found.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:eye"
+      iconColor="bg-amber-500"
+      title="/aem-fe-verify"
+      tags={[{ label: 'Visual', color: 'warning' }, { label: 'Figma vs AEM', color: 'warning' }]}
+    >
+      Visual verification of frontend rendering on local AEM -- screenshots the component,
+      compares against Figma reference or requirements, and auto-fixes gaps in a loop (up to 3 iterations).
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Flow"
+  badgeColor="success"
+  title="Verification Flow"
+  subtitle="The complete lifecycle from baseline to QA."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="No orchestrator — run individually"
+    steps={[
+      { title: 'Snapshot', subtitle: 'Baseline: fields, pages', command: '/aem-snapshot', color: '#3b82f6' },
+      { title: 'Developer implements', subtitle: 'Code changes', color: '#8b5cf6' },
+      { title: 'Verify', subtitle: 'Compare, create demo page', command: '/aem-verify', color: '#22c55e' },
+      { title: 'FE Verify', subtitle: 'AEM vs Figma visual', command: '/aem-fe-verify', color: '#d97706' },
+      { title: 'Editorial Guide', subtitle: 'Screenshot dialog, authoring guide', command: '/aem-demo', color: '#a855f7' },
+      { title: 'QA', subtitle: 'FE+BE verification', command: '/aem-qa', color: '#ef4444' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Seed Data"
+  badgeColor="warning"
+  title="AEM Project Knowledge"
+  subtitle="All AEM skills depend on a pre-built index of components, content paths, and architecture."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:pin" iconColor="bg-amber-500" title="/aem-init">
+      Run once per repo. Builds <code>.ai/project/</code> with component-index, file-patterns,
+      content-paths, and architecture docs.
+    </ContentCard>
+
+    <ContentCard icon="mdi:sync" iconColor="bg-cyan" title="/aem-refresh">
+      Syncs seed data when project structure changes. Updates component index and file patterns.
+    </ContentCard>
+
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="/aem-component">
+      Finds all source files for a named component: JS, SCSS, HTL, dialog XML, Sling Model,
+      content paths.
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-search" iconColor="bg-emerald-600" title="/aem-page-search">
+      Find all AEM pages that use a specific component. Returns page paths with clickable
+      author URLs grouped by site and language.
+    </ContentCard>
+
+    <ContentCard icon="mdi:hospital-box" iconColor="bg-red-500" title="/aem-doctor">
+      Health check for AEM infrastructure -- verifies component definitions, OSGi configs,
+      dispatcher rules, content structure, and AEM instance connectivity.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Seed Data Files">
+    All stored in <code>.ai/project/</code>: <code>project.yaml</code>, <code>file-patterns.yaml</code>,
+    <code>content-paths.yaml</code>, <code>component-index-project.md</code>, <code>architecture.md</code>,
+    <code>features.md</code>.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="QA Agent"
+  badgeColor="error"
+  title="QA Agent Detail"
+  subtitle="Two verification tracks run in parallel: backend and frontend."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="Backend Track">
+      Dialog fields and JCR properties verified via AEM MCP.
+
+      - Read dialog field definitions
+      - Check JCR property values
+      - Verify Sling Model mappings
+      - Validate exporter output
+    </ContentCard>
+
+    <ContentCard icon="mdi:web" iconColor="bg-brand-700" title="Frontend Track">
+      Page rendering, layout, and interactions verified via Chrome DevTools MCP.
+
+      - Navigate to component page
+      - Check rendered output
+      - Test interactive behaviors
+      - Screenshot for evidence
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="error" title="Automatic Bug Filing">
+    When the QA agent finds discrepancies between expected and actual behavior, it creates bug tickets
+    directly in ADO or Jira with repro steps and screenshots attached.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="MCP Tools"
+  badgeColor="secondary"
+  title="AEM MCP Tools"
+  subtitle="Direct interaction with AEM via the Model Context Protocol."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Tool</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>getNodeContent</code></td>
+        <td class="p-3">Read JCR node properties and child nodes</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>scanPageComponents</code></td>
+        <td class="p-3">List all components on a page with their resource types</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>getPageContent</code></td>
+        <td class="p-3">Get full page content tree</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>createPage</code></td>
+        <td class="p-3">Create new pages for demo or testing</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>updateComponent</code></td>
+        <td class="p-3">Modify component properties on a page</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>getTemplateStructure</code></td>
+        <td class="p-3">Inspect template policies and allowed components</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>searchContent</code></td>
+        <td class="p-3">JCR query to find content across the repository</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>getPageImages</code></td>
+        <td class="p-3">List all image references on a page</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Documentation"
+  title="AEM Documentation Generation"
+  subtitle="/aem-doc-gen creates comprehensive component documentation."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="success" title="Full Documentation Output">
+    Generates complete documentation with dialog screenshots (each panel captured individually),
+    website screenshots (rendered component on a live page), field descriptions, authoring instructions,
+    and technical notes. Published to ADO Wiki, Confluence, or saved locally as Markdown.
+  </HighlightBox>
+</Section>

@@ -1,0 +1,412 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Learning & Feedback
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Learning & Feedback"
+  subtitle="How agents accumulate knowledge over time -- from raw signal capture to rule promotion. Fix patterns, review issues, build errors, and execution metrics feed back into future runs."
+/>
+
+<SectionHeading
+  badge="Existing"
+  title="Existing Feedback Mechanisms"
+  subtitle="Seven mechanisms already capture signals during execution. Most are per-session and lose memory between runs."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="Self-Healing Loop">
+      <strong>Scope:</strong> Per-session, per-step.
+      dx-step-fix and dx-step-heal recover from failures during execution.
+      Memory is lost after the session ends -- each run starts fresh.
+    </ContentCard>
+
+    <ContentCard icon="mdi:magnify" iconColor="bg-amber-500" title="Review-Fix Loop">
+      <strong>Scope:</strong> Per-session, per-story.
+      dx-step-verify runs up to 3 review-fix cycles. Same issues may recur across stories
+      because findings are not persisted.
+    </ContentCard>
+
+    <ContentCard icon="mdi:calendar-week" iconColor="bg-cyan" title="Weekly Retrospective">
+      <strong>Scope:</strong> Per-week, automation only.
+      Written to S3 bundles. Human reviews retro and manually adjusts prompts/rules.
+      Gap: only covers automation agents, not local CLI usage.
+    </ContentCard>
+
+    <ContentCard icon="mdi:test-tube" iconColor="bg-brand-700" title="Evaluation Framework">
+      <strong>Scope:</strong> Pre-deployment quality gate.
+      Fixture pass/fail results. Human updates fixtures when prompts change.
+      Gap: does not learn from production runs.
+    </ContentCard>
+
+    <ContentCard icon="mdi:notebook" iconColor="bg-amber-500" title="Decision Journal">
+      <strong>Scope:</strong> Per-run, automation only.
+      Every agent decision logged with reasoning to S3. Human reviews journals and
+      manually adjusts policy. Gap: no automated pattern extraction.
+    </ContentCard>
+
+    <ContentCard icon="mdi:shield" iconColor="bg-red-500" title="Policy Gate">
+      <strong>Scope:</strong> Global, static.
+      <code>pipeline-policy.yaml</code> restricts what each agent role can do.
+      Manually maintained -- human updates after incidents.
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-document" iconColor="bg-emerald-600" title="Shared Rules">
+      <strong>Scope:</strong> Project-wide, git-tracked.
+      <code>.ai/rules/</code> files read by dx skills and automation agents.
+      Manual only -- no automated discovery or suggestion.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="What's Missing">
+    No per-project pattern accumulation across stories. No automated rule promotion. No calibration
+    data for planning estimates. No cross-session memory for local CLI usage.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Storage"
+  badgeColor="secondary"
+  title="Three Storage Tiers"
+  subtitle="Different knowledge types belong in different places -- from auto-loaded rules to raw machine data."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Promotion Flow"
+    description="Raw signals accumulate, patterns emerge, and proven fixes get promoted to rules."
+    steps={[
+      { title: 'Raw Signals', subtitle: '.ai/learning/\nraw/*.jsonl', color: '#6b7280' },
+      { title: '3+ Matches', subtitle: 'Pattern\ndetected', color: '#d97706' },
+      { title: 'Propose Rule', subtitle: '.claude/rules/\nlearned-*.md', color: '#8b5cf6' },
+      { title: 'Dev Confirms', subtitle: 'Rule written\nor declined', color: '#059669' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard icon="mdi:star" iconColor="bg-brand-700" title="Tier 1: .claude/rules/">
+      <strong>Permanent Conventions (Auto-Loaded)</strong>
+
+      Knowledge that influences every Claude interaction. Import conventions, naming patterns,
+      test fixture patterns. Populated after a pattern is seen 3+ times and the developer confirms.
+
+      Format: <code>learned-&lt;topic&gt;.md</code>
+    </ContentCard>
+
+    <ContentCard icon="mdi:database" iconColor="bg-cyan" title="Tier 2: .ai/">
+      <strong>Domain Knowledge (Skill-Readable)</strong>
+
+      - <code>.ai/rules/</code> -- shared rules for dx skills and automation
+      - <code>.ai/learning/</code> -- accumulated data (fix history, metrics)
+      - <code>.ai/project/</code> -- AEM component gotchas, market quirks
+    </ContentCard>
+
+    <ContentCard icon="mdi:file-hidden" iconColor="bg-amber-500" title="Tier 3: .ai/learning/raw/">
+      <strong>Raw Signals (gitignored)</strong>
+
+      Machine-readable append-only logs: <code>fixes.jsonl</code>, <code>runs.jsonl</code>,
+      <code>review-issues.jsonl</code>. Per-developer, no repo noise. Input for aggregation
+      into Tier 1 and Tier 2 files.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Capabilities"
+  badgeColor="success"
+  title="Seven Learning Capabilities"
+  subtitle="Each capability captures a specific signal type and feeds it back into future runs."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="1. Fix Pattern Memory">
+      <strong>Storage:</strong> <code>fixes.md</code> + <code>fixes.jsonl</code>
+      <br />After every dx-step-fix or dx-step-heal, capture error type, message pattern, fix applied,
+      and result. Before attempting a fix, dx-step-fix checks <code>fixes.md</code> for known patterns.
+      If a strategy worked 3/3 times, try that first. Every 10 entries, <code>fixes.md</code> is regenerated.
+    </ContentCard>
+
+    <ContentCard icon="mdi:magnify" iconColor="bg-amber-500" title="2. Review Issue Tracker">
+      <strong>Storage:</strong> <code>review-issues.md</code> + <code>review-issues.jsonl</code>
+      <br />After every dx-step-verify or dx-code-reviewer run, capture issue type, file/component,
+      auto-fix success, and cycle count. If 5+ issues of the same type appear, suggest adding a
+      convention rule. Security patterns are promoted immediately (no threshold). Feeds into plan
+      generation for preventive steps.
+    </ContentCard>
+
+    <ContentCard icon="mdi:hammer" iconColor="bg-red-500" title="3. Build Error Catalog">
+      <strong>Storage:</strong> <code>patterns.md</code>
+      <br />After every dx-step-build run, capture generalized error message patterns, affected file
+      types/modules, root cause categories, and applied fixes. Common errors get fixed faster
+      via known pattern matching.
+    </ContentCard>
+
+    <ContentCard icon="mdi:book-open-variant" iconColor="bg-cyan" title="4. Convention Discovery">
+      <strong>Storage:</strong> <code>conventions-discovered.md</code>
+      <br />After code review finds convention patterns, capture convention name, examples, and confidence
+      level. Can be promoted to <code>.ai/rules/</code> when confirmed. Reduces false positive
+      review findings over time.
+    </ContentCard>
+
+    <ContentCard icon="mdi:chart-line" iconColor="bg-brand-700" title="5. Execution Metrics">
+      <strong>Storage:</strong> <code>metrics.md</code> + <code>runs.jsonl</code>
+      <br />After every coordinator completes, capture ticket, flow, phases, steps, fixes, heals, tokens,
+      duration, and result. Enables trend analysis, token budget planning, phase bottleneck identification,
+      and estimate calibration.
+    </ContentCard>
+
+    <ContentCard icon="mdi:shape" iconColor="bg-cyan-dark" title="6. Story Archetype Matching">
+      After each successful story completion, capture story type, component area, step count/types,
+      and patterns needed. During planning, check for similar past stories to reuse step structure
+      and predict fix/healing needs.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="7. Weekly Retrospective">
+    On demand (<code>/dx-retro</code>) or automated. Reads all <code>.ai/learning/raw/&#42;.jsonl</code> files,
+    aggregates success rates, common errors, and token trends. Identifies improving/degrading patterns.
+    Suggests new rules and convention updates. Writes <code>.ai/learning/retro/YYYY-WNN-summary.md</code>.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Storage Tiers Hierarchy                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Tiers"
+  badgeColor="info"
+  title="Storage Tiers Hierarchy"
+  subtitle="Knowledge type determines storage location -- from auto-loaded rules to raw machine data."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Knowledge Type</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Best Location</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Why</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Who Reads It</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3">Project conventions (coding patterns, naming rules)</td><td class="p-3"><code>.claude/rules/</code></td><td class="p-3">Auto-loaded on every Claude invocation</td><td class="p-3">Every Claude interaction</td></tr>
+        <tr><td class="p-3">Domain knowledge (component patterns, architecture)</td><td class="p-3"><code>.ai/rules/</code></td><td class="p-3">Read by skills via config. Shared across team.</td><td class="p-3">Skills that read <code>.ai/rules/&#42;.md</code></td></tr>
+        <tr><td class="p-3">Operational metrics (run stats, timing)</td><td class="p-3"><code>.ai/learning/</code></td><td class="p-3">Machine data, needs aggregation before useful</td><td class="p-3"><code>/dx-retro</code>, <code>/dx-learn</code></td></tr>
+        <tr><td class="p-3">Fix recipes (error to fix mappings)</td><td class="p-3"><code>.claude/rules/</code> (once proven)</td><td class="p-3">Becomes a rule: "when you see X, fix with Y"</td><td class="p-3">dx-step-fix, dx-step-build</td></tr>
+        <tr><td class="p-3">Project-specific knowledge (market quirks)</td><td class="p-3"><code>.ai/project/</code></td><td class="p-3">Same area as seed data</td><td class="p-3">aem-file-resolver, dx skills</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* /dx-learn and /dx-retro                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="success"
+  title="/dx-learn and /dx-retro"
+  subtitle="Two dedicated skills for aggregating and analyzing learning data."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:new-box" iconColor="bg-brand-700" title="/dx-learn -- Aggregate">
+      Reads all <code>.jsonl</code> files in <code>.ai/learning/raw/</code> and generates aggregated markdown
+      summaries: <code>fixes.md</code>, <code>review-issues.md</code>, <code>patterns.md</code>,
+      <code>metrics.md</code>, <code>conventions-discovered.md</code>. Run manually or triggered automatically
+      every 10 entries when <code>auto-aggregate</code> is enabled.
+    </ContentCard>
+
+    <ContentCard icon="mdi:chart-bar" iconColor="bg-cyan" title="/dx-retro -- Retrospective">
+      Generates weekly retrospective with run counts, success rates, top fix/review patterns,
+      trend analysis, and suggested actions. Writes to <code>.ai/learning/retro/YYYY-WNN-summary.md</code>.
+      Can be run on demand or scheduled via automation pipelines.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Implementation Sketch                                                  */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Implementation"
+  badgeColor="secondary"
+  title="Implementation Sketch"
+  subtitle="Which skill reads what and writes where -- the data flow of the learning system."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Reads Before Acting</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Writes After Acting</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Promotion Trigger</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>dx-step-fix</code></td><td class="p-3"><code>fixes.md</code> for known patterns (3+ successes = try first)</td><td class="p-3">Append to <code>fixes.jsonl</code>; regenerate <code>fixes.md</code> every 10 entries</td><td class="p-3">3+ successes, 0 failures</td></tr>
+        <tr><td class="p-3"><code>dx-step-verify</code></td><td class="p-3">--</td><td class="p-3">Append issues to <code>review-issues.jsonl</code></td><td class="p-3">5+ same-type issues = suggest convention rule</td></tr>
+        <tr><td class="p-3"><code>dx-plan</code></td><td class="p-3"><code>metrics.md</code> + <code>conventions-discovered.md</code> + <code>fixes.md</code></td><td class="p-3">--</td><td class="p-3">--</td></tr>
+        <tr><td class="p-3"><code>dx-code-reviewer</code></td><td class="p-3">--</td><td class="p-3">Append issues; propose <code>learned-convention-&#42;.md</code></td><td class="p-3">5+ same-type across stories</td></tr>
+        <tr><td class="p-3"><code>aem-verify</code></td><td class="p-3">--</td><td class="p-3">Update <code>component-gotchas.md</code></td><td class="p-3">2+ same component issues</td></tr>
+        <tr><td class="p-3"><code>&#42;-all coordinators</code></td><td class="p-3">--</td><td class="p-3">Append run data to <code>runs.jsonl</code></td><td class="p-3">--</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="info" title="Security Patterns">
+    Security-related patterns (secrets, vulnerabilities) are promoted immediately with no threshold.
+    The developer confirmation requirement is waived for security -- these become rules automatically.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="info"
+  title="Skill-Level Integration"
+  subtitle="Each skill decides where to read from and write to. No central learning system -- skills own their signals."
+  bg="primary"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Skill</th>
+        <th class="text-left p-3 font-semibold">Before Acting</th>
+        <th class="text-left p-3 font-semibold">After Acting</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-step-fix</code></td>
+        <td class="p-3">Read <code>fixes.md</code> for known patterns</td>
+        <td class="p-3">Append to <code>fixes.jsonl</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-step-verify</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">Append issues to <code>review-issues.jsonl</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-plan</code></td>
+        <td class="p-3">Read <code>metrics.md</code> + <code>conventions-discovered.md</code> + <code>fixes.md</code></td>
+        <td class="p-3">--</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>dx-code-reviewer</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">Append issues; propose rule at 5+ occurrences</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>aem-verify</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">Update <code>component-gotchas.md</code> at 2+ occurrences</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>&#42;-all coordinators</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">Append run data to <code>runs.jsonl</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <ContentCard icon="mdi:new-box" iconColor="bg-brand-700" title="/dx-learn">
+      Reads all <code>.jsonl</code> files in <code>.ai/learning/raw/</code>, generates aggregated markdown
+      summaries: <code>fixes.md</code>, <code>review-issues.md</code>, <code>patterns.md</code>,
+      <code>metrics.md</code>, <code>conventions-discovered.md</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:chart-bar" iconColor="bg-cyan" title="/dx-retro">
+      Generates weekly retrospective with run counts, success rates, top fix/review patterns,
+      trend analysis, and suggested actions.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="Layout"
+  badgeColor="secondary"
+  title="Consumer Project Layout"
+  subtitle="How learning data is organized in a consumer repo."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="info" title="Directory Structure">
+    <CommandBlock>
+{`.ai/
+  learning/
+    fixes.md                    -- aggregated fix patterns
+    review-issues.md            -- aggregated review findings
+    patterns.md                 -- build error catalog
+    conventions-discovered.md   -- discovered conventions
+    metrics.md                  -- execution metrics summary
+    retro/
+      YYYY-WNN-summary.md      -- weekly retrospective
+    raw/                        -- .gitignored
+      runs.jsonl
+      fixes.jsonl
+      review-issues.jsonl`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <HighlightBox severity="success" title="Key Design Decisions">
+    <ul class="text-sm space-y-1 mt-2">
+      <li><strong>Skills decide where to write</strong> -- no central system</li>
+      <li><strong>Threshold before promotion</strong> -- 3+ for build fixes, 5+ for conventions</li>
+      <li><strong>Developer confirmation for rules</strong> -- never auto-create <code>.claude/rules/</code> files</li>
+      <li><strong>Security patterns promoted immediately</strong> -- no threshold for secrets/vulnerabilities</li>
+      <li><strong>Raw data is private</strong> -- gitignored, per-developer</li>
+      <li><strong>Summaries are shared</strong> -- committable, team knowledge</li>
+      <li><strong>Opt-in consumption</strong> -- skills check if learning files exist but work without them</li>
+      <li><strong>No breaking changes</strong> -- learning is additive enhancement, not dependency</li>
+    </ul>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="warning"
+  title="Configuration"
+  subtitle="Learning is controlled via .ai/config.yaml with sensible defaults."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Config Options">
+    <CommandBlock label=".ai/config.yaml">
+{`learning:
+  enabled: true                    # Master switch
+  auto-aggregate: true             # Auto-regenerate summaries every 10 entries
+  retention-days: 90               # Raw data retention (0 = forever)
+  git-commit-summaries: true       # Include .md summaries in commits
+  git-ignore-raw: true             # Gitignore .jsonl raw data`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <PipelineBlock
+    label="Migration Path"
+    description="Incremental rollout from signal capture to active learning."
+    steps={[
+      { title: 'Patch', subtitle: 'Signal capture\n(append-only)', color: '#059669' },
+      { title: 'Minor', subtitle: '/dx-learn\n/dx-retro', color: '#0891b2' },
+      { title: 'Minor', subtitle: 'Pattern\nconsumption', color: '#d97706' },
+      { title: 'Major', subtitle: 'Active\nlearning', color: '#8b5cf6' },
+    ]}
+  />
+</Section>
