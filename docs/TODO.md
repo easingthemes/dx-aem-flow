@@ -119,6 +119,18 @@ Add `SubagentStart` and `SubagentStop` hooks in `.claude/settings.json` to log w
 
 **Scope:** Rename skill directory, SKILL.md name field, agent references, all coordinator references (dx-agent-all Phase 6.5), presentation website, and skill catalog.
 
+## Plugin install ignores marketplace qualifier — resolves by plugin name only
+
+**Bug:** `/plugin install dx-aem@dx-aem-flow` resolves `dx-aem` from a *different* marketplace (`dx-aem-ai-flow`) if one is cached. Claude Code extracts just the plugin name, searches for any `dx-aem@*` match, and returns the first hit — the `@marketplace` qualifier is effectively ignored.
+
+**Tracking:** [anthropics/claude-code#20593](https://github.com/anthropics/claude-code/issues/20593)
+
+**Cache location:** `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`
+
+**Workaround:** Ensure only one marketplace contains a given plugin name, or delete stale cache entries (`rm -rf ~/.claude/plugins/cache/<wrong-marketplace>`).
+
+**Impact on dx plugins:** When users have both the GitHub marketplace (`dx-aem-flow`) and any other source (local path, ADO sparse checkout) registered, installs may silently pull from the wrong source with a stale version.
+
 ## Revert to namespace-only naming once Claude Code fixes plugin:skill resolution
 
 All skill directories were prefixed with their plugin abbreviation (`dx-init`, `aem-doctor`) to work around broken `plugin:skill` resolution in Claude Code CLI. Once the upstream bug is fixed (skills correctly show as `dx:init` not bare `init`), consider reverting to shorter directory names.
