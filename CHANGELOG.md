@@ -1,3 +1,10 @@
+## [2.50.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.3...v2.50.4) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dx-sync:** use generic repo names in SKILL.md examples ([406a0e9](https://github.com/easingthemes/dx-aem-flow/commit/406a0e934b850077ad14679bd4a0c41b4c0e209c))
+
 ## [2.50.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.2...v2.50.3) (2026-03-21)
 
 
