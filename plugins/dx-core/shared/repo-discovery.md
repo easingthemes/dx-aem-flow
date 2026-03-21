@@ -90,6 +90,31 @@ Print a warning and continue with local implementation:
 
 No delegation file is written. No pipeline is queued. The developer controls the workflow.
 
+## Hub Mode: Multi-Repo Dispatch
+
+**When `hub.enabled: true` AND cwd is a `.hub/` directory** (hub orchestration context):
+
+Hub mode replaces the manual handoff with automated dispatch via `claude -p --cwd`. Instead of printing "switch to repo X", the skill dispatches a `claude -p` session to the target repo.
+
+Read `shared/hub-dispatch.md` for the full hub dispatch protocol:
+- Hub detection logic
+- Repo resolution from config
+- Command builder (`claude -p --cwd`)
+- Result collection and state persistence
+- Dispatch modes (sequential/parallel)
+
+### Priority Order
+
+```
+1. Pipeline mode (DX_PIPELINE_MODE=true) — always takes precedence
+2. Hub mode (hub.enabled + .hub/ cwd) — dispatches via claude -p
+3. Local mode (default) — manual handoff message
+```
+
+### When Hub Mode Is Active but Cross-Repo Scope Is Not Detected
+
+Some skills (like `/dx-pr-review`) operate on a single repo at a time. In hub mode, they resolve the target repo from context (e.g., PR URL → repo name → config path) and dispatch to that specific repo, rather than needing cross-repo scope detection.
+
 ## Environment Variables
 
 | Variable | Set by | Purpose |
@@ -98,3 +123,5 @@ No delegation file is written. No pipeline is queued. The developer controls the
 | `SOURCE_REPO_NAME` | Pipeline YAML | Current repo name (from `Build.Repository.Name`) |
 | `CROSS_REPO_PIPELINE_MAP` | Pipeline variable | JSON: repo name → pipeline ID |
 | `SYSTEM_ACCESSTOKEN` | Pipeline YAML | ADO build token for REST API calls |
+| `HUB_ENABLED` | `.ai/config.yaml` | Hub mode flag (derived from `hub.enabled`) |
+| `HUB_STATE_DIR` | `.ai/config.yaml` | State directory path (derived from `hub.state-dir`) |
