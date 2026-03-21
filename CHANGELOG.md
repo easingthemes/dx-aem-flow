@@ -1,3 +1,10 @@
+## [2.50.5](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.4...v2.50.5) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dx-sync:** resolve AEM plugin path in cache layout and ensure dx.version tracking ([18eef38](https://github.com/easingthemes/dx-aem-flow/commit/18eef3846c831f6d30b75cf7b48af6cd92745c3a))
+
 ## [2.50.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.3...v2.50.4) (2026-03-21)
 
 
