@@ -15,4 +15,8 @@ do
   sed -i'' -e "s/\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"version\": \"${VERSION}\"/g" "$f"
 done
 
+# Update dx.version in config template (used by /dx-init for new consumers)
+sed -i'' -e "s/version: \"[0-9]*\.[0-9]*\.[0-9]*\"/version: \"${VERSION}\"/" \
+  plugins/dx-core/templates/config.yaml.template
+
 echo "Bumped all plugin versions to ${VERSION}"
