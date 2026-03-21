@@ -1,3 +1,10 @@
+## [2.52.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.52.0...v2.52.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dx-core:** strengthen task progress instructions from conditional to imperative ([098d82b](https://github.com/easingthemes/dx-aem-flow/commit/098d82b971735bca05d10fc9c2975f64a86261e8))
+
 # [2.52.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.51.0...v2.52.0) (2026-03-21)
 
 
