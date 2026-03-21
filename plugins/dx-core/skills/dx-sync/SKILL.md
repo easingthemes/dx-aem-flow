@@ -29,8 +29,9 @@ Read `repos:` from `.ai/config.yaml`. Present the available repos and their capa
 ```markdown
 | Repo | Path | Base Branch | Work Branch | FE | BE |
 |------|------|-------------|-------------|:--:|:--:|
-| Platform-Core | ../Platform-Core | development | feature/ai-sync | Yes | Yes |
-| Brand-B | ../Brand-B | development | feature/ai-sync | Yes | No |
+| brand-a | ../Brand-A-Project | development | feature/ai-sync | Yes | No |
+| backend | ../AEM-Backend | develop | feature/ai-sync | Yes | Yes |
+| brand-b | ../Brand-B-Project | development | feature/ai-sync | Yes | No |
 ```
 
 > All repos come from the `repos:` section in `.ai/config.yaml`. The current repo is excluded (you don't sync to yourself).
@@ -42,7 +43,7 @@ From `$ARGUMENTS`, extract:
 - **Repos:** Repo names from `.ai/config.yaml` `repos:` section
 - If no repos specified, defaults to all configured repos
 
-If no arguments at all, ask: "Sync all repos? Or specify which ones (e.g., `Platform-Core Brand-B`). Add `--dry-run` to preview."
+If no arguments at all, ask: "Sync all repos? Or specify which ones (e.g., `brand-a backend`). Add `--dry-run` to preview."
 
 ## 4. Run Sync
 
@@ -74,8 +75,9 @@ After the script completes, present:
 
 | Repo | Status | PR |
 |------|--------|-----|
-| Platform-Core | synced | PR #<id> |
-| Brand-B | synced | PR #<id> |
+| brand-a | synced | PR #<id> |
+| backend | synced | PR #<id> |
+| brand-b | synced | PR #<id> |
 ```
 
 If `--dry-run` was used, note: "Dry run — no changes were made."
