@@ -1,5 +1,11 @@
 # dx-aem-flow
 
+[![Version](https://img.shields.io/github/v/release/easingthemes/dx-aem-flow?label=version)](https://github.com/easingthemes/dx-aem-flow/releases)
+[![Release](https://github.com/easingthemes/dx-aem-flow/actions/workflows/release.yml/badge.svg)](https://github.com/easingthemes/dx-aem-flow/actions/workflows/release.yml)
+[![Website](https://github.com/easingthemes/dx-aem-flow/actions/workflows/deploy-website.yml/badge.svg)](https://github.com/easingthemes/dx-aem-flow/actions/workflows/deploy-website.yml)
+[![semantic-release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Three Claude Code plugins for AI-assisted Azure DevOps and Jira/Confluence development workflows.
 
 ## Install
