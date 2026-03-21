@@ -1,5 +1,21 @@
 # TODO — Future Plans
 
+## Testing — Future Layers
+
+### Layer 2: Skill Triggering Evals
+- [ ] Create `tests/` directory with bash test helpers (`run_claude`, `assert_contains`, `assert_order`)
+- [ ] Write trigger tests for key skills: does natural language prompt invoke the right skill?
+- [ ] Write explicit invocation tests: does `/dx-req-all 12345` trigger `dx-req-all`?
+- [ ] Add `ANTHROPIC_API_KEY` as GitHub Actions secret
+- [ ] Create `tests/run-evals.sh` runner with `--quick` (10 key skills) and `--full` (all 78) modes
+- [ ] CI workflow: run on release tags only (expensive, non-deterministic)
+
+### Layer 3: Workflow Integration
+- [ ] `/dx-init` in temp project → verify all expected files land with correct config
+- [ ] `/aem-init` → verify AEM config extends correctly
+- [ ] End-to-end: requirement fetch → plan → verify spec directory structure
+- [ ] Run manually before major releases
+
 ## Copilot CLI Dual-Support — Remaining Gaps
 
 Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/` — same directory as Claude Code. Full compatibility analysis is in `docs/architecture/cross-agents.md` (feature comparison tables) and `docs/authoring/technical-reference.md` (sections 12–14: tool alias mapping, agent inventory, frontmatter fields).
