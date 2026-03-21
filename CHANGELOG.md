@@ -1,3 +1,10 @@
+# [2.50.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.49.0...v2.50.0) (2026-03-21)
+
+
+### Features
+
+* add validation test suite and CI workflow ([80302d6](https://github.com/easingthemes/dx-aem-flow/commit/80302d643bc7b72b4d77dca7be90a4966bff7b64))
+
 # [2.49.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.48.0...v2.49.0) (2026-03-21)
 
 
