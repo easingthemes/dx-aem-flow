@@ -304,7 +304,39 @@ ADO fields return HTML. When converting:
 - Strip all other HTML tags (keep display text from `data-vss-mention` spans)
 - Trim excessive whitespace
 
-## 11. Present Summary
+## 11. Intent Workspace Sync (optional)
+
+If running inside an Intent workspace, mirror the ticket overview to the Spec note. Read `shared/intent-sync-contract.md` for full conventions.
+
+**Guard:** Is the tool `mcp__workspace-mcp__add_to_note` available? If NO → set `INTENT_STATUS = "skipped"` and go to Step 12.
+
+**If available:**
+
+1. **Set workspace title** — call `get_workspace_details`. If the title is still the default, call `set_workspace_title` with the work item title (truncated to 50 chars if needed). If already set, skip.
+
+2. **Add ticket overview to Spec note** — call `add_to_note(noteId="spec")` with:
+
+```markdown
+heading: "## Ticket Overview"
+content:
+| Field | Value |
+|-------|-------|
+| ID | #<id> |
+| Title | <title> |
+| Type | <type> |
+| State | <state> |
+| Priority | <priority> |
+| Sprint | <iteration path — last segment> |
+| Assigned To | <name> |
+
+> <One-line summary of the ticket — first sentence of description or title>
+```
+
+3. Set `INTENT_STATUS = "synced (1 block)"`.
+
+**Error handling:** If any MCP call fails, log `Intent sync: <tool_name> failed — skipping remaining sync`, set `INTENT_STATUS = "failed (<reason>)"`, and continue to Step 12. Do NOT retry or block.
+
+## 12. Present Summary
 
 After saving, print:
 
@@ -317,6 +349,8 @@ After saving, print:
 
 ### Saved:
 - `raw-story.md` — <X> sections, <Y> comments, <Z> relations
+
+**Intent:** <INTENT_STATUS>
 
 ### Next steps:
 - `/dx-req-explain` — distill into developer requirements

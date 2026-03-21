@@ -188,7 +188,47 @@ Do NOT duplicate ticket data verbatim — research.md should be deeper (code ana
 
 Read `.ai/templates/spec/research.md.template` and follow that structure exactly. The template defines all sections: Existing Components, Component Config, Backing Code (Models, Services, Exporters, API Endpoints), Frontend, Test Coverage, Related Components, Existing Implementation Check (MANDATORY), Key Findings, Files Inventory table, and Cross-Repo Scope.
 
-## 6. Present Summary
+## 6. Intent Workspace Sync (optional)
+
+If running inside an Intent workspace, mirror the research findings to a dedicated Research note. Read `shared/intent-sync-contract.md` for full conventions.
+
+**Guard:** Is the tool `mcp__workspace-mcp__add_to_note` available? If NO → set `INTENT_STATUS = "skipped"` and go to Step 7.
+
+**If available:**
+
+1. **Find or create Research note** — call `list_notes` and search for a note titled `Research: #<id>`. If found, use its `noteId`. If not, call `create_note(title="Research: #<id>", content="Research findings for ADO #<id>")` and use the returned `noteId`.
+
+2. **Add summary** — call `add_to_note(noteId=<research-note-id>)` with the Key Findings section content from `research.md` (reuse verbatim — do not regenerate).
+
+3. **Add reference blocks** — for each file in the Files Inventory table of `research.md`, call:
+   ```
+   add_reference_primitive(
+     noteId = <research-note-id>,
+     semanticId = "<file-path>",
+     description = "<one-line description from table>"
+   )
+   ```
+   Use the file path as `semanticId`. If the table includes a class/component name, append `#class:<Name>` to the semanticId.
+
+4. **Add cross-repo scope** — if `research.md` contains a Cross-Repo Scope section, call `add_to_note(noteId=<research-note-id>, heading="## Cross-Repo Scope")` with that section's content.
+
+5. **Add architecture diagram (conditional)** — if ≥3 distinct components or services were discovered in research.md, call `add_to_note(noteId=<research-note-id>)` with a diagram block:
+   ```
+   ~~~architecture layout=layered LR
+   [Component1] --> [Service1]
+   [Component2] --> [Service1]
+   [Service1] --> [Model1]
+   ~~~
+   ```
+   Map the actual component/service/model names from findings. Skip if <3 nodes.
+
+6. **Link from Spec note** — call `add_to_note(noteId="spec", content="### Research\nSee [Research: #<id>](intent://local/note/<research-note-id>)")`.
+
+7. Set `INTENT_STATUS = "synced (N references, 1 note)"` where N is the number of `add_reference_primitive` calls made.
+
+**Error handling:** If any MCP call fails, log `Intent sync: <tool_name> failed — skipping remaining sync`, set `INTENT_STATUS = "failed (<reason>)"`, and continue to Step 7. Do NOT retry or block.
+
+## 7. Present Summary
 
 After saving:
 
@@ -201,6 +241,8 @@ After saving:
 - Files to modify: <count> (estimated)
 - Test coverage: <existing test count> tests found
 - Cross-repo: <"all files in this repo" OR "also needs work in <repo1>, <repo2>">
+
+**Intent:** <INTENT_STATUS>
 
 ### Next steps:
 - `/dx-plan` — create implementation plan based on findings

@@ -99,7 +99,56 @@ The step-* skills update these statuses as they execute.
 - **No time estimates**
 - **Scale to complexity** — simple change = 3-4 steps, complex feature = 10+
 
-## 7. Present Summary
+## 7. Intent Workspace Sync (optional)
+
+If running inside an Intent workspace, mirror the plan to the Spec note as task blocks. Read `shared/intent-sync-contract.md` for full conventions.
+
+**Guard:** Is the tool `mcp__workspace-mcp__add_to_note` available? If NO → set `INTENT_STATUS = "skipped"` and go to Step 8.
+
+**If available:**
+
+1. **Read Spec note** — call `read_note(noteId="spec")` to check for existing tasks. If tasks for this plan already exist, skip to avoid duplicates.
+
+2. **Create task blocks** — call `add_to_note(noteId="spec")` with content containing one `@@@task` block per implement.md step:
+
+   ```
+   @@@task
+   # Step <N>: <step title>
+   <What this step does and why>
+
+   **Files:** <list from step>
+   @@@
+   ```
+
+   Intent auto-converts each `@@@task` block into a Task Note.
+
+3. **Add rich blocks to task notes** — after the tasks are created, for each task note:
+   - If the step has a **Test** line → `add_cli_primitive(noteId=<task_note_id>, command=<test command>, description="Verify: <step title>")`
+   - If the step has a code diff or specific code to add → `add_patch_primitive(noteId=<task_note_id>, filePath=<primary file>, diff=<change>, description=<step title>)`
+
+4. **Add pipeline progress table** — call `add_to_note(noteId="spec")`:
+
+   ```markdown
+   heading: "## Pipeline Progress"
+   content:
+   | Phase | Status |
+   |-------|--------|
+   | Requirements | ✅ Done |
+   | Planning | ✅ Done |
+   | Execution | ⬜ Pending |
+   | Build | ⬜ Pending |
+   | Review | ⬜ Pending |
+   | Commit | ⬜ Pending |
+   | PR | ⬜ Pending |
+   ```
+
+5. Set `INTENT_STATUS = "synced (<N> tasks, <M> blocks)"` where N = task count, M = total CLI + patch blocks added.
+
+**Error handling:** If any MCP call fails, log `Intent sync: <tool_name> failed — skipping remaining sync`, set `INTENT_STATUS = "failed (<reason>)"`, and continue to Step 8. Do NOT retry or block.
+
+## 8. Present Summary
+
+Print the result envelope:
 
 ```markdown
 ## implement.md created
@@ -110,6 +159,7 @@ The step-* skills update these statuses as they execute.
 - Files to create: <count>
 - Tests planned: <count> unit, manual verification included
 - Risks identified: <count or "none">
+- **Intent:** <INTENT_STATUS>
 
 ### Next steps:
 - `/dx-plan-validate` — verify plan covers all requirements
