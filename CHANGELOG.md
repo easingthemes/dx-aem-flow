@@ -1,3 +1,10 @@
+## [2.50.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.1...v2.50.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* include config.yaml.template in version bump pipeline ([5db3b37](https://github.com/easingthemes/dx-aem-flow/commit/5db3b374c649f484ffd701052135c1b77bdc020e)), closes [#20593](https://github.com/easingthemes/dx-aem-flow/issues/20593)
+
 ## [2.50.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.0...v2.50.1) (2026-03-21)
 
 
