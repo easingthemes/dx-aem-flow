@@ -30,13 +30,11 @@ Build a combined argument string from whatever was provided (e.g., `2416553 http
 
 ## Progress Tracking
 
-If `TaskCreate` is available, create these tasks before starting execution and update each (`in_progress` → `completed`) as you go:
+Before starting execution, you MUST create a task for each of these items using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
 
 1. Extract design from Figma
 2. Generate prototype
 3. Verify against design
-
-If `TaskCreate` is not available, the `Step N/3 done —` messages below provide progress.
 
 ## Execution Order
 

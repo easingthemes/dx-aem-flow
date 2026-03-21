@@ -131,7 +131,7 @@ If `superpowers:executing-plans` is available, invoke it before starting Phase 1
 
 ## Progress Tracking
 
-If `TaskCreate` is available, create tasks for each applicable phase before starting execution and update each (`in_progress` → `completed`) as you go. Delete tasks for phases that get skipped at runtime.
+Before starting execution, you MUST create a task for each applicable phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete tasks for phases that get skipped at runtime.
 
 Use the phase table above to determine which phases apply. Example tasks for a typical run:
 
@@ -145,8 +145,6 @@ Use the phase table above to determine which phases apply. Example tasks for a t
 8. Pull request
 
 Add conditional phases (Figma, AEM baseline, AEM verify, demo capture, docs) only when their conditions are met. Delete them if conditions turn out false mid-run.
-
-If `TaskCreate` is not available, the `Phase N: <name> — (X/Y)` messages and progress file provide tracking.
 
 ## Flow
 
