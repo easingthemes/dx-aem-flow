@@ -1,6 +1,6 @@
 # Visual Progress Tracking
 
-Coordinator skills (`-all` suffix) include a `## Progress Tracking` section with explicit task lists. When `TaskCreate` is available (Claude Code), follow that section to create visual progress. When unavailable (Copilot CLI), fall back to the `Step N/M done —` text messages that each skill already prints.
+Coordinator skills (`-all` suffix) include a `## Progress Tracking` section with explicit task lists. You MUST follow that section and create tasks using `TaskCreate` before starting execution.
 
 ## Rules
 

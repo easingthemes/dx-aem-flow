@@ -14,13 +14,11 @@ You are a coordinator. You do NOT implement anything yourself. You delegate each
 
 ## Progress Tracking
 
-If `TaskCreate` is available, create these tasks before starting execution and update each (`in_progress` → `completed`) as you go. Delete skipped tasks.
+Before starting execution, you MUST create a task for each of these items using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete skipped tasks.
 
 1. Triage bug
 2. Verify reproduction
 3. Fix bug
-
-If `TaskCreate` is not available, the `Step N/3 done —` messages below provide progress.
 
 ## Flow
 
