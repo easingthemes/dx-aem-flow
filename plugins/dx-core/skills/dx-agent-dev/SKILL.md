@@ -15,6 +15,21 @@ Read `.ai/automation/agents/roles/dev-agent.yaml` for your role definition. Key 
 - **Self-check:** run build/test/lint from `.ai/config.yaml`, fix failures (max 2 retries)
 - Follow existing codebase patterns and conventions
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Read `.ai/config.yaml` → `repos:` list
+2. Read the RE spec to determine which repos need implementation
+3. For each target repo:
+   - Build: `claude -p "/dx-agent-dev <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Collect results
+4. Write state files, print summary
+5. STOP — do not continue with local execution
+
+If hub mode is not active: continue with normal flow below.
+
 ## 1. Load RE Spec
 
 Look for the requirements spec in order:
