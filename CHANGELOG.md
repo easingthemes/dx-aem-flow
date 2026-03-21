@@ -1,3 +1,10 @@
+## [2.50.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.0...v2.50.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* prefix all website links with BASE_URL for GitHub Pages ([a58e494](https://github.com/easingthemes/dx-aem-flow/commit/a58e4948f73f6010d8190e45bbea10b02b979736))
+
 # [2.50.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.49.0...v2.50.0) (2026-03-21)
 
 
