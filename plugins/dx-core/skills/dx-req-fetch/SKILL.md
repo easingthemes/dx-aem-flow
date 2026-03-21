@@ -38,6 +38,23 @@ Read `.ai/config.yaml`:
 - **Project Key:** `jira.project-key`
 - **Custom Fields:** `jira.custom-fields.*`
 
+## Hub Mode Check
+
+Read `shared/hub-dispatch.md` for hub detection logic.
+
+If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
+1. Fetch the ticket normally (ADO/Jira MCP works from any directory)
+2. Save `raw-story.md` to the hub's spec directory (`.ai/specs/<id>-<slug>/`)
+3. After fetching, detect cross-repo scope from the story content
+4. If scope can be determined from the ticket alone:
+   - Resolve target repos from `shared/hub-dispatch.md`
+   - Dispatch `/dx-req-fetch <id>` to each target repo so they have local copies
+   - Write state files
+5. If scope needs codebase analysis (most cases): note in `raw-story.md` that scope detection requires `/dx-req-research` in each repo
+6. Print: "Ticket fetched. Scope detection requires research — run `/dx-agent-all <id>` for full orchestration."
+
+If hub mode is not active: continue with normal flow below.
+
 ## 1. Parse Input
 
 The argument is the ADO work item ID — a numeric value (e.g., `2435084`).
