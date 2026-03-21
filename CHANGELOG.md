@@ -1,3 +1,10 @@
+# [2.51.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.5...v2.51.0) (2026-03-21)
+
+
+### Features
+
+* **dx-core:** add universal visual task progress rule ([791c13f](https://github.com/easingthemes/dx-aem-flow/commit/791c13fb018ceeef3434b735fb3199d4e8dfee6e))
+
 ## [2.50.5](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.4...v2.50.5) (2026-03-21)
 
 
