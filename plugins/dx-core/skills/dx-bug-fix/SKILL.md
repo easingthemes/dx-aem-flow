@@ -17,6 +17,7 @@ digraph bug_fix {
     "Check verification status" [shape=box];
     "Generate fix plan (opus, 2-5 steps)" [shape=box];
     "Cross-repo gate: all steps in other repo?" [shape=diamond];
+    "Hub dispatch fix" [shape=box];
     "STOP: Fix belongs in other repo" [shape=doublecircle];
     "Execute step cycle (step - test - review - fix)" [shape=box];
     "Step blocked (2-strike)?" [shape=diamond];
@@ -34,8 +35,10 @@ digraph bug_fix {
     "Locate spec dir + read triage/verification" -> "Check verification status";
     "Check verification status" -> "Generate fix plan (opus, 2-5 steps)";
     "Generate fix plan (opus, 2-5 steps)" -> "Cross-repo gate: all steps in other repo?";
-    "Cross-repo gate: all steps in other repo?" -> "STOP: Fix belongs in other repo" [label="yes"];
+    "Cross-repo gate: all steps in other repo?" -> "Hub dispatch fix" [label="yes + hub mode"];
+    "Cross-repo gate: all steps in other repo?" -> "STOP: Fix belongs in other repo" [label="yes + no hub"];
     "Cross-repo gate: all steps in other repo?" -> "Execute step cycle (step - test - review - fix)" [label="no"];
+    "Hub dispatch fix" -> "Final summary";
     "Execute step cycle (step - test - review - fix)" -> "Step blocked (2-strike)?";
     "Step blocked (2-strike)?" -> "STOP: Human intervention needed" [label="yes"];
     "Step blocked (2-strike)?" -> "All steps done?" [label="no"];
@@ -142,6 +145,21 @@ After implement.md is generated, check if the fix belongs in another repo:
 
 **If at least one step modifies functional source code** in this repo → go to "Execute step cycle (step - test - review - fix)". The cross-repo note will appear in the final summary.
 
+### Hub dispatch fix
+
+**Entered when:** Cross-repo gate detected all fix steps belong to another repo AND hub mode is active.
+
+Read `shared/hub-dispatch.md` for the full protocol.
+
+1. Resolve target repo from cross-repo scope using hub-dispatch repo resolution
+2. Check `hub.auto-dispatch` — if `false`, confirm with user
+3. Build and execute: `claude -p "/dx-bug-fix <ticket-id>" --cwd <target-repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+4. Collect result, write `state/<ticket-id>/results/<repo>.json`
+5. Print: `✓ <repo> — <status> (<duration>, $<cost>)`
+6. Go to → "Final summary" with hub dispatch results
+
+> **Note:** If hub mode is NOT active, the existing "STOP: Fix belongs in other repo" behavior applies unchanged.
+
 ### STOP: Fix belongs in other repo
 
 Print a prominent warning and STOP:
@@ -169,6 +187,8 @@ Run `/dx-bug-fix <id>` again with `--cleanup` intent if you want to proceed with
 ```
 
 Do not proceed to any further sections. The user must fix the other repo first.
+
+> **Note:** If hub mode is active, this node is bypassed — the fix is dispatched to the target repo instead. See "Hub dispatch fix" above.
 
 ### Execute step cycle (step - test - review - fix)
 
