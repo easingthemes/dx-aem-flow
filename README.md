@@ -6,7 +6,7 @@
 [![semantic-release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Three Claude Code plugins for AI-assisted Azure DevOps and Jira/Confluence development workflows.
+Three plugins for AI-assisted software development: requirements-to-PR workflow for ADO/Jira projects, AEM component tooling and QA, and autonomous CI agents. Runs locally and in pipelines. Supports Claude Code, Copilot CLI, and VS Code Chat.
 
 ## Install
 
