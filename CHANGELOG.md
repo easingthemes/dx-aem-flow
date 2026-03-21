@@ -1,3 +1,10 @@
+## [2.50.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.2...v2.50.3) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dx-sync:** remove hub assumption from SKILL.md ([5ec2729](https://github.com/easingthemes/dx-aem-flow/commit/5ec2729fabedfea497826abf8ee6cfa4e91c1c0d))
+
 ## [2.50.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.50.1...v2.50.2) (2026-03-21)
 
 
