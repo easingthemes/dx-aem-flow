@@ -1,0 +1,17 @@
+# Enforce consistent line endings
+*.md text eol=lf
+*.mdx text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.sh text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.template text eol=lf
+
+# Binary files
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
