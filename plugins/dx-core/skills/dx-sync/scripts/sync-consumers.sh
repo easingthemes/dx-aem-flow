@@ -35,7 +35,23 @@ CURRENT_REPO="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 # Plugin directories: resolve from script location (works for both
 # installed plugins cache and local source checkout).
 DX_PLUGIN="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-AEM_PLUGIN="$(cd "$DX_PLUGIN/../dx-aem" 2>/dev/null && pwd)" || AEM_PLUGIN=""
+# Resolve AEM plugin: try sibling (local source), then versioned cache layout
+if [ -d "$DX_PLUGIN/../dx-aem" ]; then
+  AEM_PLUGIN="$(cd "$DX_PLUGIN/../dx-aem" && pwd)"
+elif [ -d "$DX_PLUGIN/../../dx-aem" ]; then
+  # Cache layout: dx-core/<ver>/ → ../../dx-aem/<ver>/
+  _DX_VER="$(basename "$DX_PLUGIN")"
+  if [ -d "$DX_PLUGIN/../../dx-aem/$_DX_VER" ]; then
+    AEM_PLUGIN="$(cd "$DX_PLUGIN/../../dx-aem/$_DX_VER" && pwd)"
+  else
+    # Fall back to latest available version
+    AEM_PLUGIN="$(ls -d "$DX_PLUGIN/../../dx-aem"/*/ 2>/dev/null | sort -V | tail -1)"
+    AEM_PLUGIN="${AEM_PLUGIN%/}"
+  fi
+  unset _DX_VER
+else
+  AEM_PLUGIN=""
+fi
 INSTALL_AGENTS="$DX_PLUGIN/skills/dx-init/scripts/install-copilot-agents.sh"
 MIGRATE_CONFIG="$SCRIPT_DIR/migrate-config.sh"
 source "$MIGRATE_CONFIG"
@@ -361,7 +377,18 @@ step_5_migrate_config() {
   local config="$repo_path/.ai/config.yaml"
 
   if [[ ! -f "$config" ]]; then
-    log_warn "  No .ai/config.yaml — skipping config migration"
+    log "  Step 5: Config migration"
+    if $DRY_RUN; then
+      log_dry "  would create minimal .ai/config.yaml with dx.version $VERSION"
+      return 0
+    fi
+    # Create minimal config so dx.version is tracked
+    mkdir -p "$repo_path/.ai"
+    cat > "$config" <<MINCONF
+dx:
+  version: "$VERSION"
+MINCONF
+    log_info "  created minimal .ai/config.yaml (dx.version: $VERSION)"
     return 0
   fi
 

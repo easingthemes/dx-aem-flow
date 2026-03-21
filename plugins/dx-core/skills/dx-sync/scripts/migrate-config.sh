@@ -328,13 +328,21 @@ run_migrations() {
   for migration in "${MIGRATIONS[@]}"; do
     IFS='|' read -r ver func <<< "$migration"
 
-    # Skip if already at or past this version
-    if ! version_lt "$current_version" "$ver"; then
+    # Skip if beyond target
+    if version_lt "$target_version" "$ver"; then
       continue
     fi
 
-    # Skip if beyond target
-    if version_lt "$target_version" "$ver"; then
+    # Run if version is older OR if migration is idempotent and detects
+    # the condition still exists (handles "missed migration window" where
+    # dx.version was bumped before migration code was introduced).
+    if ! version_lt "$current_version" "$ver"; then
+      # Already past this version — only run if migration detects work needed
+      if $func "$config" 2>/dev/null; then
+        echo "  Migration $ver (retroactive):"
+        echo "    ✓ Applied — condition was still present despite version >= $ver"
+        any_changes=true
+      fi
       continue
     fi
 
