@@ -257,3 +257,12 @@ If any agent returns `FAIL`:
 - **Keep main context lean** — you only see compact summaries, not file contents
 - **Progress reporting** — print status after each step so the user can see progress
 - **Same quality as individual skills** — running `/dx-bug-all` produces identical output to running each skill separately
+
+## Platform Compatibility
+
+This skill uses subagent orchestration (`context: fork` + Task tool dispatch) which is available in **Claude Code only**.
+
+**Copilot CLI / VS Code Chat:** Run the individual skills manually in sequence:
+1. `/dx-bug-triage <id>` — fetch bug, identify component, create triage report
+2. `/dx-bug-verify <id>` — reproduce bug in browser (optional, skip if no browser)
+3. `/dx-bug-fix <id>` — generate and execute fix, create PR

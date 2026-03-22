@@ -263,3 +263,14 @@ If spec files already exist and inputs haven't changed, each step reports `skipp
 - **Keep main context lean** — you only see compact summaries, not file contents
 - **Progress reporting** — print status after each step so the user can see progress
 - **Same quality as individual skills** — running `/dx-req-all` produces identical output to running each skill separately
+
+## Platform Compatibility
+
+This skill uses subagent orchestration (`context: fork` + Agent tool dispatch) which is available in **Claude Code only**.
+
+**Copilot CLI / VS Code Chat:** Run the individual skills manually in sequence:
+1. `/dx-req-fetch <id>` — fetch work item from ADO/Jira
+2. `/dx-req-dor <id>` — Definition of Ready check
+3. `/dx-req-explain <id>` — distill into developer requirements
+4. `/dx-req-research <id>` — search codebase for related code
+5. `/dx-req-share <id>` — share findings to ADO comment

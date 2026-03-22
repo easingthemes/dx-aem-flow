@@ -444,3 +444,16 @@ When step 3 fails compilation twice, triggers `step-heal` which analyzes the err
 - **Progress reporting** — print status after each step so the user can follow along.
 - **Re-read metadata between steps** — run `plan-metadata.sh` between steps to get the latest status (other agents update implement.md). Especially important after step-heal creates new steps. Never read full implement.md in the orchestrator — workers handle that.
 - **Don't skip blocked steps** — if a step is blocked and healing failed, stop. Steps have dependencies.
+
+## Platform Compatibility
+
+This skill uses subagent orchestration (`context: fork` + Agent tool dispatch) which is available in **Claude Code only**.
+
+**Copilot CLI / VS Code Chat:** Run each plan step manually in sequence:
+1. `/dx-step` — execute the next pending step
+2. `/dx-step-test` — run tests for the completed step
+3. `/dx-step-review` — review changes (optional)
+4. `/dx-step-commit` — commit the step
+5. Repeat 1-4 for each step in `implement.md`
+6. `/dx-step-build` — final build verification
+7. `/dx-step-verify` — full code review
