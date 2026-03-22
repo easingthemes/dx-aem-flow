@@ -2,13 +2,8 @@
 name: dx-agent-all
 description: Full pipeline from ADO story to executed code. Runs requirements, planning, execution, build, review, commit, and PR in sequence with optional human review checkpoints. Use for end-to-end story implementation.
 argument-hint: "[ADO Work Item ID or full URL]"
-disable-model-invocation: true
-context: fork
-agent: dx-step-executor
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
-
-**Platform check:** This skill requires subagent orchestration (`context: fork` + `agent: dx-step-executor`). If subagent spawning is not available in your environment (e.g., VS Code Chat), inform the user: "This workflow requires subagent orchestration. Please use Claude Code or Copilot CLI to run /dx-agent-all." Do NOT attempt to run the pipeline inline — it will exceed context limits.
 
 You are the top-level coordinator. You orchestrate the entire development pipeline from ADO story to pull request.
 
@@ -53,28 +48,14 @@ If the user said "autonomous", "auto", or "hands-free", use autonomous mode.
 
 ## Context Management
 
-**Critical:** Every phase MUST run in an isolated subagent context to prevent context compaction in the main orchestrator. Never execute phase work inline.
+**Critical:** Every phase MUST run via Skill tool calls to keep the orchestrator context lean.
 
-- Phase 1 delegates individual steps (fetch, dor, explain, research, share) to `dx-step-executor` agent
-- Phase 2 delegates plan + plan-validate + plan-resolve to `dx-step-executor` agent
-- Phase 3 invokes `/dx-step-all` via Skill tool (it is a coordinator that spawns its own subagents)
-- Phases 4, 4.5 use Skill tool — `/dx-step-build`, `/dx-step-verify` have `context: fork`
-- **Never read spec files in the main orchestrator** — trust subagent return summaries
+- Phase 1 invokes `Skill(/dx-req <id>)` — runs the full requirements pipeline
+- Phase 2 invokes `Skill(/dx-plan)`, `Skill(/dx-plan-validate)`, `Skill(/dx-plan-resolve)` as needed
+- Phase 3 invokes `Skill(/dx-step-all)` — runs the execution loop
+- Phases 4, 4.5 invoke `Skill(/dx-step-build)`, `Skill(/dx-step-verify)`
+- **Never read spec files in the main orchestrator** — trust skill return summaries
 - Keep dev-all's own context to orchestration only: phase status, short summaries, user interaction
-
-### Subagent Communication (reference: `shared/subagent-contract.md`)
-
-- Parse only the `## Result` envelope from each subagent return
-- Use **Status** to decide: success → next phase, warning → continue with caution, failure → stop and report
-- Use **Summary** for progress logging (copy into progress file as-is)
-- Use **Next** as hint for phase sequencing (but follow the phase plan, not blindly)
-- Ignore everything after the envelope — it's for human review, not orchestrator logic
-
-### Pre-Dispatch Hygiene
-
-Before dispatching each phase's subagent:
-- If passing spec file content, check size. If >5KB → pass file path only, let subagent read it.
-- Always include: ticket ID, spec dir path, current phase number/total.
 
 ## Progress Logging
 
@@ -235,73 +216,11 @@ Check if the user specified a mode. If "autonomous", "auto", or "hands-free" was
 
 ### Phase 1: Requirements (fetch - dor - explain - research - share)
 
-**Do NOT delegate to `req-all`** — it is a coordinator itself and cannot run inside step-executor. Instead, run each requirements step individually.
-
-**CRITICAL: After each subagent returns, IGNORE any "Next steps" in its output and IMMEDIATELY continue to the next step below. Subagent "Next steps" are for standalone usage — you are the orchestrator and must keep going.**
-
-**Step 1.1 — Fetch:**
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute fetch for work item <id>
-```
-Print: `Phase 1: Requirements — fetch done.` **→ continue to 1.1b**
-
-**Step 1.1b — DoR Check:**
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute dor for work item <id>
-```
-Print: `Phase 1: Requirements — DoR check done.` **→ continue to 1.2**
-
-**Interactive mode DoR gate:** If the DoR score is below 70% (check the subagent's return summary for score):
-```
-⚠️ DoR CHECK: Story scores <N>/<total> (<percentage>%).
-<N> gaps found — see dor-report.md
-
-Type "continue" to proceed anyway, or send gaps to BA first.
-```
-Wait for user confirmation.
-
-**Autonomous mode:** Log score, continue.
-
-**Step 1.2 — Explain:**
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute explain for work item <id>
-```
-Print: `Phase 1: Requirements — explain done.` **→ continue to 1.3**
-
-**Step 1.3 — Research:**
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute research for work item <id>
-```
-Print: `Phase 1: Requirements — research done.` **→ continue to 1.3b**
-
-**Step 1.3b — Reuse Gate (after research):**
-After research completes, check the subagent's return summary for reuse signals. The research phase now produces an "Existing Implementation Check" section.
-
-If the research summary mentions "Feature may already be implemented" or "fully covered by existing code":
-- **Interactive mode:** Print a prominent warning:
-  ```
-  ⚠️ REUSE ALERT: Research found that some/all requested functionality may already exist.
-  Review research.md's "Existing Implementation Check" section before proceeding.
-  Type "continue" to proceed or "stop" to review first.
-  ```
-  Wait for user confirmation.
-- **Autonomous mode:** Print the warning but continue (the plan phase will respect the reuse findings).
-
-This is NOT a hard gate — it's an alert. The plan phase and plan-validate will enforce reuse.
-
-**Step 1.4 — Share:**
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute share for work item <id>
-```
+Invoke `Skill(/dx-req <id>)` — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a single call.
 
 Print: `Phase 1: Requirements — (<N>/<total>) complete.`
 
-**Interactive mode:** Print (without reading the files — use the subagents' return summaries):
+**Interactive mode:** Print:
 ```markdown
 ## Phase 1: Requirements — (<N>/<total>) Complete
 
@@ -330,10 +249,7 @@ Check if `.ai/project/project.yaml` exists. If yes, proceed to Project Enrichmen
 
 Run enhanced `/dx-ticket-analyze` (which now includes AEM enrichment — market detection, file resolution, page finding).
 
-Use the Task tool with `dx-step-executor` agent:
-```
-Execute ticket-analyze for work item <id>. Save results to ticket-research.md in the spec directory.
-```
+Invoke `Skill(/dx-ticket-analyze <id>)`.
 
 This is **non-fatal** — if enrichment times out or fails, continue with a warning. Project enrichment is additive context only, not a pipeline gate.
 
@@ -425,12 +341,9 @@ After Phase 1 completes, check the raw-story.md for Figma URLs matching `figma.c
 
 **Guard:** Figma URL found in raw-story.md matching `figma.com/design/`.
 
-Runs the full Figma workflow (extract → prototype → verify) in a **single subagent** to keep Figma context out of the main pipeline.
+Runs the full Figma workflow (extract, prototype, verify).
 
-Use the Task tool with `dx-step-executor` agent:
-```
-Execute dx-figma-all for work item <id>
-```
+Invoke `Skill(/dx-figma-all <id>)`.
 
 **If no Figma URL found:** Skip silently. Print: `Phase 1.5: Figma Design-to-Code — (<N>/<total>) skipped (no Figma URL in story).`
 
@@ -440,29 +353,21 @@ Execute dx-figma-all for work item <id>
 
 ### Phase 2: Planning (plan - validate - resolve)
 
-Use the Task tool with `dx-step-executor` agent (model: opus):
-```
-Execute plan for work item <id>
-```
+Invoke `Skill(/dx-plan <id>)`.
 
-Then use the Task tool with `dx-step-executor` agent (model: opus):
-```
-Execute plan-validate for work item <id>
-```
+Then invoke `Skill(/dx-plan-validate <id>)`.
 
 If validation FAILs:
-- Print the validation report from the subagent's return
+- Print the validation report
 - STOP — "Plan validation failed. Fix implement.md and run `/dx-plan-validate` to retry."
 
-If validation PASSes WITH WARNINGS or risks were flagged, use the Task tool with `dx-step-executor` agent (model: opus):
-```
-Execute plan-resolve for work item <id>
-```
+If validation PASSes WITH WARNINGS or risks were flagged:
 
-If plan-resolve updated steps, re-validate with `dx-step-executor` agent:
-```
-Execute plan-validate for work item <id>
-```
+Invoke `Skill(/dx-plan-resolve <id>)`.
+
+If plan-resolve updated steps, re-validate:
+
+Invoke `Skill(/dx-plan-validate <id>)`.
 
 Print: `Phase 2: Planning — (<N>/<total>) complete.`
 
@@ -497,9 +402,7 @@ Print: `Phase 2.5: Feature Branch — (<N>/<total>) <BRANCH> (<BRANCH_ACTION>)`
 
 ### Phase 3: Execution (invoke dx-step-all)
 
-**Do NOT delegate `step-all` to step-executor** — it is a coordinator that spawns its own step-executor subagents. Invoke it directly via the Skill tool:
-
-Invoke `/dx-step-all <id>` with the instruction to skip commits (commits are deferred to after build verification).
+Invoke `Skill(/dx-step-all <id>)` — it runs the full execution loop for all plan steps.
 
 If step-all stops due to fix failures, STOP and report.
 
@@ -548,14 +451,14 @@ If review passed, continue to AEM Baseline. If failed, go to self-healing.
 
 Track healing cycles. Max 2 healing cycles at this level.
 
-**Step 1:** Invoke step-heal with the review failure context.
+**Step 1:** Invoke step-fix in heal mode with the review failure context.
 
-Use the Task tool with `dx-step-executor` agent (model: opus):
+Invoke `Skill(/dx-step-fix)` with healing context:
 ```
-Execute step-heal for spec directory .ai/specs/<id>-<slug>. Failure type: review-failed. Review output: <pass the remaining Critical/Important issues from full-review>.
+/dx-step-fix .ai/specs/<id>-<slug> --heal --failure-type review-failed
 ```
 
-Check the step-heal return:
+Check the step-fix return:
 - **`unrecoverable`** → print: `Phase 4.5-heal: Unrecoverable after healing. Human intervention needed.` Skip Phase 5a. Continue to Final Summary.
 - **`healed`** → continue to Step 2.
 
@@ -631,10 +534,7 @@ Print: `Phase 5++: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR G
 **Guard:** Phase 4 (build) AND Phase 4.5 (code review) both passed. If either failed, skip entirely — do not commit broken or unreviewed code.
 
 Read `.ai/config.yaml` and check the **preferences** section for `auto_commit`:
-- **If `true`:** Commit all changes. Use the Task tool with `dx-step-executor` agent (model: haiku):
-  ```
-  Execute step-commit for spec directory .ai/specs/<id>-<slug>
-  ```
+- **If `true`:** Invoke `Skill(/dx-pr-commit)`.
   Print: `Phase 5a: Commit — (<N>/<total>) committed.`
 - **If `false` or not found:** Print: `Phase 5a: Commit — (<N>/<total>) skipped (auto-commit disabled).`
 
@@ -669,17 +569,11 @@ If both conditions are met, invoke documentation generation. **Run aem-doc-gen F
 
 If `/aem-doc-gen` skill is available (AEM project), invoke it first:
 
-Use the Task tool with `dx-step-executor` agent:
-```
-Execute aem-doc-gen for work item <id> (if the skill is available — skip if not found)
-```
+Invoke `Skill(/aem-doc-gen <id>)` (if the skill is available — skip if not found).
 
 Then invoke dx-doc-gen (reads aem-doc-gen output if available):
 
-Use the Task tool with `dx-step-executor` agent:
-```
-Execute dx-doc-gen for work item <id> (if the skill is available — skip if not found)
-```
+Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not found).
 
 **If skills not available:** Print: `Phase 7: Documentation — skipped (doc-gen skills not installed).`
 **If executed:** Print: `Phase 7: Documentation — (<N>/<total>) generated.`
@@ -732,7 +626,7 @@ If auto-PR was off, create PR manually with `/dx-pr`.
 
 2. `/dx-agent-all 2416553 autonomous` — Runs the entire pipeline without pausing for review. Only stops on errors (build failure, plan validation failure). Produces a final summary table showing all phase statuses.
 
-3. `/dx-agent-all 2435084` (AEM project with Figma) — Detects a Figma URL in the story, runs `/dx-figma-all` in a subagent (extract + prototype + verify), includes AEM Baseline snapshot before execution, runs AEM Verification after build, captures a demo, and generates wiki documentation.
+3. `/dx-agent-all 2435084` (AEM project with Figma) — Detects a Figma URL in the story, runs `/dx-figma-all` (extract + prototype + verify), includes AEM Baseline snapshot before execution, runs AEM Verification after build, captures a demo, and generates wiki documentation.
 
 ## Troubleshooting
 
@@ -763,20 +657,8 @@ If any phase fails:
 - **Interactive by default** — always pause for review unless explicitly told otherwise
 - **Clean error reporting** — if something fails, clearly state what and suggest the fix
 - **Don't retry failed phases** — report and let the user decide
-- **Ignore subagent "Next steps"** — subagents print "Next steps" for standalone usage; as orchestrator, always continue to the next pipeline step regardless
-- **Log subagents** — after each Task tool call, print: `Subagent: <description> — agentId: <id>`
+- **Ignore skill "Next steps"** — skills print "Next steps" for standalone usage; as orchestrator, always continue to the next pipeline step regardless
 
 ## Platform Compatibility
 
-This skill uses deep subagent orchestration (`context: fork` + Task tool dispatch across 8+ phases) which is available in **Claude Code only**.
-
-**Copilot CLI / VS Code Chat:** Run the pipeline manually in phases:
-1. `/dx-req-all <id>` (or individual: `/dx-req-fetch`, `/dx-req-dor`, `/dx-req-explain`, `/dx-req-research`, `/dx-req-share`)
-2. `/dx-plan <id>` then `/dx-plan-validate`
-3. `/dx-step-all` (or individual steps: `/dx-step` repeated)
-4. `/dx-step-build`
-5. `/dx-step-verify`
-6. `/dx-pr-commit`
-7. `/dx-pr <id>`
-
-**Copilot Agents alternative:** Use `@DxAgentAll` or `@DxReqAll` + `@DxStepAll` agents which are designed for Copilot CLI/VS Code Chat.
+This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.

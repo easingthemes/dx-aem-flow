@@ -1,16 +1,11 @@
 ---
 name: dx-step-all
-description: Autonomous execution loop — runs step, step-test, step-review, step-commit for each plan step, with step-fix for failures. Stops after 2 consecutive fix failures on the same step. Use to execute the full plan hands-free.
+description: Autonomous execution loop — runs each plan step (implement + test + review + commit internally), with step-fix for failures. Stops after 2 consecutive fix failures on the same step. Use to execute the full plan hands-free.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
-disable-model-invocation: true
-context: fork
-agent: dx-step-executor
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-**Platform check:** This skill requires subagent orchestration (`context: fork` + `agent: dx-step-executor`). If subagent spawning is not available in your environment (e.g., VS Code Chat), inform the user: "This workflow requires subagent orchestration. Please use Claude Code or Copilot CLI to run /dx-step-all." Do NOT attempt to run the full loop inline.
-
-You are a coordinator. You run the step-* pipeline for each step in implement.md, delegating to subagents.
+You are a coordinator. You run the step pipeline for each step in implement.md, delegating to skills via the Skill tool.
 
 ## Progress Tracking
 
@@ -25,21 +20,16 @@ digraph step_all {
     "Load fix memory" [shape=box];
     "Get next pending step" [shape=box];
     "All steps done?" [shape=diamond];
-    "Execute step (dx-step-executor)" [shape=box];
+    "Execute step" [shape=box];
     "Step passed?" [shape=diamond];
-    "Run tests (dx-step-executor haiku)" [shape=box];
-    "Tests passed?" [shape=diamond];
-    "Review changes (dx-step-executor opus)" [shape=box];
-    "Review passed?" [shape=diamond];
-    "Fix attempt (dx-step-executor opus)" [shape=box];
+    "Fix attempt" [shape=box];
     "Fix succeeded?" [shape=diamond];
     "Consecutive failures < 2?" [shape=diamond];
-    "Invoke step-heal (dx-step-executor opus)" [shape=box];
+    "Invoke step-fix (heal)" [shape=box];
     "Heal result?" [shape=diamond];
     "Execute corrective steps" [shape=box];
     "Corrective step failed after 2 fixes?" [shape=diamond];
     "Healing cycle < 2?" [shape=diamond];
-    "Commit step (if auto-commit)" [shape=box];
     "Log progress + track fix patterns" [shape=box];
     "Completion summary + log run + promote fixes" [shape=doublecircle];
     "STOP: Human intervention needed" [shape=doublecircle];
@@ -49,30 +39,23 @@ digraph step_all {
     "Load fix memory" -> "Get next pending step";
     "Get next pending step" -> "All steps done?";
     "All steps done?" -> "Completion summary + log run + promote fixes" [label="yes"];
-    "All steps done?" -> "Execute step (dx-step-executor)" [label="no"];
-    "Execute step (dx-step-executor)" -> "Step passed?";
-    "Step passed?" -> "Run tests (dx-step-executor haiku)" [label="yes"];
-    "Step passed?" -> "Fix attempt (dx-step-executor opus)" [label="no (blocked)"];
-    "Run tests (dx-step-executor haiku)" -> "Tests passed?";
-    "Tests passed?" -> "Review changes (dx-step-executor opus)" [label="yes"];
-    "Tests passed?" -> "Fix attempt (dx-step-executor opus)" [label="no"];
-    "Review changes (dx-step-executor opus)" -> "Review passed?";
-    "Review passed?" -> "Commit step (if auto-commit)" [label="yes"];
-    "Review passed?" -> "Fix attempt (dx-step-executor opus)" [label="no"];
-    "Fix attempt (dx-step-executor opus)" -> "Fix succeeded?";
-    "Fix succeeded?" -> "Run tests (dx-step-executor haiku)" [label="yes"];
+    "All steps done?" -> "Execute step" [label="no"];
+    "Execute step" -> "Step passed?";
+    "Step passed?" -> "Log progress + track fix patterns" [label="yes"];
+    "Step passed?" -> "Fix attempt" [label="no (blocked)"];
+    "Fix attempt" -> "Fix succeeded?";
+    "Fix succeeded?" -> "Log progress + track fix patterns" [label="yes"];
     "Fix succeeded?" -> "Consecutive failures < 2?" [label="no"];
-    "Consecutive failures < 2?" -> "Fix attempt (dx-step-executor opus)" [label="yes, retry"];
-    "Consecutive failures < 2?" -> "Invoke step-heal (dx-step-executor opus)" [label="no, 2 strikes"];
-    "Invoke step-heal (dx-step-executor opus)" -> "Heal result?";
+    "Consecutive failures < 2?" -> "Fix attempt" [label="yes, retry"];
+    "Consecutive failures < 2?" -> "Invoke step-fix (heal)" [label="no, 2 strikes"];
+    "Invoke step-fix (heal)" -> "Heal result?";
     "Heal result?" -> "Execute corrective steps" [label="healed"];
     "Heal result?" -> "STOP: Human intervention needed" [label="unrecoverable"];
     "Execute corrective steps" -> "Corrective step failed after 2 fixes?";
-    "Corrective step failed after 2 fixes?" -> "Commit step (if auto-commit)" [label="no, passed"];
+    "Corrective step failed after 2 fixes?" -> "Log progress + track fix patterns" [label="no, passed"];
     "Corrective step failed after 2 fixes?" -> "Healing cycle < 2?" [label="yes, failed"];
-    "Healing cycle < 2?" -> "Invoke step-heal (dx-step-executor opus)" [label="yes, try again"];
+    "Healing cycle < 2?" -> "Invoke step-fix (heal)" [label="yes, try again"];
     "Healing cycle < 2?" -> "STOP: Human intervention needed" [label="no, 2 cycles exhausted"];
-    "Commit step (if auto-commit)" -> "Log progress + track fix patterns";
     "Log progress + track fix patterns" -> "Get next pending step";
 }
 ```
@@ -139,14 +122,14 @@ Before entering the execution loop, check if the project has accumulated fix kno
 
 If `.ai/learning/fixes.md` exists:
 - Read it
-- Include a note when dispatching step-executor agents: append to the prompt: `Known fix patterns for this project: <summary of fixes.md content>`
+- Include a note when dispatching skills: append to the prompt: `Known fix patterns for this project: <summary of fixes.md content>`
 - Print: `Learning: Loaded <N> known fix patterns from previous runs.`
 
 If it does not exist, skip silently.
 
 ### Get next pending step
 
-Re-read plan metadata to get the latest status (other agents update implement.md). Especially important after step-heal creates new steps. Never read full implement.md in the orchestrator — workers handle that.
+Re-read plan metadata to get the latest status (skills update implement.md). Especially important after step-fix creates new steps. Never read full implement.md in the orchestrator — workers handle that.
 
 ```bash
 bash .ai/lib/plan-metadata.sh $SPEC_DIR
@@ -159,121 +142,73 @@ Identify the next step with status `pending`.
 Check if any `pending` or `in-progress` steps remain.
 
 - **yes** → proceed to "Completion summary + log run + promote fixes"
-- **no** → proceed to "Execute step (dx-step-executor)" with the next pending step
+- **no** → proceed to "Execute step" with the next pending step
 
-### Execute step (dx-step-executor)
+### Execute step
 
-Use the Agent tool with `dx-step-executor` agent:
-```
-Execute step for spec directory <SPEC_DIR>
-```
+Invoke `Skill(/dx-step)` for the current step. dx-step now handles implement + test + review + commit as internal phases — no separate dispatches needed.
 
 ### Step passed?
 
-Parse the `## Result` envelope from the subagent return (reference: `shared/subagent-contract.md`):
-- **success** → proceed to "Run tests (dx-step-executor haiku)"
-- **warning** → log warning, proceed to "Run tests (dx-step-executor haiku)"
-- **failure** → classify the error (see **Error Classification** below), then proceed to "Fix attempt (dx-step-executor opus)"
+Check the result from dx-step:
+- **success** → proceed to "Log progress + track fix patterns"
+- **failure** → classify the error (see **Error Classification** below), then proceed to "Fix attempt"
 
 **Error Classification:** Before triggering healing, classify the failure using `shared/error-handling.md`:
 - **TRANSIENT** → Retry the step (counts toward consecutive failure limit)
 - **VALIDATION** → Let dx-step-fix attempt repair (counts as healing cycle)
 - **PERMANENT** → Skip healing entirely. Mark step blocked. Report to user immediately. Proceed to "STOP: Human intervention needed".
 
-This prevents wasting healing cycles on unrecoverable errors (missing dependencies, permission failures).
+### Fix attempt
 
-### Run tests (dx-step-executor haiku)
-
-Use the Agent tool with `dx-step-executor` agent (model: haiku):
-```
-Execute step-test for spec directory <SPEC_DIR>
-```
-
-### Tests passed?
-
-Parse the `## Result` envelope:
-- **yes (success/warning)** → proceed to "Review changes (dx-step-executor opus)"
-- **no (failure)** → proceed to "Fix attempt (dx-step-executor opus)"
-
-### Review changes (dx-step-executor opus)
-
-Use the Agent tool with `dx-step-executor` agent (model: opus):
-```
-Execute step-review for spec directory <SPEC_DIR>
-```
-
-**Confidence Filtering (review sub-phase):** When processing code review results:
-1. Parse findings for `**Confidence:**` values
-2. Strip any finding with confidence < 80
-3. Only act on high-confidence findings (>= 80) for the fix/heal decision
-4. Low-confidence findings are noise — do not trigger healing cycles for them
-
-### Review passed?
-
-Check the review result after confidence filtering:
-- **yes (approved or only low-confidence findings)** → proceed to "Commit step (if auto-commit)"
-- **no (high-confidence findings request changes)** → proceed to "Fix attempt (dx-step-executor opus)"
-
-### Fix attempt (dx-step-executor opus)
-
-Use the Agent tool with `dx-step-executor` agent (model: opus):
-```
-Execute step-fix for spec directory <SPEC_DIR>
-```
+Invoke `Skill(/dx-step-fix)` for the current step.
 
 Track fix attempts per step.
 
 ### Fix succeeded?
 
 Check the fix result:
-- **yes** → proceed to "Run tests (dx-step-executor haiku)" (re-test after fix)
+- **yes** → proceed to "Log progress + track fix patterns"
 - **no** → proceed to "Consecutive failures < 2?"
 
 ### Consecutive failures < 2?
 
 Check consecutive fix failure count for this step:
-- **yes, retry** → proceed to "Fix attempt (dx-step-executor opus)" for another attempt
-- **no, 2 strikes** → proceed to "Invoke step-heal (dx-step-executor opus)"
+- **yes, retry** → proceed to "Fix attempt" for another attempt
+- **no, 2 strikes** → proceed to "Invoke step-fix (heal)"
 
-### Invoke step-heal (dx-step-executor opus)
+### Invoke step-fix (heal)
 
 Track healing cycles per step. Max 2 healing cycles per original step.
 
-Use the Agent tool with `dx-step-executor` agent (model: opus):
+Invoke `Skill(/dx-step-fix)` with healing context:
 ```
-Execute step-heal for spec directory <SPEC_DIR>. Failure type: step-blocked. The blocked step is Step <N>.
+/dx-step-fix <SPEC_DIR> --heal --failure-type step-blocked --blocked-step <N>
 ```
+
+dx-step-fix now handles both fix and heal modes internally.
 
 ### Heal result?
 
-Check the step-heal return:
+Check the step-fix return:
 - **healed** → re-read implement.md to find the new corrective step(s). Proceed to "Execute corrective steps".
 - **unrecoverable** → print: `Step <N> unrecoverable after 2 fixes + healing. Human intervention needed.` Proceed to "STOP: Human intervention needed".
 
 ### Execute corrective steps
 
-Run the normal Execute step → Run tests → Review changes → Fix attempt cycle on each new corrective step created by step-heal.
+Run the normal Execute step → Fix attempt cycle on each new corrective step created by step-fix.
 
 ### Corrective step failed after 2 fixes?
 
 After running the corrective step through the full cycle (including up to 2 fix attempts):
-- **no, passed** → proceed to "Commit step (if auto-commit)"
+- **no, passed** → proceed to "Log progress + track fix patterns"
 - **yes, failed** → proceed to "Healing cycle < 2?"
 
 ### Healing cycle < 2?
 
 Check the healing cycle count for the original step:
-- **yes, try again** → proceed to "Invoke step-heal (dx-step-executor opus)" for another healing cycle
+- **yes, try again** → proceed to "Invoke step-fix (heal)" for another healing cycle
 - **no, 2 cycles exhausted** → print: `Step <N> blocked after 2 healing cycles. Human intervention needed.` Proceed to "STOP: Human intervention needed".
-
-### Commit step (if auto-commit)
-
-Read `.ai/config.yaml` and check for `auto-commit` preference. If set to `false`, not found, or if the caller instructed to skip commits, **skip this step** and print: `Commit skipped (auto-commit disabled or deferred).`
-
-If auto-commit is enabled, use the Agent tool with `dx-step-executor` agent (model: haiku):
-```
-Execute step-commit for spec directory <SPEC_DIR>
-```
 
 ### Log progress + track fix patterns
 
@@ -391,7 +326,7 @@ Print the blocked step number, the error type, and a summary of what was tried. 
 ```
 /dx-step-all 2416553
 ```
-Reads `implement.md` from `.ai/specs/2416553-add-pod-count-dropdown/`, finds 6 pending steps, and runs each through the step → test → review → commit cycle. Prints progress after each step.
+Reads `implement.md` from `.ai/specs/2416553-add-pod-count-dropdown/`, finds 6 pending steps, and runs each through dx-step (which handles implement + test + review + commit internally). Prints progress after each step.
 
 ### Resume after partial completion
 ```
@@ -400,7 +335,7 @@ Reads `implement.md` from `.ai/specs/2416553-add-pod-count-dropdown/`, finds 6 p
 If steps 1-3 are already `done`, picks up at step 4 and continues. Only pending steps are executed.
 
 ### Self-healing on failure
-When step 3 fails compilation twice, triggers `step-heal` which analyzes the error, creates a corrective step 3a, executes it, then retries step 3. If healing also fails after 2 cycles, stops and reports.
+When step 3 fails twice, triggers `dx-step-fix` in heal mode which analyzes the error, creates a corrective step 3a, executes it, then retries step 3. If healing also fails after 2 cycles, stops and reports.
 
 ## Troubleshooting
 
@@ -437,23 +372,14 @@ When step 3 fails compilation twice, triggers `step-heal` which analyzes the err
 
 ## Rules
 
-- **Coordinator only** — never implement code yourself. Always delegate via Agent tool.
+- **Coordinator only** — never implement code yourself. Always delegate via Skill tool.
 - **Sequential execution** — steps must run in order. Never parallelize steps.
-- **2-strike then heal** — after 2 consecutive fix failures, invoke step-heal before giving up.
+- **2-strike then heal** — after 2 consecutive fix failures, invoke step-fix in heal mode before giving up.
 - **2 healing cycles max** — after 2 healing cycles on the same original step, stop for real.
 - **Progress reporting** — print status after each step so the user can follow along.
-- **Re-read metadata between steps** — run `plan-metadata.sh` between steps to get the latest status (other agents update implement.md). Especially important after step-heal creates new steps. Never read full implement.md in the orchestrator — workers handle that.
+- **Re-read metadata between steps** — run `plan-metadata.sh` between steps to get the latest status (skills update implement.md). Especially important after step-fix creates new steps. Never read full implement.md in the orchestrator — workers handle that.
 - **Don't skip blocked steps** — if a step is blocked and healing failed, stop. Steps have dependencies.
 
 ## Platform Compatibility
 
-This skill uses subagent orchestration (`context: fork` + Agent tool dispatch) which is available in **Claude Code only**.
-
-**Copilot CLI / VS Code Chat:** Run each plan step manually in sequence:
-1. `/dx-step` — execute the next pending step
-2. `/dx-step-test` — run tests for the completed step
-3. `/dx-step-review` — review changes (optional)
-4. `/dx-step-commit` — commit the step
-5. Repeat 1-4 for each step in `implement.md`
-6. `/dx-step-build` — final build verification
-7. `/dx-step-verify` — full code review
+This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.
