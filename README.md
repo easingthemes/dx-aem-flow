@@ -6,7 +6,7 @@
 [![semantic-release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Three plugins for AI-assisted software development: requirements-to-PR workflow for ADO/Jira projects, AEM component tooling and QA, and autonomous CI agents. Runs locally and in pipelines. Supports Claude Code, Copilot CLI, and VS Code Chat.
+Four plugins for AI-assisted software development: requirements-to-PR workflow for ADO/Jira projects, multi-repo orchestration, AEM component tooling and QA, and autonomous CI agents. Runs locally and in pipelines. Supports Claude Code, Copilot CLI, and VS Code Chat.
 
 ## Why This Exists
 
@@ -31,6 +31,7 @@ Add the marketplace, then install the plugins you need:
 
 # Install plugins
 /plugin install dx-core@dx-aem-flow   # Core workflow (all projects)
+/plugin install dx-hub@dx-aem-flow              # Multi-repo orchestration (optional)
 /plugin install dx-aem@dx-aem-flow              # AEM tools (AEM projects)
 /plugin install dx-automation@dx-aem-flow        # Autonomous agents (24/7 pipelines)
 ```
@@ -48,13 +49,19 @@ From a local clone:
 
 Full-stack development workflow for Azure DevOps and Jira projects: requirements gathering, implementation planning, step-by-step execution with testing and review, code review, bug fixes, and PR management.
 
-**42 skills, 5 agents.** Works with any tech stack.
+**43 skills, 6 agents.** Works with any tech stack.
+
+### [dx-hub](plugins/dx-hub/) — Multi-Repo Orchestration
+
+Hub directory management for coordinating work across multiple consumer repos — init, config, status.
+
+**3 skills.**
 
 ### [dx-aem](plugins/dx-aem/) — AEM Component Tools
 
 AEM-specific tools: component dialog inspection, page search, snapshot/verify lifecycle, QA automation, and demo capture.
 
-**9 skills, 4 agents.** Requires dx plugin.
+**12 skills, 6 agents.** Requires dx plugin.
 
 ### [dx-automation](plugins/dx-automation/) — Autonomous Agents
 
