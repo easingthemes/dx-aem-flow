@@ -765,3 +765,18 @@ If any phase fails:
 - **Don't retry failed phases** — report and let the user decide
 - **Ignore subagent "Next steps"** — subagents print "Next steps" for standalone usage; as orchestrator, always continue to the next pipeline step regardless
 - **Log subagents** — after each Task tool call, print: `Subagent: <description> — agentId: <id>`
+
+## Platform Compatibility
+
+This skill uses deep subagent orchestration (`context: fork` + Task tool dispatch across 8+ phases) which is available in **Claude Code only**.
+
+**Copilot CLI / VS Code Chat:** Run the pipeline manually in phases:
+1. `/dx-req-all <id>` (or individual: `/dx-req-fetch`, `/dx-req-dor`, `/dx-req-explain`, `/dx-req-research`, `/dx-req-share`)
+2. `/dx-plan <id>` then `/dx-plan-validate`
+3. `/dx-step-all` (or individual steps: `/dx-step` repeated)
+4. `/dx-step-build`
+5. `/dx-step-verify`
+6. `/dx-pr-commit`
+7. `/dx-pr <id>`
+
+**Copilot Agents alternative:** Use `@DxAgentAll` or `@DxReqAll` + `@DxStepAll` agents which are designed for Copilot CLI/VS Code Chat.
