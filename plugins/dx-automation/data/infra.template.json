@@ -29,13 +29,6 @@
       "yaml": ".ai/automation/pipelines/cli/ado-cli-pr-review.yml",
       "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "REVIEWER_IDENTITIES"]
     },
-    "eval": {
-      "name": "{{PIPELINE_NAME_PREFIX}}-Eval-Gates",
-      "id": "{{EVAL_PIPELINE_ID}}",
-      "yaml": ".ai/automation/pipelines/eval/ado-eval-pipeline.yml",
-      "variables": [],
-      "note": "Tier 1 eval gates — no external API calls, all data from fixtures. Triggers on .ai/rules, agents, eval, policy changes."
-    },
     "pr-answer": {
       "name": "{{PIPELINE_NAME_PREFIX}}-PR-Answer-Agent",
       "id": "{{PR_ANSWER_PIPELINE_ID}}",

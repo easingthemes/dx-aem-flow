@@ -8,16 +8,9 @@ You run an AI automation agent locally against real ADO data. With `--dryRun`, r
 
 ## 0. Prerequisites
 
-Check `.env` exists at `.ai/automation/.env`:
-```bash
-[ -f .ai/automation/.env ] || [ -f .env ]
-```
-
-If missing: "Create `.ai/automation/.env` from `.ai/automation/.env.template` and fill in your credentials." STOP.
-
-Check required env vars are set:
-- `AZURE_DEVOPS_PAT`
+Check required env vars are set (in shell or `.claude/settings.local.json`):
 - `ANTHROPIC_API_KEY`
+- ADO MCP authenticated (browser OAuth) or `ADO_MCP_AUTH_TOKEN` set
 
 ## 1. Parse Arguments
 
@@ -58,9 +51,21 @@ If the user requests an agent that is disabled for this profile, report: `⚠ <a
 ## 2. Run Agent
 
 ```bash
-cd .ai/automation
-bash run.sh <agent> <id> [<repoName>] [--dryRun]
+node .ai/automation/scripts/pipeline-agent.js "<skill-prompt>"
 ```
+
+Map agent names to skill prompts:
+| Agent | Skill Prompt |
+|-------|-------------|
+| dor | `/dx-req-dod <id>` |
+| dod | `/dx-req-dod <id>` |
+| dod-fix | `/dx-req-dod <id>` |
+| pr-review | `/dx-pr-review <pr-url> analyze only` (dry run) or `/dx-pr-review <pr-url>` (live) |
+| pr-answer | `/dx-pr-answer <pr-url>` |
+| bugfix | `/dx-bug-all <id>` |
+| devagent | `/dx-agent-all <id>` |
+| docagent | `/dx-doc-gen <id>` |
+| estimation | `/dx-estimate <id>` |
 
 Stream output as it runs. This may take 1-3 minutes depending on the agent.
 
