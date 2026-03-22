@@ -1,3 +1,10 @@
+# [2.57.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.4...v2.57.0) (2026-03-22)
+
+
+### Features
+
+* **website:** add usage landing page with Figma quickstart ([30f15c3](https://github.com/easingthemes/dx-aem-flow/commit/30f15c30f9e9f0a25062d34b30c4169a693f9e1a))
+
 ## [2.56.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.3...v2.56.4) (2026-03-22)
 
 ## [2.56.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.2...v2.56.3) (2026-03-22)
