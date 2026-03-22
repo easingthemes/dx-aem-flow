@@ -116,21 +116,18 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </HighlightBox>
 
   <HighlightBox severity="warning" title="AEM MCP -- Manual Configuration Required">
-    AEM MCP requires <code>AEM_INSTANCES</code> to be set in <strong>two places</strong>:
-    <ol class="mt-2 text-sm">
-      <li><code>{"~"}/.bashrc</code> or <code>{"~"}/.zshrc</code> -- for Claude Code CLI and Copilot CLI</li>
-      <li><code>.claude/settings.local.json</code> -- for Claude Code session env</li>
-    </ol>
-    <p class="text-xs text-gray-500 mt-2">Why both? Copilot CLI does not read <code>settings.local.json</code> -- it only inherits shell environment variables.</p>
+    AEM MCP requires the <code>AEM_INSTANCES</code> environment variable. Add it to your shell profile -- both Claude Code and Copilot CLI inherit shell environment variables.
   </HighlightBox>
 
-  <CommandBlock label="~/.bashrc or ~/.zshrc">{`export AEM_INSTANCES='[{"name":"local","url":"http://localhost:4502","auth":"admin:admin"}]'`}</CommandBlock>
+  <CommandBlock label="~/.bashrc or ~/.zshrc">{`export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 
-  <CommandBlock label=".claude/settings.local.json">{`{
-  "env": {
-    "AEM_INSTANCES": "[{\\"name\\":\\"local\\",\\"url\\":\\"http://localhost:4502\\",\\"auth\\":\\"admin:admin\\"}]"
-  }
-}`}</CommandBlock>
+# Multiple instances (comma-separated):
+# export AEM_INSTANCES="local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Format">
+    Colon-delimited: <code>name:url:user:pass</code>. Multiple instances separated by commas.
+    Alternatively, you can set this in <code>.claude/settings.local.json</code> under <code>"env"</code> instead of your shell profile.
+  </HighlightBox>
 
   <HighlightBox severity="info" title="Chrome DevTools MCP">
     Chrome DevTools MCP auto-launches a Chrome instance via stdio. No manual setup required -- just ensure Chrome is installed.
