@@ -18,7 +18,7 @@ KAI is a structured development workflow built as a plugin system. It encodes yo
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
 - **Multi-source context** — skills don't just read source code. They pull ADO/Jira tickets, Figma designs, AEM content, and browser screenshots through MCP integrations.
-- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a PR.
+- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
 - **[Superpowers](https://github.com/obra/superpowers) integration** — 6 skills optionally invoke superpowers methodology (brainstorming, TDD, systematic debugging, verification) when installed, with inline fallback when it's not.
 
 ## Install
