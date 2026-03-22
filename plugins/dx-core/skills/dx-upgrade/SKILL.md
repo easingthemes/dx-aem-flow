@@ -155,8 +155,6 @@ For missing (not stale) template-generated files:
 
 | Missing File | Plugin Source | Action |
 |-------------|-------------|--------|
-| `.ai/README.md` | `<dx-plugin>/templates/README.md.template` | Read template, fill `{{PROJECT_NAME}}` from config, Write |
-| `agent.index.md` | `<dx-plugin>/templates/agent.index.md.template` | Read template, fill `{{PROJECT_NAME}}` from config, Write |
 | `.ai/me.md` | — | Create with the demo template (same as dx-init step 5e) |
 
 ### 3g. Settings
