@@ -95,6 +95,53 @@ export AXE_API_KEY="your-axe-api-key"  # optional, for accessibility testing`}</
 </Section>
 
 <SectionHeading
+  badge="Step 3b"
+  badgeColor="secondary"
+  title="Configure Project-Level MCP Servers"
+  subtitle="ADO and Jira MCP servers need manual setup for Copilot CLI."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="warning" title="Copilot CLI Does Not Read Project .mcp.json">
+    Unlike Claude Code (which reads <code>.mcp.json</code> at the project root) and VS Code Chat (which reads <code>.vscode/mcp.json</code>), Copilot CLI only reads MCP config from <code>~/.copilot/mcp-config.json</code> (global) or plugin-bundled <code>.mcp.json</code> files. Project-specific servers like ADO and Jira must be configured manually.
+  </HighlightBox>
+
+  <CommandBlock label="~/.copilot/mcp-config.json (create this file)">{`{
+  "servers": {
+    "ado": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "<your-ado-org>"]
+    }
+  }
+}`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Per-Session Alternative">
+    If you work with multiple ADO organizations, use <code>--additional-mcp-config</code> instead of the global config:
+    <code class="block mt-2 text-xs">copilot --additional-mcp-config @.mcp-copilot.json</code>
+  </HighlightBox>
+
+  <div class="overflow-x-auto mt-4">
+    <h4 class="text-sm font-semibold text-brand-900 mb-2">MCP Config Locations by Platform</h4>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Platform</th>
+          <th class="text-left py-2 px-4 font-semibold">Config File</th>
+          <th class="text-left py-2 px-4 font-semibold">Root Key</th>
+          <th class="text-left py-2 px-4 font-semibold">Scope</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code</td><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4"><code>mcpServers</code></td><td class="py-2 px-4">Per-project</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">VS Code Chat</td><td class="py-2 px-4"><code>.vscode/mcp.json</code></td><td class="py-2 px-4"><code>servers</code></td><td class="py-2 px-4">Per-project</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Copilot CLI</td><td class="py-2 px-4"><code>~/.copilot/mcp-config.json</code></td><td class="py-2 px-4"><code>servers</code></td><td class="py-2 px-4">Global</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<SectionHeading
   badge="Step 4"
   badgeColor="secondary"
   title="Start Using Skills"

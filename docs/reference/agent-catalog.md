@@ -127,7 +127,7 @@ Resolves all source files for an AEM component across multiple repos and platfor
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-inspector.md` |
 | **Used by** | `/aem-snapshot`, `/aem-verify`, `/aem-doc-gen` |
-| **Tools** | Read, Write, Glob, Grep, ToolSearch, all `mcp__AEM__*` tools, `mcp__AEM__activatePage` |
+| **Tools** | Read, Write, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools |
 
 AEM component inspector. Queries the AEM author instance via MCP tools for dialog fields, page searches, test/docs page creation, publishing, and demo data configuration. Returns compact markdown summaries — never raw JSON.
 
@@ -149,7 +149,7 @@ AEM component inspector. Queries the AEM author instance via MCP tools for dialo
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-fe-verifier.md` |
 | **Used by** | `/aem-fe-verify` |
-| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__AEM__*` tools, all `mcp__chrome-devtools-mcp__*` tools |
+| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools |
 
 Frontend visual verification agent. Creates/reuses demo pages on local AEM, screenshots components in `wcmmode=disabled` via Chrome DevTools, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines AEM MCP (page creation, component config) with Chrome DevTools MCP (navigation, screenshots).
 
@@ -169,7 +169,7 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-demo-capture.md` |
 | **Used by** | `/aem-demo`, `/aem-doc-gen` |
-| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__chrome-devtools-mcp__*` tools |
+| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools |
 
 Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
 
@@ -190,7 +190,7 @@ Browser automation agent for AEM editor interaction. Opens AEM author/publisher 
 | **Model** | Haiku |
 | **File** | `plugins/dx-aem/agents/aem-page-finder.md` |
 | **Used by** | `/aem-component`, `/aem-page-search` |
-| **Tools** | Grep, Read, ToolSearch, mcp__AEM__searchContent, mcp__AEM__enhancedPageSearch, mcp__AEM__scanPageComponents |
+| **Tools** | Grep, Read, ToolSearch, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__scanPageComponents |
 
 Finds all AEM pages using a given component. Searches configured content paths and Experience Fragments. Returns clickable author URLs using the QA author URL from config.
 
