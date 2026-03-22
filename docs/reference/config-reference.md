@@ -228,7 +228,7 @@ Coordinator skills automatically create `.ai/learning/` to store run metrics and
 ```
 .ai/learning/
 ├── raw/
-│   ├── runs.jsonl       # Run records from dx-req-all, dx-step-all, dx-bug-all
+│   ├── runs.jsonl       # Run records from dx-req, dx-step-all, dx-bug-all
 │   ├── fixes.jsonl      # Fix patterns from dx-step-all
 │   └── bugs.jsonl       # Bug patterns from dx-bug-all
 └── fixes.md             # (future) Human-readable fix summary

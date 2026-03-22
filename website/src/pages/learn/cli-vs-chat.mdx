@@ -215,7 +215,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <code>disable-model-invocation</code> (coordinator pattern).
       VS Code Chat ignores these fields -- skills load but can't orchestrate subagents.
 
-      <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req-all</code>,
+      <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req</code>,
       <code>dx-step-all</code>, <code>dx-bug-all</code>, <code>dx-figma-all</code>
 
       <strong>AEM (need inspector agent):</strong> <code>aem-snapshot</code>, <code>aem-verify</code>,
@@ -341,7 +341,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="Use Together" tags={[{ label: 'Recommended', color: 'success' }]}>
       <ul class="mt-2 list-none p-0 text-sm space-y-1">
-        <li><strong>CLI</strong> for structured workflows (/dx-req-all → /dx-plan → /dx-step-all)</li>
+        <li><strong>CLI</strong> for structured workflows (/dx-req → /dx-plan → /dx-step-all)</li>
         <li><strong>Chat</strong> for "fix this function", "explain this file"</li>
         <li><strong>CLI</strong> for PR review, ticket analysis, AEM verification</li>
         <li><strong>Chat</strong> for visual diff review and inline edits</li>

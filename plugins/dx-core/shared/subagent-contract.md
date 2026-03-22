@@ -1,6 +1,6 @@
 # Subagent Return Envelope Contract
 
-Every subagent dispatched by a coordinator skill (dx-agent-all, dx-req-all, dx-step-all) MUST structure its final response with a `## Result` block as the FIRST section.
+Every subagent dispatched by a coordinator skill (dx-agent-all, dx-req, dx-step-all) MUST structure its final response with a `## Result` block as the FIRST section.
 
 ## Mandatory Return Envelope
 
