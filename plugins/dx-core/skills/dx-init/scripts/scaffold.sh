@@ -78,7 +78,7 @@ install_rule() {
 }
 
 # --- Create directories ---
-mkdir -p .ai/specs .ai/rules .ai/research .ai/lib .ai/docs .ai/templates
+mkdir -p .ai/specs .ai/rules .ai/research .ai/lib .ai/templates
 echo "created .ai/ directories"
 
 mkdir -p .claude/rules .claude/hooks
@@ -120,13 +120,6 @@ for f in "$PLUGIN_DIR"/templates/rules/universal-*.template; do
   base="$(basename "$f" .template)"
   name="${base#universal-}"
   install_rule "$f" ".claude/rules/$name" ".claude/rules/$name"
-done
-
-# --- Install/validate docs ---
-for f in "$PLUGIN_DIR"/templates/docs/*.template; do
-  [ -f "$f" ] || continue
-  name="$(basename "$f" .template)"
-  install_rule "$f" ".ai/docs/$name" ".ai/docs/$name"
 done
 
 echo ""

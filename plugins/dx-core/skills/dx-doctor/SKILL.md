@@ -106,18 +106,11 @@ For each:
    - Different only in **comment lines** (lines starting with `#`) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
    - Different in **functional code** (non-comment lines) → `⚠ STALE (plugin version updated — run /dx-upgrade)`
 
-### 1e. Documentation Files
+### 1e. (Removed — .ai/docs/ no longer managed by plugins)
 
-Check existence and staleness of docs in `.ai/docs/`. Compare each against `<dx-plugin>/templates/docs/`:
+Plugin documentation is public at https://easingthemes.github.io/dx-aem-flow/
 
-For each `*.md.template` in `<dx-plugin>/templates/docs/`:
-1. Check if `.ai/docs/<name>.md` exists (strip `.template` suffix)
-   - Missing → `✗ MISSING`
-2. If exists, Read both files and compare content:
-   - Identical → `✓ up to date`
-   - Different → `⚠ stale (plugin template updated — run /dx-upgrade)`
-
-Report count: `Docs (<N> present, <M> stale, <K> missing out of <T> templates)`
+If `.ai/docs/` exists in the project, note: `ℹ .ai/docs/ found — these are no longer synced from plugins. Safe to remove if not project-specific.`
 
 ### 1f. Output Templates
 
