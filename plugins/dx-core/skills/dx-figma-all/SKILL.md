@@ -11,7 +11,7 @@ metadata:
 allowed-tools: ["read", "edit", "search", "write", "agent", "figma/*", "chrome-devtools-mcp/*"]
 ---
 
-You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step to the `dx-step-executor` agent via the Agent tool, then report progress.
+You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step via the Skill tool, then report progress.
 
 ## 0. Input Validation
 
@@ -50,25 +50,25 @@ Step 3: verify    → figma-gaps.md + prototype/prototype-screenshot.png
 
 ### 1. Dispatch steps 1–3 sequentially
 
-For each step, use the Agent tool to invoke the `dx-step-executor` agent. Wait for each to return before starting the next.
+For each step, use the Skill tool to invoke the skill. Wait for each to return before starting the next.
 
 **Step 1 — Extract:**
 ```
-Use the dx-step-executor agent to: Execute dx-figma-extract <combined-arguments>
+Invoke /dx-figma-extract <combined-arguments>
 ```
-Print: `Step 1/3 done —` followed by the agent's summary.
+Print: `Step 1/3 done —` followed by the summary.
 
 **Step 2 — Prototype:**
 ```
-Use the dx-step-executor agent to: Execute dx-figma-prototype <ADO ID if provided>
+Invoke /dx-figma-prototype <ADO ID if provided>
 ```
-Print: `Step 2/3 done —` followed by the agent's summary.
+Print: `Step 2/3 done —` followed by the summary.
 
 **Step 3 — Verify:**
 ```
-Use the dx-step-executor agent to: Execute dx-figma-verify <ADO ID if provided>
+Invoke /dx-figma-verify <ADO ID if provided>
 ```
-Print: `Step 3/3 done —` followed by the agent's summary.
+Print: `Step 3/3 done —` followed by the summary.
 
 ### 2. Final summary
 

@@ -7,7 +7,7 @@ resources:
       type: git
       name: {{ADO_PROJECT}}/{{ADO_REPO}}
       ref: development
-# Claude Agent SDK pipeline — DoD Fix via /dx-req-dod-fix skill.
+# Claude Agent SDK pipeline — DoD Fix via /dx-req-dod skill.
 # Chained trigger: Lambda fires this after DoD check reports failures.
 
 parameters:
@@ -46,7 +46,7 @@ steps:
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
   - bash: |
-      PROMPT="/dx-req-dod-fix ${{ parameters.workItemId }}"
+      PROMPT="/dx-req-dod ${{ parameters.workItemId }}"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze and draft fixes but do NOT apply changes, create tasks, or push code)"
       fi

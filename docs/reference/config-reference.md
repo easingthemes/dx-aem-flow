@@ -149,7 +149,7 @@ roles:
 | `wiki-project` | string | no | ADO project that owns the wiki (if different from `scm.project`) |
 | `wiki-doc-root` | string | no | Root wiki path for technical documentation (sprint subfolders created beneath) |
 | `wiki-pr-review-root` | string | no | Root wiki path for PR review reports — `/dx-pr-review-report` and `/dx-pr-reviews-report` create pages beneath this path |
-| `wiki-dor-url` | string | yes | Full URL to the DoR wiki page — `/dx-req-dor` fetches checklist from here |
+| `wiki-dor-url` | string | yes | Full URL to the DoR wiki page — `/dx-req` (Phase 2) fetches checklist from here |
 | `wiki-dod-url` | string | yes | Full URL to the DoD wiki page — `/dx-req-dod` fetches checklist from here |
 
 ### `tracker`
@@ -211,7 +211,7 @@ Override plugin default prompts without replacing the full file.
 
 | Override | Fields | Affects |
 |----------|--------|---------|
-| `pr-review` | `tone`, `severity-threshold`, `extra-rules` | `/dx-pr-review`, `/dx-pr-reviews` |
+| `pr-review` | `tone`, `severity-threshold`, `extra-rules` | `/dx-pr-review`, `/dx-pr-review-all` |
 | `pr-answer` | `persona` | `/dx-pr-answer` |
 
 ### `preferences`

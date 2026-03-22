@@ -84,7 +84,7 @@ digraph aem_qa {
 Find the story context in order:
 1. `.ai/run-context/re.json` — RE spec (requirements, expected behavior)
 2. `.ai/run-context/dev.json` — Dev output (files changed, tasks completed)
-3. `.ai/specs/<id>-*/explain.md` — requirements from `/dx-req-explain`
+3. `.ai/specs/<id>-*/explain.md` — requirements from `/dx-req` (Phase 3)
 
 If an argument (work item ID) is provided, also fetch the Story from ADO for acceptance criteria.
 

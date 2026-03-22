@@ -22,13 +22,8 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 | Command | What it does | Output |
 |---------|-------------|--------|
 | `/dx-req-all <ID>` | Full pipeline: fetch, dor, explain, research, share approach | All spec files + ADO comments |
-| `/dx-req-fetch <ID>` | Pull ADO work item, save faithfully | `raw-story.md` |
-| `/dx-req-dor` | Validate DoR, post interactive checkboxes to ADO. On re-run, reads checkbox state — if BA checked items, re-validates. | `dor-report.md` + ADO comment |
-| `/dx-req-explain` | Distill story into developer-focused requirements | `explain.md` |
-| `/dx-req-research` | Search codebase for related code via parallel agents | `research.md` |
-| `/dx-req-share` | Generate non-technical approach summary, post to ADO (idempotent) | `share-plan.md` + ADO comment |
-| `/dx-req-dod` | Validate Definition of Done — tests, PR, docs, build | `dod.md` |
-| `/dx-req-dod-fix` | Auto-fix failed DoD criteria, create Task WIs for the rest | Fixes + ADO tasks |
+| `/dx-req <ID>` | Full requirements pipeline — fetch, DoR, explain, research, share (5 phases) | All spec files + ADO comments |
+| `/dx-req-dod` | Validate Definition of Done and auto-fix gaps — tests, PR, docs, build | `dod.md` + fixes |
 | `/dx-req-tasks <ID>` | Create child Task work items with hour estimates | ADO tasks |
 | `/dx-estimate <ID>` | Estimate story complexity and effort | Estimate output |
 
@@ -44,13 +39,9 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 
 | Command | What it does |
 |---------|-------------|
-| `/dx-step-all` | Execute all plan steps autonomously (step, test, review, commit loop) |
-| `/dx-step` | Execute next pending step only |
-| `/dx-step-test` | Run tests and parse results into pass/fail summary |
-| `/dx-step-review` | Review step changes against plan and conventions |
-| `/dx-step-fix` | Diagnose and fix a blocked step |
-| `/dx-step-heal` | Diagnose pipeline failures, create corrective fix steps |
-| `/dx-step-commit` | Stage and commit completed step changes |
+| `/dx-step-all` | Execute all plan steps autonomously (step loop with fix) |
+| `/dx-step` | Execute next pending step — implement, test, review, commit |
+| `/dx-step-fix` | Diagnose and fix a blocked step — direct fix or corrective steps |
 | `/dx-step-build` | Build and deploy, auto-fix errors iteratively |
 
 ### Review & Ship
@@ -61,7 +52,6 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 | `/dx-pr` | Create pull request via ADO |
 | `/dx-pr-review <PR>` | Review a PR — analyze diff, post comments |
 | `/dx-pr-answer` | Answer open PR comments with codebase context |
-| `/dx-pr-fix` | Apply agree-will-fix code changes from reviews |
 | `/dx-pr-commit` | Commit with ADO work item linking |
 | `/dx-pr-review-report <PR>` | Generate categorized report from PR review findings, post to wiki |
 | `/dx-pr-reviews-report [N]` | Batch-generate reports for last N PRs you reviewed (parallel). `--any` for all PRs |
@@ -129,26 +119,18 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 
 **"Step through manually, review each step"**
 ```
-/dx-step        # Execute one step
-/dx-step-test   # Run tests
-/dx-step-review # Review changes
-/dx-step-commit # Commit if good
+/dx-step        # Execute one step (includes test, review, commit)
 # Repeat for each step
 ```
 
 **"Answer and fix PR review comments"**
 ```
-/dx-pr-answer   # Research + draft answers for open comments
-/dx-pr-fix      # Apply agree-will-fix changes, commit, push, reply
+/dx-pr-answer   # Research + draft answers, apply agree-will-fix changes
 ```
 
-**"DoR → BA feedback → share plan (incremental)"**
+**"Full requirements pipeline"**
 ```
-/dx-req-fetch <ID>            # 1. Fetch story from ADO
-/dx-req-dor                   # 2. Validate DoR, post checkbox comment to ADO
-# ── wait for BA to check items in ADO comment ──
-/dx-req-dor                   # 3. Re-run: reads checkboxes, re-validates, posts update
-/dx-req-all <ID>              # 4. Skips fetch+dor (done), runs explain → research → share
+/dx-req <ID>                  # Full pipeline: fetch → dor → explain → research → share
 ```
 
 Each step is idempotent — already-completed steps are skipped. Dependency chain:
@@ -193,7 +175,7 @@ All skills also work in VS Code Copilot chat via `@AgentName`:
 | `@DxCodeReview` | `/dx-step-verify` | `@DxCommit` |
 | `@DxPRReview` | `/dx-pr-review` | `@DxCodeReview`, `@DxDebug` |
 | `@DxPRAnswer` | `/dx-pr-answer` | `@DxPRFix` |
-| `@DxPRFix` | `/dx-pr-fix` | `@DxPRAnswer`, `@DxCommit` |
+| `@DxPRFix` | `/dx-pr-answer` (fix) | `@DxPRAnswer`, `@DxCommit` |
 | `@DxCommit` | `/dx-pr-commit` | `@DxPRReview`, `@DxCodeReview` |
 | `@DxTicket` | `/dx-ticket-analyze` | — |
 | `@DxHelp` | `/dx-help` | — |
