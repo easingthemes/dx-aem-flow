@@ -1,3 +1,10 @@
+## [2.53.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.1...v2.53.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* **website:** remove all private/client data from public docs ([920570d](https://github.com/easingthemes/dx-aem-flow/commit/920570deda0b70a3288d616149d30e914178260d))
+
 ## [2.53.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.0...v2.53.1) (2026-03-22)
 
 
