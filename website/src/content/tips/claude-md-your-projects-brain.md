@@ -50,5 +50,5 @@ mvn clean install # full deploy
 - PR target: development (never main)
 
 ## Architecture
-Custom Elements extending BATComponent
+Custom Elements extending CustomComponent
 ```
