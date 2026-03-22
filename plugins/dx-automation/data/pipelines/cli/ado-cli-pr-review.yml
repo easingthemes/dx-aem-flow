@@ -52,7 +52,7 @@ steps:
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze but do NOT post comments or vote)"
       else
-        PROMPT="$PROMPT. Then run /dx-pr-post $PR_URL to post the review comments to ADO."
+        PROMPT="$PROMPT. Then post the review comments to ADO (posting is included in /dx-pr-review)."
       fi
 
       PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-flow/dx/plugins"

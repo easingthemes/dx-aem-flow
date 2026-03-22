@@ -1,4 +1,4 @@
-<!-- Source: agents/dx-step-executor.md -->
+<!-- Source: Plan executor agent template -->
 ---
 name: DxPlanExecutor
 description: Execute implementation plans step-by-step. Reads implement.md, implements each pending step, verifies compilation, and commits per step. Use when you have a plan ready in specs/.

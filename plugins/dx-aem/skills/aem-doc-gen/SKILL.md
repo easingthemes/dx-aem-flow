@@ -1,6 +1,6 @@
 ---
 name: aem-doc-gen
-description: Generate AEM demo documentation — find or create docs page with configured component, capture dialog and website screenshots on QA, write authoring guide. Extends /aem-demo for automated pipeline use. Invoked by /dx-agent-all Phase 7 and /dx-req-dod-fix.
+description: Generate AEM demo documentation — find or create docs page with configured component, capture dialog and website screenshots on QA, write authoring guide. Extends /aem-demo for automated pipeline use. Invoked by /dx-agent-all Phase 7 and /dx-req-dod.
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 context: fork
 agent: aem-demo-capture
@@ -252,7 +252,7 @@ If publisher screenshot failed (step 11), omit the Website section and add a not
 
 - **"No spec directory found"**
   **Cause:** No spec directory exists for the given work item ID.
-  **Fix:** Run `/dx-req-fetch <id>` first to create the spec directory, or provide the correct work item ID.
+  **Fix:** Run `/dx-req <id>` first to create the spec directory, or provide the correct work item ID.
 
 - **Screenshots captured but images are dark or empty**
   **Cause:** The component requires specific content/configuration to render, or the page hasn't fully loaded.

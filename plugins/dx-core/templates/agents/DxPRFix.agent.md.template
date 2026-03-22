@@ -1,4 +1,4 @@
-<!-- Source: skills/dx-pr-fix/SKILL.md -->
+<!-- Source: skills/dx-pr-answer/SKILL.md (fix functionality merged into dx-pr-answer) -->
 ---
 name: DxPRFix
 description: Apply code fixes from agree-will-fix PR review comments. Reads session data, applies fixes, lints, commits, pushes, and replies to threads. Use after @DxPRAnswer has identified fixes needed.

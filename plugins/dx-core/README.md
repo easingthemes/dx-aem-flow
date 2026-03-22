@@ -21,7 +21,7 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 /dx-pr                      # Create pull request
 ```
 
-## Skills (48)
+## Skills
 
 ### Estimation
 
@@ -34,15 +34,9 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 | Skill | Description |
 |-------|-------------|
 | `/dx-req-all` | Full requirements pipeline: fetch → dor → explain → research → share |
-| `/dx-req-fetch` | Pull ADO work item and save as raw-story.md |
-| `/dx-req-dor` | Validate story against DoR checklist, extract BA data, generate open questions |
-| `/dx-req-explain` | Distill story into developer-focused requirements |
-| `/dx-req-research` | Search codebase for related code |
-| `/dx-req-share` | Generate non-technical summary for Teams/ADO |
-| `/dx-req-checklist` | ⚠️ Deprecated — use `/dx-req-dor` instead |
+| `/dx-req` | Full requirements pipeline — fetch, validate DoR, distill, research, share (5 phases) |
 | `/dx-req-tasks` | Create child Task work items with hour estimates |
-| `/dx-req-dod` | Check Definition of Done compliance — reviews PR, tasks, docs |
-| `/dx-req-dod-fix` | Auto-fix DoD gaps found by dx-req-dod |
+| `/dx-req-dod` | Check Definition of Done compliance and auto-fix gaps — reviews PR, tasks, docs |
 | `/dx-req-import` | Validate external (non-ADO) requirements document |
 
 ### Planning
@@ -58,12 +52,8 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 | Skill | Description |
 |-------|-------------|
 | `/dx-step-all` | Execute all plan steps (step → test → review → commit loop) |
-| `/dx-step` | Execute next pending step |
-| `/dx-step-test` | Run tests and parse results |
-| `/dx-step-review` | Review step changes against plan and conventions |
-| `/dx-step-fix` | Diagnose and fix a blocked step |
-| `/dx-step-commit` | Stage and commit completed step |
-| `/dx-step-heal` | Diagnose pipeline failures, create corrective steps |
+| `/dx-step` | Execute next pending step — implement, test, review, and commit |
+| `/dx-step-fix` | Diagnose and fix a blocked step — direct fix or corrective steps |
 | `/dx-step-build` | Build & deploy to local environment, auto-fix errors |
 
 ### Build & Ship
@@ -78,10 +68,8 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 | Skill | Description |
 |-------|-------------|
 | `/dx-pr-review` | Review a single PR — analyze code, post comments, propose fixes |
-| `/dx-pr-post` | Post saved PR review findings to ADO — threads with optional fix patches + vote |
 | `/dx-pr-review-all` | Batch-review multiple open PRs |
-| `/dx-pr-answer` | Answer open PR comments with codebase context |
-| `/dx-pr-fix` | Apply agree-will-fix code changes, commit, push, reply |
+| `/dx-pr-answer` | Answer open PR comments with codebase context, apply agree-will-fix changes |
 
 ### Bug Fix
 
@@ -133,7 +121,6 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 | `dx-pr-reviewer` | Sonnet | PR diff analysis, structured findings with severity |
 | `dx-file-resolver` | Haiku | Source file lookup across repos via ADO MCP |
 | `dx-doc-searcher` | Haiku | Local documentation index search |
-| `dx-step-executor` | Sonnet | Skill delegation loop for autonomous execution |
 
 ## Configuration
 

@@ -46,6 +46,6 @@ When a coordinator passes context to a subagent:
 - **Status:** failure
 - **Summary:** Could not generate plan — explain.md missing from spec directory.
 - **Files:** none
-- **Next:** dx-req-explain
+- **Next:** dx-req (Phase 3)
 - **Error:** Prerequisite file .ai/specs/2435084-hero/explain.md not found
 ```
