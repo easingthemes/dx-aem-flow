@@ -118,3 +118,12 @@ For any failure, retry the failed step **once** before stopping.
 - **Keep main context lean** — you only see compact summaries, not file contents
 - **Progress reporting** — print status after each step so the user can see progress
 - **Same quality as individual skills** — running `/dx-figma-all` produces identical output to running each skill separately
+
+## Platform Compatibility
+
+This skill uses subagent orchestration (Agent tool dispatch) which is available in **Claude Code only**.
+
+**Copilot CLI / VS Code Chat:** Run the individual skills manually in sequence:
+1. `/dx-figma-extract <figma-url> [component-name]` — extract design from Figma
+2. `/dx-figma-prototype [id]` — generate HTML/CSS prototype
+3. `/dx-figma-verify [id]` — verify prototype against design

@@ -541,7 +541,8 @@ step_8c_vscode_settings() {
     cat > "$vscode_settings" << 'SETTINGS_EOF'
 {
     "chat.instructionsFilesLocations": {
-        ".claude/rules": true
+        ".claude/rules": true,
+        ".github/instructions": true
     },
     "chat.agentSkillsLocations": {
         ".claude/skills": true
@@ -560,7 +561,7 @@ SETTINGS_EOF
     fi
     if $needs_update; then
       log_warn "  .vscode/settings.json exists but missing VS Code Chat settings — add manually"
-      log_info '  Add: "chat.instructionsFilesLocations": { ".claude/rules": true }'
+      log_info '  Add: "chat.instructionsFilesLocations": { ".claude/rules": true, ".github/instructions": true }'
       log_info '  Add: "chat.agentSkillsLocations": { ".claude/skills": true }'
     else
       log_info "  .vscode/settings.json already has VS Code Chat settings"
