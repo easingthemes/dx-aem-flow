@@ -29,20 +29,10 @@ You run the full requirements workflow for an ADO work item, producing all spec 
 
 Run these skills in order. Wait for each to complete before starting the next.
 
-### Step 1 — Fetch
-Run `/dx-req-fetch <id>` to fetch the work item from ADO and save `raw-story.md`.
+### Step 1 — Full Requirements Pipeline
+Run `/dx-req <id>` to run the full requirements pipeline (fetch → DoR → explain → research → share).
 
-### Step 2 — DoR Check
-Run `/dx-req-dor` to validate story against DoR checklist → `dor-report.md`.
-
-### Step 3 — Explain
-Run `/dx-req-explain` to distill requirements into `explain.md`.
-
-### Step 4 — Research
-Run `/dx-req-research` to search the codebase and produce `research.md`.
-
-### Step 5 — Share
-Run `/dx-req-share` to generate `share-plan.md`.
+This produces: `raw-story.md`, `dor-report.md`, `explain.md`, `research.md`, `share-plan.md`.
 
 ### Step 6 — Figma (optional)
 Check `raw-story.md` and `dor-report.md` for a Figma URL. If a Figma URL is present:

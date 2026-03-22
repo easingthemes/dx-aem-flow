@@ -6,7 +6,7 @@ disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-You are a coordinator. You do NOT implement anything yourself. You delegate each workflow phase to the `dx-step-executor` agent via the Task tool, then report progress.
+You are a coordinator. You do NOT implement anything yourself. You delegate each workflow phase to the `subagent` agent via the Task tool, then report progress.
 
 ## Flow
 
@@ -93,10 +93,10 @@ If `verification.md` doesn't exist → same warning as "Blocked".
 
 ### Generate fix plan (opus, 2-5 steps)
 
-Delegate to `dx-step-executor` agent with **model: opus** for deep reasoning:
+Delegate to a subagent with **model: opus** for deep reasoning:
 
 ```
-Use the dx-step-executor agent to: Generate implement.md for bug fix in spec directory <SPEC_DIR>.
+Generate implement.md for bug fix in spec directory <SPEC_DIR>.
 
 Read raw-bug.md, triage.md, and verification.md (if exists).
 Use the root cause hypothesis from triage.md and the evidence from verification.md
@@ -197,31 +197,15 @@ For each pending step in implement.md, run the step-test-review-fix cycle:
 **Execute Step:**
 
 ```
-Use the dx-step-executor agent to: Execute step for spec directory <SPEC_DIR>
+Invoke /dx-step for spec directory <SPEC_DIR>
 ```
 
-If step is marked `blocked` → go to fix sub-cycle.
-
-**Run Tests:**
-
-```
-Use the dx-step-executor agent (model: haiku) to: Execute step-test for spec directory <SPEC_DIR>
-```
-
-If tests fail → go to fix sub-cycle.
-
-**Review Changes:**
-
-```
-Use the dx-step-executor agent to: Execute step-review for spec directory <SPEC_DIR>
-```
-
-If review requests changes → go to fix sub-cycle.
+`/dx-step` handles implementation, testing, review, and commit in one pass. If step is marked `blocked` → go to fix sub-cycle.
 
 **Fix (if needed):**
 
 ```
-Use the dx-step-executor agent to: Execute step-fix for spec directory <SPEC_DIR>
+Invoke /dx-step-fix for spec directory <SPEC_DIR>
 ```
 
 Track fix attempts per step. If fix succeeds → re-run tests (loop back to Run Tests above).
@@ -253,7 +237,7 @@ Check implement.md for remaining pending steps:
 After all steps complete:
 
 ```
-Use the dx-step-executor agent to: Execute build for spec directory <SPEC_DIR>
+Invoke /dx-step-build for spec directory <SPEC_DIR>
 ```
 
 If build fails, delegate to step-fix. 2-strike rule applies.
@@ -263,7 +247,7 @@ If build fails, delegate to step-fix. 2-strike rule applies.
 Run local verification to confirm the fix resolved the issue:
 
 ```
-Use the dx-step-executor agent to: Execute bug-verify for work item <id> with argument "after"
+Invoke /dx-bug-verify <id> after
 ```
 
 This runs `dx-bug-verify` in `after` mode — swaps the repro URL to local AEM, re-runs the repro steps, and confirms the bug is no longer present. Output goes to `verification-local.md`.
@@ -308,14 +292,14 @@ Go to "STOP: Human intervention needed".
 2. Append failure context to `triage.md` under a new `## Fix Attempt 1 — Failure Analysis` heading
 3. Re-read the original triage + failure context
 4. Generate a revised fix plan — update `implement.md` with new steps (mark old steps as `done` or `superseded`)
-5. Execute the revised steps via dx-step-executor (same 2-strike rule per step)
+5. Execute the revised steps via `/dx-step` (same 2-strike rule per step)
 
 After revised steps complete → go to "Run build".
 
 ### Commit + create PR
 
 ```
-Use the dx-step-executor agent to: Execute commit for spec directory <SPEC_DIR> with PR.
+Invoke /dx-pr-commit for spec directory <SPEC_DIR>.
 Commit message format: #<id> Fix <short description from bug title>
 ```
 

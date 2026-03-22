@@ -227,9 +227,9 @@ Both ADO and Jira comments use HTML/markdown signatures to detect duplicates:
 
 | Signature | Used By | ADO Format | Jira Format |
 |-----------|---------|------------|-------------|
-| `<!-- ai:role:share-plan -->` | dx-req-share | HTML comment in markdown | Same (HTML comments work in Jira wiki markup) |
-| `[DevPlan] Development Plan` | dx-req-share | Visible text | Same |
-| `<!-- ai:role:dor-agent -->` | dx-req-dor | HTML comment | Same |
+| `<!-- ai:role:share-plan -->` | dx-req (Phase 5) | HTML comment in markdown | Same (HTML comments work in Jira wiki markup) |
+| `[DevPlan] Development Plan` | dx-req (Phase 5) | Visible text | Same |
+| `<!-- ai:role:dor-agent -->` | dx-req (Phase 2) | HTML comment | Same |
 | `<!-- ai:role:estimation-agent -->` | dx-estimate | HTML comment | Same |
 | `<!-- ai:role:triage-agent -->` | dx-bug-triage | HTML comment | Same |
 | `<!-- ai:role:verification-agent -->` | dx-bug-verify | HTML comment | Same |

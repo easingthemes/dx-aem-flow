@@ -89,19 +89,9 @@ Discovers HTML and accessibility conventions from the consumer project — seman
 
 ---
 
-### dx-step-executor
+---
 
-| Property | Value |
-|----------|-------|
-| **Model** | Sonnet |
-| **File** | `plugins/dx-core/agents/dx-step-executor.md` |
-| **Used by** | `/dx-step-all`, `/dx-agent-all`, `/dx-bug-all`, `/dx-req-all` |
-| **Tools** | Read, Write, Edit, Bash, Glob, Grep, Task, ToolSearch |
-| **Permission mode** | `acceptEdits` (auto-approves file edits) |
-
-Focused execution agent that runs exactly ONE skill for a given work item and returns a compact summary. Used by coordinator skills to delegate individual steps. Handles 29 skills across requirements, figma, planning, execution, build, review, bug fix, DoD, documentation, and agent categories.
-
-**Return format:** `OK <skill>` or `FAIL <skill>` with highlights and action items.
+> **Note:** The `dx-step-executor` agent has been removed. Coordinators now invoke skills directly via the Skill tool instead of delegating to an executor agent.
 
 ---
 
@@ -246,7 +236,7 @@ Fetches ADO PR diff, analyzes with project conventions, posts findings as PR com
 | Property | Value |
 |----------|-------|
 | **Template** | `plugins/dx-core/templates/agents/DxPlanExecutor.agent.md.template` |
-| **Claude equivalent** | dx-step-executor |
+| **Claude equivalent** | (skill: /dx-step) |
 | **Invoke** | `@DxPlanExecutor <step-number>` |
 
 Executes implementation plan steps from `implement.md`. Reads spec directory, runs one step at a time, saves output.
@@ -319,7 +309,7 @@ Answers PR review comments — reads pending threads, drafts responses, posts re
 | Property | Value |
 |----------|-------|
 | **Template** | `plugins/dx-core/templates/agents/DxPRFix.agent.md.template` |
-| **Claude equivalent** | (skill: /dx-pr-fix) |
+| **Claude equivalent** | (skill: /dx-pr-answer) |
 | **Invoke** | `@DxPRFix <PR-ID>` |
 
 Applies "agree-will-fix" PR review changes. Reads threads, applies code changes, resolves threads.
@@ -364,7 +354,7 @@ Systematic error diagnosis. Read-only — traces errors through code, identifies
 | **Claude equivalent** | (skill: /dx-req-all) |
 | **Invoke** | `@DxReqAll <work-item-id>` |
 
-Full requirements pipeline coordinator. Chains `/dx-req-fetch` → `/dx-req-dor` → `/dx-req-explain` → `/dx-req-research` → `/dx-req-share`.
+Full requirements pipeline coordinator. Invokes `/dx-req` which handles all 5 phases (fetch → dor → explain → research → share).
 
 **Handoffs:** DxPlanExecutor, DxTicket
 
@@ -378,7 +368,7 @@ Full requirements pipeline coordinator. Chains `/dx-req-fetch` → `/dx-req-dor`
 | **Claude equivalent** | (skill: /dx-step-all) |
 | **Invoke** | `@DxStepAll <work-item-id>` |
 
-Execution loop coordinator. Runs `/dx-step` → `/dx-step-test` → `/dx-step-review` → `/dx-step-fix` → `/dx-step-commit` in a loop until all plan steps are done.
+Execution loop coordinator. Runs `/dx-step` (includes test, review, commit) → `/dx-step-fix` for failures, in a loop until all plan steps are done.
 
 **Handoffs:** DxCodeReview, DxCommit, DxDebug
 
@@ -546,7 +536,7 @@ Answers PR review comments with session persistence (`.ai/pr-answers/pr-<id>.md`
 | Property | Value |
 |----------|-------|
 | **Template** | `plugins/dx-aem/templates/agents/AEMPRFix.agent.md.template` |
-| **Claude equivalent** | (skill: /dx-pr-fix) |
+| **Claude equivalent** | (skill: /dx-pr-answer) |
 | **Invoke** | `@AEMPRFix <PR-ID>` |
 
 Applies agree-will-fix PR review changes. Session-first resolution, minimal fixes, lint check via config commands.

@@ -27,18 +27,18 @@ flowchart LR
 
 **Developer types:** `/dx-agent-all <ADO-Story-ID>`
 
-This is the master orchestrator. It chains all phases end-to-end, from ADO story to merged PR. Each phase is strictly sequential. Sub-skills run via `dx-step-executor` agents or Skill tool with `context: fork`.
+This is the master orchestrator. It chains all phases end-to-end, from ADO story to merged PR. Each phase is strictly sequential. Sub-skills run via `subagent` agents or Skill tool with `context: fork`.
 
 ```mermaid
 flowchart TD
     subgraph P1["Phase 1: Requirements"]
         START["ADO Story ID"]
-        FETCH["1.1 /dx-req-fetch<br/>Fetch story from ADO"]
-        DOR["1.1b /dx-req-dor<br/>Validate Definition of Ready"]
+        FETCH["1.1 /dx-req<br/>Fetch story from ADO"]
+        DOR["1.1b /dx-req (dor)<br/>Validate Definition of Ready"]
         DOR_GATE{"DoR score 70+?"}
-        EXPLAIN["1.2 /dx-req-explain<br/>Simplify story into<br/>dev requirements"]
-        RESEARCH["1.3 /dx-req-research<br/>Search codebase for<br/>related files"]
-        SHARE["1.4 /dx-req-share<br/>Post team summary<br/>to ADO"]
+        EXPLAIN["1.2 /dx-req (explain)<br/>Simplify story into<br/>dev requirements"]
+        RESEARCH["1.3 /dx-req (research)<br/>Search codebase for<br/>related files"]
+        SHARE["1.4 /dx-req (share)<br/>Post team summary<br/>to ADO"]
         START --> FETCH --> DOR --> DOR_GATE
         DOR_GATE -->|pass| EXPLAIN
         EXPLAIN --> RESEARCH --> SHARE
@@ -74,7 +74,7 @@ flowchart TD
     subgraph P4["Phase 4: Build + Review"]
         BUILD["4.0 /dx-step-build<br/>Compile and deploy locally"]
         VERIFY["4.5 /dx-step-verify<br/>Lint, test, secret scan,<br/>architecture, code review"]
-        HEAL["4.5-heal /dx-step-heal<br/>Auto-fix review issues<br/>max 2 cycles"]
+        HEAL["4.5-heal /dx-step-fix<br/>Auto-fix review issues<br/>max 2 cycles"]
         BUILD --> VERIFY
         VERIFY -->|fail| HEAL
         HEAL -->|fixed| VERIFY
@@ -83,7 +83,7 @@ flowchart TD
     end
 
     subgraph P5["Phase 5: Commit + AEM"]
-        COMMIT_ALL["5a /dx-step-commit<br/>Stage and commit all changes<br/>(if auto_commit enabled)"]
+        COMMIT_ALL["5a /dx-step (commit)<br/>Stage and commit all changes<br/>(if auto_commit enabled)"]
         SNAPSHOT["5 /aem-snapshot<br/>Record dialog fields and pages<br/>to aem-before.md"]
         AEM_VERIFY["5+ /aem-verify<br/>Compare dialog changes,<br/>create demo page"]
         COMMIT_ALL --> SNAPSHOT --> AEM_VERIFY
@@ -144,40 +144,40 @@ flowchart TD
 
 ## Requirements Flow (/dx-req-all)
 
-**Developer types:** `/dx-req-all <ADO-Story-ID>` (or individual skills: `/dx-req-fetch`, `/dx-req-dor`, etc.)
+**Developer types:** `/dx-req-all <ADO-Story-ID>` (or individual skills: `/dx-req`, `/dx-req (dor)`, etc.)
 
-Chains 5 skills sequentially via `dx-step-executor` agents. Each step must complete before the next starts.
+Chains 5 skills sequentially via `subagent` agents. Each step must complete before the next starts.
 
 ```mermaid
 flowchart TD
     ADO_ID["ADO Story ID"]
 
     subgraph S1["Step 1"]
-        FETCH["/dx-req-fetch<br/>Fetch story, create<br/>spec dir and branch"]
+        FETCH["/dx-req<br/>Fetch story, create<br/>spec dir and branch"]
         RAW["raw-story.md<br/>.branch, .sprint"]
         FETCH --> RAW
     end
 
     subgraph S2["Step 2"]
-        DOR["/dx-req-dor<br/>Validate readiness,<br/>post checklist to ADO"]
+        DOR["/dx-req (dor)<br/>Validate readiness,<br/>post checklist to ADO"]
         DOR_OUT["dor-report.md<br/>+ ADO comment"]
         DOR --> DOR_OUT
     end
 
     subgraph S3["Step 3"]
-        EXPLAIN["/dx-req-explain<br/>Distill story into<br/>8-12 dev requirements"]
+        EXPLAIN["/dx-req (explain)<br/>Distill story into<br/>8-12 dev requirements"]
         EXPLAIN_OUT["explain.md"]
         EXPLAIN --> EXPLAIN_OUT
     end
 
     subgraph S4["Step 4"]
-        RESEARCH["/dx-req-research<br/>Search codebase with<br/>4 parallel Explore agents"]
+        RESEARCH["/dx-req (research)<br/>Search codebase with<br/>4 parallel Explore agents"]
         RESEARCH_OUT["research.md"]
         RESEARCH --> RESEARCH_OUT
     end
 
     subgraph S5["Step 5"]
-        SHARE["/dx-req-share<br/>Plain-language summary<br/>for team and BA"]
+        SHARE["/dx-req (share)<br/>Plain-language summary<br/>for team and BA"]
         SHARE_OUT["share-plan.md<br/>+ ADO comment"]
         SHARE --> SHARE_OUT
     end
@@ -260,11 +260,11 @@ flowchart TD
         direction TB
         PICK["Pick next pending step"]
         CODE["2a /dx-step<br/>Write code for one<br/>plan step"]
-        TEST["2b /dx-step-test<br/>Run project test suite"]
-        REVIEW["2c /dx-step-review<br/>AI code review against<br/>plan and conventions"]
+        TEST["2b /dx-step (test)<br/>Run project test suite"]
+        REVIEW["2c /dx-step (review)<br/>AI code review against<br/>plan and conventions"]
         FIX["2d /dx-step-fix<br/>Diagnose failure,<br/>apply correction"]
-        HEAL["2d-heal /dx-step-heal<br/>Root-cause analysis,<br/>insert corrective steps"]
-        COMMIT_S["2e /dx-step-commit<br/>Git commit with<br/>work item link"]
+        HEAL["2d-heal /dx-step-fix<br/>Root-cause analysis,<br/>insert corrective steps"]
+        COMMIT_S["2e /dx-step (commit)<br/>Git commit with<br/>work item link"]
 
         PICK --> CODE --> TEST
         TEST -->|pass| REVIEW
@@ -399,7 +399,7 @@ flowchart TD
     style VOTE fill:#e1bee7,stroke:#6a1b9a,color:#000
 ```
 
-**Note:** Posting happens inline within `/dx-pr-review` (Step 8) — it does NOT call `/dx-pr-post`. The standalone `/dx-pr-post` skill is only for deferred posting of previously saved findings.
+**Note:** Posting happens inline within `/dx-pr-review` (Step 8) — it does NOT call `/dx-pr-review (post)`. The standalone `/dx-pr-review (post)` skill is only for deferred posting of previously saved findings.
 
 ### Handling Feedback on Your PR (separate lifecycle)
 
@@ -411,7 +411,7 @@ flowchart TD
     CATEGORIZE["Categorize each thread:<br/>agree-will-fix / question /<br/>disagree / skip"]
     DETECT["Detect proposed patches<br/>in reviewer comments"]
     POST_REPLIES["Post approved replies<br/>to ADO threads"]
-    FIX_PR["/dx-pr-fix<br/>Apply agree-will-fix changes,<br/>lint, commit, push"]
+    FIX_PR["/dx-pr-answer<br/>Apply agree-will-fix changes,<br/>lint, commit, push"]
     REPLY_FIXED["Reply to fixed threads:<br/>Fixed. / Updated."]
 
     ANSWER --> CATEGORIZE --> DETECT --> POST_REPLIES
@@ -425,7 +425,7 @@ flowchart TD
 ### Standalone PR-Related Skills
 
 - **`/dx-pr-commit`** — Alternative to `/dx-pr`: commit + create PR in one command
-- **`/dx-pr-post`** — Post previously saved review findings to ADO (deferred posting)
+- **`/dx-pr-review (post)`** — Post previously saved review findings to ADO (deferred posting)
 - **`/dx-doc-gen`** — Generate wiki page from spec files, post to ADO wiki
 - **`/dx-req-dod`** — Check Definition of Done: PR approved? Tasks done?
 
@@ -437,7 +437,7 @@ flowchart TD
 
 **Developer types:** `/dx-bug-all <ADO-Bug-ID>`
 
-Chains 3 steps via `dx-step-executor`. Step 2 (verify) can fail without blocking step 3 (fix).
+Chains 3 steps via `subagent`. Step 2 (verify) can fail without blocking step 3 (fix).
 
 ```mermaid
 flowchart TD
@@ -535,13 +535,13 @@ flowchart LR
         end
     end
 
-    FETCH_S["/dx-req-fetch"] --> RAW
+    FETCH_S["/dx-req"] --> RAW
     FETCH_S --> BRANCH
     FETCH_S --> SPRINT
-    DOR_S["/dx-req-dor"] --> DOR_F
-    EXP_S["/dx-req-explain"] --> EXP_F
-    RES_S["/dx-req-research"] --> RES_F
-    SHARE_S["/dx-req-share"] --> SHARE_F
+    DOR_S["/dx-req (dor)"] --> DOR_F
+    EXP_S["/dx-req (explain)"] --> EXP_F
+    RES_S["/dx-req (research)"] --> RES_F
+    SHARE_S["/dx-req (share)"] --> SHARE_F
     FIGMA_EXT_S["/dx-figma-extract"] --> FIGMA_EXT
     FIGMA_EXT_S --> FIGMA_REF
     FIGMA_PROTO_S["/dx-figma-prototype"] --> FIGMA_CONV
@@ -564,7 +564,7 @@ flowchart LR
 
 | Agent | Model | Invoked By | Purpose |
 |-------|-------|------------|---------|
-| `dx-step-executor` | Sonnet | Coordinators: req-all, step-all, bug-all, agent-all, estimate | Execute single skill in isolated context |
+| `subagent` | Sonnet | Coordinators: req-all, step-all, bug-all, agent-all, estimate | Execute single skill in isolated context |
 | `dx-pr-reviewer` | Sonnet | /dx-pr-review | Analyze PR diff, return findings with confidence 80+ filter |
 | `dx-code-reviewer` | Opus | /dx-step-verify Phase 6 | Deep code review for plan alignment and quality |
 | `dx-file-resolver` | Haiku | /dx-ticket-analyze, /aem-component | Find source files across repos via file-patterns.yaml |

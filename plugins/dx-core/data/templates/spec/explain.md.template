@@ -19,7 +19,7 @@ Target 8-12 items for a medium story.
 REUSE FLAG: If any requirement sounds like something the codebase
 might already support (similar component, existing helper, known pattern),
 add a note: "(check: may overlap with existing <name>)". This flags it
-for /dx-req-research to verify. Don't suppress the requirement — just tag it. -->
+for /dx-req (Phase 4) to verify. Don't suppress the requirement — just tag it. -->
 
 ## Changes by Area
 <!-- ONLY include areas that have non-obvious changes. Use a compact format:

@@ -50,7 +50,7 @@ mkdir -p .ai/specs/<slug>
 
 ## 5. Generate explain.md
 
-Distill the requirements document into explain.md following the EXACT same format as `/dx-req-explain`:
+Distill the requirements document into explain.md following the EXACT same format as `/dx-req` (Phase 3 — explain):
 
 ```markdown
 # <Title>
@@ -82,7 +82,7 @@ If the document mentions specific component names, classes, or files:
    - Current config/dialog structure (if component exists)
    - Files inventory table
 
-Skip the full 4-agent research (user can run `/dx-req-research` manually for deeper analysis).
+Skip the full 4-agent research (user can run `/dx-req` manually for deeper analysis).
 
 If no specific code references are found, skip research.md.
 
@@ -102,7 +102,7 @@ If no specific code references are found, skip research.md.
 ### Next steps:
 - Review `explain.md` — are the requirements accurate?
 - `/dx-plan` — generate implementation plan
-- `/dx-req-research` — deeper codebase analysis (if needed)
+- `/dx-req` — deeper codebase analysis (if needed)
 ```
 
 ## Examples
@@ -121,11 +121,11 @@ If no specific code references are found, skip research.md.
 
 - **Spec directory uses slug instead of ID**
   **Cause:** This is expected behavior. Without an ADO ticket, the directory is named `.ai/specs/<slug>/` instead of `.ai/specs/<id>-<slug>/`.
-  **Fix:** No fix needed. If you later create an ADO ticket, run `/dx-req-fetch <id>` to create the ID-prefixed directory and move your files.
+  **Fix:** No fix needed. If you later create an ADO ticket, run `/dx-req <id>` to create the ID-prefixed directory and move your files.
 
 - **Research.md not generated**
   **Cause:** The requirements document doesn't mention specific component names, classes, or files that can be searched.
-  **Fix:** Run `/dx-req-research` manually for a deeper codebase analysis after the spec is created.
+  **Fix:** Run `/dx-req` manually for a deeper codebase analysis after the spec is created.
 
 ## Rules
 

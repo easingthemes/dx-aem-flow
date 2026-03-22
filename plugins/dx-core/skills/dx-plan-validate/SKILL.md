@@ -118,7 +118,7 @@ Report:
 
 - **"explain.md or implement.md not found"**
   **Cause:** The required spec files haven't been generated yet.
-  **Fix:** Run `/dx-req-explain <id>` and `/dx-plan <id>` first to generate both files.
+  **Fix:** Run `/dx-req <id>` and `/dx-plan <id>` first to generate both files.
 
 - **False "scope creep" warnings on infrastructure steps**
   **Cause:** Steps like "set up test fixtures" or "update build config" don't map directly to a numbered requirement.

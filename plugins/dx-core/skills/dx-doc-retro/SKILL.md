@@ -103,7 +103,7 @@ Create the spec directory if it doesn't exist:
 ```bash
 DIR_NAME=$(bash .ai/lib/dx-common.sh find-spec-dir <work-item-id> 2>/dev/null || echo "")
 if [ -z "$DIR_NAME" ]; then
-  # Create new spec dir using slugify from dx-req-fetch
+  # Create new spec dir using slugify from dx-req
   DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<title>")
   mkdir -p ".ai/specs/${DIR_NAME}/docs"
 fi
