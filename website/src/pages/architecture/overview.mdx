@@ -773,3 +773,88 @@ aem:
     different lifecycles -- separate plugin, separate install, separate operational skills.
   </HighlightBox>
 </Section>
+
+<SectionHeading
+  badge="Design Decisions"
+  badgeColor="warning"
+  title="What Makes This Different"
+  subtitle="Production-grade patterns that make this enterprise-ready."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan" title="Templates for Predictive Outcome" horizontal>
+      Every skill outputs to a structured template -- explain.md, implement.md, research.md. Templates encode domain knowledge and guarantee consistent output.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="Hooks to Offload LLM Usage" horizontal>
+      Shell hooks intercept tool calls before the LLM sees them. Figma screenshot hooks auto-cache assets. Pre-commit hooks validate without burning tokens.
+    </ContentCard>
+    <ContentCard icon="mdi:brain" iconColor="bg-brand-700" title="Subagents to Protect Context" horizontal>
+      Heavy operations run in isolated subagents that return compact summaries. The coordinator's context window stays clean. Right model for the job.
+    </ContentCard>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-emerald-600" title="Direct Skill Invocation -- No Middleman" horizontal>
+      Coordinators invoke skills directly via Skill() calls. No intermediary agent needed. Self-healing with 3 layers: fix, heal, retry loop.
+    </ContentCard>
+    <ContentCard icon="mdi:lock" iconColor="bg-red-500" title="Explicit Tool Allowlists" horizontal>
+      Every agent declares exactly which tools it can use. A PR reviewer cannot run Bash. Optional tools are discovered at runtime via ToolSearch.
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-cyan-dark" title="Convention-Based Discovery" horizontal>
+      Skills write to predictable paths: .ai/specs/&lt;id&gt;-&lt;slug&gt;/explain.md. The next skill finds its predecessor's output by convention.
+    </ContentCard>
+    <ContentCard icon="mdi:folder" iconColor="bg-red-500" title="The .ai/ Folder -- Clean Separation" horizontal>
+      All AI artifacts live in .ai/ -- specs, config, templates, rules, learning data. Project source stays untouched.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Config-Driven, Never Hardcoded" horizontal>
+      One config.yaml holds all project values. Same plugin codebase runs across 4 repos and 50+ potential projects without a code change.
+    </ContentCard>
+    <ContentCard icon="mdi:layers" iconColor="bg-amber-500" title="Three-Layer Override System" horizontal>
+      Plugin defaults, .ai/rules/ domain overrides, .claude/rules/ permanent conventions. Teams customize behavior by adding a file.
+    </ContentCard>
+    <ContentCard icon="mdi:memory" iconColor="bg-red-500" title="Memory via Markdown -- Between Steps" horizontal>
+      Each skill writes findings to a .md file. No database, no API, no shared memory bus -- just files on disk. Survives session crashes.
+    </ContentCard>
+    <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Subagent Memory Isolation" horizontal>
+      Subagents run in their own context window. The parent never sees the 500 files the subagent searched. Context cost doesn't propagate upward.
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="Cross-Repo Intelligence" horizontal>
+      Frontend bug that needs a backend fix? The agent detects the cross-repo dependency and delegates to the correct repository's pipeline.
+    </ContentCard>
+    <ContentCard icon="mdi:target" iconColor="bg-cyan" title="Model Tier Strategy" horizontal>
+      Opus for deep code review. Sonnet for execution. Haiku for simple lookups. Cost scales with complexity, not volume.
+    </ContentCard>
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-brand-700" title="Dual-IDE: Claude Code + GitHub Copilot" horizontal>
+      Skills written for Claude Code, auto-discovered by Copilot CLI. Agent templates generated for Copilot orchestration. Core workflows work in both IDEs.
+    </ContentCard>
+  </div>
+
+  <ContentCard icon="mdi:account" iconColor="bg-cyan" title="The Human Behind the Machine" class="mt-4">
+    Every project has a `me.md` persona file. It defines how the AI communicates -- tone,
+    language style, PR comment voice. Not a gimmick: PR comments read like a real teammate wrote them.
+    Teams codify their voice without touching agent code.
+  </ContentCard>
+
+  <HighlightBox severity="info" title="Beyond Anthropic's Official Skill Guide">
+    <ul class="list-none p-0 m-0">
+      <li class="py-0.5"><strong>Plugin architecture</strong> -- the guide has standalone skills; KAI has versioned, installable plugin packages with marketplace</li>
+      <li class="py-0.5"><strong>Coordinator + Direct Skill Invocation</strong> -- the guide shows sequential orchestration; KAI coordinators chain skills directly via Skill() calls with self-healing</li>
+      <li class="py-0.5"><strong>Memory via files</strong> -- the guide mentions MCP data passing; KAI uses convention-based .md files that persist across sessions</li>
+      <li class="py-0.5"><strong>Model tiering</strong> -- the guide doesn't address cost optimization per agent; KAI assigns Opus/Sonnet/Haiku per capability</li>
+      <li class="py-0.5"><strong>Persona system</strong> -- not in the guide; KAI's me.md makes AI output indistinguishable from human teammates</li>
+      <li class="py-0.5"><strong>Hooks for LLM offloading</strong> -- the guide focuses on skill instructions; KAI uses shell hooks for deterministic work</li>
+      <li class="py-0.5"><strong>24/7 autonomous agents</strong> -- the guide covers interactive use; KAI runs the same skills unattended on ADO pipelines</li>
+      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same 69 skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
+    </ul>
+  </HighlightBox>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-4">
+    <ContentCard icon="mdi:sitemap" iconColor="bg-cyan" title="Generic by Design">
+      Any project, any stack. AEM logic lives in its own plugin -- pure frontend projects never see it.
+    </ContentCard>
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Future-Proof">
+      Plugin architecture with versioned marketplace. New capabilities ship as plugin updates -- no migration scripts.
+    </ContentCard>
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="Enterprise-Ready">
+      Token budgets, rate limits, audit trails, role-scoped tools, deduplication, graceful degradation.
+    </ContentCard>
+  </div>
+</Section>

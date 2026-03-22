@@ -1,0 +1,180 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Setup
+sidebar: setup
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Setup"
+  subtitle="Three steps to get KAI running in your project. Works with Claude Code CLI and GitHub Copilot CLI."
+/>
+
+{/* Seed Data Callout */}
+<Section>
+  <HighlightBox severity="warning" title="Seed Data — Teach the AI About Your Project">
+    For best results, prepare <strong>seed data</strong> before running init. Seed data files tell agents about your components, architecture, markets, and file conventions.
+    Without it, agents guess. With it, they know.
+    <a href={`${import.meta.env.BASE_URL}/setup/seed-data/`} class="font-semibold ml-1">Seed Data Guide →</a>
+  </HighlightBox>
+</Section>
+
+{/* Step 1 */}
+<SectionHeading
+  badge="Step 1"
+  badgeColor="secondary"
+  title="Install Plugins"
+  subtitle="Add the shared marketplace and install the plugins your project needs."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Claude Code CLI">{`# Add marketplace (one-time)
+/plugin marketplace add easingthemes/dx-aem-flow
+
+# Install plugins
+/plugin install dx-core@dx-aem-flow
+/plugin install dx-aem@dx-aem-flow          # AEM projects only
+/plugin install dx-hub@dx-aem-flow          # Multi-repo orchestration only`}</CommandBlock>
+
+  <CommandBlock label="GitHub Copilot CLI">{`# Same commands — same marketplace, same plugins
+/plugin marketplace add easingthemes/dx-aem-flow
+/plugin install dx-core@dx-aem-flow
+/plugin install dx-aem@dx-aem-flow          # AEM projects only`}</CommandBlock>
+
+  <HighlightBox severity="info" title="Updating">
+    <code>/plugin marketplace update dx-aem-flow</code> updates all installed plugins to the latest version.
+  </HighlightBox>
+</Section>
+
+{/* Step 2 */}
+<SectionHeading
+  badge="Step 2"
+  badgeColor="secondary"
+  title="Prepare Seed Data"
+  subtitle="Create files in .ai/project/ that describe your project to the AI agents."
+  bg="alt"
+/>
+<Section>
+  <p class="text-sm text-gray-600 mb-4">
+    Seed data files are <strong>manually prepared</strong> by you. They follow a naming convention and live in <code>.ai/project/</code>.
+    The more you provide, the better agents perform.
+  </p>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">File</th>
+          <th class="text-left py-2 px-4 font-semibold">Format</th>
+          <th class="text-left py-2 px-4 font-semibold">What It Teaches</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>project.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">Repos, brands, markets, platforms, QA URLs</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>file-patterns.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">How to find source files for a component</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>content-paths.yaml</code></td><td class="py-2 px-4">YAML</td><td class="py-2 px-4">AEM content tree structure and page search patterns</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>architecture.md</code></td><td class="py-2 px-4">Markdown</td><td class="py-2 px-4">Rendering pipelines, module structure, key libraries</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>features.md</code></td><td class="py-2 px-4">Markdown</td><td class="py-2 px-4">Domain features (auth, commerce, forms) with file paths</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-emerald-600" title="Minimal">
+      Skip this step entirely. <code>/aem-init</code> auto-generates a basic <code>component-index.md</code>. Agents work but guess at architecture.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-amber-500" title="Recommended">
+      Create <code>project.yaml</code> + <code>file-patterns.yaml</code> + <code>architecture.md</code>.
+      Agents find files reliably and understand your project.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-brand-700" title="Full">
+      All files above + <code>content-paths.yaml</code> + <code>features.md</code> + <code>component-index-project.md</code>. Full multi-repo, multi-brand capabilities.
+    </ContentCard>
+  </div>
+
+  <p class="text-sm text-center mt-4">
+    <a href={`${import.meta.env.BASE_URL}/setup/seed-data/`} class="font-semibold text-brand-700">Full Seed Data Guide — formats, examples, and templates →</a>
+  </p>
+</Section>
+
+{/* Step 3 */}
+<SectionHeading
+  badge="Step 3"
+  badgeColor="secondary"
+  title="Run Init"
+  subtitle="Initialize the project with config, rules, MCP servers, and templates."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="/dx-init">
+      Core initialization — creates <code>.ai/config.yaml</code>, convention rules, MCP server config, agent templates, and shared scripts.
+      <CommandBlock label="Run">/dx-init</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="/aem-init (AEM only)">
+      AEM-specific setup — scans the codebase for components, sets up AEM MCP config, and creates seed data templates.
+      <CommandBlock label="Run">/aem-init</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <div class="overflow-x-auto mt-6">
+    <h3 class="text-base font-semibold text-brand-900 mb-2">What /dx-init Creates</h3>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Path</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/config.yaml</code></td><td class="py-2 px-4">Project configuration (branches, ADO/Jira, build commands)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/rules/</code></td><td class="py-2 px-4">Convention rules (work in both Claude Code and Copilot CLI)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4">MCP server configuration (ADO, Jira/Confluence, Figma, axe)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/agents/</code></td><td class="py-2 px-4">Copilot agent templates</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/templates/</code></td><td class="py-2 px-4">Spec file and work item comment templates</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/rules/</code></td><td class="py-2 px-4">Shared rules (PR review, pragmatism) used by local + automation</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* Done */}
+<SectionHeading
+  badge="Done"
+  badgeColor="success"
+  title="Setup Complete"
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="success" title="You're ready to go">
+    Run <code>/dx-doctor</code> to verify everything is connected (MCP servers, config, rules).
+    Then start with <code>/dx-req &lt;ticket-id&gt;</code> to pull your first story.
+  </HighlightBox>
+
+  <p class="text-sm text-gray-600 mt-4">
+    For platform-specific configuration details (env vars, MCP quirks, permissions), see:
+  </p>
+  <div class="grid md:grid-cols-3 gap-4 mt-2">
+    <a href={`${import.meta.env.BASE_URL}/setup/claude-code/`} class="no-underline">
+      <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="Claude Code Details" horizontal>
+        Permissions, MCP enablement, env vars, settings scope.
+      </ContentCard>
+    </a>
+    <a href={`${import.meta.env.BASE_URL}/setup/copilot-cli/`} class="no-underline">
+      <ContentCard icon="mdi:github" iconColor="bg-cyan-dark" title="Copilot CLI Details" horizontal>
+        MCP config differences, env var limitations, @Agent invocation.
+      </ContentCard>
+    </a>
+    <a href={`${import.meta.env.BASE_URL}/setup/scaffold/`} class="no-underline">
+      <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="Standalone Scaffold" horizontal>
+        Node.js utility for setup without AI tools.
+      </ContentCard>
+    </a>
+  </div>
+</Section>
