@@ -22,7 +22,7 @@
       "name": "dx-hub",
       "source": "./plugins/dx-hub",
       "description": "Multi-repo hub orchestration — run dx skills across sibling repositories from a single hub directory",
-      "version": "1.0.0",
+      "version": "2.55.3",
       "author": { "name": "Dragan Filipovic" }
     },
     {
