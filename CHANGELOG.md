@@ -1,3 +1,10 @@
+# [2.53.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.52.1...v2.53.0) (2026-03-22)
+
+
+### Features
+
+* **dx-core:** cross-platform compatibility for Copilot CLI and VS Code Chat ([0852542](https://github.com/easingthemes/dx-aem-flow/commit/0852542942e879ffcc37b54ce0371ac838a0d475))
+
 ## [2.52.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.52.0...v2.52.1) (2026-03-21)
 
 
