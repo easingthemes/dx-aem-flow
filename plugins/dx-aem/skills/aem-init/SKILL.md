@@ -399,23 +399,35 @@ For `qa-basic-auth`: the rule now reads credentials from env vars first (`QA_BAS
 
 **On re-run:** Compare existing file against template. If identical: skip. If template changed and user hasn't customized: update silently. If user customized: show diff, ask.
 
-### 11a. Update Local Secrets File with AEM Env Vars
+### 11a. Check AEM Environment Variable
 
-Read `.claude/settings.local.json` (created by `/dx-init` step 5i).
+Check if `AEM_INSTANCES` is already set in the shell environment:
 
-1. **If it exists:** Parse the JSON and merge these AEM-specific env var keys into the `"env"` object (empty string value). Do NOT overwrite existing values — only add keys that are missing:
+```bash
+echo "$AEM_INSTANCES"
+```
 
-   ```json
-   {
-     "env": {
-       "AEM_INSTANCES": "local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
-     }
-   }
+1. **If set:** Report: "AEM_INSTANCES detected in shell environment — AEM MCP will use it." Skip to step 12.
+
+2. **If not set:** Print setup instructions:
+
+   ```
+   AEM MCP requires the AEM_INSTANCES environment variable.
+   Add to your shell profile (~/.bashrc or ~/.zshrc):
+
+     export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
+
+   Format: name:url:user:pass (comma-separated for multiple instances).
+   Then restart your terminal or run: source ~/.zshrc
+
+   Alternative: add to .claude/settings.local.json under "env" (Claude Code only, not Copilot CLI).
    ```
 
-   Report: "Added AEM_INSTANCES to `.claude/settings.local.json` — fill in your QA credentials" (or "AEM env vars already present" if key exists).
+3. **Also update `.claude/settings.local.json`** — add the `AEM_INSTANCES` key as a placeholder. Do NOT overwrite existing values:
 
-2. **If it does not exist:** Create it with both the base dx env vars and the AEM env vars:
+   a. **If file exists:** Merge `AEM_INSTANCES` into the existing `"env"` object.
+
+   b. **If file does not exist:** Create it with both base dx env vars and AEM env vars:
 
    ```json
    {
@@ -425,12 +437,12 @@ Read `.claude/settings.local.json` (created by `/dx-init` step 5i).
        "QA_BASIC_AUTH_FALLBACK_USER": "",
        "QA_BASIC_AUTH_FALLBACK_PASS": "",
        "AXE_API_KEY": "",
-       "AEM_INSTANCES": "local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
+       "AEM_INSTANCES": "local:http://localhost:4502:admin:admin"
      }
    }
    ```
 
-   Report: "Created `.claude/settings.local.json` with AEM env vars — add your credentials before using QA/AEM skills."
+   Report: "Updated `.claude/settings.local.json` with AEM_INSTANCES. Preferred: set in shell profile for both Claude Code and Copilot CLI."
 
 ## 12. Summary
 
