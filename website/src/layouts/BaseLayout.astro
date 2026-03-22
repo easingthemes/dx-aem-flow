@@ -16,20 +16,20 @@ function url(path: string): string {
 
 const navItems = [
   { label: 'Home', path: '/' },
-  { label: 'Learn', path: '/learn/intro/' },
+  { label: 'Setup', path: '/setup/claude-code/' },
   { label: 'Workflows', path: '/workflows/local/' },
   { label: 'Reference', path: '/reference/skills/' },
   { label: 'Architecture', path: '/architecture/overview/' },
-  { label: 'Contributing', path: '/contributing/authoring/' },
-  { label: 'Setup', path: '/setup/claude-code/' },
-  { label: 'Pricing', path: '/pricing/' },
+  { label: 'Learn', path: '/learn/intro/' },
   { label: 'Demo', path: '/demo/' },
+  { label: 'Costs', path: '/costs/' },
+  { label: 'Contributing', path: '/contributing/authoring/' },
 ];
 
 function isActive(item: any): boolean {
   const fullPath = url(item.path);
   if (item.path === '/') return currentPath === fullPath;
-  if (item.path === '/pricing/') return currentPath === fullPath;
+  if (item.path === '/costs/') return currentPath === fullPath;
   const section = url(item.path.split('/').slice(0, 2).join('/') + '/');
   return currentPath.startsWith(section);
 }
