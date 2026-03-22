@@ -1,3 +1,11 @@
+## [2.58.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.0...v2.58.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* handle already-checked-out branch in sync worktree setup ([8ea755e](https://github.com/easingthemes/dx-aem-flow/commit/8ea755ebf9ed247b0b4a28b9110da4ed48a59452))
+* stop copying docs to consumer projects — plugin docs are public ([8e15ccf](https://github.com/easingthemes/dx-aem-flow/commit/8e15ccfe2026eecb53773f50f106658bf7f6accf))
+
 # [2.58.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.57.0...v2.58.0) (2026-03-22)
 
 
