@@ -2,6 +2,7 @@
 name: dx-plan
 description: Generate an implementation plan with status-tracked steps. Creates implement.md from explain.md + research.md. Uses extended thinking for deep reasoning. Use after requirements are ready (from ADO flow or import).
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+model: opus
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
@@ -22,7 +23,7 @@ Read these files from `$SPEC_DIR` (in order of importance):
 - `explain.md` — distilled requirements
 - `raw-story.md` — original story for reference (may not exist for non-ADO flows)
 
-If `research.md` doesn't exist, warn the user: "No research.md found — run `/dx-req-research` first for a better plan. Proceeding with explain.md only."
+If `research.md` doesn't exist, warn the user: "No research.md found — run `/dx-req` first for a better plan. Proceeding with explain.md only."
 
 Also check for Figma prototype files (from `/dx-figma-prototype`):
 - `figma-conventions.md` — discovered project conventions (design tokens, naming, patterns)
@@ -151,21 +152,21 @@ Detects that `research.md` has changed since `implement.md` was generated. Print
 ```
 /dx-plan 2416553
 ```
-If `research.md` doesn't exist, warns "No research.md found — run `/dx-req-research` first for a better plan" and generates from `explain.md` only. Plan will lack specific file paths and line numbers.
+If `research.md` doesn't exist, warns "No research.md found — run `/dx-req` first for a better plan" and generates from `explain.md` only. Plan will lack specific file paths and line numbers.
 
 ## Troubleshooting
 
 ### "No spec directory found"
 **Cause:** No `.ai/specs/` directory matches the given ID or slug.
-**Fix:** Run `/dx-req-fetch <id>` first to create the spec directory, or check the ID is correct.
+**Fix:** Run `/dx-req <id>` first to create the spec directory, or check the ID is correct.
 
 ### Plan has vague steps without file paths
 **Cause:** `research.md` is missing or has thin results.
-**Fix:** Run `/dx-req-research <id>` with search hints to get better codebase findings, then re-run `/dx-plan`.
+**Fix:** Run `/dx-req <id>` with search hints to get better codebase findings, then re-run `/dx-plan`.
 
 ### Plan creates new utilities instead of reusing existing ones
 **Cause:** `research.md` didn't find existing utilities, or the "Existing Implementation Check" section is missing.
-**Fix:** Run `/dx-req-research <id>` again — it may find more with different search terms. Or manually add findings to `research.md` before re-planning.
+**Fix:** Run `/dx-req <id>` again — it may find more with different search terms. Or manually add findings to `research.md` before re-planning.
 
 ## Decision Tree: Step Granularity
 

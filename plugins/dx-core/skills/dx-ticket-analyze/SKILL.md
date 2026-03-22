@@ -2,6 +2,7 @@
 name: dx-ticket-analyze
 description: Research an Azure DevOps/Jira ticket and find all relevant source files and assets. Use when a developer pastes an ADO URL or Jira issue key and wants to know what files are involved.
 argument-hint: "[ADO URL, Jira URL, work item ID, or issue key]"
+model: haiku
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
@@ -206,7 +207,7 @@ If the user says no, do nothing.
 After saving, check if pipeline spec artifacts already exist in that directory (`explain.md`, `research.md`, etc.):
 
 If pipeline artifacts exist:
-> Note: This spec dir already has pipeline artifacts. `/dx-req-research` will pick up your ticket-research.md and use the discovered file paths to accelerate its search.
+> Note: This spec dir already has pipeline artifacts. `/dx-req` will pick up your ticket-research.md and use the discovered file paths to accelerate its search.
 
 If no pipeline artifacts:
 > Tip: Run `/dx-req-all <id>` to generate the full spec pipeline. The research skill will use your ticket-research.md to skip redundant searches.

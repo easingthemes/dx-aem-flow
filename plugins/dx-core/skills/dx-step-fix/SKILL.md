@@ -1,11 +1,12 @@
 ---
 name: dx-step-fix
-description: Diagnose and fix a blocked step — compilation error, test failure, or review rejection. Analyzes the error, applies a fix, and re-verifies. Use when /dx-step, /dx-step-test, or /dx-step-review reports an issue.
+description: Diagnose and fix a blocked step — compilation error, test failure, or review rejection. Tries direct fix first; if that fails, creates corrective steps in implement.md (heal). Use when /dx-step reports a failure.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
+model: sonnet
 ---
 
-You diagnose and fix issues that blocked a plan step — compilation errors, test failures, or review feedback.
+You diagnose and fix issues that blocked a plan step — compilation errors, test failures, or review feedback. You try a direct fix first. If that fails, you escalate to creating corrective steps in implement.md for the step machinery to execute.
 
 Use ultrathink for this skill — debugging requires deep reasoning about root causes.
 
@@ -24,7 +25,14 @@ digraph step_fix {
     "Re-verify (build/test)" [shape=box];
     "Fix worked?" [shape=diamond];
     "Mark step done + report" [shape=doublecircle];
-    "Mark step blocked + report" [shape=doublecircle];
+    "Fix failed — escalate to heal?" [shape=diamond];
+    "Determine failure type" [shape=diamond];
+    "Analyze blocked step with different approach" [shape=box];
+    "Group review issues by file cluster" [shape=box];
+    "Create corrective steps in implement.md" [shape=box];
+    "Corrective steps viable?" [shape=diamond];
+    "Return: healed (new steps)" [shape=doublecircle];
+    "Return: unrecoverable" [shape=doublecircle];
 
     "Read blocked step from implement.md" -> "Classify error";
     "Classify error" -> "PERMANENT: Mark blocked, report" [label="PERMANENT"];
@@ -36,7 +44,16 @@ digraph step_fix {
     "Apply fix" -> "Re-verify (build/test)";
     "Re-verify (build/test)" -> "Fix worked?";
     "Fix worked?" -> "Mark step done + report" [label="yes"];
-    "Fix worked?" -> "Mark step blocked + report" [label="no"];
+    "Fix worked?" -> "Fix failed — escalate to heal?" [label="no"];
+    "Fix failed — escalate to heal?" -> "Return: unrecoverable" [label="no (environment/config)"];
+    "Fix failed — escalate to heal?" -> "Determine failure type" [label="yes"];
+    "Determine failure type" -> "Analyze blocked step with different approach" [label="step-blocked"];
+    "Determine failure type" -> "Group review issues by file cluster" [label="review-failed"];
+    "Analyze blocked step with different approach" -> "Corrective steps viable?";
+    "Group review issues by file cluster" -> "Create corrective steps in implement.md";
+    "Create corrective steps in implement.md" -> "Corrective steps viable?";
+    "Corrective steps viable?" -> "Return: healed (new steps)" [label="yes"];
+    "Corrective steps viable?" -> "Return: unrecoverable" [label="no"];
 }
 ```
 
@@ -133,37 +150,134 @@ Update the step's status to `done` in implement.md and print the summary:
 **Issue:** <one-line description of the problem>
 **Root cause:** <one-line diagnosis>
 **Fix applied:** <one-line description of what was changed>
-**Verification:** ✅ PASSED
+**Verification:** PASSED
 ```
 
-### Mark step blocked + report
+### Fix failed — escalate to heal?
 
-Update the step's status to `blocked` with a diagnosis. Add a note to implement.md under the step:
+The direct fix didn't work. Decide whether to escalate to heal (creating corrective steps):
+
+- **yes** → The issue is fixable by a different code approach. Proceed to "Determine failure type".
+- **no** → The issue is NOT fixable by code changes (missing dependency, environment issue, infrastructure problem). Go to "Return: unrecoverable".
+
+First, update the step's status to `blocked` with a diagnosis in implement.md:
 ```
 **Blocked:** <diagnosis of what went wrong and why the fix didn't work>
 ```
 
-STOP — don't loop. Let the coordinator or user decide next steps.
+### Determine failure type
 
-Print the summary:
+Detect the failure type from context:
+
+- **step-blocked** → The step has `**Status:** blocked` with a `**Blocked:**` diagnosis note (compilation error, test failure, or step execution issue). Go to "Analyze blocked step with different approach".
+- **review-failed** → The failure came from review feedback (review cycle failure with Critical/Important issues). Go to "Group review issues by file cluster".
+
+### Analyze blocked step with different approach
+
+The direct fix failed. Now analyze with a fundamentally different approach.
+
+1. Re-read the `**Blocked:**` note — this explains what was tried and why it failed
+2. Re-read the step's `**What**` instructions and `**Files**` list
+3. Re-read the actual current state of those files
+
+Use extended thinking to find a DIFFERENT approach:
+
+1. **What was attempted?** — What did the direct fix try to do?
+2. **Why did it fail?** — Was the fix wrong? Was the diagnosis wrong? Is there a deeper issue?
+3. **What's different now?** — What approach would succeed where the previous one failed?
+4. **Is it fixable by code changes?** — Or is it an environment/config/dependency issue?
+
+Append ONE corrective step immediately after the blocked step in implement.md:
+
+```markdown
+### Step <N>h: Heal — <descriptive title>
+**Status:** pending
+**Files:** <files that need changes>
+**What:**
+<Specific, different fix approach. Reference the failed attempt and explain why this approach is different.>
+**Why:** Auto-generated by step-fix heal. Previous fix attempt failed because: <reason from blocked note>.
+**Test:** <verification command>
+```
+
+**Numbering:** Use `<original-step-number>h` (e.g., Step `3h` heals Step 3). If a second healing is needed, use `<original-step-number>h2`.
+
+### Group review issues by file cluster
+
+The failure came from review feedback after fix cycles failed.
+
+1. Read the review failure output (passed as context by the caller)
+2. Parse each remaining Critical and Important issue — file, line, description
+3. Read the affected files to understand the current state
+
+Use extended thinking to diagnose:
+
+1. **What was attempted?** — What did the review fix cycles try to do?
+2. **Why did it fail?** — Were the fixes wrong? Is there a deeper issue?
+3. **What's different now?** — What approach would succeed where previous attempts failed?
+4. **Is it fixable by code changes?** — Or is it an environment/config/dependency issue?
+
+### Create corrective steps in implement.md
+
+Group related issues by file. Create one corrective step per file or per related cluster:
+
+```markdown
+### Step R<N>: Review fix — <file or issue cluster>
+**Status:** pending
+**Files:** <affected files>
+**What:**
+<Specific fix instructions for each issue in this cluster. Include file:line references from the review.>
+**Why:** Auto-generated by step-fix heal from review cycle failure. Issues: <count> Critical, <count> Important.
+**Test:** <verification command>
+```
+
+**Numbering:** Use `R1`, `R2`, `R3`, etc. for review-fix steps. If a second healing cycle is needed, use `R1b`, `R2b`, etc.
+
+### Corrective steps viable?
+
+Evaluate whether the corrective steps can realistically fix the problem:
+
+- **yes** → The issue is fixable by code changes and the corrective steps use a different approach than the failed attempt. Go to "Return: healed (new steps)".
+- **no** → The issue is NOT fixable by code changes (missing dependency, environment issue, architectural flaw requiring plan revision). Go to "Return: unrecoverable".
+
+### Return: healed (new steps)
+
+Corrective steps have been appended to implement.md. Print summary:
+
+```markdown
+## Heal Result
+
+**Failure type:** Step blocked / Review failed
+**Root cause:** <one-line diagnosis>
+**Corrective steps created:** <N>
+**Steps:** <list of step numbers and titles>
+**Approach:** <how this differs from the failed attempt>
+```
+
+Return `healed` — corrective steps created in implement.md, ready for step to execute.
+
+### Return: unrecoverable
+
+The issue cannot be auto-fixed. Print summary:
 
 ```markdown
 ## Fix Result: Step <N>
 
 **Issue:** <one-line description of the problem>
 **Root cause:** <one-line diagnosis>
-**Fix applied:** <one-line description of what was changed>
-**Verification:** ❌ STILL FAILING
-
-**Diagnosis:** <explanation of why the fix didn't work>
-**Recommendation:** <what to try next — manual investigation, plan revision, etc.>
+**Verdict:** Unrecoverable — <reason>
+**Recommendation:** <what the human should investigate>
 ```
+
+Return `unrecoverable` — do NOT create corrective steps. The pipeline stops here.
 
 ## Success Criteria
 
-- [ ] Error is resolved — re-verification passes (build/test/lint exits 0)
-- [ ] Step status updated in `implement.md` (back to `done` or remains `blocked`)
-- [ ] Fix is minimal — only addresses the diagnosed root cause, no unrelated changes
+- [ ] Error is resolved — re-verification passes (build/test/lint exits 0), OR
+- [ ] Corrective steps created in implement.md with `pending` status (healed), OR
+- [ ] Issue correctly identified as unrecoverable with clear reason
+- [ ] Step status updated in `implement.md`
+- [ ] Fix/diagnosis is minimal — only addresses the diagnosed root cause
+- [ ] Root cause diagnosis references actual error output, not speculation
 
 ## Examples
 
@@ -173,17 +287,23 @@ Print the summary:
 ```
 Finds the blocked step, reads the error (e.g., missing import), applies the fix, re-runs compilation. If it passes, marks the step `done`.
 
-### Fix a test failure
+### Fix fails, escalates to heal
 ```
 /dx-step-fix 2435084
 ```
-Reads the test assertion error, diagnoses root cause (e.g., wrong expected value), fixes the test or the code, re-runs the specific test.
+Direct fix attempt fails. Analyzes the failure with a different approach, creates Step `3h` with new instructions. Returns `healed`.
 
-### Unfixable issue
+### Heal review failures
 ```
 /dx-step-fix 2435084
 ```
-If the fix attempt fails, marks the step `blocked` with a diagnosis and stops. Reports what was tried and recommends next steps.
+Review found 3 Critical issues after fix cycles failed. Creates Steps `R1` and `R2` (grouped by file) with specific fix instructions. Returns `healed`.
+
+### Unrecoverable issue
+```
+/dx-step-fix 2435084
+```
+The failure requires a missing Maven dependency that isn't in the project. Returns `unrecoverable` with recommendation for human intervention.
 
 ## Troubleshooting
 
@@ -195,11 +315,31 @@ If the fix attempt fails, marks the step `blocked` with a diagnosis and stops. R
 **Cause:** Missing dependency, wrong config, or AEM not running.
 **Fix:** Address the environment issue manually (e.g., install dependency, start AEM), then re-run `/dx-step-fix`.
 
+### Corrective step also fails
+**Cause:** The healing approach was insufficient, or the root cause is deeper.
+**Fix:** The orchestrator (`dx-step-all`) allows 2 healing cycles per step. If both fail, it stops for human intervention.
+
+### "The original plan was wrong"
+**Cause:** The step instructions reference wrong files or wrong API.
+**Fix:** step-fix heals code, not plans. If the plan is fundamentally wrong, it returns `unrecoverable`. Edit `implement.md` manually.
+
+## Rationalizations to Reject
+
+| Thought | Reality |
+|---------|---------|
+| "The same fix might work if we retry" | The direct fix already tried. Heal must try a DIFFERENT approach. |
+| "I'll create many small steps to be thorough" | Fewer steps = less overhead. Group by file. |
+| "This is too complex to auto-heal" | Analyze deeper. If truly unrecoverable, say so explicitly. |
+| "The original plan was wrong" | You fix code, not plans. If the plan is flawed, return unrecoverable. |
+
 ## Rules
 
-- **One fix attempt** — try ONE fix, re-verify. If still broken, report and stop. Don't loop.
+- **One fix attempt, then heal** — try ONE direct fix, re-verify. If still broken, escalate to heal (create corrective steps). Don't loop on direct fixes.
 - **Minimal fix** — fix the immediate issue, don't refactor surrounding code
 - **Read before fixing** — understand the full context before changing anything
 - **Preserve plan intent** — the fix should accomplish what the step intended, not change direction
-- **Update implement.md** — always update the status, whether fixed or still blocked
+- **Update implement.md** — always update the status, whether fixed, healed, or unrecoverable
 - **Be honest about uncertainty** — if you can't determine the root cause, say so
+- **Different approach required** — corrective steps MUST try a different strategy than the failed fix
+- **Include test commands** — every corrective step must have a verification command
+- **Heal creates steps, not code** — the heal escalation only creates steps in implement.md; let step do the actual coding

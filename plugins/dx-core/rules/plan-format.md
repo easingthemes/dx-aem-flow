@@ -60,7 +60,7 @@ with no context can execute it.>
 Skills update step status in-place:
 - `/dx-step` changes `[pending]` → `[in-progress]` → `[done]` or `[blocked]`
 - `/dx-step-fix` changes `[blocked]` → `[pending]` (with fix applied)
-- `/dx-step-heal` adds corrective steps after `[blocked]` steps
+- `/dx-step-fix` adds corrective steps after `[blocked]` steps
 
 ## Example
 

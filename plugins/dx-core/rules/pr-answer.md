@@ -64,7 +64,7 @@ This needs a broader discussion. Created [work item/thread] to align.
 2. **Quote code** — reference specific files and lines when explaining.
 3. **Don't be defensive** — if the reviewer is right, say so immediately.
 4. **One response per thread** — don't split answers across multiple replies.
-5. **Flag agree-will-fix** — mark these clearly so `/dx-pr-fix` can pick them up.
+5. **Flag agree-will-fix** — mark these clearly so `/dx-pr-answer` can pick them up.
 6. **Prefer agree-will-fix over disagree** — when the reviewer has a valid point.
 7. **Each reply must be concise and actionable.**
 

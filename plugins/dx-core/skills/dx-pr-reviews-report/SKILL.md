@@ -321,7 +321,7 @@ For mine mode, parse the `REPORT_SUMMARY` JSON line from each agent's response t
 
 - **"No reviewed PRs in <repo>"** (any mode)
   **Cause:** None of the recent PRs have review comment threads.
-  **Fix:** Run `/dx-pr-reviews` first to review PRs, then generate reports.
+  **Fix:** Run `/dx-pr-review-all` first to review PRs, then generate reports.
 
 - **"Report already exists for PR #<id>"**
   **Cause:** A previous run already generated a report.

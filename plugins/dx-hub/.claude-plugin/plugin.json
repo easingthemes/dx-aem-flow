@@ -1,0 +1,6 @@
+{
+  "name": "dx-hub",
+  "version": "2.55.3",
+  "description": "Multi-repo hub orchestration — run dx skills across sibling repositories from a single hub directory.",
+  "keywords": ["multi-repo", "hub", "orchestration"]
+}

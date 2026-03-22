@@ -1,4 +1,4 @@
-<!-- Source: skills/dx-pr-fix/SKILL.md (enhanced with session persistence) -->
+<!-- Source: skills/dx-pr-answer/SKILL.md (fix functionality merged into dx-pr-answer) -->
 ---
 name: AEMPRFix
 description: Apply code fixes from agree-will-fix PR review comments. Reads session data from AEMPRAnswer or fetches PR independently. Applies fixes, lints, commits, pushes, and replies to threads.

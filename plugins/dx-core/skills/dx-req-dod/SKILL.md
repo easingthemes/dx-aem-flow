@@ -1,6 +1,6 @@
 ---
 name: dx-req-dod
-description: Check Definition of Done criteria for a work item — tests, PR status, open threads, linked tasks, build, docs. Works with Azure DevOps/Jira. Use when a story moves to Ready for QA or needs a completeness check.
+description: Check Definition of Done compliance and auto-fix gaps — reviews PR, tasks, docs. Posts summary to ADO.
 argument-hint: "[ADO Work Item ID, Jira Issue Key, or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
@@ -208,7 +208,82 @@ mcp__atlassian__jira_add_comment
 
 Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure.
 
-## 8. Present Summary
+## 8. Auto-Fix Gaps (if any FAIL criteria)
+
+If all criteria passed, skip to step 9.
+
+### 8a. Cross-Repo Check (pipeline mode only)
+
+If `DX_PIPELINE_MODE` is set:
+1. Check if `$SPEC_DIR/research.md` has a `## Cross-Repo Scope` section
+2. If found, apply delegation logic (see `shared/repo-discovery.md`):
+   - If current repo is NOT the target → write `delegate.json` and **STOP**
+   - If current repo IS the target → continue, delegate to other repos after fixes
+   - If map missing → warn and continue locally
+
+If `DX_PIPELINE_MODE` is not set: skip (local mode).
+
+### 8b. Categorize Failures
+
+Classify each FAIL criterion:
+
+**Auto-fixable** (agent can fix directly):
+- Missing documentation (`share-plan.md`) → generate from explain.md
+- Missing test stubs → create test file skeletons from implement.md
+- Incomplete implement.md steps → mark verified steps as done
+- Open PR threads with "agree/will fix" → apply code changes from review comments
+
+**Needs-human** (create Task work items):
+- PR not approved → needs human reviewer
+- Design decisions unresolved → needs BA/PO input
+- Manual testing required → needs QA
+- Stakeholder sign-off missing → needs PM
+
+### 8c. Auto-Fix Loop
+
+For each auto-fixable failure:
+1. Print: `Fixing: <criterion> — <action>`
+2. Execute the fix (write file, generate content, apply patch)
+3. Verify the fix resolves the criterion
+4. Print: `Fixed: <criterion>` or `Fix failed: <criterion> — <reason>`
+
+Track results: `{criterion, action, result: fixed|failed|skipped}`.
+
+### 8d. Create Task Work Items for Remaining Failures
+
+For each needs-human failure, create a child Task work item:
+
+**If provider = ado:**
+- Title: `[DoD] <criterion description>`
+- Description: `DoD check for ADO #<parent-id> failed: <failure details>\n\nHow to fix: <actionable instruction>`
+- Parent: link to the original work item
+
+**If provider = jira:**
+```
+mcp__atlassian__jira_create_issue
+  project_key: "<jira.project-key>"
+  issue_type: "<jira.child-issue-type>"
+  summary: "[DoD] <criterion description>"
+  parent_key: "<parent issue key>"
+  description: "DoD check for <parent issue key> failed: <details>\n\nHow to fix: <instruction>"
+```
+
+Track created tasks: `{criterion, taskId, title}`.
+
+### 8e. Documentation Generation
+
+If auto-fixes improved the score (at least one criterion flipped to PASS):
+1. Invoke `/dx-doc-gen <work-item-id>` if available
+2. Invoke `/aem-doc-gen <work-item-id>` if available (AEM project)
+3. If skills not available: print `Documentation generation skipped (doc-gen skills not installed).`
+
+### 8f. Re-evaluate
+
+Re-run DoD criteria evaluation (same as step 5) against updated evidence. Update `dod.md` with new results. Track the delta:
+- Criteria that flipped from FAIL → PASS
+- Criteria still failing (with created Task IDs)
+
+## 9. Present Summary
 
 ```markdown
 ## DoD Check: <Title> (ADO #<id>)
@@ -219,10 +294,36 @@ Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that struct
 **Warnings:** <count or "none">
 **DoD Source:** <wiki URL>
 
-<If FAIL:>
+<If auto-fixes were attempted:>
+### Auto-Fixed
+| Criterion | Action | Result |
+|-----------|--------|--------|
+| <criterion> | <what was done> | Fixed / Failed |
+
+### Tasks Created (needs human)
+
+**If provider = ado:**
+| Criterion | Task | Assigned |
+|-----------|------|----------|
+| <criterion> | ADO #<task-id>: <title> | <assignee or unassigned> |
+
+**If provider = jira:**
+| Criterion | Task | Assigned |
+|-----------|------|----------|
+| <criterion> | [<issue-key>]({jira.url}/browse/<issue-key>): <title> | <assignee or unassigned> |
+
+### Updated Score
+**Before:** <N>/<total> → **After:** <M>/<total>
+
+<If all pass after fixes:>
+**Verdict: Ready for QA** — all DoD criteria now met.
+
+<If still failing after fixes:>
+**Verdict: <M>/<total> passed.** <count> tasks created for remaining items.
+
+<If no fixes needed (all passed initially):>
 ### Recommended action
-Run `/dx-req-dod-fix <id>` to auto-fix failures, or fix manually:
-<list failures with one-line fix instructions>
+No action needed — all automated DoD criteria passed.
 ```
 
 ## Examples
@@ -231,7 +332,7 @@ Run `/dx-req-dod-fix <id>` to auto-fix failures, or fix manually:
 ```
 /dx-req-dod 2435084
 ```
-Fetches DoD checklist from wiki, checks PR status/votes/threads, tests, build, accessibility, child tasks. Produces `dod.md` with PASS/FAIL for each criterion. Works whether the story was implemented manually or via AI workflow.
+Fetches DoD checklist from wiki, checks PR status/votes/threads, tests, build, accessibility, child tasks. Produces `dod.md` with PASS/FAIL for each criterion. Auto-fixes what it can and creates Task work items for the rest.
 
 ### From URL
 ```
@@ -257,6 +358,14 @@ Extracts ID from URL. Same check.
 **Cause:** The wiki page doesn't follow the expected format.
 **Fix:** See `docs/authoring/wiki-checklist-format.md` for the required page structure.
 
+### Auto-fix marks criterion as fixed but re-check still fails
+**Cause:** The fix was applied but verification requires additional conditions (e.g., tests must actually pass, not just exist).
+**Fix:** Review generated test stubs or documentation, fill in real content, and re-run `/dx-req-dod`.
+
+### Task work items created but not linked to parent
+**Cause:** ADO MCP call succeeded for creation but parent link failed (permissions or API issue).
+**Fix:** Manually link the created Tasks to the parent story in ADO, or re-run (it checks for existing tasks before creating duplicates).
+
 ## Rules
 
 - **Wiki is the single source of truth** — criteria come from the wiki page, never hardcoded in the skill
@@ -267,3 +376,6 @@ Extracts ID from URL. Same check.
 - **Read config, never hardcode** — ADO URLs, build commands, branch names from config.yaml
 - **Idempotent** — check existing dod.md before regenerating
 - **Fail fast on missing config** — if wiki URL is not configured, error immediately with clear instructions
+- **Conservative auto-fixes** — only fix things the agent can verify; when in doubt, create a Task work item instead
+- **Never fake evidence** — don't mark tests as passing without running them, don't mark PR as approved without verifying
+- **Audit trail** — every auto-fix is traceable in the updated dod.md

@@ -749,8 +749,8 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 ```
 
 ### Next Steps
-<If ADO:> - Start working: `/dx-req-fetch <ADO work item ID>`
-<If Jira:> - Start working: `/dx-req-fetch <Jira issue key, e.g. PROJ-123>`
+<If ADO:> - Start working: `/dx-req <ADO work item ID>`
+<If Jira:> - Start working: `/dx-req <Jira issue key, e.g. PROJ-123>`
 - Full pipeline: `/dx-agent-all <ID>`
 - Re-detect project profile: `/dx-adapt` (re-run anytime if structure changes)
 <If AEM:>

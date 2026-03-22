@@ -61,14 +61,9 @@ Skills are available as `/dx-*` slash commands in Copilot chat:
 
 | Skill | Purpose |
 |-------|---------|
-| `/dx-req-fetch` | Fetch ADO work item |
-| `/dx-req-explain` | Distill requirements |
-| `/dx-req-research` | Search codebase for related code |
+| `/dx-req` | Full requirements pipeline (fetch, DoR, explain, research, share) |
 | `/dx-plan` | Generate implementation plan |
-| `/dx-step` | Execute next plan step |
-| `/dx-step-test` | Run tests |
-| `/dx-step-review` | Review step changes |
-| `/dx-step-commit` | Commit step changes |
+| `/dx-step` | Execute next plan step (includes test, review, commit) |
 | `/dx-pr-review` | Review a PR |
 | `/dx-pr-answer` | Answer PR comments |
 | `/dx-bug-triage` | Triage a bug |

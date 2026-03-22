@@ -34,11 +34,11 @@ If hub mode is not active: continue with normal flow below.
 
 Look for the requirements spec in order:
 1. `.ai/run-context/re.json` — produced by `/dx-agent-re`
-2. `.ai/specs/<id>-*/explain.md` — produced by `/dx-req-explain`
+2. `.ai/specs/<id>-*/explain.md` — produced by `/dx-req` (Phase 3)
 
 If an argument (work item ID) is provided, check for `.ai/specs/<id>-*/` first.
 
-If no spec found: "No requirements spec found. Run `/dx-agent-re <id>` or `/dx-req-explain <id>` first."
+If no spec found: "No requirements spec found. Run `/dx-agent-re <id>` or `/dx-req <id>` first."
 
 Read the spec and print:
 ```
@@ -202,7 +202,7 @@ Write `.ai/run-context/dev.json`:
 
 - **"No requirements spec found"**
   **Cause:** Neither `re.json` nor `explain.md` exists for the given work item.
-  **Fix:** Run `/dx-agent-re <id>` or `/dx-req-explain <id>` first to generate the spec, then re-run `/dx-agent-dev`.
+  **Fix:** Run `/dx-agent-re <id>` or `/dx-req <id>` first to generate the spec, then re-run `/dx-agent-dev`.
 
 - **Self-check fails after 2 repair attempts**
   **Cause:** The error requires understanding beyond what targeted auto-fix can address (e.g., missing dependency, framework version mismatch).

@@ -1,6 +1,6 @@
 ---
 name: DxStepAll
-description: Autonomous execution loop — runs step, step-test, step-review, step-commit for each plan step, with step-fix for failures. Use to execute the full plan hands-free.
+description: Autonomous execution loop — runs step (includes test, review, commit) for each plan step, with step-fix for failures. Use to execute the full plan hands-free.
 argument-hint: "<optional: step number to start from>"
 handoffs:
   - label: "Review all changes"
@@ -16,7 +16,7 @@ handoffs:
 
 # Step Execution Agent
 
-You execute all pending steps in `implement.md`, running the step-test-review-fix cycle for each.
+You execute all pending steps in `implement.md`. Each `/dx-step` invocation handles implementation, testing, review, and commit in one pass.
 
 ## How to use
 
@@ -42,27 +42,18 @@ Run `bash .ai/lib/ensure-feature-branch.sh <spec-dir>` to ensure we're on a feat
 For each pending step in implement.md:
 
 **a. Execute Step**
-Run `/dx-step` to implement the next pending step.
+Run `/dx-step` to implement, test, review, and commit the next pending step.
 
-**b. Run Tests**
-Run `/dx-step-test` to verify the changes.
-
-**c. Review Changes**
-Run `/dx-step-review` to review code quality.
-
-**d. Fix (if needed)**
-If any of the above fail, run `/dx-step-fix`. Track fix attempts per step.
+**b. Fix (if needed)**
+If step is blocked, run `/dx-step-fix`. Track fix attempts per step.
 
 **2-strike rule:** If 2nd consecutive fix on the same step fails:
 - Print: "Step <N> blocked after 2 fix attempts. Human intervention needed."
 - STOP the loop.
 
-If fix succeeds, go back to (b) — re-test.
+If fix succeeds, go back to (a) — re-run the step.
 
-**e. Commit (if auto-commit enabled)**
-Read `.ai/config.yaml` for `auto-commit` preference. If enabled, run `/dx-step-commit`.
-
-**f. Progress Report**
+**c. Progress Report**
 After each step cycle: `Step <N>/<total> done — <step title>`
 
 ### 4. Completion

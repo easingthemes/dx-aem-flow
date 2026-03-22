@@ -341,7 +341,7 @@ Write `<spec-dir>/aem-fe-verify.md` with:
 
 ### "No Figma reference and no requirements found"
 **Cause:** Neither figma-reference.png nor explain.md exists.
-**Fix:** Run `/dx-figma-extract` or `/dx-req-explain` first.
+**Fix:** Run `/dx-figma-extract` or `/dx-req` first.
 
 ## Success Criteria
 

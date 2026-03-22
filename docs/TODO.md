@@ -90,18 +90,18 @@ Three experimental features (`/experimental on`) are highly relevant for dx plug
 
 ### MULTI_TURN_AGENTS — Persistent subagents with write_agent
 
-**Impact: High.** Currently `DxStepAll` re-spawns `dx-step-executor` for each step, losing accumulated context. Multi-turn agents stay alive after responding — the coordinator can send follow-up messages ("now run step 2", "now run step 3") via `write_agent` to the same agent instance, preserving context across steps.
+**Impact: High.** Currently `DxStepAll` invokes skills via Skill tool for each step, losing accumulated context. Multi-turn agents stay alive after responding — the coordinator can send follow-up messages ("now run step 2", "now run step 3") via `write_agent` to the same agent instance, preserving context across steps.
 
 This is the missing piece for coordinator workflows — effectively a `handoffs:` alternative that works at the subagent level.
 
 **Action when stable:**
-1. Test with `DxStepAll` → `dx-step-executor`: spawn once, send step instructions via `write_agent`
+1. Test with `DxStepAll` → persistent subagent: spawn once, send step instructions via `write_agent`
 2. If successful, update all coordinator agent templates (`DxStepAll`, `DxAgentAll`, `DxBugAll`, `DxReqAll`)
 3. Measure context quality vs current re-spawn approach
 
 ### SUBAGENT_COMPACTION — Compaction instead of truncation for subagents
 
-**Impact: Medium.** When subagents hit context limits, they currently truncate (lose early context). Compaction keeps structured summaries instead. Benefits every subagent-heavy workflow — especially `dx-agent-all` which chains 8+ skills through `dx-step-executor`.
+**Impact: Medium.** When subagents hit context limits, they currently truncate (lose early context). Compaction keeps structured summaries instead. Benefits every subagent-heavy workflow — especially `dx-agent-all` which chains 8+ skills.
 
 Directly addresses [#1180](https://github.com/github/copilot-cli/issues/1180) (context exhaustion during handoffs).
 
@@ -161,11 +161,11 @@ Coordinator skills (`dx-req-all`, `dx-step-all`, `dx-agent-all`, `dx-bug-all`) r
 
 ```
 ────────────────────────────────────────────────────
-  Phase 2: dx-req-explain
+  Phase 2: dx-req (explain)
 ────────────────────────────────────────────────────
 ```
 
-**Scope:** All `-all` coordinators that delegate to `dx-step-executor`. The print happens in the coordinator SKILL.md before each delegation call.
+**Scope:** All `-all` coordinators that invoke skills via the Skill tool. The print happens in the coordinator SKILL.md before each skill invocation.
 
 ## Investigate `updatedMCPToolOutput` not replacing inline image
 
