@@ -10,6 +10,7 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="AI Crash Course"
@@ -192,7 +193,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       icon="mdi:puzzle"
       iconColor="bg-brand-700"
       title="dx-core"
-      tags={[{ label: '42 skills', color: 'primary' }, { label: '6 agents', color: 'primary' }]}
+      tags={[{ label: `${stats.dxCoreSkills} skills`, color: 'primary' }, { label: `${stats.dxCoreAgents} agents`, color: 'primary' }]}
     >
       Core development workflow -- requirements, planning, execution, review, bug fix.
       Works with any tech stack.
@@ -201,7 +202,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       icon="mdi:puzzle"
       iconColor="bg-cyan"
       title="dx-aem"
-      tags={[{ label: '12 skills', color: 'secondary' }, { label: '6 agents', color: 'secondary' }]}
+      tags={[{ label: `${stats.dxAemSkills} skills`, color: 'secondary' }, { label: `${stats.dxAemAgents} agents`, color: 'secondary' }]}
     >
       AEM-specific -- component inspection, page verification, dialog analysis,
       browser automation.
@@ -210,7 +211,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       icon="mdi:puzzle"
       iconColor="bg-amber-500"
       title="dx-automation"
-      tags={[{ label: '11 skills', color: 'warning' }]}
+      tags={[{ label: `${stats.dxAutomationSkills} skills`, color: 'warning' }]}
     >
       Autonomous 24/7 agents -- PR review, bug fix, estimation, documentation.
       Triggered by ADO webhooks (Jira planned).

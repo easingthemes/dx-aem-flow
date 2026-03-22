@@ -83,7 +83,7 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 | Tier | Use | Agents / Skills |
 |------|-----|-----------------|
 | Opus | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
-| Sonnet | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-demo-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
+| Sonnet | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
 | Haiku | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 ### MCP Servers
@@ -199,6 +199,43 @@ If `superpowers:<skill-name>` is available, invoke it to [benefit].
 ```
 
 This works across all platforms: Claude Code invokes via Skill tool, Copilot CLI/VS Code Chat follow the fallback. Six skills currently use this pattern: dx-plan, dx-step, dx-step-fix, dx-step-verify, dx-agent-all, dx-pr.
+
+## TODO Tracking
+
+All TODOs live in `docs/todo/`. Structure:
+
+```
+docs/todo/
+├── TODO.md              # Master tracker — numbered table with links
+├── todo-testing.md      # Detail file per topic
+├── todo-copilot-cli.md
+├── todo-automation.md
+├── todo-config.md
+├── todo-website.md
+├── todo-naming-ux.md
+├── todo-pipeline.md
+└── todo-bugs.md
+```
+
+**Rules:**
+- `TODO.md` is the single index — every item gets a numbered row with priority, status, date, and link to a detail file
+- Detail files are grouped by topic (`todo-<topic>.md`), not by date or conversation
+- When adding a TODO: add a row to `TODO.md` AND add/update the relevant detail file
+- Multiple items can link to different sections of the same detail file
+- Never scatter TODOs in other locations — always use `docs/todo/`
+
+**Detail file item format — every item MUST include:**
+```markdown
+## Item title
+
+**Added:** YYYY-MM-DD
+**Problem:** What's wrong or missing — describe the problem, not just a solution. Problems don't change; solutions do.
+**Scope:** Exact files, directories, or skills affected. Agent must know WHERE to look.
+**Done-when:** A concrete, verifiable check — a command to run, a file to check, a grep to execute. An agent must be able to confirm completion without guessing.
+**Approach:** (optional) Proposed solution, migration steps, or design notes.
+```
+
+**Verification rule:** When checking TODO status, run the `Done-when` check. Do not infer status from absence of files that might have been intentionally deleted — that's the whole point of having an explicit check.
 
 ## Documentation
 

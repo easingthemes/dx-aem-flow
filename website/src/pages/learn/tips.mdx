@@ -10,10 +10,11 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Tips & Best Practices"
-  subtitle="Practical advice from building 68 skills and running 10 autonomous agents"
+  subtitle={`Practical advice from building ${stats.totalSkills} skills and running ${stats.autonomousAgents} autonomous agents`}
 />
 
 <SectionHeading

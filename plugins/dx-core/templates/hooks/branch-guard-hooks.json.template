@@ -1,6 +1,26 @@
 {
   "version": 1,
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/next-step.sh\""
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash(git commit*)",
@@ -8,6 +28,17 @@
           {
             "type": "command",
             "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ] || [ \"$BRANCH\" = \"development\" ] || [ \"$BRANCH\" = \"develop\" ]; then echo \"BLOCKED: Do not commit on $BRANCH. Create a feature/* or bugfix/* branch first.\" >&2; exit 1; fi'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\""
           }
         ]
       }

@@ -18,7 +18,7 @@ slackText: |
   `dx-code-reviewer` — Reviews code with confidence scoring. Needs deep reasoning to distinguish real bugs from style preferences. Worth the cost because a bad review wastes more human time than the tokens cost.
   
   *Sonnet ($3/M tokens) — 7 agents:*
-  `dx-pr-reviewer`, `aem-inspector`, `aem-demo-capture`, etc. — These need good judgment AND they need to take actions (read files, run commands, edit code). Sonnet is the sweet spot.
+  `dx-pr-reviewer`, `aem-inspector`, `aem-editorial-guide-capture`, etc. — These need good judgment AND they need to take actions (read files, run commands, edit code). Sonnet is the sweet spot.
   
   *Haiku ($0.25/M tokens) — 4 agents:*
   `dx-file-resolver`, `dx-doc-searcher`, `aem-file-resolver`, `aem-page-finder` — Pure lookups. "Find files matching this pattern." No reasoning needed, just fast execution.
@@ -35,7 +35,7 @@ slackText: |
 # 12 agents across 4 plugins:
 # Opus (1):  dx-code-reviewer
 # Sonnet (7): dx-pr-reviewer,
-#   aem-inspector, aem-demo-capture,
+#   aem-inspector, aem-editorial-guide-capture,
 #   aem-bug-executor, aem-fe-verifier,
 #   dx-figma-markup, dx-figma-styles
 # Haiku (4):  dx-file-resolver,
