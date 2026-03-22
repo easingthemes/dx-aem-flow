@@ -97,13 +97,6 @@ Full documentation: [KAI Website](https://easingthemes.github.io/dx-aem-flow/)
 - [Architecture](https://easingthemes.github.io/dx-aem-flow/architecture/overview/) — System design
 - [Setup](https://easingthemes.github.io/dx-aem-flow/setup/claude-code/) — Installation guides
 
-### Run docs locally
-
-```bash
-cd website && npm install && npm run dev
-# Opens at http://localhost:4321
-```
-
 ## License
 
 MIT
