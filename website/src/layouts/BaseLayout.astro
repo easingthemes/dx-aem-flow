@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { Icon } from 'astro-icon/components';
 
 interface Props {
   title?: string;
@@ -104,8 +105,11 @@ function isActive(item: any): boolean {
     </main>
 
     <!-- Footer -->
-    <footer class="bg-brand-700 py-5 text-center text-white/60 text-sm" data-print="hide">
-      KAI — AI-Powered Development Platform
+    <footer class="bg-brand-700 py-5 text-center text-white/60 text-sm flex items-center justify-center gap-3" data-print="hide">
+      <span>KAI — AI-Powered Development Platform</span>
+      <a href="https://github.com/easingthemes/dx-aem-flow" class="text-white/60 hover:text-cyan transition-colors" aria-label="GitHub repository">
+        <Icon name="mdi:github" class="w-5 h-5" />
+      </a>
     </footer>
 
     <!-- Side badge -->
