@@ -1,11 +1,12 @@
 ---
 name: dx-step
-description: Execute the next pending step from the implementation plan. Reads implement.md, finds the first pending step, implements it, verifies compilation, and updates the status. Use to execute steps one at a time.
+description: Execute the next pending step — implement code, run tests, review against plan, and commit. Reads implement.md, finds the first pending step, implements it, tests, reviews, commits, and updates status. Use to execute steps one at a time.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+model: sonnet
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-You execute the next pending step from implement.md — read the instructions, implement the changes, verify compilation, and mark the step done.
+You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.
 
 ## Flow
 
@@ -25,6 +26,12 @@ digraph step {
     "Retry passed?" [shape=diamond];
     "VALIDATION: Auto-fix" [shape=box];
     "Auto-fix passed?" [shape=diamond];
+    "Run tests" [shape=box];
+    "Tests passed?" [shape=diamond];
+    "Review against plan" [shape=box];
+    "Review passed?" [shape=diamond];
+    "Stage and commit" [shape=box];
+    "Commit succeeded?" [shape=diamond];
     "Mark done + present summary" [shape=doublecircle];
     "Mark blocked + present summary" [shape=doublecircle];
 
@@ -39,17 +46,26 @@ digraph step {
     "Mark in-progress" -> "Execute the step";
     "Execute the step" -> "Verify compilation";
     "Verify compilation" -> "Verification passed?";
-    "Verification passed?" -> "Mark done + present summary" [label="yes"];
+    "Verification passed?" -> "Run tests" [label="yes"];
     "Verification passed?" -> "Classify error" [label="no"];
     "Classify error" -> "TRANSIENT: Retry" [label="TRANSIENT"];
     "Classify error" -> "VALIDATION: Auto-fix" [label="VALIDATION"];
     "Classify error" -> "Mark blocked + present summary" [label="PERMANENT"];
     "TRANSIENT: Retry" -> "Retry passed?";
-    "Retry passed?" -> "Mark done + present summary" [label="yes"];
+    "Retry passed?" -> "Run tests" [label="yes"];
     "Retry passed?" -> "Mark blocked + present summary" [label="no"];
     "VALIDATION: Auto-fix" -> "Auto-fix passed?";
-    "Auto-fix passed?" -> "Mark done + present summary" [label="yes"];
+    "Auto-fix passed?" -> "Run tests" [label="yes"];
     "Auto-fix passed?" -> "Mark blocked + present summary" [label="no"];
+    "Run tests" -> "Tests passed?";
+    "Tests passed?" -> "Review against plan" [label="yes"];
+    "Tests passed?" -> "Mark blocked + present summary" [label="no"];
+    "Review against plan" -> "Review passed?";
+    "Review passed?" -> "Stage and commit" [label="yes"];
+    "Review passed?" -> "Mark blocked + present summary" [label="no"];
+    "Stage and commit" -> "Commit succeeded?";
+    "Commit succeeded?" -> "Mark done + present summary" [label="yes"];
+    "Commit succeeded?" -> "Mark blocked + present summary" [label="no"];
 }
 ```
 
@@ -145,7 +161,7 @@ Otherwise: use whatever compile/typecheck command is configured.
 
 ### Verification passed?
 
-- **yes** — compilation/test exits 0 → go to "Mark done + present summary"
+- **yes** — compilation/test exits 0 → go to "Run tests"
 - **no** — error detected → go to "Classify error"
 
 ### Classify error
@@ -161,7 +177,7 @@ Retry the command (up to 2 times). If still failing, go to "Mark blocked + prese
 
 ### Retry passed?
 
-- **yes** — retry succeeded → go to "Mark done + present summary"
+- **yes** — retry succeeded → go to "Run tests"
 - **no** — still failing after retries → go to "Mark blocked + present summary"
 
 ### VALIDATION: Auto-fix
@@ -170,8 +186,72 @@ Attempt ONE auto-fix (syntax fix, missing import, lint fix). Re-run verification
 
 ### Auto-fix passed?
 
-- **yes** — fix + verify passes → go to "Mark done + present summary"
+- **yes** — fix + verify passes → go to "Run tests"
 - **no** — fix fails or verify still fails → go to "Mark blocked + present summary"
+
+### Run tests
+
+Determine the test command:
+1. Check the current step's **Test:** line
+2. Fall back to `build.test` from `.ai/config.yaml`
+3. Fall back to common patterns: Maven → `mvn test -pl <module>`, npm → `npm test`
+
+Execute with a 5-minute timeout. Parse output:
+- **Tests run** / **Passed** / **Failed** / **Errors** / **Skipped** / **Time elapsed**
+- For each failure: extract test name and assertion message (max 10 lines per failure)
+
+### Tests passed?
+
+- **yes** — all tests pass (zero failures, zero errors) → go to "Review against plan"
+- **no** — any test failure or error → go to "Mark blocked + present summary" with `{ status: "blocked", phase: "test", error: "<failure summary>" }`
+
+### Review against plan
+
+Use ultrathink for deep reasoning about correctness.
+
+Get the diff: `git diff` for uncommitted changes, or `git diff HEAD~1` if already committed. Read modified files in full for context.
+
+**Plan compliance:** Do changes match the step's instructions? Are all **Files:** modified? Any extra files changed?
+
+**Convention check:** Read `.claude/rules/` and `.github/instructions/` for relevant file types. Check naming, framework patterns, interface separation, template patterns, test patterns.
+
+**Bug check:** Null pointer risks, resource leaks, hardcoded values that should be configurable, missing imports, property name mismatches.
+
+Verdict: APPROVED, APPROVED WITH NOTES, or CHANGES REQUESTED.
+
+### Review passed?
+
+- **yes** — verdict is APPROVED or APPROVED WITH NOTES → go to "Stage and commit"
+- **no** — verdict is CHANGES REQUESTED → go to "Mark blocked + present summary" with `{ status: "blocked", phase: "review", error: "<list of required changes>" }`
+
+### Stage and commit
+
+**Before anything else**, read `shared/git-rules.md` — all git/SCM conventions.
+
+**Branch check:** Verify on `feature/*` or `bugfix/*` branch. If not, run `bash .ai/lib/ensure-feature-branch.sh $SPEC_DIR`.
+
+**Determine files:** From the step's **Files:** list + `git status` for files clearly part of this step. Never stage unrelated files, .env, credentials, or secrets.
+
+**Stage specifically** (never `git add -A`):
+```bash
+git add <file1> <file2> ... <implement.md>
+```
+Always include implement.md to capture the status update.
+
+**Commit message:** Extract work item ID from spec directory name. Format: `#<ID> <imperative description>`. Use HEREDOC:
+```bash
+git commit -m "$(cat <<'EOF'
+#<ID> <description>
+EOF
+)"
+```
+
+If nothing to stage, report "Nothing to stage — no commit created" and go to "Mark blocked + present summary" with `{ status: "blocked", phase: "commit", error: "nothing to stage" }`.
+
+### Commit succeeded?
+
+- **yes** — commit created with valid hash → go to "Mark done + present summary"
+- **no** — commit failed → go to "Mark blocked + present summary" with `{ status: "blocked", phase: "commit", error: "<message>" }`
 
 ### Mark done + present summary
 
@@ -186,9 +266,12 @@ Print:
 
 **Files modified:** <list>
 **Compilation:** passed
-**Next:** Step <N+1> — <title> (or "All steps done")
+**Tests:** passed (<N> tests, <time>)
+**Review:** <verdict>
+**Commit:** `<short hash>` — `<commit message>`
+**Next:** Step <N+1> — <title> (or "All steps done — run `/dx-pr`")
 
-Run `/dx-step-test` to run tests, `/dx-step-review` to review changes, or `/dx-step` for the next step.
+Run `/dx-step` for the next step, or `/dx-step-all` to continue autonomously.
 ```
 
 ### Mark blocked + present summary
@@ -198,22 +281,30 @@ Update implement.md:
 **Status:** blocked
 ```
 
-Include the error category, message, and suggested action. Print the summary with the failure details.
+Include the phase, error category, message, and suggested action:
+```
+{ status: "blocked", phase: "compile|test|review|commit", error: "<message>" }
+```
+
+Print the summary with the failure details. The coordinator (`dx-step-all`) uses this to decide whether to call `dx-step-fix`.
 
 ## Success Criteria
 
 - [ ] Target step status updated: pending → done (or blocked with reason)
 - [ ] If done: compilation/build command exits 0
+- [ ] If done: tests pass (zero failures)
+- [ ] If done: review verdict is APPROVED or APPROVED WITH NOTES
+- [ ] If done: commit created with work item ID in message
 - [ ] If done: files modified match step's `**Files:**` list
 - [ ] implement.md updated in-place (no corruption of other steps)
 
 ## Examples
 
-### Execute next step
+### Execute next step (full pipeline)
 ```
 /dx-step 2435084
 ```
-Finds the first pending step in `implement.md`, marks it `in-progress`, implements the code changes, verifies compilation, marks it `done`.
+Finds the first pending step in `implement.md`, marks it `in-progress`, implements code, verifies compilation, runs tests, reviews against plan and conventions, commits, and marks `done`.
 
 ### Resume interrupted step
 ```
@@ -233,6 +324,14 @@ If no pending steps remain, prints "All steps are done. Run `/dx-pr` to create a
 **Cause:** The implemented code doesn't compile, and the one auto-fix attempt also failed.
 **Fix:** Run `/dx-step-fix` to diagnose and fix the error, or manually fix and reset the status to `pending` in `implement.md`.
 
+### Step marked blocked after test failure
+**Cause:** Tests fail after implementation.
+**Fix:** Run `/dx-step-fix` to diagnose and fix failures, then reset status to `pending`.
+
+### Step marked blocked after review
+**Cause:** Code review found issues (convention violations, bugs, plan deviations).
+**Fix:** Run `/dx-step-fix` to address the required changes, then reset status to `pending`.
+
 ### Step creates a new helper instead of reusing existing one
 **Cause:** The step instructions in `implement.md` say "create new" when an existing utility would work.
 **Fix:** Fix `implement.md` first — update the step's What instructions to reference the existing code. Then re-run `/dx-step`.
@@ -241,13 +340,17 @@ If no pending steps remain, prints "All steps are done. Run `/dx-pr` to create a
 **Cause:** Planning hasn't been done yet.
 **Fix:** Run `/dx-plan <id>` to generate the implementation plan first.
 
+### "Not on a feature branch"
+**Cause:** Working on `development`, `main`, or another protected branch.
+**Fix:** The skill auto-runs `ensure-feature-branch.sh`. If that fails, manually create: `git checkout -b feature/<id>-<slug>`.
+
 ## Decision Examples
 
 ### Fixable Error (VALIDATION)
 **Error:** `error TS2304: Cannot find name 'HeroProps'`
 **Classification:** VALIDATION / SYNTAX — missing import
 **Action:** Add `import { HeroProps } from './hero.types'`, re-run compilation
-**Outcome:** Fixed. Mark step done.
+**Outcome:** Fixed. Proceed to tests.
 
 ### Unfixable Error (PERMANENT)
 **Error:** `bash: mvn: command not found`
@@ -259,6 +362,14 @@ If no pending steps remain, prints "All steps are done. Run `/dx-pr` to create a
 **Classification:** TRANSIENT / TIMEOUT — AEM is not running
 **Action:** Retry once (AEM may be starting). If still failing → mark blocked: "AEM instance not available."
 
+### Test Failure
+**Tests:** 3 failed out of 47
+**Action:** Mark blocked with `{ status: "blocked", phase: "test", error: "3 test failures: TestDialog#testDropdown, ..." }`. Coordinator calls `/dx-step-fix`.
+
+### Review Rejection
+**Verdict:** CHANGES REQUESTED — hardcoded color `#FF0000` should use SCSS variable
+**Action:** Mark blocked with `{ status: "blocked", phase: "review", error: "Convention violation: use $primary-color instead of #FF0000" }`. Coordinator calls `/dx-step-fix`.
+
 ## Rules
 
 - **One step at a time** — execute exactly one step, then stop. Let the coordinator or user decide what's next.
@@ -267,3 +378,8 @@ If no pending steps remain, prints "All steps are done. Run `/dx-pr` to create a
 - **Don't improvise** — implement exactly what the step says. If instructions are unclear, mark the step blocked with a note rather than guessing.
 - **Update status immediately** — mark in-progress before starting, done/blocked when finished. This is the state machine that coordinators rely on.
 - **Compile check is mandatory** — never mark a step done without verifying compilation passes.
+- **Tests are mandatory** — never mark a step done without running tests.
+- **Review is mandatory** — never mark a step done without reviewing against the plan.
+- **Commit is mandatory** — never mark a step done without committing changes.
+- **Follow git-rules.md** — read `shared/git-rules.md` before committing. Stage specifically, never `git add -A`.
+- **No empty commits** — if nothing to stage, report and mark blocked.
