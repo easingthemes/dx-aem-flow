@@ -210,7 +210,7 @@ If pipeline artifacts exist:
 > Note: This spec dir already has pipeline artifacts. `/dx-req` will pick up your ticket-research.md and use the discovered file paths to accelerate its search.
 
 If no pipeline artifacts:
-> Tip: Run `/dx-req-all <id>` to generate the full spec pipeline. The research skill will use your ticket-research.md to skip redundant searches.
+> Tip: Run `/dx-req <id>` to generate the full spec pipeline. The research skill will use your ticket-research.md to skip redundant searches.
 
 ## Examples
 

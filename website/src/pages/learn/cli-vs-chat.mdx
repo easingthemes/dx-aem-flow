@@ -194,7 +194,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Skills"
   badgeColor="info"
   title="VS Code Chat -- Skill Compatibility"
-  subtitle="38 of 69 skills work. 17 need context:fork or agent: dispatch (Claude Code-only features)."
+  subtitle="38 of 68 skills work. 17 need context:fork or agent: dispatch (Claude Code-only features)."
   bg="primary"
 />
 <Section>
@@ -215,7 +215,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <code>disable-model-invocation</code> (coordinator pattern).
       VS Code Chat ignores these fields -- skills load but can't orchestrate subagents.
 
-      <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req-all</code>,
+      <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req</code>,
       <code>dx-step-all</code>, <code>dx-bug-all</code>, <code>dx-figma-all</code>
 
       <strong>AEM (need inspector agent):</strong> <code>aem-snapshot</code>, <code>aem-verify</code>,
@@ -308,14 +308,14 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <HighlightBox severity="info" title="Key Insight">
-    Claude Code and Copilot CLI are <strong>nearly identical in capability</strong> -- both are terminal-based, both run the same 69 skills, both load plugins and MCP servers.
+    Claude Code and Copilot CLI are <strong>nearly identical in capability</strong> -- both are terminal-based, both run the same 68 skills, both load plugins and MCP servers.
     The real difference is between <strong>terminal CLIs</strong> (Claude Code + Copilot CLI) and <strong>VS Code Chat</strong> (IDE-integrated, visual, different file discovery).
   </HighlightBox>
 
   <div class="grid md:grid-cols-3 gap-4 mt-4">
     <ContentCard icon="mdi:console" iconColor="bg-cyan" title="Terminal CLIs (Claude Code / Copilot CLI)" tags={[{ label: 'Full power', color: 'secondary' }]}>
       <ul class="mt-2 list-none p-0 text-sm space-y-1">
-        <li><strong>All 69 skills</strong> via /dx-&#42; commands</li>
+        <li><strong>All 68 skills</strong> via /dx-&#42; commands</li>
         <li>Full plugin system (hooks, MCP, agents)</li>
         <li>Subagent orchestration</li>
         <li>CI/CD pipeline automation (headless -p mode)</li>
@@ -341,7 +341,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="Use Together" tags={[{ label: 'Recommended', color: 'success' }]}>
       <ul class="mt-2 list-none p-0 text-sm space-y-1">
-        <li><strong>CLI</strong> for structured workflows (/dx-req-all → /dx-plan → /dx-step-all)</li>
+        <li><strong>CLI</strong> for structured workflows (/dx-req → /dx-plan → /dx-step-all)</li>
         <li><strong>Chat</strong> for "fix this function", "explain this file"</li>
         <li><strong>CLI</strong> for PR review, ticket analysis, AEM verification</li>
         <li><strong>Chat</strong> for visual diff review and inline edits</li>
