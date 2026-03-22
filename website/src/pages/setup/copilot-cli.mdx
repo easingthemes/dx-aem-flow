@@ -10,6 +10,7 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Copilot CLI — Platform Details"
@@ -134,7 +135,7 @@ export JIRA_USER_EMAIL="you@example.com"`}</CommandBlock>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Skills</td><td class="py-2 px-4">68 skills, same commands</td><td class="py-2 px-4"></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Skills</td><td class="py-2 px-4">{stats.totalSkills} skills, same commands</td><td class="py-2 px-4"></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Marketplace</td><td class="py-2 px-4">Same git URL</td><td class="py-2 px-4"></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Rules</td><td class="py-2 px-4">Same .claude/rules/ files</td><td class="py-2 px-4">Dual frontmatter (paths: + applyTo:)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Agents</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: 12 subagents | Copilot: 25 @Agents</td></tr>

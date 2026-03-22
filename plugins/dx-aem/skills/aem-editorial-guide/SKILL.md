@@ -1,13 +1,13 @@
 ---
-name: aem-demo
-description: Capture a demo of the component dialog in AEM — open editor, screenshot dialog, and write editor-friendly authoring guide. Use after /aem-verify or deploying changes to create demo documentation.
+name: aem-editorial-guide
+description: Capture editorial guide for a component dialog in AEM — open editor, screenshot dialog, and write editor-friendly authoring guide. Use after /aem-verify or deploying changes to create editorial documentation.
 argument-hint: "[component-name] (e.g., hero, card, banner)"
 context: fork
-agent: aem-demo-capture
+agent: aem-editorial-guide-capture
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-demo-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
 
 ## Task
 
@@ -172,17 +172,17 @@ Return ONLY:
 
 ## Examples
 
-1. `/aem-demo hero` — Opens the hero component dialog in AEM author, captures a screenshot of the dialog, navigates to QA publisher to screenshot the rendered component, and writes `demo/authoring-guide.md` with field descriptions, dialog screenshot, and publisher URL.
+1. `/aem-editorial-guide hero` — Opens the hero component dialog in AEM author, captures a screenshot of the dialog, navigates to QA publisher to screenshot the rendered component, and writes `demo/authoring-guide.md` with field descriptions, dialog screenshot, and publisher URL.
 
-2. `/aem-demo card 2416553` — Captures demo for the card component tied to story #2416553. Finds existing demo page, screenshots the dialog with 3 tabs, takes a rendered screenshot on QA, and saves all artifacts to `.ai/specs/2416553-<slug>/demo/`.
+2. `/aem-editorial-guide card 2416553` — Captures demo for the card component tied to story #2416553. Finds existing demo page, screenshots the dialog with 3 tabs, takes a rendered screenshot on QA, and saves all artifacts to `.ai/specs/2416553-<slug>/demo/`.
 
-3. `/aem-demo productlisting` (dialog won't open) — Attempts to open the dialog but the component isn't on the page. Falls back to writing a text-only authoring guide from spec files and dialog XML analysis. Notes "Dialog screenshot unavailable — component not found on demo page" in the guide.
+3. `/aem-editorial-guide productlisting` (dialog won't open) — Attempts to open the dialog but the component isn't on the page. Falls back to writing a text-only authoring guide from spec files and dialog XML analysis. Notes "Dialog screenshot unavailable — component not found on demo page" in the guide.
 
 ## Troubleshooting
 
 - **"Component not found on demo page"**
   **Cause:** The component hasn't been placed on any editable page, or the page path is wrong.
-  **Fix:** Manually add the component to a test page in AEM author, then re-run `/aem-demo`. The skill will detect the page and capture screenshots.
+  **Fix:** Manually add the component to a test page in AEM author, then re-run `/aem-editorial-guide`. The skill will detect the page and capture screenshots.
 
 - **Screenshots are blank or show loading state**
   **Cause:** The page hasn't fully rendered when the screenshot is taken, or the component loads content asynchronously.

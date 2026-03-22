@@ -79,7 +79,7 @@ All phases in order (max 15):
 | 6+ | AEM Verification | only if AEM Baseline ran + build passed |
 | 6++ | AEM FE Verification | only if build passed + AEM MCP on localhost + Chrome DevTools available |
 | 7 | Commit | skipped if build/review failed |
-| 7.5 | Demo Capture | only if AEM Verification passed + AEM MCP available |
+| 7.5 | Editorial Guide | only if AEM Verification passed + AEM MCP available |
 | 8 | Pull Request | skipped if commit failed |
 | 9 | Documentation | optional (if doc-gen skills available) |
 
@@ -125,7 +125,7 @@ Use the phase table above to determine which phases apply. Example tasks for a t
 7. Commit
 8. Pull request
 
-Add conditional phases (Figma, AEM baseline, AEM verify, demo capture, docs) only when their conditions are met. Delete them if conditions turn out false mid-run.
+Add conditional phases (Figma, AEM baseline, AEM verify, editorial guide, docs) only when their conditions are met. Delete them if conditions turn out false mid-run.
 
 ## Flow
 
@@ -160,7 +160,7 @@ digraph agent_all {
     "Phase 5++: AEM FE Verify (conditional)" [shape=box];
     "Phase 5a: Commit (if auto-commit)" [shape=box];
     "Phase 6: Pull Request (if auto-pr)" [shape=box];
-    "Phase 6.5: Demo Capture (conditional)" [shape=box];
+    "Phase 6.5: Editorial Guide (conditional)" [shape=box];
     "Phase 7: Documentation (conditional)" [shape=box];
     "Final Summary" [shape=doublecircle];
 
@@ -198,8 +198,8 @@ digraph agent_all {
     "Phase 5+: AEM Verify (conditional)" -> "Phase 5++: AEM FE Verify (conditional)";
     "Phase 5++: AEM FE Verify (conditional)" -> "Phase 5a: Commit (if auto-commit)";
     "Phase 5a: Commit (if auto-commit)" -> "Phase 6: Pull Request (if auto-pr)";
-    "Phase 6: Pull Request (if auto-pr)" -> "Phase 6.5: Demo Capture (conditional)";
-    "Phase 6.5: Demo Capture (conditional)" -> "Phase 7: Documentation (conditional)";
+    "Phase 6: Pull Request (if auto-pr)" -> "Phase 6.5: Editorial Guide (conditional)";
+    "Phase 6.5: Editorial Guide (conditional)" -> "Phase 7: Documentation (conditional)";
     "Phase 7: Documentation (conditional)" -> "Final Summary";
 }
 ```
@@ -547,17 +547,17 @@ Read `.ai/config.yaml` and check the **preferences** section for `auto_pr`:
   Print: `Phase 6: Pull Request — (<N>/<total>) PR created.`
 - **If `false` or not found:** Print: `Phase 6: Pull Request — (<N>/<total>) skipped (auto-PR disabled).`
 
-### Phase 6.5: Demo Capture (conditional)
+### Phase 6.5: Editorial Guide (conditional)
 
 **Guard:**
 1. AEM Verification (Phase 5+) passed
 2. AEM MCP is available
 
-Ask user: "Capture demo? (y/n)"
+Ask user: "Capture editorial guide? (y/n)"
 
-If yes: invoke `/aem-demo` skill (context: fork). Captures dialog screenshots and writes authoring guide.
+If yes: invoke `/aem-editorial-guide` skill (context: fork). Captures dialog screenshots and writes authoring guide.
 
-Print: `Phase 6.5: Demo Capture — (<N>/<total>) <captured|skipped>.`
+Print: `Phase 6.5: Editorial Guide — (<N>/<total>) <captured|skipped>.`
 
 ### Phase 7: Documentation (conditional)
 
@@ -599,7 +599,7 @@ Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not foun
 | AEM Verification | Done/Skip | passed / failed / skipped |
 | AEM FE Verification | Done/Skip | PASS / PASS WITH MINOR GAPS / NEEDS ATTENTION / skipped |
 | Commit | Done/Skip | committed / skipped (build/review failed or auto-commit off) |
-| Demo Capture | Done/Skip | captured / skipped |
+| Editorial Guide | Done/Skip | captured / skipped |
 | Pull Request | Done/Skip | PR created / skipped (auto-PR off or prior failure) |
 | Documentation | Done/Skip | Wiki + demo pages / skipped (skills not installed) |
 

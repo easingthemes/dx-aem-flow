@@ -1,7 +1,7 @@
-<!-- Source: agents/aem-demo-capture.md -->
+<!-- Source: agents/aem-editorial-guide-capture.md -->
 ---
-name: AEMDemo
-description: Capture demo of a component dialog in AEM — open the editor, screenshot the dialog, and write an editor-friendly authoring guide. Use after development to document how to use the component.
+name: AEMEditorialGuide
+description: Capture editorial guide for a component dialog in AEM — open the editor, screenshot the dialog, and write an editor-friendly authoring guide. Use after development to document how to use the component.
 argument-hint: "<component-name> (e.g., hero, banner, card)"
 tools:
   - read
