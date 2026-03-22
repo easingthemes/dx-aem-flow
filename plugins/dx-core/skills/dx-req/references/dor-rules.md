@@ -1,49 +1,12 @@
----
-name: dx-req-dor
-description: Validate a fetched story against the Definition of Ready checklist, extract BA data for downstream skills, and identify open questions. Produces dor-report.md. Works with Azure DevOps/Jira. Use after /dx-req-fetch or when you need to assess story readiness. Trigger on "DoR check", "definition of ready", "story readiness", "check story quality".
-argument-hint: "<ADO Work Item ID or Jira Issue Key (optional — uses most recent if omitted)>"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
----
+# DoR Validation — Detailed Rules
 
-## Defaults
-
-Read `shared/provider-config.md` for provider detection and tool mapping.
-
-Read `.ai/config.yaml`:
-- `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`
-
-**If provider = ado:**
-- **Organization:** `scm.org`
-- **Project:** `scm.project`
-
-**If provider = jira:**
-- **Jira URL:** `jira.url`
-- **Project Key:** `jira.project-key`
-- **Note:** Area Path maps to `fields.components[].name`, Iteration Path maps to `fields.sprint.name` for DoR checklist evaluation.
-
-You read `raw-story.md` from a fetched ADO/Jira story, validate it against the project's Definition of Ready wiki page, extract structured BA data for downstream skills, and generate open questions. Output: `dor-report.md`.
-
-Use ultrathink for this skill — DoR validation requires careful cross-referencing of story content against checklist criteria, and open question generation requires the same depth as the former checklist skill.
+This file contains the full Definition of Ready validation logic used by Phase 2 of `/dx-req`.
 
 ## Persona (optional)
 
 If `.ai/me.md` exists, read it. Use it to shape the tone of open questions. Structural constraints still apply. If `.ai/me.md` doesn't exist, use defaults.
 
-## 1. Locate the Spec Directory
-
-```bash
-SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir <work-item-id-if-provided>)
-```
-
-If the script exits with error, ask the user for the work item ID.
-
-Read `raw-story.md` from `$SPEC_DIR` (required).
-
-Also read if available (for second-pass mode):
-- `explain.md` — distilled requirements
-- `research.md` — codebase findings
-
-## 2. Fetch DoR Checklist
+## Fetch DoR Checklist
 
 Read `.ai/config.yaml` and look for `scm.wiki-dor-url`.
 
@@ -87,16 +50,7 @@ Use the page content as the DoR checklist.
 
 If `confluence.dor-page-title` is NOT configured, fall back to the local checklist file at `.ai/rules/dor-checklist.md` (if it exists). If neither source is available, skip the wiki checklist comparison and validate against the built-in DoR criteria only.
 
-## 3. Check Existing Output
-
-1. Check if `dor-report.md` exists in the spec directory
-2. If it exists, read it
-3. Compare: has `raw-story.md` changed since the report was generated? (title match, section count)
-4. If `research.md` now exists but the report has no "Codebase-Informed Questions" section → regenerate (second pass)
-5. If unchanged locally → **check ADO comment for checkbox changes** (Step 8b). If BA checked new items → re-fetch story, re-validate, update report. If no checkbox changes and comment exists → print `dor-report.md already up to date — skipping` and STOP. If comment missing → skip to Step 8 to post it, then STOP.
-6. If stale → print `dor-report.md outdated — regenerating` and continue. Track what changed (e.g., "second pass: added codebase questions", "BA addressed 2 items", "story updated: new comments") for the ADO update comment in Step 8.
-
-## 4. DoR Scorecard Evaluation
+## DoR Scorecard Evaluation
 
 Evaluate each DoR section against `raw-story.md` content:
 
@@ -112,13 +66,15 @@ Evaluate each DoR section against `raw-story.md` content:
 | 8 | Accessibility | A11y checklist or notes present — skip for backend-only or config-only changes | ✅ Pass / ⊘ Skip |
 | 9 | Related Items | Parent Feature linked in Relations section | ✅ Pass / ⚠️ Warn |
 
-**Scoring:**
+### Scoring
+
 - Count ✅ passes out of applicable sections (exclude ⊘ skipped)
 - **10+ applicable passes:** Verdict = "Ready for Development"
 - **7-9:** Verdict = "Can proceed — expect clarification questions"
 - **Below 7:** Verdict = "Needs more detail before development"
 
-**Skip logic:**
+### Skip Logic
+
 - Section 4 (Authoring) → ⊘ if change type is "content update" or "technical/infrastructure"
 - Section 5 (Design) → ⊘ if story explicitly says "no visual changes" or change type is "configuration only" / "technical"
 - Section 8 (Accessibility) → ⊘ if change type is "configuration only", "content update", or "technical/infrastructure"
@@ -140,9 +96,9 @@ If a Figma URL with `node-id=` is found, perform an additional check:
 
 This check is advisory (⚠️ warning), never blocking (❌ fail).
 
-## 5. Extract Structured BA Data
+## Extract Structured BA Data
 
-Parse `raw-story.md` to extract structured data that downstream skills can consume:
+Parse `raw-story.md` to extract structured data that downstream phases can consume:
 
 ### Component
 - **Name:** Extract component name mentions (look for AEM component names, class names, or explicit "Component: X")
@@ -164,7 +120,7 @@ If a dialog field table is found (Section 4 pattern), extract it as-is:
 
 For each field: if not found in the story, write "(not provided)".
 
-## 6. Generate Open Questions
+## Generate Open Questions
 
 Apply the same rigor as a senior developer reviewing requirements before coding.
 
@@ -202,7 +158,7 @@ If `research.md` exists, cross-reference:
 
 Add these under a separate "Codebase-Informed Questions" section.
 
-## 7. Write dor-report.md
+## dor-report.md Output Format
 
 Write `$SPEC_DIR/dor-report.md`:
 
@@ -282,15 +238,15 @@ Omit entirely on first pass (before research). -->
 **Can proceed with assumptions:** <count>
 ```
 
-## 8. Post ADO Comment (MANDATORY)
+## ADO/Jira Comment Posting
 
-**This step is NOT optional.** Always post the DoR results as a comment on the ADO work item. Never skip this step — it is the primary way the BA sees the DoR findings.
+**This step is NOT optional.** Always post the DoR results as a comment on the work item.
 
-### 8a. Fetch existing comments
+### Fetch existing comments
 
 ```
 mcp__ado__wit_list_work_item_comments
-  project: "<ADO project — '<your ADO project from scm.wiki-project>' for work items>"
+  project: "<ADO project>"
   workItemId: <id>
 ```
 
@@ -304,7 +260,7 @@ mcp__atlassian__jira_get_issue
 
 Scan all comments for text containing `[DoRAgent] Definition of Ready Check`.
 
-### 8b. Read checkbox state from existing comment
+### Read checkbox state from existing comment
 
 If a `[DoRAgent]` comment exists, parse its checkbox lines to detect BA actions:
 
@@ -319,13 +275,13 @@ If `ba_addressed_sections` is non-empty:
 1. Print: `BA checked <N> items: <list>. Re-fetching story to validate...`
 2. Re-fetch the work item via MCP (`mcp__ado__wit_get_work_item`) to get updated content
    - **If provider = jira:** Re-fetch via `mcp__atlassian__jira_get_issue` with the issue key instead.
-3. Re-run the scorecard evaluation (Steps 4-6) against the fresh story data
+3. Re-run the scorecard evaluation against the fresh story data
 4. Update `dor-report.md` with the new scores
 5. Continue to posting (Mode B — update comment)
 
 If no checkboxes changed and report was not regenerated → Mode C (skip).
 
-### 8c. Post — three modes
+### Post — three modes
 
 **Mode A — First post (no existing `[DoRAgent]` comment):**
 
@@ -389,83 +345,6 @@ If the ADO comment fails to post (network error, auth issue), print a warning bu
 ⚠️ Could not post DoR comment to ADO #<id> — post manually from dor-report.md
 ```
 
-## 9. Present Summary
-
-```markdown
-## dor-report.md created
-
-**<Title>** (ADO #<id>)
-- DoR score: <N>/<total> (<percentage>%) — <verdict>
-- Open questions: <count> (<blocking count> blocking)
-- BA data extracted: <list of non-empty sections>
-- Research reduction: ~<percentage>%
-
-### Recommended action:
-<One of:
-- "Send to BA — <N> blocking questions + <N> DoR gaps need answers before development"
-- "Can proceed — all questions are non-blocking. Send DoR gaps to BA in parallel with development"
-- "Story is well-prepared — no significant gaps or questions">
-```
-
-## Examples
-
-### First pass (after fetch)
-```
-/dx-req-dor 2435084
-```
-Reads `raw-story.md`, validates against DoR wiki checklist, extracts component name "Hero" and 3 dialog fields, flags missing Figma node-id and QA URL as gaps. Produces `dor-report.md` with score 8/11 (73%). Posts summary comment to ADO (Mode A).
-
-### Second pass (after research)
-```
-/dx-req-dor 2435084
-```
-Detects `research.md` exists but `dor-report.md` has no codebase-informed questions. Regenerates with additional section: "Research shows existing Hero component uses `showBadge` property — confirm this is the same field." Posts a SHORT update comment to ADO (Mode B) — not a full re-post.
-
-### BA addressed items (checkbox loop)
-```
-/dx-req-dor 2435084
-```
-Reads existing `[DoRAgent]` comment, detects BA checked 2 items (Component Details, QA page URL). Re-fetches story from ADO, re-validates against DoR wiki. Score improves from 8/12 to 10/12. Posts short update comment (Mode B) with "Resolved" and "Still Missing" sections.
-
-### Re-run (no changes)
-```
-/dx-req-dor 2435084
-```
-`dor-report.md` is up to date, `[DoRAgent]` comment exists with no new checkbox changes. Prints "no changes detected — skipping" (Mode C).
-
-### Re-run (comment missing)
-```
-/dx-req-dor 2435084
-```
-`dor-report.md` is up to date but no `[DoRAgent]` comment on ADO. Posts the full checklist comment (Mode A), then stops.
-
-### Well-prepared story
-```
-/dx-req-dor 2435084
-```
-All DoR sections pass. All checkboxes pre-checked. Zero open questions. Report says "Story is well-prepared — no significant gaps or questions." Research reduction estimate: ~80%.
-
-## Troubleshooting
-
-### "scm.wiki-dor-url not configured"
-**Cause:** `scm.wiki-dor-url` not set in `.ai/config.yaml`.
-**Fix:** Add the wiki URL under the `scm:` section. See `docs/authoring/wiki-checklist-format.md` for how to create the wiki page.
-
-### Too many questions generated
-**Cause:** Pragmatism filter not applied strictly enough.
-**Fix:** The skill has a hard target of 2-5 questions. If exceeding, re-read the story — most "questions" are likely answerable from the content.
-
-### DoR score seems too low
-**Cause:** Story uses non-standard formatting that the parser doesn't detect.
-**Fix:** The skill looks for specific patterns (tables, URLs, checkboxes). If the BA provided info in a different format, some sections may show ⚠️ despite having the data.
-
-## Success Criteria
-
-- [ ] `dor-report.md` exists in spec directory
-- [ ] Every checklist item has status: pass, fail, or unclear
-- [ ] ≥1 item assessed (not empty checklist)
-- [ ] Open questions section present (even if empty)
-
 ## Rules
 
 - **Evidence-based scoring** — every ✅/❌/⚠️ must reference what was found (or not found) in raw-story.md
@@ -477,7 +356,7 @@ All DoR sections pass. All checkboxes pre-checked. Zero open questions. Report s
 - **Brevity is respect** — the BA should be able to read and respond in 5 minutes
 - **Extract everything** — even if a DoR section fails, extract whatever partial data exists
 - **Two-pass design** — first pass works on raw-story.md alone; second pass adds codebase questions from research.md
-- **Always post to ADO** — Step 8 is MANDATORY and must never be skipped. Three modes: full post (Mode A), short update (Mode B), or confirmed skip (Mode C). Even if Step 3 stops early, check for missing ADO comment first.
+- **Always post to ADO** — posting is MANDATORY and must never be skipped. Three modes: full post (Mode A), short update (Mode B), or confirmed skip (Mode C).
 - **Never duplicate comments** — always check for existing `[DoRAgent]` signature before posting. On regeneration or checkbox changes, post a short update (Mode B), not a full re-post.
 - **Checkboxes, not tables** — ADO comments use `- [x]` / `- [ ]` checkboxes for DoR items. These are interactive in ADO — BA can check them. Never use tables for the scorecard in ADO comments.
 - **Checkbox collaboration loop** — on re-run, read checkbox state from the existing ADO comment. If BA checked new items, re-fetch the story, re-validate, and post an update. This is the primary BA↔Agent feedback mechanism.
