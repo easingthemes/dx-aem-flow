@@ -61,7 +61,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:robot-off" iconColor="bg-brand-700" title="Coordinator-Only Architecture">
       All coordinators use <code>disable-model-invocation: true</code> -- they NEVER write code themselves.
-      Every phase is delegated to <code>dx-step-executor</code> agent via the Task tool, keeping the main
+      Every phase is delegated via direct <code>Skill()</code> invocation, keeping the main
       context lean (approximately 10 tokens per status update vs approximately 200 for full file reads).
     </ContentCard>
     <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Isolated Context Management">
@@ -107,17 +107,13 @@ import CommandBlock from '../../components/CommandBlock.astro';
     label="Requirements Pipeline"
     command="/dx-req-all <work-item-id>"
     steps={[
-      { title: 'fetch', subtitle: 'Pull ADO story', command: '/dx-req-fetch' },
-      { title: 'dor', subtitle: 'DoR validation', command: '/dx-req-dor', color: '#ef4444' },
-      { title: 'explain', subtitle: 'Dev requirements', command: '/dx-req-explain' },
-      { title: 'research', subtitle: 'Codebase search', command: '/dx-req-research' },
-      { title: 'share', subtitle: 'Post to ADO', command: '/dx-req-share' },
+      { title: 'requirements', subtitle: 'Full pipeline (fetch, DoR, explain, research, share)', command: '/dx-req' },
     ]}
   />
 
   <HighlightBox severity="warning" title="DoR Gate">
     The DoR step is a gate -- if blocking questions exist, the pipeline pauses. The BA checks items
-    in the ADO comment. Re-running <code>/dx-req-dor</code> reads the checkbox state and re-validates.
+    in the ADO comment. Re-running <code>/dx-req</code> reads the checkbox state and re-validates.
     Already-completed steps are skipped on re-run.
   </HighlightBox>
 </Section>
@@ -138,10 +134,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     label="Execution Loop (per step)"
     command="/dx-step-all"
     steps={[
-      { title: 'dx-step', subtitle: 'Execute step', command: '/dx-step' },
-      { title: 'dx-step-test', subtitle: 'Run tests', command: '/dx-step-test' },
-      { title: 'dx-step-review', subtitle: 'Review changes', command: '/dx-step-review' },
-      { title: 'dx-step-commit', subtitle: 'Commit step', command: '/dx-step-commit' },
+      { title: 'dx-step', subtitle: 'Execute + test + review + commit', command: '/dx-step' },
+      { title: 'dx-step-fix', subtitle: 'Fix on failure', command: '/dx-step-fix', color: '#f59e0b' },
     ]}
   />
 
@@ -151,8 +145,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       one attempt to diagnose and fix the issue.
     </ContentCard>
     <ContentCard icon="mdi:hospital" iconColor="bg-red-500" title="On 2 Consecutive Failures: step-heal">
-      After 2 consecutive fix failures, <code>dx-step-heal</code> performs deep diagnosis and creates
-      corrective steps in <code>implement.md</code>. Maximum 2 healing cycles before stopping for human intervention.
+      After 2 consecutive fix failures, <code>dx-step-fix</code> escalates to root cause analysis and creates
+      corrective steps in <code>implement.md</code>. Maximum 2 escalation cycles before stopping for human intervention.
     </ContentCard>
   </div>
 
@@ -219,7 +213,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <PipelineBlock
     steps={[
       { title: 'Phase 4.5', subtitle: 'Code review', command: 'dx-step-verify' },
-      { title: 'Phase 5a', subtitle: 'Commit', command: 'dx-step-commit' },
+      { title: 'Phase 5a', subtitle: 'Commit', command: 'dx-pr-commit' },
       { title: 'Phase 5', subtitle: 'AEM verify', command: 'aem-verify' },
       { title: 'Phase 6', subtitle: 'Create PR', command: 'dx-pr' },
       { title: 'Phase 7', subtitle: 'Documentation', command: 'dx-doc-gen' },
@@ -492,9 +486,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       about dependencies, step ordering, and risk assessment. This is the most token-intensive
       phase (≈80K tokens) but produces higher-quality plans with fewer downstream failures.
     </ContentCard>
-    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Healing Phase (Opus)">
-      <code>dx-step-heal</code> uses extended thinking for deep root-cause analysis when 2
-      consecutive fix attempts fail. The healer sees the full error context, previous fix attempts,
+    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Escalation Phase (Opus)">
+      <code>dx-step-fix</code> escalates to extended thinking for deep root-cause analysis when 2
+      consecutive fix attempts fail. The escalated fix sees the full error context, previous fix attempts,
       and the original step intent to devise a fundamentally different approach.
     </ContentCard>
   </div>

@@ -133,7 +133,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="Skills + Agents = What & Who">
       <strong>Skills</strong> tell the AI <em>what</em> to do (instructions, steps, expected output).
       <strong> Agents</strong> define <em>who</em> does it (which model, which tools, what persona).
-      A skill like <code>/dx-step-all</code> delegates each step to the <code>dx-step-executor</code> agent.
+      A skill like <code>/dx-step-all</code> coordinates execution by invoking skills directly.
     </ContentCard>
     <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Hooks + MCP = Automation & Data">
       <strong>Hooks</strong> fire automatically on events (validate before commit, log after subagent).
@@ -169,8 +169,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-emerald-600" title="With AI">
       <ol class="mt-2 pl-5 text-sm space-y-1">
-        <li><code>/dx-req-fetch 12345</code> -- AI reads the story</li>
-        <li><code>/dx-req-research</code> -- AI finds affected files</li>
+        <li><code>/dx-req 12345</code> -- AI reads the story and researches codebase</li>
+        <li><code>/dx-plan</code> -- AI generates implementation plan</li>
         <li><code>/dx-pr-review</code> -- AI reviews the diff</li>
         <li><code>/dx-pr-answer</code> -- AI drafts replies to comments</li>
       </ol>
@@ -192,7 +192,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       icon="mdi:puzzle"
       iconColor="bg-brand-700"
       title="dx-core"
-      tags={[{ label: '55 skills', color: 'primary' }, { label: '7 agents', color: 'primary' }]}
+      tags={[{ label: '43 skills', color: 'primary' }, { label: '6 agents', color: 'primary' }]}
     >
       Core development workflow -- requirements, planning, execution, review, bug fix.
       Works with any tech stack.
