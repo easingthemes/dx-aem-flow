@@ -1,3 +1,10 @@
+## [2.53.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.0...v2.53.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* **website:** remove migration page — greenfield project has no legacy to migrate from ([8481a8b](https://github.com/easingthemes/dx-aem-flow/commit/8481a8b20693fe43d62bf64ae66f0a89fabd5bac))
+
 # [2.53.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.52.1...v2.53.0) (2026-03-22)
 
 
