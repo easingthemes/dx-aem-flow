@@ -21,7 +21,7 @@ Read `.ai/config.yaml`:
 - **Jira URL:** `jira.url`
 - **Project Key:** `jira.project-key`
 
-You are a coordinator. You do NOT implement anything yourself. You delegate each analysis step to the `dx-step-executor` agent via the Agent tool, then synthesize results and post an estimation comment.
+You are a coordinator. You do NOT implement anything yourself. You delegate each analysis step to a subagent via the Agent tool, then synthesize results and post an estimation comment.
 
 ## Argument
 
@@ -46,25 +46,25 @@ Step 4: synthesize estimation + post ADO comment
 
 ### 1. Dispatch steps 1–3 sequentially
 
-For each step, use the Agent tool to invoke the `dx-step-executor` agent. Wait for each to return before starting the next.
+For each step, use the Skill tool to invoke the skill in a fork. Wait for each to return before starting the next.
 
 **Step 1 — Fetch:**
 ```
-Use the dx-step-executor agent to: Execute fetch for work item <id>
+Invoke /dx-req <id> (Phase 1 only — fetch)
 ```
-Print: `Step 1/4 done —` followed by the agent's summary.
+Print: `Step 1/4 done —` followed by the summary.
 
 **Step 2 — Explain:**
 ```
-Use the dx-step-executor agent to: Execute explain for work item <id>
+Invoke /dx-req <id> (Phase 3 only — explain)
 ```
-Print: `Step 2/4 done —` followed by the agent's summary.
+Print: `Step 2/4 done —` followed by the summary.
 
 **Step 3 — Research:**
 ```
-Use the dx-step-executor agent to: Execute research for work item <id>
+Invoke /dx-req <id> (Phase 4 only — research)
 ```
-Print: `Step 3/4 done —` followed by the agent's summary.
+Print: `Step 3/4 done —` followed by the summary.
 
 ### 2. Synthesize estimation (step 4)
 
@@ -267,7 +267,7 @@ Use Bash to append — `echo '<json>' >> .ai/learning/raw/runs.jsonl`
 
 - **"No spec files found" after research step**
   **Cause:** The fetch or explain step failed silently, leaving the spec directory empty.
-  **Fix:** Check the step-by-step output for error messages. Run the individual skills manually (`/dx-req-fetch`, `/dx-req-explain`) to diagnose.
+  **Fix:** Check the step-by-step output for error messages. Run `/dx-req <id>` manually to diagnose.
 
 ## Error Handling
 

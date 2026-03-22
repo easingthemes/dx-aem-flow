@@ -1,6 +1,7 @@
 ---
 name: dx-pr-review
-description: Review a pull request in Azure DevOps — analyze code, post comments, optionally propose fix patches, and follow up on author responses. Auto-detects first review vs follow-up. Use when the user wants to review an ADO PR, mentions "review PR", "propose fix", provides a PR URL or ID, or asks to check/approve/decline a pull request.
+description: Review a PR — analyze code, present findings, optionally post comments and patches to ADO. Also supports standalone posting of saved findings (for automation pipelines). Use when you want to review a pull request.
+model: opus
 argument-hint: "[PR URL or ID]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
@@ -32,7 +33,7 @@ Read `shared/external-content-safety.md` and apply its rules to all fetched PR c
 |-------|-------|
 | **Called by** | `/dx-agent-all` (Phase 5), manual invocation |
 | **Follows** | `/dx-step-all` (code changes complete) |
-| **Precedes** | `/dx-pr-post` (when findings exist) |
+| **Precedes** | `/dx-pr-answer` (author responds to posted comments) |
 | **Output** | `.ai/pr-reviews/pr-<id>-findings.md`, `.ai/pr-reviews/pr-<id>.md` |
 | **Idempotent** | No — re-runs produce fresh review |
 
@@ -104,7 +105,7 @@ Compare the PR's `createdBy.uniqueName` / `createdBy.displayName` against the cu
 Skipping PR #<id> — you are the author. You can't review your own PR.
 ```
 
-And stop. If invoked from `/dx-pr-reviews`, return this so the orchestrator can skip to the next PR.
+And stop. If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
 
 ## 3. Fetch Existing Review Threads
 
@@ -272,7 +273,7 @@ The agent reads project context, gets the diff, reviews the code, and returns st
 
 ### 4d. Save Findings
 
-Save review findings to disk **immediately** after the agent returns — BEFORE any user interaction. This enables `/dx-pr-post` to post results later (locally or in pipeline automation).
+Save review findings to disk **immediately** after the agent returns — BEFORE any user interaction. This enables standalone posting later (step 4g) or pipeline automation.
 
 ```bash
 mkdir -p .ai/pr-reviews
@@ -336,7 +337,7 @@ If `GENERATE_PATCHES` is not set or there are no fixable issues, skip this step.
 
 ### 4f. Analyze-Only Mode
 
-If the user's prompt contains **"analyze only"**, **"save only"**, or **"save results"**: **stop here**. Do NOT present findings interactively, do NOT call `AskUserQuestion`, do NOT post to ADO. The saved findings file is the output — `/dx-pr-post` handles posting.
+If the user's prompt contains **"analyze only"**, **"save only"**, or **"save results"**: **stop here**. Do NOT present findings interactively, do NOT call `AskUserQuestion`, do NOT post to ADO. The saved findings file is the output — standalone posting (step 4g) handles posting later.
 
 Print:
 
@@ -346,6 +347,19 @@ Review complete — saved findings to .ai/pr-reviews/pr-<id>-findings.md
 ```
 
 And return.
+
+### 4g. Standalone Posting (from saved findings)
+
+If the user's prompt contains **"post findings"**, **"post review"**, or **"post comments"** — this is a standalone posting request for previously saved findings. Follow `references/post-findings.md` for the full procedure:
+
+1. Load findings from `.ai/pr-reviews/pr-<id>-findings.md`
+2. Load patches from `.ai/pr-reviews/pr-<id>.patch` (if exists)
+3. Post each issue as an ADO thread (with patches if available)
+4. Post summary thread
+5. Set vote (with user confirmation in interactive mode, automatic in pipeline)
+6. Update session file
+
+This replaces the former `/dx-pr-post` skill — all posting logic is now part of this skill.
 
 ---
 
@@ -864,7 +878,7 @@ Detects previous review threads from you on this PR. Shows what changed since yo
 ```
 /dx-pr-review 12345 analyze only
 ```
-Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` without presenting interactively or posting to ADO. Used by `/dx-pr-reviews` and CI pipelines.
+Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` without presenting interactively or posting to ADO. Used by `/dx-pr-review-all` and CI pipelines.
 
 ## Troubleshooting
 

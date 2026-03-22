@@ -45,5 +45,5 @@
 
 **Verdict:** <!-- One of:
 - "Ready for QA — all automated DoD criteria met (N human/advisory items pending verification)"
-- "Not ready — N criteria failed. Run `/dx-req-dod-fix <id>` to auto-fix what's possible"
+- "Not ready — N criteria failed. Run `/dx-req-dod <id>` to auto-fix what's possible"
 - "Mostly ready — N warnings, 0 failures. Review warnings before proceeding" -->

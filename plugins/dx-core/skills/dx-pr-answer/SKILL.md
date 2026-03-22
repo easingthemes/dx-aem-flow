@@ -27,8 +27,8 @@ Read `shared/external-content-safety.md` and apply its rules to all fetched PR c
 | Field | Value |
 |-------|-------|
 | **Called by** | Manual invocation (author answering review) |
-| **Follows** | `/dx-pr-post` (review comments posted) |
-| **Precedes** | `/dx-pr-fix` (if agree-will-fix threads exist) |
+| **Follows** | `/dx-pr-review` (review comments posted) |
+| **Precedes** | — |
 | **Output** | `.ai/pr-answers/pr-<id>.md`, ADO thread replies |
 | **Idempotent** | Partially — detects already-answered threads |
 
@@ -619,7 +619,7 @@ Approve? (commit + push + reply to patch threads)
 Wait for explicit approval, then delegate to `/dx-pr-commit`:
 
 ```
-Skill("commit", args: "apply reviewer-proposed patches")
+Skill(/dx-pr-commit, args: "apply reviewer-proposed patches")
 ```
 
 #### 7a-5. Reply to Patch Threads
@@ -668,7 +668,7 @@ If there are **disagree** threads, show a reminder:
 - Thread #<id>: <file> L<line>
 ```
 
-## 9. Auto-Delegate Fixes
+## 9. Apply Fixes (if agree-will-fix threads exist)
 
 If any posted threads have category `agree-will-fix`, immediately ask:
 
@@ -677,18 +677,20 @@ If any posted threads have category `agree-will-fix`, immediately ask:
 ```
 
 Use **AskUserQuestion** with options:
-- **Apply fixes now** — invoke `/dx-pr-fix` to apply, lint, commit, push, and reply "Fixed." to each thread
-- **Skip for now** — leave fixes for later (user can run `/dx-pr-fix` manually)
+- **Apply fixes now** — apply fixes inline using the procedure below
+- **Skip for now** — leave fixes for later
 
-If the user chooses to apply:
+If the user chooses to apply, follow `references/apply-fixes.md` for the full fix procedure:
 
-```
-Skill("pr-fix")
-```
-
-This picks up the session file that was just saved and applies all `agree-will-fix` changes. No re-fetching — the session has everything needed.
-
-After `/dx-pr-fix` completes, each `agree-will-fix` thread gets a short follow-up reply ("Fixed.", "Updated.", "Done, pushed.") so the reviewer knows the code was changed without having to check the diff.
+1. Extract fixable threads from session (category `agree-will-fix`, status `pending` or `posted`)
+2. Present fix plan for user approval
+3. Verify branch matches PR source branch
+4. Apply fixes via `general-purpose` subagent (minimal changes only)
+5. Lint modified files, auto-fix once if needed
+6. Present changes for user approval
+7. Commit & push via `Skill(/dx-pr-commit)`
+8. Reply "Fixed." to each resolved thread
+9. Update session file — mark threads as `code-fixed` with commit hash
 
 ## Examples
 

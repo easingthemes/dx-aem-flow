@@ -87,7 +87,7 @@ The script creates this structure:
 ```
 .claude/
 ├── skills/           # All plugin skills (Claude Code local overrides)
-│   ├── dx-req-fetch/SKILL.md
+│   ├── dx-req/SKILL.md
 │   ├── dx-plan/SKILL.md
 │   ├── aem-component/SKILL.md
 │   ├── auto-deploy/SKILL.md

@@ -31,11 +31,7 @@ You orchestrate the entire development pipeline from ADO story to pull request.
 
 Run these skills in order:
 
-1. `/dx-req-fetch <id>` — fetch ADO story → `raw-story.md`
-2. `/dx-req-dor` — validate DoR, extract BA data → `dor-report.md`
-3. `/dx-req-explain` — distill requirements → `explain.md`
-4. `/dx-req-research` — search codebase → `research.md`
-5. `/dx-req-share` — share plan → `share-plan.md`
+1. `/dx-req <id>` — full requirements pipeline (fetch → DoR → explain → research → share)
 
 Print: `Phase 1: Requirements — complete.`
 
@@ -64,7 +60,7 @@ Print: `Phase 2: Planning — complete.`
 
 ### Phase 3: Execution
 
-Run `/dx-step` for each pending step in `implement.md`, followed by `/dx-step-test` and `/dx-step-review`. Use `/dx-step-fix` for failures.
+Run `/dx-step` for each pending step in `implement.md` (includes test, review, commit). Use `/dx-step-fix` for failures.
 
 Print: `Phase 3: Execution — <N> steps completed.`
 
@@ -85,8 +81,7 @@ Print: `Phase 5: Code Review — passed/failed.`
 ### Phase 6: Commit + PR
 
 If build and review passed:
-1. Run `/dx-step-commit` to commit changes
-2. Run `/dx-pr` to create the pull request
+1. Run `/dx-pr` to create the pull request (commits are done per-step by `/dx-step`)
 
 Print: `Phase 6: PR — created.`
 

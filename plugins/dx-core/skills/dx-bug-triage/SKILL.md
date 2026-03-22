@@ -580,7 +580,7 @@ If repro steps are ambiguous, posts a clarification comment to ADO and notes the
 
 ### "Work item #<id> is type User Story, not Bug"
 **Cause:** The ID points to a User Story, not a Bug.
-**Fix:** Use `/dx-req-fetch <id>` for User Stories instead. The skill still proceeds but bug-specific fields may be empty.
+**Fix:** Use `/dx-req <id>` for User Stories instead. The skill still proceeds but bug-specific fields may be empty.
 
 ### Component not found in codebase
 **Cause:** Bug title doesn't contain component name in brackets, or the component uses an unexpected name.

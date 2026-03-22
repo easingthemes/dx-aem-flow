@@ -2,15 +2,10 @@
 name: dx-bug-all
 description: Run the full bug fix workflow — triage, verify, and fix — all in one command. Fetches the bug from ADO, reproduces it in browser, generates and executes a fix, and creates a PR. Use when starting work on a bug ticket.
 argument-hint: "<ADO Bug Work Item ID or full URL>"
-disable-model-invocation: true
-context: fork
-agent: dx-step-executor
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
-**Platform check:** This skill requires subagent orchestration (`context: fork` + `agent: dx-step-executor`). If subagent spawning is not available in your environment (e.g., VS Code Chat), inform the user: "This workflow requires subagent orchestration. Please use Claude Code or Copilot CLI to run /dx-bug-all." Do NOT attempt to run the pipeline inline.
-
-You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step to the `dx-step-executor` agent via the Task tool, then report progress.
+You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step via the Skill tool, then report progress.
 
 ## Progress Tracking
 
@@ -115,20 +110,18 @@ If any repo failed: "Use `/dx-hub-status <ticket-id>` for details. Failed repos 
 
 ### Dispatch triage
 
-Use the Task tool to invoke the `dx-step-executor` agent:
-```
-Use the dx-step-executor agent to: Execute bug-triage for work item <id>
-```
-Print: `Step 1/3 done —` followed by the agent's summary.
+Invoke `Skill(/dx-bug-triage <id>)`.
+
+Print: `Step 1/3 done —` followed by the skill's summary.
 
 ### Triage succeeded?
 
 - **success** — triage completed, `raw-bug.md` + `triage.md` created → proceed to "Dispatch verify"
-- **FAIL** — agent returned failure → go to "Retry triage"
+- **FAIL** — skill returned failure → go to "Retry triage"
 
 ### Retry triage
 
-Retry the failed step **once** with the same agent.
+Retry the failed step **once** by invoking `Skill(/dx-bug-triage <id>)` again.
 
 ### Retry succeeded?
 
@@ -141,34 +134,30 @@ Print which step failed and the error. Cannot proceed without bug data. Suggest:
 
 ### Dispatch verify
 
-Use the Task tool to invoke the `dx-step-executor` agent:
-```
-Use the dx-step-executor agent to: Execute bug-verify for work item <id>
-```
-Print: `Step 2/3 done —` followed by the agent's summary.
+Invoke `Skill(/dx-bug-verify <id>)`.
+
+Print: `Step 2/3 done —` followed by the skill's summary.
 
 ### Verify result?
 
 - **success** — verification completed → proceed to "Dispatch fix"
 - **blocked** — browser unavailable, URL unreachable → print warning, **continue** to "Dispatch fix". Verification enhances confidence but is not required for the fix.
-- **FAIL** — agent returned failure → print warning, **continue** to "Dispatch fix". Verification enhances confidence but is not required for the fix.
+- **FAIL** — skill returned failure → print warning, **continue** to "Dispatch fix". Verification enhances confidence but is not required for the fix.
 
 ### Dispatch fix
 
-Use the Task tool to invoke the `dx-step-executor` agent:
-```
-Use the dx-step-executor agent to: Execute bug-fix for work item <id>
-```
-Print: `Step 3/3 done —` followed by the agent's summary.
+Invoke `Skill(/dx-bug-fix <id>)`.
+
+Print: `Step 3/3 done —` followed by the skill's summary.
 
 ### Fix succeeded?
 
 - **success** — fix completed → proceed to "Final summary + log run"
-- **FAIL** — agent returned failure → go to "Retry fix"
+- **FAIL** — skill returned failure → go to "Retry fix"
 
 ### Retry fix
 
-Retry the failed step **once** with the same agent.
+Retry the failed step **once** by invoking `Skill(/dx-bug-fix <id>)` again.
 
 ### Retry fix succeeded?
 
@@ -235,10 +224,10 @@ If no hotspots and no pattern matches, skip silently.
 
 ## Error Handling
 
-If any agent returns `FAIL`:
+If any skill returns `FAIL`:
 
-1. Print the failure with the agent's error message
-2. Retry the failed step **once** with the same agent
+1. Print the failure with the skill's error message
+2. Retry the failed step **once** with the same skill
 3. If still failing:
    - Print which step failed and the error
    - Print which steps succeeded and their outputs
@@ -251,8 +240,8 @@ If any agent returns `FAIL`:
 
 ## Rules
 
-- **Coordinator only** — all implementation happens inside the agent's isolated context
-- **Never implement steps yourself** — always delegate via Task tool
+- **Coordinator only** — never implement anything yourself
+- **Never implement steps yourself** — always delegate via Skill tool
 - **Sequential dependencies** — never dispatch step N+1 until step N returns (except: verify FAIL allows continue to fix)
 - **Keep main context lean** — you only see compact summaries, not file contents
 - **Progress reporting** — print status after each step so the user can see progress
@@ -260,9 +249,4 @@ If any agent returns `FAIL`:
 
 ## Platform Compatibility
 
-This skill uses subagent orchestration (`context: fork` + Task tool dispatch) which is available in **Claude Code only**.
-
-**Copilot CLI / VS Code Chat:** Run the individual skills manually in sequence:
-1. `/dx-bug-triage <id>` — fetch bug, identify component, create triage report
-2. `/dx-bug-verify <id>` — reproduce bug in browser (optional, skip if no browser)
-3. `/dx-bug-fix <id>` — generate and execute fix, create PR
+This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.
