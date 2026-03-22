@@ -79,7 +79,7 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 |-------|-------------|
 | `/dx-pr-review` | Review a single PR — analyze code, post comments, propose fixes |
 | `/dx-pr-post` | Post saved PR review findings to ADO — threads with optional fix patches + vote |
-| `/dx-pr-reviews` | Batch-review multiple open PRs |
+| `/dx-pr-review-all` | Batch-review multiple open PRs |
 | `/dx-pr-answer` | Answer open PR comments with codebase context |
 | `/dx-pr-fix` | Apply agree-will-fix code changes, commit, push, reply |
 

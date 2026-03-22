@@ -452,7 +452,7 @@ export const base = import.meta.env.BASE_URL;
         <td class="p-3 text-[#4a4a5a]">Stage, commit, and push changes</td>
       </tr>
       <tr>
-        <td class="p-3"><code>/dx-pr-reviews</code></td>
+        <td class="p-3"><code>/dx-pr-review-all</code></td>
         <td class="p-3">PR</td>
         <td class="p-3 text-[#4a4a5a]">Batch review multiple PRs</td>
       </tr>
@@ -539,8 +539,8 @@ export const base = import.meta.env.BASE_URL;
       Review comments include ready-to-apply code patches. Run <code>/dx-pr-apply</code> to apply
       all suggested patches from a PR review, build, verify, and commit in one step.
     </ContentCard>
-    <ContentCard icon="mdi:chart-multiple" iconColor="bg-cyan-dark" title="Batch Review & Reports" tags={[{label: "/dx-pr-reviews", color: "info"}, {label: "/dx-pr-review-report", color: "info"}]}>
-      <code>/dx-pr-reviews</code> reviews multiple PRs in batch. <code>/dx-pr-review-report</code> generates
+    <ContentCard icon="mdi:chart-multiple" iconColor="bg-cyan-dark" title="Batch Review & Reports" tags={[{label: "/dx-pr-review-all", color: "info"}, {label: "/dx-pr-review-report", color: "info"}]}>
+      <code>/dx-pr-review-all</code> reviews multiple PRs in batch. <code>/dx-pr-review-report</code> generates
       a categorized report from reviews and posts it to ADO Wiki or Confluence. Ideal for tech leads and sprint reviews.
     </ContentCard>
   </div>

@@ -105,7 +105,7 @@ Compare the PR's `createdBy.uniqueName` / `createdBy.displayName` against the cu
 Skipping PR #<id> — you are the author. You can't review your own PR.
 ```
 
-And stop. If invoked from `/dx-pr-reviews`, return this so the orchestrator can skip to the next PR.
+And stop. If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
 
 ## 3. Fetch Existing Review Threads
 
@@ -878,7 +878,7 @@ Detects previous review threads from you on this PR. Shows what changed since yo
 ```
 /dx-pr-review 12345 analyze only
 ```
-Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` without presenting interactively or posting to ADO. Used by `/dx-pr-reviews` and CI pipelines.
+Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` without presenting interactively or posting to ADO. Used by `/dx-pr-review-all` and CI pipelines.
 
 ## Troubleshooting
 
