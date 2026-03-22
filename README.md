@@ -19,6 +19,7 @@ KAI solves this with **skills** — short commands (`/dx-req-all`, `/dx-plan`, `
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
 - **Multi-source context** — skills don't just read source code. They pull ADO/Jira tickets, Figma designs, AEM content, and browser screenshots through MCP integrations.
 - **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a PR.
+- **[Superpowers](https://github.com/obra/superpowers) integration** — 6 skills optionally invoke superpowers methodology (brainstorming, TDD, systematic debugging, verification) when installed, with inline fallback when it's not.
 
 ## Install
 
