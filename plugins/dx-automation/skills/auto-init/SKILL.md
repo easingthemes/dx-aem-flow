@@ -25,7 +25,7 @@ Check all prerequisites before proceeding:
 2. **audit.sh required** — check `.ai/lib/audit.sh` exists. If missing: "Run `/dx-init` first — it installs the audit library." STOP.
 3. **Ask the hub question (Question 5)** BEFORE checking CLI tools — the answer determines which tools are required.
 4. **CLI tools** — verify based on profile:
-   - **Full hub:** Node.js, AWS CLI, and Azure CLI are all required. Run `setup-cli.sh` if `.ai/automation/` exists. STOP if any are missing.
+   - **Full hub:** Node.js, AWS CLI, and Azure CLI are all required. STOP if any are missing.
    - **Consumer:** Only Node.js is required (for pipeline agent scripts). AWS CLI and Azure CLI are NOT needed — this repo does not manage AWS resources.
 
 5. **Existing scaffold** — if `.ai/automation/` already exists and has `infra.json`:
@@ -170,8 +170,7 @@ else
   cp -r "$PLUGIN_DIR/data/." ".ai/automation/"
   echo "Installed .ai/automation/ data bundle"
 fi
-chmod +x .ai/automation/setup-cli.sh .ai/automation/run.sh \
-  .ai/automation/lambda/deploy.sh \
+chmod +x .ai/automation/lambda/deploy.sh \
   .ai/automation/lambda/cloudwatch/setup-alarms.sh
 ```
 
@@ -180,11 +179,6 @@ chmod +x .ai/automation/setup-cli.sh .ai/automation/run.sh \
 ```bash
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
 mkdir -p .ai/automation/pipelines/cli
-
-# Copy eval pipeline
-if [ -d "$PLUGIN_DIR/data/pipelines/eval" ]; then
-  cp -r "$PLUGIN_DIR/data/pipelines/eval" .ai/automation/pipelines/
-fi
 
 # Copy CLI pipeline YAMLs for consumer agents (PR + delegation-ready)
 for yml in ado-cli-pr-review.yml ado-cli-pr-answer.yml ado-cli-dev-agent.yml ado-cli-bug-fix.yml ado-cli-dod-fix.yml; do
