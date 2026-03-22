@@ -11,10 +11,11 @@ import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Skill Catalog"
-  subtitle="All slash commands across the four plugins -- 68 skills total"
+  subtitle={`All slash commands across the four plugins -- ${stats.totalSkills} skills total`}
 />
 
 <SectionHeading
@@ -25,13 +26,13 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
-    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '42 skills', color: 'primary' }]}>
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: `${stats.dxCoreSkills} skills`, color: 'primary' }]}>
       Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR, bug fix, documentation, and utility.
     </ContentCard>
-    <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: '12 skills', color: 'secondary' }]}>
+    <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: `${stats.dxAemSkills} skills`, color: 'secondary' }]}>
       AEM-specific verification, QA, documentation, and component reconnaissance.
     </ContentCard>
-    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="dx-automation" tags={[{ label: '11 skills', color: 'warning' }]}>
+    <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="dx-automation" tags={[{ label: `${stats.dxAutomationSkills} skills`, color: 'warning' }]}>
       Autonomous agent infrastructure: AWS Lambda, ADO pipelines, CloudWatch alarms.
     </ContentCard>
   </div>
@@ -327,7 +328,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>/aem-snapshot</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Baseline component state before development -- dialog fields, properties, pages.</td><td class="p-3"><code>aem-before.md</code></td></tr>
         <tr><td class="p-3"><code>/aem-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Check component after deployment, compare against baseline, create test page.</td><td class="p-3"><code>aem-after.md</code></td></tr>
         <tr><td class="p-3"><code>/aem-fe-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Screenshot component in wcmmode=disabled, compare against Figma/requirements, fix loop.</td><td class="p-3"><code>aem-fe-verify.md</code></td></tr>
-        <tr><td class="p-3"><code>/aem-demo</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Open AEM editor, screenshot dialog, write authoring guide.</td><td class="p-3"><code>demo/</code> folder</td></tr>
+        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Open AEM editor, screenshot dialog, write authoring guide.</td><td class="p-3"><code>demo/</code> folder</td></tr>
       </tbody>
     </table>
   </div>

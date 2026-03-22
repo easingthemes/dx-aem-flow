@@ -27,7 +27,7 @@ Install the `dx-core` plugin first:
 # ... develop your changes ...
 /dx-step-build                         # Build & deploy to AEM
 /aem-verify starterkit            # Verify component after deployment
-/aem-demo starterkit              # Screenshot dialog, write authoring guide
+/aem-editorial-guide starterkit              # Screenshot dialog, write authoring guide
 ```
 
 ## Skills (10)
@@ -38,7 +38,7 @@ Install the `dx-core` plugin first:
 |-------|-------------|
 | `/aem-snapshot` | Baseline component state before development — dialog fields, properties, pages |
 | `/aem-verify` | Check component after deployment, compare against baseline, create test page |
-| `/aem-demo` | Open AEM editor, screenshot dialog, write authoring guide |
+| `/aem-editorial-guide` | Open AEM editor, screenshot dialog, write authoring guide |
 
 ### QA
 
@@ -67,7 +67,7 @@ Install the `dx-core` plugin first:
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | `aem-inspector` | Sonnet | Dialog/component inspection, docs page creation, publishing via AEM MCP |
-| `aem-demo-capture` | Sonnet | Chrome DevTools screenshots, QA Basic Auth, dialog + publisher view capture |
+| `aem-editorial-guide-capture` | Sonnet | Chrome DevTools screenshots, QA Basic Auth, dialog + publisher view capture |
 | `aem-file-resolver` | Haiku | Resolve all source files for an AEM component across repos |
 | `aem-page-finder` | Haiku | Find AEM pages using a specific component |
 | `aem-bug-executor` | Sonnet | AEM-specific bug verification via Chrome DevTools and AEM MCP |
@@ -90,7 +90,7 @@ aem:
 
 ### QA Basic Auth
 
-QA/Stage environments often require HTTP Basic Auth. Configure credentials in `aem.qa-basic-auth` above. `/aem-init` also installs `.claude/rules/qa-basic-auth.md` — a convention rule that agents (`aem-demo-capture`, `aem-doc-gen`, `aem-bug-executor`) read at runtime for auth handling patterns (URL embedding, fetch fallback, QA URL detection).
+QA/Stage environments often require HTTP Basic Auth. Configure credentials in `aem.qa-basic-auth` above. `/aem-init` also installs `.claude/rules/qa-basic-auth.md` — a convention rule that agents (`aem-editorial-guide-capture`, `aem-doc-gen`, `aem-bug-executor`) read at runtime for auth handling patterns (URL embedding, fetch fallback, QA URL detection).
 
 The `aem.component-prefix` config is used by agents to construct CSS selectors when locating components on rendered pages.
 
@@ -104,7 +104,7 @@ This plugin uses two MCP servers (configured automatically):
 ## Full Workflow
 
 ```
-/aem-snapshot hero  →  /dx-step-all  →  /dx-step-build  →  /aem-verify hero  →  /aem-demo hero
+/aem-snapshot hero  →  /dx-step-all  →  /dx-step-build  →  /aem-verify hero  →  /aem-editorial-guide hero
 ```
 
 ## License

@@ -10,6 +10,7 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Agents"
@@ -112,7 +113,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Examples"
   badgeColor="info"
   title="Real Examples from KAI"
-  subtitle="13 agents, each matched to the right model tier."
+  subtitle={`${stats.claudeAgents} agents, each matched to the right model tier.`}
   bg="primary"
 />
 <Section>
@@ -190,12 +191,12 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Claude Code Agents">
       Live in plugin <code>agents/</code> directory. YAML frontmatter with
       <code>model</code>, <code>tools</code>, <code>isolation</code>.
-      <p class="text-xs font-semibold mt-1">13 agents total</p>
+      <p class="text-xs font-semibold mt-1">{stats.claudeAgents} agents total</p>
     </ContentCard>
     <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Copilot CLI Agents">
       Live in <code>.github/agents/</code>. Use <code>allowed-tools</code> and
       <code>handoffs</code> for navigation. Invoked with <code>@AgentName</code>.
-      <p class="text-xs font-semibold mt-1">25 agents total</p>
+      <p class="text-xs font-semibold mt-1">{stats.copilotAgents} agents total</p>
     </ContentCard>
   </div>
 

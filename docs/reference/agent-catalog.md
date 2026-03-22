@@ -152,13 +152,13 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 
 ---
 
-### aem-demo-capture
+### aem-editorial-guide-capture
 
 | Property | Value |
 |----------|-------|
 | **Model** | Sonnet |
-| **File** | `plugins/dx-aem/agents/aem-demo-capture.md` |
-| **Used by** | `/aem-demo`, `/aem-doc-gen` |
+| **File** | `plugins/dx-aem/agents/aem-editorial-guide-capture.md` |
+| **Used by** | `/aem-editorial-guide`, `/aem-doc-gen` |
 | **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools |
 
 Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
@@ -462,13 +462,13 @@ General-purpose component inspection without before/after context. Dialog fields
 
 ---
 
-### AEMDemo
+### AEMEditorialGuide
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-aem/templates/agents/AEMDemo.agent.md.template` |
-| **Claude equivalent** | aem-demo-capture |
-| **Invoke** | `@AEMDemo <component>` |
+| **Template** | `plugins/dx-aem/templates/agents/AEMEditorialGuide.agent.md.template` |
+| **Claude equivalent** | aem-editorial-guide-capture |
+| **Invoke** | `@AEMEditorialGuide <component>` |
 
 Captures dialog screenshots via Chrome DevTools and writes editor-friendly authoring guide.
 

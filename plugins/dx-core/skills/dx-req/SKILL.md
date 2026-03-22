@@ -100,17 +100,51 @@ Map fields per `shared/provider-config.md` Field Mapping.
 
 If the work item has a parent relation, fetch it. Only the direct parent — do NOT recurse.
 
-### 5. Fetch Attached Images
+### 5. Check Linked Branches & PRs
 
-Download attached images to `$SPEC_DIR/images/`. Preserve inline `<img>` URLs as-is.
+From the relations fetched in step 2, extract artifact links for branches (`vstfs:///Git/Ref/`) and pull requests (`vstfs:///Git/PullRequestId/`).
 
-### 6. Generate Spec Directory Name
+**Filter:** Only keep entries where the **branch name** contains the work item ID as a distinct segment. For PRs, check `sourceRefName` (the source branch), not the PR title.
+
+Match examples for ID `2435084`:
+- `feature/2435084-add-selector` → match
+- `bugfix/2435084-fix-dialog` → match
+- `refs/heads/feature/2435084-add-selector` → match
+- `feature/24350841-other` → no match (ID is substring of larger number)
+- `release/sprint-41` → no match
+
+**ADO — for each matching PR artifact link:**
+```
+mcp__ado__git_get_pull_request
+  project: "<ADO project>"
+  pullRequestId: <PR ID extracted from vstfs URL>
+```
+
+Record: PR ID, title, status (`active`, `completed`, `abandoned`), source branch, target branch, created date.
+
+**ADO — for branch artifact links:** Extract branch name from the `vstfs:///Git/Ref/` URL. No additional MCP call needed — the branch name and repo are in the artifact URL.
+
+**Jira:**
+```
+mcp__atlassian__jira_get_issue_development_info
+  issue_key: "<issue key>"
+```
+
+Filter returned branches and PRs the same way — branch name must contain the issue key (e.g., `feature/PROJ-123-add-selector`).
+
+If no matching branches or PRs are found, omit the section from raw-story.md entirely.
+
+### 6. Fetch Attached Images
+
+If the MCP server supports attachment download, use it. If MCP attachment download fails or is not available, do NOT fall back to HTTP download — ADO/Jira attachments require authenticated sessions and HTTP fetches return login page HTML instead of images. Preserve inline `<img>` URLs as-is in `raw-story.md`.
+
+### 7. Generate Spec Directory Name
 
 ```bash
 DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
 ```
 
-### 7. Create Feature Branch and Directory
+### 8. Create Feature Branch and Directory
 
 ```bash
 SPEC_DIR=".ai/specs/${DIR_NAME}"
@@ -120,11 +154,11 @@ bash .ai/lib/ensure-feature-branch.sh "$SPEC_DIR"
 
 Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` → `Sprint 41`), save to `$SPEC_DIR/.sprint`. Write `Unknown` if not recognizable.
 
-### 8. Check Existing Output (idempotent)
+### 9. Check Existing Output (idempotent)
 
 If `raw-story.md` exists, compare fetched data against it (title, state, description, AC, comment count, relations). If ALL match → print `raw-story.md already up to date — skipping Phase 1` and proceed to Phase 2. If changed → print what changed and continue to save.
 
-### 9. Save raw-story.md
+### 10. Save raw-story.md
 
 Write `.ai/specs/<id>-<slug>/raw-story.md` with EXACT ADO content converted from HTML to markdown. Do NOT editorialize, restructure, or interpret — faithful dump only.
 
@@ -164,6 +198,17 @@ For detailed HTML-to-markdown conversion rules, read `references/html-conversion
 
 ---
 
+## Linked Development
+### Branches
+- `feature/<id>-<slug>` — repo: <repo name>
+
+### Pull Requests
+- **PR #<id>:** <title> — **<status>** | `<sourceRefName>` → `<targetRefName>` | <created date>
+
+<!-- Omit entire section if no matching branches or PRs found. Only includes entries where branch name contains the work item ID. -->
+
+---
+
 ## Comments
 ### <Author> — <date>
 <Comment text>
@@ -194,7 +239,7 @@ Read `references/dor-rules.md` for the complete validation logic. This phase:
 5. **Extract structured BA data** — component name/type, dialog fields, design URLs, scope (brands/markets/out-of-scope)
 6. **Generate open questions** — self-discover answers first, apply pragmatism filter, target 2-5 questions. If `research.md` exists, add codebase-informed questions.
 7. **Write dor-report.md** — scorecard, BA data, gaps, questions, assumptions
-8. **Post ADO/Jira comment** (MANDATORY) — Mode A (first post with checkboxes), Mode B (short update), or Mode C (skip if unchanged). Checkbox collaboration loop: if BA checked items, re-fetch story, re-validate, update.
+8. **Post ADO/Jira comment** (MANDATORY) — BEFORE posting, fetch all existing comments and search for `[DoRAgent]` in their text. If a `[DoRAgent]` comment exists, use Mode B (short update) or Mode C (skip). If none exists, use Mode A (first post with checkboxes). Always use the `[DoRAgent]` text signature — NEVER use HTML comments like `<!-- ai:role:dor-agent -->`. Checkbox collaboration loop: if BA checked items, re-fetch story, re-validate, update.
 
 **GATE:** If blocking questions are found, PAUSE and present them to the user:
 ```
@@ -277,7 +322,7 @@ After all phases complete:
 **Directory:** `.ai/specs/<id>-<slug>/`
 
 ### Outputs:
-- `raw-story.md` — <X> sections, <Y> comments, <Z> relations
+- `raw-story.md` — <X> sections, <Y> comments, <Z> relations, <N> linked branches/PRs
 - `dor-report.md` — score <N>/<total> (<percentage>%) — <verdict>
 - `explain.md` — <count> requirements
 - `research.md` — <count> files found, <count> key findings
