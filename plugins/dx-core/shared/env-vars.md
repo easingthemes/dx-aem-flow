@@ -1,6 +1,9 @@
 # Environment Variables
 
-All secrets and sensitive credentials are stored as environment variables in `.claude/settings.local.json` (auto-gitignored, per-project). Claude Code loads these into the session automatically.
+All secrets and sensitive credentials are stored as environment variables. Two options (either works for Claude Code, shell is required for Copilot CLI):
+
+1. **Shell profile** (`~/.bashrc` or `~/.zshrc`) — `export VAR=value`. Works for both Claude Code and Copilot CLI. Best for machine-wide settings like `AEM_INSTANCES`.
+2. **`.claude/settings.local.json`** — `"env": { "VAR": "value" }`. Auto-gitignored, per-project. Best for project-specific secrets like QA auth credentials. Claude Code only (Copilot CLI does not read this file).
 
 ## How to Resolve Credentials
 

@@ -432,7 +432,16 @@ If `tracker.provider` is `jira`, also include Jira/Confluence tokens in the plac
 
 Report: "Created `.claude/settings.local.json` — add your credentials before using QA/accessibility skills."
 
-> **Note:** AEM-specific env vars (`AEM_USER`, `AEM_PASS`) are added by `/aem-init` if the project is AEM.
+Print env var guidance:
+```
+Environment variables can be set in two ways (either works for Claude Code):
+  1. Shell profile (~/.bashrc or ~/.zshrc) — required for Copilot CLI compatibility
+  2. .claude/settings.local.json "env" block — Claude Code only, per-project
+
+Recommendation: use shell exports for machine-wide vars, settings.local.json for project-specific secrets.
+```
+
+> **Note:** AEM-specific env vars (`AEM_INSTANCES`) are added by `/aem-init` if the project is AEM.
 
 **On re-run:** If the file exists, check for missing env var keys from the template above. If new keys were added by a plugin update, merge them in (empty string value) without overwriting existing values.
 
