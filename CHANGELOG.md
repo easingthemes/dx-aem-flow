@@ -1,3 +1,10 @@
+## [2.53.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.2...v2.53.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* **website:** prefix image and video paths with BASE_URL for GitHub Pages ([71e5020](https://github.com/easingthemes/dx-aem-flow/commit/71e5020c841f78a7b5d1d3da83ef421e0aee5566))
+
 ## [2.53.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.1...v2.53.2) (2026-03-22)
 
 
