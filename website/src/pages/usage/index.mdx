@@ -1,0 +1,127 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Usage
+sidebar: usage
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+
+export const base = import.meta.env.BASE_URL;
+
+<PageHero
+  title="Usage"
+  subtitle="Try KAI in 5 minutes with a free Figma design — no ticket needed. Or jump to the full story-to-PR workflow."
+/>
+
+<SectionHeading
+  badge="Try It Now"
+  title="Figma to Prototype in 5 Minutes"
+  subtitle="Use a free Figma community file to see the full design-to-code pipeline in action."
+  bg="primary"
+/>
+<Section>
+  <p>No ADO/Jira ticket needed. Grab a free Figma community file, run three commands, and see KAI generate a convention-aware prototype with visual verification.</p>
+
+  <HighlightBox severity="info" title="Prerequisites">
+    <ul class="list-none p-0 m-0">
+      <li class="py-0.5">Plugins installed (<a href={`${base}/setup/`}>Setup guide</a>)</li>
+      <li class="py-0.5">Figma desktop app open with a design file</li>
+      <li class="py-0.5">Chrome installed</li>
+    </ul>
+  </HighlightBox>
+
+  <p class="mt-4">
+    Open the <a href="https://www.figma.com/community/file/1255710621498609682" target="_blank" rel="noopener noreferrer">Flights UI Kit</a> (free Figma community file) in Figma, then run:
+  </p>
+
+  <PipelineBlock
+    label="Three Phases"
+    steps={[
+      { title: 'Extract', subtitle: 'Design tokens & screenshots from Figma', command: '/dx-figma-extract' },
+      { title: 'Prototype', subtitle: 'HTML/CSS using your project conventions', command: '/dx-figma-prototype', color: '#0891b2' },
+      { title: 'Verify', subtitle: 'Chrome screenshot vs Figma reference', command: '/dx-figma-verify', color: '#d97706' },
+    ]}
+  />
+
+  <CommandBlock label="Or run all three at once">
+    /dx-figma-all https://www.figma.com/design/bQmIeudg9VuIVXMitrvulC/Flights-•-Free-App-UI-Kit--Community-?node-id=97-8157&m=dev
+  </CommandBlock>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <div class="text-center">
+      <img src={`${import.meta.env.BASE_URL}/images/figma-demo/air-tours-reference.png`} alt="Figma Source" class="rounded-lg border border-gray-200 w-full" />
+      <p class="text-sm text-gray-500 mt-2">Figma Source</p>
+    </div>
+    <div class="text-center">
+      <img src={`${import.meta.env.BASE_URL}/images/figma-demo/prototype-screenshot.png`} alt="Generated Prototype" class="rounded-lg border border-gray-200 w-full" />
+      <p class="text-sm text-gray-500 mt-2">Generated Prototype</p>
+    </div>
+  </div>
+
+  <HighlightBox severity="success" title="Modular by Design">
+    Each phase can also be run individually. The developer stays in control.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Full Flow"
+  title="From Ticket to PR"
+  subtitle="With a real ADO or Jira ticket, run the full development pipeline."
+  bg="alt"
+/>
+<Section>
+  <p>With a real ADO or Jira ticket, run the full development pipeline.</p>
+
+  <PipelineBlock
+    label="Full Development Pipeline"
+    steps={[
+      { title: 'Requirements', subtitle: 'Fetch, validate, research', command: '/dx-req <id>' },
+      { title: 'Plan', subtitle: 'Implementation steps', command: '/dx-plan', color: '#8b5cf6' },
+      { title: 'Execute', subtitle: 'Code with self-healing', command: '/dx-step-all', color: '#059669' },
+      { title: 'Pull Request', subtitle: 'Create and link to ticket', command: '/dx-pr', color: '#d97706' },
+    ]}
+  />
+
+  <p class="text-center mt-4">
+    <a href={`${base}/usage/local/`} class="text-brand-700 font-semibold hover:text-cyan transition-colors">
+      See the full local workflow guide →
+    </a>
+  </p>
+</Section>
+
+<SectionHeading
+  badge="Explore"
+  title="All Workflows"
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-3 gap-4">
+    <a href={`${base}/usage/local/`} class="no-underline">
+      <ContentCard icon="mdi:cog" iconColor="bg-brand-700" title="Local Workflow">Requirements, planning, execution, review -- the full sprint lifecycle from ticket to PR.</ContentCard>
+    </a>
+    <a href={`${base}/usage/figma/`} class="no-underline">
+      <ContentCard icon="mdi:pencil" iconColor="bg-brand-700" title="Figma Pipeline">Extract designs, generate prototypes, verify visually -- the full design-to-code pipeline.</ContentCard>
+    </a>
+    <a href={`${base}/usage/bug-flow/`} class="no-underline">
+      <ContentCard icon="mdi:bug" iconColor="bg-brand-700" title="Bug Flow">Triage, reproduce with browser automation, fix, and PR -- end to end.</ContentCard>
+    </a>
+    <a href={`${base}/usage/aem/`} class="no-underline">
+      <ContentCard icon="mdi:cube-outline" iconColor="bg-brand-700" title="AEM Verification">Component verification, QA with browser automation, and demo capture for AEM projects.</ContentCard>
+    </a>
+    <a href={`${base}/usage/ado/`} class="no-underline">
+      <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="ADO Integration">Work item linking, PR policies, service hooks, and pipeline triggers.</ContentCard>
+    </a>
+    <a href={`${base}/usage/accessibility/`} class="no-underline">
+      <ContentCard icon="mdi:human" iconColor="bg-brand-700" title="Accessibility">Automated WCAG checks with axe, inline fixes, and accessibility reporting.</ContentCard>
+    </a>
+    <a href={`${base}/usage/dor-dod/`} class="no-underline">
+      <ContentCard icon="mdi:check-circle" iconColor="bg-brand-700" title="DoR & DoD">Definition of Ready and Definition of Done validation -- automated quality gates.</ContentCard>
+    </a>
+  </div>
+</Section>
