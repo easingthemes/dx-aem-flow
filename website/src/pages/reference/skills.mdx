@@ -14,7 +14,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Skill Catalog"
-  subtitle="All slash commands across the four plugins -- 69 skills total"
+  subtitle="All slash commands across the four plugins -- 68 skills total"
 />
 
 <SectionHeading
@@ -25,7 +25,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
-    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '43 skills', color: 'primary' }]}>
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '42 skills', color: 'primary' }]}>
       Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR, bug fix, documentation, and utility.
     </ContentCard>
     <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: '12 skills', color: 'secondary' }]}>
@@ -81,7 +81,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-req-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Coordinator: invokes /dx-req. Gates on DoR blocking questions. Logs run metrics.</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full requirements pipeline: fetch work item, validate DoR, distill dev requirements, research codebase, generate team summary. Posts interactive checkbox comment to ADO/Jira (idempotent).</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Create child Task work items with hour estimates.</td><td class="p-3">ADO/Jira tasks</td></tr>
         <tr><td class="p-3"><code>/dx-req-dod</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Check Definition of Done against ADO/Jira wiki checklist -- validates actual deliverables: PR, tests, build, docs, child tasks. Auto-fixes what is possible, creates tasks for the rest.</td><td class="p-3"><code>dod.md</code></td></tr>
@@ -468,11 +467,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
   bg="alt"
 />
 <Section>
-  <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="dx-req-all chain">
-    <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-req-all
-  └─ dx-req (full pipeline: fetch → DoR → explain → research → share)
-       GATE: blocks if blocking questions exist
-       BA checks items → re-run reads state → re-validates`}</code>
+  <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="dx-req chain">
+    <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-req (full pipeline: fetch → DoR → explain → research → share)
+  GATE: blocks if blocking questions exist
+  BA checks items → re-run reads state → re-validates`}</code>
   </ContentCard>
 
   <ContentCard icon="mdi:source-branch" iconColor="bg-cyan-dark" title="dx-agent-all chain" class="mt-4">

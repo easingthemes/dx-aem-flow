@@ -107,7 +107,7 @@ If a step has `**Status:** blocked`, skip it and find the next pending step. Pri
 
 1. Check if implement.md has an `**Other repos required:**` line. If so, print:
    ```
-   > Cross-repo: This plan covers <current repo> only. Switch to <other repo(s)> and run `/dx-req-all <id>` there.
+   > Cross-repo: This plan covers <current repo> only. Switch to <other repo(s)> and run `/dx-req <id>` there.
    ```
 2. Print: "All steps are done. Run `/dx-pr` to create a pull request."
 3. STOP.

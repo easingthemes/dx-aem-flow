@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 43 skills
+## dx-core plugin — 42 skills
 
 ### Estimation — 1 skill
 
@@ -8,11 +8,10 @@
 |-------|-----------|----------|-------------|--------|
 | dx-estimate | `/dx-estimate` | `<work-item-id or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. | ADO/Jira comment |
 
-### Requirements (`dx-req-*`) — 5 skills
+### Requirements (`dx-req-*`) — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-req-all | `/dx-req-all` | `<work-item-id>` | Full pipeline coordinator: invokes dx-req. Gates on DoR blocking questions. Logs run metrics to `.ai/learning/`. | All spec files + ADO comments |
 | dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR, distill requirements, research codebase, share summary (5 phases). Includes reference docs for each phase. | All spec files + ADO comments |
 | dx-req-tasks | `/dx-req-tasks` | `<work-item-id>` | Create child Task work items with hour estimates | ADO/Jira tasks |
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
@@ -130,9 +129,9 @@ Coordinator skills are implemented as Copilot agents with `handoffs:` (see [agen
 ## Skill Dependencies
 
 ```
-dx-req-all ── dx-req (5 phases: fetch → dor → explain → research → share)
-                  ↓ GATE: blocks if DoR has blocking questions
-                  ↻ BA checks items in ADO → re-run reads checkbox state → re-validates
+dx-req (5 phases: fetch → dor → explain → research → share)
+       ↓ GATE: blocks if DoR has blocking questions
+       ↻ BA checks items in ADO → re-run reads checkbox state → re-validates
 
 dx-agent-all ─┬─ dx-agent-re
               ├─ dx-plan (needs explain + research from dx-req)
