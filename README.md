@@ -12,13 +12,13 @@ Three plugins for AI-assisted software development: requirements-to-PR workflow 
 
 AI coding assistants are powerful, but without structure they produce inconsistent results. You end up re-explaining your project, your conventions, and your workflow every session.
 
-KAI solves this with **skills** — short commands (`/dx-req-all`, `/dx-plan`, `/dx-step-all`) that replace long prompts. Each skill knows what context to gather (tickets, config, codebase, prior specs), which subagents to spawn, and what output format to produce. You run a skill, then refine with simple follow-ups — the agent already has the full picture.
+KAI is a structured development workflow built as a plugin system. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines. A single command like `/dx-req-all` pulls the ticket from ADO/Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically. You run a skill, then refine with simple follow-ups — the agent already has the full picture.
 
 **What makes it different:**
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
 - **Multi-source context** — skills don't just read source code. They pull ADO/Jira tickets, Figma designs, AEM content, and browser screenshots through MCP integrations.
-- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a PR.
+- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
 - **[Superpowers](https://github.com/obra/superpowers) integration** — 6 skills optionally invoke superpowers methodology (brainstorming, TDD, systematic debugging, verification) when installed, with inline fallback when it's not.
 
 ## Install

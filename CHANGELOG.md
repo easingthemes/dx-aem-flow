@@ -1,3 +1,10 @@
+## [2.55.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.0...v2.55.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* add missing base path to TLDR links and screenshot images ([559429b](https://github.com/easingthemes/dx-aem-flow/commit/559429b406fc59a396b8de7c78fa43ac40bfb07a))
+
 # [2.55.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.54.0...v2.55.0) (2026-03-22)
 
 
