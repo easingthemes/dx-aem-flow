@@ -12,10 +12,33 @@ import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
 
+export const base = import.meta.env.BASE_URL;
+
 <PageHero
   title="Local Developer Workflow"
   subtitle="From ticket to merged PR -- the interactive development workflow using /dx-* skills in your IDE. Works with ADO and Jira."
 />
+
+<Section>
+  <HighlightBox severity="info" title="How It Works">
+    Instead of writing complex prompts, you run **skills** -- short commands like <code>/dx-req-all</code> or <code>/dx-plan</code>.
+    Each skill already knows what context to gather (tickets, codebase, config, prior specs -- not just source code),
+    which subagents to spawn for parallel work, and what output format to produce.
+
+    Once a skill finishes, all context stays in the session. You can refine results with simple follow-up prompts
+    ("make step 3 more granular", "skip the SCSS changes") -- no need to re-explain the project, the ticket, or your conventions.
+
+    This is the key advantage: **precision without repetition**. Each step saves its output to local files,
+    so even if a session ends, the next skill picks up where you left off.
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="First Time?">
+    Before running skills, make sure your project is set up with <code>/dx-init</code>.
+    This generates <code>.ai/config.yaml</code> with your build commands, branch names, ADO/Jira settings, and coding conventions --
+    so every skill uses the right context from the start.
+    See the <a href={`${base}/setup/claude-code/`}>Setup Guide</a> for full instructions.
+  </HighlightBox>
+</Section>
 
 <SectionHeading
   badge="Full Pipeline"
