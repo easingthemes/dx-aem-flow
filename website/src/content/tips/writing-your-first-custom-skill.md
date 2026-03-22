@@ -32,7 +32,7 @@ slackText: |
   *Step 3:* Write instructions
   ```
   1. Find the component file matching the given name in src/
-  2. Verify it extends BATComponent
+  2. Verify it extends CustomComponent
   3. Check that lifecycle methods (beforeLoad, afterLoad) exist
   4. Check that data-model parsing is implemented
   5. Report findings with specific file:line references
@@ -63,7 +63,7 @@ allowed-tools: [read, grep, glob]
 ---
 
 1. Find the component file in src/
-2. Verify it extends BATComponent
+2. Verify it extends CustomComponent
 3. Check lifecycle methods exist
 4. Report any missing patterns
 ```
