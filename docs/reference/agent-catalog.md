@@ -29,7 +29,7 @@ Deep code review with confidence-based filtering. Only reports issues at confide
 |----------|-------|
 | **Model** | Sonnet |
 | **File** | `plugins/dx-core/agents/dx-pr-reviewer.md` |
-| **Used by** | `/dx-pr-review`, `/dx-pr-reviews` |
+| **Used by** | `/dx-pr-review`, `/dx-pr-review-all` |
 | **Tools** | Read, Glob, Grep, Bash, Write, Edit |
 | **Permission mode** | `plan` (read-only by default) |
 

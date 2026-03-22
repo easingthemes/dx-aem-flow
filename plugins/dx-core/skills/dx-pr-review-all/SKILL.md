@@ -1,6 +1,6 @@
 ---
-name: dx-pr-reviews
-description: Review multiple Azure DevOps pull requests. Use when the user wants to review several PRs at once, check active PRs for a repo, or batch-review team pull requests.
+name: dx-pr-review-all
+description: Review multiple Azure DevOps pull requests in batch. Use when reviewing several PRs at once or checking active PRs for a repo.
 argument-hint: "[PR URL | Repo URL | count] [count]"
 disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
@@ -81,11 +81,11 @@ Parse `$ARGUMENTS` to determine the mode:
 
 | Input | Mode | Example |
 |-------|------|---------|
-| *(empty)* | Current repo, 5 PRs | `/dx-pr-reviews` |
-| `<number>` | Current repo, N PRs | `/dx-pr-reviews 10` |
-| `<repo URL>` | That repo, 5 PRs | `/dx-pr-reviews https://{org}/_git/My-Repo` |
-| `<repo URL> <number>` | That repo, N PRs | `/dx-pr-reviews https://{org}/_git/My-Repo 10` |
-| `<PR URL>` | Single PR (delegate) | `/dx-pr-reviews https://.../_git/.../pullrequest/12345` |
+| *(empty)* | Current repo, 5 PRs | `/dx-pr-review-all` |
+| `<number>` | Current repo, N PRs | `/dx-pr-review-all 10` |
+| `<repo URL>` | That repo, 5 PRs | `/dx-pr-review-all https://{org}/_git/My-Repo` |
+| `<repo URL> <number>` | That repo, N PRs | `/dx-pr-review-all https://{org}/_git/My-Repo 10` |
+| `<PR URL>` | Single PR (delegate) | `/dx-pr-review-all https://.../_git/.../pullrequest/12345` |
 
 ### Input type?
 
@@ -563,11 +563,11 @@ rm -rf /tmp/dx-review-<repo>
 
 ## Examples
 
-1. `/dx-pr-reviews` — Lists 5 active PRs in the current repo (excluding your own), presents the list for selection. You type "1 3" to review PRs #1 and #3. Each PR gets the full review flow: analysis, findings presentation, optional patch generation, comment posting, and vote.
+1. `/dx-pr-review-all` — Lists 5 active PRs in the current repo (excluding your own), presents the list for selection. You type "1 3" to review PRs #1 and #3. Each PR gets the full review flow: analysis, findings presentation, optional patch generation, comment posting, and vote.
 
-2. `/dx-pr-reviews https://dev.azure.com/myorg/MyProject/_git/Other-Repo 10` — Lists up to 10 active PRs from a different repo, fetches branches in one batch, spawns review agents in parallel, then processes results one at a time for approval.
+2. `/dx-pr-review-all https://dev.azure.com/myorg/MyProject/_git/Other-Repo 10` — Lists up to 10 active PRs from a different repo, fetches branches in one batch, spawns review agents in parallel, then processes results one at a time for approval.
 
-3. `/dx-pr-reviews https://dev.azure.com/myorg/MyProject/_git/MyRepo/pullrequest/12345` — Detects a single PR URL, skips the listing step, and delegates directly to `/dx-pr-review` for that specific PR.
+3. `/dx-pr-review-all https://dev.azure.com/myorg/MyProject/_git/MyRepo/pullrequest/12345` — Detects a single PR URL, skips the listing step, and delegates directly to `/dx-pr-review` for that specific PR.
 
 ## Troubleshooting
 

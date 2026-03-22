@@ -211,7 +211,7 @@ Override plugin default prompts without replacing the full file.
 
 | Override | Fields | Affects |
 |----------|--------|---------|
-| `pr-review` | `tone`, `severity-threshold`, `extra-rules` | `/dx-pr-review`, `/dx-pr-reviews` |
+| `pr-review` | `tone`, `severity-threshold`, `extra-rules` | `/dx-pr-review`, `/dx-pr-review-all` |
 | `pr-answer` | `persona` | `/dx-pr-answer` |
 
 ### `preferences`
