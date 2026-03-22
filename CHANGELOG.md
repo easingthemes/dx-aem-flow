@@ -1,3 +1,10 @@
+## [2.55.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.2...v2.55.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* **website:** add missing slash in image/video URL paths ([2e57ab7](https://github.com/easingthemes/dx-aem-flow/commit/2e57ab751f3978df630e53c8cc499f35aa459852))
+
 ## [2.55.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.1...v2.55.2) (2026-03-22)
 
 
