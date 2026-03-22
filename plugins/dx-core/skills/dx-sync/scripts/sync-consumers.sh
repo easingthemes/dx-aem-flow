@@ -310,7 +310,20 @@ step_0_setup_worktree() {
       # Remove stale worktree
       git worktree remove "$wt_path" --force 2>/dev/null || rm -rf "$wt_path"
     fi
-    git worktree add "$wt_path" "$branch" 2>&1 | sed 's/^/    /'
+
+    # Check if branch is already checked out (in main working tree or another worktree)
+    local checked_out_at
+    checked_out_at=$(git worktree list --porcelain 2>/dev/null | awk -v b="refs/heads/$branch" '/^worktree /{wt=$2} /^branch /{if($2==b) print wt}')
+    if [ -n "$checked_out_at" ]; then
+      # Branch already checked out — use that path as our worktree
+      log_info "  branch '$branch' already checked out at $checked_out_at — using directly"
+      wt_path="$checked_out_at"
+      # Signal to caller: reusing existing checkout (don't clean up)
+      echo "$wt_path" > /tmp/dx-sync-wtpath-$(basename "$repo_path")
+    else
+      git worktree add "$wt_path" "$branch" 2>&1 | sed 's/^/    /'
+      echo "$wt_path" > /tmp/dx-sync-wtpath-$(basename "$repo_path")
+    fi
 
     # Merge base into sync branch in the worktree
     cd "$wt_path"
@@ -739,13 +752,20 @@ sync_one_repo() {
     # Use worktree for git operations, original path for --no-git mode
     local work_path="$c_path"
     local wt_path="/tmp/dx-sync-$(basename "$c_path")"
+    local wt_marker="/tmp/dx-sync-wtpath-$(basename "$c_path")"
 
     if ! $NO_GIT; then
+      rm -f "$wt_marker"
       if ! step_0_setup_worktree "$c_path" "$c_base" "$c_branch"; then
         log_err "  Worktree setup failed for $c_name — skipping remaining steps"
         return 1
       fi
       if ! $DRY_RUN; then
+        # Read actual worktree path (may differ if branch was already checked out)
+        if [ -f "$wt_marker" ]; then
+          wt_path="$(cat "$wt_marker")"
+          rm -f "$wt_marker"
+        fi
         work_path="$wt_path"
       fi
     fi
@@ -763,8 +783,8 @@ sync_one_repo() {
     step_10_commit_push "$work_path" "$c_branch"
     step_11_create_pr "$work_path" "$c_base" "$c_branch" "$c_name"
 
-    # Clean up worktree
-    if ! $NO_GIT && ! $DRY_RUN && [ -d "$wt_path" ]; then
+    # Clean up worktree (only if we created a temp one, not if reusing existing checkout)
+    if ! $NO_GIT && ! $DRY_RUN && [ -d "$wt_path" ] && [[ "$wt_path" == /tmp/dx-sync-* ]]; then
       log_info "  cleaning up worktree"
       (cd "$c_path" && git worktree remove "$wt_path" --force 2>/dev/null) || rm -rf "$wt_path"
     fi
@@ -880,14 +900,21 @@ else
     # Use worktree for git operations, original path for --no-git mode
     WORK_PATH="$C_PATH"
     WT_PATH="/tmp/dx-sync-$(basename "$C_PATH")"
+    local wt_marker="/tmp/dx-sync-wtpath-$(basename "$C_PATH")"
 
     if ! $NO_GIT; then
+      rm -f "$wt_marker"
       if ! step_0_setup_worktree "$C_PATH" "$C_BASE" "$C_BRANCH"; then
         log_err "  Worktree setup failed for $C_NAME — skipping remaining steps"
         ((failed++)) || true
         continue
       fi
       if ! $DRY_RUN; then
+        # Read actual worktree path (may differ if branch was already checked out)
+        if [ -f "$wt_marker" ]; then
+          WT_PATH="$(cat "$wt_marker")"
+          rm -f "$wt_marker"
+        fi
         WORK_PATH="$WT_PATH"
       fi
     fi
@@ -905,8 +932,8 @@ else
     step_10_commit_push "$WORK_PATH" "$C_BRANCH"
     step_11_create_pr "$WORK_PATH" "$C_BASE" "$C_BRANCH" "$C_NAME"
 
-    # Clean up worktree
-    if ! $NO_GIT && ! $DRY_RUN && [ -d "$WT_PATH" ]; then
+    # Clean up worktree (only if we created a temp one, not if reusing existing checkout)
+    if ! $NO_GIT && ! $DRY_RUN && [ -d "$WT_PATH" ] && [[ "$WT_PATH" == /tmp/dx-sync-* ]]; then
       log_info "  cleaning up worktree"
       (cd "$C_PATH" && git worktree remove "$WT_PATH" --force 2>/dev/null) || rm -rf "$WT_PATH"
     fi
