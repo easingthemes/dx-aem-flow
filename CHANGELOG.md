@@ -1,3 +1,10 @@
+## [2.55.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.1...v2.55.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* clean up documentation screenshots for public use ([fbbbbd4](https://github.com/easingthemes/dx-aem-flow/commit/fbbbbd468297636591d5e315be41a27a1cecb387))
+
 ## [2.55.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.0...v2.55.1) (2026-03-22)
 
 
