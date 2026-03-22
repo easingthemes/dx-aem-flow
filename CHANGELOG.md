@@ -1,3 +1,10 @@
+## [2.53.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.3...v2.53.4) (2026-03-22)
+
+
+### Bug Fixes
+
+* broken docs links in README and website pages ([6c49370](https://github.com/easingthemes/dx-aem-flow/commit/6c49370c8d7497b5f4077c42c8b9f1c951f1ebd5))
+
 ## [2.53.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.2...v2.53.3) (2026-03-22)
 
 
