@@ -74,7 +74,7 @@ const { Content } = await render(tip);
     <!-- Screenshot -->
     {tip.data.screenshot && (
       <div class="mt-6">
-        <img src={`${import.meta.env.BASE_URL}${tip.data.screenshot}`} alt={`${tip.data.title} example`} class="rounded border border-gray-200 w-full" />
+        <img src={`${import.meta.env.BASE_URL}/${tip.data.screenshot}`} alt={`${tip.data.title} example`} class="rounded border border-gray-200 w-full" />
       </div>
     )}
 
