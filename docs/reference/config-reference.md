@@ -106,7 +106,7 @@ aem:
   active-markets:                 # Active markets (scopes searches by brand + country)
     - brand: brand-a
       countries: [gb, de, fr]
-  qa-basic-auth:                  # QA/Stage environment auth (read by aem-demo-capture, aem-doc-gen)
+  qa-basic-auth:                  # QA/Stage environment auth (read by aem-editorial-guide-capture, aem-doc-gen)
     username: "myuser"            # HTTP Basic Auth username
     password: "mypassword"        # HTTP Basic Auth password
   # repos: — REMOVED. Cross-repo config is now in the top-level repos: section.
@@ -202,7 +202,7 @@ roles:
 | `platform` | string | no | AEM platform: `legacy` (custom Web Components/Gulp) or `dxn` (@netcentric/Webpack) |
 | `active-brands` | list | no | Active brands for this repo (scopes component and page searches) |
 | `active-markets` | list | no | Active markets with brand + countries (scopes searches by market) |
-| `qa-basic-auth` | object | no | QA/Stage HTTP Basic Auth credentials (`username`, `password`). Used by `aem-demo-capture` and `aem-doc-gen` for authenticated QA environments. Also install `.claude/rules/qa-basic-auth.md` via `/aem-init` for the full auth handling pattern. |
+| `qa-basic-auth` | object | no | QA/Stage HTTP Basic Auth credentials (`username`, `password`). Used by `aem-editorial-guide-capture` and `aem-doc-gen` for authenticated QA environments. Also install `.claude/rules/qa-basic-auth.md` via `/aem-init` for the full auth handling pattern. |
 | `repos` | list | no | Cross-repo awareness — sibling repos with path, role, platform, ado-project, base-branch, capabilities |
 
 ### `overrides`
