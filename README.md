@@ -49,7 +49,7 @@ From a local clone:
 
 Full-stack development workflow for Azure DevOps and Jira projects: requirements gathering, implementation planning, step-by-step execution with testing and review, code review, bug fixes, and PR management.
 
-**43 skills, 6 agents.** Works with any tech stack.
+**42 skills, 6 agents.** Works with any tech stack.
 
 ### [dx-hub](plugins/dx-hub/) — Multi-Repo Orchestration
 
