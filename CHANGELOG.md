@@ -1,3 +1,10 @@
+# [2.58.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.57.0...v2.58.0) (2026-03-22)
+
+
+### Features
+
+* **website:** add Why This Exists intro block to home page ([87db301](https://github.com/easingthemes/dx-aem-flow/commit/87db301617932478222acda77404ead30b6c7d59))
+
 # [2.57.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.4...v2.57.0) (2026-03-22)
 
 
