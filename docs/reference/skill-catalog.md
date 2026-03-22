@@ -63,7 +63,7 @@
 | dx-pr-commit | `/dx-pr-commit` | `[pr]` | Commit changes with ADO work item linking; add `pr` to also create a PR | Git commit [+ PR] |
 | dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, save findings, optionally propose fix patches | Findings file |
 | dx-pr-post | `/dx-pr-post` | `<PR-id or URL>` | Post saved PR review findings to ADO — threads with optional fix patches + vote | ADO comments |
-| dx-pr-reviews | `/dx-pr-reviews` | none | Batch-review multiple open PRs assigned to you | Multiple reviews |
+| dx-pr-review-all | `/dx-pr-review-all` | none | Batch-review multiple open PRs assigned to you | Multiple reviews |
 | dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches | ADO replies |
 | dx-pr-fix | `/dx-pr-fix` | `<PR-id or URL>` (optional) | Apply agree-will-fix code changes from reviews, commit, push, reply to threads | Code + replies |
 | dx-pr-review-report | `/dx-pr-review-report` | `<PR-id or URL>` | Generate categorized report from PR review — groups by category, tracks patch resolution, posts to wiki. Uses report template from `assets/report-template.md`. | Report + wiki page |
