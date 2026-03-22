@@ -8,6 +8,18 @@
 
 Three plugins for AI-assisted software development: requirements-to-PR workflow for ADO/Jira projects, AEM component tooling and QA, and autonomous CI agents. Runs locally and in pipelines. Supports Claude Code, Copilot CLI, and VS Code Chat.
 
+## Why This Exists
+
+AI coding assistants are powerful, but without structure they produce inconsistent results. You end up re-explaining your project, your conventions, and your workflow every session.
+
+KAI solves this with **skills** — short commands (`/dx-req-all`, `/dx-plan`, `/dx-step-all`) that replace long prompts. Each skill knows what context to gather (tickets, config, codebase, prior specs), which subagents to spawn, and what output format to produce. You run a skill, then refine with simple follow-ups — the agent already has the full picture.
+
+**What makes it different:**
+- **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
+- **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
+- **Multi-source context** — skills don't just read source code. They pull ADO/Jira tickets, Figma designs, AEM content, and browser screenshots through MCP integrations.
+- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a PR.
+
 ## Install
 
 Add the marketplace, then install the plugins you need:
