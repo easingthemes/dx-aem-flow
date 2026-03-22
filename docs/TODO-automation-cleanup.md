@@ -69,3 +69,13 @@ Also update the `dx-automation` plugin's `/auto-init` skill to stop scaffolding 
 ## Priority
 
 Medium-high — dead code confusion. Developers seeing 90+ automation files when only 10 pipelines + 2 scripts matter.
+
+---
+
+## TODO: Eval/Testing for CLI Pipelines
+
+The old eval framework (`eval/gates.js`, `judge.js`, `mock.js`, etc.) tested the custom JS agents and was deleted with them. The CLI approach (`pipeline-agent.js` + plugin skills) has no equivalent automated testing yet.
+
+Need: a way to run pipeline agents against fixture data and verify output quality — e.g., dry-run a PR review against a known PR, compare output against expected findings.
+
+Priority: Low — manual `/auto-test --dryRun` covers basic verification for now.
