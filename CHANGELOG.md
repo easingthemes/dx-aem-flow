@@ -1,3 +1,17 @@
+# [2.60.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.59.0...v2.60.0) (2026-03-22)
+
+
+### Bug Fixes
+
+* missed aem-demo-capture rename in config.mdx ([d5a2ec3](https://github.com/easingthemes/dx-aem-flow/commit/d5a2ec3aafe570dadcb7deb016531564a67164b5))
+
+
+### Features
+
+* add linked branches/PRs check to dx-req Phase 1 ([0c1dd4f](https://github.com/easingthemes/dx-aem-flow/commit/0c1dd4fe3f289cd969e883d6b48dc6b83fa734e6))
+* expand Copilot CLI hooks template with SessionStart and PostToolUse ([4003b99](https://github.com/easingthemes/dx-aem-flow/commit/4003b99e4259d118a1df9bf13b394150c1358588))
+* extract website stats into shared config ([764569e](https://github.com/easingthemes/dx-aem-flow/commit/764569e04a5312bf4a85da959683f9d38532fd73))
+
 # [2.59.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.2...v2.59.0) (2026-03-22)
 
 
