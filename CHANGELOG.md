@@ -1,3 +1,10 @@
+# [2.55.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.54.0...v2.55.0) (2026-03-22)
+
+
+### Features
+
+* add intro blocks to local workflow page ([158ef90](https://github.com/easingthemes/dx-aem-flow/commit/158ef9067c526b65e34fecd9d9072d94a9653aab))
+
 # [2.54.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.4...v2.54.0) (2026-03-22)
 
 
