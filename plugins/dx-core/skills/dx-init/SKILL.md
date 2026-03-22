@@ -16,7 +16,7 @@ You configure the dx workflow for the current project by detecting the environme
 | **Config** (config.yaml, project.yaml) | Ask: keep / modify / regenerate |
 | **Utility scripts** (audit.sh, stop-guard.sh) | Compare against plugin version → update silently if changed |
 | **Template-generated** (README.md, agent.index.md) | Compare against latest template → update if template is newer |
-| **Docs** (.ai/docs/) | Compare against template → update if template changed (scaffold.sh handles) |
+| **Docs** (.ai/docs/) | Removed — plugin docs are public at https://easingthemes.github.io/dx-aem-flow/ |
 | **Rule files** (.ai/rules/, .claude/rules/) | Compare against template → if only template changed: update. If user customized: report diff, ask user |
 | **User-owned** (me.md) | Never touch — always skip |
 | **MCP config** (.mcp.json) | Validate configured values match current project config |
@@ -155,14 +155,13 @@ bash ${CLAUDE_SKILL_DIR}/scripts/scaffold.sh
 ```
 
 This creates:
-- `.ai/specs`, `.ai/rules`, `.ai/research`, `.ai/lib`, `.ai/docs`, `.ai/templates`
+- `.ai/specs`, `.ai/rules`, `.ai/research`, `.ai/lib`, `.ai/templates`
 - `.claude/rules`, `.claude/hooks`
 - Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, ensure-feature-branch.sh, queue-pipeline.sh) with chmod +x
 - Copies `stop-guard.sh` to `.claude/hooks/` with chmod +x
 - Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/ — 11 template files)
 - Copies shared rule templates to `.ai/rules/`
 - Copies universal rule templates to `.claude/rules/`
-- Copies documentation templates to `.ai/docs/`
 
 **On re-run:** The script validates existing files against plugin data:
 - **Utility scripts** (.ai/lib/*.sh, stop-guard.sh): updated silently if plugin version changed
@@ -210,19 +209,9 @@ confluence:
 
 Print: "Add `JIRA_PERSONAL_TOKEN` and `CONFLUENCE_PERSONAL_TOKEN` to your `.claude/settings.local.json` env block or shell profile."
 
-### 5c. Write .ai/README.md
+### 5c. (Removed — .ai/README.md and agent-index.md no longer generated)
 
-Read `templates/README.md.template` from the plugin directory (use Read tool). Fill in placeholders with project-specific values (name, skill list, build commands).
-
-**On re-run:** If `.ai/README.md` exists, compare its structure against the latest template. If the template has new sections or updated content, regenerate the file (template content is not user-customized). Write to `.ai/README.md` (use Write tool).
-
-### 5d. Seed agent.index.md
-
-Read `templates/INDEX.md.template` from the plugin directory (use Read tool). Replace `{{PROJECT_NAME}}` with the confirmed project name.
-
-**On re-run:** If `agent.index.md` already exists, read both the existing file and the filled template. Check for missing sections (e.g., new agent tables added in a plugin update). If sections are missing, ask the user: **(A) Update** (merge missing sections into existing file), **(B) Keep as-is**. Never overwrite user additions — only add missing sections.
-
-Write to `agent.index.md` (project root, alongside `CLAUDE.md`) using Write tool.
+Plugin documentation is public at https://easingthemes.github.io/dx-aem-flow/ — no need to copy docs into each consumer project.
 
 ### 5d-bis. Generate AGENTS.md
 
