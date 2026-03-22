@@ -1,6 +1,6 @@
 ---
 layout: ../../layouts/SidebarLayout.astro
-title: KAI Development Platform (Long)
+title: KAI Development Platform
 sidebar: demo
 ---
 
@@ -10,6 +10,7 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="KAI Development Platform"
@@ -66,7 +67,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     steps={[
       { title: 'Ticket', subtitle: 'ADO or Jira story/bug' },
       { title: 'DoR Check', subtitle: 'Validates readiness, posts comment', color: '#059669' },
-      { title: 'Requirements', subtitle: 'Analysis posted back to ticket', command: '/dx-req-all', color: '#0891b2' },
+      { title: 'Requirements', subtitle: 'Analysis posted back to ticket', command: '/dx-req', color: '#0891b2' },
       { title: 'Tasks Created', subtitle: 'Child tasks with estimates', color: '#8b5cf6' },
       { title: 'PR + Review', subtitle: 'PR created, reviewed, results in ADO', color: '#d97706' },
     ]}
@@ -99,7 +100,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   </div>
 </Section>
 
-{/* AEM + Figma */}
+{/* AEM + Figma Overview */}
 <SectionHeading
   badge="AEM + Figma"
   badgeColor="warning"
@@ -153,13 +154,103 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   </div>
 </Section>
 
+{/* Figma Deep Dive */}
+<SectionHeading
+  badge="Figma Deep Dive"
+  badgeColor="info"
+  title="Multi-Agent Figma Orchestration"
+  subtitle="/dx-figma-all is a coordinator skill. It orchestrates three specialized phases via isolated subagents, validates between each step, and reports progress."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Run in Claude Code">
+    /dx-figma-all https://www.figma.com/design/bQmIeudg9VuIVXMitrvulC/Flights-•-Free-App-UI-Kit--Community-?node-id=97-8157&m=dev
+  </CommandBlock>
+
+  <HighlightBox severity="warning" title="Multi-Agent Orchestration Under the Hood">
+    The coordinator invokes each phase skill directly via Skill() calls -- a composable
+    pattern applied to AI agents. Each skill runs in its own isolated context window,
+    performing deep repository intelligence without polluting the orchestrator's context. Only a compact
+    summary propagates upward. This is <strong>context engineering</strong> in practice.
+  </HighlightBox>
+
+  <div class="flex flex-col gap-4 mt-6">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="Phase 1: Extract — /dx-figma-extract" horizontal>
+      Live <strong>tool use</strong> via Figma MCP -- pulls the node tree, design tokens, and screenshots
+      directly from the running Figma desktop app. Classifies each layer using adaptive intelligence.
+      Downloads image assets locally.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-extract.md + figma-reference.png + assets/</p>
+    </ContentCard>
+
+    <ContentCard icon="mdi:account-group" iconColor="bg-cyan" title="Phase 2: Prototype — /dx-figma-prototype" horizontal>
+      <strong>Parallel reasoning</strong> across two specialized agents: <code>dx-figma-styles</code> performs
+      repository intelligence on your CSS/SCSS conventions while <code>dx-figma-markup</code> simultaneously
+      discovers HTML/accessibility patterns. The orchestrator merges both results into a standalone prototype
+      that uses your project's actual design tokens.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-conventions.md + prototype/index.html + styles.css + script.js</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">Figma Source</p>
+          <img src={`${import.meta.env.BASE_URL}/images/figma-demo/air-tours-reference.png`} alt="Figma Source" class="rounded border border-gray-200 w-full" />
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">Generated Prototype</p>
+          <img src={`${import.meta.env.BASE_URL}/images/figma-demo/prototype-screenshot.png`} alt="Generated Prototype" class="rounded border border-gray-200 w-full" />
+        </div>
+      </div>
+    </ContentCard>
+
+    <ContentCard icon="mdi:camera" iconColor="bg-emerald-600" title="Phase 3: Verify — /dx-figma-verify" horizontal>
+      <strong>Closed-loop verification</strong> via Chrome DevTools MCP -- the agent opens a real browser,
+      renders the prototype, takes a clean screenshot, and compares it against the Figma reference.
+      If visual gaps are detected, the self-healing loop patches CSS/HTML and re-verifies -- up to 2 iterations.
+
+      <p class="mt-1 text-[#7a7a8a] font-mono text-sm">Output: figma-gaps.md + prototype-screenshot.png</p>
+    </ContentCard>
+  </div>
+
+  <div class="mt-6 border border-gray-200 rounded overflow-hidden">
+    <video src={`${import.meta.env.BASE_URL}/videos/figma-all-speed.mp4`} controls class="w-full"></video>
+    <div class="p-3 bg-gray-50">
+      <h4 class="font-semibold text-brand-900">See It in Action</h4>
+      <p class="text-sm text-[#4a4a5a]">/dx-figma-all running end to end -- extract, prototype, verify -- in a single conversation.</p>
+    </div>
+  </div>
+
+  <HighlightBox severity="success" title="Human-in-the-Loop: Manual Step-by-Step">
+    Every phase can also be run individually: <code>/dx-figma-extract</code>, <code>/dx-figma-prototype</code>,
+    <code>/dx-figma-verify</code>. The developer stays in control -- inspect, adjust, iterate between steps.
+    Same composable skills, two modes: <strong>bounded autonomy</strong> or <strong>supervised execution</strong>.
+  </HighlightBox>
+
+  <ContentCard title="AEM Verification Screenshots">
+    Captured by <code>/aem-fe-verify</code> -- the agent creates a test page and configures the component
+    via AEM MCP (JCR writes), sourcing matching images and text content from the DAM automatically.
+    Screenshots are taken via Chrome DevTools MCP to verify the rendered output against the Figma reference.
+
+    <div class="grid md:grid-cols-2 gap-4 mt-4">
+      <div>
+        <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">AEM Component Dialog</p>
+        <img src={`${import.meta.env.BASE_URL}/images/aem/aem-dialog.png`} alt="AEM Component Dialog" class="rounded border border-gray-200 w-full" />
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-[#7a7a8a] uppercase mb-1">AEM Rendered Page</p>
+        <img src={`${import.meta.env.BASE_URL}/images/aem/aem-page.png`} alt="AEM Rendered Page" class="rounded border border-gray-200 w-full" />
+      </div>
+    </div>
+  </ContentCard>
+</Section>
+
 {/* Quality Gates */}
 <SectionHeading
   badge="Quality"
   badgeColor="info"
   title="Quality Gates -- From Code to PR"
   subtitle="Multiple verification layers ensure code quality before a PR is ever created."
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <PipelineBlock
@@ -186,7 +277,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   badgeColor="secondary"
   title="Autonomous PR Review"
   subtitle="Every PR gets reviewed automatically. The agent adapts its response based on what it finds."
-  bg="alt"
+  bg="primary"
 />
 <Section>
   <PipelineBlock
@@ -228,7 +319,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   badgeColor="error"
   title="Bug Triage with Browser Automation"
   subtitle="The agent opens a browser, reproduces the bug, captures evidence, analyzes root cause, writes the fix."
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <PipelineBlock
@@ -262,7 +353,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   badgeColor="error"
   title="Built on Enterprise Tools"
   subtitle="No custom agent framework. Everything runs on Claude Code CLI and GitHub Copilot CLI -- enterprise-grade, auditable, supported."
-  bg="alt"
+  bg="primary"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
@@ -287,7 +378,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   badgeColor="secondary"
   title="Three-Layer Architecture"
   subtitle="Modular layers that work independently or together, from foundation to full autonomy."
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
@@ -327,7 +418,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   badgeColor="success"
   title="Before & After"
   subtitle="Measurable improvement across every phase of delivery."
-  bg="alt"
+  bg="primary"
 />
 <Section>
   <div class="overflow-x-auto">
@@ -363,4 +454,36 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       4 plugins, independently installable. AEM logic stays in its own plugin. Works with any tech stack across connected multi repos.
     </ContentCard>
   </div>
+</Section>
+
+{/* Key Demo Commands */}
+<SectionHeading
+  badge="Commands"
+  badgeColor="secondary"
+  title="Key Demo Commands"
+  subtitle="Copy-paste ready commands for live demos."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="/dx-req">/dx-req &lt;Story-ID&gt;</CommandBlock>
+  <CommandBlock label="/dx-plan">/dx-plan</CommandBlock>
+  <CommandBlock label="/dx-step-all">/dx-step-all</CommandBlock>
+  <CommandBlock label="/dx-step-build">/dx-step-build</CommandBlock>
+  <CommandBlock label="/dx-step-verify">/dx-step-verify</CommandBlock>
+  <CommandBlock label="/dx-pr">/dx-pr</CommandBlock>
+  <CommandBlock label="/dx-pr-review">/dx-pr-review &lt;PR-URL&gt;</CommandBlock>
+  <CommandBlock label="/dx-bug-all">/dx-bug-all &lt;Bug-ID&gt;</CommandBlock>
+  <CommandBlock label="/dx-figma-all">/dx-figma-all &lt;Figma-URL&gt;</CommandBlock>
+  <CommandBlock label="/auto-status">/auto-status</CommandBlock>
+
+  <HighlightBox severity="warning" title="Pre-Demo Checklist">
+    <ul class="mt-2 space-y-1 text-sm">
+      <li>Terminal open in repo with Claude Code CLI ready</li>
+      <li>Figma desktop app open with the design file loaded (for Figma demo)</li>
+      <li>Chrome open (for DevTools MCP)</li>
+      <li>AEM running locally on :4502 (for AEM demo)</li>
+      <li>ADO or Jira browser tabs: Backlog, Pipelines, a PR with review comments</li>
+      <li>Clean spec dirs if re-running: <code>rm -rf .ai/specs/&lt;id&gt;-*/</code></li>
+    </ul>
+  </HighlightBox>
 </Section>
