@@ -7,7 +7,7 @@ resources:
       type: git
       name: {{ADO_PROJECT}}/{{ADO_REPO}}
       ref: development
-# Claude Agent SDK pipeline — DoR Check via /dx-req-all skill.
+# Claude Agent SDK pipeline — DoR Check via /dx-req skill.
 # Triggered by Lambda webhook on work item state change.
 
 parameters:
@@ -42,7 +42,7 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)
 
   - bash: |
-      PROMPT="/dx-req-all ${{ parameters.workItemId }}"
+      PROMPT="/dx-req ${{ parameters.workItemId }}"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze only, do NOT post comments to ADO)"
       else

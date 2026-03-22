@@ -5,7 +5,7 @@
 ### Layer 2: Skill Triggering Evals
 - [ ] Create `tests/` directory with bash test helpers (`run_claude`, `assert_contains`, `assert_order`)
 - [ ] Write trigger tests for key skills: does natural language prompt invoke the right skill?
-- [ ] Write explicit invocation tests: does `/dx-req-all 12345` trigger `dx-req-all`?
+- [ ] Write explicit invocation tests: does `/dx-req 12345` trigger `dx-req`?
 - [ ] Add `ANTHROPIC_API_KEY` as GitHub Actions secret
 - [ ] Create `tests/run-evals.sh` runner with `--quick` (10 key skills) and `--full` (all 78) modes
 - [ ] CI workflow: run on release tags only (expensive, non-deterministic)
@@ -155,7 +155,7 @@ All skill directories were prefixed with their plugin abbreviation (`dx-init`, `
 
 ## Better visual separation in multi-step skill logs
 
-Coordinator skills (`dx-req-all`, `dx-step-all`, `dx-agent-all`, `dx-bug-all`) run many steps sequentially. In the terminal output, step boundaries blend together — it's hard to see where one step ends and the next begins.
+Coordinator skills (`dx-req`, `dx-step-all`, `dx-agent-all`, `dx-bug-all`) run many steps sequentially. In the terminal output, step boundaries blend together — it's hard to see where one step ends and the next begins.
 
 **Idea:** Print a long horizontal rule (`────────────────────────────────`) above and below each step title, e.g.:
 

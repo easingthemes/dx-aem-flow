@@ -228,7 +228,7 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 
 - **"No spec files found — nothing to generate from"**
   **Cause:** The spec directory exists but contains no recognized files (explain.md, implement.md, etc.).
-  **Fix:** Run the requirements and planning pipeline first (`/dx-req-all <id>` or `/dx-plan <id>`). Even `raw-story.md` alone is enough for a basic page.
+  **Fix:** Run the requirements and planning pipeline first (`/dx-req <id>` or `/dx-plan <id>`). Even `raw-story.md` alone is enough for a basic page.
 
 - **"docs/wiki-page.md already up to date — skipping"**
   **Cause:** The wiki page was already generated and the source files haven't changed.

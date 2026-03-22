@@ -351,7 +351,7 @@ Systematic error diagnosis. Read-only — traces errors through code, identifies
 | Property | Value |
 |----------|-------|
 | **Template** | `plugins/dx-core/templates/agents/DxReqAll.agent.md.template` |
-| **Claude equivalent** | (skill: /dx-req-all) |
+| **Claude equivalent** | (skill: /dx-req) |
 | **Invoke** | `@DxReqAll <work-item-id>` |
 
 Full requirements pipeline coordinator. Invokes `/dx-req` which handles all 5 phases (fetch → dor → explain → research → share).
