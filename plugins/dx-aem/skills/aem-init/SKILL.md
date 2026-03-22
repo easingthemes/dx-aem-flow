@@ -423,17 +423,26 @@ echo "$AEM_INSTANCES"
    Alternative: add to .claude/settings.local.json under "env" (Claude Code only, not Copilot CLI).
    ```
 
-3. **Also update `.claude/settings.local.json`** if it exists — add the `AEM_INSTANCES` key as a placeholder so users have a reference of the expected format. Do NOT overwrite existing values:
+3. **Also update `.claude/settings.local.json`** — add the `AEM_INSTANCES` key as a placeholder. Do NOT overwrite existing values:
+
+   a. **If file exists:** Merge `AEM_INSTANCES` into the existing `"env"` object.
+
+   b. **If file does not exist:** Create it with both base dx env vars and AEM env vars:
 
    ```json
    {
      "env": {
+       "QA_BASIC_AUTH_USER": "",
+       "QA_BASIC_AUTH_PASS": "",
+       "QA_BASIC_AUTH_FALLBACK_USER": "",
+       "QA_BASIC_AUTH_FALLBACK_PASS": "",
+       "AXE_API_KEY": "",
        "AEM_INSTANCES": "local:http://localhost:4502:admin:admin"
      }
    }
    ```
 
-   Report: "Added AEM_INSTANCES placeholder to `.claude/settings.local.json`. Preferred: set in shell profile for both Claude Code and Copilot CLI."
+   Report: "Updated `.claude/settings.local.json` with AEM_INSTANCES. Preferred: set in shell profile for both Claude Code and Copilot CLI."
 
 ## 12. Summary
 
