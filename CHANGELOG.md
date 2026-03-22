@@ -1,3 +1,17 @@
+# [2.56.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.3...v2.56.0) (2026-03-22)
+
+
+### Bug Fixes
+
+* images updates ([7799e6f](https://github.com/easingthemes/dx-aem-flow/commit/7799e6f74aad39faa1a39f718347a1b47e231605))
+* sync dx-hub plugin version with other plugins ([8b8a9e5](https://github.com/easingthemes/dx-aem-flow/commit/8b8a9e5b2cbdf8ae1e1f566184aa732a4e31c935))
+* update all stale skill references after merges and renames ([a574d81](https://github.com/easingthemes/dx-aem-flow/commit/a574d81d200561161bb9d7e8a2d0efcbc4736fef))
+
+
+### Features
+
+* add SessionStart hook suggesting next skill based on spec state ([aac019b](https://github.com/easingthemes/dx-aem-flow/commit/aac019b0e5942eb1e01c131036eda12e94aeeb3a))
+
 ## [2.55.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.2...v2.55.3) (2026-03-22)
 
 
