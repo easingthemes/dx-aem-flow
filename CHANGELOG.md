@@ -1,3 +1,10 @@
+# [2.54.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.4...v2.54.0) (2026-03-22)
+
+
+### Features
+
+* add GitHub repo link with icon to website footer ([8994841](https://github.com/easingthemes/dx-aem-flow/commit/8994841d1d0635ecd1adb5a63f2c64f8b643f909))
+
 ## [2.53.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.53.3...v2.53.4) (2026-03-22)
 
 
