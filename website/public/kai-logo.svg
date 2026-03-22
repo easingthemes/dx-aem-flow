@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 10 8" width="512" height="410" shape-rendering="crispEdges">
+  <!-- KAI Logo - 8x7 face grid + 2 ears outside -->
+  <defs>
+    <style>
+      .p { fill: #9B72B0; }
+      .b { fill: #1A1A1A; }
+      .r { fill: #E91E63; }
+      .w { fill: #F5F0E0; }
+    </style>
+  </defs>
+
+  <!-- Ears outside the grid at (-1,-1) and (8,-1) -->
+  <rect x="-1" y="-1" width="1" height="1" class="r"/>
+  <rect x="8"  y="-1" width="1" height="1" class="r"/>
+
+  <!-- Row 0: pppppppp -->
+  <rect x="0" y="0" width="1" height="1" class="p"/>
+  <rect x="1" y="0" width="1" height="1" class="p"/>
+  <rect x="2" y="0" width="1" height="1" class="p"/>
+  <rect x="3" y="0" width="1" height="1" class="p"/>
+  <rect x="4" y="0" width="1" height="1" class="p"/>
+  <rect x="5" y="0" width="1" height="1" class="p"/>
+  <rect x="6" y="0" width="1" height="1" class="p"/>
+  <rect x="7" y="0" width="1" height="1" class="p"/>
+
+  <!-- Row 1: pbbppbbp -->
+  <rect x="0" y="1" width="1" height="1" class="p"/>
+  <rect x="1" y="1" width="1" height="1" class="b"/>
+  <rect x="2" y="1" width="1" height="1" class="b"/>
+  <rect x="3" y="1" width="1" height="1" class="p"/>
+  <rect x="4" y="1" width="1" height="1" class="p"/>
+  <rect x="5" y="1" width="1" height="1" class="b"/>
+  <rect x="6" y="1" width="1" height="1" class="b"/>
+  <rect x="7" y="1" width="1" height="1" class="p"/>
+
+  <!-- Row 2: pbwppwbp -->
+  <rect x="0" y="2" width="1" height="1" class="p"/>
+  <rect x="1" y="2" width="1" height="1" class="b"/>
+  <rect x="2" y="2" width="1" height="1" class="w"/>
+  <rect x="3" y="2" width="1" height="1" class="p"/>
+  <rect x="4" y="2" width="1" height="1" class="p"/>
+  <rect x="5" y="2" width="1" height="1" class="w"/>
+  <rect x="6" y="2" width="1" height="1" class="b"/>
+  <rect x="7" y="2" width="1" height="1" class="p"/>
+
+  <!-- Row 3: pppppppp -->
+  <rect x="0" y="3" width="1" height="1" class="p"/>
+  <rect x="1" y="3" width="1" height="1" class="p"/>
+  <rect x="2" y="3" width="1" height="1" class="p"/>
+  <rect x="3" y="3" width="1" height="1" class="p"/>
+  <rect x="4" y="3" width="1" height="1" class="p"/>
+  <rect x="5" y="3" width="1" height="1" class="p"/>
+  <rect x="6" y="3" width="1" height="1" class="p"/>
+  <rect x="7" y="3" width="1" height="1" class="p"/>
+
+  <!-- Row 4: pprrrppp -->
+  <rect x="0" y="4" width="1" height="1" class="p"/>
+  <rect x="1" y="4" width="1" height="1" class="p"/>
+  <rect x="2" y="4" width="1" height="1" class="r"/>
+  <rect x="3" y="4" width="1" height="1" class="r"/>
+  <rect x="4" y="4" width="1" height="1" class="r"/>
+  <rect x="5" y="4" width="1" height="1" class="p"/>
+  <rect x="6" y="4" width="1" height="1" class="p"/>
+  <rect x="7" y="4" width="1" height="1" class="p"/>
+
+  <!-- Row 5: ppbrbppp -->
+  <rect x="0" y="5" width="1" height="1" class="p"/>
+  <rect x="1" y="5" width="1" height="1" class="p"/>
+  <rect x="2" y="5" width="1" height="1" class="b"/>
+  <rect x="3" y="5" width="1" height="1" class="r"/>
+  <rect x="4" y="5" width="1" height="1" class="b"/>
+  <rect x="5" y="5" width="1" height="1" class="p"/>
+  <rect x="6" y="5" width="1" height="1" class="p"/>
+  <rect x="7" y="5" width="1" height="1" class="p"/>
+
+  <!-- Row 6: pppppppp -->
+  <rect x="0" y="6" width="1" height="1" class="p"/>
+  <rect x="1" y="6" width="1" height="1" class="p"/>
+  <rect x="2" y="6" width="1" height="1" class="p"/>
+  <rect x="3" y="6" width="1" height="1" class="p"/>
+  <rect x="4" y="6" width="1" height="1" class="p"/>
+  <rect x="5" y="6" width="1" height="1" class="p"/>
+  <rect x="6" y="6" width="1" height="1" class="p"/>
+  <rect x="7" y="6" width="1" height="1" class="p"/>
+
+  <!-- Outlines -->
+  <rect x="0" y="0" width="8" height="7" fill="none" stroke="#3A2050" stroke-width="0.12"/>
+  <rect x="1" y="1" width="2" height="2" fill="none" stroke="#3A2050" stroke-width="0.12"/>
+  <rect x="5" y="1" width="2" height="2" fill="none" stroke="#3A2050" stroke-width="0.12"/>
+  <rect x="2" y="4" width="3" height="2" fill="none" stroke="#3A2050" stroke-width="0.12"/>
+</svg>
