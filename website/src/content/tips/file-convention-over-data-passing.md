@@ -18,9 +18,9 @@ slackText: |
   
   ```
   .ai/specs/<ticket-id>-<slug>/
-  ├── raw-story.md      ← /dx-req-fetch writes this
-  ├── explain.md        ← /dx-req-explain reads raw-story, writes this
-  ├── research.md       ← /dx-req-research reads explain, writes this
+  ├── raw-story.md      ← /dx-req writes this (Phase 1: fetch)
+  ├── explain.md        ← /dx-req writes this (Phase 3: explain)
+  ├── research.md       ← /dx-req writes this (Phase 4: research)
   ├── implement.md      ← /dx-plan reads all above, writes this
   └── figma-extract.md  ← /dx-figma-extract writes this
   ```
@@ -33,18 +33,16 @@ slackText: |
   
   *No APIs, no return values, no coupling.* Skills find each other's output by convention. This is the same principle as Unix pipes — small tools, predictable I/O.
   
-  💡 Try it: Run `/dx-req-fetch <id>` then look inside `.ai/specs/`. Read the files. You'll see exactly what the AI captured.
+  💡 Try it: Run `/dx-req <id>` then look inside `.ai/specs/`. Read the files. You'll see exactly what the AI captured.
   
   #AgenticAI #Day19
 ---
 
 ```
-# /dx-req-fetch writes:
+# /dx-req writes all phases:
 .ai/specs/12345-login-bug/raw-story.md
-
-# /dx-req-explain reads raw-story.md,
-# writes:
 .ai/specs/12345-login-bug/explain.md
+.ai/specs/12345-login-bug/research.md
 
 # /dx-plan reads explain.md, writes:
 .ai/specs/12345-login-bug/implement.md

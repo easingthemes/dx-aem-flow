@@ -51,7 +51,7 @@ maxTurns: 15    # simple lookup
 ---
 
 ---
-name: dx-step-executor
+name: dx-pr-reviewer
 model: sonnet
 maxTurns: 50    # complex implementation
 ---

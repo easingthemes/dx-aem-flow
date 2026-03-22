@@ -129,11 +129,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard
       icon="mdi:diamond-stone"
       iconColor="bg-amber-500"
-      title="dx-step-executor"
+      title="dx-pr-reviewer"
       tags={[{ label: 'Sonnet', color: 'warning' }]}
     >
-      Executes implementation plan steps. Has 22 preloaded skills and
-      <code>acceptEdits</code> permission for autonomous file changes.
+      Reviews PR diffs with project conventions. Posts structured findings
+      with severity levels and inline code patches.
     </ContentCard>
     <ContentCard
       icon="mdi:circle"
@@ -200,8 +200,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="warning" title="Agent Type Naming">
-    Always use the full prefixed name: <code>dx-core:dx-step-executor</code>, NOT
-    just <code>dx-step-executor</code>. The short name fails with "Agent type not found".
+    Always use the full prefixed name: <code>dx-core:dx-code-reviewer</code>, NOT
+    just <code>dx-code-reviewer</code>. The short name fails with "Agent type not found".
   </HighlightBox>
 </Section>
 

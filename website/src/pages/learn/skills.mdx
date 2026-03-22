@@ -98,7 +98,7 @@ a step-by-step implementation plan.
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>allowed-tools</code></td><td class="py-2 px-4">Tools the AI can use</td><td class="py-2 px-4"><code>all, or [read, edit, grep]</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>disable-model-invocation</code></td><td class="py-2 px-4">Skip AI reasoning (template-only)</td><td class="py-2 px-4"><code>true</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>context: fork</code></td><td class="py-2 px-4">Run in isolated subagent context</td><td class="py-2 px-4"><code>fork</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent:</code></td><td class="py-2 px-4">Run as a specific agent type</td><td class="py-2 px-4"><code>dx-step-executor</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent:</code></td><td class="py-2 px-4">Run as a specific agent type</td><td class="py-2 px-4"><code>dx-code-reviewer</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -108,14 +108,14 @@ a step-by-step implementation plan.
   badge="Categories"
   badgeColor="warning"
   title="Skill Categories in KAI"
-  subtitle="78 skills organized by workflow phase."
+  subtitle="69 skills organized by workflow phase."
   bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
     <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="Requirements (/dx-req-*)">
       Fetch work items (ADO or Jira), explain requirements, research the codebase, share plans with the team.
-      <CommandBlock label="Example">/dx-req-fetch 2467362</CommandBlock>
+      <CommandBlock label="Example">/dx-req 2467362</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:playlist-check" iconColor="bg-cyan" title="Planning (/dx-plan)">
       Generate step-by-step implementation plans with file paths, code changes, and rationale.

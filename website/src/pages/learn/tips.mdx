@@ -13,7 +13,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Tips & Best Practices"
-  subtitle="Practical advice from building 78 skills and running 10 autonomous agents"
+  subtitle="Practical advice from building 69 skills and running 10 autonomous agents"
 />
 
 <SectionHeading
@@ -31,10 +31,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
     <ContentCard icon="mdi:play" iconColor="bg-emerald-600" title="Start Small">
       Don't run <code>/dx-agent-all</code> on day one. Start with the building blocks:
-      <CommandBlock label="Learning path">{`/dx-req-fetch <id>    # fetch a story
-/dx-req-explain       # understand requirements
-/dx-req-research      # find affected files
-/dx-plan              # generate a plan`}</CommandBlock>
+      <CommandBlock label="Learning path">{`/dx-req <id>          # full requirements pipeline
+/dx-plan              # generate a plan
+/dx-step              # execute a step`}</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:eye" iconColor="bg-cyan-dark" title="Review, Don't Trust Blindly">
       AI makes mistakes. Code review exists for a reason. <code>/dx-step-verify</code> runs
