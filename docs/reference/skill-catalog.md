@@ -8,20 +8,14 @@
 |-------|-----------|----------|-------------|--------|
 | dx-estimate | `/dx-estimate` | `<work-item-id or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. | ADO/Jira comment |
 
-### Requirements (`dx-req-*`) — 11 skills
+### Requirements (`dx-req-*`) — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-req-all | `/dx-req-all` | `<work-item-id>` | Full pipeline: fetch → dor → explain → research → share. Gates on DoR blocking questions. Logs run metrics to `.ai/learning/`. | All spec files + ADO comments |
-| dx-req-fetch | `/dx-req-fetch` | `<work-item-id>` | Pull work item from Azure DevOps or Jira via MCP, save faithfully | `raw-story.md` |
-| dx-req-dor | `/dx-req-dor` | `<work-item-id>` (optional) | Validate story against DoR wiki checklist (`scm.wiki-dor-url`), extract BA data, generate open questions. Posts interactive checkbox comment to ADO/Jira (idempotent). On re-run, reads checkbox state — if BA checked items, re-fetches story and re-validates. Two-pass: first on raw-story.md, second after research.md. | `dor-report.md` + ADO/Jira comment |
-| dx-req-explain | `/dx-req-explain` | `<work-item-id>` (optional) | Distill story into developer-focused requirements. Reads DoR report for BA context. | `explain.md` |
-| dx-req-research | `/dx-req-research` | `<work-item-id>` (optional) | Search codebase for related code via parallel agents. Skips discovery when DoR data available. | `research.md` |
-| dx-req-share | `/dx-req-share` | `<work-item-id>` (optional) | Generate non-technical summary with assumptions from DoR. Posts to ADO/Jira (idempotent). | `share-plan.md` + ADO/Jira comment |
-| dx-req-checklist | `/dx-req-checklist` | `<work-item-id>` (optional) | ⚠️ **Deprecated** — use `/dx-req-dor` instead. Kept for backward compatibility. | `checklist.md` |
+| dx-req-all | `/dx-req-all` | `<work-item-id>` | Full pipeline coordinator: invokes dx-req. Gates on DoR blocking questions. Logs run metrics to `.ai/learning/`. | All spec files + ADO comments |
+| dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — 5 phases: fetch, DoR, explain, research, share | All spec files + ADO comments |
 | dx-req-tasks | `/dx-req-tasks` | `<work-item-id>` | Create child Task work items with hour estimates | ADO/Jira tasks |
-| dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done against ADO/Jira wiki checklist (`scm.wiki-dod-url`) — validates actual deliverables: PR, tests, build, docs, child tasks | `dod.md` |
-| dx-req-dod-fix | `/dx-req-dod-fix` | `<work-item-id>` | Fix DoD failures: auto-fix what's possible, create tasks for the rest | Updated `dod.md` + tasks |
+| dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
 | dx-req-import | `/dx-req-import` | `<path-to-file>` | Validate external (non-ADO) requirements document | `explain.md` |
 
 ### Figma (`dx-figma-*`) — 4 skills
@@ -41,31 +35,25 @@
 | dx-plan-validate | `/dx-plan-validate` | `<work-item-id>` (optional) | Verify plan covers all requirements, no extras, dependencies correct | Warnings/OK |
 | dx-plan-resolve | `/dx-plan-resolve` | `<work-item-id>` (optional) | Research and fix risks flagged by validation | Updated `implement.md` |
 
-### Execution (`dx-step-*`) — 9 skills
+### Execution (`dx-step-*`) — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-step-all | `/dx-step-all` | `<work-item-id>` (optional) | Execute all plan steps autonomously (step → test → review → commit loop). Loads fix memory, logs fix patterns, promotes proven fixes to `.claude/rules/`. | All steps done |
-| dx-step | `/dx-step` | `<work-item-id>` (optional) | Execute next pending step from implement.md. Optionally invokes `superpowers:test-driven-development` for TDD discipline. | Code changes |
-| dx-step-test | `/dx-step-test` | `<work-item-id>` (optional) | Run tests and parse results into pass/fail summary | Test report |
-| dx-step-review | `/dx-step-review` | `<work-item-id>` (optional) | Review step changes against plan and conventions | Review verdict |
-| dx-step-fix | `/dx-step-fix` | `<work-item-id>` (optional) | Diagnose and fix a blocked step (compile error, test failure, review rejection). Optionally invokes `superpowers:systematic-debugging` for structured diagnosis. | Fix applied |
-| dx-step-commit | `/dx-step-commit` | `<work-item-id>` (optional) | Stage and commit completed step changes | Git commit |
-| dx-step-heal | `/dx-step-heal` | `<work-item-id>` (optional) | Diagnose pipeline failures, create corrective fix steps in implement.md | New fix steps |
+| dx-step-all | `/dx-step-all` | `<work-item-id>` (optional) | Execute all plan steps autonomously (step → fix loop). Loads fix memory, logs fix patterns, promotes proven fixes to `.claude/rules/`. | All steps done |
+| dx-step | `/dx-step` | `<work-item-id>` (optional) | Execute next pending step — implement, test, review, and commit. Optionally invokes `superpowers:test-driven-development` for TDD discipline. | Code changes + commit |
+| dx-step-fix | `/dx-step-fix` | `<work-item-id>` (optional) | Diagnose and fix a blocked step — direct fix or corrective steps in implement.md. Optionally invokes `superpowers:systematic-debugging` for structured diagnosis. | Fix applied |
 | dx-step-build | `/dx-step-build` | none | Build and deploy using config build command, auto-fix errors iteratively | Build pass/fail |
 | dx-step-verify | `/dx-step-verify` | `<work-item-id>` (optional) | 6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Optionally invokes `superpowers:verification-before-completion` for evidence-based verification. | Verdict |
 
-### Pull Request (`dx-pr-*`) — 8 skills
+### Pull Request (`dx-pr-*`) — 7 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-pr | `/dx-pr` | `<work-item-id>` (optional) | Create pull request via ADO MCP, generate description from share-plan.md. Optionally invokes `superpowers:finishing-a-development-branch` for branch readiness. | PR URL |
 | dx-pr-commit | `/dx-pr-commit` | `[pr]` | Commit changes with ADO work item linking; add `pr` to also create a PR | Git commit [+ PR] |
-| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, save findings, optionally propose fix patches | Findings file |
-| dx-pr-post | `/dx-pr-post` | `<PR-id or URL>` | Post saved PR review findings to ADO — threads with optional fix patches + vote | ADO comments |
+| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, post comments, propose fix patches + vote | Findings file + ADO comments |
 | dx-pr-review-all | `/dx-pr-review-all` | none | Batch-review multiple open PRs assigned to you | Multiple reviews |
-| dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches | ADO replies |
-| dx-pr-fix | `/dx-pr-fix` | `<PR-id or URL>` (optional) | Apply agree-will-fix code changes from reviews, commit, push, reply to threads | Code + replies |
+| dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches, apply agree-will-fix changes | ADO replies + code fixes |
 | dx-pr-review-report | `/dx-pr-review-report` | `<PR-id or URL>` | Generate categorized report from PR review — groups by category, tracks patch resolution, posts to wiki. Uses report template from `assets/report-template.md`. | Report + wiki page |
 | dx-pr-reviews-report | `/dx-pr-reviews-report` | `[--any] [PR URL | Repo URL | count] [count]` | Batch-generate review reports. Default: PRs where you are reviewer (excl. own), parallel agents. `--any`: all PRs with threads, sequential with selection. Helper script: `scripts/check-existing-reports.sh`. | Multiple reports + wiki |
 
@@ -133,23 +121,16 @@ Coordinator skills are implemented as Copilot agents with `handoffs:` (see [agen
 ## Skill Dependencies
 
 ```
-dx-req-all ─┬─ dx-req-fetch
-             ├─ dx-req-dor (needs dx-req-fetch) → posts [DoRAgent] checkbox comment to ADO
-             │    ↓ GATE: blocks if blocking questions exist
-             │    ↻ BA checks items in ADO → re-run reads checkbox state → re-validates
-             ├─ dx-req-explain (needs dx-req-fetch, reads dor-report.md)
-             ├─ dx-req-research (needs dx-req-explain, reads dor-report.md)
-             └─ dx-req-share (needs dx-req-explain, reads dor-report.md assumptions) → posts [DevPlan] to ADO
+dx-req-all ── dx-req (5 phases: fetch → dor → explain → research → share)
+                  ↓ GATE: blocks if DoR has blocking questions
+                  ↻ BA checks items in ADO → re-run reads checkbox state → re-validates
 
 dx-agent-all ─┬─ dx-agent-re
-              ├─ dx-plan (needs dx-req-explain + dx-req-research)
+              ├─ dx-plan (needs explain + research from dx-req)
               ├─ dx-plan-validate (needs dx-plan)
               ├─ dx-plan-resolve (needs dx-plan-validate)
-              ├─ dx-step-all ─┬─ dx-step
-              │               ├─ dx-step-test
-              │               ├─ dx-step-review
-              │               ├─ dx-step-fix
-              │               └─ dx-step-commit
+              ├─ dx-step-all ─┬─ dx-step (includes test, review, commit)
+              │               └─ dx-step-fix
               ├─ dx-step-build
               ├─ dx-step-verify
               ├─ dx-pr
@@ -160,8 +141,7 @@ dx-bug-all ─┬─ dx-bug-triage
              ├─ dx-bug-verify (needs triage)
              └─ dx-bug-fix (needs triage + verify)
 
-dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO)
-dx-req-dod-fix ── dx-req-dod (needs dod.md), optionally invokes dx-doc-gen + aem-doc-gen
+dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, includes auto-fix)
 ```
 
 ## dx-aem plugin — 10 skills

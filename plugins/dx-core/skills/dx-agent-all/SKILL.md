@@ -605,7 +605,7 @@ Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not foun
 
 Review the results above.
 If build failed, fix the issues and run `/dx-step-build` to retry.
-If review failed after healing, run `/dx-step-heal` manually to diagnose, then `/dx-step-verify`.
+If review failed after fixing, run `/dx-step-fix` manually to diagnose, then `/dx-step-verify`.
 If auto-PR was off, create PR manually with `/dx-pr`.
 ```
 

@@ -170,7 +170,7 @@ If you get a "tool not found" error, **fall back to ToolSearch**:
 ToolSearch query: "+chrome-devtools navigate"
 ```
 
-**IMPORTANT:** Do NOT start with ToolSearch. If tools are pre-loaded (e.g., when running as a subagent via dx-step-executor), ToolSearch returns nothing because it only finds deferred tools — and you'll wrongly conclude Chrome DevTools is unavailable.
+**IMPORTANT:** Do NOT start with ToolSearch. If tools are pre-loaded (e.g., when running as a subagent), ToolSearch returns nothing because it only finds deferred tools — and you'll wrongly conclude Chrome DevTools is unavailable.
 
 ### Tools available?
 
