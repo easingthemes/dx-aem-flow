@@ -1,3 +1,5 @@
+## [2.58.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.1...v2.58.2) (2026-03-22)
+
 ## [2.58.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.0...v2.58.1) (2026-03-22)
 
 
