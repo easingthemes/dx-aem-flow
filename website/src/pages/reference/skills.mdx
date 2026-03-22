@@ -14,7 +14,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Skill Catalog"
-  subtitle="All slash commands across the three plugins -- 78 skills total"
+  subtitle="All slash commands across the four plugins -- 69 skills total"
 />
 
 <SectionHeading
@@ -25,7 +25,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
-    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '55 skills', color: 'primary' }]}>
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '43 skills', color: 'primary' }]}>
       Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR, bug fix, documentation, and utility.
     </ContentCard>
     <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: '12 skills', color: 'secondary' }]}>
@@ -68,7 +68,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-core"
   badgeColor="primary"
   title="Requirements (dx-req-&#42;)"
-  subtitle="11 skills"
+  subtitle="6 skills"
   bg="alt"
 />
 <Section>
@@ -81,16 +81,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-req-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full pipeline: fetch, dor, explain, research, share. Gates on DoR blocking questions. Logs run metrics.</td><td class="p-3">All spec files + ADO comments</td></tr>
-        <tr><td class="p-3"><code>/dx-req-fetch</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Pull work item from Azure DevOps or Jira via MCP, save faithfully.</td><td class="p-3"><code>raw-story.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-req-dor</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Validate story against DoR wiki checklist, extract BA data, generate open questions. Posts interactive checkbox comment to ADO/Jira (idempotent). On re-run, reads checkbox state -- if BA checked items, re-fetches and re-validates.</td><td class="p-3"><code>dor-report.md</code> + ADO/Jira comment</td></tr>
-        <tr><td class="p-3"><code>/dx-req-explain</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Distill story into developer-focused requirements. Reads DoR report for BA context.</td><td class="p-3"><code>explain.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-req-research</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Search codebase for related code via parallel agents. Skips discovery when DoR data available.</td><td class="p-3"><code>research.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-req-share</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Generate non-technical summary with assumptions from DoR. Posts to ADO/Jira (idempotent).</td><td class="p-3"><code>share-plan.md</code> + ADO/Jira comment</td></tr>
-        <tr><td class="p-3"><code>/dx-req-checklist</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Deprecated -- use <code>/dx-req-dor</code> instead. Kept for backward compatibility.</td><td class="p-3"><code>checklist.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-req-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Coordinator: invokes /dx-req. Gates on DoR blocking questions. Logs run metrics.</td><td class="p-3">All spec files + ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full requirements pipeline: fetch work item, validate DoR, distill dev requirements, research codebase, generate team summary. Posts interactive checkbox comment to ADO/Jira (idempotent).</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Create child Task work items with hour estimates.</td><td class="p-3">ADO/Jira tasks</td></tr>
-        <tr><td class="p-3"><code>/dx-req-dod</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Check Definition of Done against ADO/Jira wiki checklist -- validates actual deliverables: PR, tests, build, docs, child tasks.</td><td class="p-3"><code>dod.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-req-dod-fix</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Fix DoD failures: auto-fix what is possible, create tasks for the rest.</td><td class="p-3">Updated <code>dod.md</code> + tasks</td></tr>
+        <tr><td class="p-3"><code>/dx-req-dod</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Check Definition of Done against ADO/Jira wiki checklist -- validates actual deliverables: PR, tests, build, docs, child tasks. Auto-fixes what is possible, creates tasks for the rest.</td><td class="p-3"><code>dod.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path-to-file&gt;</code></td><td class="p-3">Validate external (non-ADO) requirements document.</td><td class="p-3"><code>explain.md</code></td></tr>
       </tbody>
     </table>
@@ -152,7 +146,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-core"
   badgeColor="primary"
   title="Execution (dx-step-&#42;)"
-  subtitle="9 skills"
+  subtitle="5 skills"
   bg="primary"
 />
 <Section>
@@ -165,13 +159,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-step-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute all plan steps autonomously (step, test, review, commit loop). Loads fix memory, logs fix patterns, promotes proven fixes to <code>.claude/rules/</code>.</td><td class="p-3">All steps done</td></tr>
-        <tr><td class="p-3"><code>/dx-step</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute next pending step from implement.md. Optionally invokes <code>superpowers:test-driven-development</code>.</td><td class="p-3">Code changes</td></tr>
-        <tr><td class="p-3"><code>/dx-step-test</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Run tests and parse results into pass/fail summary.</td><td class="p-3">Test report</td></tr>
-        <tr><td class="p-3"><code>/dx-step-review</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Review step changes against plan and conventions.</td><td class="p-3">Review verdict</td></tr>
-        <tr><td class="p-3"><code>/dx-step-fix</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Diagnose and fix a blocked step (compile error, test failure, review rejection). Optionally invokes <code>superpowers:systematic-debugging</code>.</td><td class="p-3">Fix applied</td></tr>
-        <tr><td class="p-3"><code>/dx-step-commit</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Stage and commit completed step changes.</td><td class="p-3">Git commit</td></tr>
-        <tr><td class="p-3"><code>/dx-step-heal</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Diagnose pipeline failures, create corrective fix steps in implement.md.</td><td class="p-3">New fix steps</td></tr>
+        <tr><td class="p-3"><code>/dx-step-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute all plan steps autonomously (step with test, review, commit loop). Loads fix memory, logs fix patterns, promotes proven fixes to <code>.claude/rules/</code>.</td><td class="p-3">All steps done</td></tr>
+        <tr><td class="p-3"><code>/dx-step</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Execute next pending step from implement.md with integrated test, review, and commit. Optionally invokes <code>superpowers:test-driven-development</code>.</td><td class="p-3">Code changes + commit</td></tr>
+        <tr><td class="p-3"><code>/dx-step-fix</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Diagnose and fix a blocked step (compile error, test failure, review rejection). Escalates to root cause analysis if targeted fixes fail. Optionally invokes <code>superpowers:systematic-debugging</code>.</td><td class="p-3">Fix applied</td></tr>
         <tr><td class="p-3"><code>/dx-step-build</code></td><td class="p-3">none</td><td class="p-3">Build and deploy using config build command, auto-fix errors iteratively.</td><td class="p-3">Build pass/fail</td></tr>
         <tr><td class="p-3"><code>/dx-step-verify</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Optionally invokes <code>superpowers:verification-before-completion</code>.</td><td class="p-3">Verdict</td></tr>
       </tbody>
@@ -183,7 +173,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-core"
   badgeColor="primary"
   title="Pull Request (dx-pr-&#42;)"
-  subtitle="8 skills"
+  subtitle="6 skills"
   bg="alt"
 />
 <Section>
@@ -198,11 +188,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-pr</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Create pull request via ADO MCP, generate description from share-plan.md. Optionally invokes <code>superpowers:finishing-a-development-branch</code>.</td><td class="p-3">PR URL</td></tr>
         <tr><td class="p-3"><code>/dx-pr-commit</code></td><td class="p-3"><code>[pr]</code></td><td class="p-3">Commit changes with ADO work item linking; add <code>pr</code> to also create a PR.</td><td class="p-3">Git commit [+ PR]</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-review</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Review a single PR -- analyze diff, save findings, optionally propose fix patches.</td><td class="p-3">Findings file</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-post</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Post saved PR review findings to ADO -- threads with optional fix patches + vote.</td><td class="p-3">ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-review</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Review a single PR -- analyze diff, save findings, post to ADO with optional fix patches + vote.</td><td class="p-3">Findings + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-all</code></td><td class="p-3">none</td><td class="p-3">Batch-review multiple open PRs assigned to you.</td><td class="p-3">Multiple reviews</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Answer open PR comments with codebase context, detect proposed patches.</td><td class="p-3">ADO replies</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-fix</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Apply agree-will-fix code changes from reviews, commit, push, reply to threads.</td><td class="p-3">Code + replies</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Answer open PR comments with codebase context, detect proposed patches. Applies agree-will-fix code changes, commits, pushes, and replies to threads.</td><td class="p-3">ADO replies + code</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Generate categorized report from PR review -- groups by category, tracks patch resolution, posts to wiki.</td><td class="p-3">Report + wiki page</td></tr>
         <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count]</code></td><td class="p-3">Generate categorized reports for multiple PR reviews -- batch reports posted to ADO Wiki or Confluence.</td><td class="p-3">Batch reports + wiki</td></tr>
       </tbody>
@@ -482,13 +470,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="dx-req-all chain">
     <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-req-all
-  ├─ dx-req-fetch
-  ├─ dx-req-dor (needs fetch) → posts checkbox comment to ADO
-  │    GATE: blocks if blocking questions exist
-  │    BA checks items → re-run reads state → re-validates
-  ├─ dx-req-explain (needs fetch, reads dor-report.md)
-  ├─ dx-req-research (needs explain, reads dor-report.md)
-  └─ dx-req-share (needs explain, reads dor-report.md)`}</code>
+  └─ dx-req (full pipeline: fetch → DoR → explain → research → share)
+       GATE: blocks if blocking questions exist
+       BA checks items → re-run reads state → re-validates`}</code>
   </ContentCard>
 
   <ContentCard icon="mdi:source-branch" iconColor="bg-cyan-dark" title="dx-agent-all chain" class="mt-4">
@@ -496,9 +480,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
   ├─ dx-agent-re
   ├─ dx-plan → dx-plan-validate → dx-plan-resolve
   ├─ dx-step-all
-  │    ├─ dx-step → dx-step-test → dx-step-review
-  │    ├─ dx-step-fix
-  │    └─ dx-step-commit
+  │    ├─ dx-step (includes test, review, commit)
+  │    └─ dx-step-fix (targeted fix + escalation)
   ├─ dx-step-build
   ├─ dx-step-verify
   ├─ dx-pr

@@ -155,7 +155,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-req-fetch &lt;id&gt;</code></td><td class="py-2 px-4">Fetch work item (ADO or Jira) and save raw spec</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-req &lt;id&gt;</code></td><td class="py-2 px-4">Full requirements pipeline (fetch, DoR, explain, research, share)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-plan</code></td><td class="py-2 px-4">Generate implementation plan from specs</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-step &lt;n&gt;</code></td><td class="py-2 px-4">Execute a single plan step</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>/dx-step-all</code></td><td class="py-2 px-4">Execute all plan steps with self-healing</td></tr>
@@ -178,7 +178,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <CommandBlock label="Check installed skills">claude skills list | grep "dx-"</CommandBlock>
 
   <HighlightBox severity="success" title="Expected Output">
-    You should see 78 skills listed (55 from dx-core, 12 from dx-aem, plus 11 automation skills if installed).
+    You should see 69 skills listed (43 from dx-core, 3 from dx-hub, 12 from dx-aem, plus 11 automation skills if installed).
   </HighlightBox>
 </Section>
 

@@ -28,8 +28,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     label="Recovery Layers"
     description="Escalation path from first-responder fix to deep healing to coordinator retry."
     steps={[
-      { title: 'Layer 1', subtitle: 'dx-step-fix\nOne-shot fixer', color: '#059669' },
-      { title: 'Layer 2', subtitle: 'dx-step-heal\nDeep analysis', color: '#d97706' },
+      { title: 'Layer 1', subtitle: 'dx-step-fix\nTargeted fix', color: '#059669' },
+      { title: 'Layer 2', subtitle: 'dx-step-fix\nEscalation (root cause)', color: '#d97706' },
       { title: 'Layer 3', subtitle: 'Coordinator\nRetry loop', color: '#dc2626' },
     ]}
   />
@@ -40,14 +40,14 @@ import CommandBlock from '../../components/CommandBlock.astro';
       report success or failure. No refactoring, no exploration.
     </ContentCard>
 
-    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Layer 2: dx-step-heal">
-      Triggered after 2 consecutive fix failures. Uses extended thinking (ultrathink) for deep
-      root-cause analysis. Creates corrective steps with a DIFFERENT approach.
+    <ContentCard icon="mdi:medical-bag" iconColor="bg-amber-500" title="Layer 2: dx-step-fix (escalation)">
+      Triggered after 2 consecutive fix failures. dx-step-fix escalates to root cause analysis using extended thinking (ultrathink).
+      Creates corrective steps with a DIFFERENT approach.
     </ContentCard>
 
     <ContentCard icon="mdi:refresh" iconColor="bg-red-500" title="Layer 3: Coordinator">
       The coordinator loop (dx-step-all, dx-agent-all) orchestrates the retry cadence: fix, fix,
-      heal, execute corrective steps, repeat up to 2 healing cycles.
+      escalate, execute corrective steps, repeat up to 2 escalation cycles.
     </ContentCard>
   </div>
 </Section>
@@ -85,7 +85,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <SectionHeading
   badge="Layer 2"
   badgeColor="warning"
-  title="dx-step-heal -- Deep Root-Cause Analysis"
+  title="dx-step-fix (escalation) -- Deep Root-Cause Analysis"
   subtitle="After 2 consecutive fix failures, the healer takes over with extended thinking and a fundamentally different approach."
   bg="alt"
 />
@@ -137,7 +137,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       { title: 'Execute', subtitle: 'dx-step\nRun step', color: '#059669' },
       { title: 'Fix #1', subtitle: 'dx-step-fix\nFirst attempt', color: '#d97706' },
       { title: 'Fix #2', subtitle: 'dx-step-fix\nSecond attempt', color: '#d97706' },
-      { title: 'Heal #1', subtitle: 'dx-step-heal\nNew strategy', color: '#dc2626' },
+      { title: 'Heal #1', subtitle: 'dx-step-fix (escalation)\nNew strategy', color: '#dc2626' },
       { title: 'Execute', subtitle: 'Corrective\nsteps', color: '#059669' },
       { title: 'Heal #2', subtitle: 'Last resort\nor STOP', color: '#dc2626' },
     ]}
@@ -149,7 +149,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <strong>Execution failures:</strong>
         <ul class="mt-1 text-sm">
           <li>2 fix attempts (dx-step-fix)</li>
-          <li>2 healing cycles (dx-step-heal)</li>
+          <li>2 healing cycles (dx-step-fix (escalation))</li>
           <li>Each healing cycle: corrective step + 2 more fix attempts</li>
           <li>Total: up to 6 fix attempts + 2 heal analyses</li>
         </ul>
@@ -158,7 +158,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <strong>Code review failures:</strong>
         <ul class="mt-1 text-sm">
           <li>3 review-fix cycles (dx-step-verify)</li>
-          <li>2 healing cycles (dx-step-heal in coordinator)</li>
+          <li>2 healing cycles (dx-step-fix (escalation) in coordinator)</li>
           <li>Each healing: corrective steps + rebuild + re-review</li>
           <li>Total: up to 9 review cycles</li>
         </ul>
@@ -281,7 +281,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard icon="mdi:counter" iconColor="bg-brand-700" title="Per-Step Execution Failures">
       <ul class="text-sm space-y-1 mt-2">
         <li>2 fix attempts (dx-step-fix)</li>
-        <li>2 healing cycles (dx-step-heal)</li>
+        <li>2 healing cycles (dx-step-fix (escalation))</li>
         <li>Each healing cycle: new corrective step + 2 more fix attempts</li>
         <li><strong>Total: up to 6 fix attempts + 2 heal analyses</strong></li>
       </ul>
@@ -290,7 +290,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard icon="mdi:counter" iconColor="bg-cyan-dark" title="Code Review Failures">
       <ul class="text-sm space-y-1 mt-2">
         <li>3 review-fix cycles (dx-step-verify)</li>
-        <li>2 healing cycles (dx-step-heal in coordinator)</li>
+        <li>2 healing cycles (dx-step-fix (escalation) in coordinator)</li>
         <li>Each healing: corrective steps + rebuild + re-review</li>
         <li><strong>Total: up to 9 review cycles</strong></li>
       </ul>

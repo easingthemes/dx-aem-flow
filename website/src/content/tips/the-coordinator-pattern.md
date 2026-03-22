@@ -43,14 +43,11 @@ disable-model-invocation: true
 ---
 
 # Step 1: Extract
-Invoke dx-step-executor:
-  "Execute dx-figma-extract"
+Invoke Skill("dx-figma-extract")
 
 # Step 2: Prototype
-Invoke dx-step-executor:
-  "Execute dx-figma-prototype"
+Invoke Skill("dx-figma-prototype")
 
 # Step 3: Verify
-Invoke dx-step-executor:
-  "Execute dx-figma-verify"
+Invoke Skill("dx-figma-verify")
 ```

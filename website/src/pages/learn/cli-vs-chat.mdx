@@ -194,7 +194,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Skills"
   badgeColor="info"
   title="VS Code Chat -- Skill Compatibility"
-  subtitle="38 of 78 skills work. 17 need context:fork or agent: dispatch (Claude Code-only features)."
+  subtitle="38 of 69 skills work. 17 need context:fork or agent: dispatch (Claude Code-only features)."
   bg="primary"
 />
 <Section>
@@ -204,10 +204,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
       MCP-dependent skills work if servers are mirrored in <code>.vscode/mcp.json</code>.
 
       <strong>Best candidates:</strong> <code>dx-help</code>, <code>dx-doctor</code>, <code>dx-plan</code>,
-      <code>dx-req-explain</code>, <code>dx-req-research</code>, <code>dx-step</code>,
-      <code>dx-step-review</code>, <code>aem-component</code>, <code>aem-doctor</code>
+      <code>dx-req</code>, <code>dx-step</code>,
+      <code>dx-step-verify</code>, <code>aem-component</code>, <code>aem-doctor</code>
 
-      <strong>With MCP:</strong> <code>dx-req-fetch</code>, <code>dx-bug-triage</code>,
+      <strong>With MCP:</strong> <code>dx-req</code>, <code>dx-bug-triage</code>,
       <code>dx-pr-commit</code>, <code>dx-pr-review</code>, <code>dx-ticket-analyze</code>
     </ContentCard>
     <ContentCard icon="mdi:alert" iconColor="bg-amber-500" title="Limited (17 skills)" tags={[{ label: 'Degraded', color: 'warning' }]}>
@@ -308,14 +308,14 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <HighlightBox severity="info" title="Key Insight">
-    Claude Code and Copilot CLI are <strong>nearly identical in capability</strong> -- both are terminal-based, both run the same 78 skills, both load plugins and MCP servers.
+    Claude Code and Copilot CLI are <strong>nearly identical in capability</strong> -- both are terminal-based, both run the same 69 skills, both load plugins and MCP servers.
     The real difference is between <strong>terminal CLIs</strong> (Claude Code + Copilot CLI) and <strong>VS Code Chat</strong> (IDE-integrated, visual, different file discovery).
   </HighlightBox>
 
   <div class="grid md:grid-cols-3 gap-4 mt-4">
     <ContentCard icon="mdi:console" iconColor="bg-cyan" title="Terminal CLIs (Claude Code / Copilot CLI)" tags={[{ label: 'Full power', color: 'secondary' }]}>
       <ul class="mt-2 list-none p-0 text-sm space-y-1">
-        <li><strong>All 78 skills</strong> via /dx-&#42; commands</li>
+        <li><strong>All 69 skills</strong> via /dx-&#42; commands</li>
         <li>Full plugin system (hooks, MCP, agents)</li>
         <li>Subagent orchestration</li>
         <li>CI/CD pipeline automation (headless -p mode)</li>

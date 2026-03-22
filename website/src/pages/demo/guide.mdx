@@ -110,8 +110,8 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard icon="mdi:code-tags" iconColor="bg-emerald-600" title="4. Execute One Step">
       Run /dx-step to execute a single step. Show code changes.
     </ContentCard>
-    <ContentCard icon="mdi:sync" iconColor="bg-cyan-dark" title="5. Test/Review/Commit">
-      Show the /dx-step-test, /dx-step-review, /dx-step-commit loop.
+    <ContentCard icon="mdi:sync" iconColor="bg-cyan-dark" title="5. Verify & Commit">
+      Show /dx-step-verify and /dx-pr-commit -- the verification and commit loop.
     </ContentCard>
     <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="6. Automation Preview">
       Show ADO/Jira pipeline triggers, PR review bot, webhook flow.
@@ -201,9 +201,8 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   <CommandBlock label="/dx-req-all">/dx-req-all &lt;Story-ID&gt;</CommandBlock>
   <CommandBlock label="/dx-plan">/dx-plan</CommandBlock>
   <CommandBlock label="/dx-step">/dx-step</CommandBlock>
-  <CommandBlock label="/dx-step-test">/dx-step-test</CommandBlock>
-  <CommandBlock label="/dx-step-review">/dx-step-review</CommandBlock>
-  <CommandBlock label="/dx-step-commit">/dx-step-commit</CommandBlock>
+  <CommandBlock label="/dx-step-verify">/dx-step-verify</CommandBlock>
+  <CommandBlock label="/dx-pr-commit">/dx-pr-commit</CommandBlock>
   <CommandBlock label="/dx-step-build">/dx-step-build</CommandBlock>
   <CommandBlock label="/dx-pr-review">/dx-pr-review &lt;PR-URL&gt;</CommandBlock>
   <CommandBlock label="/dx-bug-triage">/dx-bug-triage &lt;Bug-ID&gt;</CommandBlock>

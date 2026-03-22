@@ -27,7 +27,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="Self-Healing Loop">
       <strong>Scope:</strong> Per-session, per-step.
-      dx-step-fix and dx-step-heal recover from failures during execution.
+      dx-step-fix recovers from failures during execution (targeted fix + root cause escalation).
       Memory is lost after the session ends -- each run starts fresh.
     </ContentCard>
 
@@ -132,7 +132,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="1. Fix Pattern Memory">
       <strong>Storage:</strong> <code>fixes.md</code> + <code>fixes.jsonl</code>
-      <br />After every dx-step-fix or dx-step-heal, capture error type, message pattern, fix applied,
+      <br />After every dx-step-fix cycle, capture error type, message pattern, fix applied,
       and result. Before attempting a fix, dx-step-fix checks <code>fixes.md</code> for known patterns.
       If a strategy worked 3/3 times, try that first. Every 10 entries, <code>fixes.md</code> is regenerated.
     </ContentCard>

@@ -3,7 +3,7 @@ title: "argument-hint: Making Skills Discoverable"
 category: "Skills — Advanced"
 focus: "Claude Code · CLI"
 tags: ["argument-hint","Autocomplete","UX"]
-overview: 'When you type / in Claude Code, you see a list of skills. The argument-hint field tells users what to pass before they even read the docs. "/dx-req-fetch <ticket-id>" is instantly clear. Without it, users have to guess what the skill expects.'
+overview: 'When you type / in Claude Code, you see a list of skills. The argument-hint field tells users what to pass before they even read the docs. "/dx-req <ticket-id>" is instantly clear. Without it, users have to guess what the skill expects.'
 codeLabel: "UX difference"
 screenshot: null
 week: 4
