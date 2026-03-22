@@ -51,7 +51,7 @@ Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answe
 
 ## Client-Specific Plugins
 
-Client-specific plugins can live alongside these plugins for project-specific enrichment (market data, brand config, etc.). See the [authoring guide](https://easingthemes.github.io/dx-aem-flow/reference/authoring/) for how to create them.
+Client-specific plugins can live alongside these plugins for project-specific enrichment (market data, brand config, etc.). See the [authoring guide](https://easingthemes.github.io/dx-aem-flow/contributing/authoring/) for how to create them.
 
 ## Quick Start
 
