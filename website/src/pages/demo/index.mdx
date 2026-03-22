@@ -11,6 +11,7 @@ import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="KAI Development Platform"
@@ -384,11 +385,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-3 gap-4">
     <div class="border border-red-400 rounded-lg p-5 bg-white h-full">
       <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 3: Automation (24/7)</h3>
-      <p class="text-sm text-gray-500">10 autonomous agents as ADO pipelines -- triggered by webhooks, no human needed</p>
+      <p class="text-sm text-gray-500">{stats.autonomousAgents} autonomous agents as ADO pipelines -- triggered by webhooks, no human needed</p>
     </div>
     <div class="border border-brand-700 rounded-lg p-5 bg-white h-full">
       <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 2: Local Workflow (Claude Code + Copilot CLI)</h3>
-      <p class="text-sm text-gray-500">68 skills on both IDEs -- requirements, planning, execution, review, PR</p>
+      <p class="text-sm text-gray-500">{stats.totalSkills} skills on both IDEs -- requirements, planning, execution, review, PR</p>
     </div>
     <div class="border border-emerald-600 rounded-lg p-5 bg-white h-full">
       <h3 class="text-base font-semibold text-brand-900 mb-1">Layer 1: Foundation</h3>
@@ -398,8 +399,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <div class="grid md:grid-cols-3 gap-4 mt-6">
     <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Plugin System" horizontal>
-      4 plugins, each independently installable. dx-core (42 skills, 6 agents),
-      dx-hub (3 skills), dx-aem (12 skills, 6 agents), dx-automation (11 skills, 10 pipeline agents).
+      {stats.totalPlugins} plugins, each independently installable. dx-core ({stats.dxCoreSkills} skills, {stats.dxCoreAgents} agents),
+      dx-hub ({stats.dxHubSkills} skills), dx-aem ({stats.dxAemSkills} skills, {stats.dxAemAgents} agents), dx-automation ({stats.dxAutomationSkills} skills, {stats.autonomousAgents} pipeline agents).
     </ContentCard>
     <ContentCard icon="mdi:earth" iconColor="bg-cyan-dark" title="Live MCP Integrations" horizontal>
       Connected to AEM, Chrome DevTools, Figma, ADO, Jira/Confluence, axe. Agents query live systems --
@@ -444,14 +445,14 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <div class="grid md:grid-cols-2 gap-4 mt-6">
-    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="10 Agents, 24/7" horizontal>
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title={`${stats.autonomousAgents} Agents, 24/7`} horizontal>
       DoR validation, PR review, bug triage, DevAgent, QA, estimation, documentation -- all triggered automatically via ADO pipelines and AWS Lambda. Jira webhook support planned.
     </ContentCard>
     <ContentCard icon="mdi:database" iconColor="bg-amber-500" title="Production Proven" horizontal>
       Runs daily across multiple projects. DevAgent implements real stories. QA agent files real bugs. Production infrastructure.
     </ContentCard>
     <ContentCard icon="mdi:puzzle" iconColor="bg-cyan-dark" title="Project-Agnostic" horizontal>
-      4 plugins, independently installable. AEM logic stays in its own plugin. Works with any tech stack across connected multi repos.
+      {stats.totalPlugins} plugins, independently installable. AEM logic stays in its own plugin. Works with any tech stack across connected multi repos.
     </ContentCard>
   </div>
 </Section>

@@ -60,7 +60,7 @@ export const base = import.meta.env.BASE_URL;
       { title: "Phase 4", subtitle: "Build + Review", command: "/dx-step-verify", color: "#f59e0b" },
       { title: "Phase 5", subtitle: "Commit & Push", command: "/dx-pr-commit", color: "#ec4899" },
       { title: "Phase 6", subtitle: "Pull Request", command: "/dx-pr", color: "#3b82f6" },
-      { title: "Phase 6.5", subtitle: "Editorial Guide", command: "/aem-demo", color: "#6366f1" },
+      { title: "Phase 6.5", subtitle: "Editorial Guide", command: "/aem-editorial-guide", color: "#6366f1" },
       { title: "Phase 7", subtitle: "Feature Documentation", command: "/dx-doc-gen", color: "#14b8a6" },
       { title: "Phase 7.5", subtitle: "QA Handoff", command: "/aem-qa-handoff", color: "#f43f5e" },
     ]}
@@ -293,7 +293,7 @@ export const base = import.meta.env.BASE_URL;
     steps={[
       { title: "Commit", subtitle: "Stage & push", command: "/dx-pr-commit", color: "#ec4899" },
       { title: "Pull Request", subtitle: "Create PR", command: "/dx-pr", color: "#3b82f6" },
-      { title: "Editorial Guide", subtitle: "Dialog screenshots", command: "/aem-demo", color: "#6366f1" },
+      { title: "Editorial Guide", subtitle: "Dialog screenshots", command: "/aem-editorial-guide", color: "#6366f1" },
       { title: "Feature Docs", subtitle: "Wiki + authoring guide", command: "/dx-doc-gen", color: "#14b8a6" },
       { title: "QA Handoff", subtitle: "Testing steps → ADO", command: "/aem-qa-handoff", color: "#f43f5e" },
     ]}
@@ -304,7 +304,7 @@ export const base = import.meta.env.BASE_URL;
       Creates a PR from <code>share-plan.md</code> with auto-generated description, linked
       work item (ADO or Jira), and branch management.
     </ContentCard>
-    <ContentCard icon="mdi:camera" iconColor="bg-cyan-dark" title="AEM Verification" tags={[{label: "/aem-snapshot", color: "primary"}, {label: "/aem-verify", color: "primary"}, {label: "/aem-demo", color: "primary"}]}>
+    <ContentCard icon="mdi:camera" iconColor="bg-cyan-dark" title="AEM Verification" tags={[{label: "/aem-snapshot", color: "primary"}, {label: "/aem-verify", color: "primary"}, {label: "/aem-editorial-guide", color: "primary"}]}>
       Takes a before/after snapshot of AEM pages, verifies component rendering, and captures a demo
       with browser automation.
     </ContentCard>
@@ -470,7 +470,7 @@ export const base = import.meta.env.BASE_URL;
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">aem-before.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-snapshot</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">aem-after.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-verify</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">qa-handoff.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-qa-handoff</code></span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">demo/</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-demo</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">demo/</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/aem-editorial-guide</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">docs/</span></div>
     <div class="py-1 pl-12"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">wiki-page.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-doc-gen</code></span></div>
   </div>
