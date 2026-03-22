@@ -10,6 +10,7 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Skills"
@@ -108,7 +109,7 @@ a step-by-step implementation plan.
   badge="Categories"
   badgeColor="warning"
   title="Skill Categories in KAI"
-  subtitle="68 skills organized by workflow phase."
+  subtitle={`${stats.totalSkills} skills organized by workflow phase.`}
   bg="alt"
 />
 <Section>

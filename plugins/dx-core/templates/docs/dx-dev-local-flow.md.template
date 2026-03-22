@@ -94,7 +94,7 @@ flowchart TD
     end
 
     subgraph P6H["Phase 6.5: Demo Capture"]
-        AEM_DEMO["6.5 /aem-demo<br/>Screenshot dialog,<br/>write authoring guide"]
+        AEM_DEMO["6.5 /aem-editorial-guide<br/>Screenshot dialog,<br/>write authoring guide"]
     end
 
     subgraph P7["Phase 7: Documentation"]
@@ -297,7 +297,7 @@ flowchart TD
 
 ## AEM Verification Flow (standalone skills)
 
-**Developer types:** `/aem-snapshot`, `/aem-verify`, `/aem-demo`, `/aem-qa` individually as needed.
+**Developer types:** `/aem-snapshot`, `/aem-verify`, `/aem-editorial-guide`, `/aem-qa` individually as needed.
 
 These are standalone skills invoked manually. They are NOT chained -- each reads/writes spec files independently.
 
@@ -320,7 +320,7 @@ flowchart TD
     end
 
     subgraph DEMO_DOC["Documentation (manual)"]
-        DEMO_SKILL["/aem-demo<br/>Open AEM editor, screenshot<br/>dialog, write authoring guide"]
+        DEMO_SKILL["/aem-editorial-guide<br/>Open AEM editor, screenshot<br/>dialog, write authoring guide"]
         DEMO_IN["Reads aem-after.md<br/>(from /aem-verify)"]
         DEMO_OUT["demo/authoring-guide.md<br/>demo/dialog-name.png"]
         DEMO_IN -.-> DEMO_SKILL
@@ -550,7 +550,7 @@ flowchart LR
     PLAN_S["/dx-plan"] --> IMPL_F
     SNAP_S["/aem-snapshot"] --> AEM_B
     VER_S["/aem-verify"] --> AEM_A
-    DEMO_S["/aem-demo or /aem-doc-gen"] --> GUIDE_F
+    DEMO_S["/aem-editorial-guide or /aem-doc-gen"] --> GUIDE_F
     DEMO_S --> DIALOG_PNG
     DOC_S["/dx-doc-gen"] --> WIKI
     DOD_S["/dx-req-dod"] --> DOD_F
@@ -573,7 +573,7 @@ flowchart LR
 | `dx-doc-searcher` | Haiku | /dx-help | Search .ai/ docs for architecture answers |
 | `aem-inspector` | Sonnet | /aem-snapshot, /aem-verify, /aem-doc-gen | Walk dialogs, create pages, configure components via AEM MCP |
 | `aem-page-finder` | Haiku | /aem-component, /aem-page-search | Find pages using a component via AEM MCP |
-| `aem-demo-capture` | Sonnet | /aem-demo, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
+| `aem-editorial-guide-capture` | Sonnet | /aem-editorial-guide, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
 | `aem-file-resolver` | Haiku | /aem-component, /dx-ticket-analyze | Resolve component files using file-patterns.yaml |
 | `aem-bug-executor` | Sonnet | /dx-bug-verify | Reproduce bugs on AEM via Chrome DevTools |
 
