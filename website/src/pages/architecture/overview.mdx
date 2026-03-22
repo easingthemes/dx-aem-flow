@@ -8,6 +8,7 @@ import PageHero from '../../components/PageHero.astro';
 import Section from '../../components/Section.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
+import { stats } from '../../config/stats';
 import CommandBlock from '../../components/CommandBlock.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 
@@ -26,10 +27,10 @@ import HighlightBox from '../../components/HighlightBox.astro';
   <HighlightBox severity="info" title="Plugin Directory Structure">
     <CommandBlock>
 {`dx-aem-flow/dx/plugins/
-  dx-core/   42 skills, 6 agents -- ADO/Jira workflow (any stack)
-  dx-hub/              3 skills -- multi-repo hub orchestration
-  dx-aem/              12 skills, 6 agents -- AEM verification & QA
-  dx-automation/       11 skills -- autonomous 24/7 agents`}
+  dx-core/   ${stats.dxCoreSkills} skills, ${stats.dxCoreAgents} agents -- ADO/Jira workflow (any stack)
+  dx-hub/              ${stats.dxHubSkills} skills -- multi-repo hub orchestration
+  dx-aem/              ${stats.dxAemSkills} skills, ${stats.dxAemAgents} agents -- AEM verification & QA
+  dx-automation/       ${stats.dxAutomationSkills} skills -- autonomous 24/7 agents`}
     </CommandBlock>
   </HighlightBox>
 
@@ -501,9 +502,9 @@ aem:
         <td class="p-3">Page search</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>aem-demo-capture</code></td>
+        <td class="p-3"><code>aem-editorial-guide-capture</code></td>
         <td class="p-3">Sonnet</td>
-        <td class="p-3"><code>/aem-demo</code></td>
+        <td class="p-3"><code>/aem-editorial-guide</code></td>
         <td class="p-3">Browser screenshots</td>
       </tr>
       <tr class="border-t border-gray-200">
@@ -567,7 +568,7 @@ aem:
       icon="mdi:wrench"
       iconColor="bg-cyan"
       title="Claude Code"
-      tags={[{ label: '68 skills', color: 'secondary' }, { label: '13 agents', color: 'secondary' }]}
+      tags={[{ label: `${stats.totalSkills} skills`, color: 'secondary' }, { label: `${stats.claudeAgents} agents`, color: 'secondary' }]}
     >
       Full plugin system with MCP servers, subagents, hooks, and shared libraries.
     </ContentCard>
@@ -576,9 +577,9 @@ aem:
       icon="mdi:monitor"
       iconColor="bg-brand-700"
       title="GitHub Copilot CLI"
-      tags={[{ label: '68 skills', color: 'primary' }, { label: '25 agents', color: 'primary' }]}
+      tags={[{ label: `${stats.totalSkills} skills`, color: 'primary' }, { label: `${stats.copilotAgents} agents`, color: 'primary' }]}
     >
-      Same 68 skills auto-discovered from plugins. 25 Copilot agents with <code>allowed-tools</code> for auto-approval
+      Same {stats.totalSkills} skills auto-discovered from plugins. {stats.copilotAgents} Copilot agents with <code>allowed-tools</code> for auto-approval
       and <code>handoffs:</code> for navigation.
     </ContentCard>
   </div>
@@ -842,7 +843,7 @@ aem:
       <li class="py-0.5"><strong>Persona system</strong> -- not in the guide; KAI's me.md makes AI output indistinguishable from human teammates</li>
       <li class="py-0.5"><strong>Hooks for LLM offloading</strong> -- the guide focuses on skill instructions; KAI uses shell hooks for deterministic work</li>
       <li class="py-0.5"><strong>24/7 autonomous agents</strong> -- the guide covers interactive use; KAI runs the same skills unattended on ADO pipelines</li>
-      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same 68 skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
+      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same {stats.totalSkills} skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
     </ul>
   </HighlightBox>
 
