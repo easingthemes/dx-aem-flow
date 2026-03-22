@@ -663,9 +663,9 @@ Populate the table dynamically from the discovered agent files. The agent name i
 
 If `AGENTS.md` already exists, compare and update silently if content has changed.
 
-### 9i. Install branch guard hook for Copilot CLI
+### 9i. Install hooks for Copilot CLI
 
-Deploy the branch guard hook to `.github/hooks/` so Copilot CLI prevents commits on protected branches (main, master, develop).
+Deploy plugin hooks to `.github/hooks/` so Copilot CLI gets the same safety and convenience hooks as Claude Code.
 
 ```bash
 mkdir -p .github/hooks
@@ -673,7 +673,12 @@ mkdir -p .github/hooks
 
 Copy `templates/hooks/branch-guard-hooks.json.template` to `.github/hooks/hooks.json`.
 
-If `.github/hooks/hooks.json` already exists, check if it already contains a `PreToolUse` hook matching `Bash(git commit*)`. If yes, skip. If no, merge the branch guard hook into the existing file.
+The template includes:
+- **PreToolUse** — branch guard (prevents commits on main/master/develop)
+- **SessionStart** — config validation + next-step suggestions
+- **PostToolUse Edit** — validates plugin file edits
+
+If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 
 ## 10. Confirm
 
