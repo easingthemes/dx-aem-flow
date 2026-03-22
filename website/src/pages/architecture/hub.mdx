@@ -1,0 +1,402 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: Multi-Repo Hub
+sidebar: architecture
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import PipelineBlock from '../../components/PipelineBlock.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="Multi-Repo Hub"
+  subtitle="Local multi-repo orchestration — run dx skills across sibling repositories from a single hub directory, with dispatch tracking and PR aggregation."
+/>
+
+<SectionHeading
+  badge="Problem"
+  title="The Local Multi-Repo Problem"
+  subtitle="Cross-Repo Delegation solves multi-repo for pipelines. But local developers need the same capability."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:folder-multiple" iconColor="bg-brand-700" title="Multiple Repos">
+      A user story spans frontend and backend repos. The developer has both checked out locally but dx skills only see the current repo.
+    </ContentCard>
+
+    <ContentCard icon="mdi:repeat" iconColor="bg-amber-500" title="Manual Repetition">
+      Without hub mode, the developer must <code>cd</code> into each repo and run skills separately — losing context between repos.
+    </ContentCard>
+
+    <ContentCard icon="mdi:eye-off" iconColor="bg-red-500" title="No Visibility">
+      No single view of what's running across repos, which PRs were created, or what failed.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Where Hub Fits in the Three-Tier Strategy">
+    <strong>Pipeline mode</strong> (ADO) → <strong>Hub mode</strong> (local multi-repo) → <strong>Manual handoff</strong> (single-repo fallback).
+    Hub mode is the local developer equivalent of pipeline cross-repo delegation.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Solution"
+  badgeColor="success"
+  title="Hub Mode"
+  subtitle="A hub directory sits above your repos and orchestrates dx skills across them."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label="Directory Layout">{`projects/
+├── .hub/                    ← hub directory (created by /dx-hub-init)
+│   ├── .ai/config.yaml      ← merged config with repos registry
+│   ├── .ai/specs/            ← shared spec output
+│   ├── .claude/CLAUDE.md     ← hub-specific instructions
+│   └── state/                ← dispatch tracking
+│       ├── active.json       ← index of in-flight dispatches
+│       └── <ticket>/
+│           ├── dispatch.json ← dispatch metadata
+│           └── results/
+│               ├── frontend.json
+│               └── backend.json
+├── Frontend-Repo/           ← sibling repo with .ai/config.yaml
+└── Backend-Repo/            ← sibling repo with .ai/config.yaml`}</CommandBlock>
+
+  <HighlightBox severity="warning" title="Requirement">
+    Hub mode requires Claude Code CLI with <code>--output-format json</code> support for dispatch. Copilot CLI does not support hub dispatch yet.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Skills"
+  badgeColor="secondary"
+  title="Hub Skills"
+  subtitle="Three skills for hub lifecycle: init, config, status."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:rocket-launch" iconColor="bg-brand-700" title="/dx-hub-init">
+      Initialize a hub directory. Discovers sibling repos with <code>.ai/config.yaml</code>, prompts for selection, builds merged config, creates hub directory structure.
+
+      <CommandBlock label="Usage">{`/dx-hub-init              # default: ../.hub
+/dx-hub-init ~/my-hub     # custom path`}</CommandBlock>
+    </ContentCard>
+
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="/dx-hub-config">
+      View and edit hub settings — add repos, change dispatch mode, toggle auto-dispatch.
+
+      <CommandBlock label="Usage">{`/dx-hub-config show
+/dx-hub-config add-repo ../New-Repo
+/dx-hub-config dispatch-mode parallel
+/dx-hub-config auto-dispatch true`}</CommandBlock>
+    </ContentCard>
+
+    <ContentCard icon="mdi:chart-box" iconColor="bg-emerald-600" title="/dx-hub-status">
+      Show status of hub dispatches — in-flight work, completed results, PRs across all repos.
+
+      <CommandBlock label="Usage">{`/dx-hub-status            # all dispatches
+/dx-hub-status 2416553    # single ticket detail
+/dx-hub-status --clean    # remove stale entries`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
+  badge="How It Works"
+  badgeColor="info"
+  title="Dispatch Flow"
+  subtitle="When a skill detects multi-repo scope, hub mode dispatches to each repo automatically."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Hub Dispatch"
+    description="From scope detection to per-repo execution and result aggregation."
+    steps={[
+      { title: 'Scope Detection', subtitle: 'Research finds\nmulti-repo scope', color: '#0891b2' },
+      { title: 'Hub Check', subtitle: 'hub.enabled?\nRepos registered?', color: '#d97706' },
+      { title: 'Dispatch', subtitle: 'claude -p --cwd\nper repo', color: '#8b5cf6' },
+      { title: 'Track', subtitle: 'State files\nper dispatch', color: '#dc2626' },
+      { title: 'Aggregate', subtitle: 'Collect results\nPRs, summaries', color: '#059669' },
+    ]}
+  />
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Decision Tree</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Condition</th>
+        <th class="text-left p-3 font-semibold">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>DX_PIPELINE_MODE=true</code></td>
+        <td class="p-3">Pipeline delegation (write <code>delegate.json</code>) — see <a href="/architecture/cross-repo/">Cross-Repo</a></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.enabled: true</code> + repos registered</td>
+        <td class="p-3">Hub dispatch — spawn Claude CLI per repo with <code>--output-format json</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Hub not configured but multi-repo detected</td>
+        <td class="p-3">Manual handoff — print "Also affects &lt;repo&gt; — run <code>/dx-bug-all</code> there"</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Single-repo scope</td>
+        <td class="p-3">Local execution — normal skill behavior</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Dispatch"
+  badgeColor="secondary"
+  title="Dispatch Modes"
+  subtitle="Sequential (default) or parallel execution across repos."
+  bg="alt"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:arrow-right" iconColor="bg-brand-700" title="Sequential (Default)">
+      Repos processed one at a time. Each completes before the next starts. Safer — errors in Repo A prevent wasted work in Repo B.
+
+      <CommandBlock label="Config">{`hub:
+  dispatch-mode: sequential`}</CommandBlock>
+    </ContentCard>
+
+    <ContentCard icon="mdi:arrow-split-vertical" iconColor="bg-cyan" title="Parallel">
+      All repos dispatched simultaneously. Faster for independent changes. Results collected as they complete.
+
+      <CommandBlock label="Config">{`hub:
+  dispatch-mode: parallel`}</CommandBlock>
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Auto-Dispatch">
+    By default, hub mode asks for confirmation before dispatching. Set <code>hub.auto-dispatch: true</code> to skip the confirmation prompt.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Config"
+  badgeColor="warning"
+  title="Hub Configuration"
+  subtitle="Hub settings in .ai/config.yaml — generated by /dx-hub-init."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label=".ai/config.yaml (hub section)">{`hub:
+  enabled: true
+  auto-dispatch: false        # ask before dispatching
+  dispatch-mode: sequential   # or parallel
+  state-ttl: 7d               # clean dispatches older than 7 days
+  state-dir: state             # relative to hub root
+
+repos:
+  - name: Frontend-Repo
+    path: ../Frontend-Repo     # relative to hub
+    base-branch: develop
+    ado-project: MyProject
+    capabilities: [fe, aem]
+  - name: Backend-Repo
+    path: ../Backend-Repo
+    base-branch: develop
+    ado-project: MyProject
+    capabilities: [be, sling]`}</CommandBlock>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">Config Fields</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Field</th>
+        <th class="text-left p-3 font-semibold">Default</th>
+        <th class="text-left p-3 font-semibold">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.enabled</code></td>
+        <td class="p-3"><code>true</code></td>
+        <td class="p-3">Enable/disable hub mode</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.auto-dispatch</code></td>
+        <td class="p-3"><code>false</code></td>
+        <td class="p-3">Skip confirmation before dispatching</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.dispatch-mode</code></td>
+        <td class="p-3"><code>sequential</code></td>
+        <td class="p-3">Sequential or parallel dispatch</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.state-ttl</code></td>
+        <td class="p-3"><code>7d</code></td>
+        <td class="p-3">Auto-clean dispatch state older than this</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.state-dir</code></td>
+        <td class="p-3"><code>state</code></td>
+        <td class="p-3">State directory relative to hub root</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>repos[].name</code></td>
+        <td class="p-3">—</td>
+        <td class="p-3">Display name (matches directory name)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>repos[].path</code></td>
+        <td class="p-3">—</td>
+        <td class="p-3">Relative or absolute path to repo</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>repos[].capabilities</code></td>
+        <td class="p-3"><code>[]</code></td>
+        <td class="p-3">Tags for scope routing (e.g., fe, be, aem)</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Status"
+  badgeColor="info"
+  title="Tracking Dispatches"
+  subtitle="/dx-hub-status shows what's running, what completed, and where PRs landed."
+  bg="alt"
+/>
+<Section>
+  <CommandBlock label="/dx-hub-status output">{`┌─────────────────────────────────────────────────────────────┐
+│  Hub Dispatches                                             │
+├──────────┬────────────┬────────────┬────────────┬───────────┤
+│ Ticket   │ Skill      │ Frontend   │ Backend    │ Started   │
+├──────────┼────────────┼────────────┼────────────┼───────────┤
+│ 2416553  │ dx-bug-all │ ✓ done     │ ⏳ running │ 10:32     │
+│ 2435084  │ dx-req-all │ ✓ done     │ ✓ done     │ 09:15     │
+│ 2448331  │ dx-bug-all │ ✗ failed   │ — skipped  │ yesterday │
+└──────────┴────────────┴────────────┴────────────┴───────────┘`}</CommandBlock>
+
+  <CommandBlock label="/dx-hub-status 2416553 (detail view)">{`Dispatch: #2416553 — dx-bug-all
+Started: 2026-03-22T10:32:00Z
+
+Frontend-Repo:
+  Status: ✓ done
+  PR: https://dev.azure.com/.../pullrequest/4521
+  Duration: 12m 34s
+  Summary: Fixed login redirect in AuthFilter.java
+
+Backend-Repo:
+  Status: ⏳ running
+  Session: abc-123-def
+  Duration: 8m 12s (in progress)`}</CommandBlock>
+
+  <h3 class="text-lg font-bold mt-8 mb-4">State Persistence</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">File</th>
+        <th class="text-left p-3 font-semibold">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>state/active.json</code></td>
+        <td class="p-3">Index of all active dispatches (derived from disk, rebuildable)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>state/&lt;ticket&gt;/dispatch.json</code></td>
+        <td class="p-3">Dispatch metadata — ticket, skill, repos, timestamps</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>state/&lt;ticket&gt;/results/&lt;repo&gt;.json</code></td>
+        <td class="p-3">Per-repo result — status, PR URL, cost, duration, summary</td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
+
+<SectionHeading
+  badge="Setup"
+  badgeColor="success"
+  title="Getting Started"
+  subtitle="Three commands to set up hub mode."
+  bg="primary"
+/>
+<Section>
+  <PipelineBlock
+    label="Hub Setup"
+    description="From zero to multi-repo orchestration."
+    steps={[
+      { title: '1. Init', subtitle: '/dx-hub-init\nDiscover repos', color: '#2d308d' },
+      { title: '2. Config', subtitle: '/dx-hub-config\nTune settings', color: '#0891b2' },
+      { title: '3. Run', subtitle: '/dx-bug-all 123\nAuto-dispatches', color: '#059669' },
+    ]}
+  />
+
+  <HighlightBox severity="info" title="Prerequisites">
+    <ul class="text-sm space-y-1 mt-2">
+      <li>Claude Code CLI with <code>--output-format json</code> support</li>
+      <li>Sibling repos with <code>.ai/config.yaml</code> (run <code>/dx-init</code> in each first)</li>
+      <li>dx-core plugin installed</li>
+    </ul>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="vs Cross-Repo"
+  badgeColor="warning"
+  title="Hub vs Pipeline Delegation"
+  subtitle="Two solutions for the same problem, in different contexts."
+  bg="alt"
+/>
+<Section>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Aspect</th>
+        <th class="text-left p-3 font-semibold">Hub Mode (Local)</th>
+        <th class="text-left p-3 font-semibold">Pipeline Delegation (ADO)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Where it runs</td>
+        <td class="p-3">Developer machine</td>
+        <td class="p-3">ADO pipelines</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Trigger</td>
+        <td class="p-3">Developer runs a skill</td>
+        <td class="p-3">Webhook → Lambda → pipeline</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Repo discovery</td>
+        <td class="p-3">Sibling directories on disk</td>
+        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code> env var</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Dispatch mechanism</td>
+        <td class="p-3"><code>claude -p --cwd &lt;repo&gt;</code></td>
+        <td class="p-3"><code>delegate.json</code> → ADO REST API</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Tracking</td>
+        <td class="p-3"><code>/dx-hub-status</code></td>
+        <td class="p-3">ADO pipeline run history</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Skills</td>
+        <td class="p-3"><code>/dx-hub-init</code>, <code>/dx-hub-config</code>, <code>/dx-hub-status</code></td>
+        <td class="p-3">Built into coordinator skills + <code>/auto-*</code></td>
+      </tr>
+    </tbody>
+  </table>
+</Section>
