@@ -1,3 +1,10 @@
+# [2.59.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.2...v2.59.0) (2026-03-22)
+
+
+### Features
+
+* add TaskCreate progress tracking to dx-req, dx-step, dx-req-dod ([1cdf28b](https://github.com/easingthemes/dx-aem-flow/commit/1cdf28b0130f53280fa9c09f9a488be3145b55d8))
+
 ## [2.58.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.1...v2.58.2) (2026-03-22)
 
 ## [2.58.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.58.0...v2.58.1) (2026-03-22)
