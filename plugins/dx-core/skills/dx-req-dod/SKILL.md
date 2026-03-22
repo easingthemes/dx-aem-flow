@@ -27,6 +27,14 @@ This validates the **actual deliverables** (code, tests, PR, build) — not agen
 
 Use ultrathink for this skill — cross-referencing multiple sources (ADO/Jira state, codebase, PR status) requires systematic verification.
 
+## Progress Tracking
+
+Create tasks using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+
+1. DoD Check (gather evidence, evaluate criteria)
+2. Auto-Fix Gaps (if failures found)
+3. Post to ADO/Jira
+
 ## 1. Resolve Work Item
 
 Parse the argument to extract the ADO work item ID (from number or URL).

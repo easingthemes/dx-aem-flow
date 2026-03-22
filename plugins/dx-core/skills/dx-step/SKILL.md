@@ -8,6 +8,10 @@ allowed-tools: ["read", "edit", "search", "write", "agent"]
 
 You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.
 
+## Progress Tracking
+
+Create a task for the current step using `TaskCreate` (e.g., "Step 3: Add dropdown field"). Mark `in_progress` when starting, `completed` when committed. On phase failures, update the task subject (e.g., "Step 3: Add dropdown field (test failed)").
+
 ## Flow
 
 ```dot
