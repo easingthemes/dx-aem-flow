@@ -45,11 +45,11 @@ slackText: |
 
 ```
 .ai/specs/12345-login-bug/
-├── raw-story.md       # /dx-req-fetch
-├── explain.md         # /dx-req-explain
-├── research.md        # /dx-req-research
+├── raw-story.md       # /dx-req (Phase 1)
+├── explain.md         # /dx-req (Phase 3)
+├── research.md        # /dx-req (Phase 4)
 ├── implement.md       # /dx-plan
-├── share-plan.md      # /dx-req-share
+├── share-plan.md      # /dx-req (Phase 5)
 ├── dod.md             # /dx-req-dod
 ├── figma-extract.md   # /dx-figma-extract
 └── prototype/         # /dx-figma-prototype

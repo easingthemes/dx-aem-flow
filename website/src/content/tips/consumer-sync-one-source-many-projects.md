@@ -15,7 +15,7 @@ slackText: |
   Building a plugin is half the battle. Distributing it across multiple projects is the other half.
   
   *Our setup:*
-  • 3 plugins developed in one source location
+  • 4 plugins developed in one source location
   • 4 consumer repos that use these plugins
   • A sync script that handles distribution
   
@@ -26,13 +26,14 @@ slackText: |
   • Reporting what changed
   
   *The version bump trap:*
-  When bumping plugin versions, you must update 4 files:
+  When bumping plugin versions, you must update 5 files:
   1. `dx-core/plugin.json`
-  2. `dx-aem/plugin.json`
-  3. `dx-automation/plugin.json`
-  4. `.claude-plugin/marketplace.json` (consumer repo root)
+  2. `dx-hub/plugin.json`
+  3. `dx-aem/plugin.json`
+  4. `dx-automation/plugin.json`
+  5. `.claude-plugin/marketplace.json` (consumer repo root)
   
-  Miss #4 and the consumer repo thinks it has an old version. This causes "already up to date" messages when you try to reinstall.
+  Miss #5 and the consumer repo thinks it has an old version. This causes "already up to date" messages when you try to reinstall.
   
   *Lessons learned:*
   • Always read the consumer's local config before applying changes — branch names, paths, and feature flags vary per project
@@ -45,11 +46,12 @@ slackText: |
 ---
 
 ```
-# Version lives in 4 files:
+# Version lives in 5 files:
 # 1. dx-core/plugin.json
-# 2. dx-aem/plugin.json
-# 3. dx-automation/plugin.json
-# 4. .claude-plugin/marketplace.json
+# 2. dx-hub/plugin.json
+# 3. dx-aem/plugin.json
+# 4. dx-automation/plugin.json
+# 5. .claude-plugin/marketplace.json
 
 # Sync to consumers:
 ./scripts/sync-consumers.sh

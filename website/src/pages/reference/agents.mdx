@@ -64,7 +64,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-core"
   badgeColor="primary"
   title="Claude Code Agents"
-  subtitle="7 agents for the platform-agnostic workflow"
+  subtitle="6 agents for the platform-agnostic workflow"
   bg="primary"
 />
 <Section>
@@ -91,13 +91,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
           <td class="p-3"><code>/dx-pr-review</code>, <code>/dx-pr-review-all</code></td>
           <td class="p-3">Read, Glob, Grep, Bash, Write, Edit</td>
           <td class="p-3">PR diff analysis with structured findings. Fetches PR diff, loads project conventions, returns findings with severity (MUST-FIX, QUESTION) and line-level comments. Does NOT post to ADO directly.</td>
-        </tr>
-        <tr>
-          <td class="p-3 font-mono text-xs"><code>dx-step-executor</code></td>
-          <td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td>
-          <td class="p-3"><code>/dx-step-all</code>, <code>/dx-agent-all</code>, <code>/dx-bug-all</code>, <code>/dx-req-all</code></td>
-          <td class="p-3">Read, Write, Edit, Bash, Glob, Grep, Task, ToolSearch</td>
-          <td class="p-3">Focused execution agent that runs exactly ONE skill per invocation. Permission mode: <code>acceptEdits</code>. Handles 29 skills. Returns <code>OK</code> or <code>FAIL</code> with compact summary.</td>
         </tr>
         <tr>
           <td class="p-3 font-mono text-xs"><code>dx-file-resolver</code></td>
@@ -201,7 +194,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="info" title="Agent Type Naming">
-    Always use the full prefixed name when spawning agents: <code>dx-core:dx-step-executor</code>, <code>dx-aem:aem-inspector</code>. The short name alone fails with "Agent type not found".
+    Always use the full prefixed name when spawning agents: <code>dx-core:dx-code-reviewer</code>, <code>dx-aem:aem-inspector</code>. The short name alone fails with "Agent type not found".
   </HighlightBox>
 </Section>
 
@@ -228,12 +221,12 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>@DxCodeReview</code></td><td class="p-3">dx-code-reviewer</td><td class="p-3">Full branch code review with confidence-based filtering (80%+). Read-only.</td><td class="p-3">DxCommit, DxDebug</td></tr>
         <tr><td class="p-3"><code>@DxPRReview</code></td><td class="p-3">dx-pr-reviewer</td><td class="p-3">Fetches ADO PR diff, analyzes with project conventions, posts findings as PR comments.</td><td class="p-3">DxCodeReview, DxDebug, DxComponent</td></tr>
-        <tr><td class="p-3"><code>@DxPlanExecutor</code></td><td class="p-3">dx-step-executor</td><td class="p-3">Executes implementation plan steps from <code>implement.md</code>.</td><td class="p-3">DxCodeReview, DxCommit, DxDebug</td></tr>
+        <tr><td class="p-3"><code>@DxPlanExecutor</code></td><td class="p-3">/dx-step-all</td><td class="p-3">Executes implementation plan steps from <code>implement.md</code>.</td><td class="p-3">DxCodeReview, DxCommit, DxDebug</td></tr>
         <tr><td class="p-3"><code>@DxComponent</code></td><td class="p-3">dx-file-resolver</td><td class="p-3">Resolves all source files for a component or module.</td><td class="p-3">DxTicket, DxHelp</td></tr>
         <tr><td class="p-3"><code>@DxHelp</code></td><td class="p-3">dx-doc-searcher</td><td class="p-3">Project Q&amp;A from <code>.ai/</code> documentation.</td><td class="p-3">DxComponent, DxTicket</td></tr>
         <tr><td class="p-3"><code>@DxTicket</code></td><td class="p-3">/dx-ticket-analyze</td><td class="p-3">ADO ticket research -- fetches work item, identifies related files.</td><td class="p-3">DxComponent, DxHelp</td></tr>
         <tr><td class="p-3"><code>@DxPRAnswer</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Answers PR review comments -- reads threads, drafts responses.</td><td class="p-3">DxPRFix, DxPRReview</td></tr>
-        <tr><td class="p-3"><code>@DxPRFix</code></td><td class="p-3">/dx-pr-fix</td><td class="p-3">Applies agree-will-fix PR review changes.</td><td class="p-3">DxPRAnswer, DxCommit</td></tr>
+        <tr><td class="p-3"><code>@DxPRFix</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Applies agree-will-fix PR review changes.</td><td class="p-3">DxPRAnswer, DxCommit</td></tr>
         <tr><td class="p-3"><code>@DxCommit</code></td><td class="p-3">/dx-pr-commit</td><td class="p-3">Smart commit with conventional message. Optionally creates ADO pull request.</td><td class="p-3">DxPRReview, DxCodeReview</td></tr>
         <tr><td class="p-3"><code>@DxDebug</code></td><td class="p-3">--</td><td class="p-3">Systematic error diagnosis. Read-only -- traces errors, identifies root causes.</td><td class="p-3">DxPlanExecutor, DxCodeReview</td></tr>
         <tr><td class="p-3"><code>@DxReqAll</code></td><td class="p-3">/dx-req-all</td><td class="p-3">Full requirements pipeline coordinator.</td><td class="p-3">DxPlanExecutor, DxTicket</td></tr>
@@ -271,7 +264,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>@AEMVerify</code></td><td class="p-3">aem-bug-executor</td><td class="p-3">Bug verification on a running AEM instance.</td><td class="p-3">DxDebug, DxComponent</td></tr>
         <tr><td class="p-3"><code>@AEMTicket</code></td><td class="p-3">/dx-ticket-analyze + enrichment</td><td class="p-3">ADO ticket research with AEM project enrichment -- 4-signal market detection, parallel agents.</td><td class="p-3">AEMComponent, DxHelp, DxReqAll</td></tr>
         <tr><td class="p-3"><code>@AEMPRAnswer</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Answers PR review comments with session persistence. Bot detection, thread categorization.</td><td class="p-3">AEMPRFix, DxPRReview</td></tr>
-        <tr><td class="p-3"><code>@AEMPRFix</code></td><td class="p-3">/dx-pr-fix</td><td class="p-3">Applies agree-will-fix PR review changes. Session-first resolution, minimal fixes.</td><td class="p-3">AEMPRAnswer, AEMCommit</td></tr>
+        <tr><td class="p-3"><code>@AEMPRFix</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Applies agree-will-fix PR review changes. Session-first resolution, minimal fixes.</td><td class="p-3">AEMPRAnswer, AEMCommit</td></tr>
         <tr><td class="p-3"><code>@AEMCommit</code></td><td class="p-3">/dx-pr-commit</td><td class="p-3">Smart commit with WI ID extraction (4 sources). Rebase, PR creation via ADO MCP.</td><td class="p-3">DxPRReview, DxCodeReview</td></tr>
       </tbody>
     </table>

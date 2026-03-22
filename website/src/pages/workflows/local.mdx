@@ -58,7 +58,7 @@ export const base = import.meta.env.BASE_URL;
       { title: "Phase 2b", subtitle: "Planning", command: "/dx-plan", color: "#d97706" },
       { title: "Phase 3", subtitle: "Execution", command: "/dx-step-*", color: "#059669" },
       { title: "Phase 4", subtitle: "Build + Review", command: "/dx-step-verify", color: "#f59e0b" },
-      { title: "Phase 5", subtitle: "Commit & Push", command: "/dx-step-commit", color: "#ec4899" },
+      { title: "Phase 5", subtitle: "Commit & Push", command: "/dx-pr-commit", color: "#ec4899" },
       { title: "Phase 6", subtitle: "Pull Request", command: "/dx-pr", color: "#3b82f6" },
       { title: "Phase 6.5", subtitle: "Editorial Guide", command: "/aem-demo", color: "#6366f1" },
       { title: "Phase 7", subtitle: "Feature Documentation", command: "/dx-doc-gen", color: "#14b8a6" },
@@ -79,29 +79,16 @@ export const base = import.meta.env.BASE_URL;
     label="One Command"
     command="/dx-req-all <ID or JIRA-KEY>"
     steps={[
-      { title: "Fetch", subtitle: "Pull work item (ADO/Jira)", command: "/dx-req-fetch" },
-      { title: "DoR", subtitle: "Validate readiness", command: "/dx-req-dor", color: "#f59e0b" },
-      { title: "Explain", subtitle: "Dev requirements", command: "/dx-req-explain", color: "#8b5cf6" },
-      { title: "Research", subtitle: "Codebase search", command: "/dx-req-research", color: "#059669" },
-      { title: "Share", subtitle: "Post summary to ADO/Jira", command: "/dx-req-share", color: "#0891b2" },
+      { title: "Requirements", subtitle: "Full pipeline (fetch, DoR, explain, research, share)", command: "/dx-req" },
     ]}
   />
 
-  <div class="grid md:grid-cols-3 gap-4 mt-4">
-    <ContentCard icon="mdi:download" iconColor="bg-brand-700" title="/dx-req-fetch" tags={[{label: "raw-story.md", color: "primary"}]}>
-      Pulls the work item (ADO or Jira) -- description, acceptance criteria, attachments. Creates a spec directory and saves the raw story.
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:download" iconColor="bg-brand-700" title="/dx-req" tags={[{label: "All spec files", color: "primary"}]}>
+      Full requirements pipeline in one skill: fetches the work item (ADO or Jira), validates DoR, distills developer requirements, researches the codebase, and generates a team summary. Produces raw-story.md, dor-report.md, explain.md, research.md, and share-plan.md.
     </ContentCard>
-    <ContentCard icon="mdi:clipboard-check" iconColor="bg-amber-500" title="/dx-req-dor" tags={[{label: "dor-report.md", color: "warning"}]}>
-      Validates against the Definition of Ready checklist. Posts an interactive checkbox comment to the ADO work item or Jira issue.
-    </ContentCard>
-    <ContentCard icon="mdi:lightbulb" iconColor="bg-cyan" title="/dx-req-explain" tags={[{label: "explain.md", color: "secondary"}]}>
-      Distills the story into developer-focused requirements -- what to build, not how. Clarifies ambiguities and flags missing context.
-    </ContentCard>
-    <ContentCard icon="mdi:magnify" iconColor="bg-emerald-600" title="/dx-req-research" tags={[{label: "research.md", color: "success"}]}>
-      Searches the codebase with parallel AI agents to find relevant files, existing patterns, reusable utilities, and related components.
-    </ContentCard>
-    <ContentCard icon="mdi:chat" iconColor="bg-cyan-dark" title="/dx-req-share" tags={[{label: "share-plan.md", color: "info"}]}>
-      Non-technical summary for the team -- paste into Teams. Covers what is being built, the approach, scope, and estimated impact.
+    <ContentCard icon="mdi:clipboard-check" iconColor="bg-amber-500" title="/dx-req-all" tags={[{label: "Coordinator", color: "warning"}]}>
+      Coordinator that invokes /dx-req. Use this for the full orchestrated pipeline with run logging and metrics.
     </ContentCard>
   </div>
 
@@ -165,8 +152,7 @@ export const base = import.meta.env.BASE_URL;
     command="/dx-step-all"
     steps={[
       { title: "Execute", subtitle: "Run plan step", command: "/dx-step <n>", color: "#059669" },
-      { title: "Fix", subtitle: "Targeted correction", command: "/dx-step-fix", color: "#f59e0b" },
-      { title: "Heal", subtitle: "Root cause analysis", command: "/dx-step-heal", color: "#ef4444" },
+      { title: "Fix", subtitle: "Targeted correction + escalation", command: "/dx-step-fix", color: "#f59e0b" },
     ]}
   />
 
@@ -175,9 +161,9 @@ export const base = import.meta.env.BASE_URL;
       <strong>Single targeted fix.</strong> When a test or review fails, this skill applies a focused correction
       to the specific problem. If the same fix fails twice, it escalates to heal.
     </ContentCard>
-    <ContentCard icon="mdi:hospital" iconColor="bg-red-500" title="/dx-step-heal">
-      <strong>Root cause analysis.</strong> When targeted fixes fail, heal investigates the root cause,
-      potentially restructures the approach, and creates new corrective steps in the plan.
+    <ContentCard icon="mdi:hospital" iconColor="bg-red-500" title="/dx-step-fix (escalation)">
+      <strong>Root cause analysis.</strong> When targeted fixes fail repeatedly, dx-step-fix escalates to root cause analysis,
+      potentially restructuring the approach and creating new corrective steps in the plan.
     </ContentCard>
   </div>
 
@@ -263,7 +249,7 @@ export const base = import.meta.env.BASE_URL;
   <div class="mt-4">
     <HighlightBox severity="warning" title="Review-Fix Loop">
       The code review phase runs up to <strong>3 cycles</strong> of review, fix, rebuild, re-review. If issues
-      persist after 3 cycles, it escalates to <code>/dx-step-heal</code>. If heal also fails, the pipeline
+      persist after 3 cycles, it escalates to <code>/dx-step-fix</code> for root cause analysis. If that also fails, the pipeline
       <strong> stops</strong> and asks for human input.
     </HighlightBox>
   </div>
@@ -283,9 +269,9 @@ export const base = import.meta.env.BASE_URL;
       Detects WCAG violations, generates remediation suggestions, and can auto-fix
       common issues like missing alt text and ARIA attributes.
     </ContentCard>
-    <ContentCard icon="mdi:clipboard-check-outline" iconColor="bg-emerald-600" title="Definition of Done" tags={[{label: "/dx-req-dod", color: "success"}, {label: "/dx-req-dod-fix", color: "success"}]}>
-      <code>/dx-req-dod</code> validates your work against the story's acceptance criteria and posts
-      a checklist to ADO. <code>/dx-req-dod-fix</code> auto-fixes failing items and re-checks.
+    <ContentCard icon="mdi:clipboard-check-outline" iconColor="bg-emerald-600" title="Definition of Done" tags={[{label: "/dx-req-dod", color: "success"}]}>
+      <code>/dx-req-dod</code> validates your work against the story's acceptance criteria, posts
+      a checklist to ADO, and auto-fixes failing items where possible.
     </ContentCard>
     <ContentCard icon="mdi:timer" iconColor="bg-amber-500" title="/dx-estimate" tags={[{label: "Estimation", color: "warning"}]}>
       Analyzes a story and produces structured estimation: hours per task, story points,
@@ -305,7 +291,7 @@ export const base = import.meta.env.BASE_URL;
   <PipelineBlock
     label="No orchestrator — run individually"
     steps={[
-      { title: "Commit", subtitle: "Stage & push", command: "/dx-step-commit", color: "#ec4899" },
+      { title: "Commit", subtitle: "Stage & push", command: "/dx-pr-commit", color: "#ec4899" },
       { title: "Pull Request", subtitle: "Create PR", command: "/dx-pr", color: "#3b82f6" },
       { title: "Editorial Guide", subtitle: "Dialog screenshots", command: "/aem-demo", color: "#6366f1" },
       { title: "Feature Docs", subtitle: "Wiki + authoring guide", command: "/dx-doc-gen", color: "#14b8a6" },
@@ -357,29 +343,9 @@ export const base = import.meta.env.BASE_URL;
         <td class="p-3 text-[#4a4a5a]">Full requirements pipeline (fetch + DoR + explain + research + share)</td>
       </tr>
       <tr>
-        <td class="p-3"><code>/dx-req-fetch &lt;id&gt;</code></td>
+        <td class="p-3"><code>/dx-req &lt;id&gt;</code></td>
         <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Pull work item (ADO or Jira)</td>
-      </tr>
-      <tr>
-        <td class="p-3"><code>/dx-req-dor</code></td>
-        <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Definition of Ready validation only</td>
-      </tr>
-      <tr>
-        <td class="p-3"><code>/dx-req-explain</code></td>
-        <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Developer requirements summary only</td>
-      </tr>
-      <tr>
-        <td class="p-3"><code>/dx-req-research</code></td>
-        <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Codebase research only</td>
-      </tr>
-      <tr>
-        <td class="p-3"><code>/dx-req-share</code></td>
-        <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Team summary only</td>
+        <td class="p-3 text-[#4a4a5a]">Full requirements pipeline (fetch, DoR, explain, research, share)</td>
       </tr>
       <tr>
         <td class="p-3"><code>/dx-req-import</code></td>
@@ -395,11 +361,6 @@ export const base = import.meta.env.BASE_URL;
         <td class="p-3"><code>/dx-req-dod</code></td>
         <td class="p-3">Quality</td>
         <td class="p-3 text-[#4a4a5a]">Validate work against acceptance criteria, post checklist to ADO/Jira</td>
-      </tr>
-      <tr>
-        <td class="p-3"><code>/dx-req-dod-fix</code></td>
-        <td class="p-3">Quality</td>
-        <td class="p-3 text-[#4a4a5a]">Auto-fix failing DoD items and re-check</td>
       </tr>
       <tr>
         <td class="p-3"><code>/dx-estimate</code></td>
@@ -496,11 +457,11 @@ export const base = import.meta.env.BASE_URL;
   <div class="border border-gray-200 rounded p-5 bg-white font-mono text-sm">
     <span class="block text-[0.7rem] uppercase tracking-wider text-gray-400 font-medium mb-3">Directory structure</span>
     <div class="border-b border-gray-50 py-1"><span class="font-semibold text-cyan-dark">.ai/specs/&lt;id&gt;-&lt;slug&gt;/</span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">raw-story.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-fetch</code></span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">dor-report.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-dor</code></span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">explain.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-explain</code></span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">research.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-research</code></span></div>
-    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">share-plan.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req-share</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">raw-story.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">dor-report.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">explain.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">research.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req</code></span></div>
+    <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">share-plan.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-req</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">implement.md</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-plan</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-6"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="font-semibold text-cyan-dark">prototype/</span><span class="text-gray-400 text-xs ml-auto float-right">&larr; <code class="text-gray-400">/dx-figma-prototype</code></span></div>
     <div class="border-b border-gray-50 py-1 pl-12"><span class="text-gray-400 mr-1">&boxur;&HorizontalLine;&HorizontalLine; </span><span class="text-brand-700">index.html</span></div>
@@ -531,7 +492,7 @@ export const base = import.meta.env.BASE_URL;
       AI-powered code review on a teammate's PR -- architecture, correctness, accessibility, performance.
       Posts structured comments with inline code patches that can be applied directly.
     </ContentCard>
-    <ContentCard icon="mdi:comment-check" iconColor="bg-emerald-600" title="Handling Feedback" tags={[{label: "/dx-pr-answer", color: "success"}, {label: "/dx-pr-fix", color: "success"}]}>
+    <ContentCard icon="mdi:comment-check" iconColor="bg-emerald-600" title="Handling Feedback" tags={[{label: "/dx-pr-answer", color: "success"}]}>
       When reviewers leave comments on your PR, AI reads them, applies fixes, and posts replies --
       resolving feedback in minutes instead of days.
     </ContentCard>

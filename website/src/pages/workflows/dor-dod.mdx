@@ -28,7 +28,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Definition of Ready (DoR)">
       Validates that a user story has all the information needed to begin implementation. Checks title, description, acceptance criteria, design links, dialog fields, and more.
-      <CommandBlock>/dx-req-dor</CommandBlock>
+      <CommandBlock>/dx-req</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:clipboard-check" iconColor="bg-emerald-600" title="Definition of Done (DoD)">
       Validates that actual deliverables (code, tests, PR, build) meet completion criteria. Works the same whether the story was implemented manually or via the AI workflow.
@@ -68,7 +68,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="Agent Posts">
-      <code>/dx-req-dor</code> evaluates the story against wiki criteria and posts a <code>[DoRAgent]</code> comment with interactive checkboxes. Passing items are pre-checked, failing items are unchecked.
+      <code>/dx-req</code> evaluates the story against wiki criteria and posts a <code>[DoRAgent]</code> comment with interactive checkboxes. Passing items are pre-checked, failing items are unchecked.
     </ContentCard>
     <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-cyan" title="BA Updates">
       The BA reads the comment, updates the story with missing data, and checks the corresponding checkboxes in the ADO comment.
@@ -125,8 +125,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </ul>
     </ContentCard>
     <ContentCard icon="mdi:auto-fix" iconColor="bg-cyan" title="Auto-Fix">
-      <code>/dx-req-dod-fix</code> reads <code>dod.md</code> failures and auto-fixes what is possible -- creates missing files, updates statuses, and fixes formatting issues.
-      <CommandBlock>/dx-req-dod-fix</CommandBlock>
+      <code>/dx-req-dod</code> also auto-fixes what is possible -- creates missing files, updates statuses, and fixes formatting issues.
+      <CommandBlock>/dx-req-dod</CommandBlock>
     </ContentCard>
   </div>
 
@@ -200,11 +200,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
       Triggered by Lambda webhooks when work items are updated. Posts DoR results as comments and can transition work item state based on pass/fail.
     </ContentCard>
     <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Automated DoD">
-      Triggered when PRs are created or updated. Validates deliverables and posts results. <code>/dx-req-dod-fix</code> can auto-remediate failures.
+      Triggered when PRs are created or updated. Validates deliverables and posts results. <code>/dx-req-dod</code> can auto-remediate failures.
     </ContentCard>
   </div>
 
   <HighlightBox severity="info" title="Same Criteria, Two Modes">
-    Both the interactive skills (<code>/dx-req-dor</code>, <code>/dx-req-dod</code>) and the automation pipelines read from the same wiki pages. Updating the wiki changes behavior for both local development and automated pipelines.
+    Both the interactive skills (<code>/dx-req</code>, <code>/dx-req-dod</code>) and the automation pipelines read from the same wiki pages. Updating the wiki changes behavior for both local development and automated pipelines.
   </HighlightBox>
 </Section>

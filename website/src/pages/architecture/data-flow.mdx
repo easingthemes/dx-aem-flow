@@ -28,12 +28,12 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <CommandBlock>
 {`.ai/specs/<ticket-id>-<slug>/
   .branch                   -- ensure-feature-branch.sh
-  raw-story.md              -- dx-req-fetch
-  explain.md                -- dx-req-explain (reads: raw-story.md)
-  research.md               -- dx-req-research (reads: raw-story.md + explain.md)
+  raw-story.md              -- dx-req (Phase 1: fetch)
+  explain.md                -- dx-req (Phase 3: explain, reads: raw-story.md)
+  research.md               -- dx-req (Phase 4: research, reads: raw-story.md + explain.md)
   ticket-research.md        -- dx-ticket-analyze
-  share-plan.md             -- dx-req-share (reads: explain + research + dor-report)
-  dor-report.md             -- dx-req-dor (reads: raw-story.md)
+  share-plan.md             -- dx-req (Phase 5: share, reads: explain + research + dor-report)
+  dor-report.md             -- dx-req (Phase 2: DoR, reads: raw-story.md)
   figma-extract.md          -- dx-figma-extract (optional)
   figma-conventions.md      -- dx-figma-prototype Phase A (optional)
   prototype/
@@ -49,7 +49,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   demo/
     dialog-*.png            -- aem-demo
     authoring-guide.md      -- aem-demo
-  images/                   -- dx-req-fetch (ADO attachments)
+  images/                   -- dx-req (ADO attachments)
   screenshots/              -- dx-bug-verify (browser screenshots)`}
     </CommandBlock>
   </HighlightBox>
@@ -73,10 +73,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
     label="Primary Pipeline"
     description="Main data flow from story fetch through to code delivery."
     steps={[
-      { title: 'raw-story.md', subtitle: 'dx-req-fetch', color: '#0891b2' },
-      { title: 'dor-report.md', subtitle: 'dx-req-dor', color: '#0891b2' },
-      { title: 'explain.md', subtitle: 'dx-req-explain', color: '#8b5cf6' },
-      { title: 'research.md', subtitle: 'dx-req-research', color: '#8b5cf6' },
+      { title: 'raw-story.md', subtitle: 'dx-req (fetch)', color: '#0891b2' },
+      { title: 'dor-report.md', subtitle: 'dx-req (DoR)', color: '#0891b2' },
+      { title: 'explain.md', subtitle: 'dx-req (explain)', color: '#8b5cf6' },
+      { title: 'research.md', subtitle: 'dx-req (research)', color: '#8b5cf6' },
       { title: 'implement.md', subtitle: 'dx-plan', color: '#d97706' },
       { title: 'Code Changes', subtitle: 'dx-step', color: '#059669' },
       { title: 'Pull Request', subtitle: 'dx-pr', color: '#059669' },
@@ -124,7 +124,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 **Why:** Expose component data as JSON
 **Test:** mvn test -pl core
 
-### Step 3h: Fix missing import          -- added by dx-step-heal
+### Step 3h: Fix missing import          -- added by dx-step-fix (escalation)
 **Status:** done
 **Files:** core/.../FooExporter.java
 **What:** Corrective fix for compilation error
@@ -176,7 +176,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>scm.org</code></td>
-        <td class="p-3">dx-req-fetch (ADO URLs)</td>
+        <td class="p-3">dx-req (ADO URLs)</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>build.command</code></td>

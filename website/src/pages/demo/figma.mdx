@@ -31,8 +31,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       iconColor="bg-brand-700"
       title="dx-core"
       tags={[
-        { label: '55 skills' },
-        { label: '7 agents', color: 'secondary' },
+        { label: '43 skills' },
+        { label: '6 agents', color: 'secondary' },
         { label: 'Figma + ADO/Jira MCP', color: 'success' },
       ]}
     >
@@ -128,8 +128,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </CommandBlock>
 
   <HighlightBox severity="warning" title="Multi-Agent Orchestration Under the Hood">
-    The coordinator dispatches a <code>dx-step-executor</code> subagent for each phase — a composable
-    microservice pattern applied to AI agents. Each subagent runs in its own isolated context window,
+    The coordinator invokes each phase skill directly via Skill() calls — a composable
+    pattern applied to AI agents. Each skill runs in its own isolated context window,
     performing deep repository intelligence without polluting the orchestrator's context. Only a compact
     summary propagates upward. This is <strong>context engineering</strong> in practice.
   </HighlightBox>

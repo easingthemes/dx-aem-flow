@@ -14,13 +14,13 @@ export const base = import.meta.env.BASE_URL;
 
 <PageHero
   title="AI-Powered Development Platform"
-  subtitle="From ticket to production -- how AI transforms sprint delivery with 78 skills, 10 autonomous agents, and self-learning capabilities across your entire development lifecycle."
+  subtitle="From ticket to production -- how AI transforms sprint delivery with 69 skills, 10 autonomous agents, and self-learning capabilities across your entire development lifecycle."
 />
 
 <Section>
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 text-center">
     <div>
-      <div class="text-4xl font-extrabold text-cyan">78</div>
+      <div class="text-4xl font-extrabold text-cyan">69</div>
       <div class="text-sm text-gray-500">Skills</div>
     </div>
     <div>
@@ -28,7 +28,7 @@ export const base = import.meta.env.BASE_URL;
       <div class="text-sm text-gray-500">Copilot Agents</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">3</div>
+      <div class="text-4xl font-extrabold text-cyan">4</div>
       <div class="text-sm text-gray-500">Plugins</div>
     </div>
     <div>
@@ -56,7 +56,7 @@ export const base = import.meta.env.BASE_URL;
     </div>
     <div class="border border-brand-700 rounded p-5 bg-white">
       <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-1">Layer 2: Local Workflow (Claude Code + Copilot CLI)</h3>
-      <p class="text-[0.9rem] text-[#4a4a5a]">78 skills on both IDEs -- /dx-req-all, /dx-plan, /dx-step-all, /dx-pr</p>
+      <p class="text-[0.9rem] text-[#4a4a5a]">69 skills on both IDEs -- /dx-req-all, /dx-plan, /dx-step-all, /dx-pr</p>
     </div>
     <div class="border border-emerald-500 rounded p-5 bg-white">
       <h3 class="text-[1.1rem] font-semibold text-[#1a1a2e] mb-1">Layer 1: Foundation</h3>
@@ -164,7 +164,7 @@ export const base = import.meta.env.BASE_URL;
       { title: 'Review with Patch', subtitle: 'Inline code fix', command: '/dx-pr-review' },
       { title: 'Question Only', subtitle: 'Clarification needed', command: '/dx-pr-answer', color: '#0891b2' },
       { title: 'Lower Acceptance', subtitle: 'Reduced threshold', color: '#d97706' },
-      { title: 'Follow-up Comment', subtitle: 'Ongoing discussion', command: '/dx-pr-fix', color: '#059669' },
+      { title: 'Follow-up Comment', subtitle: 'Ongoing discussion', command: '/dx-pr-answer', color: '#059669' },
     ]}
   />
 </Section>
@@ -172,13 +172,13 @@ export const base = import.meta.env.BASE_URL;
 <SectionHeading
   badge="Plugins"
   badgeColor="success"
-  title="Three Plugins, Independently Installable"
+  title="Four Plugins, Independently Installable"
   subtitle="Non-AEM projects only need dx. AEM-specific logic never pollutes a pure frontend project."
   bg="primary"
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
-    <ContentCard icon="mdi:wrench" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '55 skills' }, { label: '7 agents', color: 'secondary' }]}>
+    <ContentCard icon="mdi:wrench" iconColor="bg-brand-700" title="dx-core" tags={[{ label: '43 skills' }, { label: '6 agents', color: 'secondary' }]}>
       Full development lifecycle -- requirements, planning, execution, review, PR, accessibility, documentation. Works with any stack.
     </ContentCard>
     <ContentCard icon="mdi:cube-outline" iconColor="bg-amber-500" title="dx-aem" tags={[{ label: '12 skills', color: 'warning' }, { label: '6 agents', color: 'secondary' }]}>
@@ -218,11 +218,11 @@ export const base = import.meta.env.BASE_URL;
   </div>
 
   <div class="grid md:grid-cols-2 gap-4 mt-4">
-    <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Claude Code" tags={[{label: "78 skills", color: "secondary"}, {label: "13 agents", color: "secondary"}]}>
-      Run <code>/dx-*</code> skills directly in the terminal. 78 skills, 13 agents, full MCP integrations.
+    <ContentCard icon="mdi:wrench" iconColor="bg-cyan" title="Claude Code" tags={[{label: "69 skills", color: "secondary"}, {label: "13 agents", color: "secondary"}]}>
+      Run <code>/dx-*</code> skills directly in the terminal. 69 skills, 13 agents, full MCP integrations.
     </ContentCard>
-    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="GitHub Copilot CLI" tags={[{label: "78 skills", color: "primary"}, {label: "25 agents", color: "primary"}]}>
-      Same 78 skills + 25 Copilot agents with <code>@AgentName</code> invocation. Same plugins, same marketplace -- install once.
+    <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="GitHub Copilot CLI" tags={[{label: "69 skills", color: "primary"}, {label: "25 agents", color: "primary"}]}>
+      Same 69 skills + 25 Copilot agents with <code>@AgentName</code> invocation. Same plugins, same marketplace -- install once.
     </ContentCard>
   </div>
 </Section>
@@ -368,8 +368,8 @@ export const base = import.meta.env.BASE_URL;
     <ContentCard icon="mdi:brain" iconColor="bg-brand-700" title="Subagents to Protect Context" horizontal>
       Heavy operations run in isolated subagents that return compact summaries. The coordinator's context window stays clean. Right model for the job.
     </ContentCard>
-    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-emerald-600" title="Step Executor -- Skill Chaining Engine" horizontal>
-      One agent that can execute any of 41 skills. Coordinators chain skills in sequence. Self-healing with 3 layers: fix, heal, retry loop.
+    <ContentCard icon="mdi:lightning-bolt" iconColor="bg-emerald-600" title="Direct Skill Invocation -- No Middleman" horizontal>
+      Coordinators invoke skills directly via Skill() calls. No intermediary agent needed. Self-healing with 3 layers: fix, heal, retry loop.
     </ContentCard>
     <ContentCard icon="mdi:lock" iconColor="bg-red-500" title="Explicit Tool Allowlists" horizontal>
       Every agent declares exactly which tools it can use. A PR reviewer cannot run Bash. Optional tools are discovered at runtime via ToolSearch.
@@ -412,13 +412,13 @@ export const base = import.meta.env.BASE_URL;
   <HighlightBox severity="info" title="Beyond Anthropic's Official Skill Guide">
     <ul class="list-none p-0 m-0">
       <li class="py-0.5"><strong>Plugin architecture</strong> -- the guide has standalone skills; KAI has versioned, installable plugin packages with marketplace</li>
-      <li class="py-0.5"><strong>Coordinator + Step Executor</strong> -- the guide shows sequential orchestration; KAI chains 41 skills through a single executor agent with self-healing</li>
+      <li class="py-0.5"><strong>Coordinator + Direct Skill Invocation</strong> -- the guide shows sequential orchestration; KAI coordinators chain skills directly via Skill() calls with self-healing</li>
       <li class="py-0.5"><strong>Memory via files</strong> -- the guide mentions MCP data passing; KAI uses convention-based .md files that persist across sessions</li>
       <li class="py-0.5"><strong>Model tiering</strong> -- the guide doesn't address cost optimization per agent; KAI assigns Opus/Sonnet/Haiku per capability</li>
       <li class="py-0.5"><strong>Persona system</strong> -- not in the guide; KAI's me.md makes AI output indistinguishable from human teammates</li>
       <li class="py-0.5"><strong>Hooks for LLM offloading</strong> -- the guide focuses on skill instructions; KAI uses shell hooks for deterministic work</li>
       <li class="py-0.5"><strong>24/7 autonomous agents</strong> -- the guide covers interactive use; KAI runs the same skills unattended on ADO pipelines</li>
-      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same 78 skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
+      <li class="py-0.5"><strong>Dual-IDE support</strong> -- same 69 skills + shared marketplace work in both Claude Code and GitHub Copilot CLI</li>
     </ul>
   </HighlightBox>
 

@@ -62,7 +62,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       title="PR Answerer"
       tags={[{ label: 'PR comment', color: 'primary' }, { label: 'webhook', color: 'secondary' }]}
     >
-      Webhook on PR comment. Runs <code>/dx-pr-answer</code> + <code>/dx-pr-fix</code> -- researches
+      Webhook on PR comment. Runs <code>/dx-pr-answer</code> -- researches
       codebase, drafts replies, and applies agreed fixes automatically.
     </ContentCard>
   </div>
@@ -97,7 +97,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:wrench"
       iconColor="bg-emerald-600"
       title="DoD Fixer"
-      tags={[{ label: 'KAI-DOD-FIX-AUTOMATION', color: 'success' }, { label: '/dx-req-dod-fix', color: 'secondary' }]}
+      tags={[{ label: 'KAI-DOD-FIX-AUTOMATION', color: 'success' }, { label: '/dx-req-dod', color: 'secondary' }]}
     >
       Fixes DoD gaps found by the checker -- adds missing tests, docs, or acceptance criteria evidence.
     </ContentCard>

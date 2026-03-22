@@ -18,15 +18,16 @@ import HighlightBox from '../../components/HighlightBox.astro';
 
 <SectionHeading
   badge="Plugins"
-  title="Three-Plugin Architecture"
-  subtitle="All skills, agents, and rules are organized into three self-contained plugins."
+  title="Four-Plugin Architecture"
+  subtitle="All skills, agents, and rules are organized into four self-contained plugins."
   bg="alt"
 />
 <Section>
   <HighlightBox severity="info" title="Plugin Directory Structure">
     <CommandBlock>
 {`dx-aem-flow/dx/plugins/
-  dx-core/   55 skills, 7 agents -- ADO/Jira workflow (any stack)
+  dx-core/   43 skills, 6 agents -- ADO/Jira workflow (any stack)
+  dx-hub/              3 skills -- multi-repo hub orchestration
   dx-aem/              12 skills, 6 agents -- AEM verification & QA
   dx-automation/       11 skills -- autonomous 24/7 agents`}
     </CommandBlock>
@@ -263,8 +264,8 @@ aem:
     </HighlightBox>
 
     <HighlightBox severity="error" title="Agent Type Naming">
-      Always use the full prefixed name: <code>dx-core:dx-step-executor</code>, NOT just
-      <code>dx-step-executor</code>. The short name fails with "Agent type not found".
+      Always use the full prefixed name: <code>dx-core:dx-code-reviewer</code>, NOT just
+      <code>dx-code-reviewer</code>. The short name fails with "Agent type not found".
     </HighlightBox>
 
     <HighlightBox severity="success" title="Fork Auto-Isolation">
@@ -452,12 +453,6 @@ aem:
     </thead>
     <tbody>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>dx-step-executor</code></td>
-        <td class="p-3">Sonnet</td>
-        <td class="p-3"><code>coordinators</code></td>
-        <td class="p-3">Execute single skill</td>
-      </tr>
-      <tr class="border-t border-gray-200">
         <td class="p-3"><code>dx-pr-reviewer</code></td>
         <td class="p-3">Sonnet</td>
         <td class="p-3"><code>/dx-pr-review</code></td>
@@ -572,7 +567,7 @@ aem:
       icon="mdi:wrench"
       iconColor="bg-cyan"
       title="Claude Code"
-      tags={[{ label: '78 skills', color: 'secondary' }, { label: '13 agents', color: 'secondary' }]}
+      tags={[{ label: '69 skills', color: 'secondary' }, { label: '13 agents', color: 'secondary' }]}
     >
       Full plugin system with MCP servers, subagents, hooks, and shared libraries.
     </ContentCard>
@@ -581,9 +576,9 @@ aem:
       icon="mdi:monitor"
       iconColor="bg-brand-700"
       title="GitHub Copilot CLI"
-      tags={[{ label: '78 skills', color: 'primary' }, { label: '25 agents', color: 'primary' }]}
+      tags={[{ label: '69 skills', color: 'primary' }, { label: '25 agents', color: 'primary' }]}
     >
-      Same 78 skills auto-discovered from plugins. 25 Copilot agents with <code>allowed-tools</code> for auto-approval
+      Same 69 skills auto-discovered from plugins. 25 Copilot agents with <code>allowed-tools</code> for auto-approval
       and <code>handoffs:</code> for navigation.
     </ContentCard>
   </div>
@@ -712,9 +707,9 @@ aem:
 />
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Three Plugins, One Repo">
-      Three independently installable plugins in a single monorepo. Non-AEM projects only need
-      <code>dx-core</code>; AEM projects add <code>dx-aem</code>; any project wanting
+    <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="Four Plugins, One Repo">
+      Four independently installable plugins in a single monorepo. Non-AEM projects only need
+      <code>dx-core</code>; multi-repo projects add <code>dx-hub</code>; AEM projects add <code>dx-aem</code>; any project wanting
       24/7 autonomous agents adds <code>dx-automation</code>. Single repo simplifies maintenance.
     </ContentCard>
 
@@ -724,10 +719,9 @@ aem:
       a config lookup makes skills reusable across any project.
     </ContentCard>
 
-    <ContentCard icon="mdi:merge" iconColor="bg-emerald-600" title="Merged Step Executors">
-      <code>ado-step-executor</code> and <code>bug-step-executor</code> merged into one
-      <code>dx-step-executor</code>. Both did the same thing -- receive a skill name, execute it,
-      return a compact summary. Merging eliminates duplication.
+    <ContentCard icon="mdi:merge" iconColor="bg-emerald-600" title="Direct Skill Invocation">
+      Coordinators invoke skills directly via <code>Skill()</code> calls instead of routing through
+      an intermediary executor agent. Simpler architecture, fewer context switches, lower token cost.
     </ContentCard>
 
     <ContentCard icon="mdi:layers" iconColor="bg-amber-500" title="Three-Layer Override System">
