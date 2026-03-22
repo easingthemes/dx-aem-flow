@@ -1,3 +1,12 @@
+## [2.56.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.1...v2.56.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* clarify env var setup — shell export is primary, settings.local.json is alternative ([025a88a](https://github.com/easingthemes/dx-aem-flow/commit/025a88abb266ca2e0c22b00c9e6d7ec66cf76cd4))
+* restore QA env vars fallback in aem-init settings.local.json creation ([857e016](https://github.com/easingthemes/dx-aem-flow/commit/857e0162fd7e3babdf614020a7e1fc833eacc369))
+* **website:** correct AEM MCP setup — single shell export, colon-delimited format ([842c12a](https://github.com/easingthemes/dx-aem-flow/commit/842c12aa20b2934a1960dae4fa652a8dd7b141cd))
+
 ## [2.56.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.56.0...v2.56.1) (2026-03-22)
 
 # [2.56.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.55.3...v2.56.0) (2026-03-22)
