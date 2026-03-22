@@ -1,7 +1,7 @@
 {
   "name": "dx-aem",
   "description": "AEM component verification, dialog inspection, demo capture, QA automation, and multi-platform project knowledge for Adobe Experience Manager projects",
-  "version": "2.56.1",
+  "version": "2.56.2",
   "author": {
     "name": "Dragan Filipovic"
   },
