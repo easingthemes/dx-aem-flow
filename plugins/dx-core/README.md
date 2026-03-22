@@ -13,7 +13,7 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 
 ```bash
 /dx-init                    # One-time project setup — generates .ai/config.yaml
-/dx-req-all 2416553         # Fetch work item (ADO/Jira), distill requirements, research codebase
+/dx-req 2416553             # Fetch work item (ADO/Jira), distill requirements, research codebase
 /dx-plan                    # Generate step-by-step implementation plan
 /dx-step-all                # Execute all steps autonomously (test + review + commit loop)
 /dx-step-build                   # Build & deploy, auto-fix errors
@@ -33,7 +33,6 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 
 | Skill | Description |
 |-------|-------------|
-| `/dx-req-all` | Full requirements pipeline: fetch → dor → explain → research → share |
 | `/dx-req` | Full requirements pipeline — fetch, validate DoR, distill, research, share (5 phases) |
 | `/dx-req-tasks` | Create child Task work items with hour estimates |
 | `/dx-req-dod` | Check Definition of Done compliance and auto-fix gaps — reviews PR, tasks, docs |

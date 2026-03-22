@@ -256,7 +256,7 @@ After all steps are done:
 
 ### Cross-Repo Note:
 <If implement.md has "Other repos required", print:>
-> This plan covers **<current repo>** only. Switch to **<other repo(s)>** and run `/dx-req-all <id>` there to plan and execute those changes.
+> This plan covers **<current repo>** only. Switch to **<other repo(s)>** and run `/dx-req <id>` there to plan and execute those changes.
 <Otherwise omit this section.>
 
 ### Next steps:

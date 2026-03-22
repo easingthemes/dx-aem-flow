@@ -21,7 +21,7 @@ export const base = import.meta.env.BASE_URL;
 
 <Section>
   <HighlightBox severity="info" title="How It Works">
-    Instead of writing complex prompts, you run **skills** -- short commands like <code>/dx-req-all</code> or <code>/dx-plan</code>.
+    Instead of writing complex prompts, you run **skills** -- short commands like <code>/dx-req</code> or <code>/dx-plan</code>.
     Each skill already knows what context to gather (tickets, codebase, config, prior specs -- not just source code),
     which subagents to spawn for parallel work, and what output format to produce.
 
@@ -77,7 +77,7 @@ export const base = import.meta.env.BASE_URL;
 <Section>
   <PipelineBlock
     label="One Command"
-    command="/dx-req-all <ID or JIRA-KEY>"
+    command="/dx-req <ID or JIRA-KEY>"
     steps={[
       { title: "Requirements", subtitle: "Full pipeline (fetch, DoR, explain, research, share)", command: "/dx-req" },
     ]}
@@ -87,7 +87,7 @@ export const base = import.meta.env.BASE_URL;
     <ContentCard icon="mdi:download" iconColor="bg-brand-700" title="/dx-req" tags={[{label: "All spec files", color: "primary"}]}>
       Full requirements pipeline in one skill: fetches the work item (ADO or Jira), validates DoR, distills developer requirements, researches the codebase, and generates a team summary. Produces raw-story.md, dor-report.md, explain.md, research.md, and share-plan.md.
     </ContentCard>
-    <ContentCard icon="mdi:clipboard-check" iconColor="bg-amber-500" title="/dx-req-all" tags={[{label: "Coordinator", color: "warning"}]}>
+    <ContentCard icon="mdi:clipboard-check" iconColor="bg-amber-500" title="/dx-req" tags={[{label: "Coordinator", color: "warning"}]}>
       Coordinator that invokes /dx-req. Use this for the full orchestrated pipeline with run logging and metrics.
     </ContentCard>
   </div>
@@ -338,7 +338,7 @@ export const base = import.meta.env.BASE_URL;
     </thead>
     <tbody class="divide-y divide-gray-100">
       <tr>
-        <td class="p-3"><code>/dx-req-all &lt;id&gt;</code></td>
+        <td class="p-3"><code>/dx-req &lt;id&gt;</code></td>
         <td class="p-3">Requirements</td>
         <td class="p-3 text-[#4a4a5a]">Full requirements pipeline (fetch + DoR + explain + research + share)</td>
       </tr>

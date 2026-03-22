@@ -37,7 +37,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Model Strategy</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>dx-req-all</code></td><td class="p-3">4 steps</td><td class="p-3">Requirements gathering</td><td class="p-3">Sonnet + Opus (checklist)</td></tr>
+        <tr><td class="p-3"><code>dx-req</code></td><td class="p-3">4 steps</td><td class="p-3">Requirements gathering</td><td class="p-3">Sonnet + Opus (checklist)</td></tr>
         <tr><td class="p-3"><code>dx-step-all</code></td><td class="p-3">N steps (dynamic)</td><td class="p-3">Plan execution loop</td><td class="p-3">Sonnet + Opus (fix/heal) + Haiku (test/commit)</td></tr>
         <tr><td class="p-3"><code>dx-bug-all</code></td><td class="p-3">3 steps</td><td class="p-3">Bug triage, verify, fix</td><td class="p-3">Sonnet + Opus (fix planning)</td></tr>
         <tr><td class="p-3"><code>dx-agent-all</code></td><td class="p-3">12 phases (max 13)</td><td class="p-3">Full story to PR pipeline</td><td class="p-3">All tiers</td></tr>
@@ -92,20 +92,20 @@ import CommandBlock from '../../components/CommandBlock.astro';
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
-{/* dx-req-all                                                              */}
+{/* dx-req                                                              */}
 {/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
   badge="Coordinator"
   badgeColor="primary"
-  title="dx-req-all"
+  title="dx-req"
   subtitle="Requirements gathering pipeline -- 4 steps"
   bg="alt"
 />
 <Section>
   <PipelineBlock
     label="Requirements Pipeline"
-    command="/dx-req-all <work-item-id>"
+    command="/dx-req <work-item-id>"
     steps={[
       { title: 'requirements', subtitle: 'Full pipeline (fetch, DoR, explain, research, share)', command: '/dx-req' },
     ]}
@@ -202,7 +202,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     command="/dx-agent-all <work-item-id>"
     description="Interactive by default -- pauses after requirements. Add 'autonomous' to skip pauses."
     steps={[
-      { title: 'Phase 1', subtitle: 'Requirements', command: 'dx-req-all' },
+      { title: 'Phase 1', subtitle: 'Requirements', command: 'dx-req' },
       { title: 'Phase 1.5', subtitle: 'Figma extract', command: 'dx-figma-extract' },
       { title: 'Phase 2', subtitle: 'Figma prototype', command: 'dx-figma-prototype' },
       { title: 'Phase 2b', subtitle: 'Planning', command: 'dx-plan' },
@@ -230,7 +230,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <div class="space-y-4">
-    <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Phase 1: Requirements (dx-req-all)">
+    <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Phase 1: Requirements (dx-req)">
       Subagent runs the full requirements pipeline: fetch, dor, explain, research, share.
       <strong>Interactive:</strong> Pauses for human review of dor-report.md and explain.md.
       <strong>Autonomous:</strong> Continues immediately.
@@ -374,7 +374,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
       <thead><tr class="bg-brand-100">
         <th class="text-left p-3 font-semibold text-brand-900">Phase</th>
-        <th class="text-left p-3 font-semibold text-brand-900">dx-req-all</th>
+        <th class="text-left p-3 font-semibold text-brand-900">dx-req</th>
         <th class="text-left p-3 font-semibold text-brand-900">dx-step-all</th>
         <th class="text-left p-3 font-semibold text-brand-900">dx-bug-all</th>
         <th class="text-left p-3 font-semibold text-brand-900">dx-agent-all</th>
@@ -418,7 +418,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Autonomous</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>dx-req-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
+        <tr><td class="p-3"><code>dx-req</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
         <tr><td class="p-3"><code>dx-step-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
         <tr><td class="p-3"><code>dx-bug-all</code></td><td class="p-3">No pauses</td><td class="p-3">No pauses</td></tr>
         <tr><td class="p-3"><code>dx-agent-all</code></td><td class="p-3">Pause after requirements, auto-continue after planning</td><td class="p-3">Straight through</td></tr>

@@ -95,7 +95,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-req-all</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Full pipeline coordinator: invokes dx-req</td><td class="p-3"><code>specs/&lt;id&gt;-&#42;/</code></td></tr>
         <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Full requirements pipeline (fetch, DoR, explain, research, share)</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Create child Task work items with estimates</td><td class="p-3">ADO/Jira tasks</td></tr>
         <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path&gt;</code></td><td class="p-3">Validate external requirements document</td><td class="p-3"><code>explain.md</code></td></tr>
@@ -471,7 +470,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:source-branch" iconColor="bg-brand-700" title="How It Works">
       <ol class="text-sm list-decimal list-inside space-y-1 mt-2">
-        <li>Requirements phase (<code>/dx-req-all</code>) discovers which repos need work</li>
+        <li>Requirements phase (<code>/dx-req</code>) discovers which repos need work</li>
         <li><code>research.md</code> and <code>explain.md</code> list the repos involved</li>
         <li>Plan and execution only cover the <strong>current repo</strong></li>
         <li>Switch to the other repo and run the same workflow there</li>
@@ -487,12 +486,12 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <CommandBlock label="Manual cross-repo workflow">
 {`# In backend repo:
-/dx-req-all 2416553
+/dx-req 2416553
 /dx-plan
 /dx-step-all
 
 # In frontend repo (same ticket, plans FE steps only):
-/dx-req-all 2416553
+/dx-req 2416553
 /dx-plan
 /dx-step-all`}
   </CommandBlock>
