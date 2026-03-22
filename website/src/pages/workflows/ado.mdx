@@ -78,7 +78,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard
       icon="mdi:format-list-checks"
       iconColor="bg-amber-500"
-      title="/dx-req-dor"
+      title="/dx-req (DoR phase)"
       tags={[{ label: '[DoRAgent]', color: 'warning' }, { label: 'dor-check.md.template', color: 'default' }]}
     >
       Definition of Ready checklist with interactive checkboxes. BAs can check items directly in ADO, then re-run DoR to update the scorecard. Three modes: full post, update, or skip if unchanged.
@@ -87,7 +87,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard
       icon="mdi:chat"
       iconColor="bg-cyan"
-      title="/dx-req-share"
+      title="/dx-req (share phase)"
       tags={[{ label: '[DevPlan]', color: 'info' }, { label: 'share-plan.md.template', color: 'default' }]}
     >
       Non-technical implementation plan for the team. Covers what's being built, the approach, scope (S/M/L), assumptions, and open questions. Suitable for pasting into Teams or standup notes.
@@ -174,13 +174,13 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     </thead>
     <tbody>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-req-dor</code></td>
+        <td class="p-3"><code>/dx-req (DoR phase)</code></td>
         <td class="p-3"><code class="text-xs">[DoRAgent] Definition of Ready Check</code></td>
         <td class="p-3 text-xs">A: full | B: update | C: skip</td>
         <td class="p-3"><code class="text-xs">dor-check.md.template</code></td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-req-share</code></td>
+        <td class="p-3"><code>/dx-req</code> (share)</td>
         <td class="p-3"><code class="text-xs">[DevPlan] Development Plan</code></td>
         <td class="p-3 text-xs">A: full | B: update</td>
         <td class="p-3"><code class="text-xs">share-plan.md.template</code></td>
@@ -271,7 +271,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard
       icon="mdi:clipboard-check-outline"
       iconColor="bg-amber-500"
-      title="/dx-req-dod-fix"
+      title="/dx-req-dod"
       tags={[{ label: 'Task', color: 'warning' }, { label: 'fix items', color: 'warning' }]}
     >
       Creates Task work items for failed Definition of Done criteria that cannot be auto-fixed.
@@ -308,7 +308,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3"><code class="text-xs">&lt;FE/BE/Authoring task&gt;</code></td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-req-dod-fix</code></td>
+        <td class="p-3"><code>/dx-req-dod</code></td>
         <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
         <td class="p-3"><code class="text-xs">wit_create_work_item</code></td>
         <td class="p-3"><code class="text-xs">&lt;fix description&gt;</code></td>
@@ -411,8 +411,8 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   <PipelineBlock
     label="Development Lifecycle ADO Writes"
     steps={[
-      { title: 'DoR Check', subtitle: 'Comment', command: '/dx-req-dor', color: '#f59e0b' },
-      { title: 'Dev Plan', subtitle: 'Comment', command: '/dx-req-share', color: '#0891b2' },
+      { title: 'DoR Check', subtitle: 'Comment', command: '/dx-req (DoR phase)', color: '#f59e0b' },
+      { title: 'Dev Plan', subtitle: 'Comment', command: '/dx-req', color: '#0891b2' },
       { title: 'RE Agent', subtitle: 'Comment + Tasks', command: '/dx-agent-re', color: '#8b5cf6' },
       { title: 'Estimation', subtitle: 'Comment + Updates', command: '/dx-estimate', color: '#d97706' },
       { title: 'Task Split', subtitle: 'Tasks + Estimates', command: '/dx-req-tasks', color: '#059669' },
@@ -436,13 +436,13 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <tbody>
       <tr class="border-t border-gray-200">
         <td class="p-3">Requirements</td>
-        <td class="p-3"><code>/dx-req-dor</code></td>
+        <td class="p-3"><code>/dx-req (DoR phase)</code></td>
         <td class="p-3">Comment</td>
         <td class="p-3">Story</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Requirements</td>
-        <td class="p-3"><code>/dx-req-share</code></td>
+        <td class="p-3"><code>/dx-req</code> (share)</td>
         <td class="p-3">Comment</td>
         <td class="p-3">Story</td>
       </tr>
@@ -484,7 +484,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Quality</td>
-        <td class="p-3"><code>/dx-req-dod-fix</code></td>
+        <td class="p-3"><code>/dx-req-dod</code> (fix)</td>
         <td class="p-3">Tasks</td>
         <td class="p-3">Story children</td>
       </tr>

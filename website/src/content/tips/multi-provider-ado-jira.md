@@ -49,7 +49,7 @@ tracker:
 # if jira → use mcp__atlassian__*
 
 # Same skill, different backend:
-/dx-req-fetch 12345
+/dx-req 12345
 # → ADO: mcp__ado__wit_get_work_item
 # → Jira: mcp__atlassian__get_issue
 ```
