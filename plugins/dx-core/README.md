@@ -121,6 +121,10 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 | `dx-pr-reviewer` | Sonnet | PR diff analysis, structured findings with severity |
 | `dx-file-resolver` | Haiku | Source file lookup across repos via ADO MCP |
 | `dx-doc-searcher` | Haiku | Local documentation index search |
+| `dx-figma-styles` | Haiku | CSS/SCSS convention discovery for prototype generation |
+| `dx-figma-markup` | Haiku | HTML/accessibility convention discovery for prototype generation |
+
+Model tiering is also applied at the skill level via `model:` frontmatter (e.g., Opus for dx-plan, dx-step-verify, dx-pr-review; Haiku for dx-ticket-analyze, dx-help).
 
 ## Configuration
 

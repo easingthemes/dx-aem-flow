@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 58 skills
+## dx-core plugin — 43 skills
 
 ### Estimation — 1 skill
 
@@ -13,7 +13,7 @@
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-req-all | `/dx-req-all` | `<work-item-id>` | Full pipeline coordinator: invokes dx-req. Gates on DoR blocking questions. Logs run metrics to `.ai/learning/`. | All spec files + ADO comments |
-| dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — 5 phases: fetch, DoR, explain, research, share | All spec files + ADO comments |
+| dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR, distill requirements, research codebase, share summary (5 phases). Includes reference docs for each phase. | All spec files + ADO comments |
 | dx-req-tasks | `/dx-req-tasks` | `<work-item-id>` | Create child Task work items with hour estimates | ADO/Jira tasks |
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
 | dx-req-import | `/dx-req-import` | `<path-to-file>` | Validate external (non-ADO) requirements document | `explain.md` |
@@ -40,10 +40,10 @@
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-step-all | `/dx-step-all` | `<work-item-id>` (optional) | Execute all plan steps autonomously (step → fix loop). Loads fix memory, logs fix patterns, promotes proven fixes to `.claude/rules/`. | All steps done |
-| dx-step | `/dx-step` | `<work-item-id>` (optional) | Execute next pending step — implement, test, review, and commit. Optionally invokes `superpowers:test-driven-development` for TDD discipline. | Code changes + commit |
-| dx-step-fix | `/dx-step-fix` | `<work-item-id>` (optional) | Diagnose and fix a blocked step — direct fix or corrective steps in implement.md. Optionally invokes `superpowers:systematic-debugging` for structured diagnosis. | Fix applied |
+| dx-step | `/dx-step` | `<work-item-id>` (optional) | Execute next pending step — implement, test, review, and commit in one pass. Uses `model: sonnet` frontmatter. Optionally invokes `superpowers:test-driven-development` for TDD discipline. | Code changes + commit |
+| dx-step-fix | `/dx-step-fix` | `<work-item-id>` (optional) | Diagnose and fix a blocked step — direct fix, corrective steps, or revert. Includes heal-loop for persistent failures. Uses `model: sonnet` frontmatter. Optionally invokes `superpowers:systematic-debugging` for structured diagnosis. | Fix applied |
 | dx-step-build | `/dx-step-build` | none | Build and deploy using config build command, auto-fix errors iteratively | Build pass/fail |
-| dx-step-verify | `/dx-step-verify` | `<work-item-id>` (optional) | 6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Optionally invokes `superpowers:verification-before-completion` for evidence-based verification. | Verdict |
+| dx-step-verify | `/dx-step-verify` | `<work-item-id>` (optional) | 6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Uses `model: opus` frontmatter. Optionally invokes `superpowers:verification-before-completion` for evidence-based verification. | Verdict |
 
 ### Pull Request (`dx-pr-*`) — 7 skills
 
@@ -51,9 +51,9 @@
 |-------|-----------|----------|-------------|--------|
 | dx-pr | `/dx-pr` | `<work-item-id>` (optional) | Create pull request via ADO MCP, generate description from share-plan.md. Optionally invokes `superpowers:finishing-a-development-branch` for branch readiness. | PR URL |
 | dx-pr-commit | `/dx-pr-commit` | `[pr]` | Commit changes with ADO work item linking; add `pr` to also create a PR | Git commit [+ PR] |
-| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, post comments, propose fix patches + vote | Findings file + ADO comments |
+| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, post findings, propose fix patches + vote. Includes reference doc for posting findings. Uses `model: opus` frontmatter. | Findings file + ADO comments |
 | dx-pr-review-all | `/dx-pr-review-all` | none | Batch-review multiple open PRs assigned to you | Multiple reviews |
-| dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches, apply agree-will-fix changes | ADO replies + code fixes |
+| dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches, apply agree-will-fix code changes. Includes reference doc for applying fixes. | ADO replies + code fixes |
 | dx-pr-review-report | `/dx-pr-review-report` | `<PR-id or URL>` | Generate categorized report from PR review — groups by category, tracks patch resolution, posts to wiki. Uses report template from `assets/report-template.md`. | Report + wiki page |
 | dx-pr-reviews-report | `/dx-pr-reviews-report` | `[--any] [PR URL | Repo URL | count] [count]` | Batch-generate review reports. Default: PRs where you are reviewer (excl. own), parallel agents. `--any`: all PRs with threads, sequential with selection. Helper script: `scripts/check-existing-reports.sh`. | Multiple reports + wiki |
 
@@ -93,7 +93,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-sync | `/dx-sync` | `[--dry-run] [--parallel] [repo1 repo2 ...]` | Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options | Sync report |
 
-### Utility — 10 skills
+### Utility — 7 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -104,9 +104,18 @@
 | dx-ticket-analyze | `/dx-ticket-analyze` | `<work-item-id or URL>` | Research ADO/Jira ticket, find all relevant source files | Research report |
 | dx-eject | `/dx-eject` | `[dx\|aem\|auto\|all]` | Eject plugin assets into local repo — copies all skills, agents, rules, templates so project works without plugins | `.claude/skills/`, `.ai/ejected/` |
 | dx-help | `/dx-help` | `<question>` | Answer architecture questions from local .ai/ docs | Answer |
+
+---
+
+## dx-hub plugin — 3 skills
+
+Multi-repo orchestration plugin. Manages hub directories that coordinate work across multiple consumer repos.
+
+| Skill | Invocation | Argument | Description | Output |
+|-------|-----------|----------|-------------|--------|
 | dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
-| dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
 | dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| dispatch-mode \| auto-dispatch]` | View and edit hub configuration | Config update |
+| dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
 
 ---
 
@@ -144,9 +153,9 @@ dx-bug-all ─┬─ dx-bug-triage
 dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, includes auto-fix)
 ```
 
-## dx-aem plugin — 10 skills
+## dx-aem plugin — 12 skills
 
-### Verification (3)
+### Verification (4)
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|

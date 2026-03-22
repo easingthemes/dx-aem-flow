@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Three Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
+Four Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
 
-- **dx-core** (`plugins/dx-core/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. 53 skills (`dx-*`), 7 agents. 15 Copilot agent templates (incl. coordinators).
-- **dx-aem** (`plugins/dx-aem/`) — AEM-specific verification, QA, and demo capture. Includes AEM project knowledge (seed data). Requires dx. 10 skills (`aem-*`), 5 agents.
+- **dx-core** (`plugins/dx-core/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. 43 skills (`dx-*`), 6 agents. 15 Copilot agent templates (incl. coordinators).
+- **dx-hub** (`plugins/dx-hub/`) — Multi-repo orchestration: hub init, config, status. 3 skills (`dx-hub-*`).
+- **dx-aem** (`plugins/dx-aem/`) — AEM-specific verification, QA, and demo capture. Includes AEM project knowledge (seed data). Requires dx. 12 skills (`aem-*`), 6 agents.
 - **dx-automation** (`plugins/dx-automation/`) — Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. Requires dx. 11 skills (`auto-*`).
 
 AEM project knowledge (seed data) is now built into dx-aem — no separate plugin needed.
@@ -38,9 +39,9 @@ No compilation, linting, or automated test suite — verify skills manually by r
 
 ## Architecture
 
-### Three-Plugin Design
+### Four-Plugin Design
 
-Plugins are independently installable. Non-AEM projects only need dx. Each plugin has:
+Plugins are independently installable. Non-AEM projects only need dx-core (+ dx-hub for multi-repo). Each plugin has:
 ```
 plugin/
 ├── .claude-plugin/plugin.json   # Plugin manifest (shared by Claude Code + Copilot CLI)
@@ -77,11 +78,13 @@ Projects can also shadow entire skills by creating `.claude/skills/<name>/SKILL.
 
 ### Model Tier Strategy
 
-| Tier | Use | Agents |
-|------|-----|--------|
-| Opus | Deep reasoning (code review) | dx-code-reviewer |
-| Sonnet | Execution (steps, PR review, inspections) | dx-pr-reviewer, dx-step-executor, aem-inspector, aem-demo-capture, aem-bug-executor |
-| Haiku | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder |
+Model tiering is applied at two levels: agents use `model:` in their frontmatter, and skills can also specify `model:` frontmatter for direct execution without an agent.
+
+| Tier | Use | Agents / Skills |
+|------|-----|-----------------|
+| Opus | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
+| Sonnet | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-demo-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
+| Haiku | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 ### MCP Servers
 
@@ -133,7 +136,7 @@ agent: agent-name      # optional
 ---
 ```
 
-- Skills go in `plugins/{dx-core,dx-aem,dx-automation}/skills/<name>/SKILL.md`
+- Skills go in `plugins/{dx-core,dx-hub,dx-aem,dx-automation}/skills/<name>/SKILL.md`
 - Helper scripts go in `skills/<name>/scripts/*.sh`
 - Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-req-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
 
