@@ -11,6 +11,7 @@ import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
 import CommandBlock from '../../components/CommandBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Agent Catalog"
@@ -64,7 +65,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-core"
   badgeColor="primary"
   title="Claude Code Agents"
-  subtitle="6 agents for the platform-agnostic workflow"
+  subtitle={`${stats.dxCoreAgents} agents for the platform-agnostic workflow`}
   bg="primary"
 />
 <Section>
@@ -133,7 +134,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="dx-aem"
   badgeColor="secondary"
   title="AEM Agents"
-  subtitle="6 agents for AEM-specific operations"
+  subtitle={`${stats.dxAemAgents} agents for AEM-specific operations`}
   bg="alt"
 />
 <Section>
@@ -162,9 +163,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
           <td class="p-3">Frontend visual verification. Creates demo pages, screenshots components in <code>wcmmode=disabled</code>, compares against Figma reference using multimodal vision. Fix loop: edit source, rebuild, redeploy, re-screenshot.</td>
         </tr>
         <tr>
-          <td class="p-3 font-mono text-xs"><code>aem-demo-capture</code></td>
+          <td class="p-3 font-mono text-xs"><code>aem-editorial-guide-capture</code></td>
           <td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td>
-          <td class="p-3"><code>/aem-demo</code>, <code>/aem-doc-gen</code></td>
+          <td class="p-3"><code>/aem-editorial-guide</code>, <code>/aem-doc-gen</code></td>
           <td class="p-3">Read, Write, Glob, ToolSearch, Chrome DevTools MCP</td>
           <td class="p-3">Browser automation for AEM editor. Handles login, QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, writes editor-friendly documentation.</td>
         </tr>
@@ -259,7 +260,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>@AEMBefore</code></td><td class="p-3">aem-inspector</td><td class="p-3">Pre-development baseline capture. Walks component dialog, finds pages, saves snapshot.</td><td class="p-3">DxPlanExecutor</td></tr>
         <tr><td class="p-3"><code>@AEMAfter</code></td><td class="p-3">aem-inspector</td><td class="p-3">Post-deployment verification. Compares against <code>aem-before.md</code> baseline.</td><td class="p-3">DxCodeReview</td></tr>
         <tr><td class="p-3"><code>@AEMSnapshot</code></td><td class="p-3">aem-inspector</td><td class="p-3">General-purpose component inspection. Dialog fields, pages, JCR properties.</td><td class="p-3">AEMBefore, DxComponent</td></tr>
-        <tr><td class="p-3"><code>@AEMDemo</code></td><td class="p-3">aem-demo-capture</td><td class="p-3">Captures dialog screenshots, writes editor-friendly authoring guide.</td><td class="p-3">--</td></tr>
+        <tr><td class="p-3"><code>@AEMEditorialGuide</code></td><td class="p-3">aem-editorial-guide-capture</td><td class="p-3">Captures dialog screenshots, writes editor-friendly authoring guide.</td><td class="p-3">--</td></tr>
         <tr><td class="p-3"><code>@AEMComponent</code></td><td class="p-3">aem-file-resolver + aem-page-finder</td><td class="p-3">Multi-platform component lookup. Source files, AEM pages, dialog fields. Data-driven via project.yaml.</td><td class="p-3">AEMTicket, AEMBefore, DxComponent</td></tr>
         <tr><td class="p-3"><code>@AEMVerify</code></td><td class="p-3">aem-bug-executor</td><td class="p-3">Bug verification on a running AEM instance.</td><td class="p-3">DxDebug, DxComponent</td></tr>
         <tr><td class="p-3"><code>@AEMTicket</code></td><td class="p-3">/dx-ticket-analyze + enrichment</td><td class="p-3">ADO ticket research with AEM project enrichment -- 4-signal market detection, parallel agents.</td><td class="p-3">AEMComponent, DxHelp, DxReqAll</td></tr>

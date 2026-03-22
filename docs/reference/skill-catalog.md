@@ -161,7 +161,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | aem-snapshot | `/aem-snapshot` | `<component-name>` | Baseline component state before development — dialog fields, properties, pages | `aem-before.md` |
 | aem-verify | `/aem-verify` | `<component-name>` | Check component after deployment, compare against baseline, create test page | `aem-after.md` |
 | aem-fe-verify | `/aem-fe-verify` | `<component-name>` | Screenshot component in wcmmode=disabled, compare against Figma/requirements, fix loop | `aem-fe-verify.md` |
-| aem-demo | `/aem-demo` | `<component-name>` | Open AEM editor, screenshot dialog, write authoring guide | `demo/` folder |
+| aem-editorial-guide | `/aem-editorial-guide` | `<component-name>` | Open AEM editor, screenshot dialog, write authoring guide | `demo/` folder |
 
 ### QA (2)
 

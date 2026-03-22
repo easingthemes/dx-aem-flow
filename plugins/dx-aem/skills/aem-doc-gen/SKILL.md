@@ -1,13 +1,13 @@
 ---
 name: aem-doc-gen
-description: Generate AEM demo documentation — find or create docs page with configured component, capture dialog and website screenshots on QA, write authoring guide. Extends /aem-demo for automated pipeline use. Invoked by /dx-agent-all Phase 7 and /dx-req-dod.
+description: Generate AEM demo documentation — find or create docs page with configured component, capture dialog and website screenshots on QA, write authoring guide. Extends /aem-editorial-guide for automated pipeline use. Invoked by /dx-agent-all Phase 7 and /dx-req-dod.
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 context: fork
-agent: aem-demo-capture
+agent: aem-editorial-guide-capture
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-demo-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM doc generation requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM doc generation requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
 
 You generate AEM component demo documentation from completed spec files. You find or create a docs page, configure the component, capture dialog and website screenshots, and write an authoring guide with Authoring and Website sections.
 
@@ -121,7 +121,7 @@ If the page already exists, reuse it (idempotent). Same JCR path works on both l
 
 ## 10. Dialog Screenshot (Author)
 
-Use the aem-demo-capture agent:
+Use the aem-editorial-guide-capture agent:
 
 1. Navigate to `$AUTHOR_URL/editor.html<docs-page-path>.html`
 2. QA Basic Auth handled by agent if URL is non-localhost
@@ -157,7 +157,7 @@ If still not available after 60s, skip website screenshot and note in guide.
 
 ### 11c. Capture rendered component
 
-Use the aem-demo-capture agent in publisher view mode:
+Use the aem-editorial-guide-capture agent in publisher view mode:
 
 1. Navigate to `$PUBLISH_URL<docs-page-path>.html`
 2. QA Basic Auth handled by agent if URL is non-localhost
@@ -211,7 +211,7 @@ For each field: what it does, when to use it, any conditional visibility.>
 **Publisher URL:** <publisher URL to docs page>
 ```
 
-**Writing principles (same as `/aem-demo`):**
+**Writing principles (same as `/aem-editorial-guide`):**
 - No JCR properties, no code paths, no Java class names
 - Write for someone who authors pages in AEM, not a developer
 - Focus on what they see in the dialog and what each field controls
@@ -242,7 +242,7 @@ If publisher screenshot failed (step 11), omit the Website section and add a not
 
 ## Examples
 
-1. `/aem-doc-gen hero 2416553` — Finds the spec directory for story #2416553, discovers `demo/authoring-guide.md` from a prior `/aem-demo` run. Connects to AEM, locates or creates a docs page with the hero component configured, captures dialog and rendered screenshots on QA, and writes the enhanced authoring guide with field descriptions, screenshots, and publisher URLs.
+1. `/aem-doc-gen hero 2416553` — Finds the spec directory for story #2416553, discovers `demo/authoring-guide.md` from a prior `/aem-editorial-guide` run. Connects to AEM, locates or creates a docs page with the hero component configured, captures dialog and rendered screenshots on QA, and writes the enhanced authoring guide with field descriptions, screenshots, and publisher URLs.
 
 2. `/aem-doc-gen card` (no prior demo) — No existing `demo/authoring-guide.md` found. Runs the full flow: finds the card component on AEM, captures dialog structure, takes screenshots, and generates the authoring guide from scratch. Saves to the most recent spec directory.
 
@@ -267,7 +267,7 @@ If publisher screenshot failed (step 11), omit the Website section and add a not
 - **Read config for all AEM URLs** — never hardcode `localhost:4502` or component paths
 - **QA by default in pipeline** — when `PIPELINE_MODE=true`, always use QA URLs
 - **Degrade gracefully** — text-only guide if AEM unavailable, still valuable
-- **Re-use agents** — aem-demo-capture for screenshots, aem-inspector for page creation and JCR operations
+- **Re-use agents** — aem-editorial-guide-capture for screenshots, aem-inspector for page creation and JCR operations
 - **Idempotent** — check existing before regenerating; reuse docs page if it exists
 - **Non-technical audience** — authoring guide is for content editors, not developers
 - **Don't block on screenshots** — if dialog won't open or component isn't found, write guide from spec files only and note the issue
