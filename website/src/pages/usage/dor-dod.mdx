@@ -28,7 +28,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:clipboard-text" iconColor="bg-brand-700" title="Definition of Ready (DoR)">
       Validates that a user story has all the information needed to begin implementation. Checks title, description, acceptance criteria, design links, dialog fields, and more.
-      <CommandBlock>/dx-req</CommandBlock>
+      <CommandBlock>/dx-dor 12345</CommandBlock>
+      <p class="text-xs text-gray-500 mt-2"><code>/dx-req</code> delegates DoR validation to <code>/dx-dor</code> internally. Use <code>/dx-dor</code> for standalone DoR checks or batch mode (<code>/dx-dor 12345 12346 12347</code>).</p>
     </ContentCard>
     <ContentCard icon="mdi:clipboard-check" iconColor="bg-emerald-600" title="Definition of Done (DoD)">
       Validates that actual deliverables (code, tests, PR, build) meet completion criteria. Works the same whether the story was implemented manually or via the AI workflow.
@@ -38,6 +39,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <HighlightBox severity="info" title="Wiki-Driven Criteria">
     Both checklists are maintained as ADO wiki pages configured in <code>.ai/config.yaml</code>. Skills fetch criteria at runtime -- editing the wiki immediately changes what gets checked. No code changes needed.
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="DoR Checklist Required">
+    Teams must configure <code>scm.wiki-dor-url</code> in <code>.ai/config.yaml</code> or create <code>.ai/rules/dor-checklist.md</code> in checkbox format. The implicit hardcoded-fallback scorecard has been removed.
   </HighlightBox>
 </Section>
 
@@ -68,7 +73,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="Agent Posts">
-      <code>/dx-req</code> evaluates the story against wiki criteria and posts a <code>[DoRAgent]</code> comment with interactive checkboxes. Passing items are pre-checked, failing items are unchecked.
+      <code>/dx-dor</code> evaluates the story against wiki criteria and posts a <code>[DoRAgent]</code> comment with interactive checkboxes. Passing items are pre-checked, failing items are unchecked.
     </ContentCard>
     <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-cyan" title="BA Updates">
       The BA reads the comment, updates the story with missing data, and checks the corresponding checkboxes in the ADO comment.
@@ -95,9 +100,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Agent</code> criteria</td><td class="py-2 px-4">Evaluated programmatically -- PASS or FAIL</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Human</code> criteria</td><td class="py-2 px-4">Always WARN (advisory) -- agent cannot verify</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Advisory</code> criteria</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>required</code> criteria</td><td class="py-2 px-4">Evaluated programmatically -- PASS or FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>recommended</code> criteria</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>human</code> criteria</td><td class="py-2 px-4">Always WARN -- agent cannot verify</td></tr>
       </tbody>
     </table>
   </div>
@@ -182,7 +187,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </ul>
     </ContentCard>
     <ContentCard icon="mdi:format-list-checks" iconColor="bg-cyan-dark" title="Wiki Format">
-      Both pages use the same format: numbered sections (<code>## N. Title</code>), criteria tables with three columns (<code>Criterion | Who checks | What to verify</code>), and optional skip triggers. See the <a href={`${base}/contributing/wiki-format/`}>Wiki Format</a> page for full details.
+      DoR pages use checkbox format: numbered sections (<code>## N. Title</code>), criteria as checkboxes (<code>- [ ] **Name** `tag` — Description</code>), and optional skip triggers. DoD pages still use table format. See the <a href={`${base}/contributing/wiki-format/`}>Wiki Format</a> page for full details.
     </ContentCard>
   </div>
 </Section>
@@ -205,6 +210,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="info" title="Same Criteria, Two Modes">
-    Both the interactive skills (<code>/dx-req</code>, <code>/dx-req-dod</code>) and the automation pipelines read from the same wiki pages. Updating the wiki changes behavior for both local development and automated pipelines.
+    Both the interactive skills (<code>/dx-dor</code>, <code>/dx-req</code>, <code>/dx-req-dod</code>) and the automation pipelines read from the same wiki pages. Updating the wiki changes behavior for both local development and automated pipelines.
   </HighlightBox>
 </Section>

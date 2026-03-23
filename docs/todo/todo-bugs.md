@@ -25,13 +25,13 @@
 
 **Added:** 2026-03-22
 **Problem:** Two cross-platform issues cause duplicate DoR comments on ADO work items:
-1. **Signature mismatch:** Claude Code posts DoR comments with `<!-- ai:role:dor-agent -->` HTML comment instead of the `[DoRAgent]` text signature specified in `dor-rules.md`. Copilot CLI can't detect Claude's comment → posts a duplicate.
-2. **Copilot CLI bypasses reference file logic:** Generated `dor-report.md` via Python script instead of following `dor-rules.md`'s comment-checking flow. Never fetched existing comments to check for duplicates.
+1. **Signature mismatch:** Claude Code posts DoR comments with `<!-- ai:role:dor-agent -->` HTML comment instead of the `[DoRAgent]` text signature specified in `dx-dor/references/comment-format.md`. Copilot CLI can't detect Claude's comment → posts a duplicate.
+2. **Copilot CLI bypasses reference file logic:** Generated `dor-report.md` via Python script instead of following `dx-dor/references/comment-format.md`'s comment-checking flow. Never fetched existing comments to check for duplicates.
 **Scope:**
-- Reference file: `plugins/dx-core/skills/dx-req/references/dor-rules.md` (has correct `[DoRAgent]` signature)
-- Skill: `plugins/dx-core/skills/dx-req/SKILL.md` (Phase 2 — DoR check section)
-**Done-when:** `grep -n "DoRAgent\|BEFORE posting\|fetch.*comment.*search" plugins/dx-core/skills/dx-req/SKILL.md` shows explicit instructions to (a) use `[DoRAgent]` signature and (b) fetch existing comments before posting.
-**Approach:** Standardize on `[DoRAgent]` signature in SKILL.md (not just reference file). Add explicit "BEFORE posting, fetch comments and search for `[DoRAgent]`" to SKILL.md Phase 2, not buried in the reference file.
+- Reference file: `plugins/dx-core/skills/dx-dor/references/comment-format.md` (has correct `[DoRAgent]` signature)
+- Skill: `plugins/dx-core/skills/dx-dor/SKILL.md` (standalone DoR check, also called by dx-req Phase 2)
+**Done-when:** `grep -n "DoRAgent\|BEFORE posting\|fetch.*comment.*search" plugins/dx-core/skills/dx-dor/SKILL.md plugins/dx-core/skills/dx-dor/references/comment-format.md` shows explicit instructions to (a) use `[DoRAgent]` signature and (b) fetch existing comments before posting.
+**Approach:** Standardize on `[DoRAgent]` signature in dx-dor skill and comment-format.md reference. The signature detection and comment-checking flow are now in the standalone `/dx-dor` skill.
 
 ## Subagent Hooks
 
