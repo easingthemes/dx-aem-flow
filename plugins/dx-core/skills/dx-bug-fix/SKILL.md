@@ -2,7 +2,6 @@
 name: dx-bug-fix
 description: Generate a lightweight fix plan, execute it, run tests, and create a PR for a bug. Reads triage.md and verification.md, generates implement.md (2-5 steps), delegates execution to step, build to build, and PR to commit. Use after /dx-bug-triage or /dx-bug-verify.
 argument-hint: "<ADO Bug Work Item ID (optional — uses most recent if omitted)>"
-disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
@@ -153,7 +152,7 @@ Read `shared/hub-dispatch.md` for the full protocol.
 
 1. Resolve target repo from cross-repo scope using hub-dispatch repo resolution
 2. Check `hub.auto-dispatch` — if `false`, confirm with user
-3. Build and execute: `claude -p "/dx-bug-fix <ticket-id>" --cwd <target-repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+3. Build and execute: `cd <target-repo.path> && claude -p "/dx-bug-fix <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
 4. Collect result, write `state/<ticket-id>/results/<repo>.json`
 5. Print: `✓ <repo> — <status> (<duration>, $<cost>)`
 6. Go to → "Final summary" with hub dispatch results
