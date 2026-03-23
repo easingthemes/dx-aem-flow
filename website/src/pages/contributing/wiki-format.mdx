@@ -25,7 +25,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:book-open" iconColor="bg-brand-700" title="Wiki as Config">
-      The <code>/dx-req</code> and <code>/dx-req-dod</code> skills fetch criteria from ADO wiki pages configured in <code>.ai/config.yaml</code>. Editing the wiki page immediately changes what the skill checks -- no code changes needed.
+      The <code>/dx-dor</code>, <code>/dx-req</code>, and <code>/dx-req-dod</code> skills fetch criteria from ADO wiki pages configured in <code>.ai/config.yaml</code>. Editing the wiki page immediately changes what the skill checks -- no code changes needed.
     </ContentCard>
     <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Config Keys">
       <CommandBlock>{`scm:
@@ -44,7 +44,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   bg="primary"
 />
 <Section>
-  <CommandBlock label="Wiki page template">{`# Title -- Checklist
+  <CommandBlock label="Wiki page template (checkbox format)">{`# Title -- Checklist
 
 > **Purpose:** ...
 > **Who validates:** ...
@@ -56,13 +56,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 Description paragraph.
 
-| Criterion | Who checks | What to verify |
-|-----------|-----------|----------------|
-| Criterion name | Agent | What the agent checks |
-| Another criterion | Human | What a human verifies |
-| Optional criterion | Advisory | Advisory check -- never fails |
+- [ ] **Criterion name** \`required\` — What the agent checks
+- [ ] **Another criterion** \`recommended\` — Advisory check
+- [ ] **Human check** \`human\` — Only human can verify
 
-**Skip trigger:** When this section can be skipped.
+> **Skip:** When this section can be skipped.
 
 ---
 
@@ -100,30 +98,31 @@ Description paragraph.
         <li>Non-numbered <code>##</code> headings (like <code>## Completion Summary</code>) are metadata, not checklist sections</li>
       </ul>
     </ContentCard>
-    <ContentCard icon="mdi:table" iconColor="bg-cyan" title="Criteria Tables">
-      Each section MUST have a markdown table with exactly three columns:
+    <ContentCard icon="mdi:checkbox-marked-outline" iconColor="bg-cyan" title="Criteria Checkboxes">
+      Each section contains checkboxes in this format:
       <ul class="mt-2 text-sm list-none p-0 space-y-1">
-        <li><strong>Criterion</strong> -- human-readable criterion name</li>
-        <li><strong>Who checks</strong> -- <code>Agent</code>, <code>Human</code>, or <code>Advisory</code></li>
-        <li><strong>What to verify</strong> -- free-text description</li>
+        <li><code>- [ ] **Name** `tag` — Description</code></li>
+        <li><strong>Name</strong> -- bold criterion name</li>
+        <li><strong>Tag</strong> -- inline code: <code>required</code>, <code>recommended</code>, or <code>human</code></li>
+        <li><strong>Description</strong> -- what the agent checks or the human verifies</li>
       </ul>
     </ContentCard>
   </div>
 
-  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">"Who checks" Values</h3>
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Tag Values</h3>
   <div class="overflow-x-auto">
     <table class="w-full text-sm border-collapse">
       <thead>
         <tr class="border-b border-gray-200">
-          <th class="text-left py-2 px-4 font-semibold">Value</th>
+          <th class="text-left py-2 px-4 font-semibold">Tag</th>
           <th class="text-left py-2 px-4 font-semibold">Meaning</th>
           <th class="text-left py-2 px-4 font-semibold">Skill Behavior</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Agent</code></td><td class="py-2 px-4">Automated check</td><td class="py-2 px-4">Evaluates programmatically -- PASS or FAIL</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Human</code></td><td class="py-2 px-4">Requires human judgment</td><td class="py-2 px-4">Always WARN (advisory) -- agent cannot verify</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Advisory</code></td><td class="py-2 px-4">Nice-to-have check</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>required</code></td><td class="py-2 px-4">Automated check -- must pass</td><td class="py-2 px-4">Evaluates programmatically -- PASS or FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>recommended</code></td><td class="py-2 px-4">Automated check -- advisory</td><td class="py-2 px-4">WARN at most, never FAIL</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>human</code></td><td class="py-2 px-4">Requires human judgment</td><td class="py-2 px-4">Always WARN -- agent cannot verify</td></tr>
       </tbody>
     </table>
   </div>
@@ -177,10 +176,8 @@ Description paragraph.
 
   <CommandBlock label="Minimal DoR section example">{`## 1. Story Basics
 
-| Criterion | Who checks | What to verify |
-|-----------|-----------|----------------|
-| Title and description | Agent | Title non-empty, Description non-empty |
-| Acceptance criteria | Agent | AC section exists with at least 1 testable condition |`}</CommandBlock>
+- [ ] **Title and description** \`required\` — Title non-empty, Description non-empty
+- [ ] **Acceptance criteria** \`required\` — AC section exists with at least 1 testable condition`}</CommandBlock>
 </Section>
 
 <SectionHeading
@@ -252,7 +249,7 @@ Description paragraph.
       Add the URL to <code>.ai/config.yaml</code> under the <code>scm:</code> section. Both <code>wiki-dor-url</code> and <code>wiki-dod-url</code> are required.
     </HighlightBox>
     <HighlightBox severity="warning" title="Skill does not recognize a criterion">
-      Check that the table format is exact: three columns, pipe-separated, with the header row matching <code>Criterion | Who checks | What to verify</code>.
+      For DoR pages, check that the checkbox format is exact: <code>- [ ] **Name** `tag` — Description</code>. For DoD pages, check that the table has three columns, pipe-separated, with the header row matching <code>Criterion | Who checks | What to verify</code>.
     </HighlightBox>
     <HighlightBox severity="warning" title="New section not being checked">
       Ensure the heading uses the <code>## N. Title</code> format (numbered, with period after the number). Non-numbered headings are metadata.
