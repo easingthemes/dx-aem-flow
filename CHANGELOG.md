@@ -1,3 +1,10 @@
+# [2.62.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.3...v2.62.0) (2026-03-23)
+
+
+### Features
+
+* **dx-hub:** add Claude Code settings, MCP config, and rules to hub-init ([44622b2](https://github.com/easingthemes/dx-aem-flow/commit/44622b22024ce20895292b2dc75605ef6c904d2b))
+
 ## [2.61.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.2...v2.61.3) (2026-03-23)
 
 
