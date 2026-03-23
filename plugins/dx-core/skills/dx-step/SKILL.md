@@ -92,7 +92,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
    - Read `implement.md` step instructions for file paths
    - Match file paths to repo capabilities from config
    - Or: if step specifies a repo tag (from cross-repo plan), use that
-2. Dispatch to the correct repo: `claude -p "/dx-step <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+2. Dispatch to the correct repo: `cd <repo.path> && claude -p "/dx-step <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
 3. Collect result, write state
 4. Print: `✓ <repo> — step <N> <status>`
 5. Go to → "All done" (step executed in target repo)

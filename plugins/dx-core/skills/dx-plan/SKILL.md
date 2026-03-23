@@ -41,7 +41,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `research.md` → `## Cross-Repo Scope` for per-repo scope
 2. If cross-repo scope detected:
    a. Resolve target repos from config
-   b. For each repo, dispatch planning: `claude -p "/dx-plan <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   b. For each repo, dispatch planning: `cd <repo.path> && claude -p "/dx-plan <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
    c. Each repo generates its own `implement.md` locally
    d. Collect and summarize: "Plans generated in <N> repos"
 3. Write state files

@@ -303,7 +303,7 @@ Read `shared/hub-dispatch.md` for the full protocol.
    c. Create state directory: `state/<ticket-id>/`
    d. Write `state/<ticket-id>/dispatch.json` with dispatch metadata
    e. For each target repo (per `hub.dispatch-mode`):
-      - Build command: `claude -p "/dx-agent-all <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+      - Build command: `cd <repo.path> && claude -p "/dx-agent-all <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
       - Execute via Bash tool
       - Collect result, write `state/<ticket-id>/results/<repo>.json`
       - Print: `✓ <repo> — <status> (<duration>, $<cost>)`
