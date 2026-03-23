@@ -1,3 +1,10 @@
+## [2.61.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.0...v2.61.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* re-apply /dx-req-all → /dx-req in data templates ([1116155](https://github.com/easingthemes/dx-aem-flow/commit/1116155a48a8468dca966c0d795e7ddaeb10379a))
+
 # [2.61.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.60.0...v2.61.0) (2026-03-23)
 
 
