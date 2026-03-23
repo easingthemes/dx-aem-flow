@@ -226,22 +226,18 @@ Omit empty sections entirely. Work item IDs must be integers for MCP. Always con
 
 ## Phase 2: DoR Validation
 
-**Output:** `dor-report.md` | **Idempotent:** skips if dor-report.md up to date and ADO comment posted
+**Output:** `dor-report.md` | **Idempotent:** `/dx-dor` handles its own idempotency (checks existing ADO comment)
 
-Use ultrathink for this phase — DoR validation requires careful cross-referencing of story content against checklist criteria.
+Invoke `/dx-dor` with the work item ID via the Skill tool.
 
-Read `references/dor-rules.md` for the complete validation logic. This phase:
+`/dx-dor` handles everything: wiki fetch, existing comment detection, validation, posting, and writing `dor-report.md` to `$SPEC_DIR`.
 
-1. **Read inputs** — `raw-story.md` (required), plus `explain.md` and `research.md` if available (second-pass mode)
-2. **Fetch DoR checklist** — from wiki (`scm.wiki-dor-url`) or Confluence (`confluence.dor-page-title`)
-3. **Check existing output** — if `dor-report.md` exists, check staleness. If `research.md` appeared since last run, regenerate to add codebase-informed questions. Check ADO comment for BA checkbox changes.
-4. **Evaluate 9-section scorecard** — Story Basics, Change Type, Component Details, Authoring Changes, Design & Visual, Content & Testing, Scope & Boundaries, Accessibility, Related Items. Apply skip logic for non-applicable sections.
-5. **Extract structured BA data** — component name/type, dialog fields, design URLs, scope (brands/markets/out-of-scope)
-6. **Generate open questions** — self-discover answers first, apply pragmatism filter, target 2-5 questions. If `research.md` exists, add codebase-informed questions.
-7. **Write dor-report.md** — scorecard, BA data, gaps, questions, assumptions
-8. **Post ADO/Jira comment** (MANDATORY) — BEFORE posting, fetch all existing comments and search for `[DoRAgent]` in their text. If a `[DoRAgent]` comment exists, use Mode B (short update) or Mode C (skip). If none exists, use Mode A (first post with checkboxes). Always use the `[DoRAgent]` text signature — NEVER use HTML comments like `<!-- ai:role:dor-agent -->`. Checkbox collaboration loop: if BA checked items, re-fetch story, re-validate, update.
+After `/dx-dor` completes, read `$SPEC_DIR/dor-report.md` and extract:
+- **Verdict** — if "Needs more detail", present gaps and ask whether to continue or stop
+- **Blocking questions** — if the "Blocking" section is non-empty, present questions and wait for user input (even if verdict is "Can proceed")
+- **Extracted BA Data** — component name, dialog fields, Figma URL, scope → feed into Phase 3
 
-**GATE:** If blocking questions are found, PAUSE and present them to the user:
+**GATE:** If verdict is "Needs more detail" OR blocking questions exist:
 ```
 ⚠️ <N> blocking questions found — development cannot proceed until resolved.
 
