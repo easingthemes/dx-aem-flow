@@ -77,12 +77,19 @@ Compute `<repo-relative-path>` = `.ai/specs/<id>-<slug>` (relative to repo root)
 **Conditional sections:** The template contains sections guarded by comments (e.g., "ONLY if figma-extract.md exists"). Check for each source file and OMIT the entire section (heading included) if the source data is not available. Specifically:
 - **Design Reference** — only if `figma-extract.md` or `prototype/` dir exists
 - **Figma Comparison** — only if BOTH Figma reference AND rendered screenshot exist
-- **QA Verification** — only if `demo/authoring-guide.md` or `aem-after.md` or `qa-handoff.md` has page URLs. Read QA URLs from `.ai/config.yaml` (`aem.author-url-qa`, `aem.publish-url-qa`).
 
-**QA page URLs:** Extract demo page path from (in priority order):
+**QA Verification (MANDATORY for AEM projects):** AEM pages are the deliverable — this is what the customer wants to see. Every AEM wiki page MUST include QA page URLs. Read QA URLs from `.ai/config.yaml` (`aem.author-url-qa`, `aem.publish-url-qa`).
+
+Two views are required per page:
+- **Author Edit:** `<author-url-qa>/editor.html<page>.html` — dialog/config view for authors
+- **Author Preview:** `<author-url-qa><page>.html?wcmmode=disabled` — FE rendering without editor chrome, for demo
+
+Extract demo page path from (in priority order):
 1. `qa-handoff.md` — QA-specific URLs
 2. `demo/authoring-guide.md` — Author URL, Publisher URL
 3. `aem-after.md` — Test/Demo page path
+
+**Multi-component coverage:** If several components are affected, determine whether they can all be demoed on one page or need separate pages. Provide a QA URL table for each page needed. If a new component was created but not yet on a QA page, flag: `⚠️ Component <name> needs to be added to a QA page and configured for demo.`
 
 ### 5b. Template — Without Authoring Guide (non-AEM or authoring-guide missing)
 
@@ -277,5 +284,8 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 - **No time estimates** — never include estimates or durations
 - **Authoring-guide drives template** — if `demo/authoring-guide.md` exists, use the AEM demo walkthrough template; otherwise use the standard template with Usage section
 - **Repo-relative screenshot paths** — all image references use `.ai/specs/<id>-<slug>/...` paths so screenshots can be committed to the repo and linked from ADO wiki
-- **Omit empty conditional sections** — Design Reference, Figma Comparison, QA Verification are conditional. If source data is missing, omit the entire section including heading. Never write "N/A" placeholders.
+- **Omit empty conditional sections** — Design Reference, Figma Comparison are conditional. If source data is missing, omit the entire section including heading. Never write "N/A" placeholders.
+- **QA pages are mandatory** — for AEM projects, QA Author Edit + Preview URLs are required. This is the deliverable. Preview uses `wcmmode=disabled` for FE demo.
+- **Multi-component = multi-page** — if several components are affected and need different pages, provide QA URL tables for each page
+- **Don't list every file** — group by area (FE/BE/Config) with short descriptions. The PR has the diff; the wiki explains what and why.
 - **Demo walkthrough order** — AEM template sections follow a demo presentation flow: story → design → implementation → QA → dialog → frontend → Figma comparison → authoring guide → files
