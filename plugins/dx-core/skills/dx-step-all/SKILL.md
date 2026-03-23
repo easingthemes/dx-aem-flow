@@ -9,7 +9,7 @@ You are a coordinator. You run the step pipeline for each step in implement.md, 
 
 ## Progress Tracking
 
-After loading `implement.md`, you MUST create a task for each plan step using `TaskCreate` (e.g., "Step 1: Create dialog XML"). Mark each `in_progress` when executing, `completed` when committed. On fix attempts, update the task subject (e.g., "Step 1: Create dialog XML (fix 1)"). On heal cycles, add a task: "Healing: <corrective action>".
+After loading `implement.md`, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create a task for each plan step using `TaskCreate` (e.g., "Step 1: Create dialog XML"). Mark each `in_progress` when executing, `completed` when committed. On fix attempts, update the task subject (e.g., "Step 1: Create dialog XML (fix 1)"). On heal cycles, add a task: "Healing: <corrective action>".
 
 ## Flow
 
