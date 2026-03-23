@@ -226,7 +226,7 @@ Omit empty sections entirely. Work item IDs must be integers for MCP. Always con
 
 ## Phase 2: DoR Validation
 
-**Output:** `dor-report.md` | **Idempotent:** `/dx-dor` handles its own idempotency (checks existing ADO comment)
+**Output:** `dor-report.md` | **Idempotent:** `/dx-dor` handles its own idempotency (checks existing ADO comment + story content changes)
 
 Invoke `/dx-dor` with the work item ID via the Skill tool.
 
@@ -237,7 +237,7 @@ After `/dx-dor` completes, read `$SPEC_DIR/dor-report.md` and extract:
 - **Blocking questions** — if the "Blocking" section is non-empty, present questions and wait for user input (even if verdict is "Can proceed")
 - **Extracted BA Data** — component name, dialog fields, Figma URL, scope → feed into Phase 3
 
-**GATE:** If verdict is "Needs more detail" OR blocking questions exist:
+**GATE (always enforced — even on re-run):** After `/dx-dor` completes, read `dor-report.md` verdict. If verdict is "Needs more detail" OR blocking questions exist, you MUST stop and ask:
 ```
 ⚠️ <N> blocking questions found — development cannot proceed until resolved.
 
@@ -247,6 +247,8 @@ Reply with answers or type "proceed" to continue with assumptions.
 ```
 
 Wait for user input. If user provides answers, record as assumptions and continue. If user types "proceed", continue with existing assumptions.
+
+**CRITICAL:** This gate applies to **every run**, not just the first. If a re-run produces a reused (Mode C) dor-report.md that still says "Needs more detail", the gate fires again. The user must explicitly approve continuation each time — prior approval does not carry over across sessions.
 
 ---
 
