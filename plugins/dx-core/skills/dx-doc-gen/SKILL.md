@@ -35,7 +35,13 @@ Read these files from `$SPEC_DIR` (all optional — generate from what's availab
 - `implement.md` — step-by-step plan with status
 - `research.md` — codebase context and patterns found
 - `.sprint` — sprint name (e.g., `Sprint 41`) saved by `/dx-req` (Phase 1)
+- `.branch` — feature branch name
+- `.pr` — PR number and URL (if PR was created)
 - `demo/authoring-guide.md` — AEM authoring guide with screenshots (produced by `/aem-doc-gen`)
+- `figma-extract.md` — Figma design data (produced by `/dx-figma-extract`)
+- `aem-fe-verify.md` — FE verification verdict (produced by `/aem-fe-verify`)
+- `aem-after.md` — post-deployment component state (produced by `/aem-verify`)
+- `qa-handoff.md` — QA testing steps with page URLs (produced by `/aem-qa-handoff`)
 
 If none exist (excluding authoring-guide.md), print "No spec files found — nothing to generate from" and STOP.
 
@@ -58,9 +64,25 @@ Create `$SPEC_DIR/docs/` directory if it doesn't exist.
 
 ### 5a. Template — With Authoring Guide (AEM projects)
 
-If `demo/authoring-guide.md` exists, read `.ai/templates/wiki/wiki-page-aem.md.template` and follow that structure exactly. This enhanced template replaces the `## Usage` section with `## Authoring` and `## Website` sections including dialog screenshots and publisher URLs from the authoring guide.
+If `demo/authoring-guide.md` exists, read `.ai/templates/wiki/wiki-page-aem.md.template` and follow that structure exactly. The template is structured as a **demo walkthrough** — sections are ordered to match a typical demo presentation flow (story → design → implementation → QA page → dialog → frontend → Figma comparison → authoring guide).
 
-**Screenshot references:** ADO wiki does not support binary upload via current MCP tools. Local `docs/wiki-page.md` uses relative image paths (works in repo viewer). Wiki posting includes the markdown image references as-is — screenshot files live in the spec directory alongside the wiki page.
+**Screenshot references — repo-relative paths:** ADO wiki does not support binary upload via current MCP tools. All screenshot references MUST use repo-relative paths so they can be committed and linked from the ADO wiki.
+
+Compute `<repo-relative-path>` = `.ai/specs/<id>-<slug>` (relative to repo root). Use this for all image references in the generated wiki page:
+- `<repo-relative-path>/demo/dialog-<component>.png`
+- `<repo-relative-path>/demo/rendered-<component>.png`
+- `<repo-relative-path>/prototype/figma-reference.png`
+- `<repo-relative-path>/screenshots/component-rendered.png`
+
+**Conditional sections:** The template contains sections guarded by comments (e.g., "ONLY if figma-extract.md exists"). Check for each source file and OMIT the entire section (heading included) if the source data is not available. Specifically:
+- **Design Reference** — only if `figma-extract.md` or `prototype/` dir exists
+- **Figma Comparison** — only if BOTH Figma reference AND rendered screenshot exist
+- **QA Verification** — only if `demo/authoring-guide.md` or `aem-after.md` or `qa-handoff.md` has page URLs. Read QA URLs from `.ai/config.yaml` (`aem.author-url-qa`, `aem.publish-url-qa`).
+
+**QA page URLs:** Extract demo page path from (in priority order):
+1. `qa-handoff.md` — QA-specific URLs
+2. `demo/authoring-guide.md` — Author URL, Publisher URL
+3. `aem-after.md` — Test/Demo page path
 
 ### 5b. Template — Without Authoring Guide (non-AEM or authoring-guide missing)
 
@@ -210,19 +232,23 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 **<Title>** (ADO #<id>)
 - Sprint: <sprint name>
 - Output: `<spec-dir>/docs/wiki-page.md`
-- Sections: <count> (Acceptance Criteria, Implementation, Authoring/Usage, Files Changed, Result)
-- Has Authoring/Website: Yes / No (authoring-guide.md found / not found)
+- Sections: <list of included sections>
+- Template: AEM (demo walkthrough) / Standard (technical doc)
+- Screenshots: <count> referenced (<list of screenshot files found>)
+- Committable screenshots: `git add <spec-dir>/demo/*.png <spec-dir>/prototype/*.png <spec-dir>/screenshots/*.png`
+- Figma: Yes / No
+- QA URLs: Yes / No
 - Word count: <N> words
 - Mode: Local / Wiki (posted to <wiki path>)
 ```
 
 ## Examples
 
-1. `/dx-doc-gen 2416553` — Reads spec files (raw-story.md, explain.md, implement.md, share-plan.md), generates `docs/wiki-page.md` with Acceptance Criteria, Implementation, What Changed, Files Changed, and Result sections. Saves locally.
+1. `/dx-doc-gen 2416553` — Reads spec files, generates `docs/wiki-page.md` with Summary, What Changed and Why, Usage, Files Changed. Standard template.
 
-2. `/dx-doc-gen 2416553` (AEM project with authoring guide) — Detects `demo/authoring-guide.md` from a prior `/aem-doc-gen` run. Uses the enhanced template with Authoring and Website sections including dialog screenshots and publisher URLs instead of the generic Usage section.
+2. `/dx-doc-gen 2416553` (AEM project with authoring guide) — Detects `demo/authoring-guide.md`. Uses AEM template: Summary → Design Reference → What Changed and Why → QA Verification → Dialog Changes → Frontend Preview → Figma Comparison → Authoring Guide → Files Changed. Screenshots use repo-relative paths.
 
-3. `/dx-doc-gen 2416553` (pipeline mode) — `PIPELINE_MODE=true` triggers wiki posting. Creates the sprint subfolder (`Sprint 42`) in the ADO wiki if it doesn't exist, then creates the wiki page at the configured doc root path.
+3. `/dx-doc-gen 2416553` (pipeline mode) — `PIPELINE_MODE=true` triggers wiki posting. Creates the sprint subfolder (`Sprint 42`) in the ADO wiki if it doesn't exist, then creates the wiki page at the configured doc root path. Summary includes `git add` command for committing screenshots.
 
 ## Troubleshooting
 
@@ -243,10 +269,13 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 - **Read config, never hardcode** — ADO URLs, project names, wiki paths from config.yaml
 - **Skip empty sections** — never write "N/A" or "None" filler. Omit the section entirely.
 - **Tech lead audience** — more detailed than share-plan.md, less raw than explain.md. Include actual techniques and patterns used.
-- **Acceptance criteria verbatim** — copy from raw-story.md without rephrasing, so reviewers can verify coverage
+- **No acceptance criteria** — the linked ADO ticket has the full AC. The wiki page links to the ticket, no need to duplicate.
 - **Idempotent** — check existing output before regenerating
 - **Degrade gracefully** — generate from whatever spec files are available. More files = richer output, but even raw-story.md alone is enough for a basic page.
 - **Sprint from .sprint file** — do NOT hardcode sprint numbers. Always read from the file or fall back to iteration path parsing.
 - **Wiki path encoding** — ADO wiki uses spaces in paths. Do NOT URL-encode the path when passing to MCP tools.
 - **No time estimates** — never include estimates or durations
-- **Authoring-guide drives template** — if `demo/authoring-guide.md` exists, use the enhanced template with Authoring/Website sections; otherwise use the standard template with Usage section
+- **Authoring-guide drives template** — if `demo/authoring-guide.md` exists, use the AEM demo walkthrough template; otherwise use the standard template with Usage section
+- **Repo-relative screenshot paths** — all image references use `.ai/specs/<id>-<slug>/...` paths so screenshots can be committed to the repo and linked from ADO wiki
+- **Omit empty conditional sections** — Design Reference, Figma Comparison, QA Verification are conditional. If source data is missing, omit the entire section including heading. Never write "N/A" placeholders.
+- **Demo walkthrough order** — AEM template sections follow a demo presentation flow: story → design → implementation → QA → dialog → frontend → Figma comparison → authoring guide → files
