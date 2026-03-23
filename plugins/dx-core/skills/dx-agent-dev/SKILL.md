@@ -23,7 +23,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `.ai/config.yaml` → `repos:` list
 2. Read the RE spec to determine which repos need implementation
 3. For each target repo:
-   - Build: `claude -p "/dx-agent-dev <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Build: `cd <repo.path> && claude -p "/dx-agent-dev <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
    - Collect results
 4. Write state files, print summary
 5. STOP — do not continue with local execution

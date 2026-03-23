@@ -24,7 +24,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
    - Or: check each repo for a feature branch matching the ticket ID
 3. For each repo with completed work:
    - If `repos[].no-pr: true` → skip, print: `<repo> — pushed (no PR)`
-   - Otherwise: dispatch `claude -p "/dx-pr <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Otherwise: dispatch `cd <repo.path> && claude -p "/dx-pr <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
    - Collect PR URLs from results
 4. Write state, print summary:
    ```

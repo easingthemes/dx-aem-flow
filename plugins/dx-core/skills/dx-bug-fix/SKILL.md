@@ -153,7 +153,7 @@ Read `shared/hub-dispatch.md` for the full protocol.
 
 1. Resolve target repo from cross-repo scope using hub-dispatch repo resolution
 2. Check `hub.auto-dispatch` — if `false`, confirm with user
-3. Build and execute: `claude -p "/dx-bug-fix <ticket-id>" --cwd <target-repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+3. Build and execute: `cd <target-repo.path> && claude -p "/dx-bug-fix <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
 4. Collect result, write `state/<ticket-id>/results/<repo>.json`
 5. Print: `✓ <repo> — <status> (<duration>, $<cost>)`
 6. Go to → "Final summary" with hub dispatch results
