@@ -7,7 +7,7 @@ resources:
       type: git
       name: {{ADO_PROJECT}}/{{ADO_REPO}}
       ref: development
-# Claude Agent SDK pipeline — DoR Check via /dx-req skill.
+# Claude Agent SDK pipeline — DoR Check via /dx-dor skill.
 # Triggered by Lambda webhook on work item state change.
 
 parameters:
@@ -42,11 +42,9 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)
 
   - bash: |
-      PROMPT="/dx-req ${{ parameters.workItemId }}"
+      PROMPT="/dx-dor ${{ parameters.workItemId }}"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze only, do NOT post comments to ADO)"
-      else
-        PROMPT="$PROMPT. Then post share-plan.md and dor-report.md as a [DoRAgent] Requirements Analysis comment on work item ${{ parameters.workItemId }} using ADO MCP tools."
       fi
 
       PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-flow/dx/plugins"
@@ -55,11 +53,11 @@ steps:
 
       echo "prompt: $PROMPT"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
-    displayName: "AI DoR Check + Requirements"
+    displayName: "AI DoR Check"
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
-      MAX_TURNS: "40"
+      MAX_TURNS: "20"
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Agent"
     timeoutInMinutes: 60
