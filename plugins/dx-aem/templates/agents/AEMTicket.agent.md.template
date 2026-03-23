@@ -158,7 +158,7 @@ Dispatch agents simultaneously:
 If the user says yes:
 1. Create directory `.ai/specs/<id>-<slug>/`
 2. Write to `.ai/specs/<id>-<slug>/ticket-research.md`
-3. Suggest: `/dx-req-all <id>` to generate the full spec pipeline
+3. Suggest: `/dx-req <id>` to generate the full spec pipeline
 
 ## Rules
 
