@@ -1,55 +1,26 @@
-### [QAHandoff] QA Testing Steps — <component-name>
+### [QAHandoff] Ready for QA — <story-title>
 
-**Story:** #<work-item-id> — <story-title>
-**Component:** `<component-resource-type>`
-**QA Page:** <qa-author-url>/editor.html<test-page-path>.html
-**QA Preview:** <qa-publish-url><test-page-path>.html
-**PR:** <pr-url> (if available)
+**PR:** <pr-url>
+**Branch:** `<branch-name>`
+**Wiki:** [Technical Documentation](<wiki-url>) — full details, screenshots, authoring guide
 
-#### Pre-configured Test Page
+#### QA Pages
 
-A test page has been created/reused on QA AEM with the component configured for the changes introduced in this story.
+| Environment | URL |
+|-------------|-----|
+| QA Author | <qa-author-url>/editor.html<test-page-path>.html |
+| QA Publisher | <qa-publish-url><test-page-path>.html |
 
-- **Author:** <qa-author-url>/editor.html<test-page-path>.html
-- **Publisher:** <qa-publish-url><test-page-path>.html
-- **Demo data:** <configured/partial/manual> — <notes on what was configured>
+#### Prerequisites
 
-#### Testing Steps
+<!-- OMIT if none. Only hard dependencies that block QA.
+- <dependency PR or deployment that must be live first>
+-->
 
-<!-- Numbered steps for QA team. Each step has action + expected result. -->
+#### What Changed
 
-1. **Navigate** to <qa-publish-url><test-page-path>.html
-   - **Expected:** Page loads, component is visible in <section>
-
-2. **Verify <feature/change 1>**
-   - Action: <what to do>
-   - **Expected:** <what should happen>
-
-3. **Verify <feature/change 2>**
-   - Action: <what to do>
-   - **Expected:** <what should happen>
-
-<!-- Add steps for each acceptance criterion from the story -->
-
-4. **Verify dialog** — Open <qa-author-url>/editor.html<test-page-path>.html
-   - Click the component → Configure (wrench icon)
-   - **Expected:** Dialog opens with fields: <field list>
-
-5. **Responsive check** — Resize browser to mobile width (375px)
-   - **Expected:** <responsive behavior>
-
-#### Verification Screenshot
-
-<!-- Screenshot taken from QA publisher showing the component rendered -->
-
-_Screenshot captured from QA publisher at <timestamp>._
-
-#### Environment
-
-- **QA Author:** <qa-author-url>
-- **QA Publisher:** <qa-publish-url>
-- **Branch:** <branch-name>
-- **Verified by:** AI QA Handoff Agent
+<!-- 3-5 bullets max. Same as wiki Summary — what was done, not how to test it.
+QA has test plans for detailed verification. -->
 
 ---
-_[QAHandoff] | <ISO timestamp> · Follow the steps above and update the story status after testing._
+_[QAHandoff] | <ISO timestamp> · See wiki page for dialog screenshots, authoring guide, and implementation details._

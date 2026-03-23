@@ -1,7 +1,7 @@
 ---
 name: dx-req-tasks
-description: Create child Task work items under an Azure DevOps/Jira User Story with hour estimates. Use when the user wants to break down a story into FE/BE/Authoring tasks, create tasks from a story, or populate effort estimates on child items.
-argument-hint: "[Work Item ID, Jira Issue Key, or URL] [BE] [FE] [Authoring]"
+description: Create or close child Task work items under an Azure DevOps/Jira User Story. Use to break down a story into FE/BE/Authoring tasks with hour estimates, or use "close" argument to close all child tasks after development is done.
+argument-hint: "[Work Item ID] [BE|FE|Authoring] or [Work Item ID] close"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
@@ -50,9 +50,12 @@ Remaining tokens are optional **group filters**: `BE`, `FE`, `Authoring` (case-i
 /dx-req-tasks 2416553 BE           → only BE tasks
 /dx-req-tasks 2416553 FE BE        → only FE + BE tasks
 /dx-req-tasks 2416553 Authoring    → only Authoring tasks
+/dx-req-tasks 2416553 close        → close all child tasks
 ```
 
 If no argument is provided, ask the user for the work item ID.
+
+**If `close` is in the arguments:** Skip steps 2-10. Jump to **Close Mode** (at the end of this skill).
 
 ## 2. Load MCP Tools
 
@@ -467,6 +470,146 @@ Where `{scm.org}` and `{scm.project_url_encoded}` are read from `.ai/config.yaml
 |---|-----|-------|-------|------|
 | 1 | PROJ-124 | BE - Implement model | 8 | [Open]({jira.url}/browse/PROJ-124) |
 
+## Close Mode
+
+When the argument contains `close`, this skill closes all open child tasks under the story.
+
+### C1. Load MCP Tools
+
+```
+ToolSearch("+ado wit")
+```
+
+### C2. Fetch Parent Story + Children
+
+```
+mcp__ado__wit_get_work_item
+  project: "<ADO project from config>"
+  id: <work item ID>
+  expand: "relations"
+```
+
+Extract child Task IDs from relations (`System.LinkTypes.Hierarchy-Forward`).
+
+If no children found, print "No child tasks found." and STOP.
+
+Fetch child details:
+```
+mcp__ado__wit_get_work_items_batch_by_ids
+  project: "<ADO project from config>"
+  ids: [<child IDs>]
+  fields: ["System.Title", "System.WorkItemType", "System.State",
+           "Microsoft.VSTS.Scheduling.OriginalEstimate",
+           "Microsoft.VSTS.Scheduling.RemainingWork",
+           "Microsoft.VSTS.Scheduling.CompletedWork"]
+```
+
+Filter to **Task** type only.
+
+### C3. Determine Which Tasks to Close
+
+**Closeable:** Tasks in state `New`, `Active`, or `In Progress` (not already `Closed`, `Removed`, or `Resolved`).
+
+If no closeable tasks, print "All tasks already closed." and STOP.
+
+### C4. Verify Development is Done
+
+Check that development is actually complete before closing:
+
+1. Find spec dir: `bash .ai/lib/dx-common.sh find-spec-dir <work-item-id>`
+2. If `implement.md` exists, check that all steps are `done`
+3. If any steps are NOT `done`, warn:
+   ```
+   ⚠ implement.md has <N> incomplete steps. Close tasks anyway? (y/n)
+   ```
+   Wait for confirmation.
+
+If no spec dir or no implement.md, skip this check (user may be closing manually).
+
+### C5. Calculate Time Updates
+
+For each closeable task, compute the time fields:
+
+```
+completed_work_new = (existing CompletedWork or 0) + (existing RemainingWork or 0)
+remaining_work_new = 0
+```
+
+This moves whatever time was remaining into completed work — the task used its full budget.
+
+### C6. Present Close Plan
+
+```markdown
+## Close Tasks — Story #<id>
+
+| ID | Title | State | Original | Completed → | Remaining → |
+|----|-------|-------|----------|-------------|-------------|
+| #12345 | BE - Implement model | Active | 8h | 0 → 8h | 8 → 0h |
+| #12346 | FE - PR Review | New | 1h | 0 → 1h | 1 → 0h |
+| #12347 | BE - Unit Tests | Closed | 3h | (already closed) | |
+
+**<N> tasks will be closed.** Proceed? (y/n)
+```
+
+Wait for user confirmation.
+
+### C7. Close Tasks
+
+For each closeable task, update in this order:
+1. Set Completed Work (add remaining to completed)
+2. Set Remaining Work to 0
+3. Set State to Closed
+
+```
+mcp__ado__wit_update_work_items_batch
+  updates: [
+    {
+      "id": <task ID>,
+      "path": "/fields/Microsoft.VSTS.Scheduling.CompletedWork",
+      "value": <completed_work_new>
+    },
+    {
+      "id": <task ID>,
+      "path": "/fields/Microsoft.VSTS.Scheduling.RemainingWork",
+      "value": 0
+    },
+    {
+      "id": <task ID>,
+      "path": "/fields/System.State",
+      "value": "Closed"
+    },
+    ...for each closeable task
+  ]
+```
+
+### If provider = jira
+
+```
+mcp__atlassian__jira_update_issue
+  issue_key: "<sub-task key>"
+  fields: {
+    "timespent": <completed_work_new * 3600>,
+    "timeestimate": 0
+  }
+  transition: "Done"
+```
+
+**Note:** Jira transitions vary by workflow. Use `mcp__atlassian__jira_get_transitions` to find the "Done" transition ID if "Done" doesn't work by name. Jira stores time in **seconds** — multiply hours by 3600.
+
+### C8. Print Summary
+
+```markdown
+## Closed <N> Tasks under Story #<id>
+
+| ID | Title | Completed | Previous State |
+|----|-------|-----------|---------------|
+| #12345 | BE - Implement model | 8h | Active |
+| #12346 | FE - PR Review | 1h | New |
+
+**Total completed:** <sum>h
+All child tasks closed. Remaining work zeroed, time moved to Completed Work.
+```
+
 ## Examples
 
 1. `/dx-req-tasks 2416553` — Fetches story #2416553, infers BE+FE+Authoring groups from the title and description, plans tasks with hours totaling Story Points x 8, presents the breakdown for approval, then creates child Tasks in ADO.
@@ -474,6 +617,8 @@ Where `{scm.org}` and `{scm.project_url_encoded}` are read from `.ai/config.yaml
 2. `/dx-req-tasks 2416553 FE` — Creates only Frontend tasks (FE - Implement component rendering, FE - Testing, FE - PR Review) under the story, skipping BE and Authoring groups.
 
 3. `/dx-req-tasks 2416553` (with existing tasks) — Detects 3 existing child Tasks already consuming 24h of the 40h budget, plans new tasks for the remaining 16h, and fills in missing hour estimates on existing tasks marked `(inferred)`.
+
+4. `/dx-req-tasks 2416553 close` — Fetches child tasks, checks implement.md steps are all done, shows close plan with time updates (Remaining Work → Completed Work), and after confirmation closes all tasks. Sprint burndown and capacity tracking stay accurate.
 
 ## Troubleshooting
 
