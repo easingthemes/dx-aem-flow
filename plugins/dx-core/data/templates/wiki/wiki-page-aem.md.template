@@ -43,16 +43,27 @@ Include technique used and WHY chosen over alternatives. -->
 
 ## QA Verification
 
-<!-- URLs from authoring-guide.md, aem-after.md, or qa-handoff.md.
-Use QA URLs from config.yaml if available. -->
+<!-- MANDATORY for AEM projects. AEM pages are the deliverable — this is what the customer sees.
+URLs from authoring-guide.md, aem-after.md, or qa-handoff.md. QA URLs from config.yaml. -->
+
+<!-- For EACH affected component/page. If multiple components need different pages, repeat the table.
+If all components can be demoed on one page, one table is enough. -->
 
 | Environment | URL |
 |-------------|-----|
-| QA Author | `<author-url-qa>/editor.html<demo-page-path>.html` |
+| QA Author (Edit) | `<author-url-qa>/editor.html<demo-page-path>.html` |
+| QA Author (Preview) | `<author-url-qa><demo-page-path>.html?wcmmode=disabled` |
 | QA Publisher | `<publish-url-qa><demo-page-path>.html` |
-| Local Author | `<author-url>/editor.html<demo-page-path>.html` |
 
-<!-- If no demo page was created, note: "No QA page — component exists on production pages listed in Authoring > Existing Pages below." -->
+<!-- QA Author Edit = dialog configuration view (for authors)
+     QA Author Preview = frontend rendering without editor chrome (for FE demo, wcmmode=disabled)
+     QA Publisher = end-user view -->
+
+<!-- If new component was created but not yet on a QA page:
+"⚠️ Component <name> needs to be added to a QA page and configured for demo." -->
+
+<!-- If component only exists on production pages:
+"Component exists on production pages — no dedicated QA demo page." with page paths if known. -->
 
 ## Dialog Changes
 
