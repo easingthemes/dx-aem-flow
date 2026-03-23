@@ -1,3 +1,11 @@
+## [2.62.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.62.0...v2.62.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* remove disable-model-invocation from skills called by coordinators ([af3b5a4](https://github.com/easingthemes/dx-aem-flow/commit/af3b5a47ebedcaf816b553481c9d534bec649394))
+* replace invalid --cwd and --permission-mode trust in dispatch commands ([313f197](https://github.com/easingthemes/dx-aem-flow/commit/313f19712b60203f5bebe791fac2e7e2ab773ea7))
+
 # [2.62.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.3...v2.62.0) (2026-03-23)
 
 
