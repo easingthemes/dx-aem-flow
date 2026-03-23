@@ -1,3 +1,19 @@
+# [2.61.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.60.0...v2.61.0) (2026-03-23)
+
+
+### Bug Fixes
+
+* correct docs inconsistencies after dx-dor separation ([261df77](https://github.com/easingthemes/dx-aem-flow/commit/261df7762642f31ac74b6457f8211df748d2c745))
+* update DoR pipeline to use standalone /dx-dor instead of /dx-req ([108660e](https://github.com/easingthemes/dx-aem-flow/commit/108660edd0f394a8a4cafea8a05d787e63f90a72))
+* update stale dor-rules.md references in todo-bugs.md ([a9db4ef](https://github.com/easingthemes/dx-aem-flow/commit/a9db4ef2f59b3790d26c9f31504671e2c64c992e))
+
+
+### Features
+
+* add dx-dor standalone skill for Definition of Ready validation ([14c9936](https://github.com/easingthemes/dx-aem-flow/commit/14c99361ff5a4ce533fb42665fff152f99b4afb2))
+* **dx-dor:** add ADO comment posting and output format reference ([b2d9f8d](https://github.com/easingthemes/dx-aem-flow/commit/b2d9f8d67b42f5e6e52918a09a75e88345c621ce))
+* **dx-dor:** add wiki checkbox format parsing rules ([5056678](https://github.com/easingthemes/dx-aem-flow/commit/50566786b46307ec0c303a5d0b48f11e282a1018))
+
 # [2.60.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.59.0...v2.60.0) (2026-03-22)
 
 
