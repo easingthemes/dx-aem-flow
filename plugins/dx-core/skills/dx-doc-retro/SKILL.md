@@ -167,7 +167,8 @@ Follow the same wiki posting logic as `/dx-doc-gen` (step 6a):
 1. Read wiki config (`scm.wiki-id`, `scm.wiki-project`, `scm.wiki-doc-root`)
 2. Build path: `<wiki-doc-root>/<Sprint XX>/<id>-<slug>`
 3. Create sprint subfolder if needed
-4. Create or update the page via `mcp__ado__wiki_create_or_update_page`
+4. **Check for existing page by ID prefix** — list pages under the sprint folder (`mcp__ado__wiki_list_pages`) and check if any page name starts with `<id>-`. If found, reuse that existing path instead of the newly generated slug. The work item ID prefix is unique per story.
+5. Create or update the page via `mcp__ado__wiki_create_or_update_page`
 
 If `scm.wiki-id` is not configured, save locally only.
 
