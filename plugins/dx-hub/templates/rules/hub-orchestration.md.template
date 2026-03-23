@@ -1,0 +1,90 @@
+---
+description: Hub orchestration rules — how Claude behaves in a multi-repo hub directory
+---
+
+# Hub Orchestration
+
+This is a **hub directory** — it orchestrates work across multiple repos. It contains no source code.
+
+## Core Constraints
+
+- **Never edit code files from this directory.** Code lives in sibling repos. Use dispatch or tell the user to switch to the repo.
+- **Never run build/test commands.** The hub has no build system. Builds happen in each repo.
+- **Always read config first.** Hub config is in `.ai/config.yaml` — it lists all repos, their paths, base branches, and ADO projects.
+
+## Working with Tickets
+
+- Use the ADO MCP tools (`mcp__ado__wit_get_work_item`, `mcp__ado__wit_get_work_items_batch_by_ids`) to read work items.
+- When asked about multiple tickets, batch-read them and present a summary table.
+- Check `.ai/specs/<id>-*/` in each sibling repo to find existing dx workflow output (specs, plans, implementation state).
+
+## Plugin System — Where to Find Info
+
+Four plugins are installed. To understand what a skill does, how to invoke it, or what it produces:
+
+1. **Installed plugins (local):** Read skill files directly from the installed plugin directories. Each skill is a `SKILL.md` file with full instructions, inputs, outputs, and examples. Use Glob to find them:
+   ```
+   ~/.claude/plugins/cache/dx-aem-flow/*/skills/*/SKILL.md
+   ```
+2. **Documentation (web):** Full docs, tutorials, architecture guides, and skill catalog are at:
+   - **Docs site:** https://easingthemes.github.io/dx-aem-flow/
+   - **GitHub repo:** https://github.com/easingthemes/dx-aem-flow
+
+### Plugin overview
+
+| Plugin | Prefix | Purpose |
+|--------|--------|---------|
+| dx-core | `/dx-*` | Platform-agnostic workflow: requirements → planning → execution → review → PR |
+| dx-aem | `/aem-*` | AEM-specific: component verification, QA, demo capture, authoring guides |
+| dx-hub | `/dx-hub-*` | Multi-repo orchestration (this plugin) |
+| dx-automation | `/auto-*` | Autonomous CI/CD agents (DoR, PR review, DoD, BugFix, etc.) |
+
+### User Story pipeline stages (dx-core)
+
+| Stage | Key skill | Produces | Progress indicator |
+|-------|-----------|----------|--------------------|
+| Requirements | `/dx-req` | `explain.md`, `research.md` | `explain.md` exists |
+| Planning | `/dx-plan` | `implement.md` (numbered steps) | `implement.md` exists |
+| Execution | `/dx-step` | `step-N-*.md` per step + commits | Count step files vs total in plan |
+| Verification | `/dx-step-verify` | `step-N-verify.md` PASS/FAIL | All verify files show PASS |
+| PR | `/dx-pr` | `pr.md` + ADO Pull Request | `pr.md` exists |
+
+### Bug pipeline stages (dx-core)
+
+| Stage | Key skill | Produces |
+|-------|-----------|----------|
+| Triage | `/dx-bug-triage` | `triage.md` |
+| Verify | `/dx-bug-verify` | `verification.md` |
+| Fix | `/dx-bug-fix` | `implement.md` + PR |
+
+## Determining Ticket Progress
+
+To assess where a ticket stands:
+
+1. **Read the ADO work item** — get title, state, assigned to, linked PRs
+2. **Scan sibling repos** for `.ai/specs/<ticket-id>-*/` directories (use Glob via repo paths from config)
+3. **Map files to pipeline stage:**
+   - No spec dir → not started
+   - `raw-story.md` only → fetched but not analyzed
+   - `explain.md` + `research.md` → requirements done, needs plan
+   - `implement.md` → planned, check step count for total
+   - `step-N-*.md` → in progress, N = current step
+   - All steps + verify PASS → ready for PR
+   - `pr.md` → PR created, check ADO for PR status
+4. **Check `implement.md`** for total step count — compare against existing `step-*.md` files
+5. **Check ADO for linked PRs** — are they open, approved, merged?
+
+## Cross-Repo Context
+
+- Hub config `repos[].path` gives relative paths to each repo (e.g., `../repo-name`)
+- Use these paths with Read/Glob/Grep to inspect sibling repo state
+- When reporting status, always identify which repo each finding belongs to
+
+## Demo Preparation
+
+When asked to prepare for a demo or status update:
+1. Read all requested tickets from ADO (batch with `mcp__ado__wit_get_work_items_batch_by_ids`)
+2. For each ticket, scan sibling repos for spec directories
+3. Summarize in a table: ticket ID, title, type (Story/Bug), repo, current stage, steps done/total, what's left
+4. Highlight blockers, open questions, or tickets with no progress
+5. For completed work: note linked PRs and their status (open/merged)
