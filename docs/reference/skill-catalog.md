@@ -63,7 +63,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-bug-all | `/dx-bug-all` | `<bug-id>` | Full bug workflow: triage → verify → fix. Logs bug patterns, detects component hotspots. | Bug fixed |
 | dx-bug-triage | `/dx-bug-triage` | `<bug-id>` | Fetch bug from ADO/Jira, find affected component, save triage | `raw-bug.md`, `triage.md` |
-| dx-bug-verify | `/dx-bug-verify` | `<bug-id>` (optional) | Reproduce ADO/Jira bug via Chrome DevTools, capture screenshots | `verification.md` |
+| dx-bug-verify | `/dx-bug-verify` | `<bug-id> [before\|after\|qa]` | Reproduce bug via Chrome DevTools. `before`: confirm bug exists. `after`: verify fix locally. `qa`: verify fix on QA post-merge. | `verification.md` / `-local.md` / `-qa.md` |
 | dx-bug-fix | `/dx-bug-fix` | `<bug-id>` (optional) | Generate fix plan from triage, execute, create PR | `implement.md` + PR |
 
 ### Agent Roles (`dx-agent-*`) — 3 skills
