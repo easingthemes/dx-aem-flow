@@ -90,7 +90,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       title="/dx-req (share phase)"
       tags={[{ label: '[DevPlan]', color: 'info' }, { label: 'share-plan.md.template', color: 'default' }]}
     >
-      Non-technical implementation plan for the team. Covers what's being built, the approach, scope (S/M/L), assumptions, and open questions. Suitable for pasting into Teams or standup notes.
+      Short development plan for the team: scope (S/M/L) and 3-5 bullets on what will change. Suitable for pasting into Teams. Posted before development starts -- no wiki link (wiki is generated post-implementation).
     </ContentCard>
 
     <ContentCard
@@ -144,7 +144,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       title="/aem-qa-handoff"
       tags={[{ label: '[QAHandoff]', color: 'secondary' }, { label: 'qa-handoff.md.template', color: 'default' }]}
     >
-      Structured testing steps for the QA team. Two modes: lightweight (reuses /aem-doc-gen output) or full (creates own test page + screenshots). Maps acceptance criteria to numbered testing steps with expected results.
+      Short QA handoff pointer: QA page URLs (author + publisher), prerequisites, what changed (3-5 bullets), and a link to the wiki page for full details. QA has test plans for detailed verification -- the comment is a notification, not a test script.
     </ContentCard>
   </div>
 
@@ -261,11 +261,11 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:pencil"
       iconColor="bg-cyan"
       title="/dx-req-tasks"
-      tags={[{ label: 'Task (batch)', color: 'info' }, { label: 'estimates', color: 'warning' }]}
+      tags={[{ label: 'Task (batch)', color: 'info' }, { label: 'estimates', color: 'warning' }, { label: 'close', color: 'success' }]}
     >
       Batch-creates child Task work items with hour estimates. Sets Original Estimate and
-      Remaining Work fields. Useful for sprint planning -- breaks a story into FE/BE/Authoring
-      tasks with effort estimates.
+      Remaining Work fields. With <code>close</code> argument: moves Remaining Work to Completed Work,
+      zeros remaining, and sets state to Closed. Full task lifecycle: create → close.
     </ContentCard>
 
     <ContentCard
@@ -332,9 +332,10 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       title="/dx-doc-gen"
       tags={[{ label: 'wiki', color: 'success' }, { label: 'post-implementation', color: 'success' }]}
     >
-      Generates technical documentation from completed spec files -- architecture decisions,
-      usage guide, API changes. Posts to ADO Wiki under <code>&lt;wiki-doc-root&gt;/&lt;Sprint&gt;/&lt;id&gt;-&lt;slug&gt;</code>.
-      The final step in the development pipeline (Phase 7).
+      Generates wiki page structured as a **demo walkthrough**: Summary, Design Reference (Figma),
+      What Changed and Why, QA Verification (URLs), Dialog Changes (screenshot), Frontend Preview
+      (screenshot), Figma Comparison (side-by-side), Authoring Guide, Files Changed. Screenshots
+      use repo-relative paths for committing. Posts to ADO Wiki under <code>&lt;wiki-doc-root&gt;/&lt;Sprint&gt;/&lt;id&gt;-&lt;slug&gt;</code>.
     </ContentCard>
 
     <ContentCard
@@ -391,11 +392,22 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard
       icon="mdi:timer"
       iconColor="bg-amber-500"
-      title="/dx-req-tasks"
+      title="/dx-req-tasks (create)"
       tags={[{ label: 'wit_update_work_items_batch', color: 'warning' }]}
     >
       After creating child Task items, updates their estimation fields: **Original Estimate** and
       **Remaining Work**. Uses batch update for efficiency. Also sets assignment if configured.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:check-circle"
+      iconColor="bg-emerald-600"
+      title="/dx-req-tasks close"
+      tags={[{ label: 'wit_update_work_items_batch', color: 'success' }]}
+    >
+      Closes all open child tasks after development: moves **Remaining Work** into **Completed Work**,
+      zeros remaining, sets state to **Closed**. Checks <code>implement.md</code> to verify all steps
+      are done before closing. Sprint burndown and capacity stay accurate.
     </ContentCard>
   </div>
 </Section>
@@ -418,8 +430,9 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       { title: 'Task Split', subtitle: 'Tasks + Estimates', command: '/dx-req-tasks', color: '#059669' },
       { title: 'DoD Check', subtitle: 'Comment', command: '/dx-req-dod', color: '#10b981' },
       { title: 'QA Agent', subtitle: 'Bugs', command: '/aem-qa', color: '#ef4444' },
-      { title: 'QA Handoff', subtitle: 'Comment', command: '/aem-qa-handoff', color: '#6366f1' },
-      { title: 'Docs', subtitle: 'Wiki page', command: '/dx-doc-gen', color: '#14b8a6' },
+      { title: 'QA Handoff', subtitle: 'Comment + Wiki link', command: '/aem-qa-handoff', color: '#6366f1' },
+      { title: 'Docs', subtitle: 'Wiki page (demo)', command: '/dx-doc-gen', color: '#14b8a6' },
+      { title: 'Task Close', subtitle: 'Close + time', command: '/dx-req-tasks close', color: '#059669' },
     ]}
   />
 
@@ -499,6 +512,12 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3"><code>/aem-qa-handoff</code></td>
         <td class="p-3">Comment</td>
         <td class="p-3">Story</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">Completion</td>
+        <td class="p-3"><code>/dx-req-tasks close</code></td>
+        <td class="p-3">Update + Close</td>
+        <td class="p-3">Story children</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Documentation</td>
