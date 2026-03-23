@@ -1,3 +1,10 @@
+# [2.64.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.63.0...v2.64.0) (2026-03-23)
+
+
+### Features
+
+* add `qa` mode to dx-bug-verify for post-merge QA verification ([5acd326](https://github.com/easingthemes/dx-aem-flow/commit/5acd3268721831a33b199e829d8787aa7eb21466))
+
 # [2.63.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.62.1...v2.63.0) (2026-03-23)
 
 
