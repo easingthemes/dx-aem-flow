@@ -12,7 +12,7 @@
 ## Quick Start
 
 ```
-/dx-req-all <ID>    # Fetch work item (ADO/Jira), explain, research codebase
+/dx-req <ID>    # Fetch work item (ADO/Jira), explain, research codebase
 /dx-plan            # Generate step-by-step implementation plan
 /dx-step-all        # Execute all steps (test + review + commit loop)
 /dx-step-build      # Build & deploy
