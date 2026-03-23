@@ -29,7 +29,7 @@ Build a combined argument string from whatever was provided (e.g., `2416553 http
 
 ## Progress Tracking
 
-Before starting execution, you MUST create a task for each of these items using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each item using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
 
 1. Extract design from Figma
 2. Generate prototype
