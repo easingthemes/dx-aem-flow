@@ -1,3 +1,11 @@
+## [2.61.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.2...v2.61.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* restore 2-space indentation in website config files ([6c3d906](https://github.com/easingthemes/dx-aem-flow/commit/6c3d906c2f20bd5e5525cf64d2285002234d0266))
+* update website redirect paths and tailwind ESM import ([8134908](https://github.com/easingthemes/dx-aem-flow/commit/8134908754e796374fa893249ed51678ab28a53c))
+
 ## [2.61.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.1...v2.61.2) (2026-03-23)
 
 
