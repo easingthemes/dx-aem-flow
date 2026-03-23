@@ -7,7 +7,7 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 ## Quick Start
 
 ```
-/dx-req-all <ID>    # Fetch ADO story, explain, research codebase
+/dx-req <ID>    # Fetch ADO story, explain, research codebase
 /dx-plan            # Generate step-by-step implementation plan
 /dx-step-all        # Execute all steps (test + review + commit loop)
 /dx-step-build      # Build & deploy
@@ -21,7 +21,7 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 
 | Command | What it does | Output |
 |---------|-------------|--------|
-| `/dx-req-all <ID>` | Full pipeline: fetch, dor, explain, research, share approach | All spec files + ADO comments |
+| `/dx-req <ID>` | Full pipeline: fetch, dor, explain, research, share approach | All spec files + ADO comments |
 | `/dx-req <ID>` | Full requirements pipeline — fetch, DoR, explain, research, share (5 phases) | All spec files + ADO comments |
 | `/dx-req-dod` | Validate Definition of Done and auto-fix gaps — tests, PR, docs, build | `dod.md` + fixes |
 | `/dx-req-tasks <ID>` | Create child Task work items with hour estimates | ADO tasks |
@@ -103,13 +103,13 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 
 **"Just give me the requirements, I'll code myself"**
 ```
-/dx-req-all <ID>
+/dx-req <ID>
 # Review .ai/specs/<id>-*/explain.md, then code manually
 ```
 
 **"Generate a plan, then execute it"**
 ```
-/dx-req-all <ID>
+/dx-req <ID>
 /dx-plan
 /dx-plan-validate
 /dx-step-all
@@ -150,12 +150,12 @@ Some tickets require changes in multiple repos. Run the workflow in each repo in
 
 ```
 # In first repo:
-/dx-req-all <ID>   # research.md lists other repos involved
+/dx-req <ID>   # research.md lists other repos involved
 /dx-plan           # plans only the changes for THIS repo
 /dx-step-all
 
 # Switch to second repo, run same workflow
-/dx-req-all <ID>
+/dx-req <ID>
 /dx-plan
 /dx-step-all
 ```
@@ -166,7 +166,7 @@ All skills also work in VS Code Copilot chat via `@AgentName`:
 
 | Agent | Same as | Handoffs to |
 |-------|---------|-------------|
-| `@DxReqAll` | `/dx-req-all` | `@DxPlanExecutor`, `@DxFigma` |
+| `@DxReqAll` | `/dx-req` | `@DxPlanExecutor`, `@DxFigma` |
 | `@DxStepAll` | `/dx-step-all` | `@DxCodeReview`, `@DxCommit` |
 | `@DxBugAll` | `/dx-bug-all` | `@DxCodeReview`, `@DxCommit` |
 | `@DxAgentAll` | `/dx-agent-all` | `@DxCodeReview`, `@DxCommit` |

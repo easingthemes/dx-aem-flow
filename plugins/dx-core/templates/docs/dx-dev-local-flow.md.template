@@ -142,9 +142,9 @@ flowchart TD
 
 ---
 
-## Requirements Flow (/dx-req-all)
+## Requirements Flow (/dx-req)
 
-**Developer types:** `/dx-req-all <ADO-Story-ID>` (or individual skills: `/dx-req`, `/dx-req (dor)`, etc.)
+**Developer types:** `/dx-req <ADO-Story-ID>` (or individual skills: `/dx-req`, `/dx-req (dor)`, etc.)
 
 Chains 5 skills sequentially via `subagent` agents. Each step must complete before the next starts.
 
@@ -207,7 +207,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph INPUTS["Input Files (created by /dx-req-all + /dx-figma-*)"]
+    subgraph INPUTS["Input Files (created by /dx-req + /dx-figma-*)"]
         EXP["explain.md (required)"]
         RES["research.md (recommended)"]
         RAW["raw-story.md (reference)"]
