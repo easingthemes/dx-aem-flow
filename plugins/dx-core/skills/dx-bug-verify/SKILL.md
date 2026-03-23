@@ -491,41 +491,54 @@ mcp__atlassian__jira_add_comment
   comment: "<comment text — same format as below>"
 ```
 
+**Comment structure rules:**
+- **URL on its own row** — always `**URL:** <clickable-url>` as a separate line, never buried in sentences
+- **Footer** — always end with `---` separator + `_[Tag] | <ISO timestamp> · <context hint>_` (matches DoR, QAHandoff, PRReview style)
+
 **`before` mode comments:**
 
 If Reproduced:
 ```markdown
 **[BugVerify] Bug Reproduced**
 
-Automated browser testing confirmed this bug at `<url>`.
+**URL:** <url>
+
+Automated browser testing confirmed this bug.
 
 **Steps executed:** <N> steps followed successfully
 **Key evidence:** <1-2 sentences, e.g., "Preview image (src set to blob URL) remains visible after file input is cleared. DOM confirms input.files.length === 0 but img.src is still set.">
 **Console errors:** <N or "None">
 
-_Automated verification via Chrome DevTools MCP_
+---
+_[BugVerify] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Could Not Reproduce:
 ```markdown
 **[BugVerify] Could Not Reproduce**
 
-Automated browser testing at `<url>` did not reproduce this bug.
+**URL:** <url>
+
+Automated browser testing did not reproduce this bug.
 
 **Steps executed:** <N> steps
 **Observed behavior:** <what happened instead>
 **Possible reasons:** Environment-specific, intermittent, or already fixed.
 
-_Automated verification via Chrome DevTools MCP_
+---
+_[BugVerify] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Blocked:
 ```markdown
 **[BugVerify] Verification Blocked**
 
+**URL:** <url>
+
 Could not complete automated reproduction: <reason>.
 
-_Manual reproduction recommended._
+---
+_[BugVerify] | <ISO timestamp> · Manual reproduction recommended_
 ```
 
 **`after` mode comments:**
@@ -534,46 +547,58 @@ If Fix Verified:
 ```markdown
 **[BugVerifyLocal] Fix Verified on Local AEM**
 
-Post-fix browser testing on local AEM (`<url>`) confirms the bug is resolved.
+**URL:** <url>
+
+Post-fix browser testing confirms the bug is resolved.
 
 **Steps executed:** <N> repro steps — bug no longer occurs
 **Evidence:** <1-2 sentences, e.g., "Preview image is correctly cleared when file input is cancelled. DOM confirms both input.files.length === 0 and img.src is empty.">
 **Console errors:** <N or "None">
 
-_Automated post-fix verification via Chrome DevTools MCP_
+---
+_[BugVerifyLocal] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Fix Failed:
 ```markdown
 **[BugVerifyLocal] Fix Failed — Bug Still Present**
 
-Post-fix browser testing on local AEM (`<url>`) shows the bug is **still present**.
+**URL:** <url>
+
+Post-fix browser testing shows the bug is **still present**.
 
 **Steps executed:** <N> repro steps
 **Observed behavior:** <what still happens>
 
-_Fix needs further work. Automated verification via Chrome DevTools MCP._
+---
+_[BugVerifyLocal] | <ISO timestamp> · Fix needs further work_
 ```
 
 If Fix Partial:
 ```markdown
 **[BugVerifyLocal] Fix Partially Verified**
 
-Post-fix browser testing on local AEM (`<url>`) shows the bug is **partially fixed**.
+**URL:** <url>
+
+Post-fix browser testing shows the bug is **partially fixed**.
 
 **Fixed:** <what improved>
 **Remaining:** <what still fails>
 
-_Automated post-fix verification via Chrome DevTools MCP_
+---
+_[BugVerifyLocal] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Blocked:
 ```markdown
 **[BugVerifyLocal] Local Verification Blocked**
 
+**URL:** <url>
+
 Could not complete post-fix verification on local AEM: <reason>.
 
-_Manual local testing recommended._
+---
+_[BugVerifyLocal] | <ISO timestamp> · Manual local testing recommended_
 ```
 
 **`qa` mode comments:**
@@ -582,47 +607,59 @@ If Fix Verified on QA:
 ```markdown
 **[BugVerifyQA] Fix Verified on QA**
 
-Post-merge browser testing on QA (`<url>`) confirms the fix is deployed and working.
+**URL:** <url>
+
+Post-merge browser testing confirms the fix is deployed and working.
 
 **Steps executed:** <N> repro steps — bug no longer occurs on QA
 **Evidence:** <1-2 sentences summarizing what was observed>
 **Console errors:** <N or "None">
 
-_Automated QA verification via Chrome DevTools MCP_
+---
+_[BugVerifyQA] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Fix Failed on QA:
 ```markdown
 **[BugVerifyQA] Fix Failed on QA — Bug Still Present**
 
-Post-merge browser testing on QA (`<url>`) shows the bug is **still present** after deployment.
+**URL:** <url>
+
+Post-merge browser testing shows the bug is **still present** after deployment.
 
 **Steps executed:** <N> repro steps
 **Observed behavior:** <what still happens>
 **Possible causes:** Deployment not yet complete, environment-specific issue, or fix incomplete.
 
-_Manual QA investigation recommended. Automated verification via Chrome DevTools MCP._
+---
+_[BugVerifyQA] | <ISO timestamp> · Manual QA investigation recommended_
 ```
 
 If Fix Partial on QA:
 ```markdown
 **[BugVerifyQA] Fix Partially Verified on QA**
 
-Post-merge browser testing on QA (`<url>`) shows the bug is **partially fixed**.
+**URL:** <url>
+
+Post-merge browser testing shows the bug is **partially fixed**.
 
 **Fixed:** <what improved>
 **Remaining:** <what still fails>
 
-_Automated QA verification via Chrome DevTools MCP_
+---
+_[BugVerifyQA] | <ISO timestamp> · Verified via Chrome DevTools MCP_
 ```
 
 If Blocked:
 ```markdown
 **[BugVerifyQA] QA Verification Blocked**
 
+**URL:** <url>
+
 Could not complete post-merge verification on QA: <reason>.
 
-_Manual QA testing recommended._
+---
+_[BugVerifyQA] | <ISO timestamp> · Manual QA testing recommended_
 ```
 
 ### Present summary
