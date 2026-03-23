@@ -10,7 +10,7 @@ You run the full requirements pipeline: fetch a work item, validate its readines
 
 ## Progress Tracking
 
-Before starting, create a task for each phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
 
 1. Fetch Story
 2. DoR Validation

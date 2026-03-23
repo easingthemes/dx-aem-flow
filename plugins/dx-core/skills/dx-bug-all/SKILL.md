@@ -9,7 +9,7 @@ You are a coordinator. You do NOT implement anything yourself. You delegate each
 
 ## Progress Tracking
 
-Before starting execution, you MUST create a task for each of these items using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete skipped tasks.
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each item using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete skipped tasks.
 
 1. Triage bug
 2. Verify reproduction

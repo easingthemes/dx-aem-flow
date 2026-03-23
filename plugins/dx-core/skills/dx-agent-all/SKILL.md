@@ -112,7 +112,7 @@ If `superpowers:executing-plans` is available, invoke it before starting Phase 1
 
 ## Progress Tracking
 
-Before starting execution, you MUST create a task for each applicable phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete tasks for phases that get skipped at runtime.
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each applicable phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete tasks for phases that get skipped at runtime.
 
 Use the phase table above to determine which phases apply. Example tasks for a typical run:
 
