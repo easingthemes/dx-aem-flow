@@ -1,3 +1,10 @@
+## [2.61.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.1...v2.61.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* update init templates to use /dx-req instead of deprecated /dx-req-all ([5e44f62](https://github.com/easingthemes/dx-aem-flow/commit/5e44f62428114727387869fb395af9222f55038c))
+
 ## [2.61.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.61.0...v2.61.1) (2026-03-23)
 
 
