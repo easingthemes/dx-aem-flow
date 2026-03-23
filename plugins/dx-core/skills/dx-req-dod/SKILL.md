@@ -29,7 +29,7 @@ Use ultrathink for this skill — cross-referencing multiple sources (ADO/Jira s
 
 ## Progress Tracking
 
-Create tasks using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create tasks using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
 
 1. DoD Check (gather evidence, evaluate criteria)
 2. Auto-Fix Gaps (if failures found)
