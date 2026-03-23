@@ -10,7 +10,7 @@ You execute the next pending step from implement.md — implement the changes, v
 
 ## Progress Tracking
 
-Create a task for the current step using `TaskCreate` (e.g., "Step 3: Add dropdown field"). Mark `in_progress` when starting, `completed` when committed. On phase failures, update the task subject (e.g., "Step 3: Add dropdown field (test failed)").
+Before creating tasks, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create a task for the current step using `TaskCreate` (e.g., "Step 3: Add dropdown field"). Mark `in_progress` when starting, `completed` when committed. On phase failures, update the task subject (e.g., "Step 3: Add dropdown field (test failed)").
 
 ## Flow
 
