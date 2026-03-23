@@ -17,8 +17,8 @@ digraph dx_dor {
     "Fetch story" [shape=box];
     "Fetch DoR wiki" [shape=box];
     "Existing [DoRAgent] comment?" [shape=diamond];
-    "Read checkbox state" [shape=box];
-    "BA updated checkboxes?" [shape=diamond];
+    "Read checkbox state + compare story" [shape=box];
+    "Changes detected?" [shape=diamond];
     "Re-fetch story + re-validate" [shape=box];
     "Materialize comment → dor-report.md (Mode C)" [shape=box];
     "Parse wiki → build criteria" [shape=box];
@@ -34,11 +34,11 @@ digraph dx_dor {
     "Spawn parallel subagents" -> "Done";
     "Fetch story" -> "Fetch DoR wiki";
     "Fetch DoR wiki" -> "Existing [DoRAgent] comment?";
-    "Existing [DoRAgent] comment?" -> "Read checkbox state" [label="yes"];
+    "Existing [DoRAgent] comment?" -> "Read checkbox state + compare story" [label="yes"];
     "Existing [DoRAgent] comment?" -> "Parse wiki → build criteria" [label="no"];
-    "Read checkbox state" -> "BA updated checkboxes?";
-    "BA updated checkboxes?" -> "Re-fetch story + re-validate" [label="yes"];
-    "BA updated checkboxes?" -> "Materialize comment → dor-report.md (Mode C)" [label="no"];
+    "Read checkbox state + compare story" -> "Changes detected?";
+    "Changes detected?" -> "Re-fetch story + re-validate" [label="yes"];
+    "Changes detected?" -> "Materialize comment → dor-report.md (Mode C)" [label="no"];
     "Re-fetch story + re-validate" -> "Generate dor-report.md";
     "Materialize comment → dor-report.md (Mode C)" -> "Done";
     "Parse wiki → build criteria" -> "Evaluate story against criteria";
@@ -86,20 +86,23 @@ digraph dx_dor {
 - If found: continue to "Read checkbox state"
 - If not found: continue to "Parse wiki -> build criteria"
 
-### Read checkbox state
+### Read checkbox state + compare story
 
-- Parse `- [x]` and `- [ ]` lines from the existing comment
-- Compare against the original post state to detect changes
+Two change checks — either one triggers re-validation:
 
-### BA updated checkboxes?
+1. **Checkbox changes:** Parse `- [x]` and `- [ ]` lines from the existing comment. Compare against the original post state to detect BA checkbox updates.
+2. **Story content changes:** Compare the fetched story (from "Fetch story" step) against `$SPEC_DIR/raw-story.md` (if it exists). Check title, description, acceptance criteria, and comment count. If ANY differ, the ticket was updated since the last DoR run.
 
-- If any checkbox changed from `[ ]` to `[x]` since original post: **yes** -> continue to "Re-fetch story + re-validate"
-- If no checkboxes changed: **no** -> continue to "Materialize comment -> dor-report.md (Mode C)"
+### Changes detected?
+
+- If any checkbox changed from `[ ]` to `[x]` since original post: **yes** → print: `BA checked <N> items: <list>. Re-validating...`
+- If story content changed (description, AC, or new comments): **yes** → print: `Ticket updated since last DoR check (changed: <fields>). Re-validating...`
+- If both unchanged: **no** → continue to "Materialize comment → dor-report.md (Mode C)"
 
 ### Re-fetch story + re-validate
 
-- Print: `BA checked <N> items: <list>. Re-fetching story to validate...`
-- Re-fetch work item via MCP to get updated content
+- Re-fetch work item via MCP to get latest content (already fetched in "Fetch story" — reuse that data)
+- Update `$SPEC_DIR/raw-story.md` with fresh content
 - Re-run evaluation against wiki criteria
 
 ### Materialize comment -> dor-report.md (Mode C)
@@ -153,11 +156,11 @@ Fetches story #2416553, evaluates against DoR checklist, writes `dor-report.md`,
 ```
 Spawns parallel subagents, each validating one item. Prints summary table at the end.
 
-### Re-run after BA updates
+### Re-run after BA updates (checkboxes or ticket content)
 ```
 /dx-dor 2416553
 ```
-Detects existing `[DoRAgent]` comment, finds BA checked 3 items, re-fetches story, re-validates, posts Mode B update.
+Detects existing `[DoRAgent]` comment. Checks for BA checkbox changes AND ticket content changes (description, AC, new comments). If either changed → re-fetches story, re-validates, posts Mode B update. If neither changed → Mode C reuse.
 
 ## Rules
 
