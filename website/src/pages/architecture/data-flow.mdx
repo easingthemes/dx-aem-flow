@@ -45,12 +45,14 @@ import CommandBlock from '../../components/CommandBlock.astro';
   dev-all-progress.md       -- coordinator progress tracking (optional)
   verification.md           -- dx-bug-verify (for bugs)
   docs/
-    wiki-page.md            -- dx-doc-gen (reads: all spec files)
+    wiki-page.md            -- dx-doc-gen (demo walkthrough: summary, QA URLs, screenshots, Figma)
   demo/
-    dialog-*.png            -- aem-editorial-guide
-    authoring-guide.md      -- aem-editorial-guide
+    dialog-*.png            -- aem-doc-gen (dialog screenshot)
+    rendered-*.png          -- aem-doc-gen (publisher screenshot)
+    authoring-guide.md      -- aem-doc-gen (editor-friendly guide)
+    page-structure.md       -- aem-doc-gen (cached page structure)
   images/                   -- dx-req (ADO attachments)
-  screenshots/              -- dx-bug-verify (browser screenshots)`}
+  screenshots/              -- aem-fe-verify (component vs Figma)`}
     </CommandBlock>
   </HighlightBox>
 
@@ -88,7 +90,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
     description="Work item comments posted at key milestones. Each is idempotent -- skip if unchanged, minimal update if changed."
     steps={[
       { title: '[DoRAgent]', subtitle: 'BA checks\ncheckboxes', color: '#0891b2' },
-      { title: '[DevPlan]', subtitle: 'Assumptions\n+ plan', color: '#d97706' },
+      { title: '[DevPlan]', subtitle: 'Scope\n+ bullets', color: '#d97706' },
       { title: '[DoD]', subtitle: 'Completion\ncriteria', color: '#059669' },
     ]}
   />
