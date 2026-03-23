@@ -40,21 +40,16 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Structure"
   badgeColor="secondary"
   title="Page Structure"
-  subtitle="Both DoR and DoD wiki pages follow the same structure."
+  subtitle="DoR uses checkbox format, DoD uses table format. Both share the same section heading and scoring conventions."
   bg="primary"
 />
 <Section>
-  <CommandBlock label="Wiki page template (checkbox format)">{`# Title -- Checklist
+  <CommandBlock label="DoR wiki page template (checkbox format)">{`# Definition of Ready -- Checklist
 
-> **Purpose:** ...
-> **Who validates:** ...
-> **When:** ...
-
----
+> **Who validates:** Tech Lead / DoR Agent
+> **When:** Before "Ready for Development"
 
 ## 1. Section Name
-
-Description paragraph.
 
 - [ ] **Criterion name** \`required\` — What the agent checks
 - [ ] **Another criterion** \`recommended\` — Advisory check
@@ -62,19 +57,31 @@ Description paragraph.
 
 > **Skip:** When this section can be skipped.
 
----
-
 ## 2. Next Section
 
 ...
 
----
+## Scoring
 
-## Completion Summary
+- All \`required\` pass -> **Ready for Development**
+- 1-2 \`required\` fail -> **Can proceed -- expect clarification**
+- 3+ \`required\` fail -> **Needs more detail**`}</CommandBlock>
 
-| # | Section | Automated | Human |
-|---|---------|-----------|-------|
-| 1 | Section Name | description | -- |
+  <CommandBlock label="DoD wiki page template (table format)">{`# Definition of Done -- Checklist
+
+> **Who validates:** DoD Agent / Tech Lead
+> **When:** Before PR merge
+
+## 1. Section Name
+
+| Criterion | Who checks | What to verify |
+|-----------|-----------|----------------|
+| Criterion name | Agent | What the agent checks |
+| Another criterion | Human | What a human verifies |
+
+**Skip trigger:** When this section can be skipped.
+
+## Scoring
 
 **Scoring:**
 - All automated criteria pass -> pass verdict
@@ -138,7 +145,7 @@ Description paragraph.
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:skip-next" iconColor="bg-amber-500" title="Skip Triggers">
-      Optional <code>&#42;&#42;Skip trigger:&#42;&#42;</code> paragraphs after a criteria table define when criteria in that section can be skipped (marked SKIP). The text is parsed as natural language. Common patterns:
+      Optional blockquotes after criteria define when a section can be skipped (marked SKIP). DoR uses <code>&gt; **Skip:** ...</code>, DoD uses <code>**Skip trigger:** ...</code>. The text is parsed as natural language. Common patterns:
       <ul class="mt-2 text-sm list-none p-0 space-y-1">
         <li>"Pure configuration or content-only changes"</li>
         <li>"Backend-only or infrastructure changes"</li>
@@ -165,13 +172,13 @@ Description paragraph.
 />
 <Section>
   <ContentCard icon="mdi:clipboard-check" iconColor="bg-brand-700" title="Detection Patterns">
-    The "What to verify" column contains instructions the skill interprets:
+    The hint text after <code>—</code> in each checkbox describes what the skill checks:
     <ul class="mt-2 text-sm list-none p-0 space-y-1">
-      <li><code>Title non-empty, Description non-empty</code> -- check specific fields</li>
-      <li><code>Figma URL with node-id= parameter</code> -- look for URL patterns</li>
-      <li><code>Dialog field table with columns (Field, Type, Options)</code> -- look for table patterns</li>
+      <li><code>Clear: [Brand/Market] Verb + Feature</code> -- check title matches pattern</li>
+      <li><code>Direct link with node-id</code> -- look for Figma URL with node-id parameter</li>
+      <li><code>Field table or "no dialog changes"</code> -- look for table pattern or explicit skip</li>
     </ul>
-    <p class="text-sm mt-2">Sub-criteria are comma-separated within one criterion. The skill evaluates each sub-check individually.</p>
+    <p class="text-sm mt-2">The agent interprets hints using its understanding of the story content. Hints are guidance, not rigid regex patterns.</p>
   </ContentCard>
 
   <CommandBlock label="Minimal DoR section example">{`## 1. Story Basics
@@ -227,8 +234,8 @@ Description paragraph.
     </ContentCard>
     <ContentCard icon="mdi:alert" iconColor="bg-red-500" title="Common Pitfalls">
       <ul class="mt-2 text-sm list-none p-0 space-y-1">
-        <li>Keep table format exact: pipe-separated, header + separator + data rows</li>
-        <li>The <code>Who checks</code> column controls automation -- choose carefully</li>
+        <li><strong>DoR:</strong> Checkbox format must be exact: <code>- [ ] **Name** `tag` — Description</code></li>
+        <li><strong>DoD:</strong> Table format must be exact: pipe-separated, header + separator + data rows</li>
         <li>Use <code>## N. Title</code> format for checklist sections (numbered with period)</li>
         <li>Non-numbered headings are treated as metadata, not sections</li>
       </ul>
