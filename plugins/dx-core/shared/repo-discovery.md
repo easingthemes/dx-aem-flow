@@ -94,12 +94,12 @@ No delegation file is written. No pipeline is queued. The developer controls the
 
 **When `hub.enabled: true` AND cwd is a `.hub/` directory** (hub orchestration context):
 
-Hub mode replaces the manual handoff with automated dispatch via `claude -p --cwd`. Instead of printing "switch to repo X", the skill dispatches a `claude -p` session to the target repo.
+Hub mode replaces the manual handoff with automated dispatch via `cd <path> && claude -p`. Instead of printing "switch to repo X", the skill dispatches a `claude -p` session to the target repo.
 
 Read `shared/hub-dispatch.md` for the full hub dispatch protocol:
 - Hub detection logic
 - Repo resolution from config
-- Command builder (`claude -p --cwd`)
+- Command builder (`cd <path> && claude -p`)
 - Result collection and state persistence
 - Dispatch modes (sequential/parallel)
 

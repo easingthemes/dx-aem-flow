@@ -62,7 +62,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
    - If URL provided: extract repo name from URL path
    - If ID only: cannot determine repo — ask user which repo
 2. Match repo name to `repos:` config entry
-3. Dispatch: `claude -p "/dx-pr-review <pr-url-or-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+3. Dispatch: `cd <repo.path> && claude -p "/dx-pr-review <pr-url-or-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
 4. Collect result (review findings)
 5. Print review summary from the dispatched session
 6. STOP

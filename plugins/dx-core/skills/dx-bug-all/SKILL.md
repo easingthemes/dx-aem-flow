@@ -93,7 +93,7 @@ Read `shared/hub-dispatch.md` for the full protocol.
 3. Check `hub.auto-dispatch` — if `false`, confirm with user
 4. Write `state/<ticket-id>/dispatch.json`
 5. For each target repo:
-   - Build and execute: `claude -p "/dx-bug-all <ticket-id>" --cwd <repo.path> --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode trust`
+   - Build and execute: `cd <repo.path> && claude -p "/dx-bug-all <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
    - Collect result, write state
    - Print progress: `✓ <repo> — <status>`
 6. Rebuild `state/active.json`

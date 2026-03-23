@@ -4,7 +4,7 @@ Reference document for coordinator skills that orchestrate work across multiple 
 
 ## When This Applies
 
-Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. Instead of manually switching to each repo, coordinator skills dispatch sub-invocations via `claude -p --cwd <repo-path>` and collect structured results.
+Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. Instead of manually switching to each repo, coordinator skills dispatch sub-invocations via `cd <repo-path> && claude -p` and collect structured results.
 
 This document defines how to detect hub mode, resolve target repos, build dispatch commands, collect results, and persist state. It is the local alternative to pipeline delegation (see `repo-discovery.md`).
 
@@ -17,7 +17,7 @@ Is DX_PIPELINE_MODE=true?
   → yes: delegate via ADO pipeline (see repo-discovery.md — stop here)
 
 Is hub.enabled=true AND cwd ends with .hub/?
-  → yes: dispatch via claude -p --cwd (this document)
+  → yes: dispatch via cd <path> && claude -p (this document)
 
 Is cross-repo scope detected?
   → yes: print "switch to {repo.name} at {repo.path}" (manual handoff)
@@ -107,21 +107,21 @@ Example: if cwd is `/projects/project-x/.hub` and path is `../repo-a`, the resol
 Build the dispatch invocation for each target repo:
 
 ```bash
+cd "<resolved-repo-path>" && \
 claude -p "<skill-invocation>" \
-  --cwd "<resolved-repo-path>" \
   --output-format json \
   --allowedTools "Bash,Read,Edit,Write,Glob,Grep" \
-  --permission-mode trust
+  --permission-mode bypassPermissions
 ```
 
 ### Parameter Notes
 
 | Parameter | Value | Reason |
 |-----------|-------|--------|
+| `cd <path> &&` | resolved absolute path | sets working directory before launching Claude — the CLI has no `--cwd` flag |
 | `--output-format json` | always | structured result collection |
 | `--allowedTools` | skill-dependent | minimum required for the skill |
-| `--permission-mode trust` | always | non-interactive session, no prompts |
-| `--cwd` | resolved absolute path | repo context for all file operations |
+| `--permission-mode bypassPermissions` | always | non-interactive session, no prompts. Valid modes: `acceptEdits`, `bypassPermissions`, `default`, `dontAsk`, `plan`, `auto` |
 
 The `<skill-invocation>` string is exactly what the user would type in an interactive session, e.g. `/dx-step-all 12345` or `/dx-bug-all BUG-99`.
 
@@ -286,8 +286,8 @@ Proceed? [y/N]
 If the user declines, print the manual commands they can run:
 ```
 To dispatch manually:
-  claude -p "/dx-step-all 12345" --cwd /projects/project-x/repo-a --output-format json --permission-mode trust
-  claude -p "/dx-step-all 12345" --cwd /projects/project-x/repo-b --output-format json --permission-mode trust
+  cd /projects/project-x/repo-a && claude -p "/dx-step-all 12345" --output-format json --permission-mode bypassPermissions
+  cd /projects/project-x/repo-b && claude -p "/dx-step-all 12345" --output-format json --permission-mode bypassPermissions
 ```
 
 ### `hub.auto-dispatch: true`
