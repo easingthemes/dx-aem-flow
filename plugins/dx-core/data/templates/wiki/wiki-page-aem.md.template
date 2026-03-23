@@ -53,7 +53,7 @@ If all components can be demoed on one page, one table is enough. -->
 |-------------|-----|
 | QA Author (Edit) | `<author-url-qa>/editor.html<demo-page-path>.html` |
 | QA Author (Preview) | `<author-url-qa><demo-page-path>.html?wcmmode=disabled` |
-| QA Publisher | `<publish-url-qa><demo-page-path>.html` |
+| QA Publisher | `<publish-url-qa><demo-page-path>` |
 
 <!-- QA Author Edit = dialog configuration view (for authors)
      QA Author Preview = frontend rendering without editor chrome (for FE demo, wcmmode=disabled)
