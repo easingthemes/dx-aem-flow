@@ -38,3 +38,15 @@
 6. Deprecate project.yaml with migration in `/dx-upgrade`
 
 **Risk:** Touches config reading in many skills — needs careful testing. Consumer repos need migration (move project.yaml content into config.yaml).
+
+## DoD Checkbox Format
+
+**Added:** 2026-03-23
+**Problem:** DoR now uses checkbox format (`- [ ] **Name** \`tag\` — hint`) which is simpler to parse and interactive in ADO. DoD still uses the old 3-column table format (`Criterion | Who checks | What to verify`). Having two formats creates documentation overhead and makes the wiki-format page more complex. Unifying to checkbox format would simplify parsing logic and enable `dx-req-dod` to use the same dynamic wiki parsing as `dx-dor`.
+**Scope:**
+- `plugins/dx-core/skills/dx-req-dod/SKILL.md` — needs wiki-driven parsing (currently has some hardcoded checks)
+- `website/src/pages/contributing/wiki-format.mdx` — currently documents both formats
+- `website/src/pages/usage/dor-dod.mdx` — mentions DoD table format
+- Consumer wiki pages — DoD pages need migration to checkbox format
+**Done-when:** `grep -n "Who checks" plugins/dx-core/skills/dx-req-dod/SKILL.md` returns zero matches AND `grep "checkbox" website/src/pages/contributing/wiki-format.mdx` shows a single unified format for both DoR and DoD.
+**Approach:** Follow the dx-dor pattern — extract DoD wiki parsing into a shared reference, migrate DoD wiki pages to checkbox format, update dx-req-dod to parse dynamically.

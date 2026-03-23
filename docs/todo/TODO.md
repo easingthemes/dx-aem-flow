@@ -28,4 +28,6 @@
 | 22 | ~~Port hooks to Copilot CLI~~ | Medium | **Done** | 2026-03-22 | [todo-copilot-cli.md#hooks-porting](todo-copilot-cli.md#hooks-porting) — 3 ported (SessionStart×2, PostToolUse Edit); Figma blocked by #17, Stop blocked by Copilot CLI |
 | 23 | Copilot CLI project MCP not loaded | Medium | Blocked (upstream) | 2026-03-22 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery) |
 
-**Counts:** 23 total — 8 done, 7 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed
+| 24 | Migrate DoD wiki to checkbox format | Low | Open | 2026-03-23 | [todo-config.md#dod-checkbox](todo-config.md#dod-checkbox-format) |
+
+**Counts:** 24 total — 8 done, 8 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed
