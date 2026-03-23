@@ -269,7 +269,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-bug-all</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Full bug workflow: triage, verify, fix</td></tr>
         <tr><td class="p-3"><code>/dx-bug-triage</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Fetch bug, find affected component</td></tr>
-        <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (opt)</td><td class="p-3">Reproduce via Chrome DevTools, capture screenshots</td></tr>
+        <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt; [before|after|qa]</code></td><td class="p-3">Reproduce via Chrome DevTools. <code>before</code>: confirm bug. <code>after</code>: verify fix locally. <code>qa</code>: verify fix on QA post-merge.</td></tr>
         <tr><td class="p-3"><code>/dx-bug-fix</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (opt)</td><td class="p-3">Generate fix plan, execute, create PR</td></tr>
       </tbody>
     </table>

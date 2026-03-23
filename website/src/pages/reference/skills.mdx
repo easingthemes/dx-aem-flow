@@ -217,7 +217,7 @@ import { stats } from '../../config/stats';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-bug-all</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Full bug workflow: triage, verify, fix. Logs bug patterns, detects component hotspots.</td><td class="p-3">Bug fixed</td></tr>
         <tr><td class="p-3"><code>/dx-bug-triage</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Fetch bug from ADO/Jira, find affected component, save triage.</td><td class="p-3"><code>raw-bug.md</code>, <code>triage.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (optional)</td><td class="p-3">Reproduce bug via Chrome DevTools, capture screenshots.</td><td class="p-3"><code>verification.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt; [before|after|qa]</code></td><td class="p-3">Reproduce bug via Chrome DevTools. <code>before</code>: confirm bug. <code>after</code>: verify fix locally. <code>qa</code>: verify fix on QA post-merge.</td><td class="p-3"><code>verification.md</code> / <code>verification-local.md</code> / <code>verification-qa.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-bug-fix</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (optional)</td><td class="p-3">Generate fix plan from triage, execute, create PR.</td><td class="p-3"><code>implement.md</code> + PR</td></tr>
       </tbody>
     </table>
