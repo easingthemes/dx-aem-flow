@@ -1,3 +1,10 @@
+# [2.63.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.62.1...v2.63.0) (2026-03-23)
+
+
+### Features
+
+* demo-friendly wiki templates, trim ADO comments, add task close ([39610b5](https://github.com/easingthemes/dx-aem-flow/commit/39610b50768aca7c2987470215653e3940c43df5))
+
 ## [2.62.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.62.0...v2.62.1) (2026-03-23)
 
 
