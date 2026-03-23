@@ -14,7 +14,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-dor | `/dx-dor` | `<work-item-id(s)>` | Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Batch mode: space-separated IDs for parallel validation. | `dor-report.md` + ADO comment |
 | dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR (delegates to `/dx-dor`), distill requirements, research codebase, share summary (5 phases). Includes reference docs for each phase. | All spec files + ADO comments |
-| dx-req-tasks | `/dx-req-tasks` | `<work-item-id>` | Create child Task work items with hour estimates | ADO/Jira tasks |
+| dx-req-tasks | `/dx-req-tasks` | `<work-item-id> [close]` | Create child Task work items with hour estimates. `close` arg: moves Remaining→Completed, zeros remaining, closes tasks | ADO/Jira tasks |
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
 | dx-req-import | `/dx-req-import` | `<path-to-file>` | Validate external (non-ADO) requirements document | `explain.md` |
 
@@ -78,7 +78,7 @@
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki docs from spec files (after development). Reads aem-doc-gen output for Authoring/Website sections. Posts to sprint-specific ADO Wiki/Confluence subfolder. | `docs/wiki-page.md` |
+| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Dialog/FE screenshots, Figma comparison, Authoring Guide. Screenshots use repo-relative paths. Posts to ADO Wiki/Confluence. | `docs/wiki-page.md` |
 | dx-doc-retro | `/dx-doc-retro` | `<work-item-id>` | Retroactive wiki docs for completed stories — fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed. | `docs/wiki-page.md` |
 
 ### Quality — 1 skill
@@ -169,7 +169,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | aem-qa | `/aem-qa` | `<work-item-id>` (optional) | Full QA agent — navigate pages, check rendering/dialogs, screenshot, create Bug tickets | `qa.json` |
-| aem-qa-handoff | `/aem-qa-handoff` | `<component> <id>` | Generate testing steps for QA team, post to ADO. Reuses `/aem-doc-gen` output or creates own test page | `qa-handoff.md` |
+| aem-qa-handoff | `/aem-qa-handoff` | `<component> <id>` | Post short QA handoff to ADO: QA URLs, prerequisites, what changed, wiki link. Reuses `/aem-doc-gen` test page or creates own | `qa-handoff.md` |
 
 ### Documentation (1)
 
