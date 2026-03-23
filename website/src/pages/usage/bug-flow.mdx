@@ -65,8 +65,9 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     >
       <code>/dx-bug-verify</code>
 
-      Chrome DevTools MCP navigates to the affected page, follows repro steps, takes screenshots
-      to confirm the bug exists.
+      Chrome DevTools MCP navigates to the affected page, follows repro steps, takes screenshots.
+      Three modes: <code>before</code> (confirm bug exists), <code>after</code> (verify fix locally),
+      <code>qa</code> (verify fix on QA post-merge).
     </ContentCard>
 
     <ContentCard
@@ -199,9 +200,9 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3">raw-bug.md, triage.md</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-bug-verify</code></td>
+        <td class="p-3"><code>/dx-bug-verify [before|after|qa]</code></td>
         <td class="p-3">Verify</td>
-        <td class="p-3">verification.md, screenshots</td>
+        <td class="p-3">verification.md / verification-local.md / verification-qa.md, screenshots</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-bug-fix</code></td>

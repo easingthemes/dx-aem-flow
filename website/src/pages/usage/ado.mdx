@@ -133,9 +133,9 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:check-decagram"
       iconColor="bg-brand-700"
       title="/dx-bug-verify"
-      tags={[{ label: '[BugVerify]', color: 'primary' }]}
+      tags={[{ label: '[BugVerify]', color: 'primary' }, { label: '[BugVerifyQA]', color: 'success' }]}
     >
-      Bug verification evidence. Before mode: confirms the bug is reproducible on QA (screenshots, console errors). After mode: confirms the fix works on local AEM.
+      Bug verification evidence. Before mode: confirms the bug is reproducible on QA (screenshots, console errors). After mode: confirms the fix works on local AEM. QA mode: confirms the fix is deployed and working on QA post-merge.
     </ContentCard>
 
     <ContentCard
@@ -211,7 +211,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-bug-verify</code></td>
-        <td class="p-3"><code class="text-xs">[BugVerify] / [BugVerifyLocal]</code></td>
+        <td class="p-3"><code class="text-xs">[BugVerify] / [BugVerifyLocal] / [BugVerifyQA]</code></td>
         <td class="p-3 text-xs">A: full post</td>
         <td class="p-3 text-xs text-gray-500">inline</td>
       </tr>
