@@ -138,7 +138,18 @@ mcp__ado__wiki_create_or_update_page
   content: "# ${SPRINT}\n\nTechnical documentation for stories in ${SPRINT}."
 ```
 
-6. **Create or update the wiki page:**
+6. **Check for existing page by ID prefix.** The work item ID is unique — if a page already exists for this story (possibly with a different slug), reuse its path instead of creating a duplicate:
+
+```
+mcp__ado__wiki_list_pages
+  wikiIdentifier: <scm.wiki-id>
+  project: <scm.wiki-project>
+  path: "${WIKI_ROOT}/${SPRINT}"
+```
+
+Scan the returned child pages for any whose name starts with `<id>-` (e.g., `2451742-`). If found, set `WIKI_PATH` to that existing page's path — do NOT use the newly generated slug.
+
+7. **Create or update the wiki page:**
 
 ```
 mcp__ado__wiki_create_or_update_page
@@ -148,9 +159,9 @@ mcp__ado__wiki_create_or_update_page
   content: <contents of docs/wiki-page.md>
 ```
 
-7. Print: `Wiki page created/updated at ${WIKI_PATH}`
+8. Print: `Wiki page created/updated at ${WIKI_PATH}`
 
-If the sprint is `Unknown`, post under `${WIKI_ROOT}/Unsorted/${PAGE_TITLE}` instead and warn: `Sprint unknown — page placed under Unsorted. Move it manually after confirming the sprint.`
+If the sprint is `Unknown`, post under `${WIKI_ROOT}/Unsorted/${PAGE_TITLE}` instead (apply the same ID-prefix lookup in Unsorted) and warn: `Sprint unknown — page placed under Unsorted. Move it manually after confirming the sprint.`
 
 ### 6b. Confluence Mode
 
