@@ -1,3 +1,10 @@
+## [2.64.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.2...v2.64.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* wiki posting must find existing page by ID prefix before creating ([59f30b8](https://github.com/easingthemes/dx-aem-flow/commit/59f30b8444ac4b4d83739e484e104249db1e705e))
+
 ## [2.64.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.1...v2.64.2) (2026-03-23)
 
 
