@@ -1,3 +1,13 @@
+## [2.64.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.1...v2.64.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* dx-doc-gen QA mandatory, add Author Preview, fix Publisher URL ([163dacf](https://github.com/easingthemes/dx-aem-flow/commit/163dacfc8848262222ba83618c1e24b84961d581))
+* dx-doc-gen QA pages mandatory, add Author Preview URL ([3a93d49](https://github.com/easingthemes/dx-aem-flow/commit/3a93d49d11f227a4667a7fa7d03068936eba25b5))
+* dx-doc-retro must use AEM template and include QA page URLs ([1729c0d](https://github.com/easingthemes/dx-aem-flow/commit/1729c0d83cd354071bd652933c7e78b28e7881e4))
+* page selection rule — new pages only for new components ([d5a258d](https://github.com/easingthemes/dx-aem-flow/commit/d5a258dbe66d4b41eba2987b05fa0ad51d54157a))
+
 ## [2.64.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.0...v2.64.1) (2026-03-23)
 
 
