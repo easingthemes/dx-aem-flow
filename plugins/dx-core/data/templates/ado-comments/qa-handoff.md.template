@@ -8,8 +8,9 @@
 
 | Environment | URL |
 |-------------|-----|
-| QA Author | <qa-author-url>/editor.html<test-page-path>.html |
-| QA Publisher | <qa-publish-url><test-page-path>.html |
+| QA Author (Edit) | <qa-author-url>/editor.html<test-page-path>.html |
+| QA Author (Preview) | <qa-author-url><test-page-path>.html?wcmmode=disabled |
+| QA Publisher | <qa-publish-url><test-page-path> |
 
 #### Prerequisites
 

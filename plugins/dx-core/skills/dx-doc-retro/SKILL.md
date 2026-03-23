@@ -111,9 +111,47 @@ fi
 
 Save the sprint name to `$SPEC_DIR/.sprint`.
 
-Read `.ai/templates/wiki/wiki-page.md.template` and follow that structure, adapted for retroactive documentation (PR links instead of branch, synthesize from PR descriptions instead of spec files).
+### 5a. Choose Template
+
+Check if this is an AEM project: read `.ai/config.yaml` for `aem.author-url` or `aem.author-url-qa`. If either exists → AEM project.
+
+- **AEM project:** Read `.ai/templates/wiki/wiki-page-aem.md.template` — demo walkthrough structure
+- **Non-AEM project:** Read `.ai/templates/wiki/wiki-page.md.template` — standard technical doc
+
+Follow the template structure, adapted for retroactive documentation (PR links instead of branch, synthesize from PR descriptions instead of spec files).
+
+### 5b. QA AEM Pages (MANDATORY for AEM projects)
+
+**AEM pages are the deliverable — this is what the customer wants to see.** Every wiki page for an AEM project MUST include QA page URLs for both Author Edit and Preview modes.
+
+Read QA URLs from `.ai/config.yaml`:
+- `aem.author-url-qa` — QA Author (e.g., `https://qa-author.example.com`)
+- `aem.publish-url-qa` — QA Publisher (e.g., `https://qa-publish.example.com`)
+
+**Determine affected components** from the story, PR descriptions, and codebase search. Then:
+
+1. **Single component:** One QA page URL pair (Author Edit + Preview)
+2. **Multiple components on the same page:** One QA page URL pair if all components can be demoed on a single page
+3. **Multiple components on different pages:** Multiple QA page URL pairs — one per page needed to cover all components
+
+**For each component/page, provide:**
+
+| Environment | URL |
+|-------------|-----|
+| QA Author (Edit) | `<author-url-qa>/editor.html<page-path>.html` |
+| QA Author (Preview) | `<author-url-qa><page-path>.html?wcmmode=disabled` |
+
+The Preview URL (`wcmmode=disabled`) shows the page as the end user sees it — this is the FE demo view.
+
+**If new components were created:** Note that the component must be added to a QA page and configured for demo. If no existing QA page contains the component, flag this: `⚠️ Component <name> needs to be added to a QA page for demo.`
+
+**If the component is only on production pages:** Note: `Component exists on production pages — no dedicated QA demo page.` Still provide the production page paths if discoverable.
+
+### 5c. Content Focus
 
 **Key difference from `/dx-doc-gen`:** No Architecture Decisions, API Changes, or Usage sections unless the PR descriptions explicitly contain that information. Keep it focused on what can be reliably discovered.
+
+**Do NOT list every changed file.** Group by area (FE/BE/Config) with short descriptions. The Files Changed section should be a brief grouped summary, not a file-by-file changelog. The PR link has the full diff — the wiki page explains the *what and why*, not every file.
 
 ## 6. Post to Wiki (optional)
 
@@ -245,6 +283,10 @@ mcp__atlassian__confluence_update_page
 
 - **Discovery-based** — this skill does NOT require spec files. It discovers everything from ADO + PRs + codebase search.
 - **PR descriptions are gold** — they often contain the best implementation summary. Prioritize them over story descriptions.
+- **AEM pages are mandatory** — for AEM projects, QA Author Edit + Preview URLs are required. This is the deliverable the customer sees.
+- **Use the right template** — AEM projects get the demo walkthrough template (`wiki-page-aem.md.template`), non-AEM get the standard template.
+- **Don't list every file** — group by area (FE/BE/Config) with short descriptions. The PR has the diff; the wiki explains what and why.
+- **Multi-component = multi-page** — if several components are affected, provide QA page URLs for each (unless they all fit on one page).
 - **Don't fabricate** — if you can't determine a technique or pattern, say what was changed without guessing how.
 - **Read config, never hardcode** — ADO URLs, wiki paths from config.yaml
 - **Skip empty sections** — never write "N/A" filler
