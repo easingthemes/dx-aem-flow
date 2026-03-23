@@ -114,7 +114,7 @@ If ticket data or file searches found files in OTHER repos, list them:
 |------|--------------|-----------|
 | Frontend-Repo | FE template + styles for new layout | `src/components/{name}/` |
 
-> Run the same workflow (`/dx-req-all <id>`) in each repo above to plan
+> Run the same workflow (`/dx-req <id>`) in each repo above to plan
 > and execute those changes.
 
 OMIT this section entirely if all files belong to the current repo.

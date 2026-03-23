@@ -2,7 +2,7 @@
 
 **Repo:** <current repo name, detected from folder or git remote>
 <!-- If research.md has a "Cross-Repo Scope" section, add the line below: -->
-**Other repos required:** <repo name(s)> (<brief description> — run `/dx-req-all <id>` there)
+**Other repos required:** <repo name(s)> (<brief description> — run `/dx-req <id>` there)
 
 ## Approach
 <!-- 2-3 sentences: overall strategy — what's being modified vs created new,
