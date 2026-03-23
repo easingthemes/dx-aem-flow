@@ -23,6 +23,7 @@ digraph hub_init {
     "User selects repos" [shape=diamond];
     "Build config" [shape=box];
     "Create hub structure" [shape=box];
+    "Configure Claude Code settings" [shape=box];
     "Generate CLAUDE.md" [shape=box];
     "Offer workspace file" [shape=diamond];
     "Create .code-workspace" [shape=box];
@@ -41,7 +42,8 @@ digraph hub_init {
     "User selects repos" -> "Build config" [label="confirmed"];
     "User selects repos" -> "STOP: User cancelled" [label="none selected"];
     "Build config" -> "Create hub structure";
-    "Create hub structure" -> "Generate CLAUDE.md";
+    "Create hub structure" -> "Configure Claude Code settings";
+    "Configure Claude Code settings" -> "Generate CLAUDE.md";
     "Generate CLAUDE.md" -> "Offer workspace file";
     "Offer workspace file" -> "Create .code-workspace" [label="yes"];
     "Offer workspace file" -> "Summary" [label="no"];
@@ -192,7 +194,7 @@ Create the hub directory layout:
 ```bash
 mkdir -p "$HUB_PATH/.ai/specs"
 mkdir -p "$HUB_PATH/.ai/rules"
-mkdir -p "$HUB_PATH/.claude"
+mkdir -p "$HUB_PATH/.claude/rules"
 mkdir -p "$HUB_PATH/state"
 ```
 
@@ -203,6 +205,104 @@ Write `$HUB_PATH/.gitignore`:
 state/
 .ai/specs/
 ```
+
+**Install hub rules:**
+
+Copy rule templates from the dx-hub plugin's `templates/rules/` directory to `$HUB_PATH/.claude/rules/`:
+
+```bash
+for tpl in ${CLAUDE_PLUGIN_DIR}/templates/rules/*.md.template; do
+  dest="$HUB_PATH/.claude/rules/$(basename "$tpl" .template)"
+  if [ ! -f "$dest" ]; then
+    cp "$tpl" "$dest"
+  fi
+done
+```
+
+Strip the `.template` suffix. Do not overwrite existing files (user may have customized them).
+
+Report: "Installed hub rules: <list of rule filenames>"
+
+### Configure Claude Code settings
+
+The hub directory needs Claude Code settings so that plugins and MCP servers are available when the user opens the hub in Claude Code. Read these from the first selected sibling repo — its `.claude/settings.json` was created by `/dx-init`.
+
+**Step 1 — Read sibling settings:**
+
+Pick the first selected repo. Read `<repo-path>/.claude/settings.json`. Extract:
+- `extraKnownMarketplaces` — the marketplace source(s)
+- `enabledPlugins` — which plugins are enabled
+- `enabledMcpjsonServers` — which MCP servers are enabled (if present)
+
+If the first repo has no `.claude/settings.json`, try the next selected repo. If none have it, warn:
+```
+WARNING: No sibling repo has .claude/settings.json — plugins won't be available in the hub.
+Run /dx-init in at least one repo first, then re-run /dx-hub-init.
+```
+Skip this step (do not create settings files) and continue to "Generate CLAUDE.md".
+
+**Step 2 — Write `.claude/settings.json`:**
+
+Check if `$HUB_PATH/.claude/settings.json` already exists.
+- **If it exists on reinit:** Read it and merge — add missing keys but do not overwrite existing values (user may have customized permissions, env, etc.).
+- **If it does not exist:** Create it.
+
+Write/merge the following structure:
+
+```json
+{
+  "plansDirectory": ".ai/specs",
+  "env": {
+    "COPILOT_CUSTOM_INSTRUCTIONS_DIRS": ".claude/rules"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "enabledMcpjsonServers": <copied from sibling, or ["ado"] as minimum>,
+  "enabledPlugins": <copied from sibling>,
+  "extraKnownMarketplaces": <copied from sibling>
+}
+```
+
+Do NOT copy `permissions` from the sibling — the hub is an orchestrator directory, not a code repo. Let the user build up permissions naturally through Claude Code prompts.
+
+**Step 3 — Write `.claude/settings.local.json`:**
+
+Check if `$HUB_PATH/.claude/settings.local.json` already exists.
+- **If it exists:** Do not overwrite. Report "Local secrets file validated".
+- **If it does not exist:** Check if the sibling repo has `.claude/settings.local.json`. If yes, copy its `env` block (secrets like `AEM_INSTANCES`, API keys). If no, create a minimal placeholder:
+
+```json
+{
+  "env": {}
+}
+```
+
+Report: "Created `.claude/settings.local.json` — add credentials if needed for hub dispatch."
+
+**Step 4 — Create `.mcp.json`:**
+
+The hub needs project-level MCP servers so the user can read tickets, check PRs, and query docs directly from the hub directory. Read the sibling repo's `.mcp.json` and copy relevant servers.
+
+1. Pick the first selected repo. Read `<repo-path>/.mcp.json`.
+2. **If it exists:** Copy the full `mcpServers` object. The hub is an orchestration directory — it benefits from having all the same MCP servers (ADO for tickets/PRs, context7 for docs, Atlassian if configured).
+3. **If no sibling has `.mcp.json`:** Warn and skip:
+   ```
+   WARNING: No sibling repo has .mcp.json — MCP tools (ADO, etc.) won't be available in the hub.
+   Run /dx-init in at least one repo first, then re-run /dx-hub-init.
+   ```
+
+**If `$HUB_PATH/.mcp.json` already exists on reinit:** Read it and merge — add missing server entries but do not overwrite existing ones (user may have customized args, added servers).
+
+Write `$HUB_PATH/.mcp.json`:
+```json
+{
+  "mcpServers": <merged mcpServers from sibling>
+}
+```
+
+Report: "Created `.mcp.json` — MCP servers: <list of server names>"
 
 ### Generate CLAUDE.md
 
@@ -223,12 +323,24 @@ across multiple repos via dx-core hub mode.
 
 No build commands. This directory dispatches to repos.
 
+## MCP Servers
+
+ADO MCP is configured — use `mcp__ado__wit_get_work_item` and
+`mcp__ado__wit_get_work_items_batch_by_ids` to read tickets directly.
+
+## Specs & Progress
+
+Check sibling repos for dx workflow output:
+- Specs live in `<repo-path>/.ai/specs/<ticket-id>-<slug>/`
+- See `.claude/rules/hub-orchestration.md` for the full spec directory convention
+
 ## Rules
 
 - Never edit code files from this directory
 - Use /dx-hub-status to check in-flight work
 - Dispatch happens via hub-enabled dx-core skills
 - Config lives in `.ai/config.yaml` — edit it to add/remove repos
+- See `.claude/rules/` for detailed hub behavior rules
 ```
 
 Replace the `<list of repo names and paths from config>` placeholder with the actual repo list formatted as:
@@ -278,9 +390,18 @@ Print:
 
 ### Files created:
 - `.ai/config.yaml` — hub config with repo registry
+- `.claude/settings.json` — marketplace, plugins, MCP servers (from sibling repo)
+- `.claude/settings.local.json` — local env vars / secrets placeholder
+- `.claude/rules/` — hub convention rules
+- `.mcp.json` — MCP servers (ADO, context7, etc. from sibling repo)
 - `CLAUDE.md` — hub instructions for Claude
 - `state/` — runtime dispatch state (gitignored)
 - `.gitignore` — ignores state and specs
+
+### Plugins:
+- **Marketplace:** <marketplace name from sibling>
+- **Enabled:** <list of enabled plugins>
+- **MCP servers:** <list of enabled MCP servers>
 
 ### Next steps:
 - Open $HUB_PATH in Claude Code to use hub mode
@@ -321,6 +442,10 @@ If `../.hub/.ai/config.yaml` already exists, prompts for confirmation before ove
 ### Hub already exists — want to add a repo
 **Cause:** Re-running init overwrites the full repo list.
 **Fix:** Edit `.ai/config.yaml` directly to append a new entry under `repos:`. Follow the existing format (name, path, base-branch, ado-project).
+
+### No plugins available in hub
+**Cause:** No sibling repo had `.claude/settings.json` when hub-init ran, so marketplace and plugin settings were not copied.
+**Fix:** Run `/dx-init` in at least one sibling repo first, then re-run `/dx-hub-init`. The init reads `extraKnownMarketplaces` and `enabledPlugins` from the first sibling's `.claude/settings.json`.
 
 ### Workspace file not opening all repos
 **Cause:** Relative paths in `hub.code-workspace` are resolved from the hub directory. If repos moved, paths break.
