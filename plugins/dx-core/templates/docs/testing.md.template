@@ -4,7 +4,7 @@
 
 | Flow | Command | Pass when |
 |------|---------|-----------|
-| Story workflow | `/dx-req-all <ID>` then `/dx-plan` then `/dx-agent-all` | Spec files created, steps executed, PR created |
+| Story workflow | `/dx-req <ID>` then `/dx-plan` then `/dx-agent-all` | Spec files created, steps executed, PR created |
 | Bug fix | `/dx-bug-all <ID>` | Triage + fix, no `[ALERT:CRITICAL]` |
 | PR review | `/dx-pr-review <PR>` then `/dx-pr-answer` | Review posted, answers drafted |
 | AEM verify | `/aem-snapshot <comp>` then `/aem-verify <comp>` | Before/after snapshots captured |

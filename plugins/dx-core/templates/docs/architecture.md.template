@@ -41,7 +41,7 @@
           |          Developer's Machine         |
           |                                      |
           |  Claude Code CLI  or  VS Code        |
-          |  /dx-req-all         @DxPRReview     |
+          |  /dx-req         @DxPRReview     |
           |  /dx-plan            @DxCodeReview   |
           |  /dx-step-all        @DxCommit       |
           |                                      |
@@ -57,7 +57,7 @@
 The developer runs commands. The AI assists.
 
 ```
-/dx-req-all <ID>  -->  skill reads config.yaml
+/dx-req <ID>  -->  skill reads config.yaml
                        skill fetches ADO work item
                        skill researches codebase (parallel agents)
                        skill writes .ai/specs/<id>-<slug>/raw-story.md, explain.md, research.md
