@@ -1,3 +1,12 @@
+## [2.64.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.0...v2.64.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* clean up stale tasks on restart in all coordinator skills ([dbc015a](https://github.com/easingthemes/dx-aem-flow/commit/dbc015ac2f648f8f8f06c36ce119a2aa944887c2))
+* dx-dor re-validates on story changes, dx-req gate always enforced ([6c0c079](https://github.com/easingthemes/dx-aem-flow/commit/6c0c079ea9d33133e532924fb9768ba36501e17f))
+* standardize dx-bug-verify ADO comment structure ([c9755ff](https://github.com/easingthemes/dx-aem-flow/commit/c9755ff77bc55f608bd2703056764ce4ce8563f1))
+
 # [2.64.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.63.0...v2.64.0) (2026-03-23)
 
 
