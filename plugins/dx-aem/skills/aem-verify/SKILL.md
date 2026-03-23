@@ -163,10 +163,15 @@ Also examine the **container chain** — what's between `jcr:content/root` and t
 
 ### Discover proper test page placement
 
+Read `shared/demo-page-setup.md` for the **Page Selection Rule** — it applies to this skill.
+
+**Key rule:** New pages are ONLY for new components. For updates to existing components (enhancements, a11y fixes, bug fixes), find the best representative existing page with the component and reuse it for screenshots and QA URLs. Do NOT modify production pages — just use them as-is. Only fall back to creating a new page if no existing page has the component.
+
 Follow "How to Discover Component Placement" from your system prompt:
 
 **If pages were found (existing component):**
-- Take the first **production** page path (skip demo/test-specs pages)
+- Find the **best representative page** — prefer production content pages over demo/test pages, prefer pages where the component is prominent, prefer the same market/brand as the story
+- Record the page path for QA URLs (Author Edit + Preview)
 - Find the **language root** from that page — use the same site/brand as the production page
 - Record the **template** used by that page (`jcr:content/cq:template`)
 - Record the **container chain** (parent sling:resourceType from root to component)

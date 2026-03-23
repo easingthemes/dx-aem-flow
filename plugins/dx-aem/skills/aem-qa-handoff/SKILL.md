@@ -130,7 +130,9 @@ If lightweight, skip page creation. If full, create/reuse test page.
 
 ### Create or reuse test page on QA AEM
 
-Same as before — all AEM MCP calls use `instance: "qa"`. Resolve QA basic auth. Check for existing page from `aem-after.md`. Create if needed.
+Read `shared/demo-page-setup.md` for the **Page Selection Rule**. New pages are ONLY for new components — for updates/fixes, find the best existing page with the component.
+
+All AEM MCP calls use `instance: "qa"`. Resolve QA basic auth. Check for existing page from `aem-after.md` first, then search for representative production pages. Only create if component is truly new.
 
 ### QA AEM reachable?
 

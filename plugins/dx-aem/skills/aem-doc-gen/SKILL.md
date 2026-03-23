@@ -102,13 +102,18 @@ Discover page structure from <page-path>:
 Save findings to $SPEC_DIR/demo/page-structure.md
 ```
 
-## 9. Create or Reuse Demo Page
+## 9. Select or Create Demo Page
+
+Read `shared/demo-page-setup.md` for the **Page Selection Rule**.
+
+**Key rule:** New pages are ONLY for new components. For updates to existing components (enhancements, a11y fixes), find the best representative existing page with the component and reuse it. Only create a new page if the component is truly new and not on any existing page.
+
+**Priority order for page selection:**
+1. **aem-verify output** — check `aem-after.md` for a "Test Page" or "Demo Page" path. If found, reuse it.
+2. **Existing production page** — search for pages with the component. Pick the best representative (prominent usage, same market/brand).
+3. **Create new** — only if component is new. Create at `<demo-parent-path>/<feature-title-slug>`.
 
 Read `aem.demo-parent-path` from `.ai/config.yaml`. If not set, fall back to `<language-root>/demo`.
-
-**Reuse the page from aem-verify if it exists:** Check `aem-after.md` for a "Test Page" or "Demo Page" path. If found, reuse that page — do NOT create a second page.
-
-If no existing demo page: create at `<demo-parent-path>/<feature-title-slug>`.
 
 Use the aem-inspector agent:
 ```

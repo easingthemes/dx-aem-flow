@@ -84,10 +84,13 @@ Two views are required per page:
 - **Author Edit:** `<author-url-qa>/editor.html<page>.html` — dialog/config view for authors
 - **Author Preview:** `<author-url-qa><page>.html?wcmmode=disabled` — FE rendering without editor chrome, for demo
 
+**Page selection rule:** New demo pages are ONLY for new components. For updates to existing components (enhancements, a11y fixes), the page should be the best representative existing page that already has the component — not a newly created demo page.
+
 Extract demo page path from (in priority order):
 1. `qa-handoff.md` — QA-specific URLs
 2. `demo/authoring-guide.md` — Author URL, Publisher URL
 3. `aem-after.md` — Test/Demo page path
+4. If none of the above have a page, and this is an existing component update, search for the best representative production page with the component
 
 **Multi-component coverage:** If several components are affected, determine whether they can all be demoed on one page or need separate pages. Provide a QA URL table for each page needed. If a new component was created but not yet on a QA page, flag: `⚠️ Component <name> needs to be added to a QA page and configured for demo.`
 
