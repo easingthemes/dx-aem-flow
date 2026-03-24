@@ -29,5 +29,6 @@
 | 23 | Copilot CLI project MCP not loaded | Medium | Blocked (upstream) | 2026-03-22 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery) |
 
 | 24 | Migrate DoD wiki to checkbox format | Low | Open | 2026-03-23 | [todo-config.md#dod-checkbox](todo-config.md#dod-checkbox-format) |
+| 25 | Cross-repo component-discovery.md consumption | Medium | Pending | 2026-03-24 | [todo-aem-discovery.md](todo-aem-discovery.md#cross-repo-discovery-consumption) |
 
-**Counts:** 24 total — 8 done, 8 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed
+**Counts:** 25 total — 8 done, 8 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed, 1 pending
