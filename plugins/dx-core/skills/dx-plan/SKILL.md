@@ -78,6 +78,30 @@ If this is a complex feature with multiple valid approaches, check if `superpowe
 
 If a brainstorming spec already exists in `docs/superpowers/specs/`, read it for design context.
 
+## AEM Component Intelligence Rules
+
+If `research.md` contains an `## AEM Component Intelligence` section, apply these three rules during step generation:
+
+### Rule 1: Variant Completeness
+When a step modifies a component, check AEM Component Intelligence for variants:
+- **Variants in this repo** → include in the SAME step as additional files to modify (same change, different file path)
+- **Variants in other repos** → add a NOTE at the bottom of the step: "⚠ Variant `<name>` in `<repo>` may need the same change. Verify in a separate session."
+
+Every step that touches a component MUST account for all known variants. Missing a variant is a plan defect.
+
+### Rule 2: Field Semantic Awareness
+When a step references an AEM dialog field (e.g., for aria-label, display text, image alt), verify the field's semantic meaning from AEM Component Intelligence:
+- Check the field's `Label` and `Sample Authored Values`
+- If the plan's intended use doesn't match the field's actual semantic meaning → flag in the step with the correct field and explanation
+- Example: plan says "use `heading` for product name" but AEM shows heading Label="Product Price", Value="$29.99" → step must note: "Use `text` (Product Name), NOT `heading` (Product Price)"
+
+### Rule 3: Null Content Guard
+When a step renders a dialog field value in the UI (link text, label, display content):
+- Check AEM Component Intelligence for that field's authored values across pages
+- If ANY page shows the field as empty ("(empty)" or blank) → add a sub-task to the step: "Guard: AEM shows `<field>` is empty on `<page>`. Wrap rendering in conditional to prevent empty elements (empty `<a>`, `<span>`, etc.)."
+
+These rules are technology-agnostic — they specify WHAT to guard, not HOW. The project's `.claude/rules/` files provide syntax-specific patterns (HTL conditionals, HBS `{{#if}}`, etc.).
+
 ## 4. Generate implement.md
 
 Analyze all inputs and write `implement.md` in the same spec directory.
