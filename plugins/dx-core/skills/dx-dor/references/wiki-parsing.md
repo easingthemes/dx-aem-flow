@@ -26,8 +26,8 @@ Read `.ai/config.yaml` and attempt each source in order:
 
 ### Criterion Detection
 - Regex: `^- \[ \] \*\*(.+?)\*\* `(.+?)` — (.+)$`
-- Captures: name, tag (required/recommended/human), hint
-- Tag behavior: `required` — Fail if missing; `recommended` — Warn if missing; `human` — always Warn
+- Captures: name, tag (mandatory/required/recommended/human), hint
+- Tag behavior: `mandatory` — HARD GATE: Fail blocks entire verdict regardless of score; `required` — Fail if missing (contributes to count-based threshold); `recommended` — Warn if missing; `human` — always Warn
 
 ### Skip Trigger Detection
 - Regex: `^> \*\*Skip:\*\* (.+)$` after a section's criteria
@@ -35,14 +35,15 @@ Read `.ai/config.yaml` and attempt each source in order:
 
 ### Scoring Detection
 - Look for `## Scoring` heading (no number prefix), parse `- <condition> → **<verdict>**`
-- Default if absent: all required pass — Ready; 1-2 fail — Can proceed; 3+ fail — Needs more detail
+- **Mandatory gate (always applies, before count-based scoring):** If ANY `mandatory` criterion has status Fail → verdict is "Needs more detail" regardless of other scores
+- Default count-based thresholds (if wiki doesn't define `## Scoring`): all required pass — Ready; 1-2 fail — Can proceed; 3+ fail — Needs more detail
 
 ## Evaluation Logic
 
 For each wiki-parsed section, evaluate each non-skipped criterion:
 1. Read the criterion's hint text (after the `—`) as natural-language guidance
 2. Search `raw-story.md` for evidence matching that hint
-3. Score: evidence found — Pass; not found + `required` — Fail; not found + `recommended` — Warn; `human` — always Warn
+3. Score: evidence found — Pass; not found + `mandatory` — Fail (HARD GATE); not found + `required` — Fail; not found + `recommended` — Warn; `human` — always Warn
 
 **Common evidence patterns:** non-empty title, AC heading with testable conditions, Relations section with parent Feature, Figma URL with `node-id=`, image refs (`![](...)` / `<img>`), markdown tables with expected columns, change-type keywords (new feature, enhancement, config, content, bug fix, technical).
 
@@ -85,7 +86,7 @@ Write `$SPEC_DIR/dor-report.md`:
 # DoR Report: <Title> (ADO #<id>)
 
 **Score:** <passes>/<total applicable> (<percentage>%)
-**Verdict:** <Ready for Development / Can proceed — expect clarification / Needs more detail>
+**Verdict:** <Ready for Development / Can proceed — expect clarification / Needs more detail — MANDATORY criteria not met: <list>>
 **DoR Source:** <wiki URL or local file path>
 
 ## Scorecard
@@ -93,6 +94,8 @@ Write `$SPEC_DIR/dor-report.md`:
 | # | Section | Status | Notes |
 |---|---------|--------|-------|
 <!-- One row per wiki-parsed section -->
+<!-- mandatory failures show status "MANDATORY FAIL" (distinct from regular "Fail") -->
+<!-- Gaps section: mandatory failures listed first with "MANDATORY" prefix -->
 
 ## Extracted BA Data
 
