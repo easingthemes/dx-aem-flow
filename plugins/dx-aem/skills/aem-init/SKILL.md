@@ -286,12 +286,23 @@ Ensure `.claude/rules/` exists. The Write tool creates parent directories automa
 
 ### 8c. Copy rule templates to `.claude/rules/`
 
-Use Glob to find template files (no Bash needed):
+1. Read `project.role` from `.ai/config.yaml`
+2. Determine which template directories to install:
+
+| `project.role` | Directories |
+|---|---|
+| `frontend` | `shared/` + `fe/` |
+| `backend` | `shared/` + `be/` |
+| `fullstack` | `shared/` + `be/` + `fe/` |
+| `config` | `shared/` only |
+| (not set) | All directories (backward compatibility) |
+
+3. For each selected directory, Glob template files (no Bash needed):
 ```
-Glob: "<plugin-path>/templates/rules/*.md.template"
+Glob: "<plugin-path>/templates/rules/<dir>/*.md.template"
 ```
 
-For each result:
+4. For each template file found:
 
 Derive target filename by stripping the `.template` suffix (e.g., `be-sling-models.md.template` → `be-sling-models.md`).
 
@@ -308,7 +319,24 @@ Scan existing `.claude/rules/*.md` — read their frontmatter (`description` and
 - Ask: **(A) Skip** (keep existing), **(B) Replace** (overwrite with template), **(C) Write as `.template`** (user can diff manually)
 
 **No conflict:**
-1. Copy the file to `.claude/rules/<target>`, stripping the `.template` extension.
+Copy the file to `.claude/rules/<target>`, stripping the `.template` extension.
+
+5. Resolve template variables before writing:
+
+Read from `.ai/config.yaml`:
+
+| Variable | Config source |
+|---|---|
+| `{{COMPONENT_PREFIX}}` | `aem.component-prefix` |
+| `{{DAM_PATH}}` | `aem.dam-path` |
+| `{{CSS_PREFIX}}` | `aem.component-prefix` (fallback: `project.prefix`) |
+| `{{BUILD_TOOL}}` | `toolchain.build-tool` |
+| `{{CSS_COMPILER}}` | `toolchain.css-compiler` |
+| `{{NODE_VERSION}}` | `toolchain.node` |
+| `{{COMPONENT_BASE_CLASS}}` | `toolchain.component-base-class` |
+| `{{RESOURCE_TYPE_PATTERN}}` | `aem.resource-type-pattern` |
+
+For each variable, if the config value is empty or missing, leave the placeholder as-is (consumer will fill in or the value is not relevant for this project).
 
 > **Note:** `.github/instructions/` copies are no longer generated. Copilot CLI reads rules directly from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` env var. Rules with dual frontmatter (`paths:` + `applyTo:`) work in both tools from a single source.
 
@@ -401,6 +429,10 @@ If project.yaml exists:
 4. For each repo in config `repos:`, enrich with fields from project.yaml: `platform`, `ado-project`
 5. If `path` is missing on any entry, ask: "Local path for **<repo>**? (default: `../<name>`)"
 6. Ask for `base-branch` if not set (default: same as `scm.base-branch`)
+7. For each repo in `repos:`, if `role:` is missing or `capabilities:` is present:
+   - Ask via AskUserQuestion: "What is **<repo>**'s role? (frontend / backend / fullstack / config)"
+   - Write `role:` to the repo's entry in config.yaml
+   - If `capabilities:` exists on that entry, remove it
 
 ### 10c. Preferences
 

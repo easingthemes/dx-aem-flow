@@ -3,7 +3,7 @@ title: "Terminal Agents: Claude Code vs Copilot CLI"
 category: "Meet Your AI Tools"
 focus: "Claude Code · CLI"
 tags: ["Claude Code","Copilot CLI","Terminal"]
-overview: "Both Claude Code and Copilot CLI are terminal-native autonomous agents. Claude Code has 1M token context, worktree isolation, and persistent memory. Copilot CLI (GA Feb 2026) has /fleet for parallel subagents, multi-model support (Claude + GPT + Gemini), and cloud delegation. Same 68 skills run in both."
+overview: "Both Claude Code and Copilot CLI are terminal-native autonomous agents. Claude Code has 1M token context, worktree isolation, and persistent memory. Copilot CLI (GA Feb 2026) has /fleet for parallel subagents, multi-model support (Claude + GPT + Gemini), and cloud delegation. Same 69 skills run in both."
 codeLabel: "Two terminal agents"
 screenshot: null
 week: 1
@@ -12,7 +12,7 @@ order: 3
 slackText: |
   🤖 Agentic AI Tip #3 — Terminal Agents: Claude Code vs Copilot CLI
   
-  Both are terminal-native agents. Both run our 68 skills. But they have distinct superpowers:
+  Both are terminal-native agents. Both run our 69 skills. But they have distinct superpowers:
   
   *Claude Code:*
   • 1M token context (with Opus)

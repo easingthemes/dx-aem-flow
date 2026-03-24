@@ -102,6 +102,35 @@ When a step renders a dialog field value in the UI (link text, label, display co
 
 These rules are technology-agnostic — they specify WHAT to guard, not HOW. The project's `.claude/rules/` files provide syntax-specific patterns (HTL conditionals, HBS `{{#if}}`, etc.).
 
+### Cross-Repo Step Markers
+
+If `research.md` contains a `## Cross-Repo Scope` section with **Scope: Multi-repo**:
+
+1. Read repo names from the Cross-Repo Scope section
+2. Prefix each step title with a repo tag: `[This repo]`, `[{Repo-Name}]`
+3. Group steps by repo: all backend-repo steps first, then this-repo steps
+4. Between repo groups, add a separator note:
+
+> Steps tagged [{Backend-Repo}] must be implemented in that repo. Deploy before starting [This repo] steps.
+
+5. The `**Other repos required:**` line at plan completion lists all non-current repos from the scope section
+
+Example:
+
+### Step 1: Add dialog field [{Backend-Repo}]
+**Files:** `ui.apps/.../component/_cq_dialog/.content.xml`
+**What:** Add `newField` to dialog
+**Verification:** Field appears in dialog XML
+
+> Steps tagged [{Backend-Repo}] must be implemented in that repo. Deploy before starting [This repo] steps.
+
+### Step 2: Consume new field [This repo]
+**Files:** `ui.frontend/src/.../component.js`
+**What:** Read `newField` from data model
+**Verification:** Field renders on page
+
+If research.md has no Cross-Repo Scope section or scope is "This repo only", do not add repo tags.
+
 ## 4. Generate implement.md
 
 Analyze all inputs and write `implement.md` in the same spec directory.

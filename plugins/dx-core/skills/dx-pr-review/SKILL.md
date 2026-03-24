@@ -377,6 +377,32 @@ This is the primary enforcement mechanism for the confidence ≥ 80 rule. The ag
 
 ---
 
+### 4d. Cross-Repo Field Impact Check
+
+If ALL of these are true:
+- `repos:` section exists in `.ai/config.yaml`
+- PR diff modifies any `_cq_dialog/.content.xml` file
+- This repo's `project.role` is `backend` or `fullstack`
+
+Then:
+1. Extract changed field names from the dialog XML diff:
+   - Added fields: new `<name>` attributes in granite:data or sling:resourceType nodes
+   - Renamed fields: `<name>` changed between old and new
+   - Removed fields: `<name>` attributes deleted
+2. For each sibling repo in `repos:` with `role: frontend` or `role: fullstack`:
+   - If `path:` is set in config → Grep that path for changed field names in `*.hbs`, `*.html`, `*.js` files
+   - Report findings:
+     - Field **renamed**: "Breaking change: field `{old}` renamed to `{new}`. FE repos to check: {files referencing old name}"
+     - Field **removed**: "Breaking change: field `{old}` removed. FE files still referencing: {file list}"
+     - Field **added**: "Info: New field `{name}` available for FE consumption"
+3. If sibling repos have no `path:` set:
+   - Add advisory: "Dialog fields changed — verify FE repos consume correctly. Set `repos[N].path` in config.yaml or run `/aem-init` to enable automated cross-repo checks."
+4. Append findings to review output under `## Cross-Repo Impact` heading
+
+If none of the conditions are true, skip this step entirely.
+
+---
+
 ### 5. Present Findings
 
 **Do NOT post anything to Azure DevOps yet.** Display the agent's findings:

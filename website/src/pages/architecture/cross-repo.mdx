@@ -14,7 +14,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Cross-Repo Architecture"
-  subtitle="Multi-repo strategy, delegation patterns, and delegate.json -- how pipelines hand off work to the correct repository when the fix lives elsewhere."
+  subtitle="Multi-repo intelligence for local development and pipeline delegation -- how skills detect cross-repo scope, tag plan steps by repo, check sibling impact, and hand off work to the correct repository."
 />
 
 <SectionHeading
@@ -268,9 +268,57 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <SectionHeading
   badge="Local"
   badgeColor="success"
-  title="Local Developer Flow"
-  subtitle="Cross-repo detection still runs locally, but delegation is manual."
+  title="Local Cross-Repo Intelligence"
+  subtitle="Skills detect, tag, and verify cross-repo impact during local development -- no pipelines required."
   bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Prerequisite">
+    Local cross-repo intelligence requires the <code>repos:</code> section in <code>.ai/config.yaml</code> with
+    at least <code>name</code>, <code>role</code>, and <code>path</code> for each sibling repo.
+  </HighlightBox>
+
+  <h3 class="text-lg font-bold mt-6 mb-4">Skills with Cross-Repo Awareness</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:magnify" iconColor="bg-brand-700" title="/dx-req — Scope Detection">
+      During research (Phase 5c), detects when a story spans sibling repos by checking for cross-repo
+      signals: dialog field dependencies, data model changes, template references, exporter modifications.
+      Appends a <code>## Cross-Repo Scope</code> section to <code>research.md</code> listing affected repos,
+      field dependencies, and deployment order.
+    </ContentCard>
+
+    <ContentCard icon="mdi:tag-multiple" iconColor="bg-cyan" title="/dx-plan — Step Tagging">
+      When <code>research.md</code> contains a Cross-Repo Scope section, tags each plan step with its target
+      repo: <code>[My-Backend-Repo] Add dialog field</code>. Groups steps by repo with deployment
+      dependency notes (typically backend before frontend).
+    </ContentCard>
+
+    <ContentCard icon="mdi:shield-alert" iconColor="bg-amber-500" title="/dx-pr-review — Field Impact">
+      When reviewing a PR that modifies <code>_cq_dialog</code> XML files, greps sibling FE repos
+      (via <code>repos[].path</code>) for usage of renamed or removed field names. Reports breaking
+      changes and flags new fields available for frontend consumption.
+    </ContentCard>
+  </div>
+
+  <PipelineBlock
+    label="Local Cross-Repo Flow"
+    description="How cross-repo intelligence flows through the local development workflow."
+    steps={[
+      { title: '/dx-req', subtitle: 'Detects scope\nacross repos', color: '#0891b2' },
+      { title: 'research.md', subtitle: 'Cross-Repo\nScope section', color: '#8b5cf6' },
+      { title: '/dx-plan', subtitle: 'Tags steps\nwith [repo]', color: '#d97706' },
+      { title: '/dx-step', subtitle: 'Developer works\nper-repo steps', color: '#059669' },
+      { title: '/dx-pr-review', subtitle: 'Checks sibling\nfield impact', color: '#dc2626' },
+    ]}
+  />
+</Section>
+
+<SectionHeading
+  badge="Local"
+  badgeColor="success"
+  title="Local Developer Flow (Pipelines)"
+  subtitle="Cross-repo detection still runs locally, but delegation is manual."
+  bg="alt"
 />
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

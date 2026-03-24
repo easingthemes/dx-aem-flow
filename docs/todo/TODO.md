@@ -11,7 +11,7 @@
 | 5 | Normalize MCP tool names to bare format (213 refs) | Low | Open | 2026-03-22 | [todo-copilot-cli.md#mcp-prefixes](todo-copilot-cli.md#mcp-tool-prefix-stripping) — LLM resolves prefixed names on all platforms; cosmetic cleanup only |
 | 6 | Copilot CLI experimental features (watch) | Low | Watch | 2026-03-03 | [todo-copilot-cli.md#experimental](todo-copilot-cli.md#experimental-features) |
 | 7 | ~~Clean up old automation in plugin~~ | High | **Done** | 2026-03-22 | [todo-automation.md](todo-automation.md) — `1800b25` |
-| 8 | Consolidate config.yaml + project.yaml | Medium | Open | 2026-03-22 | [todo-config.md](todo-config.md) |
+| 8 | ~~Consolidate config.yaml + project.yaml~~ | Medium | **Done** | 2026-03-22 | [todo-config.md](todo-config.md) — project.yaml fields merged into config.yaml; migration via dx-upgrade; 9 skills updated |
 | 9 | ~~Extract website stats constants~~ | Low | **Done** | 2026-03-22 | [todo-website.md](todo-website.md) — `stats.ts` created; 11 `.mdx` pages use imports; 7 `.md` tips have hardcoded counts (can't import TS) |
 | 10 | Rename `.ai/me.md` → `.me` at project root | Low | Decision needed | 2026-03-03 | [todo-naming-ux.md#rename-me](todo-naming-ux.md#rename-aimemd) |
 | 11 | ~~Rename `/aem-demo` → `/aem-editorial-guide`~~ | Low | **Done** | 2026-03-03 | [todo-naming-ux.md#rename-aem-demo](todo-naming-ux.md#rename-aem-demo) — skill, agent, template, 19 file refs, website all updated |
@@ -31,4 +31,4 @@
 | 24 | Migrate DoD wiki to checkbox format | Low | Open | 2026-03-23 | [todo-config.md#dod-checkbox](todo-config.md#dod-checkbox-format) |
 | 25 | Cross-repo component-discovery.md consumption | Medium | Pending | 2026-03-24 | [todo-aem-discovery.md](todo-aem-discovery.md#cross-repo-discovery-consumption) |
 
-**Counts:** 25 total — 8 done, 8 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 25 total — 9 done, 7 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed, 1 pending
