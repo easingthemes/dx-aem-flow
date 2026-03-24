@@ -1,3 +1,20 @@
+# [2.65.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.4...v2.65.0) (2026-03-24)
+
+
+### Bug Fixes
+
+* dx-step digraph node name must exactly match section heading ([bb13496](https://github.com/easingthemes/dx-aem-flow/commit/bb134968f6be01b41faaddef15d623436f5f5d3d))
+
+
+### Features
+
+* **aem-init:** add AEM MCP component discovery — dialog fields, variants, pages, authored values ([0e1cdac](https://github.com/easingthemes/dx-aem-flow/commit/0e1cdac56df43e0103fc5f17519c060ca539b39e))
+* **dx-dor:** add mandatory tag — hard-gate DoR checks regardless of overall score ([f06d072](https://github.com/easingthemes/dx-aem-flow/commit/f06d07202b963f014c82eca3913e3a3b1bbc71da))
+* **dx-dor:** mandatory failures surface as MANDATORY FAIL in report output ([eab46ed](https://github.com/easingthemes/dx-aem-flow/commit/eab46ed1b97cc8b4c807b29c03c80c162f6b8881))
+* **dx-plan:** add AEM-informed planning rules — variant completeness, field semantics, null guards ([5c0df6a](https://github.com/easingthemes/dx-aem-flow/commit/5c0df6af85c00236fda4fc22184f3f9ca32c48e1))
+* **dx-req:** inject AEM component discovery into research — field semantics, variants, pages ([4f39c7e](https://github.com/easingthemes/dx-aem-flow/commit/4f39c7ea9d854bd1e040b914f7ccace8d6365dd1))
+* **dx-step:** add AEM MCP pre-check — validate field existence and semantics before implementing ([d98f05c](https://github.com/easingthemes/dx-aem-flow/commit/d98f05cf9901c656127a723c46f6709d675a8609))
+
 ## [2.64.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.3...v2.64.4) (2026-03-24)
 
 
