@@ -6,7 +6,7 @@ model: sonnet
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
-Validate one or more work items against the project's Definition of Ready checklist. Fetches the DoR wiki page, evaluates each criterion against the story content, generates a scorecard, and posts an interactive ADO/Jira comment with checkboxes for BA collaboration. Supports three modes: first post (Mode A), update after changes (Mode B), and reuse when nothing changed (Mode C).
+Validate one or more work items against the project's Definition of Ready checklist. Fetches the DoR wiki page, evaluates each criterion against the story content, generates a scorecard, and posts an interactive ADO/Jira comment with checkboxes for BA collaboration. Supports three modes: first post (Mode A), update after changes (Mode B), and reuse when nothing changed (Mode C). Supports `mandatory` tag for hard-gate checks that block regardless of overall score.
 
 ## Flow
 
@@ -120,6 +120,7 @@ Two change checks — either one triggers re-validation:
 
 - For each section: check skip trigger against change type
 - For each criterion: evaluate against raw-story.md content
+  - `mandatory`: Pass or Fail (HARD GATE — a Fail here overrides the final verdict)
   - `required`: Pass or Fail
   - `recommended`: Pass or Warn
   - `human`: Warn always (needs human judgment)
@@ -130,6 +131,7 @@ Two change checks — either one triggers re-validation:
 
 - Compute score from applicable `required` criteria
 - Apply scoring thresholds from wiki `## Scoring` section
+- **Mandatory gate:** After computing the count-based verdict, check if any `mandatory`-tagged criterion has status Fail. If yes, override verdict to "Needs more detail — MANDATORY criteria not met: <comma-separated list of failed mandatory criteria>" regardless of the count-based score. This gate fires AFTER evaluation but BEFORE writing the report.
 - Write `$SPEC_DIR/dor-report.md` per output format in `references/wiki-parsing.md`
 
 ### Post ADO comment
