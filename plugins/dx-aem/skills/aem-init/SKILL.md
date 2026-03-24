@@ -516,6 +516,8 @@ echo "$AEM_INSTANCES"
 
 ## 12. Summary
 
+> **Run component discovery for best results:** The `component-discovery.md` file (generated in Step 6b) provides dialog field semantics, component variants, and page locations to all downstream skills (`/dx-req`, `/dx-plan`, `/dx-step`). Without it, these skills rely on Glob/Grep only and may miss field meanings and brand-specific variants. Re-run `/aem-init` after major dialog changes on QA.
+
 ```markdown
 ## AEM Initialized
 
