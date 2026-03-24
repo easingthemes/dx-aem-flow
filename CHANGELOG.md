@@ -1,3 +1,10 @@
+## [2.64.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.3...v2.64.4) (2026-03-24)
+
+
+### Bug Fixes
+
+* unify Configuration/Dialog/Authoring into single presenter-friendly Authoring section ([93c7e11](https://github.com/easingthemes/dx-aem-flow/commit/93c7e11b6bc7b296ec0e4246fd68cfb3b6337b8e))
+
 ## [2.64.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.2...v2.64.3) (2026-03-23)
 
 
