@@ -3,7 +3,7 @@ name: dx-step
 description: Execute the next pending step — implement code, run tests, review against plan, and commit. Reads implement.md, finds the first pending step, implements it, tests, reviews, commits, and updates status. Use to execute steps one at a time.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: sonnet
-allowed-tools: ["read", "edit", "search", "write", "agent"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*"]
 ---
 
 You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.
@@ -22,6 +22,7 @@ digraph step {
     "All done" [shape=doublecircle];
     "Step status?" [shape=diamond];
     "Mark in-progress" [shape=box];
+    "AEM MCP Pre-Check" [shape=box];
     "Execute the step" [shape=box];
     "Verify compilation" [shape=box];
     "Verification passed?" [shape=diamond];
@@ -45,9 +46,10 @@ digraph step {
     "Find next step" -> "All done" [label="none pending"];
     "Find next step" -> "Step status?" [label="found"];
     "Step status?" -> "Mark in-progress" [label="pending"];
-    "Step status?" -> "Execute the step" [label="in-progress (resume)"];
+    "Step status?" -> "AEM MCP Pre-Check" [label="in-progress (resume)"];
     "Step status?" -> "Find next step" [label="blocked (skip)"];
-    "Mark in-progress" -> "Execute the step";
+    "Mark in-progress" -> "AEM MCP Pre-Check";
+    "AEM MCP Pre-Check" -> "Execute the step";
     "Execute the step" -> "Verify compilation";
     "Verify compilation" -> "Verification passed?";
     "Verification passed?" -> "Run tests" [label="yes"];
@@ -120,7 +122,7 @@ If a step has `**Status:** blocked`, skip it and find the next pending step. Pri
 
 Route based on the step's current status:
 - **pending** → go to "Mark in-progress"
-- **in-progress** → go to "Execute the step" (resume interrupted step)
+- **in-progress** → go to "AEM MCP Pre-Check" (resume interrupted step — pre-check is idempotent)
 - **blocked** → go back to "Find next step" (skip and find next pending)
 
 ### Mark in-progress
@@ -129,6 +131,24 @@ Update the step's status in implement.md:
 ```
 **Status:** in-progress
 ```
+
+### AEM MCP Pre-Check (component steps only)
+
+**Trigger:** Only runs when the current step modifies files under `aem.component-path` or frontend component paths from config. Skip for pure Java, config, test-only, or non-component steps.
+
+**Prerequisite:** `aem.author-url-qa` configured in `.ai/config.yaml`. If not configured, skip pre-check silently.
+
+Three quick validation queries against AEM QA:
+
+1. **Component exists** — `mcp__plugin_dx-aem_AEM__getNodeContent` on the component definition path. If not found: warn "Component `<name>` not found on QA. May be new or not yet deployed. Skipping AEM pre-check." and skip remaining queries.
+
+2. **Field exists** — `mcp__plugin_dx-aem_AEM__getNodeContent` on `<component-path>/<name>/_cq_dialog` (depth 6). Check that every dialog field referenced in the plan step actually exists in the dialog. If a referenced field is missing: warn "Plan references field `<field>` but it's not in the QA dialog. Possible: not yet deployed or field name is wrong."
+
+3. **Field semantic check** — `mcp__plugin_dx-aem_AEM__getNodeContent` on a component instance from a known page (use pages from `research.md` AEM Component Intelligence, or query for one). Compare the plan's assumption about the field's purpose against the actual `fieldLabel` and authored value. If mismatch: warn "Plan says `<field>` is `<plan assumption>`, but QA shows label `<actual label>` with value `<actual value>`. Review the step."
+
+**All results are warnings — never block execution.** The agent uses warnings to adjust its implementation approach if needed. Pre-check informs, does not gate.
+
+**What this does NOT do:** No page scanning (init territory), no variant discovery (planning territory), no content comparison (aem-verify territory), no full dialog walk (aem-snapshot territory). This is a focused 3-query sanity check.
 
 ### Execute the step
 
