@@ -65,11 +65,12 @@ Read `dx.version` from `.ai/config.yaml`:
 
 To determine the current plugin version, read `version` from the dx-core plugin.json.
 
-### 1b. Project Profile
+### 1b. Stale project.yaml check
 
-Check `.ai/project.yaml`:
-- Exists → `✓ present`
-- Missing → `⚠ missing (run /dx-adapt to detect project profile)`
+Check for the deprecated adapt-generated profile file `.ai/project.yaml` (NOT `.ai/project/project.yaml` — that's seed data and is checked in section 8):
+
+- Exists → `⚠ DEPRECATED: .ai/project.yaml found. Run /dx-upgrade to migrate fields to config.yaml.`
+- Missing → `✓ not present (expected — fields are in config.yaml)`
 
 ### 1c. Template-Generated Files
 
@@ -260,7 +261,7 @@ Check existence and staleness of AEM rules in `.claude/rules/`. Compare each aga
 
 For each: missing → `✗ MISSING`, content matches → `✓ up to date`, differs → `⚠ stale`.
 
-**Note:** Some rules may have been intentionally deleted by dx-init step 8a (project type filtering). If `.ai/project.yaml` exists and has `type: aem-frontend`, expect `be-*.md` files to be absent — report as `— filtered (aem-frontend)` not as missing.
+**Note:** Some rules may have been intentionally deleted by dx-init step 8a (project type filtering). If `.ai/config.yaml` has `project.type: aem-frontend`, expect `be-*.md` files to be absent — report as `— filtered (aem-frontend)` not as missing.
 
 ### 7c. AEM Sections in Shared Rules
 
@@ -376,7 +377,7 @@ dx Core Files                                      Status
   project.name                                     ✓ present
   scm.provider                                     ✓ present
   ...
-.ai/project.yaml                                   ✓ present
+.ai/project.yaml (deprecated)                      ✓ not present
 .ai/README.md                                      ✓ present
 agent.index.md                                     ✓ present
 .ai/me.md                                          ⚠ missing (optional)

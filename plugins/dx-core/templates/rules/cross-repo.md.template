@@ -1,0 +1,47 @@
+---
+description: Cross-repo coordination rules for multi-repo projects
+paths: ["**/*"]
+applyTo: "**/*"
+---
+
+# Cross-Repo Coordination
+
+## Repo Ownership
+
+{{REPOS_TABLE}}
+
+## Identifying Cross-Repo Scope
+
+Before starting work, determine scope:
+- **This repo only** — changes contained within this repo's role
+- **Multi-repo** — changes require PRs in sibling repos
+
+Check for cross-repo signals:
+- New dialog field needed → backend repo owns dialogs (role: backend)
+- New data model key → check if exporter/model lives in sibling repo
+- Template/rendering change → check if templates live in sibling repo
+- Config/dispatcher change → check if config repo is separate (role: config)
+
+## Multi-Repo PR Workflow
+
+When work spans repos:
+1. Backend repo changes first (models, dialogs, exporters)
+2. Deploy backend changes to shared environment
+3. Frontend repo changes second (templates, JS, styles)
+4. Test integrated result on shared environment
+5. Create PRs in dependency order — link them in descriptions
+
+## Field Name Verification
+
+When consuming fields from a sibling repo:
+- Verify field name exists in source (dialog XML, model class, exporter)
+- Use AEM MCP `getNodeContent` on dialog path at depth 4 to inspect fields
+- Check exporter endpoint JSON output for available keys
+- AEM checkbox fields store as strings ("true" / "false"), not booleans
+
+## Sibling Repo Impact
+
+Before modifying shared components:
+- Check if sibling repos (same role) consume the same component
+- Verify unmodified variations still work after changes
+- Document which sibling repos are affected in PR description

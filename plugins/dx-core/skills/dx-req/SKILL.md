@@ -292,6 +292,39 @@ This phase spawns parallel Explore subagents for codebase searching. Read `refer
 5b. **AEM Discovery Fallback** — If `component-discovery.md` is missing, stale (>7 days), or doesn't cover a component named in `explain.md`, dispatch a 5th parallel agent (inline, not a named agent file) that queries AEM QA via `mcp__plugin_dx-aem_AEM__getNodeContent` and `mcp__plugin_dx-aem_AEM__searchContent` for the missing components only. Agent receives: component names, `aem.author-url-qa`, `aem.component-path` from config. Appends results to the synthesis. This is a safety net — if aem-init was run properly, Layer 1 (step 2b) covers it.
 6. **Synthesize into research.md** — follow `.ai/templates/spec/research.md.template`. Merge ticket-research data. Include Existing Implementation Check (MANDATORY). **Append `## AEM Component Intelligence` section** with per-component entries from `$AEM_CONTEXT` (or Layer 2 fallback): dialog fields with labels, variants (this repo + other repos), pages, field semantics (authored values revealing what each field actually contains). If no AEM data available, omit section.
 
+**5c. Cross-Repo Scope Detection**
+
+If `repos:` section exists in `.ai/config.yaml`:
+
+1. Read `project.role` from config
+2. If `.ai/project/component-discovery.md` exists:
+   - Extract entries for components mentioned in research context
+   - For each component, note which repos own which layers (dialog, model, template, FE)
+3. Analyze ticket scope:
+   - If ticket mentions dialog/field changes AND this repo's role is NOT `backend`:
+     flag "Cross-repo scope: backend repo PR likely needed for dialog change"
+   - If component has variations in sibling repos (from component-discovery.md or repos config):
+     flag "Sibling impact: {repo} may have variations of this component"
+4. Append `## Cross-Repo Scope` section to `research.md`:
+
+```markdown
+## Cross-Repo Scope
+
+**Scope:** Multi-repo | This repo only
+
+**Repos involved:**
+- {repo-name} (role: {role}) — {reason}
+- This repo (role: {role}) — {what this repo does}
+
+**Component discovery:**
+- {component}: {which layers in which repos}
+
+**Dependencies:**
+- {dependency ordering notes}
+```
+
+If `repos:` doesn't exist or scope is this-repo-only, omit this section entirely.
+
 **Error handling:** If agents fail, retry narrower, then fall back to inline Glob/Grep. Always produce research.md even with partial results.
 
 ---
@@ -305,6 +338,9 @@ Read `references/share-template.md` for the complete generation and posting logi
 1. **Read inputs** — `raw-story.md` (required), `explain.md` (required), `research.md` (recommended), `dor-report.md` (optional), `implement.md` (optional — triggers post-plan mode)
 2. **Check existing output** — if `share-plan.md` exists, check staleness (title match, input changes, implement.md appearance). If current → skip.
 3. **Generate share-plan.md** — non-technical summary with: Summary (2 sentences), Implementation Approach (3-5 bullets), What Won't Change, Scope & Blockers, Multi-Repo (if applicable), Assumptions, Open Questions (top 3 from dor-report.md)
+
+   If `research.md` contains a `## Cross-Repo Scope` section with multi-repo scope:
+   - Add to share-plan.md under Implementation Notes: "**Multi-repo:** {list of repos involved with roles}"
 4. **Writing principles:** hard limit ~25 lines, zero jargon, no time estimates, audience is non-developers, scope is qualitative (Small/Medium/Large)
 5. **Post ADO/Jira comment** (idempotent) — check for existing `[DevPlan]` comment, post full or update as needed
 
