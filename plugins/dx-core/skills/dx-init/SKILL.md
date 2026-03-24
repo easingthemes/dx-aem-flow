@@ -751,6 +751,8 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 │   └── AEMVerify.agent.md
 ```
 
+> **Quality scales with context:** The dx plugins provide workflow orchestration and convention templates. Your project provides context — `config.yaml`, `project.yaml`, `.claude/rules/` customizations. Extend the installed rule templates with project-specific patterns (brand naming, component variants, accessibility guards). The richer your project context, the better AI output quality.
+
 ### Next Steps
 <If ADO:> - Start working: `/dx-req <ADO work item ID>`
 <If Jira:> - Start working: `/dx-req <Jira issue key, e.g. PROJ-123>`
