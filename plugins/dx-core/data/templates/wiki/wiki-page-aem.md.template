@@ -39,7 +39,8 @@ Include technique used and WHY chosen over alternatives. -->
 
 ### Configuration
 
-<!-- OMIT if none. New config values, env vars, feature flags, dialog fields. -->
+<!-- OMIT if none. Non-dialog config only: env vars, OSGi configs, feature flags.
+Dialog/component authoring changes go in the Authoring section below. -->
 
 ## QA Verification
 
@@ -65,19 +66,42 @@ If all components can be demoed on one page, one table is enough. -->
 <!-- If component only exists on production pages:
 "Component exists on production pages — no dedicated QA demo page." with page paths if known. -->
 
-## Dialog Changes
+## Authoring
 
-### What's New in the Dialog
+<!-- From authoring-guide.md. This is the CORE demo section — every action MUST have a clickable link.
+The presenter follows this to configure and demo the component live. -->
 
-<!-- NEW or CHANGED fields only from authoring-guide.md.
-Per field: what it does, conditional visibility. Skip unchanged. -->
+<!-- Repeat this block for EACH component that needs configuration.
+Component names MUST be real AEM component names (from authoring-guide.md or aem-after.md).
+Page URL MUST be a real AEM Author Edit URL where the component exists. -->
 
-### Dialog Screenshot
+### <Component Name>
+
+**Page:** [`<demo-page-path>`](<author-url-qa>/editor.html<demo-page-path>.html)
+**Component:** <Real AEM Component Name — must exist on the page above>
+
+Open the page, find **<Component Name>**, open the component dialog, and change:
+
+| Field | Value | Notes |
+|-------|-------|-------|
+| <field name> | <new value or setting> | <conditional visibility, default, purpose> |
+
+<!-- Add all NEW or CHANGED fields from authoring-guide.md. Skip unchanged fields. -->
+
+#### Dialog Screenshot
 
 ![Dialog](<repo-relative-path>/demo/dialog-<component>.png)
 
 <!-- Screenshot location: .ai/specs/<id>-<slug>/demo/dialog-<component>.png
 Commit with: git add .ai/specs/<id>-<slug>/demo/dialog-*.png -->
+
+### Tips
+
+<!-- Conditional visibility, gotchas, recommendations from authoring-guide.md. -->
+
+### Existing Pages
+
+<!-- OMIT if none. Table from authoring-guide.md — other pages using this component. -->
 
 ## Frontend Preview
 
@@ -101,22 +125,6 @@ Commit with: git add .ai/specs/<id>-<slug>/demo/rendered-*.png -->
 
 <!-- If fe-verify screenshots exist in screenshots/ dir, use those instead:
 .ai/specs/<id>-<slug>/screenshots/component-rendered.png -->
-
-## Authoring Guide
-
-<!-- From authoring-guide.md. Written for content editors, not developers. -->
-
-### Existing Pages
-
-<!-- OMIT if none. Table from authoring-guide.md. -->
-
-### How to Configure
-
-<!-- Field descriptions from authoring-guide.md "How to Use". -->
-
-### Tips
-
-<!-- Conditional visibility, gotchas, recommendations. -->
 
 ## Files Changed
 

@@ -286,6 +286,7 @@ mcp__atlassian__confluence_update_page
 - **PR descriptions are gold** — they often contain the best implementation summary. Prioritize them over story descriptions.
 - **AEM pages are mandatory** — for AEM projects, QA Author Edit + Preview URLs are required. This is the deliverable the customer sees.
 - **Use the right template** — AEM projects get the demo walkthrough template (`wiki-page-aem.md.template`), non-AEM get the standard template.
+- **Authoring = presenter runbook** — every action in the Authoring section MUST have a clickable AEM Author Edit URL, the real component name, and a field-by-field table. The presenter should never have to search for anything.
 - **Don't list every file** — group by area (FE/BE/Config) with short descriptions. The PR has the diff; the wiki explains what and why.
 - **Multi-component = multi-page** — if several components are affected, provide QA page URLs for each (unless they all fit on one page).
 - **Don't fabricate** — if you can't determine a technique or pattern, say what was changed without guessing how.
