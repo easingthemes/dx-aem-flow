@@ -39,6 +39,8 @@
 
 **Risk:** Touches config reading in many skills — needs careful testing. Consumer repos need migration (move project.yaml content into config.yaml).
 
+**Resolved:** 2026-03-24 — project.yaml fields merged into config.yaml (project.type, project.role, toolchain section). Migration via dx-upgrade Step 1b. 9 skills updated to read from config.yaml.
+
 ## DoD Checkbox Format
 
 **Added:** 2026-03-23

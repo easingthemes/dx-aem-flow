@@ -13,7 +13,7 @@
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-dor | `/dx-dor` | `<work-item-id(s)>` | Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Batch mode: space-separated IDs for parallel validation. Supports `mandatory` tag for hard-gate checks. | `dor-report.md` + ADO comment |
-| dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR (delegates to `/dx-dor`), distill requirements, research codebase, share summary (5 phases). Includes reference docs for each phase. | All spec files + ADO comments |
+| dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR (delegates to `/dx-dor`), distill requirements, research codebase, share summary (5 phases). Detects cross-repo scope when `repos:` exists in config and scopes research accordingly. Includes reference docs for each phase. | All spec files + ADO comments |
 | dx-req-tasks | `/dx-req-tasks` | `<work-item-id> [close]` | Create child Task work items with hour estimates. `close` arg: moves Remaining→Completed, zeros remaining, closes tasks | ADO/Jira tasks |
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
 | dx-req-import | `/dx-req-import` | `<path-to-file>` | Validate external (non-ADO) requirements document | `explain.md` |
@@ -31,7 +31,7 @@
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-plan | `/dx-plan` | `<work-item-id>` (optional) | Generate step-by-step implementation plan with status tracking. Optionally invokes `superpowers:brainstorming` for design exploration before planning. | `implement.md` |
+| dx-plan | `/dx-plan` | `<work-item-id>` (optional) | Generate step-by-step implementation plan with status tracking. Tags steps with repo markers (e.g., `[repo: ui]`) when the plan spans multiple repos. Optionally invokes `superpowers:brainstorming` for design exploration before planning. | `implement.md` |
 | dx-plan-validate | `/dx-plan-validate` | `<work-item-id>` (optional) | Verify plan covers all requirements, no extras, dependencies correct | Warnings/OK |
 | dx-plan-resolve | `/dx-plan-resolve` | `<work-item-id>` (optional) | Research and fix risks flagged by validation | Updated `implement.md` |
 
@@ -51,7 +51,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-pr | `/dx-pr` | `<work-item-id>` (optional) | Create pull request via ADO MCP, generate description from share-plan.md. Optionally invokes `superpowers:finishing-a-development-branch` for branch readiness. | PR URL |
 | dx-pr-commit | `/dx-pr-commit` | `[pr]` | Commit changes with ADO work item linking; add `pr` to also create a PR | Git commit [+ PR] |
-| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, post findings, propose fix patches + vote. Includes reference doc for posting findings. Uses `model: opus` frontmatter. | Findings file + ADO comments |
+| dx-pr-review | `/dx-pr-review` | `<PR-id or URL>` | Review a single PR — analyze diff, post findings, propose fix patches + vote. Checks cross-repo field impact for dialog changes when `repos:` is in config. Includes reference doc for posting findings. Uses `model: opus` frontmatter. | Findings file + ADO comments |
 | dx-pr-review-all | `/dx-pr-review-all` | none | Batch-review multiple open PRs assigned to you | Multiple reviews |
 | dx-pr-answer | `/dx-pr-answer` | `<PR-id or URL>` (optional) | Answer open PR comments with codebase context, detect proposed patches, apply agree-will-fix code changes. Includes reference doc for applying fixes. | ADO replies + code fixes |
 | dx-pr-review-report | `/dx-pr-review-report` | `<PR-id or URL>` | Generate categorized report from PR review — groups by category, tracks patch resolution, posts to wiki. Uses report template from `assets/report-template.md`. | Report + wiki page |
@@ -98,9 +98,9 @@
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-init | `/dx-init` | none (interactive) | Configure project — detect environment, generate .ai/config.yaml, README, rule templates | `.ai/` directory |
-| dx-adapt | `/dx-adapt` | `[aem-fullstack\|aem-frontend\|frontend]` | Auto-detect project type, structure, and build commands. Saves `.ai/project.yaml` and substitutes real values into `.claude/rules/`. Run after `dx-init` and `aem-init`. | `.ai/project.yaml` |
-| dx-doctor | `/dx-doctor` | `[dx\|aem\|seed-data\|auto\|all]` | Check health of all dx workflow files across installed plugins — config, rules, scripts, seed data, MCP, settings | Status report |
-| dx-upgrade | `/dx-upgrade` | `[dx\|aem\|auto\|all]` | Fix all issues found by dx-doctor — updates stale files, installs missing files, reports manual actions | Upgrade report |
+| dx-adapt | `/dx-adapt` | `[aem-fullstack\|aem-frontend\|frontend]` | Auto-detect project type, structure, and build commands. Writes `project.type`, `project.role`, and `toolchain` section to `.ai/config.yaml` (derives role from type if not specified) and substitutes real values into `.claude/rules/`. Run after `dx-init` and `aem-init`. | `.ai/config.yaml` update |
+| dx-doctor | `/dx-doctor` | `[dx\|aem\|seed-data\|auto\|all]` | Check health of all dx workflow files across installed plugins — config, rules, scripts, seed data, MCP, settings. Warns on stale `project.yaml` files (deprecated — fields now live in `config.yaml`). | Status report |
+| dx-upgrade | `/dx-upgrade` | `[dx\|aem\|auto\|all]` | Fix all issues found by dx-doctor — updates stale files, installs missing files, reports manual actions. Migrates legacy `project.yaml` fields into `config.yaml` (Step 1b). | Upgrade report |
 | dx-ticket-analyze | `/dx-ticket-analyze` | `<work-item-id or URL>` | Research ADO/Jira ticket, find all relevant source files | Research report |
 | dx-eject | `/dx-eject` | `[dx\|aem\|auto\|all]` | Eject plugin assets into local repo — copies all skills, agents, rules, templates so project works without plugins | `.claude/skills/`, `.ai/ejected/` |
 | dx-help | `/dx-help` | `<question>` | Answer architecture questions from local .ai/ docs | Answer |
