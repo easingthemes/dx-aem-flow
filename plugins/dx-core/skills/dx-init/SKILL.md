@@ -13,7 +13,7 @@ You configure the dx workflow for the current project by detecting the environme
 
 | File Category | Re-run Behavior |
 |---|---|
-| **Config** (config.yaml, project.yaml) | Ask: keep / modify / regenerate |
+| **Config** (config.yaml) | Ask: keep / modify / regenerate |
 | **Utility scripts** (audit.sh, stop-guard.sh) | Compare against plugin version → update silently if changed |
 | **Template-generated** (README.md, agent.index.md) | Compare against latest template → update if template is newer |
 | **Docs** (.ai/docs/) | Removed — plugin docs are public at https://easingthemes.github.io/dx-aem-flow/ |
@@ -436,20 +436,20 @@ Recommendation: use shell exports for machine-wide vars, settings.local.json for
 
 ## 6. Detect Project Profile
 
-Run `dx-adapt` detection inline — **Phases 1–3 only**. This detects the project type, extracts build commands and AEM values, confirms with the user, and saves `.ai/project.yaml`.
+Run `dx-adapt` detection inline — **Phases 1–3 only**. This detects the project type, extracts build commands and AEM values, confirms with the user, and saves the profile into `.ai/config.yaml`.
 
-Since `.ai/project.yaml` does not exist yet at this point, skip adapt's Phase 0 existence check entirely — go directly to Phase 1 (detect).
+Since the `project:` section in `.ai/config.yaml` does not exist yet at this point, skip adapt's Phase 0 existence check entirely — go directly to Phase 1 (detect).
 
 Run adapt Phases 1–3:
 - **Phase 1** — detect project type and extract build commands, source roots, AEM values
 - **Phase 2** — confirm detected values with the user (one confirmation table)
-- **Phase 3** — save `.ai/project.yaml`
+- **Phase 3** — save detected profile into `.ai/config.yaml`
 
 **Stop here** — do NOT run Phase 4 (value substitution) or Phase 5 (report) yet. Those run in step 8 after AEM setup.
 
 ## 7. AEM Setup (conditional)
 
-After `.ai/project.yaml` is saved, check the detected project type:
+After the profile is saved to `.ai/config.yaml`, check the detected project type:
 
 **If project type is `aem-fullstack` or `aem-frontend`:**
 
@@ -489,7 +489,7 @@ Skip this step entirely.
 
 ### 8a. Filter rules by project type
 
-Read `.ai/project.yaml` to get the `type` field, then:
+Read `project.type` from `.ai/config.yaml`, then:
 
 | Project Type | Action |
 |---|---|
@@ -502,13 +502,13 @@ Use Glob to list `.claude/rules/be-*.md` and `.claude/rules/fe-*.md`, then delet
 
 ### 8b. Verify project values in rules
 
-Read each `.claude/rules/*.md` file that was written in Step 7. Verify that project-specific values from `.ai/project.yaml` are present (not generic placeholders). Check for:
+Read each `.claude/rules/*.md` file that was written in Step 7. Verify that project-specific values from `.ai/config.yaml` are present (not generic placeholders). Check for:
 
-- Java package name (should match `aem.javaPackage` from project.yaml)
-- Component path (should match `aem.componentPath`)
-- Component group (should match `aem.componentGroup`)
+- Java package name (should match `aem.java-package` from config.yaml `aem:` section)
+- Component path (should match `aem.component-path` from config.yaml `aem:` section)
+- Component group (should match `aem.component-group` from config.yaml `aem:` section)
 
-If any file still contains generic examples (`myproject`, `<prefix>`, `<package>`) instead of real values, substitute them with values from `.ai/project.yaml`.
+If any file still contains generic examples (`myproject`, `<prefix>`, `<package>`) instead of real values, substitute them with values from `.ai/config.yaml` (`aem:`, `toolchain:`, and `project:` sections).
 
 ### 8c. Report
 
@@ -687,9 +687,8 @@ After writing, display:
 ```markdown
 ## dx Initialized
 
-**Project:** <name> (<project type from project.yaml>)
-**Config:** `.ai/config.yaml`
-**Profile:** `.ai/project.yaml` (build commands, module structure)
+**Project:** <name> (<project type from config.yaml>)
+**Config:** `.ai/config.yaml` (project config + build commands + module structure)
 **Rules:** `.ai/rules/` (<N> shared rules installed)
 **Attribution:** `.claude/settings.json` — commit/PR attribution disabled
 **Secrets:** `.claude/settings.local.json` — local env vars for QA auth, API keys (gitignored)
@@ -713,8 +712,7 @@ After writing, display:
 ```
 agent.index.md         ← AI setup entry point (all paths, all agents)
 .ai/
-├── config.yaml        ← project configuration
-├── project.yaml       ← build commands and module structure (from adapt)
+├── config.yaml        ← project configuration + build commands + module structure
 ├── README.md          ← workflow quick reference
 ├── me.md              ← personal tone/style for PR replies (gitignored)
 ├── rules/             ← shared rules (dx skills + automation agents)
@@ -751,7 +749,7 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 │   └── AEMVerify.agent.md
 ```
 
-> **Quality scales with context:** The dx plugins provide workflow orchestration and convention templates. Your project provides context — `config.yaml`, `project.yaml`, `.claude/rules/` customizations. Extend the installed rule templates with project-specific patterns (brand naming, component variants, accessibility guards). The richer your project context, the better AI output quality.
+> **Quality scales with context:** The dx plugins provide workflow orchestration and convention templates. Your project provides context — `config.yaml`, `.claude/rules/` customizations. Extend the installed rule templates with project-specific patterns (brand naming, component variants, accessibility guards). The richer your project context, the better AI output quality.
 
 ### Next Steps
 <If ADO:> - Start working: `/dx-req <ADO work item ID>`
