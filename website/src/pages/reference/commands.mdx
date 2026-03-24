@@ -37,7 +37,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-init</code></td><td class="p-3">Configure project -- ADO mapping, build commands, base branch. Creates <code>.ai/config.yaml</code>.</td></tr>
         <tr><td class="p-3"><code>/aem-init</code></td><td class="p-3">Detect AEM structure, append <code>aem:</code> section to config. AEM projects only.</td></tr>
-        <tr><td class="p-3"><code>/dx-adapt</code></td><td class="p-3">Auto-detect project type, structure, and build commands.</td></tr>
+        <tr><td class="p-3"><code>/dx-adapt</code></td><td class="p-3">Auto-detect project type, role, toolchain, and build commands. Writes <code>project.type</code>, <code>project.role</code>, and <code>toolchain:</code> section to config.</td></tr>
         <tr><td class="p-3"><code>/auto-init</code></td><td class="p-3">Scaffold autonomous agent infrastructure (optional).</td></tr>
       </tbody>
     </table>
@@ -95,7 +95,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Full requirements pipeline (fetch, DoR, explain, research, share)</td><td class="p-3">All spec files + ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Full requirements pipeline (fetch, DoR, explain, research, share). Detects cross-repo scope when <code>repos:</code> exists in config.</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Create child Task work items with estimates</td><td class="p-3">ADO/Jira tasks</td></tr>
         <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path&gt;</code></td><td class="p-3">Validate external requirements document</td><td class="p-3"><code>explain.md</code></td></tr>
       </tbody>
@@ -153,7 +153,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-plan</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Generate step-by-step implementation plan</td><td class="p-3"><code>implement.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-plan</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Generate step-by-step implementation plan. Tags steps with repo names for cross-repo work.</td><td class="p-3"><code>implement.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-plan-validate</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Verify plan covers all requirements</td><td class="p-3">Pass/Fail</td></tr>
         <tr><td class="p-3"><code>/dx-plan-resolve</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Fix risks flagged by validation</td><td class="p-3">Updated <code>implement.md</code></td></tr>
       </tbody>
@@ -298,7 +298,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-pr</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Create pull request via ADO MCP</td></tr>
         <tr><td class="p-3"><code>/dx-pr-commit</code></td><td class="p-3"><code>[pr]</code></td><td class="p-3">Commit with WI linking; add <code>pr</code> to also create a PR</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-review</code></td><td class="p-3"><code>&lt;PR URL&gt;</code></td><td class="p-3">Review a PR -- analyze diff, post comments, propose fixes</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-review</code></td><td class="p-3"><code>&lt;PR URL&gt;</code></td><td class="p-3">Review a PR -- analyze diff, post comments, propose fixes. Checks sibling FE repos for field impact on dialog changes.</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-all</code></td><td class="p-3">none</td><td class="p-3">Batch-review multiple open PRs</td></tr>
         <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR URL&gt;</code> (opt)</td><td class="p-3">Answer open PR comments, apply agree-will-fix changes</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR URL&gt;</code></td><td class="p-3">Generate categorized report, post to wiki</td></tr>
@@ -445,8 +445,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Description</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-doctor</code></td><td class="p-3"><code>[dx|aem|seed-data|auto|all]</code></td><td class="p-3">Check health of all dx workflow files</td></tr>
-        <tr><td class="p-3"><code>/dx-upgrade</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Fix all issues found by dx-doctor</td></tr>
+        <tr><td class="p-3"><code>/dx-doctor</code></td><td class="p-3"><code>[dx|aem|seed-data|auto|all]</code></td><td class="p-3">Check health of all dx workflow files. Warns on stale <code>project.yaml</code> files.</td></tr>
+        <tr><td class="p-3"><code>/dx-upgrade</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Fix all issues found by dx-doctor. Migrates legacy <code>project.yaml</code> fields into <code>config.yaml</code>.</td></tr>
         <tr><td class="p-3"><code>/dx-eject</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Eject plugin assets into local repo</td></tr>
         <tr><td class="p-3"><code>/aem-refresh</code></td><td class="p-3">none</td><td class="p-3">Update <code>.ai/project/</code> seed data</td></tr>
         <tr><td class="p-3"><code>/aem-doctor</code></td><td class="p-3"><code>[components|osgi|dispatcher|all]</code></td><td class="p-3">Check AEM project infrastructure health</td></tr>
