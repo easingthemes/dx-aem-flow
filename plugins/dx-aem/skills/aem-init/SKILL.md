@@ -15,6 +15,7 @@ You configure AEM-specific settings by detecting the project structure and appen
 |---|---|
 | **Config** (aem: section in config.yaml) | Ask: keep / modify / regenerate |
 | **Component index** (.ai/project/component-index.md) | Offer to re-scan if stale |
+| **Component discovery** (.ai/project/component-discovery.md) | Offer to re-scan if stale (AEM dialog changes on QA) |
 | **Shared rule extensions** (pr-review.md, pr-answer.md AEM sections) | Validate sections exist, re-append if missing |
 | **Rule templates** (.claude/rules/be-*.md, fe-*.md) | Compare against plugin template → if template changed and user hasn't customized: update. If user customized: show diff, ask |
 | **Copilot instructions** | Read from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` — no copies needed |
@@ -134,7 +135,9 @@ aem:
   # selector: "<exporter-selector>"      # Uncomment if project uses custom selector
 ```
 
-## 6. Generate Component Index (optional)
+## 6. Component Discovery
+
+### 6a. Glob-based Component Index (structural)
 
 Ask: "Scan for existing components and generate `.ai/project/component-index.md`? This helps `/aem-component` and `/dx-ticket-analyze` find files faster."
 
@@ -142,6 +145,73 @@ If yes:
 1. Glob for all component `.content.xml` files under the component path
 2. Extract: name, title, group, resource type, resourceSuperType
 3. Write `.ai/project/component-index.md` as a lookup table (create `.ai/project/` if needed)
+
+### 6b. AEM MCP Component Discovery (semantic)
+
+Ask: "Query AEM QA for component dialog fields, variants, and pages? This creates `.ai/project/component-discovery.md` for richer AI planning. Requires AEM QA to be reachable."
+
+If yes:
+
+**Prerequisites check:**
+1. `aem.author-url-qa` must be configured. If not: warn "Set `aem.author-url-qa` in config to enable component discovery." and skip.
+2. Test AEM QA reachability: `mcp__plugin_dx-aem_AEM__getNodeContent` on the component root path. If unreachable: warn "AEM QA not reachable — component-discovery.md skipped. Run `/aem-init` again when QA is available." and skip.
+
+**Discovery logic:**
+
+For each component found by Step 6a's Glob scan (scoped to this repo's `aem.component-path`):
+
+1. **Dialog fields** — `mcp__plugin_dx-aem_AEM__getNodeContent` on `<component-path>/<name>/_cq_dialog` with depth 6. Extract: field name, `sling:resourceType` (maps to field type), `fieldLabel`, `fieldDescription`, `required` flag.
+
+2. **Variants in this repo** — Glob sibling directories with same name suffix under the component path. E.g., if component is `productcard`, check for `*-productcard` or `productcard-*` siblings.
+
+3. **Variants in other repos** — `mcp__plugin_dx-aem_AEM__searchContent` for components whose `sling:resourceSuperType` equals this component's resourceType. Cross-reference with `repos:` section in config.yaml to note owning repo.
+
+4. **Pages using component** — `mcp__plugin_dx-aem_AEM__searchContent` by `sling:resourceType` under the content roots from `content-paths.yaml` or `aem.demo-parent-path` parent. Limit to 5 pages.
+
+5. **Authored values** — For the first page found, `mcp__plugin_dx-aem_AEM__getNodeContent` on the component instance (depth 4). Extract actual field values to reveal semantic meaning.
+
+**Parallelism:** Dispatch one Explore agent per ~10 components. Each agent receives the component list, AEM QA URL, and query instructions. Agents use `mcp__plugin_dx-aem_AEM__*` tools directly.
+
+**Output:** Write `.ai/project/component-discovery.md` with format:
+
+```markdown
+# AEM Component Discovery
+
+**Generated:** <date>
+**Instance:** <aem.author-url-qa> (QA)
+**Repo:** <scm.repo or project name>
+**Scope:** <aem.resource-type-pattern>* (<count> components)
+
+## <component-name>
+
+**Resource Type:** <full resource type>
+**Owner:** <repo name> (this repo)
+**Variants (this repo):** <comma-separated list or "none">
+**Variants (other repos):**
+  - `<variant-name>` → <repo-name> (superType: <this component's resourceType>)
+
+### Dialog Fields
+| Field | Type | Label | Description | Required |
+|-------|------|-------|-------------|----------|
+| <name> | <type> | <fieldLabel> | <fieldDescription> | <yes/no> |
+
+### Sample Authored Values (from <page-path>)
+| Field | Value |
+|-------|-------|
+| <name> | <value or "(empty)"> |
+
+### Pages (<count>)
+- <page-path-1>
+- <page-path-2>
+...
+
+### Cross-Repo Dependencies
+- **superType:** <superType resource type> → <repo name> (base)
+```
+
+For brand-override repos: dialog fields note `inherited from <base>` vs `LOCAL (this repo)`.
+
+**Re-run behavior:** If `.ai/project/component-discovery.md` already exists, ask "Re-scan component discovery? (recommended after dialog changes on QA)". If no: keep existing, report "validated (kept existing)".
 
 ## 7. Extend Shared Rules with AEM Patterns
 
@@ -446,6 +516,8 @@ echo "$AEM_INSTANCES"
 
 ## 12. Summary
 
+> **Run component discovery for best results:** The `component-discovery.md` file (generated in Step 6b) provides dialog field semantics, component variants, and page locations to all downstream skills (`/dx-req`, `/dx-plan`, `/dx-step`). Without it, these skills rely on Glob/Grep only and may miss field meanings and brand-specific variants. Re-run `/aem-init` after major dialog changes on QA.
+
 ```markdown
 ## AEM Initialized
 
@@ -459,6 +531,7 @@ echo "$AEM_INSTANCES"
 | File | Status |
 |------|--------|
 | component-index.md | <generated / exists / skipped> |
+| component-discovery.md | <generated / exists / skipped / QA unreachable> |
 | project.yaml | <found / not found> |
 | file-patterns.yaml | <found / not found> |
 | content-paths.yaml | <found / not found> |
