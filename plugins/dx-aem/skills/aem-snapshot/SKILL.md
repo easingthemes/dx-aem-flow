@@ -45,7 +45,7 @@ Extract: `jcr:title`, `componentGroup`.
 
 ### 2. Walk the dialog
 
-Get all dialog fields following the "How to Walk a Dialog" instructions from your system prompt.
+Get all dialog fields by walking the dialog tree.
 
 ### 2b. Read market/site config for scoping
 
@@ -55,7 +55,7 @@ Also check `.ai/project/component-index.md` (or `.ai/component-index.md`) — if
 
 ### 3. Find pages using the component
 
-Follow the "How to Find Pages Using a Component" strategy from your system prompt — **try multiple queries before concluding 0 pages:**
+Find pages using the component — **try multiple queries before concluding 0 pages:**
 
 Read the resource type pattern from `.ai/config.yaml` `aem.resource-type-pattern`. Search configured content paths first (more targeted, faster). Then:
 
