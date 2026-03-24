@@ -21,9 +21,26 @@ class Scaffold {
 
   /**
    * Set placeholder values for template substitution.
+   * Also derives projectRole from projectType if not explicitly set.
    */
   setPlaceholders(values) {
     this.placeholders = { ...this.placeholders, ...values };
+
+    // Derive projectRole from projectType if not explicitly provided
+    if (!this.placeholders.projectRole && this.placeholders.projectType) {
+      const typeToRole = {
+        'aem-fullstack': 'fullstack',
+        'aem-frontend': 'frontend',
+        'frontend': 'frontend',
+        'java': 'backend',
+      };
+      this.placeholders.projectRole = typeToRole[this.placeholders.projectType] || 'fullstack';
+    }
+
+    // Default REPOS_TABLE placeholder for non-interactive CLI context
+    if (!this.placeholders.REPOS_TABLE) {
+      this.placeholders.REPOS_TABLE = '| Repo | Role | Platform | Base Branch |\n|---|---|---|---|\n| <!-- TODO: Fill in your repo table from config.yaml repos: section --> |';
+    }
   }
 
   /**
@@ -311,18 +328,35 @@ modules:
     const rulesDir = path.join(this.aemPlugin, 'templates', 'rules');
     if (!fs.existsSync(rulesDir)) return;
 
-    const projectType = this.placeholders.projectType || 'aem-fullstack';
+    const role = this.placeholders.projectRole || 'fullstack';
+    const skipDirs = {
+      frontend: ['be'],
+      backend: ['fe'],
+      config: ['be', 'fe'],
+      fullstack: [],
+    };
+    const dirsToSkip = skipDirs[role] || [];
 
+    // Handle templates at root level (backward compat)
     for (const file of fs.readdirSync(rulesDir)) {
-      if (!file.endsWith('.template')) continue;
-      const name = file.replace('.template', '');
+      const fullPath = path.join(rulesDir, file);
+      if (fs.statSync(fullPath).isFile() && file.endsWith('.md.template')) {
+        const name = file.replace('.template', '');
+        this.copyFile(fullPath, `.claude/rules/${name}`);
+      }
+    }
 
-      // Filter by project type (same logic as dx-init)
-      if (projectType === 'aem-frontend' && name.startsWith('be-')) continue;
-      if (projectType === 'frontend' && (name.startsWith('be-') || name === 'fe-clientlibs.md')) continue;
-      if (projectType === 'java' && name.startsWith('fe-')) continue;
-
-      this.copyFile(path.join(rulesDir, file), `.claude/rules/${name}`);
+    // Recurse shared/, be/, fe/ subdirectories
+    const subdirs = ['shared', 'be', 'fe'];
+    for (const subdir of subdirs) {
+      if (dirsToSkip.includes(subdir)) continue;
+      const subdirPath = path.join(rulesDir, subdir);
+      if (!fs.existsSync(subdirPath)) continue;
+      for (const file of fs.readdirSync(subdirPath)) {
+        if (!file.endsWith('.md.template')) continue;
+        const name = file.replace('.template', '');
+        this.copyFile(path.join(subdirPath, file), `.claude/rules/${name}`);
+      }
     }
   }
 
