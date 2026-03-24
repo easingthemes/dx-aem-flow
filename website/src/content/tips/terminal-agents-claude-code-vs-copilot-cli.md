@@ -15,7 +15,7 @@ slackText: |
   Both are terminal-native agents. Both run our 68 skills. But they have distinct superpowers:
   
   *Claude Code:*
-  • 1M token context (8x more than Copilot CLI)
+  • 1M token context (with Opus)
   • Worktree isolation — agents get their own repo copy
   • Persistent memory across sessions
   • 13 plugin agents with model tiering (Opus/Sonnet/Haiku)
@@ -51,7 +51,7 @@ claude
 
 # Copilot CLI
 copilot
-# 32-128K context, multi-model
+# 128K-1M context (depends on model), multi-model
 # /fleet parallel agents, Plan mode
 # 25 .github agents, cloud delegation
 # Cross-session memory
