@@ -63,6 +63,30 @@ Ask: **Proceed with auto-fixes?** (the confirmation items will be handled one-by
 
 If the user declines, STOP.
 
+## 1b. Migrate project.yaml (if exists)
+
+If `.ai/project.yaml` exists (NOT `.ai/project/project.yaml`):
+
+1. Read `.ai/project.yaml`
+2. Read `.ai/config.yaml`
+3. Merge fields per mapping:
+   - `type` → `project.type` (add to project: section)
+   - `role` → `project.role` (derive from type if not set: aem-frontend→frontend, aem-fullstack→fullstack, java→backend)
+   - `toolchain.*` → `toolchain:` section (add new top-level section)
+   - `build.serve` → `build.serve` (add if not present)
+   - `build.lint-js` → `build.lint-js` (add if not present)
+   - `build.lint-scss` → `build.lint-scss` (add if not present)
+   - `build.lint-fix` → `build.lint-fix` (add if not present)
+   - `component.base-class` → `toolchain.component-base-class`
+   - Drop: modules, source, output, component.registration
+4. If `repos:` section exists in `.ai/config.yaml`:
+   - For each repo entry, if `capabilities:` exists but `role:` does not:
+     - Derive role from capabilities: if capabilities includes both fe and be → fullstack; fe only → frontend; be only → backend; neither → config
+     - Add `role:` field, remove `capabilities:`
+5. Write updated `.ai/config.yaml`
+6. Rename `.ai/project.yaml` → `.ai/project.yaml.migrated`
+7. Report: "Migrated project.yaml fields to config.yaml. Old file renamed to project.yaml.migrated."
+
 ## 2. Resolve Plugin Directories
 
 Find each plugin root directory (same method as dx-doctor):
@@ -134,10 +158,16 @@ Check `dx.version` in `.ai/config.yaml`:
 
 ### 3d. AEM Rule Files (if aem plugin configured)
 
-| Installed | Plugin Source |
-|-----------|-------------|
-| `.claude/rules/audit.md` | `<aem-plugin>/templates/rules/audit.md.template` |
-| `.claude/rules/qa-basic-auth.md` | `<aem-plugin>/templates/rules/qa-basic-auth.md.template` |
+Use a recursive glob to find all templates: `<aem-plugin>/templates/rules/**/*.md.template`
+
+For each `.md.template` file found:
+- Strip the `.template` extension to get the destination filename
+- Preserve subdirectory structure under `<aem-plugin>/templates/rules/` → `.claude/rules/`
+  - Example: `shared/audit.md.template` → `.claude/rules/audit.md`
+  - Example: `shared/qa-basic-auth.md.template` → `.claude/rules/qa-basic-auth.md`
+  - Example: `be/be-components.md.template` → `.claude/rules/be-components.md`
+  - Example: `fe/fe-tokens.md.template` → `.claude/rules/fe-tokens.md`
+- Read source, Write to destination (flattening the subdir — destination is always directly under `.claude/rules/`, not in a subdir)
 
 ### 3e. Copilot Agents and Skills
 
@@ -198,8 +228,8 @@ If the file has AEM sections appended (for `pr-review.md` and `pr-answer.md`):
 
 ### 4b. AEM Convention Rules (`.claude/rules/`)
 
-For each stale AEM rule (be-*.md, fe-*.md, naming.md, accessibility.md):
-1. Read installed and template
+For each stale AEM rule found via `<aem-plugin>/templates/rules/**/*.md.template` (e.g., `be/be-*.md.template`, `fe/fe-*.md.template`, `shared/naming.md.template`, `shared/accessibility.md.template`):
+1. Read installed file (`.claude/rules/<name>.md`) and corresponding template
 2. Ask same A/B/C as above
 
 ### 4c. Automation Policy (if applicable)
