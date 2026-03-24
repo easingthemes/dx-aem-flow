@@ -1,3 +1,15 @@
+# [2.66.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.65.0...v2.66.0) (2026-03-24)
+
+
+### Bug Fixes
+
+* correct Copilot CLI context window from "32k-128k" to "128K-1M (model-dependent)" ([cfb2ec4](https://github.com/easingthemes/dx-aem-flow/commit/cfb2ec4681ff0b15dc1eea4ce07442bbb666c8aa))
+
+
+### Features
+
+* add TLDR tip [#52](https://github.com/easingthemes/dx-aem-flow/issues/52) — Plugins: Install Once, Use Everywhere ([28392ea](https://github.com/easingthemes/dx-aem-flow/commit/28392ea67fdb1b412f86129066bf74d350ea46dd))
+
 # [2.65.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.64.4...v2.65.0) (2026-03-24)
 
 
