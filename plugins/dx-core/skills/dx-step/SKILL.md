@@ -132,7 +132,7 @@ Update the step's status in implement.md:
 **Status:** in-progress
 ```
 
-### AEM MCP Pre-Check (component steps only)
+### AEM MCP Pre-Check
 
 **Trigger:** Only runs when the current step modifies files under `aem.component-path` or frontend component paths from config. Skip for pure Java, config, test-only, or non-component steps.
 
