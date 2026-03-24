@@ -521,6 +521,33 @@ Print a summary:
 - **Values verified:** <count> files checked, <count> substitutions made (or "all correct")
 ```
 
+### 8d. Install cross-repo coordination rule (if multi-repo)
+
+Read `.ai/config.yaml`. If a `repos:` section exists with at least one entry:
+
+1. Read `plugins/dx-core/templates/rules/cross-repo.md.template` (use Read tool).
+2. Build `{{REPOS_TABLE}}` from config:
+   - First row: current repo — name from `project.name`, role from `project.role`, platform from `aem.platform` (if set, otherwise "—"), base branch from `scm.base-branch`
+   - Remaining rows: each entry in `repos:` section — name, role, platform (if set, otherwise "—"), base-branch (if set, otherwise "—")
+
+   Format:
+   ```markdown
+   | Repo | Role | Platform | Base Branch |
+   |---|---|---|---|
+   | {project.name} (this repo) | {project.role} | {aem.platform or —} | {scm.base-branch} |
+   | {repos[0].name} | {repos[0].role} | {repos[0].platform or —} | {repos[0].base-branch or —} |
+   | ... | ... | ... | ... |
+   ```
+
+3. Replace `{{REPOS_TABLE}}` in the template content with the generated table.
+4. Apply smart-update logic (same as Step 8c in aem-init):
+   - If `.claude/rules/cross-repo.md` exists and is identical to the generated content → skip, report "cross-repo.md up to date"
+   - If `.claude/rules/cross-repo.md` exists but differs, AND user has not customized it (differs from template in the same way) → update silently, report "cross-repo.md updated"
+   - If `.claude/rules/cross-repo.md` exists and user has customized it → show diff, ask: **(A) Keep yours**, **(B) Use updated version**, **(C) Merge manually**
+5. Write the result to `.claude/rules/cross-repo.md` (use Write tool).
+
+If `repos:` section does not exist or is empty, skip this step entirely.
+
 ## 9. Copilot Support (optional)
 
 Ask:
