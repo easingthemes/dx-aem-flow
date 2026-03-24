@@ -12,7 +12,7 @@
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-dor | `/dx-dor` | `<work-item-id(s)>` | Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Batch mode: space-separated IDs for parallel validation. | `dor-report.md` + ADO comment |
+| dx-dor | `/dx-dor` | `<work-item-id(s)>` | Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Batch mode: space-separated IDs for parallel validation. Supports `mandatory` tag for hard-gate checks. | `dor-report.md` + ADO comment |
 | dx-req | `/dx-req` | `<work-item-id>` | Full requirements pipeline — fetch ticket, validate DoR (delegates to `/dx-dor`), distill requirements, research codebase, share summary (5 phases). Includes reference docs for each phase. | All spec files + ADO comments |
 | dx-req-tasks | `/dx-req-tasks` | `<work-item-id> [close]` | Create child Task work items with hour estimates. `close` arg: moves Remaining→Completed, zeros remaining, closes tasks | ADO/Jira tasks |
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
@@ -181,7 +181,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| aem-init | `/aem-init` | none (interactive) | Detect AEM structure, append `aem:` section to .ai/config.yaml, set up project seed data | Config update |
+| aem-init | `/aem-init` | none (interactive) | Detect AEM structure, append `aem:` section to .ai/config.yaml, set up project seed data. Generates `component-discovery.md` via AEM MCP for field semantics and variant discovery. | Config update |
 | aem-component | `/aem-component` | `<component-name>` | Find all source files, AEM pages, and dialog fields for a component (multi-platform, data-driven) | Component report |
 | aem-page-search | `/aem-page-search` | `<component-name>` | Find all AEM pages using a specific component | Page list |
 | aem-refresh | `/aem-refresh` | none | Update `.ai/project/` seed data from plugin, external docs repo, or manual sources | Seed data files |
