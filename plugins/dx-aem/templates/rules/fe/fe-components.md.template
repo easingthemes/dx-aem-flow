@@ -1,0 +1,46 @@
+---
+description: Frontend component patterns and conventions
+paths: ["**/ui.frontend/**"]
+applyTo: "**/*.js, **/*.scss"
+---
+
+# Frontend Component Patterns
+
+## Component Variation Scoping
+
+When modifying a component:
+1. List ALL known variations (check component-discovery.md if it exists)
+2. Determine which variations are affected by the change
+3. Verify unmodified variations still work after changes
+4. Document changes per variation
+
+## Data Flow
+
+Dialog field → data model → template → JS/CSS
+
+When consuming data from AEM:
+- Verify field name exists in the dialog (check backend repo if cross-repo)
+- Guard against empty/null values — don't render empty elements
+- AEM checkbox fields are strings ("true" / "false"), not booleans
+
+## Accessibility
+
+- Screen-reader only text: use `.sr-only` class (visually hidden, announced by screen readers)
+- Linked headings: use `aria-labelledby` referencing a visible heading element
+- Dynamic labels: use `aria-label` for programmatic labeling
+- Empty links/buttons without visible text fail axe `link-name` — always provide accessible name
+- Guard CTAs with conditional rendering: if label is empty, don't render the element
+
+## Conditional Rendering
+
+Before rendering any content from the dialog:
+- Check if the field has a value — empty `ctaTitle` or `ariaLabel` causes accessibility failures
+- Prefer backend validation (required field in dialog) over frontend guards
+- If backend can't enforce, add frontend guard (template conditional + JS null check)
+
+## Pre-existing Bugs
+
+If you discover a bug unrelated to the current ticket:
+- Document it separately (comment in code or note in PR description)
+- Do NOT fix it in the same PR unless it's trivial AND directly adjacent to your changes
+- Mixing bug fixes with feature work makes PRs harder to review
