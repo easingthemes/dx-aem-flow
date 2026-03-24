@@ -7,6 +7,8 @@ dx:
 project:
   name: "{{PROJECT_NAME}}"
   prefix: "{{PROJECT_PREFIX}}"
+  type: "{{PROJECT_TYPE}}"              # aem-fullstack | aem-frontend | frontend | java | ...
+  role: "{{PROJECT_ROLE}}"              # frontend | backend | fullstack | config
 
 scm:
   provider: ado                           # ado | github
@@ -34,6 +36,19 @@ build:
   # test-single: "mvn test -pl core -Dtest={className}"  # Single test class
   # lint: "npm run lint"                 # Uncomment if applicable
   # frontend: "npm run build"           # Frontend-only build
+  # serve: ""                           # dev server command
+  # lint-js: ""                         # JS-specific lint
+  # lint-scss: ""                       # SCSS-specific lint
+  # lint-fix: ""                        # auto-fix lint issues
+
+# toolchain: — detected by /dx-adapt, describes the project's build stack
+#   node: "18.0.0"
+#   build-tool: webpack              # webpack | gulp4 | vite | rollup
+#   css-compiler: dart-sass          # dart-sass | node-sass
+#   js-transpiler: babel             # babel | esbuild | tsc
+#   template-engine: htl             # htl | jsx
+#   component-base-class: ""         # optional — framework base class
+#   module-system: esm               # esm | iife | cjs
 
 # Optional — multi-market / multi-brand support
 # markets:
@@ -49,7 +64,6 @@ build:
 #     platform: Legacy                 # Legacy | DXN (AEM only, added by /aem-init)
 #     ado-project: "My Project"        # ADO project (if different from scm.project)
 #     base-branch: develop             # Default branch (defaults to scm.base-branch)
-#     capabilities: [fe, be, sling]    # Rule templates for sync (auto-detected if omitted)
 
 # Optional — override plugin default prompts
 # overrides:
