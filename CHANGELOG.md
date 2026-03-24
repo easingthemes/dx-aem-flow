@@ -1,3 +1,25 @@
+# [2.67.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.66.0...v2.67.0) (2026-03-24)
+
+
+### Bug Fixes
+
+* remove stale "from your system prompt" references in aem skills ([699f6ae](https://github.com/easingthemes/dx-aem-flow/commit/699f6ae8f220fefb49aa749ccfbc1414b3a38652))
+
+
+### Features
+
+* add cross-repo.md.template to dx-core ([e73ea5b](https://github.com/easingthemes/dx-aem-flow/commit/e73ea5b9d5ca807a212517b9c92f0d0548f4c4a7))
+* add project.role, toolchain section, repos[].role to config template ([7233640](https://github.com/easingthemes/dx-aem-flow/commit/72336408029d43a832231bd875f4af4f50ffe8a8))
+* aem-init selects templates by project.role ([c9c08e4](https://github.com/easingthemes/dx-aem-flow/commit/c9c08e4adbf792d21ec8bbe0d25360ac6e5d650a))
+* CLI scaffold recurses template subdirectories with role filtering ([b11f8a2](https://github.com/easingthemes/dx-aem-flow/commit/b11f8a2afb6d3d8a6206df989b7319d8dd36d32f))
+* dx-adapt writes project profile to config.yaml instead of project.yaml ([b5531f6](https://github.com/easingthemes/dx-aem-flow/commit/b5531f688d640d1cbec72c2e1c80bfcc1a43d6a6))
+* dx-init reads project profile from config.yaml ([9266f29](https://github.com/easingthemes/dx-aem-flow/commit/9266f297bb1e56e9cc7ec879c9faedbfe5d4f69e))
+* dx-plan tags steps with repo names for cross-repo work ([9846370](https://github.com/easingthemes/dx-aem-flow/commit/9846370df2e82e97ab2037cf1ee75c677d4ca417))
+* dx-pr-review checks sibling FE repos when dialog fields change ([cb46e2a](https://github.com/easingthemes/dx-aem-flow/commit/cb46e2a523ae77c260b3c144198421b2ffcaf2f3))
+* dx-req detects cross-repo scope during research ([5d4bbfd](https://github.com/easingthemes/dx-aem-flow/commit/5d4bbfde0386d39509a57a8301349f7289b8ba17))
+* dx-upgrade migrates project.yaml to config.yaml ([a702788](https://github.com/easingthemes/dx-aem-flow/commit/a702788e0c1d38ea0e495d7963e0304419638f0f))
+* migrate 6 skills from project.yaml to config.yaml reads ([61c4d1f](https://github.com/easingthemes/dx-aem-flow/commit/61c4d1f470ebce0b2a7e2babd0ef530af2dbe9b9))
+
 # [2.66.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.65.0...v2.66.0) (2026-03-24)
 
 
