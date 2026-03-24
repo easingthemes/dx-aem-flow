@@ -64,7 +64,9 @@ Create `$SPEC_DIR/docs/` directory if it doesn't exist.
 
 ### 5a. Template — With Authoring Guide (AEM projects)
 
-If `demo/authoring-guide.md` exists, read `.ai/templates/wiki/wiki-page-aem.md.template` and follow that structure exactly. The template is structured as a **demo walkthrough** — sections are ordered to match a typical demo presentation flow (story → design → implementation → QA page → dialog → frontend → Figma comparison → authoring guide).
+If `demo/authoring-guide.md` exists, read `.ai/templates/wiki/wiki-page-aem.md.template` and follow that structure exactly. The template is structured as a **demo walkthrough** — sections are ordered to match a typical demo presentation flow (story → design → implementation → QA page → authoring/dialog → frontend → Figma comparison).
+
+**Authoring section is the core of the demo page.** It merges what was previously split across Configuration, Dialog Changes, and Authoring Guide into one presenter-friendly section. Every action MUST have a clickable link — the AEM Author Edit URL where the component exists, the real component name, and a field-by-field table of what to change. The presenter should be able to follow this section to configure and demo the component live without searching for anything.
 
 **Screenshot references — repo-relative paths:** ADO wiki does not support binary upload via current MCP tools. All screenshot references MUST use repo-relative paths so they can be committed and linked from the ADO wiki.
 
@@ -267,7 +269,7 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 
 1. `/dx-doc-gen 2416553` — Reads spec files, generates `docs/wiki-page.md` with Summary, What Changed and Why, Usage, Files Changed. Standard template.
 
-2. `/dx-doc-gen 2416553` (AEM project with authoring guide) — Detects `demo/authoring-guide.md`. Uses AEM template: Summary → Design Reference → What Changed and Why → QA Verification → Dialog Changes → Frontend Preview → Figma Comparison → Authoring Guide → Files Changed. Screenshots use repo-relative paths.
+2. `/dx-doc-gen 2416553` (AEM project with authoring guide) — Detects `demo/authoring-guide.md`. Uses AEM template: Summary → Design Reference → What Changed and Why → QA Verification → Authoring (page URL + component + field table + dialog screenshot) → Frontend Preview → Figma Comparison → Files Changed. Screenshots use repo-relative paths.
 
 3. `/dx-doc-gen 2416553` (pipeline mode) — `PIPELINE_MODE=true` triggers wiki posting. Creates the sprint subfolder (`Sprint 42`) in the ADO wiki if it doesn't exist, then creates the wiki page at the configured doc root path. Summary includes `git add` command for committing screenshots.
 
@@ -302,4 +304,5 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 - **QA pages are mandatory** — for AEM projects, QA Author Edit + Preview URLs are required. This is the deliverable. Preview uses `wcmmode=disabled` for FE demo.
 - **Multi-component = multi-page** — if several components are affected and need different pages, provide QA URL tables for each page
 - **Don't list every file** — group by area (FE/BE/Config) with short descriptions. The PR has the diff; the wiki explains what and why.
-- **Demo walkthrough order** — AEM template sections follow a demo presentation flow: story → design → implementation → QA → dialog → frontend → Figma comparison → authoring guide → files
+- **Demo walkthrough order** — AEM template sections follow a demo presentation flow: story → design → implementation → QA → authoring (page URL + component + fields + dialog screenshot) → frontend → Figma comparison → files
+- **Authoring = presenter runbook** — every action in the Authoring section MUST have a clickable AEM Author Edit URL and the real component name. The presenter should never have to search for anything — all links, component names, and field values are explicit.
