@@ -538,11 +538,13 @@ step_8c_vscode_settings() {
 
   if $DRY_RUN; then
     if [ -f "$vscode_settings" ]; then
-      local has_skills has_instr
+      local has_skills has_instr has_subagents
       has_skills=$(grep -c "agentSkillsLocations" "$vscode_settings" 2>/dev/null | tail -1 || echo 0)
       has_instr=$(grep -c "instructionsFilesLocations" "$vscode_settings" 2>/dev/null | tail -1 || echo 0)
+      has_subagents=$(grep -c "allowInvocationsFromSubagents" "$vscode_settings" 2>/dev/null | tail -1 || echo 0)
       [ "$has_skills" -eq 0 ] && log_dry "  would add chat.agentSkillsLocations"
       [ "$has_instr" -eq 0 ] && log_dry "  would add chat.instructionsFilesLocations"
+      [ "$has_subagents" -eq 0 ] && log_dry "  would add chat.subagents.allowInvocationsFromSubagents"
     else
       log_dry "  would create .vscode/settings.json with VS Code Chat settings"
     fi
@@ -559,23 +561,30 @@ step_8c_vscode_settings() {
     },
     "chat.agentSkillsLocations": {
         ".claude/skills": true
-    }
+    },
+    "chat.subagents.allowInvocationsFromSubagents": true
 }
 SETTINGS_EOF
     log_info "  created .vscode/settings.json"
   else
     # Check if settings already have our entries
     local needs_update=false
+    local missing_entries=""
     if ! grep -q "instructionsFilesLocations" "$vscode_settings" 2>/dev/null; then
       needs_update=true
+      missing_entries="$missing_entries\n  Add: \"chat.instructionsFilesLocations\": { \".claude/rules\": true, \".github/instructions\": true }"
     fi
     if ! grep -q "agentSkillsLocations" "$vscode_settings" 2>/dev/null; then
       needs_update=true
+      missing_entries="$missing_entries\n  Add: \"chat.agentSkillsLocations\": { \".claude/skills\": true }"
+    fi
+    if ! grep -q "allowInvocationsFromSubagents" "$vscode_settings" 2>/dev/null; then
+      needs_update=true
+      missing_entries="$missing_entries\n  Add: \"chat.subagents.allowInvocationsFromSubagents\": true"
     fi
     if $needs_update; then
       log_warn "  .vscode/settings.json exists but missing VS Code Chat settings — add manually"
-      log_info '  Add: "chat.instructionsFilesLocations": { ".claude/rules": true, ".github/instructions": true }'
-      log_info '  Add: "chat.agentSkillsLocations": { ".claude/skills": true }'
+      echo -e "$missing_entries" | while read -r line; do [ -n "$line" ] && log_info "$line"; done
     else
       log_info "  .vscode/settings.json already has VS Code Chat settings"
     fi
