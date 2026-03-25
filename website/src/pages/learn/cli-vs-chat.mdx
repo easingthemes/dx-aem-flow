@@ -225,15 +225,17 @@ import { stats } from '../../config/stats';
     </ContentCard>
   </div>
 
-  <HighlightBox severity="success" title="Setup -- One Setting">
-    Add to <code>.vscode/settings.json</code> to expose plugin skills to VS Code Chat:
+  <HighlightBox severity="success" title="Setup -- Key Settings">
+    Add to <code>.vscode/settings.json</code> to expose plugin skills and enable nested agent orchestration:
     <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
   ".claude/skills": true,
   "dx-aem-flow/dx/plugins/dx-core/skills": true,
   "dx-aem-flow/dx/plugins/dx-aem/skills": true
-}`}</CommandBlock>
-    VS Code Chat also defaults to reading <code>.claude/rules/</code> and <code>.github/agents/</code> --
-    the same files Claude Code and Copilot CLI use. No duplication needed.
+},
+"chat.subagents.allowInvocationsFromSubagents": true`}</CommandBlock>
+    The subagent setting (VS Code 1.113+) lets coordinator agents like DxAgentAll dispatch subagents
+    programmatically. Without it, nested orchestration is disabled.
+    <code>/dx-sync</code> configures this automatically for consumer projects.
   </HighlightBox>
 
   <div class="overflow-x-auto mt-4">
