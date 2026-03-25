@@ -1,3 +1,10 @@
+# [2.68.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.67.0...v2.68.0) (2026-03-25)
+
+
+### Features
+
+* add /dx-scan skill and batch mode for /dx-estimate ([870f725](https://github.com/easingthemes/dx-aem-flow/commit/870f725ec554689bf4e5a3433b64becc8e8273dc))
+
 # [2.67.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.66.0...v2.67.0) (2026-03-24)
 
 
