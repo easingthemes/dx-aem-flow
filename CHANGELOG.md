@@ -1,3 +1,10 @@
+# [2.72.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.71.0...v2.72.0) (2026-03-25)
+
+
+### Features
+
+* add tip-block class to tip cards for screenshot automation ([f3d5ce3](https://github.com/easingthemes/dx-aem-flow/commit/f3d5ce3b231190d731e870277bdbf1a6fb7c7df4))
+
 # [2.71.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.70.0...v2.71.0) (2026-03-25)
 
 
