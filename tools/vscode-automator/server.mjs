@@ -21,7 +21,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -54,9 +54,11 @@ const SCRIPTS = {
     end tell
   `,
 
+  // Shared: get VS Code CGWindowID via Swift/CoreGraphics
+  getWindowId: `do shell script "swift -e 'import CoreGraphics; let ws = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String:Any]] ?? []; for w in ws { if (w[kCGWindowOwnerName as String] as? String) == " & quote & "Code" & quote & ", let n = w[kCGWindowNumber as String] as? Int, (w[kCGWindowLayer as String] as? Int) == 0 { print(n); break } }'"`,
+
   screenshot: (outputPath) => {
     const safePath = outputPath.replace(/'/g, "'\\''");
-    // Get CGWindowID via Swift/CoreGraphics (no Python dependency), then screencapture -l
     return `do shell script "winid=$(swift -e 'import CoreGraphics; let ws = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String:Any]] ?? []; for w in ws { if (w[kCGWindowOwnerName as String] as? String) == " & quote & "Code" & quote & ", let n = w[kCGWindowNumber as String] as? Int, (w[kCGWindowLayer as String] as? Int) == 0 { print(n); break } }'); screencapture -l $winid -o '${safePath}'"`;
   },
 };
@@ -296,6 +298,89 @@ server.tool(
     await new Promise(r => setTimeout(r, 300));
     await runAppleScript(SCRIPTS.screenshot(resolvedPath));
     return { content: [{ type: 'text', text: `Screenshot saved to ${resolvedPath}` }] };
+  }
+);
+
+// ── Recording state ──────────────────────────────────────────────────
+
+let activeRecording = null;
+
+// ── Tool: vscode_record ─────────────────────────────────────────────
+
+server.tool(
+  'vscode_record',
+  'Start recording the VS Code window as a video. Recording runs in the background — execute automation actions, then call vscode_stop_record to finish. Only one recording at a time.',
+  {
+    output_path: z.string().describe('File path for the video (MOV). Must be under tools/.'),
+    max_duration: z.number().min(10).max(300).optional().describe('Max recording duration in seconds (default 120). Recording auto-stops after this.'),
+  },
+  async ({ output_path, max_duration }) => {
+    if (activeRecording) {
+      throw new Error('A recording is already in progress. Call vscode_stop_record first.');
+    }
+
+    const resolvedPath = resolve(output_path);
+    const allowedPrefixes = [join(process.cwd(), 'tools')];
+    if (!allowedPrefixes.some(prefix => resolvedPath.startsWith(prefix))) {
+      throw new Error(`Recording path must be under tools/. Got: ${output_path}`);
+    }
+
+    await runAppleScript(SCRIPTS.focus);
+    await new Promise(r => setTimeout(r, 300));
+
+    // Get the VS Code window ID
+    const winId = await runAppleScript(SCRIPTS.getWindowId);
+    if (!winId || !winId.trim()) {
+      throw new Error('Could not find VS Code window ID.');
+    }
+
+    const duration = max_duration || 120;
+
+    // Spawn screencapture in video mode as background process
+    const proc = spawn('screencapture', ['-l', winId.trim(), '-V', String(duration), '-o', resolvedPath], {
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    activeRecording = {
+      process: proc,
+      path: resolvedPath,
+      startTime: Date.now(),
+      maxDuration: duration,
+    };
+
+    // Auto-cleanup if process exits on its own (max duration reached)
+    proc.on('exit', () => {
+      activeRecording = null;
+    });
+
+    return { content: [{ type: 'text', text: `Recording started → ${resolvedPath} (max ${duration}s). Run your automation, then call vscode_stop_record.` }] };
+  }
+);
+
+// ── Tool: vscode_stop_record ────────────────────────────────────────
+
+server.tool(
+  'vscode_stop_record',
+  'Stop the current VS Code window recording. The video file is saved automatically.',
+  {},
+  async () => {
+    if (!activeRecording) {
+      throw new Error('No recording in progress.');
+    }
+
+    const { process: proc, path: filePath, startTime } = activeRecording;
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+
+    // Send SIGINT to screencapture to stop recording gracefully
+    proc.kill('SIGINT');
+
+    // Wait a moment for file to finalize
+    await new Promise(r => setTimeout(r, 1000));
+
+    activeRecording = null;
+
+    return { content: [{ type: 'text', text: `Recording stopped after ${elapsed}s → ${filePath}` }] };
   }
 );
 
