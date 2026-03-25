@@ -4,58 +4,28 @@ category: "Real-World Workflows"
 focus: "Claude Code"
 tags: ["Bug","Triage","Visual Verification"]
 overview: "Our bug flow: /dx-bug-triage fetches the bug ticket and finds the affected component in code. /dx-bug-verify opens Chrome, follows repro steps, and takes screenshots to confirm the bug. /dx-bug-fix implements the fix and verifies it works. Three skills, zero tab-switching."
-codeLabel: "Bug triage pipeline"
 screenshot: null
 week: 9
 weekLabel: "Agents — AI Personas"
 order: 45
-slackText: |
-  🤖 Agentic AI Tip #45 — Bug Triage: Ticket to Root Cause
-  
-  Bug fixing is 80% investigation, 20% coding. AI excels at the investigation part.
-  
-  *Step 1: Triage (/dx-bug-triage)*
-  • Fetches the bug ticket from ADO
-  • Reads repro steps, expected vs actual behavior
-  • Searches codebase for affected components
-  • Saves root cause hypothesis to `triage.md`
-  
-  *Step 2: Verify (/dx-bug-verify)*
-  • Opens Chrome DevTools MCP
-  • Navigates to the repro URL
-  • Follows the repro steps (click, fill, navigate)
-  • Takes screenshots at each step
-  • Confirms: "Yes, the bug reproduces" or "Cannot reproduce"
-  
-  *Step 3: Fix (/dx-bug-fix)*
-  • Reads the triage findings
-  • Implements the fix
-  • Re-runs verification in Chrome
-  • Screenshots the fixed state
-  • Before/after comparison
-  
-  *Why visual verification matters:*
-  "The hero component overlaps the nav on mobile" — you can't verify this by reading code. You need to see it. Chrome DevTools MCP makes the AI see what the user sees.
-  
-  💡 Try it: Pick a UI bug from your backlog. Run `/dx-bug-triage <id>` and read the triage output. Even if you fix it manually, the investigation saves time.
-  
-  #AgenticAI #Day45
+slackOneLiner: "🤖 Tip #45 — Bug fixing is 80% investigation — let AI triage the ticket, visually verify the bug in Chrome, then fix and re-verify."
+keyPointsTitle: "The Three-Step Bug Flow"
+actionItemsTitle: "When to Use Each Step"
+keyPoints:
+  - "**Step 1 — Triage** (/dx-bug-triage) — Fetches the bug ticket from ADO, reads repro steps and expected vs actual behavior, searches the codebase for affected components, and saves a root cause hypothesis to triage.md."
+  - "**Step 2 — Verify** (/dx-bug-verify) — Opens Chrome DevTools MCP, navigates to the repro URL, follows repro steps (click, fill, navigate), takes screenshots at each step, and confirms whether the bug reproduces."
+  - "**Step 3 — Fix** (/dx-bug-fix) — Reads the triage findings, implements the fix, re-runs verification in Chrome, screenshots the fixed state, and produces a before/after comparison."
+  - "**Visual verification matters** — 'The hero component overlaps the nav on mobile' can't be verified by reading code. Chrome DevTools MCP makes the AI see what the user sees."
+actionItems:
+  - |
+    **Pick the right skill for your situation**
+    - /dx-bug-triage — investigation only, safe to run anytime
+    - /dx-bug-verify — confirms reproduction, still read-only
+    - /dx-bug-fix — implements changes, use on a feature branch
+  - "**Even partial use saves time** — Pick a UI bug, run /dx-bug-triage <id>, and read the investigation output. Even if you fix it manually, the automated triage saves significant investigation time."
+  - |
+    **Prerequisites**
+    - Chrome DevTools MCP must be configured for the visual verify and fix steps
+    - Bug ticket needs repro steps and expected vs actual behavior for best results
+    - Run on a feature branch when using /dx-bug-fix
 ---
-
-```
-# Bug workflow:
-/dx-bug-triage 54321
-# → Fetches bug from ADO
-# → Finds affected component
-# → Saves root cause hypothesis
-
-/dx-bug-verify
-# → Opens Chrome DevTools
-# → Follows repro steps
-# → Screenshots the bug
-
-/dx-bug-fix
-# → Implements the fix
-# → Re-verifies in Chrome
-# → Screenshots the fixed state
-```
