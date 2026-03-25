@@ -1,3 +1,10 @@
+# [2.71.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.70.0...v2.71.0) (2026-03-25)
+
+
+### Features
+
+* add allowInvocationsFromSubagents to VS Code settings via dx-sync ([fb40e5a](https://github.com/easingthemes/dx-aem-flow/commit/fb40e5ae16b2e3f23bd22b7dc6b725bbe4d57abe))
+
 # [2.70.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.69.0...v2.70.0) (2026-03-25)
 
 
