@@ -328,17 +328,22 @@ server.tool(
     await runAppleScript(SCRIPTS.focus);
     await new Promise(r => setTimeout(r, 300));
 
-    // Get the VS Code window ID
-    const winId = await runAppleScript(SCRIPTS.getWindowId);
-    if (!winId || !winId.trim()) {
-      throw new Error('Could not find VS Code window ID.');
+    // Get VS Code window bounds (position + size) for region recording
+    // Note: screencapture -l (window ID) is ignored in -V (video) mode,
+    // so we use -R (region) to capture just the VS Code window area
+    const boundsStr = await runAppleScript(
+      'tell application "System Events" to tell process "Code" to get {position, size} of front window'
+    );
+    const bounds = boundsStr.split(',').map(s => parseInt(s.trim(), 10));
+    if (bounds.length !== 4 || bounds.some(isNaN)) {
+      throw new Error(`Could not get VS Code window bounds. Got: ${boundsStr}`);
     }
+    const [x, y, w, h] = bounds;
 
     const duration = max_duration || 120;
 
-    // Spawn screencapture in video mode as background process
-    // -l must be concatenated with windowID (e.g., -l290722), not separate args
-    const proc = spawn('screencapture', [`-l${winId.trim()}`, '-V', String(duration), '-o', resolvedPath], {
+    // Use -R (region) since -l (window ID) is ignored in video mode
+    const proc = spawn('screencapture', ['-R', `${x},${y},${w},${h}`, '-V', String(duration), '-o', resolvedPath], {
       detached: true,
       stdio: 'ignore',
     });
