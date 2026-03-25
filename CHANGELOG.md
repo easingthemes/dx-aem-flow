@@ -1,3 +1,11 @@
+## [2.68.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.0...v2.68.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* deduplicate env var docs across setup pages ([836988d](https://github.com/easingthemes/dx-aem-flow/commit/836988d24d56c00d92fa8d7127b1de33c170edb2))
+* setup page uses correct AEM_INSTANCES env var format ([46eb73c](https://github.com/easingthemes/dx-aem-flow/commit/46eb73c280b1107421da967ba6acf54d0baf4bca))
+
 # [2.68.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.67.0...v2.68.0) (2026-03-25)
 
 
