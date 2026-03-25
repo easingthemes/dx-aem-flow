@@ -1,3 +1,15 @@
+# [2.73.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.2...v2.73.0) (2026-03-25)
+
+
+### Bug Fixes
+
+* remove `local` keyword used outside function in sync script ([f6d4a9f](https://github.com/easingthemes/dx-aem-flow/commit/f6d4a9fd503fa82366835f0994e93eecc4e1230f))
+
+
+### Features
+
+* add VS Code automator MCP server and demo-vscode skill ([935b1d9](https://github.com/easingthemes/dx-aem-flow/commit/935b1d954462b8833022bc4405a0a334039d27da))
+
 ## [2.72.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.1...v2.72.2) (2026-03-25)
 
 
