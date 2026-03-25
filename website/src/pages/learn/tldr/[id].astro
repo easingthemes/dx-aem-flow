@@ -2,7 +2,7 @@
 import SidebarLayout from '../../../layouts/SidebarLayout.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
-import SectionHeading from '../../../components/SectionHeading.astro';
+import CommandBlock from '../../../components/CommandBlock.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -15,68 +15,166 @@ export async function getStaticPaths() {
 
 const { tip } = Astro.props;
 const { Content } = await render(tip);
+const { title, order, week, category, overview, tags, focus, slackText, slackOneLiner, keyPoints, keyPointsTitle, actionItems, actionItemsTitle, screenshot } = tip.data;
+
+function parsePoint(text: string) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const main = lines[0];
+  const subs = lines.slice(1).filter(l => l.trim().startsWith('- ')).map(l => l.trim().slice(2));
+  const dashIdx = main.indexOf(' — ');
+  return { main, dashIdx, subs };
+}
 ---
 
-<SidebarLayout title={tip.data.title} sidebar="learn">
-  <PageHero title={tip.data.title} subtitle={`Day ${tip.data.order ?? '?'} · Week ${tip.data.week ?? '?'} · ${tip.data.category}`} />
+<SidebarLayout title={title} sidebar="learn">
+  <PageHero title={title} subtitle={`Day ${order ?? '?'} · Week ${week ?? '?'} · ${category}`} />
 
   <Section>
-    <!-- Meta badges -->
-    <div class="flex flex-wrap gap-2 mb-6">
-      {tip.data.order && (
-        <span class="inline-block px-3 py-1 bg-brand-700 text-white rounded text-xs font-mono font-bold">
-          #{tip.data.order}
-        </span>
-      )}
-      <span class="inline-block px-3 py-1 bg-brand-100 rounded text-xs font-semibold text-brand-700">
-        {tip.data.category}
-      </span>
-      {tip.data.focus && (
-        <span class="inline-block px-3 py-1 bg-cyan/10 rounded text-xs font-semibold text-cyan-dark">
-          {tip.data.focus}
-        </span>
-      )}
-      {tip.data.tags.map((tag) => (
-        <span class="inline-block px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-600">
-          {tag}
-        </span>
-      ))}
-    </div>
-
-    <!-- Overview -->
-    <div class="bg-brand-100 rounded p-5 mb-6">
-      <p class="text-[0.95rem] text-[#1a1a2e] leading-relaxed">{tip.data.overview}</p>
-    </div>
-
-    <!-- Main content (code examples, explanation) -->
-    <div class="prose prose-lg max-w-none mb-8">
-      <Content />
-    </div>
-
-    <!-- Slack message (copy-paste ready) -->
-    {tip.data.slackText && (
-      <div class="border border-gray-200 rounded-lg overflow-hidden">
+    <!-- Slack One-Liner -->
+    {slackOneLiner && (
+      <div class="border border-gray-200 rounded-lg overflow-hidden mb-8">
         <div class="flex justify-between items-center px-5 py-3 bg-gray-50 border-b border-gray-200">
           <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Slack Message — copy & paste</span>
           <button
-            id="copy-slack"
+            id="copy-oneliner"
             class="px-3 py-1 text-xs font-medium bg-brand-700 text-white rounded hover:bg-brand-500 transition-colors"
           >
             Copy
           </button>
         </div>
         <div class="p-5">
-          <pre id="slack-text" class="text-[0.8rem] text-gray-600 leading-relaxed whitespace-pre-wrap font-sans bg-transparent p-0 m-0">{tip.data.slackText}</pre>
+          <p id="oneliner-text" class="text-base text-gray-700 leading-relaxed font-medium">{slackOneLiner}</p>
         </div>
       </div>
     )}
 
-    <!-- Screenshot -->
-    {tip.data.screenshot && (
-      <div class="mt-6">
-        <img src={`${import.meta.env.BASE_URL}/${tip.data.screenshot}`} alt={`${tip.data.title} example`} class="rounded border border-gray-200 w-full" />
+    <!-- Two-Column Share Cards -->
+    {keyPoints && keyPoints.length > 0 && actionItems && actionItems.length > 0 && (
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Key Insight Card -->
+        <div class="border border-gray-200 rounded-lg bg-white p-5 flex flex-col">
+          <div class="flex flex-wrap gap-2 mb-3">
+            {order && (
+              <span class="inline-block px-3 py-1 bg-brand-700 text-white rounded text-xs font-mono font-bold">
+                #{order}
+              </span>
+            )}
+            {focus && (
+              <span class="inline-block px-3 py-1 bg-cyan/10 rounded text-xs font-semibold text-cyan-dark">
+                {focus}
+              </span>
+            )}
+          </div>
+          <h3 class="text-xl font-bold text-[#1a1a2e] mb-4">{keyPointsTitle || title}</h3>
+          <ul class="space-y-3 flex-1">
+            {keyPoints.map((point: string) => {
+              const { main, dashIdx, subs } = parsePoint(point);
+              return (
+                <li>
+                  <div class="flex items-start gap-2.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-700 mt-[7px] flex-shrink-0"></span>
+                    <span class="text-[0.9rem] text-gray-700 leading-[1.7]">
+                      {dashIdx > -1 ? (
+                        <><strong class="text-[#1a1a2e]">{main.slice(0, dashIdx)}</strong>{' — '}<span class="text-gray-600">{main.slice(dashIdx + 3)}</span></>
+                      ) : (
+                        <span class="text-gray-600">{main}</span>
+                      )}
+                    </span>
+                  </div>
+                  {subs.length > 0 && (
+                    <ul class="ml-6 mt-1.5 space-y-1">
+                      {subs.map((sub: string) => (
+                        <li class="flex items-start gap-2">
+                          <span class="text-brand-700 -mt-[3px] flex-shrink-0">›</span>
+                          <span class="text-[0.85rem] text-gray-500 leading-[1.6]">{sub}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {tags && tags.length > 0 && (
+            <div class="flex flex-wrap gap-2 pt-3 mt-4 border-t border-gray-100">
+              {tags.map((tag: string) => (
+                <span class="inline-block px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-600">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <!-- Try It Card -->
+        <div class="border border-gray-200 rounded-lg bg-white p-5 flex flex-col">
+          <div class="flex flex-wrap gap-2 mb-3">
+            {order && (
+              <span class="inline-block px-3 py-1 bg-brand-700 text-white rounded text-xs font-mono font-bold">
+                #{order}
+              </span>
+            )}
+            <span class="inline-block px-3 py-1 bg-brand-100 rounded text-xs font-semibold text-brand-700">
+              {category}
+            </span>
+          </div>
+          <h3 class="text-xl font-bold text-[#1a1a2e] mb-4">{actionItemsTitle || title}</h3>
+          <ol class="space-y-3 flex-1">
+            {actionItems.map((item: string, i: number) => {
+              const { main, dashIdx, subs } = parsePoint(item);
+              return (
+                <li>
+                  <div class="flex items-start gap-2.5">
+                    <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <span class="text-[0.9rem] text-gray-700 leading-[1.7]">
+                      {dashIdx > -1 ? (
+                        <><strong class="text-[#1a1a2e]">{main.slice(0, dashIdx)}</strong>{' — '}<span class="text-gray-600">{main.slice(dashIdx + 3)}</span></>
+                      ) : (
+                        <span class="text-gray-600">{main}</span>
+                      )}
+                    </span>
+                  </div>
+                  {subs.length > 0 && (
+                    <ul class="ml-[2.35rem] mt-1.5 space-y-1">
+                      {subs.map((sub: string) => (
+                        <li class="flex items-start gap-2">
+                          <span class="text-brand-700 -mt-[3px] flex-shrink-0">›</span>
+                          <span class="text-[0.85rem] text-gray-500 leading-[1.6]">{sub}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+          {tags && tags.length > 0 && (
+            <div class="flex flex-wrap gap-2 pt-3 mt-4 border-t border-gray-100">
+              {tags.map((tag: string) => (
+                <span class="inline-block px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-600">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     )}
+
+    <!-- Custom Screenshot Placeholder -->
+    <div class="mb-8">
+      {screenshot ? (
+        <img src={`${import.meta.env.BASE_URL}/${screenshot}`} alt={`${title} example`} class="rounded-xl border border-gray-200 w-full" />
+      ) : (
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center min-h-[180px] bg-gray-50/50">
+          <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span class="text-sm text-gray-400 font-medium">Your screenshot here</span>
+          <span class="text-xs text-gray-300 mt-1">Optional — add a screenshot from your own workflow</span>
+        </div>
+      )}
+    </div>
 
     <!-- Navigation -->
     <div class="mt-8 pt-4 border-t border-gray-200">
@@ -87,23 +185,26 @@ const { Content } = await render(tip);
   </Section>
 
   <script>
-    const btn = document.getElementById('copy-slack');
-    const text = document.getElementById('slack-text');
-    btn?.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(text?.textContent ?? '');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 2000);
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = text?.textContent ?? '';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 2000);
-      }
-    });
+    function setupCopy(btnId: string, textId: string) {
+      const btn = document.getElementById(btnId);
+      const text = document.getElementById(textId);
+      btn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(text?.textContent ?? '');
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy', 2000);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text?.textContent ?? '';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+      });
+    }
+    setupCopy('copy-oneliner', 'oneliner-text');
   </script>
 </SidebarLayout>
