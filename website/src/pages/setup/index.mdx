@@ -14,18 +14,17 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 
 <PageHero
   title="Setup"
-  subtitle="Four steps to get dx running in your project. Works with Claude Code CLI and GitHub Copilot CLI."
+  subtitle="Three steps to get dx running in your project. Works with Claude Code CLI and GitHub Copilot CLI."
 />
 
 <Section>
   <PipelineBlock
     label="Setup Flow"
-    description="Install plugins, configure project, teach the AI your conventions, then set up your CLI platform."
+    description="Install plugins, configure project, teach the AI your conventions."
     steps={[
       { title: 'Step 1', subtitle: 'Install\nPlugins', color: '#0891b2' },
       { title: 'Step 2', subtitle: 'Init +\nAdapt', color: '#8b5cf6' },
       { title: 'Step 3', subtitle: 'Scan\nProject', color: '#d97706' },
-      { title: 'Step 4', subtitle: 'Platform\nSetup', color: '#059669' },
     ]}
   />
 </Section>
@@ -191,46 +190,43 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
-{/* Step 4                                                                  */}
+{/* Platform Notes                                                          */}
 {/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
-  badge="Step 4"
-  badgeColor="secondary"
-  title="Platform Setup"
-  subtitle="Configure environment variables and MCP servers for your CLI platform."
+  badge="MCP"
+  badgeColor="info"
+  title="MCP Configuration"
+  subtitle="/dx-init creates .mcp.json with all MCP servers pre-configured. You only need to verify ADO authentication."
   bg="alt"
 />
 <Section>
-  <p class="text-sm text-gray-600 mb-4">
-    Both platforms use the same plugins and skills, but MCP server configuration and environment variable handling differ.
-    Follow the guide for your platform to complete the setup.
+  <HighlightBox severity="success" title="MCP Servers — Already Configured">
+    <code>/dx-init</code> creates <code>.mcp.json</code> with ADO, AEM, Figma, axe, and Chrome DevTools servers.
+    ADO MCP uses browser-based OAuth — on first use, it opens a browser to authenticate. No PAT needed.
+  </HighlightBox>
+
+  <p class="text-sm text-gray-600 mt-4 mb-4">
+    For platform-specific details (permissions, settings scope, Copilot CLI differences), see:
   </p>
 
   <div class="grid md:grid-cols-3 gap-4">
     <a href={`${import.meta.env.BASE_URL}/setup/claude-code/`} class="no-underline">
       <ContentCard icon="mdi:console" iconColor="bg-brand-700" title="Claude Code" horizontal>
-        MCP auto-configured via <code>.mcp.json</code>. Env vars in <code>.claude/settings.local.json</code> or shell profile.
-        Permissions, model tiering, attribution.
+        Permissions, MCP enablement, settings scope, attribution.
       </ContentCard>
     </a>
     <a href={`${import.meta.env.BASE_URL}/setup/copilot-cli/`} class="no-underline">
       <ContentCard icon="mdi:github" iconColor="bg-cyan-dark" title="Copilot CLI" horizontal>
-        MCP via <code>~/.copilot/mcp-config.json</code> (not project <code>.mcp.json</code>).
-        Env vars <strong>must</strong> be in shell profile — does not read <code>settings.local.json</code>.
+        Copilot needs its own MCP config at <code>{"~"}/.copilot/mcp-config.json</code> for ADO.
       </ContentCard>
     </a>
     <a href={`${import.meta.env.BASE_URL}/setup/scaffold/`} class="no-underline">
       <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="Standalone Scaffold" horizontal>
-        Node.js utility for setup without AI tools. For CI/CD, dev containers, or quick onboarding.
+        Node.js utility for setup without AI tools.
       </ContentCard>
     </a>
   </div>
-
-  <HighlightBox severity="warning" title="Don't Skip This Step">
-    Without platform-specific env vars and MCP configuration, skills that interact with ADO, Jira, AEM, or Figma
-    will not be able to connect. Your CLI platform page has the exact variables and configuration needed.
-  </HighlightBox>
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
