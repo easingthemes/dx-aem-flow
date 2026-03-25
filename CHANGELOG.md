@@ -1,3 +1,10 @@
+## [2.72.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.0...v2.72.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* escape tildes and backslashes in MDX code tags to fix website build ([4a4eb26](https://github.com/easingthemes/dx-aem-flow/commit/4a4eb2654a134685bc42f0b5c909059918ab21cc))
+
 # [2.72.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.71.0...v2.72.0) (2026-03-25)
 
 
