@@ -2,6 +2,12 @@
 name: DxReqAll
 description: Full requirements workflow — fetch ADO story, explain, research codebase, share plan, and generate checklist. Use to gather all requirements documents at once for a new story.
 argument-hint: "<ADO Work Item ID or URL>"
+tools:
+  - read
+  - codebase
+  - search
+  - agent
+agents: ['DxTicket', 'DxFigma', 'DxPlanExecutor']
 handoffs:
   - label: "Extract Figma design"
     agent: DxFigma
