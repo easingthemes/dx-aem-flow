@@ -1,3 +1,10 @@
+# [2.70.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.69.0...v2.70.0) (2026-03-25)
+
+
+### Features
+
+* add nested subagent support and dx-aem hooks for VS Code 1.113 + Copilot CLI 1.0.11 ([aec2810](https://github.com/easingthemes/dx-aem-flow/commit/aec2810ef4a41857ed210e1facbe02d30a5b3bb3))
+
 # [2.69.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.2...v2.69.0) (2026-03-25)
 
 
