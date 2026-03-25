@@ -1,7 +1,7 @@
 ---
 name: dx-estimate
-description: Analyze an Azure DevOps/Jira User Story and produce a structured estimation — understanding, implementation plan, recommended hours/SP, AEM pages affected, and open questions. Posts result as an ADO/Jira comment. Use when you want an AI-generated estimation for a story.
-argument-hint: "[ADO Work Item ID, Jira Issue Key, or full URL]"
+description: Analyze an Azure DevOps/Jira User Story and produce a structured estimation — understanding, implementation plan, recommended hours/SP, AEM pages affected, and open questions. Posts result as an ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. Use when you want an AI-generated estimation for a story.
+argument-hint: "<Work Item ID(s) — space-separated for batch>"
 disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
@@ -25,11 +25,37 @@ You are a coordinator. You do NOT implement anything yourself. You delegate each
 
 ## Argument
 
-The argument is the ADO work item ID — a numeric value (e.g., `2435084`).
+The argument is one or more ADO work item IDs — numeric values (e.g., `2435084`) or Jira issue keys, space-separated for batch mode.
 
 If the user provides a full ADO URL like `https://dev.azure.com/{org}/{project}/_workitems/edit/{id}`, extract the numeric ID.
 
-If no argument is provided, ask the user for the work item ID.
+If no argument is provided, ask the user for the work item ID(s).
+
+Parse the argument: split on whitespace to produce a list of IDs.
+
+### Single or batch?
+
+- If 1 ID: continue to "Execution Order" below
+- If 2+ IDs: continue to "Batch Mode"
+
+### Batch Mode
+
+For each ID, use the Agent tool to dispatch a subagent with prompt: `Run /dx-estimate <id>`
+
+Run all agents **in parallel**. Each subagent runs the full estimation flow independently (fetch → explain → research → synthesize → post ADO comment). Each produces its own spec files and ADO comment — identical output to running `/dx-estimate <id>` individually.
+
+After all agents complete, print a summary table:
+
+```markdown
+## Batch Estimation Summary
+
+| ID | Title | BE | FE | Auth | Total | SP | Questions | Status |
+|----|-------|----|----|------|-------|----|-----------|--------|
+| <id> | <title> | Xh | Xh | Xh | Xh | X | X | Posted |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+```
+
+Then STOP — do not continue to the single-ticket flow below.
 
 ## Execution Order
 
@@ -251,9 +277,11 @@ Use Bash to append — `echo '<json>' >> .ai/learning/raw/runs.jsonl`
 
 1. `/dx-estimate 2416553` — Fetches the story, distills requirements, researches the codebase, then synthesizes an estimation: BE 16h + FE 12h + Authoring 4h = 32h total, suggested SP: 8 (Fibonacci). Posts the estimation as an ADO comment with the `<!-- ai:role:estimation-agent -->` signature.
 
-2. `/dx-estimate 2416553 dry run` — Runs the same analysis but prints the estimation to stdout without posting to ADO. Useful for reviewing the estimate before committing it to the work item.
+2. `/dx-estimate 2416553 2416554 2416555` — Batch mode. Spawns parallel subagents, each running the full estimation flow. Each story gets its own spec files, ADO comment, and estimation. Prints a summary table at the end.
 
-3. `/dx-estimate 2435084` (re-run) — Finds existing spec files (raw-story.md, explain.md, research.md) from a previous run, skips regeneration, and updates the existing estimation comment (detected by signature) instead of creating a duplicate.
+3. `/dx-estimate 2416553 dry run` — Runs the same analysis but prints the estimation to stdout without posting to ADO. Useful for reviewing the estimate before committing it to the work item.
+
+4. `/dx-estimate 2435084` (re-run) — Finds existing spec files (raw-story.md, explain.md, research.md) from a previous run, skips regeneration, and updates the existing estimation comment (detected by signature) instead of creating a duplicate.
 
 ## Troubleshooting
 
