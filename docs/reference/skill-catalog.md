@@ -1,12 +1,12 @@
 # Skill Catalog
 
-## dx-core plugin — 43 skills
+## dx-core plugin — 44 skills
 
 ### Estimation — 1 skill
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-estimate | `/dx-estimate` | `<work-item-id or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. | ADO/Jira comment |
+| dx-estimate | `/dx-estimate` | `<work-item-id(s) or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
 
 ### Requirements + DoR — 5 skills
 
@@ -93,12 +93,13 @@
 |-------|-----------|----------|-------------|--------|
 | dx-sync | `/dx-sync` | `[--dry-run] [--parallel] [repo1 repo2 ...]` | Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options | Sync report |
 
-### Utility — 7 skills
+### Utility — 8 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-init | `/dx-init` | none (interactive) | Configure project — detect environment, generate .ai/config.yaml, README, rule templates | `.ai/` directory |
 | dx-adapt | `/dx-adapt` | `[aem-fullstack\|aem-frontend\|frontend]` | Auto-detect project type, structure, and build commands. Writes `project.type`, `project.role`, and `toolchain` section to `.ai/config.yaml` (derives role from type if not specified) and substitutes real values into `.claude/rules/`. Run after `dx-init` and `aem-init`. | `.ai/config.yaml` update |
+| dx-scan | `/dx-scan` | `[phase1\|phase2\|phase3\|all]` | Deep project scan — discover FE conventions (CSS vars, breakpoints, component patterns), BE conventions (Sling Models, dialog structure, test framework), and generate seed data (architecture.md, features.md, file-patterns.yaml, content-paths.yaml). Interactive — presents discoveries for confirmation before writing. Run after `dx-init` + `dx-adapt` + `aem-init`. | Updated `.claude/rules/` + `.ai/project/` seed data |
 | dx-doctor | `/dx-doctor` | `[dx\|aem\|seed-data\|auto\|all]` | Check health of all dx workflow files across installed plugins — config, rules, scripts, seed data, MCP, settings. Warns on stale `project.yaml` files (deprecated — fields now live in `config.yaml`). | Status report |
 | dx-upgrade | `/dx-upgrade` | `[dx\|aem\|auto\|all]` | Fix all issues found by dx-doctor — updates stale files, installs missing files, reports manual actions. Migrates legacy `project.yaml` fields into `config.yaml` (Step 1b). | Upgrade report |
 | dx-ticket-analyze | `/dx-ticket-analyze` | `<work-item-id or URL>` | Research ADO/Jira ticket, find all relevant source files | Research report |
