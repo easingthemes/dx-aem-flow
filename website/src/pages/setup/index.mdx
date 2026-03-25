@@ -88,21 +88,24 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 
   <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-6">Run these commands in order:</h3>
 
-  <div class="grid md:grid-cols-3 gap-4">
+  <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="/dx-init">
       Core initialization — creates <code>.ai/config.yaml</code>, convention rules, MCP config, agent templates, shared scripts. Interactive — asks about your ADO/Jira project, build commands, and base branch.
+      If it detects an AEM project, automatically runs <code>/aem-init</code> to append the <code>aem:</code> section, install BE/FE rules by project role, and auto-generate <code>component-index.md</code> via AEM MCP.
     </ContentCard>
-    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-amber-500" title="/aem-init (AEM only)">
-      AEM-specific setup — detects component structure, appends <code>aem:</code> section to config, installs BE/FE rules by project role, auto-generates <code>component-index.md</code> via AEM MCP.
-    </ContentCard>
-    <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-cyan" title="/dx-adapt">
+    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-cyan" title="/dx-adapt">
       Auto-detects project type (<code>aem-fullstack</code>, <code>aem-frontend</code>, etc.), toolchain (Node version, build tool, CSS compiler), and writes <code>project.type</code>, <code>project.role</code>, and <code>toolchain:</code> to config.
     </ContentCard>
   </div>
 
-  <CommandBlock label="Typical AEM project setup">{`/dx-init                    # Core config + rules + MCP
-/aem-init                   # AEM structure detection + component index
+  <CommandBlock label="Setup">{`/dx-init                    # Core config + rules + MCP (chains to /aem-init for AEM projects)
+/aem-init                   # Only if not already run as part of /dx-init
 /dx-adapt                   # Project type + toolchain auto-detection`}</CommandBlock>
+
+  <HighlightBox severity="info" title="/aem-init">
+    <code>/dx-init</code> automatically chains to <code>/aem-init</code> when it detects an AEM project.
+    Run <code>/aem-init</code> separately only if you skipped it during init or are adding AEM support to an existing project.
+  </HighlightBox>
 
   <div class="overflow-x-auto mt-6">
     <h3 class="text-base font-semibold text-brand-900 mb-2">What gets created</h3>
