@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
