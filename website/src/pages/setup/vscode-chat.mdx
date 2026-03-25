@@ -36,7 +36,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:store" iconColor="bg-brand-700" title="Marketplace Install (Recommended)" tags={[{ label: 'New in VS Code 1.110+', color: 'info' }]}>
-      VS Code clones the plugin repo into <code>~/Library/Application Support/Code/agentPlugins/</code>
+      VS Code clones the plugin repo into <code>{"~/Library/Application Support/Code/agentPlugins/"}</code>
       (macOS) and reads <code>marketplace.json</code> to discover all plugins. Full plugin support:
       agents, skills, hooks, MCP servers, instructions, and prompts.
 
@@ -213,9 +213,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3">macOS</td><td class="py-2 px-3"><code>~/Library/Application Support/Code/agentPlugins/github.com/&#123;owner&#125;/&#123;repo&#125;/</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3">Windows</td><td class="py-2 px-3"><code>%APPDATA%\Code\agentPlugins\github.com\&#123;owner&#125;\&#123;repo&#125;\</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3">Linux</td><td class="py-2 px-3"><code>~/.config/Code/agentPlugins/github.com/&#123;owner&#125;/&#123;repo&#125;/</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">macOS</td><td class="py-2 px-3"><code>{"~/Library/Application Support/Code/agentPlugins/github.com/{owner}/{repo}/"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">Windows</td><td class="py-2 px-3"><code>{"%APPDATA%\\Code\\agentPlugins\\github.com\\{owner}\\{repo}\\"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">Linux</td><td class="py-2 px-3"><code>{"~/.config/Code/agentPlugins/github.com/{owner}/{repo}/"}</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -230,8 +230,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Claude Code CLI</td><td class="py-2 px-3"><code>~/.claude/plugins/</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Copilot CLI</td><td class="py-2 px-3"><code>~/.copilot/state/installed-plugins/</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Claude Code CLI</td><td class="py-2 px-3"><code>{"~/.claude/plugins/"}</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Copilot CLI</td><td class="py-2 px-3"><code>{"~/.copilot/state/installed-plugins/"}</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">VS Code Chat</td><td class="py-2 px-3"><code>agentPlugins/</code> (see above)</td><td class="py-2 px-3"><code>chat.plugins.marketplaces</code> setting</td></tr>
       </tbody>
     </table>
