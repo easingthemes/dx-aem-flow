@@ -104,7 +104,7 @@ import { stats } from '../../config/stats';
       </thead>
       <tbody>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Interface</td><td class="py-2 px-3">Terminal</td><td class="py-2 px-3">Terminal</td><td class="py-2 px-3">IDE chat panel</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">KAI plugins</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">No plugin system</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">KAI plugins</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">Native</td><td class="py-2 px-3">Agent Plugins (1.110+)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Skills</td><td class="py-2 px-3">78 via /dx-&#42;</td><td class="py-2 px-3">78 via /dx-&#42;</td><td class="py-2 px-3">38 of 78 (via settings)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Agents</td><td class="py-2 px-3">13 (plugin agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td><td class="py-2 px-3">25 (.github/agents/)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">MCP servers</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.vscode/mcp.json</td></tr>
@@ -152,7 +152,7 @@ import { stats } from '../../config/stats';
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Skills (SKILL.md)</td><td class="py-2 px-3">Plugin auto-discover</td><td class="py-2 px-3">Plugin auto-discover</td><td class="py-2 px-3">via settings path</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">MCP Servers</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.mcp.json + plugin</td><td class="py-2 px-3">.vscode/mcp.json</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">CLAUDE.md</td><td class="py-2 px-3">Native + nested + @import</td><td class="py-2 px-3">Read (flat only)</td><td class="py-2 px-3">Optional (chat.useClaudeMdFile)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Plugin manifest</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">--</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Plugin manifest</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">Same file</td><td class="py-2 px-3">Same file (1.110+)</td></tr>
       </tbody>
     </table>
   </div>
@@ -225,8 +225,21 @@ import { stats } from '../../config/stats';
     </ContentCard>
   </div>
 
-  <HighlightBox severity="success" title="Setup -- Key Settings">
-    Add to <code>.vscode/settings.json</code> to expose plugin skills and enable nested agent orchestration:
+  <HighlightBox severity="success" title="Setup -- Marketplace Install (Recommended)">
+    Since VS Code 1.110, you can install plugins directly from the marketplace — the same
+    <code>marketplace.json</code> used by Claude Code and Copilot CLI. Add to your VS Code
+    <strong>User</strong> Settings:
+    <CommandBlock label="VS Code User Settings">{`"chat.plugins.marketplaces": [
+  "easingthemes/dx-aem-flow"
+]`}</CommandBlock>
+    Then open Extensions → search <code>@agentPlugins</code> → install <strong>dx-core</strong> and <strong>dx-aem</strong>.
+    This gives you the full plugin experience: agents, skills, hooks, MCP servers, instructions, and prompts.
+    See the <a href={`${import.meta.env.BASE_URL}/setup/vscode-chat/`}>VS Code Chat setup guide</a> for details.
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="Alternative -- Manual Settings">
+    If you prefer not to use the marketplace, add to <code>.vscode/settings.json</code> to expose
+    plugin skills directly:
     <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
   ".claude/skills": true,
   "dx-aem-flow/dx/plugins/dx-core/skills": true,
@@ -236,6 +249,7 @@ import { stats } from '../../config/stats';
     The subagent setting (VS Code 1.113+) lets coordinator agents like DxAgentAll dispatch subagents
     programmatically. Without it, nested orchestration is disabled.
     <code>/dx-sync</code> configures this automatically for consumer projects.
+    This approach only exposes skills — agents, hooks, and MCP servers from the plugin are not loaded.
   </HighlightBox>
 
   <div class="overflow-x-auto mt-4">
