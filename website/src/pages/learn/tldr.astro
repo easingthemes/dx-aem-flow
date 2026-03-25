@@ -22,16 +22,7 @@ const weekLabels: Record<number, string> = {
   8: 'Skills — Advanced',
   9: 'Agents — AI Personas',
   10: 'Agents — AI Personas',
-  11: 'MCP — System Integration',
-  12: 'MCP — System Integration',
-  13: 'Hooks — Guardrails',
-  14: 'Hooks — Guardrails',
-  15: 'Plugins — Full Package',
-  16: 'Plugins — Full Package',
-  17: 'Real-World Workflows',
-  18: 'Real-World Workflows',
-  19: 'Mastery',
-  20: 'Mastery',
+  11: 'Plugins & Mastery',
 };
 
 // Group by weekLabel
@@ -53,10 +44,13 @@ const base = import.meta.env.BASE_URL;
     subtitle="One tip per day. From basics to production patterns. Built from 78 skills and 3 plugins."
   />
 
-  {Object.entries(grouped).map(([weekLabel, weekTips], groupIdx) => (
+  {Object.entries(grouped).map(([weekLabel, weekTips], groupIdx) => {
+    const weeks = [...new Set(weekTips.map(t => t.data.week))].sort((a, b) => (a ?? 0) - (b ?? 0));
+    const weekBadge = weeks.length > 1 ? `Weeks ${weeks[0]}–${weeks[weeks.length - 1]}` : `Week ${weeks[0] ?? '?'}`;
+    return (
     <>
       <SectionHeading
-        badge={`Week ${weekTips[0]?.data.week ?? '?'}`}
+        badge={weekBadge}
         badgeColor={badgeColors[groupIdx % badgeColors.length]}
         title={weekLabel}
         subtitle={`${weekTips.length} tips`}
@@ -79,5 +73,6 @@ const base = import.meta.env.BASE_URL;
         </ul>
       </Section>
     </>
-  ))}
+  );
+  })}
 </SidebarLayout>
