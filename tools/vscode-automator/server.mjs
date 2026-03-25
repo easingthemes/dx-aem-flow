@@ -337,7 +337,8 @@ server.tool(
     const duration = max_duration || 120;
 
     // Spawn screencapture in video mode as background process
-    const proc = spawn('screencapture', ['-l', winId.trim(), '-V', String(duration), '-o', resolvedPath], {
+    // -l must be concatenated with windowID (e.g., -l290722), not separate args
+    const proc = spawn('screencapture', [`-l${winId.trim()}`, '-V', String(duration), '-o', resolvedPath], {
       detached: true,
       stdio: 'ignore',
     });
