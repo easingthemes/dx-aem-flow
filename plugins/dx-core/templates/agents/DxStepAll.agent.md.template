@@ -2,6 +2,12 @@
 name: DxStepAll
 description: Autonomous execution loop — runs step (includes test, review, commit) for each plan step, with step-fix for failures. Use to execute the full plan hands-free.
 argument-hint: "<optional: step number to start from>"
+tools:
+  - read
+  - codebase
+  - search
+  - agent
+agents: ['DxCodeReview', 'DxCommit', 'DxDebug']
 handoffs:
   - label: "Review all changes"
     agent: DxCodeReview

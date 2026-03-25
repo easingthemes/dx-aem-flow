@@ -174,9 +174,52 @@ import { stats } from '../../config/stats';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>isolation</code></td><td class="py-2 px-4">Run in worktree</td><td class="py-2 px-4"><code>worktree</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>maxTurns</code></td><td class="py-2 px-4">Conversation turn limit</td><td class="py-2 px-4"><code>10, 20, 50</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>user-invocable</code></td><td class="py-2 px-4">Can user call directly?</td><td class="py-2 px-4"><code>true / false</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agents</code></td><td class="py-2 px-4">Subagent allowlist (Copilot/VS Code)</td><td class="py-2 px-4"><code>['AgentA', 'AgentB'] / '*'</code></td></tr>
       </tbody>
     </table>
   </div>
+</Section>
+
+<SectionHeading
+  badge="1.113+"
+  badgeColor="warning"
+  title="Nested Subagents"
+  subtitle="VS Code 1.113 allows agents to spawn other agents -- enabling multi-level orchestration."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:sitemap" iconColor="bg-brand-700" title="How It Works">
+      Agents declare <code>tools: ['agent']</code> and an <code>agents:</code> field listing which
+      subagents they can invoke. The parent dispatches work programmatically -- the LLM decides
+      when to spawn a subagent based on the task.
+      <CommandBlock label="Coordinator agent frontmatter">{`tools:
+  - read
+  - codebase
+  - agent           # required for nesting
+agents: ['DxCodeReview', 'DxCommit', 'DxDebug']`}</CommandBlock>
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="User Setting Required">
+      Nested subagents are <strong>off by default</strong>. Users must enable:
+      <CommandBlock label="VS Code settings.json">{`"chat.subagents.allowInvocationsFromSubagents": true`}</CommandBlock>
+      This prevents infinite recursion while allowing deep orchestration when intended.
+      Our coordinator agents (DxAgentAll, DxBugAll, DxStepAll) now include <code>agents:</code> fields
+      to leverage this when enabled.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="agents: vs handoffs:">
+    <code>agents:</code> enables <strong>programmatic dispatch</strong> -- the LLM autonomously decides when to call subagents.
+    <code>handoffs:</code> creates <strong>UI buttons</strong> -- the user clicks to transition. Both can coexist in the same agent.
+    Our coordinator templates use both: <code>agents:</code> for autonomous orchestration, <code>handoffs:</code> for manual navigation.
+  </HighlightBox>
+
+  <HighlightBox severity="warning" title="Model Fallback Arrays (VS Code 1.113+)">
+    The <code>model:</code> field now accepts an array for prioritized fallback:
+    <code>model: ['claude-opus-4-5', 'claude-sonnet-4-5']</code>.
+    Tries the first available model, then falls back. Only relevant for Copilot/VS Code Chat (multi-provider).
+    Claude Code continues to use tier aliases (<code>opus</code>, <code>sonnet</code>, <code>haiku</code>).
+  </HighlightBox>
 </Section>
 
 <SectionHeading

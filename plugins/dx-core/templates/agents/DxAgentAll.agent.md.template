@@ -2,6 +2,12 @@
 name: DxAgentAll
 description: Full pipeline from ADO story to executed code. Runs requirements, planning, execution, build, review, commit, and PR in sequence. Use for end-to-end story implementation.
 argument-hint: "<ADO Work Item ID or URL>"
+tools:
+  - read
+  - codebase
+  - search
+  - agent
+agents: ['DxReqAll', 'DxPlanExecutor', 'DxStepAll', 'DxCodeReview', 'DxCommit', 'DxDebug', 'DxFigma']
 handoffs:
   - label: "Review all changes"
     agent: DxCodeReview

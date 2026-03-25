@@ -133,6 +133,46 @@ import { stats } from '../../config/stats';
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
+{/* v1.0.11 Features                                                        */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="v1.0.11"
+  badgeColor="success"
+  title="What's New in v1.0.11"
+  subtitle="Key improvements for plugin-based workflows."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:folder-network" iconColor="bg-emerald-600" title="Monorepo Discovery">
+      Skills, agents, MCP servers, and custom instructions are now discovered at <strong>every directory level</strong>
+      from the working directory up to the git root. Users in <code>monorepo/apps/frontend/</code> automatically
+      find <code>.github/agents/</code> installed at the repo root by <code>/dx-init</code>.
+    </ContentCard>
+    <ContentCard icon="mdi:merge" iconColor="bg-cyan" title="Hook Merging">
+      Hooks from multiple extensions now <strong>merge</strong> instead of overwriting. dx-core and dx-aem can each
+      contribute their own hooks without conflict. SessionStart <code>additionalContext</code> is injected into the
+      conversation context.
+    </ContentCard>
+    <ContentCard icon="mdi:account" iconColor="bg-brand-700" title="Personal Skills Directory">
+      <code>~/.agents/skills/</code> is now a personal skill discovery directory (aligning with VS Code Chat).
+      Use it for individual developer customizations that don't belong in the shared repo.
+    </ContentCard>
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="Session Management">
+      <code>/clear</code> abandons the session entirely. <code>/new</code> starts a fresh conversation while keeping
+      the old session backgrounded. Both accept an optional prompt. <code>/cd</code> now keeps a separate working
+      directory per session, restored when switching.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Atlassian MCP OAuth">
+    MCP OAuth authentication now works with the Atlassian Rovo MCP Server (Dynamic Client Registration with
+    non-standard auth metadata URLs). Teams using Jira/Confluence via MCP should see smoother setup.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
 {/* Differences                                                             */}
 {/* ════════════════════════════════════════════════════════════════════════ */}
 

@@ -96,6 +96,34 @@ import CommandBlock from '../../components/CommandBlock.astro';
 </Section>
 
 <SectionHeading
+  badge="v1.0.11"
+  badgeColor="success"
+  title="Hook Merging (Copilot CLI v1.0.11+)"
+  subtitle="Multiple plugins can contribute hooks without overwriting each other."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:merge" iconColor="bg-emerald-600" title="Multi-Plugin Hooks">
+      Before v1.0.11, if both dx-core and dx-aem defined hooks, one would overwrite the other.
+      Now hooks from multiple extensions <strong>merge</strong> -- each plugin contributes its own hooks
+      and they all fire correctly.
+    </ContentCard>
+    <ContentCard icon="mdi:chat-processing" iconColor="bg-cyan" title="SessionStart Context Injection">
+      SessionStart hook <code>additionalContext</code> is now injected into the conversation.
+      Our <code>session-start.sh</code> and <code>next-step.sh</code> hooks now surface active specs
+      and pending steps in Copilot CLI sessions -- previously this context was lost.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="What This Means for KAI">
+    dx-core owns general hooks (branch guard, subagent log, Figma screenshots).
+    dx-aem now has its own <code>hooks.json</code> for AEM-specific hooks (Chrome DevTools screenshots).
+    Both plugins' hooks fire in the same session without conflict.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="When to Use"
   badgeColor="info"
   title="When to Use Hooks vs Skills"

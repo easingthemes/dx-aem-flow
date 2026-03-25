@@ -38,8 +38,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Tools format</td><td class="py-2 px-4"><code>Read, Glob, Grep, Bash</code></td><td class="py-2 px-4"><code>read, search, codebase, agent</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">MCP format</td><td class="py-2 px-4"><code>mcp__server__tool_name</code></td><td class="py-2 px-4"><code>'server/tool_name'</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Model</td><td class="py-2 px-4"><code>sonnet / opus / haiku</code></td><td class="py-2 px-4">Full model string or array</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Sub-agents</td><td class="py-2 px-4">Flat (no nesting)</td><td class="py-2 px-4"><code>agents:</code> field</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Sub-agents</td><td class="py-2 px-4">Flat (Task tool)</td><td class="py-2 px-4"><code>agents:</code> field (nested, VS Code 1.113+)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Handoffs</td><td class="py-2 px-4">N/A</td><td class="py-2 px-4"><code>handoffs:</code> buttons</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Model format</td><td class="py-2 px-4"><code>sonnet / opus / haiku</code></td><td class="py-2 px-4">String or array (fallback chain)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Memory</td><td class="py-2 px-4"><code>memory: project</code></td><td class="py-2 px-4">Not supported</td></tr>
       </tbody>
     </table>
@@ -225,8 +226,9 @@ isolation: worktree        # Isolated git worktree
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model: opus</code></td><td class="py-2 px-4">Omit (VS Code selects model)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools: Read, Glob, Grep, Bash</code></td><td class="py-2 px-4"><code>tools: [read, search, search/codebase]</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>mcp__ado__search_code</code></td><td class="py-2 px-4"><code>'ado/search_code'</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Task tool delegation</td><td class="py-2 px-4"><code>agents: ['sub-agent-name']</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Task tool delegation</td><td class="py-2 px-4"><code>agents: ['sub-agent-name']</code> + <code>tools: [agent]</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>ToolSearch("+AEM")</code></td><td class="py-2 px-4">Remove -- Copilot auto-loads MCP tools</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model: opus</code></td><td class="py-2 px-4"><code>model: ['claude-opus-4-5', 'claude-sonnet-4-5']</code> (fallback array)</td></tr>
       </tbody>
     </table>
   </div>
