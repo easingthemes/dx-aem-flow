@@ -909,7 +909,7 @@ else
     # Use worktree for git operations, original path for --no-git mode
     WORK_PATH="$C_PATH"
     WT_PATH="/tmp/dx-sync-$(basename "$C_PATH")"
-    local wt_marker="/tmp/dx-sync-wtpath-$(basename "$C_PATH")"
+    wt_marker="/tmp/dx-sync-wtpath-$(basename "$C_PATH")"
 
     if ! $NO_GIT; then
       rm -f "$wt_marker"
