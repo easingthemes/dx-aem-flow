@@ -4,59 +4,30 @@ category: "Plugins — Full Package"
 focus: "Claude Code"
 tags: ["Settings","Per-Project","local.md"]
 overview: "Plugins need different settings per project — different AEM URLs, different markets, different build commands. The pattern: .claude/plugin-name.local.md with YAML frontmatter. It's gitignored (per-project), loaded by the plugin, and separates config from code."
-codeLabel: "Per-project plugin config"
 screenshot: null
 week: 8
 weekLabel: "Skills — Advanced"
 order: 39
-slackText: |
-  🤖 Agentic AI Tip #39 — Plugin Settings: Per-Project Config
-  
-  A plugin that works the same way in every project isn't very useful. Real projects have different URLs, different markets, different conventions.
-  
-  *The pattern:*
-  `.claude/<plugin-name>.local.md` — a per-project config file with YAML frontmatter.
-  
-  ```yaml
-  ---
-  aem:
-    author-url: http://localhost:4502
-    author-url-qa: https://qa-author.example.com
-    active-markets: [gb, de, fr]
-  ---
-  ```
-  
-  *Why .local.md?*
-  • `.local` = gitignored (project-specific, not committed)
-  • `.md` = can include both structured YAML and free-text notes
-  • Plugin reads the YAML for settings, ignores the markdown
-  
-  *What goes in plugin settings:*
-  • Environment URLs (local, QA, staging)
-  • Market/locale scoping
-  • Feature flags
-  • API endpoints
-  • Credentials references (point to env vars, never store secrets)
-  
-  *What does NOT go here:*
-  • Secrets (use environment variables)
-  • Shared team conventions (use `.ai/config.yaml`)
-  • Temporary state (use spec directory files)
-  
-  💡 Try it: Check if your project has any `.claude/*.local.md` files. If you're using plugins, configure the per-project settings.
-  
-  #AgenticAI #Day39
+slackOneLiner: "🤖 Tip #39 — Use `.claude/<plugin-name>.local.md` for per-project plugin settings — gitignored YAML frontmatter that separates config from code."
+keyPointsTitle: "The Three Config Layers"
+actionItemsTitle: "What Goes Where"
+keyPoints:
+  - "**`.claude/<plugin-name>.local.md`** — Per-project config with YAML frontmatter. The plugin reads the YAML for settings and ignores the markdown body. `.local` means gitignored, `.md` means it can include free-text notes."
+  - "**`.ai/config.yaml`** — Shared team conventions that get committed. Build commands, branch names, project structure — everything the team agrees on."
+  - "**Spec directory files** — Temporary per-ticket state in `.ai/specs/<id>/`. Created during work, discarded after merge."
+  - "**Why three layers** — Team conventions are shared (config.yaml). Developer preferences are local (local.md). Ticket context is temporary (spec files). Each has a different lifecycle and audience."
+actionItems:
+  - |
+    **What goes in plugin settings (.local.md)**
+    - `aem.author-url` — http://localhost:4502
+    - `aem.author-url-qa` — https://qa-author.example.com
+    - `aem.active-markets` — [gb, de, fr]
+    - `aem.demo-parent-path` — /content/brand-a/gb/en
+  - |
+    **What does NOT go here**
+    - Secrets — use environment variables, never store directly
+    - Shared team conventions — use `.ai/config.yaml` instead
+    - Temporary state — use spec directory files
+  - "**Never store secrets directly** — Reference environment variables instead (e.g., `auth-token: $AEM_AUTH_TOKEN`). The .local.md file is gitignored but secrets still shouldn't be in plain text."
+  - "**Check your project** — Look for `.claude/*.local.md` files. If you're using plugins but don't have these, you may be missing per-project configuration."
 ---
-
-```
-# .claude/dx-aem.local.md
----
-aem:
-  author-url: http://localhost:4502
-  author-url-qa: https://qa-author.example.com
-  active-markets: [gb, de, fr]
-  demo-parent-path: /content/brand-a/gb/en
----
-
-Additional notes for this project...
-```

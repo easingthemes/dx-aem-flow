@@ -4,51 +4,25 @@ category: "Hooks — Guardrails"
 focus: "Claude Code"
 tags: ["PreToolUse","Block","Safety"]
 overview: "PreToolUse hooks fire before the AI executes a tool call. If the hook exits with non-zero, the tool call is blocked. This is how you prevent dangerous operations: committing on protected branches, force-pushing, deleting production resources. Prevention beats recovery."
-codeLabel: "Branch protection"
 screenshot: null
 week: 7
 weekLabel: "Skills — Advanced"
 order: 33
-slackText: |
-  🤖 Agentic AI Tip #33 — PreToolUse: Block Before It Happens
-  
-  The most valuable type of hook: preventing mistakes before they happen.
-  
-  *How it works:*
-  When the AI is about to run a tool (like Bash with `git commit`), the PreToolUse hook fires first. If the hook exits with code 1, the tool call is *blocked*. The AI gets the error message and must find another approach.
-  
-  *Real example — branch protection:*
-  ```json
-  {
-    "event": "PreToolUse",
-    "matcher": "Bash(git commit*)",
-    "command": "./scripts/check-branch.sh"
-  }
-  ```
-  
-  The script checks the current branch. If it's `main`, `master`, `development`, or `develop`, it blocks the commit with a clear message.
-  
-  *Why a hook instead of just telling the AI "don't commit on main"?*
-  Because instructions get forgotten in long sessions. Context windows compress. Conventions drift. But hooks are *structural* — they can't be overridden by context loss.
-  
-  *Other PreToolUse patterns:*
-  • Block `git push --force` to any branch
-  • Block `rm -rf` on project directories
-  • Block MCP calls to production environments
-  • Validate file paths before write operations
-  
-  💡 Try it: Add a branch protection hook. Test it by asking the AI to commit on `main`. Watch it get blocked gracefully.
-  
-  #AgenticAI #Day33
+slackOneLiner: "🤖 Tip #33 — PreToolUse hooks block dangerous operations before they happen. Instructions get forgotten; hooks are structural."
+keyPointsTitle: "How Prevention Works"
+actionItemsTitle: "Patterns to Implement"
+keyPoints:
+  - "PreToolUse fires before any tool call — if the hook exits with code 1, the tool call is blocked. The AI gets the error message and must find another approach."
+  - "**Branch protection example** — hook matches `Bash(git commit*)`, script checks current branch, blocks if it's main/master/development/develop with a clear message."
+  - "**Why a hook instead of instructions** — instructions get forgotten in long sessions. Context windows compress. Conventions drift. Hooks are structural and can't be overridden by context loss."
+actionItems:
+  - |
+    Common PreToolUse patterns for real risks
+    - Block `git push --force` to any branch
+    - Block `rm -rf` on project directories
+    - Block MCP calls to production environments
+    - Validate file paths before write operations
+  - "Add a branch protection hook — test it by asking the AI to commit on `main` and watch it get blocked gracefully"
+  - "List the 3 most dangerous commands for your project and write a PreToolUse matcher for each"
+  - "Keep hook scripts simple — check one thing, exit 0 (allow) or exit 1 (block with message). Complex scripts slow down every tool call."
 ---
-
-```
-# scripts/check-branch.sh
-#!/bin/bash
-BRANCH=$(git branch --show-current)
-if [[ "$BRANCH" =~ ^(main|master|development|develop)$ ]]; then
-  echo "BLOCKED: Cannot commit on $BRANCH"
-  exit 1
-fi
-exit 0
-```

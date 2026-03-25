@@ -14,6 +14,11 @@ const tips = defineCollection({
     weekLabel: z.string().optional(),
     order: z.number().optional(),
     slackText: z.string().optional(),
+    slackOneLiner: z.string().optional(),
+    keyPoints: z.array(z.string()).optional(),
+    keyPointsTitle: z.string().optional(),
+    actionItems: z.array(z.string()).optional(),
+    actionItemsTitle: z.string().optional(),
   }),
 });
 

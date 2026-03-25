@@ -4,45 +4,29 @@ category: "Meet Your AI Tools"
 focus: "All Tools"
 tags: ["Prompting","Specificity","Context"]
 overview: 'The difference between a useful AI response and a useless one is almost always in the prompt. "Fix this" gives you generic suggestions. "Fix the null pointer in handleSubmit when user.email is undefined on line 47" gives you working code. Specificity beats cleverness.'
-codeLabel: "Prompt comparison"
 screenshot: null
 week: 1
 weekLabel: "Meet Your AI Tools"
 order: 5
-slackText: |
-  🤖 Agentic AI Tip #5 — Ask the Right Question
-  
-  The #1 skill that separates effective AI users from frustrated ones: specificity.
-  
-  *Bad prompts:*
-  • "Fix this bug"
-  • "Make it faster"
-  • "Refactor the code"
-  
-  *Good prompts:*
-  • "Fix the null pointer in handleSubmit (login.js:47) when user.email is undefined — add a null check before the API call"
-  • "The user list page loads in 3s. Profile the component renders, identify unnecessary re-renders, and memoize the expensive computations"
-  • "Refactor the auth middleware to extract the JWT validation into a separate utility — we need it in the WebSocket handler too"
-  
-  The pattern: *what + where + why + how.*
-  
-  What's broken/needed, where in the code, why it matters, and what approach you're thinking. You don't need all four every time, but the more context you give, the better the response.
-  
-  One more trick: include error messages verbatim. Copy-paste the stack trace. AI is remarkably good at parsing error output.
-  
-  💡 Try it: Next time you get a bad response, re-ask with the file path, line number, and expected behavior.
-  
-  #AgenticAI #Day5
+slackOneLiner: "🤖 Tip #5 — The #1 skill separating effective AI users from frustrated ones is specificity. Say what, where, why, and how."
+keyPointsTitle: "The What/Where/Why/How Pattern"
+keyPoints:
+  - "Specificity is everything — 'Fix this bug' gets generic suggestions, 'Fix the null pointer in handleSubmit (login.js:47) when user.email is undefined' gets working code."
+  - |
+    The pattern — four elements that transform prompts
+    - What — what's broken or what you need
+    - Where — file path, line number, component name
+    - Why — user impact, dependency, urgency
+    - How — suggested fix direction or approach
+  - "Include error messages verbatim — copy-paste the stack trace. AI is remarkably good at parsing error output."
+  - "You don't need all four elements every time — but the more context you give, the better the response."
+actionItemsTitle: "Bad Prompts vs Good Prompts"
+actionItems:
+  - |
+    Side-by-side comparison
+    - 'Fix this bug' → 'Fix the null pointer in handleSubmit (login.js:47) when user.email is undefined — add a null check before the API call'
+    - 'Make it faster' → 'The user list page loads in 3s. Profile the component renders, identify unnecessary re-renders, and memoize the expensive computations'
+    - 'Refactor the code' → 'Refactor the auth middleware to extract JWT validation into a separate utility — we need it in the WebSocket handler too'
+  - "Next time you get a bad AI response, re-ask with the file path, line number, and expected behavior — compare the difference"
+  - "Always copy-paste error messages and stack traces verbatim into your prompt instead of paraphrasing them"
 ---
-
-```
-# Bad prompt
-"Fix the bug"
-
-# Good prompt
-"In src/auth/login.js line 47,
- handleSubmit throws when user.email
- is undefined. Add a null check before
- the API call and show a validation
- error to the user."
-```

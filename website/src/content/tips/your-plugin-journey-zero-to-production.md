@@ -4,60 +4,33 @@ category: "Mastery"
 focus: "All Tools"
 tags: ["Journey","Evolution","Production"]
 overview: "You don't build a plugin in a day. Start with one skill solving one pain point. Add an agent when you need a different model tier. Add hooks when you need guardrails. Add MCP when you need external systems. Bundle as a plugin when 2+ projects need the same tools. Our plugins evolved over months, not days."
-codeLabel: "Plugin evolution"
 screenshot: null
 week: 11
 weekLabel: "MCP — System Integration"
 order: 51
-slackText: |
-  🤖 Agentic AI Tip #51 — Your Plugin Journey: Zero to Production
-  
-  You've made it to Day 50! Here's the meta-lesson from building 69 skills across 4 plugins.
-  
-  *Don't plan a plugin. Grow one.*
-  
-  *Month 1: Solve one pain point*
-  Create a single skill that saves you 10 minutes per day. A build checker, a component verifier, a convention reminder. One file. Done.
-  
-  *Month 2: Add related skills*
-  As you use the first skill, you'll notice patterns. "I always do X before Y." Write a skill for X too. Add rules for your conventions.
-  
-  *Month 3: Add agents*
-  Some tasks need a different model tier. Your build checker (Haiku) is different from your code reviewer (Opus). Create agent definitions.
-  
-  *Month 4: Add guardrails*
-  You'll make a mistake — commit on the wrong branch, edit a config file incorrectly. Add hooks to prevent it structurally.
-  
-  *Month 5: Package and share*
-  If two projects need the same skills, bundle them as a plugin. Write a sync script. Version it.
-  
-  *The key insight:*
-  Our plugins didn't start as "let's build a comprehensive AI development platform." They started as "I'm tired of typing the same build command." Everything else grew from there.
-  
-  Start small. Ship today. Iterate tomorrow.
-  
-  💡 Try it: Write your first skill. Right now. Today. That's your Day 1.
-  
-  #AgenticAI #Day51
+slackOneLiner: "🤖 Tip #51 — Don't plan a plugin — grow one. Start with one skill solving one pain point, then add agents, hooks, and MCP as real needs emerge."
+keyPointsTitle: "The Growth Path"
+actionItemsTitle: "Your First Steps"
+keyPoints:
+  - "**The meta-lesson** — Don't plan a plugin. Grow one. Our 69 skills across 4 plugins didn't start as a 'comprehensive AI development platform' — they started as 'I'm tired of typing the same build command.'"
+  - |
+    **Month-by-month evolution**
+    - Month 1 — One skill solving one pain point (a build checker, a convention reminder)
+    - Month 2 — Add related skills as patterns emerge ('I always do X before Y') plus rules
+    - Month 3 — Add agents when tasks need different model tiers (Haiku for lookups, Opus for review)
+    - Month 4 — Add hooks as guardrails after you make a mistake (wrong branch, bad config edit)
+    - Month 5 — Package as a plugin when 2+ projects need the same tools
+  - "**Start from real friction** — Each skill should save you 10 minutes per day. A build checker, a component verifier, a convention reminder. If it doesn't solve a real pain point, don't build it."
+  - "**Patterns reveal themselves** — As you use your first skill, you'll notice what you always do before and after it. Those adjacent tasks become your next skills."
+actionItems:
+  - "**Write your first skill today** — Pick the one task you repeat most and automate it with a single SKILL.md file. That's your Day 1."
+  - |
+    **Follow the natural growth path**
+    - Start with `.claude/commands/` for project-local skills
+    - Add `.claude/rules/` when you notice recurring conventions
+    - Add `agents/` when different tasks need different model tiers
+    - Add `hooks/hooks.json` when you need structural guardrails
+    - Graduate to a plugin when multiple projects need the same tools
+  - "**Package when shared** — The moment two projects need the same skills, bundle them as a plugin. Write a sync script. Version it. One source, many consumers."
+  - "**Don't over-engineer early** — Resist the urge to plan the full plugin up front. Let real usage drive what you build next. Iterate tomorrow."
 ---
-
-```
-# The evolution:
-# Month 1: One skill
-.claude/commands/check-build.md
-
-# Month 2: Three skills + rules
-.claude/commands/
-.claude/rules/
-
-# Month 3: Skills + agents
-+ agents/code-reviewer.md
-
-# Month 4: + hooks + MCP
-+ hooks/hooks.json
-+ .mcp.json
-
-# Month 5: Package as plugin
-+ .claude-plugin/plugin.json
-# → Install in all projects
-```

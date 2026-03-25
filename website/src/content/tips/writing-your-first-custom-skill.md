@@ -4,66 +4,26 @@ category: "Skills — Recipe Book"
 focus: "Claude Code"
 tags: ["Custom","Commands","DIY"]
 overview: "You can create a custom skill in under 2 minutes. Create a markdown file in .claude/commands/, add frontmatter and instructions, and invoke it with /your-skill-name. Start with something small — a build checker, a convention reminder, a component scaffolder."
-codeLabel: "Your first skill"
 screenshot: null
 week: 3
 weekLabel: "Context — The Secret Sauce"
 order: 15
-slackText: |
-  🤖 Agentic AI Tip #15 — Writing Your First Custom Skill
-  
-  Stop telling AI the same instructions over and over. Write a skill once, use it forever.
-  
-  *Step 1:* Create the file
-  ```
-  .claude/commands/check-component.md
-  ```
-  
-  *Step 2:* Add frontmatter
-  ```yaml
-  ---
-  name: check-component
-  description: Verify a web component follows project patterns
-  argument-hint: "<component-name>"
-  allowed-tools: [read, grep, glob]
-  ---
-  ```
-  
-  *Step 3:* Write instructions
-  ```
-  1. Find the component file matching the given name in src/
-  2. Verify it extends CustomComponent
-  3. Check that lifecycle methods (beforeLoad, afterLoad) exist
-  4. Check that data-model parsing is implemented
-  5. Report findings with specific file:line references
-  ```
-  
-  *Step 4:* Use it
-  ```
-  /check-component hero
-  ```
-  
-  That's it. No JavaScript, no API, no build step. Just a markdown file that the AI follows as instructions.
-  
-  *Pro tip:* Commit the file to git. Now your entire team has the skill.
-  
-  💡 Try it: Think of an instruction you've given AI more than twice. Write it as a skill file right now. It takes 2 minutes.
-  
-  #AgenticAI #Day15
+slackOneLiner: "🤖 Tip #15 — Stop repeating yourself. Write a skill once in 2 minutes, use it forever — no JavaScript, no API, no build step."
+keyPointsTitle: "Four Steps to a Skill"
+actionItemsTitle: "Build One Right Now"
+keyPoints:
+  - "**Step 1 — Create the file** — Just a markdown file at `.claude/commands/check-component.md`. That's the only location requirement."
+  - "**Step 2 — Add frontmatter** — name, description, argument-hint, and allowed-tools in a YAML block. This controls how the skill behaves and what it can access."
+  - "**Step 3 — Write instructions** — Numbered steps telling the AI what to do. 'Find the component, verify it extends CustomComponent, check lifecycle methods, report findings with file:line references.'"
+  - "**Step 4 — Use it** — Type `/check-component hero` and the AI follows your instructions exactly. No JavaScript, no API, no build step."
+actionItems:
+  - "**Find your first candidate** — Think of an instruction you've given AI more than twice. A build checker, a convention reminder, a component scaffolder. That's your first skill."
+  - |
+    Create the skill file now
+    - Create `.claude/commands/your-skill.md`
+    - Add frontmatter: name, description, argument-hint, allowed-tools
+    - Write 3-5 numbered instruction steps
+    - Test with `/your-skill <argument>`
+  - "**Commit to git** — Once the skill file is in version control, your entire team has the skill automatically. Shared knowledge encoded as a file."
+  - "**Start small, iterate** — Your first skill doesn't need to be perfect. Get it working, then refine the instructions as you use it."
 ---
-
-```
-# .claude/commands/check-component.md
----
-name: check-component
-description: Verify a web component
-  follows project patterns
-argument-hint: "<component-name>"
-allowed-tools: [read, grep, glob]
----
-
-1. Find the component file in src/
-2. Verify it extends CustomComponent
-3. Check lifecycle methods exist
-4. Report any missing patterns
-```

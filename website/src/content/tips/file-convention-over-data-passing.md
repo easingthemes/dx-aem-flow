@@ -4,48 +4,26 @@ category: "Skills — Advanced"
 focus: "Claude Code"
 tags: ["Spec Directory","Convention","Decoupling"]
 overview: "Our skills don't pass data through APIs or return values. Instead, each skill writes output to a predictable file location (.ai/specs/<id>/). The next skill reads from the same location. This decouples skills completely — each can be tested and run independently."
-codeLabel: "File convention"
 screenshot: null
 week: 4
 weekLabel: "Context — The Secret Sauce"
 order: 19
-slackText: |
-  🤖 Agentic AI Tip #19 — File Convention Over Data Passing
-  
-  How do you pass data between AI skills that run in separate contexts? You don't.
-  
-  Instead, we use a *file convention*: each skill writes its output to a predictable location, and the next skill knows where to look.
-  
-  ```
-  .ai/specs/<ticket-id>-<slug>/
-  ├── raw-story.md      ← /dx-req writes this (Phase 1: fetch)
-  ├── explain.md        ← /dx-req writes this (Phase 3: explain)
-  ├── research.md       ← /dx-req writes this (Phase 4: research)
-  ├── implement.md      ← /dx-plan reads all above, writes this
-  └── figma-extract.md  ← /dx-figma-extract writes this
-  ```
-  
-  *Why this beats data passing:*
-  1. *Inspectable* — you can read any file to see what happened
-  2. *Resumable* — skip a step and re-run just what you need
-  3. *Testable* — each skill is independent
-  4. *Debuggable* — if step 3 fails, check step 2's output
-  
-  *No APIs, no return values, no coupling.* Skills find each other's output by convention. This is the same principle as Unix pipes — small tools, predictable I/O.
-  
-  💡 Try it: Run `/dx-req <id>` then look inside `.ai/specs/`. Read the files. You'll see exactly what the AI captured.
-  
-  #AgenticAI #Day19
+slackOneLiner: "🤖 Tip #19 — How do you pass data between AI skills in separate contexts? You don't. Use a file convention — each skill writes to a predictable location, the next knows where to look."
+keyPointsTitle: "The Design Pattern"
+actionItemsTitle: "See It in Action"
+keyPoints:
+  - "**The pattern** — Each skill writes its output to a predictable location (`.ai/specs/<ticket-id>-<slug>/`), and the next skill knows where to look. No APIs, no return values, no coupling."
+  - "**Same principle as Unix pipes** — Small tools, predictable I/O. Skills find each other's output by convention, not by API contracts or shared memory."
+  - "**Inspectable** — You can read any file to see exactly what happened. `raw-story.md` shows what was fetched, `explain.md` shows how it was interpreted, `implement.md` shows the plan."
+  - "**Testable and debuggable** — Each skill is fully independent. If step 3 fails, check step 2's output file. Mock any input by writing the expected file manually."
+actionItems:
+  - "**Try the flow** — Run `/dx-req <id>` then look inside `.ai/specs/` — read the files to see exactly what the AI captured at each phase."
+  - |
+    Understand the file flow
+    - `/dx-req` writes: raw-story.md, explain.md, research.md
+    - `/dx-plan` reads explain.md + research.md, writes: implement.md
+    - `/dx-figma-extract` writes: figma-extract.md
+    - Each skill is independent — test and run them in any order
+  - "**Resumable by design** — Skip a step and re-run just what you need. `/dx-plan` reads `explain.md` which is already there from `/dx-req`. No need to re-run the entire chain."
+  - "**Apply to custom skills** — When building your own skills, follow the same convention. Write output to `.ai/specs/<id>/` so other skills can chain from it."
 ---
-
-```
-# /dx-req writes all phases:
-.ai/specs/12345-login-bug/raw-story.md
-.ai/specs/12345-login-bug/explain.md
-.ai/specs/12345-login-bug/research.md
-
-# /dx-plan reads explain.md, writes:
-.ai/specs/12345-login-bug/implement.md
-
-# Each skill is independent!
-```
