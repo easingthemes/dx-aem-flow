@@ -1,0 +1,276 @@
+---
+layout: ../../layouts/SidebarLayout.astro
+title: "VS Code Chat"
+sidebar: setup
+---
+
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import HighlightBox from '../../components/HighlightBox.astro';
+import CommandBlock from '../../components/CommandBlock.astro';
+
+<PageHero
+  title="VS Code Chat — Agent Plugins"
+  subtitle="Install dx plugins from the VS Code marketplace UI or configure manually. Two approaches, same plugins."
+/>
+
+<HighlightBox severity="info" title="Prerequisites">
+  This page covers VS Code Copilot Chat integration. For the terminal-based CLIs, see
+  <a href={`${import.meta.env.BASE_URL}/setup/claude-code/`}>Claude Code</a> or
+  <a href={`${import.meta.env.BASE_URL}/setup/copilot-cli/`}>Copilot CLI</a>.
+  For a feature comparison across all three platforms, see <a href={`${import.meta.env.BASE_URL}/learn/cli-vs-chat/`}>CLI vs Chat</a>.
+</HighlightBox>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* TWO APPROACHES                                                         */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Overview"
+  title="Two Installation Approaches"
+  subtitle="Choose marketplace-based (recommended) or manual settings."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:store" iconColor="bg-brand-700" title="Marketplace Install (Recommended)" tags={[{ label: 'New in VS Code 1.110+', color: 'info' }]}>
+      VS Code clones the plugin repo into <code>~/Library/Application Support/Code/agentPlugins/</code>
+      (macOS) and reads <code>marketplace.json</code> to discover all plugins. Full plugin support:
+      agents, skills, hooks, MCP servers, instructions, and prompts.
+
+      <strong>Result:</strong> All plugins appear in the Chat Customizations panel with full feature counts.
+    </ContentCard>
+    <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Manual Settings">
+      Point <code>chat.agentSkillsLocations</code> at plugin skill directories in
+      <code>.vscode/settings.json</code>. Simpler but only exposes skills — no agents, hooks, or
+      MCP servers from the plugin.
+
+      <strong>Result:</strong> Individual skills available, but no plugin-level management.
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* MARKETPLACE INSTALL                                                    */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Marketplace"
+  badgeColor="secondary"
+  title="Marketplace-Based Install"
+  subtitle="VS Code discovers and installs plugins from a git-hosted marketplace — the same marketplace.json used by Claude Code and Copilot CLI."
+  bg="primary"
+/>
+<Section>
+  <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="Step 1 — Add the Marketplace">
+    Open VS Code Settings (JSON) and add the marketplace source:
+    <CommandBlock label="VS Code User Settings (settings.json)">{`"chat.plugins.marketplaces": [
+  "easingthemes/dx-aem-flow"
+]`}</CommandBlock>
+    This tells VS Code to clone the repo into its <code>agentPlugins/</code> directory and read the
+    <code>.claude-plugin/marketplace.json</code> file to discover available plugins.
+
+    <strong>Alternative formats:</strong>
+    <ul class="text-sm mt-1 space-y-1">
+      <li><code>"easingthemes/dx-aem-flow"</code> — GitHub shorthand (recommended)</li>
+      <li><code>"https://github.com/easingthemes/dx-aem-flow.git"</code> — Full HTTPS URL</li>
+      <li><code>"file:///path/to/local/repo"</code> — Local directory for development</li>
+    </ul>
+  </ContentCard>
+
+  <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-brand-700" title="Step 2 — Install Plugins">
+    Open the Extensions view and type <code>@agentPlugins</code> in the search bar.
+    You'll see all plugins from the marketplace. Click <strong>Install</strong> on the ones you need:
+
+    <ul class="text-sm mt-1 space-y-1">
+      <li><strong>dx-core</strong> — Full development workflow (required)</li>
+      <li><strong>dx-aem</strong> — AEM verification and QA (optional, requires dx-core)</li>
+      <li><strong>dx-hub</strong> — Multi-repo orchestration (optional)</li>
+      <li><strong>dx-automation</strong> — Autonomous pipeline agents (optional)</li>
+    </ul>
+  </ContentCard>
+
+  <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-brand-700" title="Step 3 — Verify">
+    Open <strong>Chat Customizations</strong> (gear icon in the Chat panel). You should see your installed
+    plugins under <strong>Plugins</strong> in the sidebar, showing counts for agents, skills, hooks,
+    MCP servers, instructions, and prompts.
+  </ContentCard>
+
+  <HighlightBox severity="warning" title="Update Behavior">
+    VS Code clones from the <strong>remote git repo</strong>, not your local working copy.
+    Changes must be <strong>pushed to GitHub</strong> before VS Code picks them up. If you see stale
+    content, try <strong>Reload Window</strong> (Cmd+Shift+P → "Developer: Reload Window").
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* ALTERNATIVE: COMMAND PALETTE                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Alt"
+  badgeColor="info"
+  title="Alternative Install Methods"
+  subtitle="Other ways to install plugins without editing settings.json."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:console" iconColor="bg-cyan-dark" title="Command Palette">
+      <strong>Cmd+Shift+P</strong> → "Chat: Install Plugin From Source" → paste the repo URL.
+      This installs directly without adding a marketplace first.
+    </ContentCard>
+    <ContentCard icon="mdi:link" iconColor="bg-emerald-600" title="URL Handler (VS Code 1.113+)">
+      Click a link with the <code>vscode://</code> protocol:
+      <CommandBlock label="Install a plugin">{`vscode://chat-plugin/install?source=easingthemes/dx-aem-flow`}</CommandBlock>
+      <CommandBlock label="Add a marketplace">{`vscode://chat-plugin/add-marketplace?ref=easingthemes/dx-aem-flow`}</CommandBlock>
+    </ContentCard>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* WORKSPACE RECOMMENDATIONS                                              */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Team"
+  badgeColor="success"
+  title="Workspace Recommendations"
+  subtitle="Recommend plugins to team members — VS Code prompts them to install on first chat message."
+  bg="primary"
+/>
+<Section>
+  <ContentCard icon="mdi:account-group" iconColor="bg-brand-700" title="Recommend Plugins for Your Project">
+    Add to your project's <code>.vscode/settings.json</code> (committed to git):
+    <CommandBlock label=".vscode/settings.json">{`{
+  "extraKnownMarketplaces": {
+    "dx-aem-flow": {
+      "source": { "source": "github", "repo": "easingthemes/dx-aem-flow" }
+    }
+  },
+  "enabledPlugins": {
+    "dx-core@dx-aem-flow": true,
+    "dx-aem@dx-aem-flow": true
+  }
+}`}</CommandBlock>
+    When a team member opens the project and sends their first chat message, VS Code shows a notification
+    suggesting they install the recommended plugins.
+    They also appear under <code>@agentPlugins @recommended</code> in the Extensions view.
+  </ContentCard>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* MANUAL SETTINGS                                                        */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Manual"
+  badgeColor="warning"
+  title="Manual Settings (Legacy)"
+  subtitle="Point VS Code at skill directories directly — works without the marketplace system."
+  bg="alt"
+/>
+<Section>
+  <ContentCard icon="mdi:cog" iconColor="bg-cyan" title="Skill and Agent Locations">
+    Add to <code>.vscode/settings.json</code>:
+    <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
+  ".claude/skills": true,
+  "dx-aem-flow/dx/plugins/dx-core/skills": true,
+  "dx-aem-flow/dx/plugins/dx-aem/skills": true
+},
+"chat.subagents.allowInvocationsFromSubagents": true`}</CommandBlock>
+    The subagent setting (VS Code 1.113+) lets coordinator agents dispatch subagents.
+    <code>/dx-sync</code> configures this automatically for consumer projects.
+  </ContentCard>
+
+  <HighlightBox severity="info" title="When to Use Manual Settings">
+    Use manual settings when you need skills in VS Code Chat but don't want the full plugin
+    management system. This approach only exposes skills — agents, hooks, and MCP servers from
+    the plugin are not loaded. For full plugin support, use the marketplace install.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* STORAGE                                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Storage"
+  badgeColor="info"
+  title="Where Plugins Live"
+  subtitle="VS Code clones marketplace repos into a platform-specific directory."
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Platform</th>
+          <th class="text-left py-2 px-3 font-semibold">Agent Plugins Directory</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">macOS</td><td class="py-2 px-3"><code>~/Library/Application Support/Code/agentPlugins/github.com/&#123;owner&#125;/&#123;repo&#125;/</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">Windows</td><td class="py-2 px-3"><code>%APPDATA%\Code\agentPlugins\github.com\&#123;owner&#125;\&#123;repo&#125;\</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3">Linux</td><td class="py-2 px-3"><code>~/.config/Code/agentPlugins/github.com/&#123;owner&#125;/&#123;repo&#125;/</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overflow-x-auto mt-4">
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-3 font-semibold">Platform</th>
+          <th class="text-left py-2 px-3 font-semibold">Plugin Storage</th>
+          <th class="text-left py-2 px-3 font-semibold">Marketplace Discovery</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Claude Code CLI</td><td class="py-2 px-3"><code>~/.claude/plugins/</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">Copilot CLI</td><td class="py-2 px-3"><code>~/.copilot/state/installed-plugins/</code></td><td class="py-2 px-3"><code>/plugin marketplace add</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-3 font-semibold">VS Code Chat</td><td class="py-2 px-3"><code>agentPlugins/</code> (see above)</td><td class="py-2 px-3"><code>chat.plugins.marketplaces</code> setting</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="success" title="Same Manifest, Three Platforms">
+    All three platforms read the same <code>.claude-plugin/marketplace.json</code> and
+    <code>plugin.json</code> files. No platform-specific changes needed.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* KNOWN LIMITATIONS                                                      */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Caveats"
+  badgeColor="warning"
+  title="Known Limitations (Preview)"
+  subtitle="The agent plugin system is in Preview — expect rough edges."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:alert-circle" iconColor="bg-amber-500" title="Preview Limitations">
+      <ul class="text-sm mt-1 space-y-1">
+        <li><strong>No plugin icons</strong> — all plugins show a generic puzzle-piece icon. No <code>icon</code> field in <code>plugin.json</code> yet.</li>
+        <li><strong>Marketplace must be user-level</strong> — <code>chat.plugins.marketplaces</code> only works in user settings, not workspace settings.</li>
+        <li><strong>Silent failures</strong> — errors in <code>marketplace.json</code> or <code>plugin.json</code> cause the feed to silently not appear.</li>
+        <li><strong>Aggressive caching</strong> — may need VS Code reload to pick up changes.</li>
+      </ul>
+    </ContentCard>
+    <ContentCard icon="mdi:lightbulb" iconColor="bg-cyan" title="Troubleshooting">
+      <ul class="text-sm mt-1 space-y-1">
+        <li><strong>Plugins not showing?</strong> Check that <code>chat.plugins.enabled</code> is not set to <code>false</code>.</li>
+        <li><strong>Stale content?</strong> Cmd+Shift+P → "Developer: Reload Window".</li>
+        <li><strong>Marketplace not appearing?</strong> Verify the repo URL is correct and the <code>marketplace.json</code> is valid JSON.</li>
+        <li><strong>Skills missing?</strong> Check the plugin is enabled (not disabled) in Chat Customizations.</li>
+      </ul>
+    </ContentCard>
+  </div>
+</Section>
