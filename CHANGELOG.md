@@ -1,3 +1,10 @@
+## [2.72.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.1...v2.72.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* make tips platform-neutral and update Copilot model roster ([1602f31](https://github.com/easingthemes/dx-aem-flow/commit/1602f3159daebb64726be82c3dc1e1d91fcde8b0)), closes [#11](https://github.com/easingthemes/dx-aem-flow/issues/11) [#6](https://github.com/easingthemes/dx-aem-flow/issues/6)
+
 ## [2.72.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.0...v2.72.1) (2026-03-25)
 
 
