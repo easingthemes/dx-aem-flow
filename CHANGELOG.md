@@ -1,3 +1,15 @@
+# [2.69.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.2...v2.69.0) (2026-03-25)
+
+
+### Bug Fixes
+
+* simplify TLDR index to list view and consolidate orphan week groups ([b99e4c6](https://github.com/easingthemes/dx-aem-flow/commit/b99e4c6503ef5c689e76b489e3cac4248b608008))
+
+
+### Features
+
+* redesign tip pages for Slack sharing with two-card layout ([ff5354d](https://github.com/easingthemes/dx-aem-flow/commit/ff5354dc77ff4ee8dd384c5d526fd5b30173497c))
+
 ## [2.68.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.1...v2.68.2) (2026-03-25)
 
 
