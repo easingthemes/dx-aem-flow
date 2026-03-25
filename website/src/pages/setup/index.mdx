@@ -69,13 +69,21 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 />
 <Section>
   <HighlightBox severity="warning" title="AEM Projects — Set Environment Variables First">
-    If you're using AEM MCP tools, set the AEM author URL as an environment variable <strong>before</strong> running
-    <code>/aem-init</code>. This allows component discovery to scan your running AEM instance for dialog fields,
+    The AEM MCP server requires the <code>AEM_INSTANCES</code> environment variable. Set it <strong>before</strong> running
+    <code>/aem-init</code> so component discovery can scan your running AEM instance for dialog fields,
     variants, and pages.
-    <CommandBlock label="Shell profile (~/.zshrc or ~/.bashrc)">{`export AEM_AUTHOR_URL="http://localhost:4502"
-export AEM_AUTHOR_USER="admin"
-export AEM_AUTHOR_PASSWORD="admin"`}</CommandBlock>
+    <CommandBlock label="Shell profile (~/.zshrc or ~/.bashrc)">{`# Format: name:host:user:pass — comma-separated for multiple instances
+export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
+
+# Multi-instance example (local + QA):
+# export AEM_INSTANCES="local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
+
+# Optional: accessibility testing + QA Basic Auth
+# export AXE_API_KEY="your-axe-api-key"
+# export QA_BASIC_AUTH_USER="your-qa-username"
+# export QA_BASIC_AUTH_PASS="your-qa-password"`}</CommandBlock>
     Restart your terminal or run <code>source ~/.zshrc</code> after adding these.
+    These env vars work in both Claude Code and Copilot CLI.
   </HighlightBox>
 
   <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-6">Run these commands in order:</h3>
