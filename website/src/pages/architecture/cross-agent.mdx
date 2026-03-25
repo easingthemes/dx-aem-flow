@@ -257,8 +257,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Sub-agents</td>
-        <td class="p-3">Flat (no nesting)</td>
-        <td class="p-3"><code>agents:</code> field</td>
+        <td class="p-3">Flat (Task tool)</td>
+        <td class="p-3"><code>agents:</code> field (nested, VS Code 1.113+)</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Navigation</td>
@@ -331,6 +331,13 @@ import CommandBlock from '../../components/CommandBlock.astro';
     Plugin <code>hooks/hooks.json</code> is active in Claude Code only. <code>.github/hooks/hooks.json</code>
     is active in Copilot CLI only. Both use the same <code>version: 1</code> format with PascalCase events.
     <code>/dx-init</code> deploys hooks to both locations.
+  </HighlightBox>
+
+  <HighlightBox severity="success" title="Hook Merging (Copilot CLI v1.0.11+)">
+    Multiple plugins' hooks now <strong>merge</strong> instead of overwriting each other. dx-core contributes
+    general hooks (branch guard, Figma screenshots, subagent log) while dx-aem contributes AEM-specific hooks
+    (Chrome DevTools screenshots). In Claude Code, plugin hooks always merged. In Copilot CLI, this required v1.0.11+.
+    SessionStart <code>additionalContext</code> is also now injected into the conversation context.
   </HighlightBox>
 </Section>
 
