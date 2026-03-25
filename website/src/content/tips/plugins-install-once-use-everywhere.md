@@ -5,8 +5,8 @@ focus: "All Tools"
 tags: ["Plugins","Marketplace","Skills","Agents","MCP"]
 overview: "Plugins are installable bundles of skills, agents, rules, and MCP servers. One command adds them. They work in both Claude Code and Copilot CLI. Think of them like VS Code extensions — but for your terminal AI."
 screenshot: null
-week: 15
-weekLabel: "Plugins — Full Package"
+week: 11
+weekLabel: "Plugins & Mastery"
 order: 52
 slackOneLiner: "🤖 Tip #52 — Plugins are installable bundles of skills, agents, rules, and MCP servers — like VS Code extensions for your terminal AI."
 keyPointsTitle: "What Plugins Give You"

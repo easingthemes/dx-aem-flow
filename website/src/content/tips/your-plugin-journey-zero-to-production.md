@@ -6,7 +6,7 @@ tags: ["Journey","Evolution","Production"]
 overview: "You don't build a plugin in a day. Start with one skill solving one pain point. Add an agent when you need a different model tier. Add hooks when you need guardrails. Add MCP when you need external systems. Bundle as a plugin when 2+ projects need the same tools. Our plugins evolved over months, not days."
 screenshot: null
 week: 11
-weekLabel: "MCP — System Integration"
+weekLabel: "Plugins & Mastery"
 order: 51
 slackOneLiner: "🤖 Tip #51 — Don't plan a plugin — grow one. Start with one skill solving one pain point, then add agents, hooks, and MCP as real needs emerge."
 keyPointsTitle: "The Growth Path"
