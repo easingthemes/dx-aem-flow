@@ -1,3 +1,10 @@
+## [2.68.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.1...v2.68.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* cleanup setup pages — 3 steps, deduplicate env vars, simplify MCP ([67fef2c](https://github.com/easingthemes/dx-aem-flow/commit/67fef2c14f937e96bf25171238073e6d3433705d))
+
 ## [2.68.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.68.0...v2.68.1) (2026-03-25)
 
 
