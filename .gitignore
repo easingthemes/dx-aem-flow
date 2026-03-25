@@ -18,6 +18,8 @@ node_modules/
 # Claude Code local state
 .claude/settings.local.json
 .claude/subagent-log.txt
+.claude/skills/demo-vscode/
+.claude/agents/
 
 # Website build artifacts
 website/dist/

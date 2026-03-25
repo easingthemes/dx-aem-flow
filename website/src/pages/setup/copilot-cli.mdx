@@ -60,7 +60,7 @@ import { stats } from '../../config/stats';
 <Section>
   <HighlightBox severity="warning" title="Copilot CLI Does Not Read Project .mcp.json">
     Claude Code reads <code>.mcp.json</code> at the project root. Copilot CLI only reads from
-    <code>~/.copilot/mcp-config.json</code> (global) or plugin-bundled <code>.mcp.json</code> files.
+    <code>{"~"}/.copilot/mcp-config.json</code> (global) or plugin-bundled <code>.mcp.json</code> files.
     Project-specific servers like ADO must be configured manually.
   </HighlightBox>
 
@@ -92,7 +92,7 @@ import { stats } from '../../config/stats';
       <tbody>
         <tr class="border-t border-gray-200"><td class="p-3">Claude Code</td><td class="p-3"><code>.mcp.json</code></td><td class="p-3"><code>mcpServers</code></td><td class="p-3">Per-project</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">VS Code Chat</td><td class="p-3"><code>.vscode/mcp.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Per-project</td></tr>
-        <tr class="border-t border-gray-200"><td class="p-3">Copilot CLI</td><td class="p-3"><code>~/.copilot/mcp-config.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Global</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Copilot CLI</td><td class="p-3"><code>{"~"}/.copilot/mcp-config.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Global</td></tr>
       </tbody>
     </table>
   </div>
@@ -156,7 +156,7 @@ import { stats } from '../../config/stats';
       conversation context.
     </ContentCard>
     <ContentCard icon="mdi:account" iconColor="bg-brand-700" title="Personal Skills Directory">
-      <code>~/.agents/skills/</code> is now a personal skill discovery directory (aligning with VS Code Chat).
+      <code>{"~"}/.agents/skills/</code> is now a personal skill discovery directory (aligning with VS Code Chat).
       Use it for individual developer customizations that don't belong in the shared repo.
     </ContentCard>
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="Session Management">
