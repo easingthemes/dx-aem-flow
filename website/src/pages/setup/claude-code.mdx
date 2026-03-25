@@ -13,72 +13,96 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Claude Code — Platform Details"
-  subtitle="Claude-specific configuration: env vars, MCP setup, permissions, and settings scope."
+  subtitle="Claude-specific configuration: MCP enablement, permissions, settings scope, and customization."
 />
+
+<HighlightBox severity="info" title="Prerequisites">
+  Complete <a href={`${import.meta.env.BASE_URL}/setup/`}>Steps 1–3 on the Setup page</a> first (install plugins, init, scan).
+  Environment variables (<code>AEM_INSTANCES</code>, <code>AXE_API_KEY</code>, etc.) are documented there.
+</HighlightBox>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* MCP                                                                     */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
   badge="MCP"
   badgeColor="secondary"
-  title="MCP Environment Variables"
-  subtitle="ADO MCP is auto-configured. Jira and AEM MCPs need env vars."
+  title="MCP Server Configuration"
+  subtitle="Claude Code reads .mcp.json at the project root — created by /dx-init."
   bg="alt"
 />
 <Section>
-  <HighlightBox severity="success" title="ADO MCP — Auto-Configured">
-    Browser-based OAuth. On first use, opens a browser to authenticate. No PAT or env var needed.
-  </HighlightBox>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="ADO MCP — Auto-Configured">
+      Browser-based OAuth. On first use, opens a browser to authenticate. No PAT or env var needed.
+    </ContentCard>
+    <ContentCard icon="mdi:information" iconColor="bg-cyan" title="AEM + Chrome DevTools MCP">
+      AEM MCP reads <code>AEM_INSTANCES</code> from your shell. Chrome DevTools auto-launches — just ensure Chrome is installed.
+    </ContentCard>
+  </div>
 
-  <HighlightBox severity="info" title="Jira/Confluence MCP">
-    Set in your shell profile or <code>.claude/settings.local.json</code>:
-    <code>JIRA_PERSONAL_TOKEN</code>, <code>JIRA_BASE_URL</code>, <code>JIRA_USER_EMAIL</code>.
-  </HighlightBox>
-
-  <HighlightBox severity="warning" title="AEM MCP">
-    Requires the <code>AEM_INSTANCES</code> environment variable. Add to your shell profile — both Claude Code and Copilot CLI inherit shell env vars.
-  </HighlightBox>
-
-  <CommandBlock label="~/.bashrc or ~/.zshrc">{`export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
-
-# Multiple instances (comma-separated):
-# export AEM_INSTANCES="local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"`}</CommandBlock>
-
-  <HighlightBox severity="info" title="Format">
-    Colon-delimited: <code>name:url:user:pass</code>. Multiple instances separated by commas.
-    Alternatively, set in <code>.claude/settings.local.json</code> under <code>"env"</code>.
-  </HighlightBox>
-
-  <HighlightBox severity="info" title="Chrome DevTools MCP">
-    Auto-launches a Chrome instance via stdio. No manual setup — just ensure Chrome is installed.
-  </HighlightBox>
-</Section>
-
-<SectionHeading
-  badge="Config"
-  badgeColor="info"
-  title="Configuration Details"
-  subtitle="Auto-configured by /dx-init but documented here for manual setup or troubleshooting."
-  bg="primary"
-/>
-<Section>
-  <h3 class="text-base font-semibold text-brand-900 mb-4">Co-authored Commit Footer</h3>
-  <p class="text-sm text-gray-600 mb-2">Disable Claude's default co-author footer in <code>.claude/settings.json</code>:</p>
-  <CommandBlock label=".claude/settings.json">{`{
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  }
-}`}</CommandBlock>
-
-  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-4">MCP Server Enablement</h3>
-  <p class="text-sm text-gray-600 mb-2">Enable only the servers your project uses — unused servers consume tokens:</p>
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Enable Only What You Need</h3>
+  <p class="text-sm text-gray-600 mb-2">Unused MCP servers consume tokens. Enable selectively in <code>.claude/settings.json</code>:</p>
   <CommandBlock label=".claude/settings.json">{`{
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": ["ado"]
 }`}</CommandBlock>
   <p class="text-sm text-gray-500 mt-2">Add <code>"AEM"</code> and <code>"chrome-devtools-mcp"</code> for AEM projects.</p>
 
-  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-4">Permissions</h3>
-  <p class="text-sm text-gray-600 mb-2">Start minimal, expand as needed — Claude prompts for anything not in the allow list:</p>
+  <HighlightBox severity="info" title="Env Vars — Two Options in Claude Code">
+    Claude Code can read env vars from your <strong>shell profile</strong> (recommended — works for both Claude Code and Copilot CLI)
+    or from <code>.claude/settings.local.json</code> under <code>"env"</code> (Claude Code only, gitignored).
+    Shell profile is preferred for portability.
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Settings                                                                */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="Config"
+  badgeColor="info"
+  title="Settings & Permissions"
+  subtitle="Auto-configured by /dx-init — documented here for manual setup or troubleshooting."
+  bg="primary"
+/>
+<Section>
+  <h3 class="text-base font-semibold text-white mb-3">Settings Scope</h3>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+    <thead>
+      <tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold">Scope</th>
+        <th class="text-left p-3 font-semibold">Stored In</th>
+        <th class="text-left p-3 font-semibold">Shared via Git</th>
+        <th class="text-left p-3 font-semibold">Use For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>project</strong> (recommended)</td>
+        <td class="p-3"><code>.claude/settings.json</code></td>
+        <td class="p-3">Yes</td>
+        <td class="p-3">Permissions, MCP enablement, attribution</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>local</strong></td>
+        <td class="p-3"><code>.claude/settings.local.json</code></td>
+        <td class="p-3">No (gitignored)</td>
+        <td class="p-3">Secrets, personal env vars</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><strong>user</strong></td>
+        <td class="p-3"><code>{"~"}/.claude/settings.json</code></td>
+        <td class="p-3">No</td>
+        <td class="p-3">Global preferences</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="text-base font-semibold text-white mt-8 mb-3">Permissions</h3>
+  <p class="text-sm text-gray-200 mb-2">Start minimal, expand as needed — Claude prompts for anything not in the allow list:</p>
   <CommandBlock label=".claude/settings.json">{`{
   "permissions": {
     "allow": [
@@ -95,50 +119,27 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <HighlightBox severity="warning" title="Avoid Wildcards">
     Do not use wildcards like <code>{"mcp__ado__*"}</code> — they send full tool schemas on every request, wasting tokens.
   </HighlightBox>
+
+  <h3 class="text-base font-semibold text-white mt-8 mb-3">Co-authored Commit Footer</h3>
+  <p class="text-sm text-gray-200 mb-2">Disable Claude's default co-author footer:</p>
+  <CommandBlock label=".claude/settings.json">{`{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}`}</CommandBlock>
 </Section>
 
-<SectionHeading
-  badge="Scope"
-  badgeColor="secondary"
-  title="Settings Scope"
-  subtitle="Choose where to store settings based on sharing needs."
-  bg="alt"
-/>
-<Section>
-  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
-    <thead>
-      <tr class="bg-brand-100">
-        <th class="text-left p-3 font-semibold">Scope</th>
-        <th class="text-left p-3 font-semibold">Stored In</th>
-        <th class="text-left p-3 font-semibold">Shared via Git</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="border-t border-gray-200">
-        <td class="p-3"><strong>project</strong> (recommended)</td>
-        <td class="p-3"><code>.claude/settings.json</code></td>
-        <td class="p-3">Yes</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3"><strong>user</strong></td>
-        <td class="p-3"><code>{"~"}/.claude/settings.json</code></td>
-        <td class="p-3">No</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3"><strong>local</strong></td>
-        <td class="p-3"><code>.claude/settings.local.json</code></td>
-        <td class="p-3">No (gitignored)</td>
-      </tr>
-    </tbody>
-  </table>
-</Section>
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Customization                                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
   badge="Custom"
   badgeColor="warning"
   title="Customization"
   subtitle="Adjust agent behavior, override config, or shadow entire skills."
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
@@ -160,11 +161,15 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 </Section>
 
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Troubleshoot                                                            */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
 <SectionHeading
   badge="Troubleshoot"
   badgeColor="error"
   title="Troubleshooting"
-  bg="alt"
+  bg="primary"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
@@ -182,7 +187,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Uninstall"
   badgeColor="error"
   title="Uninstall"
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <CommandBlock label="Remove plugins">{`claude plugin uninstall dx
