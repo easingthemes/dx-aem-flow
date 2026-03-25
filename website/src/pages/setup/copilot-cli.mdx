@@ -14,31 +14,41 @@ import { stats } from '../../config/stats';
 
 <PageHero
   title="Copilot CLI — Platform Details"
-  subtitle="Copilot-specific configuration: env var limitations, MCP config differences, and @Agent invocation."
+  subtitle="Copilot-specific configuration: env var limitations, MCP config location, and @Agent invocation."
 />
 
+<HighlightBox severity="info" title="Prerequisites">
+  Complete <a href={`${import.meta.env.BASE_URL}/setup/`}>Steps 1–3 on the Setup page</a> first (install plugins, init, scan).
+  Environment variables (<code>AEM_INSTANCES</code>, <code>AXE_API_KEY</code>, etc.) are documented there.
+</HighlightBox>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Critical Limitation                                                     */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
 <SectionHeading
-  badge="Env Vars"
+  badge="Critical"
   badgeColor="error"
-  title="Environment Variable Limitation"
-  subtitle="Critical difference from Claude Code."
+  title="Shell-Only Environment Variables"
+  subtitle="The most important difference from Claude Code."
   bg="alt"
 />
 <Section>
   <HighlightBox severity="error" title="Copilot CLI Does Not Read settings.local.json">
-    Copilot CLI only inherits shell environment variables (<code>HOME</code>, <code>TMPDIR</code>, <code>PWD</code>, and custom exports).
-    Plugin MCP configs using <code>$&#123;AEM_INSTANCES&#125;</code> work in Claude Code but <strong>fail silently</strong> in Copilot CLI
-    unless the variable is exported in your shell profile.
+    Copilot CLI only inherits shell environment variables. Plugin MCP configs using
+    <code>{'${AEM_INSTANCES}'}</code> work in Claude Code but <strong>fail silently</strong> in Copilot CLI
+    unless the variable is exported in your shell profile (<code>{"~"}/.zshrc</code> or <code>{"~"}/.bashrc</code>).
   </HighlightBox>
 
-  <CommandBlock label="~/.bashrc or ~/.zshrc (REQUIRED for Copilot CLI)">{`export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
-export AXE_API_KEY="your-axe-api-key"  # optional, for accessibility testing
-
-# Jira (if using Jira instead of ADO)
-export JIRA_PERSONAL_TOKEN="your-token"
-export JIRA_BASE_URL="https://myorg.atlassian.net"
-export JIRA_USER_EMAIL="you@example.com"`}</CommandBlock>
+  <p class="text-sm text-gray-600 mt-4">
+    All env vars from the <a href={`${import.meta.env.BASE_URL}/setup/`}>Setup page</a> must be in your shell profile.
+    If you previously set them in <code>.claude/settings.local.json</code>, add them to your shell profile too.
+  </p>
 </Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* MCP Config                                                              */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
   badge="MCP"
@@ -69,54 +79,62 @@ export JIRA_USER_EMAIL="you@example.com"`}</CommandBlock>
   </HighlightBox>
 
   <div class="overflow-x-auto mt-4">
-    <h4 class="text-sm font-semibold text-brand-900 mb-2">MCP Config Locations by Platform</h4>
-    <table class="w-full text-sm border-collapse">
+    <h4 class="text-sm font-semibold text-white mb-2">MCP Config Locations by Platform</h4>
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
       <thead>
-        <tr class="border-b border-gray-200">
-          <th class="text-left py-2 px-4 font-semibold">Platform</th>
-          <th class="text-left py-2 px-4 font-semibold">Config File</th>
-          <th class="text-left py-2 px-4 font-semibold">Root Key</th>
-          <th class="text-left py-2 px-4 font-semibold">Scope</th>
+        <tr class="bg-brand-100">
+          <th class="text-left p-3 font-semibold">Platform</th>
+          <th class="text-left p-3 font-semibold">Config File</th>
+          <th class="text-left p-3 font-semibold">Root Key</th>
+          <th class="text-left p-3 font-semibold">Scope</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code</td><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4"><code>mcpServers</code></td><td class="py-2 px-4">Per-project</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">VS Code Chat</td><td class="py-2 px-4"><code>.vscode/mcp.json</code></td><td class="py-2 px-4"><code>servers</code></td><td class="py-2 px-4">Per-project</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Copilot CLI</td><td class="py-2 px-4"><code>~/.copilot/mcp-config.json</code></td><td class="py-2 px-4"><code>servers</code></td><td class="py-2 px-4">Global</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Claude Code</td><td class="p-3"><code>.mcp.json</code></td><td class="p-3"><code>mcpServers</code></td><td class="p-3">Per-project</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">VS Code Chat</td><td class="p-3"><code>.vscode/mcp.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Per-project</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Copilot CLI</td><td class="p-3"><code>~/.copilot/mcp-config.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Global</td></tr>
       </tbody>
     </table>
   </div>
 </Section>
 
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Agents                                                                  */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
 <SectionHeading
   badge="Agents"
   badgeColor="info"
-  title="Copilot Agents (@Agent Invocation)"
+  title="@Agent Invocation"
   subtitle="In addition to /dx-* skills, Copilot CLI supports @Agent invocation."
   bg="alt"
 />
 <Section>
   <div class="overflow-x-auto">
-    <table class="w-full text-sm border-collapse">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
       <thead>
-        <tr class="border-b border-gray-200">
-          <th class="text-left py-2 px-4 font-semibold">Agent</th>
-          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+        <tr class="bg-brand-100">
+          <th class="text-left p-3 font-semibold">Agent</th>
+          <th class="text-left p-3 font-semibold">Purpose</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxPRReview</code></td><td class="py-2 px-4">Review PRs with inline patches and severity levels</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxCodeReview</code></td><td class="py-2 px-4">Deep code review with architecture analysis</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@AEMComponent</code></td><td class="py-2 px-4">Inspect and verify AEM components</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxHelp</code></td><td class="py-2 px-4">Answer architecture questions from project docs</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxReqAll</code></td><td class="py-2 px-4">Full requirements pipeline</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxPlan</code></td><td class="py-2 px-4">Generate and validate implementation plans</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxStepAll</code></td><td class="py-2 px-4">Execute all plan steps with recovery loops</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>@DxBugTriage</code></td><td class="py-2 px-4">Bug triage with browser automation evidence</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxPRReview</code></td><td class="p-3">Review PRs with inline patches and severity levels</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxCodeReview</code></td><td class="p-3">Deep code review with architecture analysis</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@AEMComponent</code></td><td class="p-3">Inspect and verify AEM components</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxHelp</code></td><td class="p-3">Answer architecture questions from project docs</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxReqAll</code></td><td class="p-3">Full requirements pipeline</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxStepAll</code></td><td class="p-3">Execute all plan steps with recovery loops</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxBugAll</code></td><td class="p-3">Full bug workflow: triage → verify → fix</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3"><code>@DxAgentAll</code></td><td class="p-3">End-to-end delivery: requirements → PR</td></tr>
       </tbody>
     </table>
   </div>
 </Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Differences                                                             */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
   badge="Diff"
@@ -126,22 +144,22 @@ export JIRA_USER_EMAIL="you@example.com"`}</CommandBlock>
 />
 <Section>
   <div class="overflow-x-auto">
-    <table class="w-full text-sm border-collapse">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
       <thead>
-        <tr class="border-b border-gray-200">
-          <th class="text-left py-2 px-4 font-semibold">Aspect</th>
-          <th class="text-left py-2 px-4 font-semibold">Shared</th>
-          <th class="text-left py-2 px-4 font-semibold">Differs</th>
+        <tr class="bg-brand-100">
+          <th class="text-left p-3 font-semibold">Aspect</th>
+          <th class="text-left p-3 font-semibold">Shared</th>
+          <th class="text-left p-3 font-semibold">Differs</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Skills</td><td class="py-2 px-4">{stats.totalSkills} skills, same commands</td><td class="py-2 px-4"></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Marketplace</td><td class="py-2 px-4">Same git URL</td><td class="py-2 px-4"></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Rules</td><td class="py-2 px-4">Same .claude/rules/ files</td><td class="py-2 px-4">Dual frontmatter (paths: + applyTo:)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Agents</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: 12 subagents | Copilot: 25 @Agents</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Env Vars</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: shell + settings.local.json | Copilot: shell only</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">MCP Config</td><td class="py-2 px-4">Same servers</td><td class="py-2 px-4">Claude: .mcp.json | Copilot: ~/.copilot/mcp-config.json</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Permissions</td><td class="py-2 px-4"></td><td class="py-2 px-4">Claude: prompt | Copilot: allowed-tools allowlist</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Skills</td><td class="p-3">{stats.totalSkills} skills, same commands</td><td class="p-3"></td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Marketplace</td><td class="p-3">Same git URL</td><td class="p-3"></td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Rules</td><td class="p-3">Same .claude/rules/ files</td><td class="p-3">Dual frontmatter (paths: + applyTo:)</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Agents</td><td class="p-3"></td><td class="p-3">Claude: 12 subagents | Copilot: 25 @Agents</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Env Vars</td><td class="p-3"></td><td class="p-3">Claude: shell + settings.local.json | Copilot: shell only</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">MCP Config</td><td class="p-3">Same servers</td><td class="p-3">Claude: .mcp.json | Copilot: ~/.copilot/mcp-config.json</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Permissions</td><td class="p-3"></td><td class="p-3">Claude: prompt | Copilot: allowed-tools allowlist</td></tr>
       </tbody>
     </table>
   </div>
