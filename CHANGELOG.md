@@ -1,3 +1,18 @@
+# [2.74.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.73.0...v2.74.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* scope session-start hook to dx-initialized projects only ([7e6da0e](https://github.com/easingthemes/dx-aem-flow/commit/7e6da0e15a284b939d6fe0edf736dfe71229e1d2))
+* use concatenated -l flag for window-specific video recording ([de21d45](https://github.com/easingthemes/dx-aem-flow/commit/de21d45f6fe50dfc88a5ea3b2f0c59af73b6d29a))
+* use region capture for video recording ([8d196e2](https://github.com/easingthemes/dx-aem-flow/commit/8d196e2e519794583166cf6f4e7e403c3199cf5d))
+
+
+### Features
+
+* add plugin logos and metadata fields ([9044311](https://github.com/easingthemes/dx-aem-flow/commit/9044311a90f055a1405f720ec23f0ac178c96611))
+* add video recording tools to VS Code automator ([4b5bbea](https://github.com/easingthemes/dx-aem-flow/commit/4b5bbea3c7033f389b2e23d3bcd8488f5d214cef))
+
 # [2.73.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.72.2...v2.73.0) (2026-03-25)
 
 
