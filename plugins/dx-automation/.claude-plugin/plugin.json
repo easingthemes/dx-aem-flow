@@ -5,6 +5,9 @@
   "author": {
     "name": "Dragan Filipovic"
   },
+  "homepage": "https://easingthemes.github.io/dx-aem-flow",
+  "repository": "https://github.com/easingthemes/dx-aem-flow",
   "license": "MIT",
+  "logo": "./assets/logo.png",
   "keywords": ["ado", "aws", "lambda", "automation", "ai-agents", "dor", "pr-review"]
 }
