@@ -258,7 +258,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:alert-circle" iconColor="bg-amber-500" title="Preview Limitations">
       <ul class="text-sm mt-1 space-y-1">
-        <li><strong>No plugin icons</strong> — all plugins show a generic puzzle-piece icon. No <code>icon</code> field in <code>plugin.json</code> yet.</li>
+        <li><strong>No plugin icons</strong> — all plugins show a generic puzzle-piece icon. A <code>logo</code> field is <a href="https://github.com/microsoft/vscode/issues/304758">coming soon</a> (On Deck milestone). Our plugins already ship <code>assets/logo.png</code> and declare <code>"logo"</code> in <code>plugin.json</code> — will activate once VS Code ships support.</li>
         <li><strong>Marketplace must be user-level</strong> — <code>chat.plugins.marketplaces</code> only works in user settings, not workspace settings.</li>
         <li><strong>Silent failures</strong> — errors in <code>marketplace.json</code> or <code>plugin.json</code> cause the feed to silently not appear.</li>
         <li><strong>Aggressive caching</strong> — may need VS Code reload to pick up changes.</li>

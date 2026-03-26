@@ -30,5 +30,13 @@
 
 | 24 | Migrate DoD wiki to checkbox format | Low | Open | 2026-03-23 | [todo-config.md#dod-checkbox](todo-config.md#dod-checkbox-format) |
 | 25 | Cross-repo component-discovery.md consumption | Medium | Pending | 2026-03-24 | [todo-aem-discovery.md](todo-aem-discovery.md#cross-repo-discovery-consumption) |
+| 26 | Open Plugins: vendor-neutral `.plugin/` manifest | Low | Watch | 2026-03-26 | [todo-open-plugins.md#vendor-neutral-manifest](todo-open-plugins.md#vendor-neutral-manifest) |
+| 27 | Open Plugins: rules `.mdc` extension | Low | Watch | 2026-03-26 | [todo-open-plugins.md#rules-file-extension](todo-open-plugins.md#rules-file-extension-md--mdc) |
+| 28 | Open Plugins: `commands/` dir separation | Low | Watch | 2026-03-26 | [todo-open-plugins.md#commands-directory](todo-open-plugins.md#commands-directory-separation) |
+| 29 | Open Plugins: `${PLUGIN_ROOT}` variable naming | Low | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-root](todo-open-plugins.md#plugin_root-variable-naming) |
+| 30 | Open Plugins: output styles support | Low | Watch | 2026-03-26 | [todo-open-plugins.md#output-styles](todo-open-plugins.md#output-styles-support) |
+| 31 | Open Plugins: monitor spec finalization | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#monitor-spec](todo-open-plugins.md#monitor-spec-finalization) |
 
-**Counts:** 25 total — 9 done, 7 open, 5 blocked, 1 watch, 1 deferred, 1 decision needed, 1 pending
+| 32 | Open Plugins: plugin logo (`logo` field) | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-logo](todo-open-plugins.md#plugin-logo--icon) — `assets/logo.png` + `"logo"` field added to all 4 plugins; waiting on [vscode#304758](https://github.com/microsoft/vscode/issues/304758) |
+
+**Counts:** 32 total — 9 done, 7 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
