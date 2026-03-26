@@ -3,6 +3,10 @@
 # Returns warnings via additionalContext if issues found.
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+
+# Only run in dx-initialized projects
+[ ! -d "$PROJECT_DIR/.ai" ] && exit 0
+
 WARNINGS=""
 
 # Check .ai/config.yaml exists
