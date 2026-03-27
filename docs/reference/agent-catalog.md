@@ -192,10 +192,10 @@ Finds all AEM pages using a given component. Searches configured content paths a
 |----------|-------|
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-bug-executor.md` |
-| **Used by** | `/dx-bug-verify` (for AEM-specific bugs) |
+| **Used by** | `/dx-bug-verify` (for AEM bugs) |
 | **Tools** | Read, Write, Glob, Grep, ToolSearch, Chrome DevTools MCP, AEM MCP |
 
-AEM-specific bug verification agent. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, and optionally checks JCR state. Returns structured verification result with evidence table.
+AEM bug verification agent. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, and optionally checks JCR state. Returns structured verification result with evidence table.
 
 ---
 
@@ -418,7 +418,7 @@ Figma design-to-code coordinator. Chains `/dx-figma-extract` → `/dx-figma-prot
 
 ## Copilot Agents — aem plugin (10 agents)
 
-AEM Copilot agents are seeded into `.github/agents/` when Copilot support is enabled during `/aem-init`. They extend the DX agents with AEM-specific capabilities.
+AEM Copilot agents are seeded into `.github/agents/` when Copilot support is enabled during `/aem-init`. They provide the AEM full-flow lifecycle — component dialogs, JCR content, editorial QA, browser automation, and demo capture.
 
 ### AEMBefore
 
