@@ -27,3 +27,18 @@
 - Option B: Use `xdotool` on Linux, PowerShell on Windows as platform backends in vscode-automator
 - Option C: Use VS Code's `workbench.action.terminal.sendSequence` command via a VS Code task or keybinding hack
 - Evaluate after V1 usage confirms the terminal-dispatch model works well
+
+## Publish vscode-automator as Standalone npm Package
+
+**Added:** 2026-03-27
+**Problem:** `vscode-automator` is a local file in `tools/vscode-automator/`. Plugin `.mcp.json` can't reference it with a stable path because the path breaks when the plugin is installed via marketplace into a consumer project. Currently `dx-hub-init` must resolve the path at init time, which is fragile.
+**Scope:** `tools/vscode-automator/`, `plugins/dx-hub/skills/dx-hub-init/SKILL.md`, `plugins/dx-hub/shared/hub-dispatch.md`
+**Done-when:** `npm info vscode-automator-mcp` returns package metadata, and the hub `.mcp.json` uses `"command": "npx", "args": ["-y", "vscode-automator-mcp"]` — same pattern as `aem-mcp-server` in dx-aem.
+
+**Approach:**
+- Add `bin` field to `tools/vscode-automator/package.json` pointing at `server.mjs`
+- Set `name: "vscode-automator-mcp"`, add description, keywords, license, repository
+- Add a README with usage examples (standalone MCP, Claude Code plugin config, skill usage)
+- `npm publish`
+- Update `dx-hub-init` Step 5 to use `npx -y vscode-automator-mcp` instead of resolving a local path
+- The MCP server is general-purpose (not tied to dx plugins) — useful for demo capture, multi-session orchestration, any VS Code automation via MCP
