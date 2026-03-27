@@ -39,4 +39,6 @@
 
 | 32 | Open Plugins: plugin logo (`logo` field) | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-logo](todo-open-plugins.md#plugin-logo--icon) — `assets/logo.png` + `"logo"` field added to all 4 plugins; waiting on [vscode#304758](https://github.com/microsoft/vscode/issues/304758) |
 
-**Counts:** 32 total — 9 done, 7 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
+| 33 | `allowed-tools` Copilot CLI version-gated error | Low | Informational | 2026-03-27 | [todo-allowed-tools.md](todo-allowed-tools.md#allowed-tools-version-gated-behavior-in-copilot-cli) — Valid field per Agent Skills spec + Claude Code; Copilot CLI 1.0.10+ suppresses unknown field warnings. Users must update CLI. |
+
+**Counts:** 33 total — 9 done, 7 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending, 1 informational
