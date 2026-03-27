@@ -1,3 +1,15 @@
+# [2.77.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.76.0...v2.77.0) (2026-03-27)
+
+
+### Bug Fixes
+
+* **dx-hub:** address PR review — fix MCP path, remove headless references ([0033c1b](https://github.com/easingthemes/dx-aem-flow/commit/0033c1b5493ca13487dd58b5c9f3ad208b6183f7))
+
+
+### Features
+
+* **dx-hub:** rewrite hub dispatch to use VS Code terminals instead of headless claude -p ([8146c5f](https://github.com/easingthemes/dx-aem-flow/commit/8146c5f5dc1af86c031f83fdb6363a0ecc8090d3))
+
 # [2.76.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.75.0...v2.76.0) (2026-03-27)
 
 
