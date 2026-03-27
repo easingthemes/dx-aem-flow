@@ -3,6 +3,7 @@ name: dx-ticket-analyze
 description: Research an Azure DevOps/Jira ticket and find all relevant source files and assets. Use when a developer pastes an ADO URL or Jira issue key and wants to know what files are involved.
 argument-hint: "[ADO URL, Jira URL, work item ID, or issue key]"
 model: haiku
+effort: low
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
