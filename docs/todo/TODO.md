@@ -52,4 +52,12 @@
 | 43 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
 | 44 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
 
-**Counts:** 44 total — 9 done, 19 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 45 | Subagent: coordinator waiting UX — Tasks not polling | High | Open | 2026-03-27 | [todo-subagent-improvements.md#coordinator-waiting-ux](todo-subagent-improvements.md#coordinator-waiting-ux--use-tasks-instead-of-polling) — background agents should use TaskCreate, never poll output files |
+| 46 | Subagent: parallel dispatch for independent phases | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#parallel-dispatch](todo-subagent-improvements.md#parallel-subagent-dispatch-for-independent-phases) — AEM Baseline+Build, AEM Verify+FE Verify can run concurrently |
+| 47 | Subagent: context budget enforcement | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#context-budget](todo-subagent-improvements.md#subagent-context-budget-enforcement) — >5KB inputs must be summarized before passing to fork |
+| 48 | Subagent: error classification in Result envelope | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#error-classification](todo-subagent-improvements.md#subagent-error-classification-in-result-envelope) — transient/permanent/config for retry logic |
+| 49 | Subagent: MCP tool discovery resilience pattern | Low | Open | 2026-03-27 | [todo-subagent-improvements.md#mcp-discovery](todo-subagent-improvements.md#mcp-tool-discovery-resilience-pattern) — standardize ToolSearch fallback in all MCP agents |
+| 50 | Subagent: coordinator output discipline | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#output-discipline](todo-subagent-improvements.md#coordinator-output-discipline--summarize-dont-echo) — use Task updates, don't echo Result envelopes |
+| 51 | Subagent: Task-based progress for long-running phases | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#task-progress](todo-subagent-improvements.md#task-based-progress-for-long-running-subagent-phases) — descriptive TaskCreate before each Skill() dispatch |
+
+**Counts:** 51 total — 9 done, 26 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
