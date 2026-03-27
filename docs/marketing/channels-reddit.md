@@ -42,23 +42,28 @@
 
 ### r/SideProject Post
 ```
-Title: I built an open-source AI dev platform with 73 skills that automates the entire sprint lifecycle
+Title: I built 73 structured AI skills for enterprise dev workflows — consistent output, not raw suggestions
 
 Hey r/SideProject!
 
-After years of manually wrangling tickets, PRs, and code reviews,
-I built dx-aem-flow — 4 plugins with 73 AI skills that handle
-everything from requirements analysis to production PRs.
+Every dev team uses AI now — Copilot, Cursor, Claude Code. But on
+enterprise projects I kept seeing the same problem: raw AI output is
+inconsistent. Quality depends on the prompt, there's no process
+discipline, no audit trail, no verification.
 
-What makes it different:
-- Works on Claude Code, GitHub Copilot CLI, AND VS Code Chat (same skills everywhere)
-- Config-driven: one YAML file, zero hardcoded values
-- Includes 10 autonomous agents that run 24/7 on Azure DevOps
+So I built dx-aem-flow — 4 plugins with 73 structured skills that
+produce consistent, enterprise-quality output from ticket to PR.
+
+What makes it different from raw AI tools:
+- Structured artifacts at every step (requirements, plans, verification reports)
+- Config-driven: one YAML file, consistent results across the whole team
+- 6-phase verification gate (compile, lint, test, secrets, architecture, AI review)
+- 10 autonomous agents enforcing quality in Azure DevOps pipelines 24/7
+- Same skills on Claude Code, Copilot CLI, and VS Code Chat
 - Pure markdown — no build system, no Docker
-- Open source (MIT)
+- Open source
 
-The wild part: you can tag a ticket in ADO and wake up to a verified PR.
-No human interaction needed.
+The key insight: the gap in AI dev tools isn't intelligence — it's structure.
 
 GitHub: [link]
 Docs: [link]

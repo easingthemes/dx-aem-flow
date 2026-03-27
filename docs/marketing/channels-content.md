@@ -17,22 +17,22 @@
 
 ### Flagship Articles (Long-form, 2000+ words)
 
-1. **"I Automated My Entire Dev Sprint With 73 AI Skills — Here's the Open-Source Toolkit"**
-   - The hero article. Covers the full lifecycle. Screenshots from ADO.
+1. **"AI Code Generation Is Commoditized. Structured Enterprise Output Is Not. Here's What I Built."**
+   - The hero article. Why raw AI output isn't enough for enterprise, how structured skills bridge the gap.
    - Platforms: Dev.to, Hashnode, Medium (Better Programming)
 
-2. **"From Figma to Production AEM Component in One Command"**
-   - Visual walkthrough of the Figma pipeline.
+2. **"From Figma to Production AEM Component — A Structured Pipeline Verified at Every Step"**
+   - Visual walkthrough of the Figma pipeline, emphasizing structured artifacts and verification.
    - Source: `website/src/pages/usage/figma.mdx`
    - Platforms: Dev.to, Medium
 
-3. **"Building 10 Autonomous AI Agents for Azure DevOps Pipelines"**
-   - Architecture deep-dive: Lambda + ADO + AI agents.
+3. **"Building 10 Autonomous Agents That Enforce Enterprise Quality in Azure DevOps Pipelines"**
+   - Architecture deep-dive: Lambda + ADO + structured AI agents.
    - Source: `website/src/pages/architecture/automation.mdx`
    - Platforms: Dev.to, Hashnode
 
-4. **"Why AI Coding Tools Fail Enterprise Teams (And What Actually Works)"**
-   - Contrarian piece. Position dx-aem-flow as the solution.
+4. **"The Gap Between Raw AI Suggestions and Enterprise-Quality Structured Output"**
+   - What's commoditized vs what's still missing. Position structured skills as the bridge.
    - Platforms: Medium, LinkedIn article, Dev.to
 
 5. **"The Config-Driven AI Development Platform — One YAML File, 50+ Repos"**
@@ -51,9 +51,9 @@
 
 ### Comparison/SEO Articles
 
-13. "Manual vs AI-Assisted Sprint: A Time Comparison"
+13. "Raw AI Output vs Structured Skills: What Enterprise Teams Actually Need"
 14. "Claude Code vs GitHub Copilot CLI vs VS Code Chat — Why Not All Three?"
-15. "Open Source AI Dev Tools: A Curated Guide for Enterprise Teams"
+15. "Beyond Code Generation: Structured AI Workflows for Enterprise Development"
 
 ---
 
