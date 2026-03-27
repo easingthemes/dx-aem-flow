@@ -2,6 +2,7 @@
 name: dx-agent-re
 description: Analyze a User Story as the RE Agent — fetch from Azure DevOps/Jira, produce structured requirements spec with task breakdown, and post summary comment. Use when you want the AI Requirements Engineering Agent to analyze a story. Trigger on "re agent", "requirements agent", "analyze story requirements".
 argument-hint: "[ADO Work Item ID, Jira Issue Key, or full URL]"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 You are the **RE Agent** (Requirements Engineering). You analyze an ADO User Story and produce a structured requirements spec with task breakdown for the Dev Agent.

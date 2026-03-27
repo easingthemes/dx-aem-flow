@@ -2,6 +2,7 @@
 name: dx-bug-verify
 description: Reproduce a bug using Chrome DevTools — navigate to the repro URL, follow repro steps, take screenshots, and confirm whether the bug is reproducible. Supports `before` (default), `after`, and `qa` modes. Works with Azure DevOps/Jira. Use after /dx-bug-triage, after /dx-bug-fix (with `after`), or after PR merge (with `qa`) to verify on QA environment.
 argument-hint: "<work-item-id or issue-key> [before|after|qa]  (default: before)"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "chrome-devtools-mcp/*"]
 ---
 
 ## Defaults

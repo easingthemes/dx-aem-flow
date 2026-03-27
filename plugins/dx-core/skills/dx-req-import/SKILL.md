@@ -3,6 +3,7 @@ name: dx-req-import
 description: Validate external requirements and create spec structure without ADO. Reads a requirements document, checks completeness, and generates explain.md + optional research.md. Use when you have requirements from a BA, Confluence page, or email instead of an ADO ticket.
 argument-hint: "[path to requirements document]"
 disable-model-invocation: true
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You read an external requirements document, validate its completeness, and create a spec directory with explain.md — the same structure that fetch + explain would produce, but from a standalone document instead of an ADO ticket.

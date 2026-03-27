@@ -3,6 +3,7 @@ name: dx-plan
 description: Generate an implementation plan with status-tracked steps. Creates implement.md from explain.md + research.md. Uses extended thinking for deep reasoning. Use after requirements are ready (from ADO flow or import).
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You read the spec documents and use extended thinking to generate `implement.md` — a concrete, step-by-step development plan with status tracking for automated execution.

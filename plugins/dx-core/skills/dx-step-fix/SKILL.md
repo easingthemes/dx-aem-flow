@@ -2,6 +2,7 @@
 name: dx-step-fix
 description: Diagnose and fix a blocked step — compilation error, test failure, or review rejection. Tries direct fix first; if that fails, creates corrective steps in implement.md (heal). Use when /dx-step reports a failure.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 model: sonnet
 ---
 

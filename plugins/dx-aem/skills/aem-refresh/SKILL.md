@@ -2,6 +2,7 @@
 name: aem-refresh
 description: Refresh .ai/project/ seed data files from a local path or remote ADO docs repo. Use when project knowledge files need updating.
 argument-hint: "[local-path-to-docs | blank for remote]"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 You refresh `.ai/project/` data files from an external source. This updates the project knowledge that agents use for component lookups, file resolution, and market-scoped searches.

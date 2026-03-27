@@ -2,6 +2,7 @@
 name: dx-req-dod
 description: Check Definition of Done compliance and auto-fix gaps — reviews PR, tasks, docs. Posts summary to ADO.
 argument-hint: "[ADO Work Item ID, Jira Issue Key, or full URL]"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 ## Defaults

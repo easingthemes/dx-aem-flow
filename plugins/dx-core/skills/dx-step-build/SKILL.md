@@ -3,6 +3,7 @@ name: dx-step-build
 description: Build and deploy to local dev environment, fix errors iteratively until the build passes. Use after code changes to verify everything compiles and deploys correctly.
 argument-hint: "[optional: build command override]"
 context: fork
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You build and deploy the project, diagnose any failures, fix them, and repeat until the build passes.

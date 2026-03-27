@@ -7,6 +7,7 @@ metadata:
   version: 2.28.0
   mcp-server: figma
   category: design-to-code
+allowed-tools: ["read", "edit", "search", "write", "agent", "figma/*", "chrome-devtools-mcp/*"]
 ---
 
 You extract everything needed from a Figma design link — reference code, design tokens, screenshots — so that Figma is never consulted again in downstream steps.

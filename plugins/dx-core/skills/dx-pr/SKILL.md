@@ -2,6 +2,7 @@
 name: dx-pr
 description: Create a pull request after all plan steps are complete. Verifies all steps are done, generates PR description from share-plan.md, pushes branch, and creates PR via ADO MCP tools. Use as the final step in the execution pipeline.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You create a pull request for the completed implementation.

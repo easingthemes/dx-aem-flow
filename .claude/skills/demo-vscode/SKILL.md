@@ -3,6 +3,7 @@ name: demo-vscode
 description: "Capture 3 screenshots for a tip page — two card captures from the website + a VS Code demo. Trigger: /demo-vscode <tip-url>"
 argument-hint: "<tip-page-url>"
 model: opus
+allowed-tools: Read, Write, Glob, Grep, Agent, ToolSearch, WebFetch,
   mcp__chrome-devtools-mcp__navigate_page,
   mcp__chrome-devtools-mcp__take_snapshot,
   mcp__chrome-devtools-mcp__take_screenshot,

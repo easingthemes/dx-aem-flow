@@ -2,6 +2,7 @@
 name: dx-doc-retro
 description: Generate technical documentation retroactively for completed stories — fetches ADO story, finds linked PRs, searches codebase, and produces wiki-ready docs without needing spec files. Posts to ADO Wiki or Confluence depending on provider config. Use when documentation was never generated during development.
 argument-hint: "[ADO Work Item ID or URL]"
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 You generate technical documentation for stories that are already implemented. Unlike `/dx-doc-gen` (which reads spec files produced during development), this skill discovers everything from the ADO work item and linked PRs. Posts to ADO Wiki or Confluence depending on `tracker.provider`.

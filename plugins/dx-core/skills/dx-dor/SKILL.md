@@ -3,6 +3,7 @@ name: dx-dor
 description: Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Use standalone at sprint start, in batch, or as part of /dx-req.
 argument-hint: "<Work Item ID(s) — space-separated for batch>"
 model: sonnet
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 Validate one or more work items against the project's Definition of Ready checklist. Fetches the DoR wiki page, evaluates each criterion against the story content, generates a scorecard, and posts an interactive ADO/Jira comment with checkboxes for BA collaboration. Supports three modes: first post (Mode A), update after changes (Mode B), and reuse when nothing changed (Mode C). Supports `mandatory` tag for hard-gate checks that block regardless of overall score.

@@ -2,6 +2,7 @@
 name: dx-hub-status
 description: Show status of hub dispatches — in-flight work, completed results, and PRs across all repos. Use to check multi-repo progress. Trigger on "hub status", "dispatch status", "what's running".
 argument-hint: "[ticket-id (optional) | --clean]"
+allowed-tools: ["Read", "Glob", "Grep", "Write", "Bash"]
 ---
 
 You display the status of hub dispatches across all configured repos.

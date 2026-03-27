@@ -2,6 +2,7 @@
 name: dx-plan-resolve
 description: Resolve risks and issues flagged by plan-validate. Researches codebase for concrete solutions and updates implement.md steps with fixes. Use after /dx-plan-validate reports warnings or risks.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You resolve risks and issues found during plan validation by researching the codebase for concrete solutions, then updating `implement.md` with specific fix instructions.

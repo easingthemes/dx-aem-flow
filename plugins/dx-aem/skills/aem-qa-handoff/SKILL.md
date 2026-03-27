@@ -8,6 +8,7 @@ compatibility: "Full mode requires AEM MCP (QA instance) and Chrome DevTools MCP
 metadata:
   mcp-server: AEM, chrome-devtools-mcp
   category: aem-verification
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available for full mode.

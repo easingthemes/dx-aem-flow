@@ -4,6 +4,7 @@ description: Generate AEM demo documentation — find or create docs page with c
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 context: fork
 agent: aem-editorial-guide-capture
+allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM doc generation requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."

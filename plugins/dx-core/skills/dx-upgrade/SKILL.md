@@ -2,6 +2,7 @@
 name: dx-upgrade
 description: Upgrade consumer project to latest plugin versions — runs dx-doctor, then fixes stale files, installs missing files, and reports what needs manual action. Use after upgrading plugins.
 argument-hint: "[dx|aem|auto|all]"
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You upgrade a consumer project's dx workflow files to match the latest installed plugin versions. You diagnose first (dx-doctor), then fix issues with smart handling of user-customized files.

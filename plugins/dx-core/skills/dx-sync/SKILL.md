@@ -2,6 +2,7 @@
 name: dx-sync
 description: Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options. Use when you say "sync plugins", "update consumers", "push to all repos".
 argument-hint: "[--dry-run] [--parallel] [repo1 repo2 ...] — repo names from .ai/config.yaml repos:"
+allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You sync plugin updates to consumer AEM repos using the `sync-consumers.sh` script. Any consumer repo can run this skill — there is no hub. Repos are listed in `.ai/config.yaml` under `repos:`.

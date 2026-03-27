@@ -3,6 +3,7 @@ name: dx-help
 description: Answer developer questions about project architecture, components, patterns, and workflows. Use when a developer asks "how does X work?", "what is Y?", "where do I find Z?", or any general question about the project. This is the go-to skill for questions that aren't about a specific ticket or component lookup.
 argument-hint: "[question about the project]"
 model: haiku
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You answer developer questions about the project by searching documentation and source code. You are a knowledge base navigator — you find the answer in docs and code.
