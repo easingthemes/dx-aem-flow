@@ -27,6 +27,13 @@ keyPoints:
     - `*` matches anything (including nothing)
     - Pattern matches tool name and optionally arguments in parentheses
     - No regex — just glob-style wildcards
+  - |
+    The `if` field — fine-grained filtering inside a hook
+    - `matcher` selects which tool events to listen for; `if` adds a second filter using permission rule syntax
+    - Evaluated BEFORE spawning the hook process — avoids unnecessary shell invocations
+    - Example: `"matcher": "Bash"` + `"if": "Bash(git commit*)"` — the hook entry fires on all Bash events, but only spawns the script for git commits
+    - Example: `"matcher": "Edit"` + `"if": "Edit(**/.claude-plugin/**)"` — only validate plugin file edits, skip all other edits
+    - Use `if` when your matcher is broad but your script only applies to a subset
 actionItems:
   - |
     A matcher for every risk level
