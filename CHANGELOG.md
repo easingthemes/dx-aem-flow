@@ -1,3 +1,17 @@
+# [2.75.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.74.0...v2.75.0) (2026-03-27)
+
+
+### Bug Fixes
+
+* broaden "Why This Exists" to cover full lifecycle, not just governance ([bdaa346](https://github.com/easingthemes/dx-aem-flow/commit/bdaa346f4c0bd88e301d302325c6f51b402f5c5c))
+* remove "more than AI code completion" framing ([6d9978f](https://github.com/easingthemes/dx-aem-flow/commit/6d9978fe9e2a860ad7778de9b30e6542127e3597))
+
+
+### Features
+
+* apply enterprise/multi-platform/AEM-full-flow messaging across docs ([64d4d34](https://github.com/easingthemes/dx-aem-flow/commit/64d4d348e54d5af3dd5e3a005e741a2ee534c26b))
+* shift messaging to enterprise, multi-platform, and AEM full-flow ([4ebb624](https://github.com/easingthemes/dx-aem-flow/commit/4ebb62424323003cdb612172426ccf2e2fef52f4))
+
 # [2.74.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.73.0...v2.74.0) (2026-03-26)
 
 
