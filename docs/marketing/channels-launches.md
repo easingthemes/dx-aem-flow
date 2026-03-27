@@ -16,10 +16,10 @@
 ### Product Hunt Copy
 
 **Tagline (60 chars max):**
-> "73 AI skills that turn tickets into production PRs"
+> "Structured AI skills for enterprise dev workflows"
 
 **Description:**
-> dx-aem-flow is an open-source enterprise AI development platform. 4 plugins, 73+ skills, 12 autonomous agents. Automates the entire sprint lifecycle — requirements, planning, execution, code review, PR creation — across Claude Code, GitHub Copilot CLI, and VS Code Chat. Config-driven. Pure markdown. Works on any tech stack.
+> AI code generation is commoditized — every tool does it. dx-aem-flow bridges the gap to structured, enterprise-quality output. 73 skills that produce consistent, auditable artifacts from ticket to PR: requirements analysis, implementation plans, 6-phase verification, and autonomous quality gates. Config-driven, pure markdown, works on Claude Code, Copilot CLI, and VS Code Chat. Open source.
 
 **Topics/Categories:**
 - Developer Tools
@@ -55,7 +55,7 @@
 
 ### Title Format
 ```
-Show HN: dx-aem-flow – Open-source AI plugins for enterprise dev workflows (73 skills)
+Show HN: dx-aem-flow – Structured AI skills for enterprise dev workflows, not raw code suggestions
 ```
 
 ### Rules
@@ -68,25 +68,34 @@ Show HN: dx-aem-flow – Open-source AI plugins for enterprise dev workflows (73
 
 ### The "Show HN" Comment (post immediately after)
 ```
-Hey HN! I built dx-aem-flow because I was tired of the disconnect between
-AI coding assistants and real enterprise dev workflows.
+Hey HN! Every dev team uses AI coding tools now — Copilot, Cursor, Claude
+Code. Code generation is commoditized. But on enterprise projects, I kept
+hitting the same wall: raw AI output is inconsistent, there's no process
+discipline, no structured artifacts, no verification pipeline.
 
-The problem: AI tools generate code, but code generation is maybe 30% of
-a developer's sprint. Requirements analysis, planning, code review, PR
-creation, documentation — all still manual.
+So I built 73 structured skills that produce consistent, enterprise-quality
+output. The key insight: the gap isn't AI intelligence — it's structure.
 
-So I built 73 skills that handle the entire sprint lifecycle. They're
-pure markdown (no build system), config-driven (one YAML file), and work
-identically on Claude Code, GitHub Copilot CLI, and VS Code Chat.
+What "structured" means concretely:
+- Every skill produces named artifacts (requirements.md, plan.md, verify.md)
+  to .ai/specs/<ticket-id>/ — auditable, reproducible
+- Config-driven (one YAML file) — same output regardless of who runs it
+- 6-phase verification gate (compile, lint, test, secrets, architecture, AI review)
+- Three-layer override system (project rules > config > plugin defaults)
 
 The architecture:
 - 4 plugins (dx-core for any stack, dx-aem for Adobe Experience Manager,
   dx-hub for multi-repo, dx-automation for 24/7 agents)
-- Skills chain together via file-based conventions (.ai/specs/ directory)
-- 10 autonomous agents run on Azure DevOps pipelines via AWS Lambda webhooks
-- Model tiering: Opus for deep reasoning, Sonnet for execution, Haiku for lookups
+- Pure markdown — no build system, no Docker
+- Same skills work on Claude Code, Copilot CLI, and VS Code Chat
+- 10 autonomous agents run on ADO pipelines via AWS Lambda webhooks
+- Model tiering: Opus for reasoning, Sonnet for execution, Haiku for lookups
 
-Happy to answer any questions about the architecture or approach.
+Honest trade-offs: the learning curve is real — you need to understand the
+skill chain and config system. It's built for teams that want process
+discipline, not for quick ad-hoc prompting.
+
+Happy to answer questions about the architecture or approach.
 ```
 
 ### What HN Loves

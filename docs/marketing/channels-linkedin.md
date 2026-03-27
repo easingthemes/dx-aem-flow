@@ -49,54 +49,53 @@
 
 ### LinkedIn Post Templates
 
-**Template 1: Problem → Solution → Proof**
+**Template 1: The Structure Gap**
 ```
-Most enterprise dev teams lose 40% of their sprint to manual workflow tasks.
+Every dev team uses AI now. Copilot, Cursor, Claude Code — pick your tool.
 
-Requirements analysis? Manual.
-PR reviews? Manual.
-Bug triage? Manual.
-Documentation? Manual.
+But here's what I noticed on enterprise projects:
 
-I built 73 AI skills that automate the entire sprint lifecycle.
+→ Developer A prompts AI, gets decent output
+→ Developer B prompts the same AI, gets inconsistent output
+→ No one validates requirements before coding
+→ No one checks if the PR meets Definition of Done
+→ No audit trail of what AI analyzed or decided
 
-From ticket to production PR. Autonomously.
+The problem isn't AI intelligence. It's structure.
 
-Here's what changed for my team:
-→ PR review: 4 hours → 12 minutes
-→ Requirements analysis: 2 hours → 15 minutes
-→ Bug triage to fix: 1 day → 45 minutes
+I built 73 structured skills that produce consistent,
+enterprise-quality output regardless of who runs them.
 
-The toolkit is open source: [link]
+Named artifacts at every step. Config-driven. Auditable.
+Open source: [link]
 
-What would you automate first?
+What's the biggest gap you see in AI dev tools?
 ```
 
-**Template 2: Contrarian Take**
+**Template 2: Commoditized vs Structured**
 ```
-Unpopular opinion: AI code generation is the LEAST valuable thing AI can do for developers.
+AI code generation is commoditized. Every tool does it now.
 
-Here's what actually moves the needle:
+Here's what's NOT commoditized:
 
-1. AI that reads your ticket and validates requirements BEFORE you code
-2. AI that plans implementation steps and checks coverage
-3. AI that reviews its own code through 6 verification phases
-4. AI that creates the PR with context, not just a diff
-5. AI that runs 24/7 fixing bugs while you sleep
+1. Structured requirements analysis with named artifacts
+2. Plan verification before a single line of code is written
+3. 6-phase quality gates (compile, lint, test, secrets, architecture, AI review)
+4. Domain-specific verification (AEM dialogs, JCR content, editorial guides)
+5. Autonomous agents enforcing standards in CI/CD — 24/7
 
-Code generation is step 3 of 10.
+That's the gap between "AI suggests code" and
+"AI delivers enterprise-grade structured output."
 
-We're obsessing over the wrong part of the workflow.
-
-I built an open-source platform that handles all 10 steps.
-73 skills. 4 plugins. Every AI platform.
+I built an open-source plugin system that bridges this gap.
+73 skills. 4 plugins. Consistent results every time.
 
 Agree or disagree? 👇
 ```
 
-**Template 3: Carousel Outline — "From Ticket to PR in 7 Steps"**
+**Template 3: Carousel Outline — "From Ticket to Verified PR: Structured AI Workflow"**
 ```
-Slide 1: "Your AI assistant writes code. Mine delivers verified PRs." (hook)
+Slide 1: "AI code generation is commoditized. Structured enterprise output is not." (hook)
 Slide 2: Step 1 — /dx-req: Fetch ticket, validate DoR, research codebase
 Slide 3: Step 2 — /dx-plan: Generate implementation plan with risk analysis
 Slide 4: Step 3 — /dx-step-all: Execute all steps (implement → test → review loop)

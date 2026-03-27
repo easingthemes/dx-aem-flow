@@ -25,26 +25,28 @@
 
 ## Thread Templates
 
-### Thread 1: "I Automated My Entire Sprint"
+### Thread 1: "The Structure Gap in AI Dev Tools"
 ```
-🧵 I automated my entire development sprint with AI.
+🧵 Every dev team uses AI now. Copilot, Cursor, Claude Code.
 
-Not just code generation — the ENTIRE workflow.
+But here's what nobody talks about:
 
-Requirements → Planning → Execution → Review → PR → Docs.
+AI code generation is commoditized.
+What's NOT commoditized is structured, enterprise-quality output.
 
-73 AI skills. Open source. Here's how it works:
+I built 73 skills that bridge that gap. Open source. Here's what they do:
 
 (1/10)
 ---
-Step 1: /dx-req
+Step 1: /dx-req — Structured Requirements
 
-AI reads the Jira/ADO ticket.
-Validates Definition of Ready.
-Researches the codebase for relevant code.
-Writes a requirements summary.
+Instead of ad-hoc prompting, this skill:
+→ Fetches the ticket from ADO/Jira
+→ Validates Definition of Ready
+→ Researches your codebase
+→ Produces a named artifact: raw-story.md + explain.md
 
-Time saved: 2 hours → 15 minutes.
+Same output every time. Regardless of who runs it.
 
 (2/10)
 ---
@@ -94,34 +96,36 @@ Your reviewer gets everything they need.
 
 (6/10)
 ---
-The wild part?
+Why does this matter?
 
-This all works on:
-✅ Claude Code
-✅ GitHub Copilot CLI
-✅ VS Code Chat
+Because with raw AI tools:
+→ Developer A gets different output than Developer B
+→ No audit trail of what was analyzed
+→ No verification before shipping
+→ Quality depends on the prompt
 
-Same skills. Same config. Same results.
+With structured skills:
+→ Same input = same quality output. Every time.
 
 (7/10)
 ---
-But wait — it gets better.
+It gets better: same skills run in CI/CD.
 
-I built 10 autonomous agents that run 24/7.
+10 autonomous agents on Azure DevOps pipelines.
+Same structured output, enforced automatically.
 
-Tag a ticket in Azure DevOps.
-Wake up to a verified, ready-to-review PR.
-
-No human interaction needed.
+DoR validation, PR review, DoD checks — all 24/7.
+Enterprise governance without manual overhead.
 
 (8/10)
 ---
-The entire system is:
+The architecture:
 
-→ Config-driven (one YAML file, zero hardcoded values)
-→ Pure markdown (no build system, no Docker)
-→ Open source
-→ Enterprise-grade (DoR/DoD validation, audit logging)
+→ Config-driven (one YAML, zero hardcoded values)
+→ Named artifacts at every step (.ai/specs/)
+→ Three-layer override system (rules > config > defaults)
+→ Model tiering (Opus/Sonnet/Haiku by task complexity)
+→ Works on Claude Code, Copilot CLI, VS Code Chat
 
 (9/10)
 ---
@@ -137,58 +141,50 @@ It takes 2 minutes to install and 1 command to start.
 (10/10)
 ```
 
-### Thread 2: "Why AI Coding Tools Fail Enterprise Teams"
+### Thread 2: "Why Raw AI Output Isn't Enterprise-Ready"
 ```
-Hot take: Most AI coding tools are useless for enterprise development.
+Every AI tool can generate code. That's table stakes in 2026.
 
-Here's why — and what actually works.
+But here's what enterprise teams actually need — and almost no tool provides:
 
 🧵👇
 ---
-Problem 1: They generate code in isolation.
+Problem 1: Inconsistent output quality.
 
-Enterprise code lives in a context:
-- Ticket requirements
-- Team conventions
-- Architecture decisions
-- Test patterns
+Developer A prompts Cursor → gets clean code.
+Developer B prompts the same tool → gets spaghetti.
 
-AI that ignores context generates throwaway code.
+The quality depends on the prompt, not the process.
+Enterprise teams need consistent output regardless of who runs it.
 ---
-Problem 2: They stop at code generation.
+Problem 2: No structured artifacts.
 
-Code is maybe 30% of a developer's sprint.
+Raw AI gives you a code diff. That's it.
 
-What about:
-- Requirements analysis
-- Implementation planning
-- Code review
-- PR creation
-- Documentation
-- Bug triage
+Where's the requirements analysis?
+Where's the implementation plan?
+Where's the verification report?
+Where's the audit trail?
 
-All manual. All time-consuming.
+Enterprise teams need traceability, not just code.
 ---
 Problem 3: No governance.
 
 Enterprise teams need:
-- Definition of Ready validation
-- Multi-phase code review
-- Secret scanning
-- Architecture compliance
-- Audit trails
+- Definition of Ready validation before coding starts
+- Multi-phase verification (not just "does it compile")
+- Secret scanning, architecture review
+- Consistent quality gates in CI/CD
 
-"Just generate code" doesn't cut it.
+Raw AI tools don't enforce any of this.
 ---
-The fix: Don't generate code. Orchestrate workflows.
+The fix: Structured skills that encode process discipline.
 
-I built a system of 73 AI skills that handle the ENTIRE sprint.
+73 skills. Each produces named artifacts.
+Config-driven — one YAML file, consistent across the team.
+Same skills run locally AND in CI/CD pipelines.
 
-Each skill does one thing well.
-Skills chain together into pipelines.
-Config drives everything.
-
-It's open source: [link]
+Enterprise-quality output. Every time. Open source: [link]
 ```
 
 ### Thread 3: "From Figma to Production in One Command"
