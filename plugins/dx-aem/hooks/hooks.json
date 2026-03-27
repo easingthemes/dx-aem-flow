@@ -7,7 +7,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\"",
+            "async": true,
+            "statusMessage": "Logging screenshot..."
           }
         ]
       },
@@ -16,7 +18,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\"",
+            "async": true,
+            "statusMessage": "Logging snapshot..."
           }
         ]
       }

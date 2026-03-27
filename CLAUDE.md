@@ -78,13 +78,13 @@ Projects can also shadow entire skills by creating `.claude/skills/<name>/SKILL.
 
 ### Model Tier Strategy
 
-Model tiering is applied at two levels: agents use `model:` in their frontmatter, and skills can also specify `model:` frontmatter for direct execution without an agent.
+Model tiering is applied at two levels: agents use `model:` in their frontmatter, and skills can also specify `model:` and `effort:` frontmatter for direct execution without an agent.
 
-| Tier | Use | Agents / Skills |
-|------|-----|-----------------|
-| Opus | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
-| Sonnet | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
-| Haiku | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
+| Tier | Effort | Use | Agents / Skills |
+|------|--------|-----|-----------------|
+| Opus | `high` | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
+| Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
+| Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 ### MCP Servers
 
@@ -122,6 +122,18 @@ Plugin hooks and Copilot CLI hooks are **completely separate systems** with no o
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9h handles this for the branch-guard hook. See the docs site (`website/`) for full details.
 
+### Hook Authoring — Key Fields
+
+| Field | Purpose | Example |
+|-------|---------|---------|
+| `matcher` | Which tool events to listen for | `"Bash"`, `"Edit"`, `"mcp__*figma*"` |
+| `if` | Fine-grained permission rule filter (evaluated before spawning) | `"Bash(git commit*)"`, `"Edit(**/.claude-plugin/**)"` |
+| `statusMessage` | Spinner text while hook runs | `"Checking branch protection..."` |
+| `async` | Non-blocking background execution | `true` for observational hooks |
+| `timeout` | Seconds before canceling | `30` for quick checks |
+
+**Exit codes:** `0` = success (parse JSON from stdout), `2` = blocking error (stderr as feedback), other = non-blocking error. **Never use exit 1 for blocking** — it's treated as a non-blocking error (shown only in verbose mode).
+
 ## Conventions for Adding Skills/Agents
 
 ### Skill Structure
@@ -131,8 +143,11 @@ To give both platforms the same safety hooks, install to both locations. `/dx-in
 name: my-skill
 description: One-line with trigger phrases
 argument-hint: "<what user passes>"
-context: fork          # optional
-agent: agent-name      # optional
+model: sonnet          # optional — opus | sonnet | haiku
+effort: medium         # optional — low | medium | high | max
+context: fork          # optional — run in isolated subagent
+agent: agent-name      # optional — subagent type for context: fork
+paths: ["**/*.ts"]     # optional — limit auto-activation to file patterns
 ---
 ```
 
