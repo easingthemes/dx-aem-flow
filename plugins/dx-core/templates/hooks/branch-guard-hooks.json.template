@@ -7,7 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh\"",
+            "statusMessage": "Validating environment..."
           }
         ]
       },
@@ -16,18 +17,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/next-step.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/next-step.sh\"",
+            "statusMessage": "Checking workflow state..."
           }
         ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash(git commit*)",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ] || [ \"$BRANCH\" = \"development\" ] || [ \"$BRANCH\" = \"develop\" ]; then echo \"BLOCKED: Do not commit on $BRANCH. Create a feature/* or bugfix/* branch first.\" >&2; exit 1; fi'"
+            "if": "Bash(git commit*)",
+            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ] || [ \"$BRANCH\" = \"development\" ] || [ \"$BRANCH\" = \"develop\" ]; then echo \"BLOCKED: Do not commit on $BRANCH. Create a feature/* or bugfix/* branch first.\" >&2; exit 2; fi'",
+            "statusMessage": "Checking branch protection..."
           }
         ]
       }
@@ -38,7 +42,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\""
+            "if": "Edit(**/.claude-plugin/** **plugin.json)",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"",
+            "statusMessage": "Validating plugin edit..."
           }
         ]
       }
