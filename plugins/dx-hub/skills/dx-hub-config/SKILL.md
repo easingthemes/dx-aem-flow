@@ -1,7 +1,7 @@
 ---
 name: dx-hub-config
-description: View and edit hub configuration — add repos, change dispatch mode, toggle auto-dispatch. Use to manage hub settings. Trigger on "hub config", "add repo to hub", "change dispatch mode".
-argument-hint: "[show | add-repo <path> | dispatch-mode <sequential|parallel> | auto-dispatch <true|false>]"
+description: View and edit hub configuration — add repos, adjust terminal delay. Use to manage hub settings. Trigger on "hub config", "add repo to hub", "terminal delay".
+argument-hint: "[show | add-repo <path> | terminal-delay <seconds>]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash"]
 ---
 
@@ -21,8 +21,7 @@ Inspect `$ARGUMENTS` and route to the matching section:
 |---|---|
 | *(none)* or `show` | Display current hub config |
 | `add-repo <path>` | Discover and add a repo |
-| `dispatch-mode <sequential\|parallel>` | Change dispatch mode |
-| `auto-dispatch <true\|false>` | Toggle auto-dispatch flag |
+| `terminal-delay <seconds>` | Set seconds to wait for Claude to start in terminal |
 
 ## 2. show
 
@@ -31,14 +30,12 @@ Print hub settings in readable format:
 ```
 Hub Configuration
 ─────────────────────────────────
-Enabled:        <hub.enabled>
-Auto-dispatch:  <hub.auto-dispatch>
-Dispatch mode:  <hub.dispatch-mode>
-State TTL:      <hub.state-ttl>
-State dir:      <hub.state-dir>
+Enabled:         <hub.enabled>
+Terminal delay:  <hub.terminal-delay>s
+State TTL:       <hub.state-ttl>
 
 Repos (<count>):
-  - <name>  <path>  [base: <base-branch>]  [project: <project>]
+  - <name>  <path>  [capabilities: <caps>]  [base: <base-branch>]  [project: <project>]
   ...
 ```
 
@@ -61,17 +58,11 @@ Repos (<count>):
 6. Print confirmation:
    > Added `<name>` (`<resolved-path>`) to hub. Total repos: <new count>.
 
-## 4. dispatch-mode <mode>
+## 4. terminal-delay <seconds>
 
-1. Validate `<mode>` is `sequential` or `parallel`. If not, STOP: "Invalid dispatch mode `<mode>`. Use `sequential` or `parallel`."
-2. Update `hub.dispatch-mode` in `.ai/config.yaml`.
-3. Print: > Dispatch mode set to `<mode>`.
-
-## 5. auto-dispatch <bool>
-
-1. Validate `<bool>` is `true` or `false`. If not, STOP: "Invalid value `<bool>`. Use `true` or `false`."
-2. Update `hub.auto-dispatch` in `.ai/config.yaml`.
-3. Print: > Auto-dispatch set to `<bool>`.
+1. Validate `<seconds>` is a positive integer between 1 and 30. If not, STOP: "Invalid delay `<seconds>`. Use a number between 1 and 30."
+2. Update `hub.terminal-delay` in `.ai/config.yaml`.
+3. Print: > Terminal delay set to `<seconds>`s.
 
 ## Examples
 
@@ -87,10 +78,9 @@ Prints current hub settings and all registered repos.
 Reads `../my-other-repo/.ai/config.yaml`, extracts metadata, and adds the repo to the hub.
 
 ```
-/dx-hub-config dispatch-mode parallel
-/dx-hub-config auto-dispatch false
+/dx-hub-config terminal-delay 8
 ```
-Updates the named setting and confirms the change.
+Updates the terminal startup delay and confirms the change.
 
 ## Troubleshooting
 

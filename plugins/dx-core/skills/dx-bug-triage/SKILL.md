@@ -175,7 +175,9 @@ This creates `bugfix/<id>-<slug>` and saves the branch name to `$SPEC_DIR/.branc
 
 ## 8. Check Existing raw-bug.md
 
-If `raw-bug.md` exists in spec dir:
+**Pre-seeded file check:** If `raw-bug.md` already exists in the spec directory AND no data has been fetched yet from ADO/Jira (e.g., the file was pre-seeded by `/dx-hub-dispatch`), skip the fetch entirely — print `raw-bug.md found (pre-seeded) — skipping fetch` and jump to step 11 (triage). This avoids redundant ADO/Jira API calls when the hub has already provided the raw ticket.
+
+**Normal idempotency (fetch already happened):** If `raw-bug.md` exists and data was fetched:
 1. Compare title, state, severity, repro steps, comment count, relations
 2. If ALL match → print `raw-bug.md already up to date — skipping` → skip to step 11 (triage)
 3. If changed → print what changed → regenerate

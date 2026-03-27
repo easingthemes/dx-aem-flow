@@ -48,5 +48,8 @@
 | 39 | Docs: new hook/skill features | Low | Open | 2026-03-27 | [todo-review-plugin-improvements.md#docs](todo-review-plugin-improvements.md#documentation-updates) |
 | 40 | Copilot CLI hook compatibility matrix | Low | Open | 2026-03-27 | [todo-review-plugin-improvements.md#copilot-cli](todo-review-plugin-improvements.md#copilot-cli-hook-compatibility) |
 | 41 | OpenSkills / Agent Skills cross-platform notes | Low | Watch | 2026-03-27 | [todo-review-plugin-improvements.md#openskills](todo-review-plugin-improvements.md#openskills--agent-skills-standard-compatibility) |
+| 42 | Hub V2: rich status tracking (phase, steps, PRs) | Medium | Open | 2026-03-27 | [todo-hub.md#v2-rich-status-tracking](todo-hub.md#v2-rich-status-tracking) |
+| 43 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
+| 44 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
 
-**Counts:** 41 total — 9 done, 16 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 44 total — 9 done, 19 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending

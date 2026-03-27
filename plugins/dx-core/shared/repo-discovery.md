@@ -94,26 +94,26 @@ No delegation file is written. No pipeline is queued. The developer controls the
 
 **When `hub.enabled: true` AND cwd is a `.hub/` directory** (hub orchestration context):
 
-Hub mode replaces the manual handoff with automated dispatch via `cd <path> && claude -p`. Instead of printing "switch to repo X", the skill dispatches a `claude -p` session to the target repo.
+Hub mode replaces the manual handoff with a dedicated dispatch skill. Instead of printing "switch to repo X", the skill directs the user to `/dx-hub-dispatch`, which opens independent Claude sessions in VS Code terminals — one per repo.
 
-Read `shared/hub-dispatch.md` for the full hub dispatch protocol:
+Read `shared/hub-dispatch.md` for the hub dispatch protocol:
 - Hub detection logic
 - Repo resolution from config
-- Command builder (`cd <path> && claude -p`)
-- Result collection and state persistence
-- Dispatch modes (sequential/parallel)
+- Terminal-based dispatch via vscode-automator
+- Pre-seeded raw ticket files
+- V1 status tracking (running/done/blocked/failed)
 
 ### Priority Order
 
 ```
 1. Pipeline mode (DX_PIPELINE_MODE=true) — always takes precedence
-2. Hub mode (hub.enabled + .hub/ cwd) — dispatches via claude -p
+2. Hub mode (hub.enabled + .hub/ cwd) — redirect to /dx-hub-dispatch
 3. Local mode (default) — manual handoff message
 ```
 
-### When Hub Mode Is Active but Cross-Repo Scope Is Not Detected
+### When Hub Mode Is Active
 
-Some skills (like `/dx-pr-review`) operate on a single repo at a time. In hub mode, they resolve the target repo from context (e.g., PR URL → repo name → config path) and dispatch to that specific repo, rather than needing cross-repo scope detection.
+Skills detect hub mode and STOP with a message directing the user to `/dx-hub-dispatch`. Individual skills do not dispatch directly — the hub's dedicated skill handles terminal opening, pre-seeding, and delegation.
 
 ## Environment Variables
 

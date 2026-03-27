@@ -286,7 +286,7 @@ Read `shared/repo-discovery.md` for full protocol details.
 
 ### Phase 1.5b: Hub Dispatch
 
-Read `shared/hub-dispatch.md` for the full protocol.
+Read `shared/hub-dispatch.md` for hub detection logic.
 
 **Skip this phase if:**
 - `DX_PIPELINE_MODE` is set (pipeline mode took precedence in Phase 1.5a)
@@ -294,44 +294,9 @@ Read `shared/hub-dispatch.md` for the full protocol.
 
 **If hub mode is active:**
 
-1. Read `.ai/config.yaml` → `hub:` and `repos:` sections
-2. Find the spec directory: `.ai/specs/<id>-*/`
-3. Read `research.md` → `## Cross-Repo Scope` section
-4. If cross-repo scope detected:
-   a. Use repo resolution from `shared/hub-dispatch.md` to map scope to repo configs
-   b. Check `hub.auto-dispatch` — if `false`, show dispatch plan and ask for confirmation
-   c. Create state directory: `state/<ticket-id>/`
-   d. Write `state/<ticket-id>/dispatch.json` with dispatch metadata
-   e. For each target repo (per `hub.dispatch-mode`):
-      - Build command: `cd <repo.path> && claude -p "/dx-agent-all <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
-      - Execute via Bash tool
-      - Collect result, write `state/<ticket-id>/results/<repo>.json`
-      - Print: `✓ <repo> — <status> (<duration>, $<cost>)`
-   f. Rebuild `state/active.json`
-   g. Go to → "Hub dispatch complete — collect results"
-5. If no cross-repo scope: continue to next phase (single-repo, execute locally)
+Print: `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this ticket to repo terminals.` STOP.
 
-Print: `Phase 1.5b: Hub Dispatch — (<N>/<total>) <dispatched to M repos|skipped (single repo)|skipped (not hub mode)>.`
-
-### Hub dispatch complete — collect results
-
-After all dispatches complete, present a summary:
-
-```markdown
-## Hub Dispatch Complete
-
-| Repo | Status | PR | Cost | Duration |
-|------|--------|----|------|----------|
-| <repo> | ✓ done | #<pr> | $<cost> | <duration> |
-| <repo> | ✗ failed | — | $<cost> | <duration> |
-
-**Total cost:** $<sum>
-**Failed repos:** <list or "none">
-
-Use `/dx-hub-status <ticket-id>` for details.
-```
-
-If any repo failed, do NOT proceed to local execution. The hub has handled dispatch — go to Final Summary with the hub results.
+Hub dispatch is handled by the dedicated `/dx-hub-dispatch` skill, which opens independent VS Code terminals for each repo. Individual skills no longer dispatch directly.
 
 ### Figma URL in story?
 

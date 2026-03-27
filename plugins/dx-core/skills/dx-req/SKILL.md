@@ -44,15 +44,8 @@ Read `.ai/config.yaml`:
 Read `shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
-1. Fetch the ticket normally (ADO/Jira MCP works from any directory)
-2. Save `raw-story.md` to the hub's spec directory (`.ai/specs/<id>-<slug>/`)
-3. After fetching, detect cross-repo scope from the story content
-4. If scope can be determined from the ticket alone:
-   - Resolve target repos from `shared/hub-dispatch.md`
-   - Dispatch `/dx-req <id>` to each target repo so they have local copies
-   - Write state files
-5. If scope needs codebase analysis (most cases): note in `raw-story.md` that scope detection requires research in each repo
-6. Print: "Ticket fetched. Scope detection requires research — run `/dx-agent-all <id>` for full orchestration."
+- Print: "Hub mode detected. Use `/dx-hub-dispatch <id>` to dispatch this ticket to repo terminals."
+- STOP — do not run the requirements pipeline from the hub directory. The hub is a coordinator, not an executor. Each repo runs its own `/dx-req` with full plugin access.
 
 If hub mode is not active: continue with normal flow below.
 
@@ -156,7 +149,9 @@ Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` 
 
 ### 9. Check Existing Output (idempotent)
 
-If `raw-story.md` exists, compare fetched data against it (title, state, description, AC, comment count, relations). If ALL match → print `raw-story.md already up to date — skipping Phase 1` and proceed to Phase 2. If changed → print what changed and continue to save.
+**Pre-seeded file check:** If `raw-story.md` already exists in the spec directory AND no data has been fetched yet from ADO/Jira (e.g., the file was pre-seeded by `/dx-hub-dispatch`), skip the fetch entirely — print `raw-story.md found (pre-seeded) — skipping fetch` and proceed to Phase 2. This avoids redundant ADO/Jira API calls when the hub has already provided the raw ticket.
+
+**Normal idempotency (fetch already happened):** If `raw-story.md` exists and data was fetched, compare fetched data against it (title, state, description, AC, comment count, relations). If ALL match → print `raw-story.md already up to date — skipping Phase 1` and proceed to Phase 2. If changed → print what changed and continue to save.
 
 ### 10. Save raw-story.md
 
