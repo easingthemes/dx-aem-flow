@@ -9,7 +9,6 @@ metadata:
   version: 2.35.0
   mcp-server: AEM, chrome-devtools-mcp
   category: aem-verification
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-fe-verifier` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "Frontend verification requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."

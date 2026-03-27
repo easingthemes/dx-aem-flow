@@ -4,7 +4,6 @@ description: 6-phase verification with auto-fix — compile, lint, test, secret 
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
 context: fork
-allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You perform a 6-phase verification of ALL changes: compile, lint, test, secret scan, architecture check, then code review with auto-fix. You only pass when all phases are clean.

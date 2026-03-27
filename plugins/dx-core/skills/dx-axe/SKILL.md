@@ -2,7 +2,6 @@
 name: dx-axe
 description: Run accessibility testing on a URL using the axe MCP Server — analyze violations, get remediation guidance, apply fixes, and verify. Use when asked to check accessibility, run a11y audit, or fix WCAG issues.
 argument-hint: "<URL to test> [--fix] [--standard wcag2aa|wcag21aa|best-practice]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "axe-mcp-server/*", "chrome-devtools-mcp/*"]
 ---
 
 You perform accessibility testing and remediation using the Deque axe MCP Server. You follow a strict analyze → remediate → fix → verify workflow.

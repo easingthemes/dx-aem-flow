@@ -2,7 +2,6 @@
 name: dx-step-all
 description: Autonomous execution loop — runs each plan step (implement + test + review + commit internally), with step-fix for failures. Stops after 2 consecutive fix failures on the same step. Use to execute the full plan hands-free.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
-allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You are a coordinator. You run the step pipeline for each step in implement.md, delegating to skills via the Skill tool.

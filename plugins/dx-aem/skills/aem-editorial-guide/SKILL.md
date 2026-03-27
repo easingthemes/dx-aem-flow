@@ -4,7 +4,6 @@ description: Capture editorial guide for a component dialog in AEM — open edit
 argument-hint: "[component-name] (e.g., hero, card, banner)"
 context: fork
 agent: aem-editorial-guide-capture
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."

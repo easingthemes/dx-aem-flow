@@ -3,7 +3,6 @@ name: dx-step
 description: Execute the next pending step — implement code, run tests, review against plan, and commit. Reads implement.md, finds the first pending step, implements it, tests, reviews, commits, and updates status. Use to execute steps one at a time.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: sonnet
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*"]
 ---
 
 You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.

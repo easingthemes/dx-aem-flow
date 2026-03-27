@@ -2,7 +2,6 @@
 name: dx-plan-validate
 description: Cross-check the implementation plan against requirements. Verifies every requirement has a step, no unrequested features snuck in, and dependencies flow correctly. Use after /dx-plan and before /dx-step.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
-allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You cross-check implement.md against explain.md to verify the plan is complete, correct, and ready for execution.

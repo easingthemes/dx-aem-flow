@@ -3,7 +3,6 @@ name: dx-estimate
 description: Analyze an Azure DevOps/Jira User Story and produce a structured estimation — understanding, implementation plan, recommended hours/SP, AEM pages affected, and open questions. Posts result as an ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. Use when you want an AI-generated estimation for a story.
 argument-hint: "<Work Item ID(s) — space-separated for batch>"
 disable-model-invocation: true
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 ## Defaults

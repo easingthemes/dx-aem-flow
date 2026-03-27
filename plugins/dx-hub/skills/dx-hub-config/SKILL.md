@@ -2,7 +2,6 @@
 name: dx-hub-config
 description: View and edit hub configuration — add repos, change dispatch mode, toggle auto-dispatch. Use to manage hub settings. Trigger on "hub config", "add repo to hub", "change dispatch mode".
 argument-hint: "[show | add-repo <path> | dispatch-mode <sequential|parallel> | auto-dispatch <true|false>]"
-allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash"]
 ---
 
 You view and edit the hub configuration in `.ai/config.yaml`.

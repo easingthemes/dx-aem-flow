@@ -2,7 +2,6 @@
 name: dx-bug-all
 description: Run the full bug fix workflow — triage, verify, and fix — all in one command. Fetches the bug from ADO, reproduces it in browser, generates and executes a fix, and creates a PR. Use when starting work on a bug ticket.
 argument-hint: "<ADO Bug Work Item ID or full URL>"
-allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You are a coordinator. You do NOT implement anything yourself. You delegate each workflow step via the Skill tool, then report progress.

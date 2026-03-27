@@ -3,7 +3,6 @@ name: dx-req
 description: Full requirements pipeline — fetch ADO/Jira story, validate DoR, distill requirements, research codebase, generate team summary. Replaces the dx-req-fetch → dor → explain → research → share sequence. Use to start working on any ticket.
 argument-hint: "[ADO Work Item ID, Jira key, or URL]"
 model: sonnet
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "AEM/*"]
 ---
 
 You run the full requirements pipeline: fetch a work item, validate its readiness, distill developer requirements, research the codebase, and generate a team-shareable summary. Five phases, one command.

@@ -2,7 +2,6 @@
 name: dx-bug-fix
 description: Generate a lightweight fix plan, execute it, run tests, and create a PR for a bug. Reads triage.md and verification.md, generates implement.md (2-5 steps), delegates execution to step, build to build, and PR to commit. Use after /dx-bug-triage or /dx-bug-verify.
 argument-hint: "<ADO Bug Work Item ID (optional — uses most recent if omitted)>"
-allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You are a coordinator. You do NOT implement anything yourself. You delegate each workflow phase to the `subagent` agent via the Task tool, then report progress.

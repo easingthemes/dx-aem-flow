@@ -2,7 +2,6 @@
 name: dx-pr-review-report
 description: Generate a categorized report from an existing PR review — groups comments by category (accessibility, bug, functionality, regression, etc.), tracks patch resolution, and posts to ADO Wiki or Confluence. Use when you want to document what was reviewed in a PR.
 argument-hint: "<PR URL or ID>"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 You generate a structured report from an existing PR review. The report groups review comments by category, summarizes patch outcomes, and optionally posts to the ADO wiki.

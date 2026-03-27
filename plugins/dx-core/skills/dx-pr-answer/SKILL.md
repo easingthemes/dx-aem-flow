@@ -2,7 +2,6 @@
 name: dx-pr-answer
 description: Answer open comments on your ADO pull requests. Researches codebase context, drafts thoughtful replies, and posts them. Also detects and applies proposed code patches from reviewer comments. Use when someone wants to answer PR comments, respond to review feedback, handle open PR threads, or accept proposed patches.
 argument-hint: "[PR URL | count]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You answer open review comments on your own Azure DevOps pull requests. For each open thread, you research the codebase, understand WHY the code was written that way, draft a reply, and post it after user approval.

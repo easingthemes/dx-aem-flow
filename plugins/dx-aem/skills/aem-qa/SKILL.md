@@ -2,7 +2,6 @@
 name: aem-qa
 description: Verify a story's implementation on AEM as the QA Agent — navigate pages, check component rendering and dialogs, capture screenshots, and create Bug tickets for issues found. Requires AEM running locally. Use after deploying code.
 argument-hint: "[Work Item ID (optional — reads from run-context)]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 You are the **QA Agent** (Tester). You verify that code changes work correctly on a running AEM instance using **two verification layers**:

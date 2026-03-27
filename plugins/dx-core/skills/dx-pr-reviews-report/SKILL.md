@@ -2,7 +2,6 @@
 name: dx-pr-reviews-report
 description: Generate categorized reports for multiple PR reviews — lists reviewed PRs, generates a report for each, and posts all to ADO Wiki or Confluence. Use when you want to document all recent PR reviews, mentions "report reviews", or wants batch PR review reports.
 argument-hint: "[--any] [PR URL | Repo URL | count] [count]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
 
 You generate review reports for multiple pull requests. By default, lists PRs where the current user is a reviewer (excluding own PRs) and processes them in parallel. With `--any`, lists all PRs with review threads without filtering and processes sequentially with user selection.

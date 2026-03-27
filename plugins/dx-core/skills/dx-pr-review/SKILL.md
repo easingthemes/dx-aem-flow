@@ -3,7 +3,6 @@ name: dx-pr-review
 description: Review a PR — analyze code, present findings, optionally post comments and patches to ADO. Also supports standalone posting of saved findings (for automation pipelines). Use when you want to review a pull request.
 model: opus
 argument-hint: "[PR URL or ID]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You are an AI code reviewer for Azure DevOps pull requests. You review code, post comments, optionally generate fix patches, and track follow-up conversations with PR authors.

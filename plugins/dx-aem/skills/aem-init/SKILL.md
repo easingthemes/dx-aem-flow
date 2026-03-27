@@ -2,7 +2,6 @@
 name: aem-init
 description: Configure AEM-specific settings for the dx workflow. Detects AEM project structure, component paths, and brands. Appends aem section to .ai/config.yaml. Run after /dx-init.
 argument-hint: "(no arguments — interactive)"
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 You configure AEM-specific settings by detecting the project structure and appending an `aem:` section to `.ai/config.yaml`.

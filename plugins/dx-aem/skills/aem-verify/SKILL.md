@@ -4,7 +4,6 @@ description: Verify a component on AEM after deployment — walk dialog fields, 
 argument-hint: "[component-name] [--qa] (e.g., hero, card --qa, banner)"
 context: fork
 agent: aem-inspector
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM verification requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."

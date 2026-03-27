@@ -7,7 +7,6 @@ metadata:
   version: 2.28.0
   mcp-server: chrome-devtools-mcp
   category: design-to-code
-allowed-tools: ["read", "edit", "search", "write", "agent", "figma/*", "chrome-devtools-mcp/*"]
 ---
 
 You visually verify a generated HTML/CSS prototype against the original Figma design screenshot. You open the prototype in Chrome, take a screenshot, compare both images side by side using multimodal vision, and fix any visual gaps — up to 2 iterations.
