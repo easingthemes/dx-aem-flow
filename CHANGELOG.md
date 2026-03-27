@@ -1,3 +1,16 @@
+# [2.78.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.77.0...v2.78.0) (2026-03-27)
+
+
+### Bug Fixes
+
+* reframe entire marketing plan — structured enterprise output, not raw AI ([9b11b50](https://github.com/easingthemes/dx-aem-flow/commit/9b11b50f32c6d6df390f9ed9796b3f2e608b9ed6))
+* rewrite marketing plan for solo developer reality (€0-100/month) ([4770c2d](https://github.com/easingthemes/dx-aem-flow/commit/4770c2d2ad556329330186369b87fcb9d022f7a2))
+
+
+### Features
+
+* add comprehensive marketing plan for dx-aem-flow plugins ([162f85e](https://github.com/easingthemes/dx-aem-flow/commit/162f85ebd0c2de89ad29779ed8d31a73b3140178))
+
 # [2.77.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.76.0...v2.77.0) (2026-03-27)
 
 
