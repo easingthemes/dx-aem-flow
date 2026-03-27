@@ -41,5 +41,6 @@
 
 | 33 | Hub V2: rich status tracking (phase, steps, PRs) | Medium | Open | 2026-03-27 | [todo-hub.md#v2-rich-status-tracking](todo-hub.md#v2-rich-status-tracking) |
 | 34 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
+| 35 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
 
-**Counts:** 34 total — 9 done, 9 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 35 total — 9 done, 10 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
