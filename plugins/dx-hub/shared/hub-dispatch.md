@@ -1,12 +1,12 @@
 # Hub Dispatch Protocol
 
-Reference document for coordinator skills that orchestrate work across multiple repositories from a hub workspace.
+Reference document for how hub mode dispatches work to repos via VS Code terminals.
 
 ## When This Applies
 
-Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. Instead of manually switching to each repo, coordinator skills dispatch sub-invocations via `cd <repo-path> && claude -p` and collect structured results.
+Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. Instead of running headless `claude -p` subprocesses, the hub opens independent interactive Claude Code sessions in VS Code terminals — one per repo. Each session has its own CWD, full plugin access, and MCP tools.
 
-This document defines how to detect hub mode, resolve target repos, build dispatch commands, collect results, and persist state. It is the local alternative to pipeline delegation (see `repo-discovery.md`).
+This document defines hub detection, repo resolution, the dispatch mechanism, and state tracking. It is the local alternative to pipeline delegation (see `repo-discovery.md`).
 
 ## Decision Tree (Per Skill)
 
@@ -17,7 +17,7 @@ Is DX_PIPELINE_MODE=true?
   → yes: delegate via ADO pipeline (see repo-discovery.md — stop here)
 
 Is hub.enabled=true AND cwd ends with .hub/?
-  → yes: dispatch via cd <path> && claude -p (this document)
+  → yes: use /dx-hub-dispatch to launch VS Code terminal sessions (this document)
 
 Is cross-repo scope detected?
   → yes: print "switch to {repo.name} at {repo.path}" (manual handoff)
@@ -50,8 +50,7 @@ Target repos are listed under `repos:` in `.ai/config.yaml`:
 ```yaml
 hub:
   enabled: true
-  auto-dispatch: false
-  dispatch-mode: sequential
+  terminal-delay: 5
   state-ttl: 7d
 
 repos:
@@ -68,12 +67,11 @@ repos:
 
 ### Matching Logic
 
-Match repos from the cross-repo scope section of the spec file against the `repos:` list:
+Match repos by explicit user arguments or by detecting scope from ticket content:
 
-1. **Name match** — compare repo names case-insensitively
-2. **Capabilities match** — use the role-to-capabilities table below
-
-If both `role` and `capabilities` are present in the scope spec, `capabilities` takes precedence over `role`.
+1. **Explicit** — user names repos in the dispatch command → use those
+2. **Name match** — compare repo names case-insensitively against ticket text
+3. **Capabilities match** — use the role-to-capabilities table below
 
 ### Role-to-Capabilities Mapping
 
@@ -87,7 +85,7 @@ A repo matches a role if its `capabilities` list contains at least one matching 
 
 ### No Match Warning
 
-If no repo entry matches a required scope target, print a warning and skip that target — do not abort the entire dispatch:
+If no repo entry matches, print a warning and ask the user — do not abort:
 
 ```
 ⚠ No repo entry found for "Unknown-Repo". Add it to repos: in .ai/config.yaml.
@@ -98,205 +96,126 @@ If no repo entry matches a required scope target, print a warning and skip that 
 Paths in `repos[].path` may be absolute or relative:
 
 - **Absolute paths** — used as-is
-- **Relative paths** — resolved against the `.hub/` directory parent (one level up from cwd)
+- **Relative paths** — resolved against the hub directory (cwd)
 
 Example: if cwd is `/projects/project-x/.hub` and path is `../repo-a`, the resolved path is `/projects/project-x/repo-a`.
 
-## 2. Command Builder
+## 2. Dispatch Mechanism — VS Code Terminals
 
-Build the dispatch invocation for each target repo:
+Hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server. Each terminal gets an independent interactive Claude session with full plugin and MCP access.
+
+### Why Terminals (Not Headless)
+
+| Concern | Headless (`claude -p`) | Terminal (vscode-automator) |
+|---------|----------------------|---------------------------|
+| CWD per repo | Via `cd &&` prefix | Native — terminal opens in repo |
+| Plugin loading | Limited | Full — reads repo's `.claude/` |
+| MCP servers | Not available | Full — reads repo's `.mcp.json` |
+| User visibility | Hidden, log only | User sees all terminals live |
+| Interactivity | None — fire and forget | User can intervene, answer questions |
+| Permission prompts | Must bypass all | Normal interactive flow |
+
+### Terminal Launch Sequence
+
+For each target repo:
+
+1. **Open terminal:** `vscode_new_terminal` → wait 1s
+2. **Set directory:** `vscode_type` "cd <abs-path>" → `vscode_keystroke` Enter → wait 1s
+3. **Start Claude:** `vscode_type` "claude" → `vscode_keystroke` Enter → wait `terminal-delay` seconds
+4. **Type prompt:** `vscode_type` "<delegation prompt>" → `vscode_keystroke` Enter
+5. **Pause:** wait 2s before next terminal (avoid focus conflicts)
+
+### Delegation Prompt
+
+The prompt typed into each repo's Claude session:
+
+```
+Ticket <id> raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>.
+Cross-repo context at <hub-abs-path>/state/<ticket-id>/context.md — read it before starting.
+You handle the <repo-name> portion (<role>).
+Also involved: <other-repos-and-roles>.
+When done or blocked, update status in <hub-abs-path>/state/<ticket-id>/status.json — set repos.<repo-name> to done, blocked, or failed.
+Now run: <skill> <ticket-id>
+```
+
+The prompt is a single message — no multi-turn setup. It gives each repo:
+- Where to find the pre-seeded raw ticket (skips ADO fetch)
+- Cross-repo context (what other repos are doing)
+- Where to write status updates
+- What skill to execute
+
+### Pre-Seeding Raw Tickets
+
+Before launching terminals, the hub copies the raw ticket file into each repo's spec directory:
 
 ```bash
-cd "<resolved-repo-path>" && \
-claude -p "<skill-invocation>" \
-  --output-format json \
-  --allowedTools "Bash,Read,Edit,Write,Glob,Grep" \
-  --permission-mode bypassPermissions
+mkdir -p "<repo-path>/.ai/specs/<id>-<slug>/"
+cp "state/<ticket-id>/<raw-story.md|raw-bug.md>" "<repo-path>/.ai/specs/<id>-<slug>/"
 ```
 
-### Parameter Notes
+This lets `dx-req` and `dx-bug-triage` skip the ADO/Jira fetch — they check for existing raw files before calling MCP.
 
-| Parameter | Value | Reason |
-|-----------|-------|--------|
-| `cd <path> &&` | resolved absolute path | sets working directory before launching Claude — the CLI has no `--cwd` flag |
-| `--output-format json` | always | structured result collection |
-| `--allowedTools` | skill-dependent | minimum required for the skill |
-| `--permission-mode bypassPermissions` | always | non-interactive session, no prompts. Valid modes: `acceptEdits`, `bypassPermissions`, `default`, `dontAsk`, `plan`, `auto` |
+## 3. State Tracking (V1 — Minimal)
 
-The `<skill-invocation>` string is exactly what the user would type in an interactive session, e.g. `/dx-step-all 12345` or `/dx-bug-all BUG-99`.
+State is intentionally minimal in V1. The user can see all terminals live — complex progress tracking adds overhead without value.
 
-### Allowed Tools
+### status.json
 
-Default tool set covers most skills: `Bash,Read,Edit,Write,Glob,Grep`. Extend for skills that require MCP tools — but keep the list minimal. Do not include tools the dispatched skill does not need.
-
-## 3. Result Collection
-
-### JSON Output Contract
-
-`claude -p --output-format json` produces one JSON object per session:
-
-```json
-{
-  "session_id": "sess_abc123",
-  "result": "Completed implementation. 3 files modified.",
-  "cost_usd": 0.12,
-  "duration_ms": 45200,
-  "is_error": false
-}
-```
-
-If the session ended with an unhandled error, `is_error` is `true` and `result` contains the error message or last output.
-
-### Exit States
-
-| State | Condition | Action |
-|-------|-----------|--------|
-| **Success** | exit 0, `is_error: false` | write result, continue |
-| **Failure** | exit non-0, or `is_error: true` | write result with error, continue to next repo |
-| **Timeout** | process exceeds timeout | kill process, write timeout result, continue |
-
-Default timeout: **30 minutes** per repo. Override via `hub.dispatch-timeout` in config (value in minutes).
-
-**No automatic retries.** Partial success is kept — completed repos are not rolled back if a later repo fails. Report all outcomes at the end.
-
-## 4. State Persistence
-
-State files live under `.hub/state/` relative to the hub workspace. They survive across sessions so a failed dispatch can be resumed or inspected.
-
-### Per-Repo Result
-
-Written after each repo completes (success, failure, or timeout):
+Written by hub at dispatch start, updated by each repo session:
 
 ```
-.hub/state/<ticket-id>/results/<repo-name>.json
+state/<ticket-id>/status.json
 ```
 
 ```json
 {
-  "repo": "Repo-A",
-  "path": "/projects/project-x/repo-a",
-  "status": "success",
-  "session_id": "sess_abc123",
-  "result": "Completed implementation. 3 files modified.",
-  "cost_usd": 0.12,
-  "duration_ms": 45200,
-  "dispatched_at": "2026-01-15T10:30:00Z",
-  "completed_at": "2026-01-15T10:30:45Z"
+  "ticket": "12345",
+  "title": "Add user profile page",
+  "type": "User Story",
+  "skill": "/dx-agent-all",
+  "started": "2026-01-15T10:30:00Z",
+  "repos": {
+    "repo-fe": "running",
+    "repo-be": "running"
+  }
 }
 ```
 
-Status values: `success`, `failure`, `timeout`, `skipped`.
+Status values: `running` | `done` | `blocked` | `failed`
 
-### Dispatch Metadata
+Hub writes the initial file. Each repo's Claude session updates its own entry when finished or blocked. The delegation prompt includes the instruction to do this.
 
-Written once at the start of dispatch, updated at completion:
+### context.md
 
-```
-.hub/state/<ticket-id>/dispatch.json
-```
-
-```json
-{
-  "ticket_id": "12345",
-  "skill": "dx-step-all",
-  "dispatch_mode": "sequential",
-  "repos": ["Repo-A", "Repo-B"],
-  "started_at": "2026-01-15T10:30:00Z",
-  "completed_at": "2026-01-15T10:31:30Z",
-  "status": "partial",
-  "summary": "2/2 repos completed. 1 success, 1 failure."
-}
-```
-
-Dispatch status values: `running`, `complete`, `partial` (some repos failed), `aborted`.
-
-### Active Index
-
-Rebuilt from all result files after each dispatch completes:
+Written by hub before launching terminals:
 
 ```
-.hub/state/active.json
+state/<ticket-id>/context.md
 ```
 
-```json
-{
-  "updated_at": "2026-01-15T10:31:30Z",
-  "dispatches": [
-    {
-      "ticket_id": "12345",
-      "status": "partial",
-      "repos": {
-        "Repo-A": "success",
-        "Repo-B": "failure"
-      }
-    }
-  ]
-}
-```
+Contains: ticket summary, which repos are involved, their roles, and brief notes on what each handles. Read by each repo's Claude session before starting work.
 
-The active index is a convenience summary — it is always derived from result files, never the source of truth.
-
-### State Lifecycle
+### Raw ticket file
 
 ```
-1. Write dispatch.json (status: running)
-2. For each repo:
-   a. Dispatch claude -p
-   b. Collect result
-   c. Write results/<repo-name>.json
-3. Update dispatch.json (status: complete/partial)
-4. Rebuild active.json from all result files
+state/<ticket-id>/raw-story.md    (or raw-bug.md)
 ```
+
+The master copy. Copied into each repo's spec directory during pre-seeding.
 
 ### Cleanup
 
-Entries older than `hub.state-ttl` (default: `7d`) may be removed on next dispatch. TTL is measured from `dispatch.json:completed_at`. Running dispatches (`status: running`) are never removed by cleanup.
+Entries older than `hub.state-ttl` (default: `7d`) may be removed by `/dx-hub-status --clean`. Running dispatches are never cleaned.
 
-## 5. Dispatch Modes
+## 4. Hub Does NOT
 
-Controlled by `hub.dispatch-mode` in config (or overridable per-invocation):
+- **Plan** — each repo runs its own `/dx-req` + `/dx-plan`
+- **Implement** — each repo runs its own `/dx-step`
+- **Review code** — each repo handles its own PR
+- **Interpret requirements** — it only routes the raw ticket
+- **Collect results** — it reads status.json, not structured output
 
-| Mode | Behavior |
-|------|----------|
-| `sequential` | One repo at a time, in `repos:` config order. Default. |
-| `parallel` | All repos dispatched simultaneously. Results collected as they complete. |
-| `auto` | Deferred to v2 — not implemented. |
-
-**Sequential** is the default and recommended for most workflows. It produces cleaner output and avoids write conflicts if repos share any artifact paths.
-
-**Parallel** is appropriate when repos are fully independent and speed matters. All `claude -p` processes run concurrently; collect results with a process group or background job pattern.
-
-## 6. Auto-Dispatch vs Confirmation
-
-Controlled by `hub.auto-dispatch` in config:
-
-### `hub.auto-dispatch: false` (default)
-
-Show the dispatch plan and ask for confirmation before executing:
-
-```
-Hub dispatch plan for ticket 12345:
-  Mode: sequential
-  Repos: Repo-A → Repo-B
-  Skill: /dx-step-all 12345
-
-Proceed? [y/N]
-```
-
-If the user declines, print the manual commands they can run:
-```
-To dispatch manually:
-  cd /projects/project-x/repo-a && claude -p "/dx-step-all 12345" --output-format json --permission-mode bypassPermissions
-  cd /projects/project-x/repo-b && claude -p "/dx-step-all 12345" --output-format json --permission-mode bypassPermissions
-```
-
-### `hub.auto-dispatch: true`
-
-Dispatch immediately without confirmation. Log the plan before executing:
-
-```
-Hub dispatch: ticket 12345 → Repo-A, Repo-B (sequential)
-```
+The hub is a thin coordinator. It fetches, routes, and launches — nothing more.
 
 ## Config Reference
 
@@ -305,15 +224,13 @@ All hub settings live under `hub:` in `.ai/config.yaml`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hub.enabled` | `false` | Enable hub mode for this workspace |
-| `hub.auto-dispatch` | `false` | Skip confirmation prompt |
-| `hub.dispatch-mode` | `sequential` | `sequential` or `parallel` |
-| `hub.dispatch-timeout` | `30` | Per-repo timeout in minutes |
+| `hub.terminal-delay` | `5` | Seconds to wait for Claude to start in terminal |
 | `hub.state-ttl` | `7d` | How long to keep completed state entries |
 
 The `repos:` list is a top-level key (not nested under `hub:`):
 
 | Key | Required | Description |
 |-----|----------|-------------|
-| `repos[].name` | yes | Display name, used for state file names |
+| `repos[].name` | yes | Display name, used for state file names and terminal identification |
 | `repos[].path` | yes | Absolute or relative path to repo root |
 | `repos[].capabilities` | no | List of capability tags: `fe`, `be` |

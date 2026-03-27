@@ -148,14 +148,9 @@ After implement.md is generated, check if the fix belongs in another repo:
 
 **Entered when:** Cross-repo gate detected all fix steps belong to another repo AND hub mode is active.
 
-Read `shared/hub-dispatch.md` for the full protocol.
+Print: `Hub mode detected. The fix belongs in another repo. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to the correct repo terminal.` STOP.
 
-1. Resolve target repo from cross-repo scope using hub-dispatch repo resolution
-2. Check `hub.auto-dispatch` — if `false`, confirm with user
-3. Build and execute: `cd <target-repo.path> && claude -p "/dx-bug-fix <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
-4. Collect result, write `state/<ticket-id>/results/<repo>.json`
-5. Print: `✓ <repo> — <status> (<duration>, $<cost>)`
-6. Go to → "Final summary" with hub dispatch results
+Hub dispatch is handled by the dedicated `/dx-hub-dispatch` skill, which opens independent VS Code terminals for each repo.
 
 > **Note:** If hub mode is NOT active, the existing "STOP: Fix belongs in other repo" behavior applies unchanged.
 
@@ -187,7 +182,7 @@ Run `/dx-bug-fix <id>` again with `--cleanup` intent if you want to proceed with
 
 Do not proceed to any further sections. The user must fix the other repo first.
 
-> **Note:** If hub mode is active, this node is bypassed — the fix is dispatched to the target repo instead. See "Hub dispatch fix" above.
+> **Note:** If hub mode is active, the "Hub dispatch fix" node directs the user to `/dx-hub-dispatch` instead of reaching this node.
 
 ### Execute step cycle (step - test - review - fix)
 

@@ -174,17 +174,18 @@ Merge selected repos into a hub `config.yaml`:
 ```yaml
 hub:
   enabled: true
-  auto-dispatch: false
-  dispatch-mode: sequential
-  state-dir: state/
+  terminal-delay: 5
   state-ttl: 7d
 
 repos:
   - name: <dir-name>
     path: ../<dir-name>
     base-branch: <scm.base-branch from repo config, default: main>
+    capabilities: [<fe|be — infer from repo name or ask user>]
     ado-project: <scm.project from repo config, omit if absent>
 ```
+
+The `capabilities` field is used by `/dx-hub-dispatch` to auto-detect which repos a ticket needs. Common values: `fe` (frontend), `be` (backend). If unsure, ask the user during repo selection. A repo can have multiple capabilities: `[fe, be]`.
 
 One entry per selected repo. Paths are relative to the hub directory. No hardcoded org URLs, project names, or credentials.
 
@@ -295,14 +296,30 @@ The hub needs project-level MCP servers so the user can read tickets, check PRs,
 
 **If `$HUB_PATH/.mcp.json` already exists on reinit:** Read it and merge — add missing server entries but do not overwrite existing ones (user may have customized args, added servers).
 
-Write `$HUB_PATH/.mcp.json`:
+**Step 5 — Add vscode-automator MCP server:**
+
+The hub's dispatch mechanism uses the `vscode-automator` MCP server to open VS Code terminals. Add it to the merged MCP config:
+
 ```json
 {
-  "mcpServers": <merged mcpServers from sibling>
+  "vscode-automator": {
+    "command": "node",
+    "args": ["<path-to-dx-aem-flow>/tools/vscode-automator/server.mjs"],
+    "type": "stdio"
+  }
 }
 ```
 
-Report: "Created `.mcp.json` — MCP servers: <list of server names>"
+Resolve `<path-to-dx-aem-flow>` from the plugin's installed location. If the plugin is installed via marketplace, the path is relative to the marketplace cache. If you cannot resolve the absolute path, use a relative path from the hub directory to the `tools/vscode-automator/server.mjs` file.
+
+Write `$HUB_PATH/.mcp.json`:
+```json
+{
+  "mcpServers": <merged mcpServers from sibling + vscode-automator>
+}
+```
+
+Report: "Created `.mcp.json` — MCP servers: <list of server names> + vscode-automator"
 
 ### Generate CLAUDE.md
 
@@ -385,7 +402,7 @@ Print:
 
 **Location:** $HUB_PATH
 **Repos:** <N> repos configured
-**Dispatch mode:** sequential
+**Terminal delay:** 5s (configurable via hub.terminal-delay)
 **Workspace file:** <created at hub.code-workspace | not created>
 
 ### Files created:
