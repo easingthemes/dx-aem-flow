@@ -14,8 +14,8 @@ import { stats } from '../config/stats';
 export const base = import.meta.env.BASE_URL;
 
 <PageHero
-  title="AI-Powered Development Platform"
-  subtitle="AI plugin system that automates your sprint: fetch tickets, plan implementation, write code, review PRs, and create documentation. Works with Claude Code and GitHub Copilot CLI."
+  title="Enterprise AI Development Platform"
+  subtitle="For enterprise teams on Azure DevOps and Atlassian. 70+ skills that run identically across Claude Code, GitHub Copilot CLI, and VS Code Chat — from ticket to PR, fully autonomous. Deep AEM specialization built in."
 />
 
 <Section>
@@ -33,8 +33,8 @@ export const base = import.meta.env.BASE_URL;
       <div class="text-sm text-gray-500">Plugins</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">4</div>
-      <div class="text-sm text-gray-500">Repos Supported</div>
+      <div class="text-4xl font-extrabold text-cyan">3</div>
+      <div class="text-sm text-gray-500">AI Platforms</div>
     </div>
     <div>
       <div class="text-4xl font-extrabold text-cyan">13</div>
@@ -50,10 +50,10 @@ export const base = import.meta.env.BASE_URL;
 />
 <Section>
   <p class="text-sm text-gray-600 leading-relaxed">
-    AI coding assistants are powerful, but without structure they produce inconsistent results. You end up re-explaining your project, your conventions, and your workflow every session.
+    Enterprise development teams need more than AI code completion. They need governance — DoR validation before work starts, 6-phase verification before code merges, autonomous PR review that enforces standards 24/7. They need consistency across repos, across IDEs, across team members.
   </p>
   <p class="text-sm text-gray-600 leading-relaxed mt-3">
-    KAI is a structured development workflow built as a plugin system. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into <strong>skills</strong> that orchestrate multi-agent pipelines. A single command like <code>/dx-req</code> pulls the ticket from ADO/Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
+    KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into <strong>skills</strong> that orchestrate multi-agent pipelines across every major AI platform. A single command like <code>/dx-req</code> pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
   </p>
 
   <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -69,11 +69,11 @@ export const base = import.meta.env.BASE_URL;
     <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="Autonomous Mode" horizontal>
       The same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
     </ContentCard>
-    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-emerald-600" title="Dual-IDE" horizontal>
-      Same {stats.totalSkills} skills work in Claude Code and GitHub Copilot CLI. Same plugins, same marketplace — install once, use everywhere.
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-emerald-600" title="Every AI Platform" horizontal>
+      Same {stats.totalSkills} skills work in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config — install once, use everywhere.
     </ContentCard>
-    <ContentCard icon="mdi:star" iconColor="bg-cyan-dark" title="Superpowers Integration" horizontal>
-      6 skills optionally invoke <a href="https://github.com/obra/superpowers" class="text-brand-700">superpowers</a> methodology (brainstorming, TDD, debugging, verification) when installed.
+    <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Enterprise Governance" horizontal>
+      DoR validation, 6-phase verification gate, autonomous PR review, secret scanning, and branch protection. Ship with confidence.
     </ContentCard>
   </div>
 </Section>
@@ -102,7 +102,7 @@ export const base = import.meta.env.BASE_URL;
 <SectionHeading
   badge="Design-to-Code"
   title="Figma to Production Code"
-  subtitle="One command turns a Figma URL into a production AEM component that matches the design."
+  subtitle="One command turns a Figma URL into a production AEM component. The only AI platform with deep AEM knowledge — dialogs, JCR, OSGi, Sling models, all understood natively."
   bg="primary"
 />
 <Section>
@@ -167,7 +167,7 @@ export const base = import.meta.env.BASE_URL;
   badge="Plugins"
   badgeColor="success"
   title="Four Plugins, Independently Installable"
-  subtitle="Non-AEM projects only need dx. AEM-specific logic never pollutes a pure frontend project."
+  subtitle="Core workflow for any stack. AEM specialization for teams that need it — the deepest AI-powered AEM tooling available."
   bg="primary"
 />
 <Section>
@@ -176,7 +176,7 @@ export const base = import.meta.env.BASE_URL;
       Full development lifecycle -- requirements, planning, execution, review, PR, accessibility, documentation. Works with any stack.
     </ContentCard>
     <ContentCard icon="mdi:cube-outline" iconColor="bg-amber-500" title="dx-aem" tags={[{ label: `${stats.dxAemSkills} skills`, color: 'warning' }, { label: `${stats.dxAemAgents} agents`, color: 'secondary' }]}>
-      AEM-specific -- component verification, QA with browser automation, demo capture, project knowledge (seed data).
+      AEM full-flow -- component dialogs, JCR content, editorial QA, browser automation, demo capture. The complete AEM development lifecycle.
     </ContentCard>
     <ContentCard icon="mdi:lightning-bolt" iconColor="bg-red-500" title="dx-automation" tags={[{ label: `${stats.dxAutomationSkills} skills`, color: 'error' }]}>
       24/7 autonomous agents -- DoR, PR review, bug fix, DevAgent, QA, estimation. AWS Lambda + ADO pipelines.
@@ -187,7 +187,7 @@ export const base = import.meta.env.BASE_URL;
 <SectionHeading
   badge="Engineering"
   title="What Makes This Different"
-  subtitle="Built for real teams shipping real code."
+  subtitle="Built for enterprise development teams."
   bg="alt"
 />
 <Section>
@@ -201,8 +201,8 @@ export const base = import.meta.env.BASE_URL;
     <ContentCard icon="mdi:lightning-bolt" iconColor="bg-emerald-600" title="Direct Skill Invocation" horizontal>
       Coordinators invoke skills directly via Skill() calls. No intermediary agent needed. Self-healing with 3 layers: fix, heal, retry loop.
     </ContentCard>
-    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-brand-700" title="Dual-IDE Support" horizontal>
-      Same {stats.totalSkills} skills work in Claude Code and GitHub Copilot CLI. Same plugins, same marketplace — install once, use everywhere.
+    <ContentCard icon="mdi:hammer-wrench" iconColor="bg-brand-700" title="Every AI Platform" horizontal>
+      Same {stats.totalSkills} skills work in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config — install once, use everywhere.
     </ContentCard>
     <ContentCard icon="mdi:target" iconColor="bg-cyan" title="Model Tier Strategy" horizontal>
       Opus for deep code review. Sonnet for execution. Haiku for simple lookups. Cost scales with complexity, not volume.
