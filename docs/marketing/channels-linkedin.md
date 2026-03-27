@@ -1,12 +1,12 @@
-# LinkedIn Strategy — Personal Brand + Product Promotion
+# LinkedIn Strategy — Personal Brand as a Developer
 
-## Why LinkedIn First
+## Why LinkedIn Is Your #1 Channel
 
-- 1.1B members; generates **80% of all B2B social media leads**
-- Personal profiles get **8x more engagement** than company pages
-- Carousels have the highest engagement rate (6.60%)
-- **Thought Leader Ads** let you promote personal posts as sponsored content
-- Perfect for positioning yourself as THE expert in AI-powered enterprise development
+- Personal profiles get **8x more engagement** than company pages — and you ARE the brand
+- Recruiters, engineering managers, and fellow devs live here
+- Your open-source project IS your portfolio — LinkedIn lets you narrate it
+- Every post builds your reputation as "the developer who built that AI workflow toolkit"
+- Zero cost. No ads needed. Organic personal posts win.
 
 ---
 
@@ -109,36 +109,13 @@ Slide 9: CTA — "Star us on GitHub: [link]"
 
 ---
 
-## Thought Leader Ads Strategy
+## Optional: Boost a Viral Post (€50 max)
 
-### What They Are
-LinkedIn lets you **promote posts from your personal profile** as sponsored content. Combines organic trust with paid reach.
-
-### Setup
-1. Create a LinkedIn Company Page (even minimal)
-2. Connect your personal profile
-3. Select best-performing organic posts (wait 24-48h to see organic traction)
-4. Promote via Campaign Manager as "Thought Leader Ad"
-
-### Targeting for Enterprise Developers
-
-| Parameter | Values |
-|-----------|--------|
-| Job Titles | Software Engineer, Senior Developer, DevOps Engineer, Engineering Manager, CTO, VP Engineering, Technical Lead |
-| Skills | Azure DevOps, Adobe Experience Manager, CI/CD, GitHub, Jira, Agile |
-| Company Size | 200-10,000+ employees |
-| Industries | Technology, Financial Services, Healthcare, Retail |
-| Seniority | Senior, Manager, Director, VP, C-suite |
-
-### Budget
-- **Testing:** $50-100/day per promoted post
-- **Scaling:** $100-200/day on winners
-- **Monthly budget:** $1,500-3,000 (testing) → $5,000-8,000 (scaling)
-- **Expected CPC:** $5-12 | **CPL:** $100-200
+If a post gets 50+ organic likes, click "Boost" directly on the post. Budget €50 over 7 days. This is the ONLY paid LinkedIn activity worth considering. See `paid-campaigns.md` for the decision tree.
 
 ---
 
-## Engagement Strategy
+## Engagement Strategy (This Is the Real Growth Engine)
 
 ### Daily Routine (15-20 min)
 1. Comment on 5-10 posts from target audience (engineering leaders, DevRel, AI dev tool creators)

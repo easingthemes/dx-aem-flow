@@ -2,7 +2,10 @@
 
 **Date:** 2026-03-27
 **Author:** easingthemes
-**Product:** dx-aem-flow — Enterprise AI Development Platform (4 plugins, 73+ skills)
+**Context:** Solo developer, open-source passion project, not a company
+**Goal:** Promote the tool AND build personal reputation as an expert developer
+**Budget:** Max €100/month (mostly free/organic)
+**Product:** dx-aem-flow — Open-Source AI Development Plugins (4 plugins, 73+ skills)
 
 ---
 
@@ -21,11 +24,17 @@
 
 ## Executive Summary
 
-dx-aem-flow is an open-source enterprise AI development platform with **73+ skills across 4 plugins** that works identically on Claude Code, GitHub Copilot CLI, and VS Code Chat. The marketing plan focuses on establishing the author as a thought leader in AI-powered development workflows while driving adoption through a mix of organic community marketing, directory submissions, content marketing, and targeted paid campaigns.
+This is a **solo developer's grassroots marketing plan** for an open-source project. No company, no sales team, no big budget — just a great tool and the developer behind it.
 
-**Core Narrative:** "The only AI dev platform that automates your entire sprint — from ticket to production PR — across every AI coding tool."
+**Two goals, equal weight:**
+1. **Get developers using dx-aem-flow** — it genuinely saves hours per sprint
+2. **Build your personal brand** as the developer who built this — career credibility, conference invites, consulting opportunities, job offers
 
-**Goal:** 1,000 GitHub stars, 500 active installs, and 10,000 website visitors within 6 months.
+**Core Narrative:** "I built 73 AI skills that automate my entire sprint. Here's the open-source toolkit — and what I learned along the way."
+
+**Budget:** €0-100/month. 95% of this plan is free. The optional €100 is for boosting one or two LinkedIn/Twitter posts that go viral organically.
+
+**Goal:** 500 GitHub stars, 200 active installs, and recognition as a thought leader in AI-powered development within 6 months.
 
 ---
 
@@ -34,8 +43,8 @@ dx-aem-flow is an open-source enterprise AI development platform with **73+ skil
 ### One-Liner
 > "70+ AI skills that turn tickets into production PRs — works in Claude Code, Copilot CLI, and VS Code Chat."
 
-### Elevator Pitch
-> Enterprise dev teams waste 40% of their sprint on manual workflow tasks. dx-aem-flow encodes the entire sprint lifecycle — requirements, planning, execution, code review, PR creation — into 73 reusable AI skills. One config file. Every AI platform. Autonomous 24/7 agents included.
+### Elevator Pitch (Personal)
+> I got tired of wasting half my sprint on manual work — writing PRs, reviewing code, triaging bugs. So I built 73 AI skills that handle the entire lifecycle. Requirements to merged PR. It's open source, works on Claude Code, Copilot CLI, and VS Code Chat. I use it every day.
 
 ### Clickbait-Ready Headlines (for social media)
 
@@ -70,32 +79,31 @@ dx-aem-flow is an open-source enterprise AI development platform with **73+ skil
 
 | Segment | Pain Point | Key Message | Channels |
 |---------|-----------|-------------|----------|
-| **Enterprise Dev Teams (ADO/Jira)** | Manual sprint overhead, inconsistent workflows | "Automate your entire sprint lifecycle" | LinkedIn, Google Ads |
-| **AEM Developers** | No AI tools understand AEM architecture | "First AI toolkit with native AEM support" | AEM forums, LinkedIn, Dev.to |
-| **DevOps Engineers** | CI/CD lacks AI intelligence | "24/7 autonomous agents on your pipelines" | Reddit r/devops, Twitter |
-| **Engineering Managers** | Team velocity, PR review bottlenecks | "Cut PR review cycle from hours to minutes" | LinkedIn, webinars |
-| **AI Tool Enthusiasts** | Looking for best AI dev tools | "73 skills, open source, works everywhere" | Product Hunt, AI directories |
-| **Open Source Contributors** | Want to contribute to meaningful projects | "Plugin architecture, easy to extend" | GitHub, Reddit, HN |
+| **Fellow developers (ADO/Jira)** | Manual sprint overhead | "I automated my sprint — you can too" | LinkedIn, Reddit, Dev.to |
+| **AEM developers** | No AI tools for AEM | "First AI toolkit with native AEM support" | AEM forums, LinkedIn |
+| **AI tool enthusiasts** | Looking for best AI dev tools | "73 skills, open source, works everywhere" | Product Hunt, AI directories, Twitter |
+| **Open source contributors** | Want to contribute | "Plugin architecture, easy to extend" | GitHub, Reddit, HN |
+| **Recruiters / hiring managers** | Looking for strong developers | Your profile + this project = proof of skill | LinkedIn |
 
 ---
 
 ## Channel Strategy Overview
 
-| Channel | Type | Priority | Monthly Cost | Expected Impact |
-|---------|------|----------|-------------|-----------------|
-| **LinkedIn (personal brand)** | Organic + Paid | P0 | $0-3,000 | Thought leadership, enterprise leads |
-| **Twitter/X** | Organic + Paid | P0 | $0-500 | Developer awareness, community |
-| **Product Hunt** | Launch | P0 | $0-500 | Spike traffic, credibility |
-| **Hacker News** | Launch | P0 | $0 | Technical credibility |
-| **Reddit** | Organic | P1 | $0 | Community trust, organic traffic |
-| **Dev.to / Hashnode / Medium** | Content | P1 | $0 | SEO, developer education |
-| **AI Directories (50+)** | Listings | P1 | $0-100 | SEO backlinks, discovery |
-| **Startup Directories (20+)** | Listings | P2 | $0-100 | SEO backlinks |
-| **Google Ads** | Paid | P2 | $1,500 | Intent capture |
-| **LinkedIn Ads** | Paid | P2 | $3,000 | Enterprise targeting |
-| **Discord/Slack Communities** | Organic | P2 | $0 | Niche engagement |
-| **YouTube** | Content | P3 | $0 | Long-form demos |
-| **GitHub Sponsors** | Funding | P3 | $0 | Sustainability |
+Everything is organic/free except one optional €100/month boost.
+
+| Channel | Type | Priority | Cost | Expected Impact |
+|---------|------|----------|------|-----------------|
+| **LinkedIn (personal brand)** | Organic | P0 — DO FIRST | €0 | Thought leadership, career opportunities |
+| **Twitter/X** | Organic | P0 | €0 | Developer awareness, community |
+| **Reddit** | Organic | P0 | €0 | Community trust, organic traffic |
+| **Dev.to / Hashnode** | Content | P0 | €0 | SEO, developer education, portfolio |
+| **Product Hunt** | Launch | P1 | €0 | Spike traffic, credibility badge |
+| **Hacker News** | Launch | P1 | €0 | Technical credibility |
+| **AI Directories (50+)** | Listings | P1 | €0 | SEO backlinks, discovery |
+| **Discord/Slack Communities** | Organic | P2 | €0 | Niche engagement |
+| **Optional: Boost 1 post** | Paid | P3 | €50-100 | Only if a post goes viral organically |
+
+**Total: €0-100/month**
 
 **Detailed plans for each channel:** See companion files in `docs/marketing/`.
 
@@ -125,10 +133,10 @@ dx-aem-flow is an open-source enterprise AI development platform with **73+ skil
 - [ ] Cross-promote launch across all channels
 - [ ] Publish: "Why Most AI Coding Tools Fail Enterprise Teams" (LinkedIn + Medium)
 
-### Week 7-8: Paid Amplification
-- [ ] Start LinkedIn Thought Leader Ads ($50-100/day on best-performing posts)
-- [ ] Launch Google Ads on high-intent keywords ($50/day)
-- [ ] Boost best Twitter thread ($15-25/day)
+### Week 7-8: Double Down on What Works
+- [ ] Look at analytics: which posts/articles got the most traction?
+- [ ] Write follow-up content on your best-performing topic
+- [ ] **Optional:** If a LinkedIn/Twitter post went viral organically, boost it with €50-100
 - [ ] Publish: "Building 10 Autonomous AI Agents for Azure DevOps" (Dev.to)
 - [ ] LinkedIn carousel: "Manual vs AI-Assisted Sprint — The Numbers"
 - [ ] Plan second Product Hunt launch (feature update)
@@ -142,48 +150,67 @@ dx-aem-flow is an open-source enterprise AI development platform with **73+ skil
 
 ---
 
-## Budget Summary
+## Budget Summary — Max €100/month
 
-### Bootstrapped Start ($0/month)
-Everything organic: directory submissions, Reddit, Twitter, LinkedIn personal posts, Dev.to/Hashnode articles, Product Hunt, Hacker News.
+### The Reality: 95% Free
 
-### Growth Phase ($5,000/month)
+Almost everything in this plan costs nothing but your time. The best developer marketing is **authentic content from the person who built the thing**.
 
-| Item | Monthly Cost |
-|------|-------------|
-| LinkedIn Ads (Thought Leader Ads) | $3,000 |
-| Google Ads (search intent) | $1,500 |
-| Twitter/X promoted posts | $500 |
-| Tools (scheduling, analytics) | $50-100 |
-| **Total** | **~$5,000-5,100** |
+| Item | Cost | Notes |
+|------|------|-------|
+| LinkedIn posts | €0 | Personal profile, organic reach |
+| Twitter/X threads | €0 | Organic |
+| Reddit engagement | €0 | Karma + genuine contributions |
+| Dev.to / Hashnode articles | €0 | Free platforms |
+| Product Hunt launch | €0 | Free listing |
+| Hacker News Show HN | €0 | Free |
+| 50+ directory submissions | €0 | Almost all free |
+| Discord/Slack communities | €0 | Free |
+| GitHub profile optimization | €0 | Free |
+| **Optional: Boost 1 viral post** | **€50-100** | **Only if organic post takes off** |
+| **Total** | **€0-100/month** | |
 
-### Scale Phase ($10,000-15,000/month)
+### Where to Spend the Optional €100
 
-| Item | Monthly Cost |
-|------|-------------|
-| LinkedIn Sponsored Content | $5,000-8,000 |
-| Google Ads (expanded keywords) | $2,000-3,000 |
-| Twitter/X campaigns | $1,000 |
-| Product Hunt promoted | $500 |
-| Content creation tools | $200 |
-| Freelance content writer | $1,500-2,000 |
-| **Total** | **~$10,200-14,700** |
+Only spend money to **amplify what's already working organically:**
+- A LinkedIn post got 50+ likes → Boost it for €50 to reach 5,000-10,000 more people
+- A Twitter thread got 100+ retweets → Promote it for €30-50
+- A Dev.to article hit trending → Nothing to spend, it's already working
+
+**Rule: Never boost a post that flopped organically. Only pour fuel on existing fire.**
+
+### Free Tools to Use
+
+| Tool | Purpose | Cost |
+|------|---------|------|
+| Buffer (free tier) | Schedule LinkedIn + Twitter posts | €0 |
+| Canva (free tier) | LinkedIn carousels, social images | €0 |
+| Google Analytics | Track docs site traffic | €0 |
+| GitHub Insights | Track repo traffic, referrers | €0 |
+| LinkedIn Analytics | Track post performance | €0 |
 
 ---
 
 ## KPIs & Success Metrics
 
+### Project Metrics
 | Metric | 3-Month Target | 6-Month Target |
 |--------|---------------|----------------|
-| GitHub Stars | 300 | 1,000 |
-| Plugin Installs | 150 | 500 |
-| Website Monthly Visitors | 3,000 | 10,000 |
-| LinkedIn Followers (personal) | 2,000 | 5,000 |
-| Twitter/X Followers | 1,000 | 3,000 |
-| Dev.to Article Views | 10,000 | 50,000 |
-| Product Hunt Upvotes | 200+ | — |
-| Newsletter Subscribers | 200 | 1,000 |
-| Inbound Enterprise Leads | 5 | 20 |
+| GitHub Stars | 100 | 500 |
+| Plugin Installs | 50 | 200 |
+| Website Monthly Visitors | 1,000 | 5,000 |
+| Dev.to Article Views | 5,000 | 20,000 |
+| Product Hunt Upvotes | 100+ | — |
+
+### Personal Brand Metrics (Equally Important)
+| Metric | 3-Month Target | 6-Month Target |
+|--------|---------------|----------------|
+| LinkedIn Followers (personal) | 500 | 2,000 |
+| LinkedIn post impressions/month | 10,000 | 50,000 |
+| Twitter/X Followers | 300 | 1,000 |
+| Conference talk proposals submitted | 2 | 5 |
+| Inbound messages (recruiters, collabs) | 5 | 20 |
+| "Known for AI dev workflows" in your niche | Starting | Established |
 
 ---
 
@@ -195,5 +222,5 @@ Everything organic: directory submissions, Reddit, Twitter, LinkedIn personal po
 - [`channels-content.md`](channels-content.md) — Blog/content marketing strategy
 - [`channels-launches.md`](channels-launches.md) — Product Hunt, HN, launch platforms
 - [`directories.md`](directories.md) — Full list of directories to submit to
-- [`paid-campaigns.md`](paid-campaigns.md) — Paid advertising playbook
+- [`paid-campaigns.md`](paid-campaigns.md) — Optional micro-budget boost strategy (€50-100)
 - [`website-content-assets.md`](website-content-assets.md) — Best docs to repurpose for campaigns
