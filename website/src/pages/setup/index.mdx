@@ -14,7 +14,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 
 <PageHero
   title="Setup"
-  subtitle="Three steps to get dx running in your project. Works with Claude Code CLI and GitHub Copilot CLI."
+  subtitle="Three steps to get dx running in your project. Works with Claude Code, GitHub Copilot CLI, and VS Code Chat."
 />
 
 <Section>
@@ -41,7 +41,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   bg="primary"
 />
 <Section>
-  <CommandBlock label="Claude Code CLI or GitHub Copilot CLI">{`# Add marketplace (one-time)
+  <CommandBlock label="Claude Code, GitHub Copilot CLI, or VS Code Chat">{`# Add marketplace (one-time)
 /plugin marketplace add easingthemes/dx-aem-flow
 
 # Install plugins
@@ -89,7 +89,7 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-brand-700" title="/dx-init">
-      Core initialization — creates <code>.ai/config.yaml</code>, convention rules, MCP config, agent templates, shared scripts. Interactive — asks about your ADO/Jira project, build commands, and base branch.
+      Core initialization — creates <code>.ai/config.yaml</code>, convention rules, MCP config, agent templates, shared scripts. Interactive — asks about your Azure DevOps or Jira project, build commands, and base branch.
       If it detects an AEM project, automatically runs <code>/aem-init</code> to append the <code>aem:</code> section, install BE/FE rules by project role, and auto-generate <code>component-index.md</code> via AEM MCP.
     </ContentCard>
     <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-cyan" title="/dx-adapt">
@@ -117,7 +117,7 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/config.yaml</code></td><td class="py-2 px-4">Project config (branches, ADO/Jira, build commands, AEM)</td><td class="py-2 px-4">dx-init + aem-init + dx-adapt</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.ai/config.yaml</code></td><td class="py-2 px-4">Project config (branches, Azure DevOps/Jira, build commands, AEM)</td><td class="py-2 px-4">dx-init + aem-init + dx-adapt</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/rules/</code></td><td class="py-2 px-4">Convention rules (generic templates at this stage)</td><td class="py-2 px-4">dx-init + aem-init</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4">MCP server configuration (ADO, Jira/Confluence, Figma, axe)</td><td class="py-2 px-4">dx-init</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/agents/</code></td><td class="py-2 px-4">Copilot agent templates</td><td class="py-2 px-4">dx-init</td></tr>
