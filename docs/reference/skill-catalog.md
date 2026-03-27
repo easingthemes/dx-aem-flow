@@ -108,14 +108,15 @@
 
 ---
 
-## dx-hub plugin — 3 skills
+## dx-hub plugin — 4 skills
 
-Multi-repo orchestration plugin. Manages hub directories that coordinate work across multiple consumer repos.
+Multi-repo orchestration plugin. Dispatches tickets to independent Claude Code sessions in VS Code terminals — one per repo. Each session has its own CWD, full plugin access, and MCP tools.
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
+| dx-hub-dispatch | `/dx-hub-dispatch` | `<ticket-id> [repos...] [--skill]` | Dispatch a ticket to repos via VS Code terminals | Terminal sessions + status.json |
 | dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
-| dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| dispatch-mode \| auto-dispatch]` | View and edit hub configuration | Config update |
+| dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| terminal-delay]` | View and edit hub configuration | Config update |
 | dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
 
 ---
