@@ -1,3 +1,16 @@
+# [2.76.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.75.0...v2.76.0) (2026-03-27)
+
+
+### Bug Fixes
+
+* remove paths field from AEM skills that use remote MCP ([d424e07](https://github.com/easingthemes/dx-aem-flow/commit/d424e074944147b3636f93ca2033ca65a63b756c))
+* restore precise matcher on branch-guard, fix Edit if pattern ([58503e3](https://github.com/easingthemes/dx-aem-flow/commit/58503e3f5aca128edd0d9287c28d5fc2af9bfe56))
+
+
+### Features
+
+* modernize hooks and skills with new Claude Code platform features ([d0caf60](https://github.com/easingthemes/dx-aem-flow/commit/d0caf60849e9589bca145e9f70ad0218c2e7a79d))
+
 # [2.75.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.74.0...v2.75.0) (2026-03-27)
 
 
