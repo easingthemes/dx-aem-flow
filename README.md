@@ -10,7 +10,7 @@ Enterprise AI development platform for teams shipping on Azure DevOps and Atlass
 
 ## Why This Exists
 
-Enterprise development teams need more than AI code completion. They need governance — DoR validation before work starts, 6-phase verification before code merges, autonomous PR review that enforces standards 24/7. They need consistency across repos, across IDEs, across team members. And they need it without re-explaining the project every session.
+Enterprise development teams need more than AI code completion. They need a system that handles the full lifecycle — requirements analysis, implementation planning, code generation, testing, verification, documentation, and PR creation — with governance at every step. Consistent across repos, across IDEs, across team members. And without re-explaining the project every session.
 
 KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines across every major AI platform. A single command like `/dx-req-all` pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
 
