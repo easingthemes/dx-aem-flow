@@ -39,8 +39,17 @@
 
 | 32 | Open Plugins: plugin logo (`logo` field) | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-logo](todo-open-plugins.md#plugin-logo--icon) — `assets/logo.png` + `"logo"` field added to all 4 plugins; waiting on [vscode#304758](https://github.com/microsoft/vscode/issues/304758) |
 
-| 33 | Hub V2: rich status tracking (phase, steps, PRs) | Medium | Open | 2026-03-27 | [todo-hub.md#v2-rich-status-tracking](todo-hub.md#v2-rich-status-tracking) |
-| 34 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
-| 35 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
+| 33 | Hook `if` field — conditional execution | High | Open | 2026-03-27 | [todo-review-plugin-improvements.md#hook-if-field](todo-review-plugin-improvements.md#hook-if-field--conditional-execution) |
+| 34 | Branch-guard exit code bug (exit 1 → exit 2) | High | Open | 2026-03-27 | [todo-review-plugin-improvements.md#branch-guard-exit-code](todo-review-plugin-improvements.md#branch-guard-exit-code-bug) |
+| 35 | Hook statusMessage for UX | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#hook-statusmessage](todo-review-plugin-improvements.md#hook-statusmessage-for-ux) |
+| 36 | Async screenshot hooks | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#async-screenshot](todo-review-plugin-improvements.md#async-screenshot-hooks) |
+| 37 | Skill `effort` field for model-tiered skills | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#skill-effort](todo-review-plugin-improvements.md#skill-effort-field) |
+| 38 | AEM skills `paths` field for scoped activation | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#aem-paths](todo-review-plugin-improvements.md#aem-skills-paths-field) |
+| 39 | Docs: new hook/skill features | Low | Open | 2026-03-27 | [todo-review-plugin-improvements.md#docs](todo-review-plugin-improvements.md#documentation-updates) |
+| 40 | Copilot CLI hook compatibility matrix | Low | Open | 2026-03-27 | [todo-review-plugin-improvements.md#copilot-cli](todo-review-plugin-improvements.md#copilot-cli-hook-compatibility) |
+| 41 | OpenSkills / Agent Skills cross-platform notes | Low | Watch | 2026-03-27 | [todo-review-plugin-improvements.md#openskills](todo-review-plugin-improvements.md#openskills--agent-skills-standard-compatibility) |
+| 42 | Hub V2: rich status tracking (phase, steps, PRs) | Medium | Open | 2026-03-27 | [todo-hub.md#v2-rich-status-tracking](todo-hub.md#v2-rich-status-tracking) |
+| 43 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
+| 44 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
 
-**Counts:** 35 total — 9 done, 10 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 44 total — 9 done, 19 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
