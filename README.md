@@ -6,20 +6,21 @@
 [![semantic-release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Four plugins for AI-assisted software development: requirements-to-PR workflow for ADO/Jira projects, multi-repo orchestration, AEM component tooling and QA, and autonomous CI agents. Runs locally and in pipelines. Supports Claude Code, Copilot CLI, and VS Code Chat.
+Enterprise AI development platform for teams shipping on Azure DevOps and Atlassian. 70+ skills that run identically across **Claude Code**, **GitHub Copilot CLI**, and **VS Code Chat** — from ticket to PR, fully autonomous. Deep AEM specialization built in.
 
 ## Why This Exists
 
-AI coding assistants are powerful, but without structure they produce inconsistent results. You end up re-explaining your project, your conventions, and your workflow every session.
+Enterprise development teams need more than AI code completion. They need governance — DoR validation before work starts, 6-phase verification before code merges, autonomous PR review that enforces standards 24/7. They need consistency across repos, across IDEs, across team members. And they need it without re-explaining the project every session.
 
-KAI is a structured development workflow built as a plugin system. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines. A single command like `/dx-req-all` pulls the ticket from ADO/Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically. You run a skill, then refine with simple follow-ups — the agent already has the full picture.
+KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines across every major AI platform. A single command like `/dx-req-all` pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
 
 **What makes it different:**
+- **Every AI platform** — same 70+ skills work identically in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config, same results — regardless of which IDE your team uses.
+- **Enterprise governance** — DoR validation, 6-phase verification gate (compile, lint, test, secret scan, architecture review, AI code review), autonomous PR review, and branch protection. Ship with confidence.
+- **AEM full-flow** — the deepest AI-powered AEM tooling available. Figma → component → dialog inspection → JCR content → editorial QA → browser automation → demo capture. The complete AEM development lifecycle.
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
-- **Multi-source context** — skills don't just read source code. They pull ADO/Jira tickets, Figma designs, AEM content, and browser screenshots through MCP integrations.
 - **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
-- **[Superpowers](https://github.com/obra/superpowers) integration** — 6 skills optionally invoke superpowers methodology (brainstorming, TDD, systematic debugging, verification) when installed, with inline fallback when it's not.
 
 ## Install
 
@@ -57,9 +58,9 @@ Hub directory management for coordinating work across multiple consumer repos �
 
 **3 skills.**
 
-### [dx-aem](plugins/dx-aem/) — AEM Component Tools
+### [dx-aem](plugins/dx-aem/) — AEM Full-Flow
 
-AEM-specific tools: component dialog inspection, page search, snapshot/verify lifecycle, QA automation, and demo capture.
+The complete AEM development lifecycle: component dialog inspection, JCR content, page authoring, editorial QA with browser automation, snapshot/verify lifecycle, and demo capture. The deepest AI-powered AEM tooling available.
 
 **12 skills, 6 agents.** Requires dx plugin.
 
