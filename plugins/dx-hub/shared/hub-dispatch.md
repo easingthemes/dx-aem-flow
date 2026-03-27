@@ -4,7 +4,7 @@ Reference document for how hub mode dispatches work to repos via VS Code termina
 
 ## When This Applies
 
-Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. Instead of running headless `claude -p` subprocesses, the hub opens independent interactive Claude Code sessions in VS Code terminals — one per repo. Each session has its own CWD, full plugin access, and MCP tools.
+Hub mode lets a single `.hub/` directory act as an orchestration point for multi-repo workflows. The hub opens independent interactive Claude Code sessions in VS Code terminals — one per repo. Each session has its own CWD, full plugin access, and MCP tools.
 
 This document defines hub detection, repo resolution, the dispatch mechanism, and state tracking. It is the local alternative to pipeline delegation (see `repo-discovery.md`).
 
@@ -102,18 +102,7 @@ Example: if cwd is `/projects/project-x/.hub` and path is `../repo-a`, the resol
 
 ## 2. Dispatch Mechanism — VS Code Terminals
 
-Hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server. Each terminal gets an independent interactive Claude session with full plugin and MCP access.
-
-### Why Terminals (Not Headless)
-
-| Concern | Headless (`claude -p`) | Terminal (vscode-automator) |
-|---------|----------------------|---------------------------|
-| CWD per repo | Via `cd &&` prefix | Native — terminal opens in repo |
-| Plugin loading | Limited | Full — reads repo's `.claude/` |
-| MCP servers | Not available | Full — reads repo's `.mcp.json` |
-| User visibility | Hidden, log only | User sees all terminals live |
-| Interactivity | None — fire and forget | User can intervene, answer questions |
-| Permission prompts | Must bypass all | Normal interactive flow |
+Hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server (registered in the hub's project-level `.mcp.json` by `/dx-hub-init`). Each terminal gets an independent interactive Claude session with full plugin and MCP access. The user can see all sessions live and intervene at any time.
 
 ### Terminal Launch Sequence
 

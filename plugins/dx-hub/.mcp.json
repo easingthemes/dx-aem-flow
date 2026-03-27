@@ -1,9 +1,3 @@
 {
-  "mcpServers": {
-    "vscode-automator": {
-      "command": "node",
-      "args": ["../../tools/vscode-automator/server.mjs"],
-      "type": "stdio"
-    }
-  }
+  "mcpServers": {}
 }

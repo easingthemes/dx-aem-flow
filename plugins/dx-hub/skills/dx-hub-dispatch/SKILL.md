@@ -2,7 +2,7 @@
 name: dx-hub-dispatch
 description: Dispatch a ticket to multiple repos via VS Code terminals. Reads ticket, detects involved repos, opens independent Claude sessions in each repo. Trigger on "dispatch ticket", "hub dispatch", "work on ticket across repos".
 argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all]"
-allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash", "mcp__plugin_dx-hub_vscode-automator__*", "mcp__ado__*", "mcp__atlassian__*"]
+allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash", "mcp__vscode-automator__*", "mcp__ado__*", "mcp__atlassian__*"]
 ---
 
 You dispatch a ticket to one or more repos by opening independent Claude Code sessions in VS Code terminals. The hub does NOT plan or implement — it fetches the ticket, determines which repos are involved, and launches real Claude sessions in each repo with a delegation prompt.
@@ -249,18 +249,18 @@ For each target repo, open a VS Code terminal and start a Claude session:
 
 **Step 1 — Open new terminal:**
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_new_terminal
+mcp__vscode-automator__vscode_new_terminal
 ```
 
 Wait 1 second for terminal to initialize.
 
 **Step 2 — cd into the repo:**
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_type
+mcp__vscode-automator__vscode_type
   text: "cd <repo-absolute-path>"
 ```
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_keystroke
+mcp__vscode-automator__vscode_keystroke
   key: "return"
 ```
 
@@ -268,11 +268,11 @@ Wait 1 second.
 
 **Step 3 — Start Claude:**
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_type
+mcp__vscode-automator__vscode_type
   text: "claude"
 ```
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_keystroke
+mcp__vscode-automator__vscode_keystroke
   key: "return"
 ```
 
@@ -287,11 +287,11 @@ Ticket <id> raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>. Cross-
 ```
 
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_type
+mcp__vscode-automator__vscode_type
   text: "<delegation prompt>"
 ```
 ```
-mcp__plugin_dx-hub_vscode-automator__vscode_keystroke
+mcp__vscode-automator__vscode_keystroke
   key: "return"
 ```
 
