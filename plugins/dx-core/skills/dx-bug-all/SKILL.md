@@ -79,34 +79,12 @@ Check if hub mode is active:
 2. `.ai/config.yaml` has `hub.enabled: true`
 3. Current working directory is a `.hub/` directory
 
-If all three conditions are met → proceed to "Hub dispatch"
+If all three conditions are met:
+Print: `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to repo terminals.` STOP.
+
+Hub dispatch is handled by the dedicated `/dx-hub-dispatch` skill, which opens independent VS Code terminals for each repo.
+
 Otherwise → proceed to "Dispatch triage" (existing flow)
-
-### Hub dispatch
-
-Read `shared/hub-dispatch.md` for the full protocol.
-
-1. Read `.ai/config.yaml` → `repos:` list
-2. Determine which repos need the bug fix:
-   - If a spec directory exists with `triage.md` → `## Cross-Repo Scope`, use repo resolution
-   - If no triage yet, dispatch triage first to detect scope, then dispatch fix per repo
-3. Check `hub.auto-dispatch` — if `false`, confirm with user
-4. Write `state/<ticket-id>/dispatch.json`
-5. For each target repo:
-   - Build and execute: `cd <repo.path> && claude -p "/dx-bug-all <ticket-id>" --output-format json --allowedTools "Bash,Read,Edit,Write,Glob,Grep" --permission-mode bypassPermissions`
-   - Collect result, write state
-   - Print progress: `✓ <repo> — <status>`
-6. Rebuild `state/active.json`
-
-### Hub results summary
-
-Present hub dispatch results:
-
-| Repo | Status | PR | Cost | Duration |
-|------|--------|----|------|----------|
-| <repo> | ✓ done | #<id> | $<cost> | <time> |
-
-If any repo failed: "Use `/dx-hub-status <ticket-id>` for details. Failed repos can be re-dispatched."
 
 ### Dispatch triage
 

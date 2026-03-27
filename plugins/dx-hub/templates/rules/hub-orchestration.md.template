@@ -8,15 +8,32 @@ This is a **hub directory** — it orchestrates work across multiple repos. It c
 
 ## Core Constraints
 
-- **Never edit code files from this directory.** Code lives in sibling repos. Use dispatch or tell the user to switch to the repo.
+- **Never edit code files from this directory.** Code lives in sibling repos. Use `/dx-hub-dispatch` to launch work in repo terminals.
 - **Never run build/test commands.** The hub has no build system. Builds happen in each repo.
-- **Always read config first.** Hub config is in `.ai/config.yaml` — it lists all repos, their paths, base branches, and ADO projects.
+- **Always read config first.** Hub config is in `.ai/config.yaml` — it lists all repos, their paths, capabilities, and base branches.
+
+## Dispatch Model
+
+The hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server. Each terminal runs an independent interactive Claude session in the target repo's directory with full plugin and MCP access.
+
+**Hub does:**
+- Fetch tickets from ADO/Jira
+- Determine which repos are involved (by capabilities or explicit user selection)
+- Pre-seed raw ticket files into each repo's spec directory
+- Launch Claude sessions in VS Code terminals with delegation prompts
+- Track simple status (running/done/blocked/failed)
+
+**Hub does NOT:**
+- Plan implementations — each repo does its own `/dx-req` + `/dx-plan`
+- Write code — each repo handles its own `/dx-step`
+- Review code — each repo manages its own PR
+- Interpret requirements — it only routes the raw ticket
 
 ## Working with Tickets
 
 - Use the ADO MCP tools (`mcp__ado__wit_get_work_item`, `mcp__ado__wit_get_work_items_batch_by_ids`) to read work items.
 - When asked about multiple tickets, batch-read them and present a summary table.
-- Check `.ai/specs/<id>-*/` in each sibling repo to find existing dx workflow output (specs, plans, implementation state).
+- Check `state/<ticket-id>/status.json` for dispatch progress.
 
 ## Plugin System — Where to Find Info
 
@@ -38,6 +55,15 @@ Four plugins are installed. To understand what a skill does, how to invoke it, o
 | dx-aem | `/aem-*` | AEM-specific: component verification, QA, demo capture, authoring guides |
 | dx-hub | `/dx-hub-*` | Multi-repo orchestration (this plugin) |
 | dx-automation | `/auto-*` | Autonomous CI/CD agents (DoR, PR review, DoD, BugFix, etc.) |
+
+### Hub skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/dx-hub-dispatch` | Dispatch a ticket to repos via VS Code terminals |
+| `/dx-hub-status` | Check dispatch progress (running/done/blocked/failed) |
+| `/dx-hub-config` | View/edit hub configuration |
+| `/dx-hub-init` | Initialize or reinitialize the hub directory |
 
 ### User Story pipeline stages (dx-core)
 
@@ -62,8 +88,9 @@ Four plugins are installed. To understand what a skill does, how to invoke it, o
 To assess where a ticket stands:
 
 1. **Read the ADO work item** — get title, state, assigned to, linked PRs
-2. **Scan sibling repos** for `.ai/specs/<ticket-id>-*/` directories (use Glob via repo paths from config)
-3. **Map files to pipeline stage:**
+2. **Check `state/<ticket-id>/status.json`** — quick view of per-repo status
+3. **Scan sibling repos** for `.ai/specs/<ticket-id>-*/` directories (use Glob via repo paths from config)
+4. **Map files to pipeline stage:**
    - No spec dir → not started
    - `raw-story.md` only → fetched but not analyzed
    - `explain.md` + `research.md` → requirements done, needs plan
@@ -71,7 +98,6 @@ To assess where a ticket stands:
    - `step-N-*.md` → in progress, N = current step
    - All steps + verify PASS → ready for PR
    - `pr.md` → PR created, check ADO for PR status
-4. **Check `implement.md`** for total step count — compare against existing `step-*.md` files
 5. **Check ADO for linked PRs** — are they open, approved, merged?
 
 ## Cross-Repo Context
@@ -79,12 +105,13 @@ To assess where a ticket stands:
 - Hub config `repos[].path` gives relative paths to each repo (e.g., `../repo-name`)
 - Use these paths with Read/Glob/Grep to inspect sibling repo state
 - When reporting status, always identify which repo each finding belongs to
+- Cross-repo context files live at `state/<ticket-id>/context.md`
 
 ## Demo Preparation
 
 When asked to prepare for a demo or status update:
 1. Read all requested tickets from ADO (batch with `mcp__ado__wit_get_work_items_batch_by_ids`)
-2. For each ticket, scan sibling repos for spec directories
+2. For each ticket, check `state/` for dispatch status and scan sibling repos for spec directories
 3. Summarize in a table: ticket ID, title, type (Story/Bug), repo, current stage, steps done/total, what's left
 4. Highlight blockers, open questions, or tickets with no progress
 5. For completed work: note linked PRs and their status (open/merged)
