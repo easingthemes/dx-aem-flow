@@ -30,7 +30,7 @@ This is a **solo developer's grassroots marketing plan** for an open-source proj
 1. **Get developers using dx-aem-flow** — it genuinely saves hours per sprint
 2. **Build your personal brand** as the developer who built this — career credibility, conference invites, consulting opportunities, job offers
 
-**Core Narrative:** "I built 73 AI skills that automate my entire sprint. Here's the open-source toolkit — and what I learned along the way."
+**Core Narrative:** "Every dev team uses AI now. The difference is structured, enterprise-quality output vs raw suggestions. I built the plugins that bridge that gap."
 
 **Budget:** €0-100/month. 95% of this plan is free. The optional €100 is for boosting one or two LinkedIn/Twitter posts that go viral organically.
 
@@ -40,38 +40,44 @@ This is a **solo developer's grassroots marketing plan** for an open-source proj
 
 ## Product Positioning
 
+### The Reality of AI Dev Tools in 2026
+
+Every developer already uses AI — Copilot, Cursor, Claude Code, Cody. Code generation is commoditized. But there's a massive gap between "AI generates code" and "AI delivers structured, enterprise-grade output." Most tools give you raw suggestions with no process, no consistency, and no governance. The quality depends entirely on who writes the prompt.
+
+**dx-aem-flow fills that gap.** Not another AI coding tool — a structured workflow system that produces consistent, auditable, enterprise-quality results from ticket to PR.
+
 ### One-Liner
-> "70+ AI skills that turn tickets into production PRs — works in Claude Code, Copilot CLI, and VS Code Chat."
+> "Not another AI coding tool. A structured enterprise workflow system — 73 skills that deliver consistent, production-grade results from ticket to PR."
 
 ### Elevator Pitch (Personal)
-> I got tired of wasting half my sprint on manual work — writing PRs, reviewing code, triaging bugs. So I built 73 AI skills that handle the entire lifecycle. Requirements to merged PR. It's open source, works on Claude Code, Copilot CLI, and VS Code Chat. I use it every day.
+> Everyone uses AI for coding now. The problem is that raw AI suggestions are inconsistent — quality depends on the prompt, there's no process, no verification, no traceability. I built 73 structured skills that encode enterprise workflow discipline: requirements analysis with named artifacts, plan verification before execution, domain-specific inspections, 6-phase quality gates, and autonomous agents in CI/CD. Same skills, same config, same results — across Claude Code, Copilot CLI, and VS Code Chat. Open source.
 
-### Clickbait-Ready Headlines (for social media)
+### Catchy Headlines (for social media)
 
 | # | Headline | Platform |
 |---|----------|----------|
-| 1 | "I automated my entire dev workflow with 73 AI skills. Here's the open-source toolkit." | Twitter thread, Reddit |
-| 2 | "Why I stopped writing PRs manually (and built AI agents to do it)" | LinkedIn, Dev.to |
-| 3 | "This open-source project turns a Jira ticket into a merged PR while you sleep" | Hacker News, Product Hunt |
-| 4 | "73 skills. 4 plugins. 0 manual steps. Meet the AI dev platform enterprises actually need." | LinkedIn carousel |
-| 5 | "Your AI coding assistant generates code. Mine generates entire verified PRs." | Twitter/X |
-| 6 | "I built 10 autonomous AI agents that run 24/7 on Azure DevOps. They review PRs, fix bugs, and write docs." | Reddit, LinkedIn |
-| 7 | "From Figma design to production AEM component in one command — here's how" | Twitter, Dev.to |
-| 8 | "The 6-phase AI code review that catches what humans miss" | LinkedIn |
-| 9 | "Open source AI toolkit that actually understands your entire codebase, not just the file you're editing" | Hacker News |
-| 10 | "Stop prompting. Start orchestrating. The plugin system that chains AI agents like microservices." | Twitter thread |
+| 1 | "Every dev team uses AI now. The difference is structure. Here's what I built." | LinkedIn, Twitter thread |
+| 2 | "Your AI coding tool generates suggestions. My plugins deliver verified PRs with full traceability." | Twitter/X |
+| 3 | "AI coding is commoditized. Enterprise-quality structured output is not. I open-sourced the bridge." | Hacker News, LinkedIn |
+| 4 | "73 structured skills. 4 plugins. Consistent results regardless of who runs them." | LinkedIn carousel |
+| 5 | "The gap in AI dev tools isn't intelligence — it's process discipline. Here's the fix." | LinkedIn, Dev.to |
+| 6 | "I built 10 autonomous agents that run 24/7 on Azure DevOps — structured enterprise output, not raw suggestions." | Reddit, LinkedIn |
+| 7 | "From Figma design to production AEM component — structured pipeline, verified at every step" | Twitter, Dev.to |
+| 8 | "Why raw AI code generation fails enterprise teams (and what structured skills do differently)" | LinkedIn, Medium |
+| 9 | "Config-driven AI workflows: one YAML file, 73 skills, consistent output across 50+ repos" | Hacker News |
+| 10 | "Stop prompting ad-hoc. Start using structured AI skills that produce auditable artifacts." | Twitter thread |
 
 ### Key Differentiators (USPs)
 
-1. **Works everywhere** — Same 73 skills on Claude Code, Copilot CLI, VS Code Chat
-2. **Full lifecycle** — Not just code generation: requirements → planning → execution → review → PR → docs
-3. **Autonomous mode** — 10 AI agents running 24/7 as ADO pipelines (tag a ticket, get a PR)
-4. **Config-driven** — One `.ai/config.yaml`, zero hardcoded values, works across 50+ repos
-5. **Persistent memory** — Survives session crashes via markdown files (no lost context)
-6. **Enterprise governance** — DoR/DoD validation, 6-phase verification gate, secret scanning
-7. **AEM mastery** — Deepest AI-powered Adobe Experience Manager tooling available
-8. **Cost-optimized** — Smart model tiering (Opus/Sonnet/Haiku) keeps token spend predictable
-9. **Pure markdown** — No build system, no compilation, no Docker — just `.md` files + shell scripts
+1. **Structured output, not raw suggestions** — Every skill produces named artifacts (requirements, plans, verification reports) — consistent regardless of who runs them
+2. **Enterprise workflow discipline** — DoR validation before coding, 6-phase verification gate, DoD checks before merge — process that raw AI tools lack
+3. **Config-driven consistency** — One `.ai/config.yaml` drives all behavior. No ad-hoc prompting, no quality variance between developers
+4. **Works everywhere** — Same 73 skills on Claude Code, Copilot CLI, VS Code Chat — structured results on any platform
+5. **Autonomous quality gates** — 10 AI agents running 24/7 as ADO pipelines, enforcing enterprise standards in CI/CD
+6. **Domain expertise built in** — AEM components, dialogs, JCR, editorial guides — deep knowledge that generic tools can't prompt their way to
+7. **Persistent, auditable artifacts** — Every step writes to `.ai/specs/` — survives sessions, enables traceability and team handoffs
+8. **Smart model tiering** — Opus for reasoning, Sonnet for execution, Haiku for lookups — cost-optimized without sacrificing quality
+9. **Pure markdown** — No build system, no Docker — just `.md` files + shell scripts. Enterprise results from a simple plugin system
 
 ---
 
@@ -79,9 +85,9 @@ This is a **solo developer's grassroots marketing plan** for an open-source proj
 
 | Segment | Pain Point | Key Message | Channels |
 |---------|-----------|-------------|----------|
-| **Fellow developers (ADO/Jira)** | Manual sprint overhead | "I automated my sprint — you can too" | LinkedIn, Reddit, Dev.to |
-| **AEM developers** | No AI tools for AEM | "First AI toolkit with native AEM support" | AEM forums, LinkedIn |
-| **AI tool enthusiasts** | Looking for best AI dev tools | "73 skills, open source, works everywhere" | Product Hunt, AI directories, Twitter |
+| **Fellow developers (ADO/Jira)** | AI output is inconsistent, no process | "Structured skills = consistent enterprise output" | LinkedIn, Reddit, Dev.to |
+| **AEM developers** | Generic AI tools don't know AEM | "Deep AEM domain expertise built into structured skills" | AEM forums, LinkedIn |
+| **AI tool enthusiasts** | Looking for what's beyond raw code generation | "73 structured skills, open source, enterprise-quality output" | Product Hunt, AI directories, Twitter |
 | **Open source contributors** | Want to contribute | "Plugin architecture, easy to extend" | GitHub, Reddit, HN |
 | **Recruiters / hiring managers** | Looking for strong developers | Your profile + this project = proof of skill | LinkedIn |
 
