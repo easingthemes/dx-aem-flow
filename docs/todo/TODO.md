@@ -39,4 +39,7 @@
 
 | 32 | Open Plugins: plugin logo (`logo` field) | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-logo](todo-open-plugins.md#plugin-logo--icon) — `assets/logo.png` + `"logo"` field added to all 4 plugins; waiting on [vscode#304758](https://github.com/microsoft/vscode/issues/304758) |
 
-**Counts:** 32 total — 9 done, 7 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
+| 33 | Hub V2: rich status tracking (phase, steps, PRs) | Medium | Open | 2026-03-27 | [todo-hub.md#v2-rich-status-tracking](todo-hub.md#v2-rich-status-tracking) |
+| 34 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
+
+**Counts:** 34 total — 9 done, 9 open, 5 blocked, 8 watch, 1 deferred, 1 decision needed, 1 pending
