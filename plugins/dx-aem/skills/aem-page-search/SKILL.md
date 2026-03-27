@@ -2,7 +2,6 @@
 name: aem-page-search
 description: Find AEM pages that use a specific component. Returns page paths with clickable author URLs. Use when you need to find where a component is used on the AEM instance.
 argument-hint: "[component-name] (e.g., hero, banner, accordion)"
-paths: ["**/ui.apps/**", "**/ui.content/**", "**/.content.xml"]
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 

@@ -2,7 +2,6 @@
 name: aem-component
 description: Find all source files, AEM pages, and dialog fields for an AEM component. Use when a developer asks "where is component X?", "what files for hero?", or any component lookup question.
 argument-hint: "[component name (e.g., hero, banner, accordion)]"
-paths: ["**/ui.apps/**", "**/ui.content/**", "**/ui.frontend/**", "**/.content.xml"]
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
