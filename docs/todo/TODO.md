@@ -58,4 +58,6 @@
 | 48 | Subagent: MCP tool discovery resilience | Low | Open | 2026-03-27 | [todo-subagent-improvements.md#mcp-discovery](todo-subagent-improvements.md#mcp-tool-discovery-resilience--shared-reference) — standardize ToolSearch fallback in all MCP agents |
 | 49 | Subagent: coordinator output discipline — Tasks over text | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#output-discipline](todo-subagent-improvements.md#coordinator-output-discipline--tasks-over-text) — use Task updates as progress channel, not conversation text |
 
-**Counts:** 49 total — 9 done, 24 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 50 | Budget / token tracking for automation agents | Low | Open | 2026-03-28 | [todo-automation.md#budget-tracking](todo-automation.md#budget-tracking) |
+
+**Counts:** 50 total — 9 done, 25 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
