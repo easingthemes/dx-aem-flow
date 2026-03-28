@@ -126,15 +126,47 @@ This is a key strength — workers are fully independent sessions in different d
 
 **What:** Built-in multi-agent coordination where one session (lead) delegates to teammates, each with independent context windows.
 
-**Status:** Experimental (v2.1.32+, ~March 2026)
+**Status:** Experimental research preview (v2.1.32+, Feb 2026). Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
 
-### How it works
+### Tools provided
 
-- Lead session creates teammates via `TeamCreate` tool
-- Teammates get their own context windows and tool access
-- Communication via `SendMessage` (peer-to-peer supported)
-- Shared `TaskList` for coordination
-- Visual split panes via tmux or iTerm2
+| Tool | Purpose |
+|------|---------|
+| **TeamCreate** | Creates a named team, config at `~/.claude/teams/{name}/` |
+| **Task** | Spawns a teammate — separate Claude Code process with own context window, role prompt, full tool access |
+| **SendMessage** | Peer-to-peer messaging — any agent can message any other, or broadcast to all |
+| **TeamDelete** | Cleans up team resources |
+
+### Communication model
+
+- **Mailbox system:** `SendMessage` delivers directly to recipients (no polling)
+- **Shared task list:** All agents see task status, claim work, mark complete
+- **Task dependencies:** Blocked tasks auto-unblock when dependencies complete (file locking for race prevention)
+- **Idle notifications:** Lead notified when teammates finish
+
+### Quality gate hooks
+
+| Hook | Trigger | Use |
+|------|---------|-----|
+| `TeammateIdle` | Teammate about to go idle | Exit 2 to send feedback and keep it working |
+| `TaskCreated` | Task being created | Exit 2 to block creation with feedback |
+| `TaskCompleted` | Task being marked complete | Exit 2 to block completion with feedback |
+
+### Display modes
+
+- **In-process** (default): All teammates in one terminal. Shift+Down to cycle, Ctrl+T for task list.
+- **Split-pane** (tmux or iTerm2): Each teammate gets own pane. Recommended for 3+ teammates.
+- Practical limit: **3-5 teammates**, 5-6 tasks each. Beyond that, coordination overhead and token costs (7x single session) grow faster than gains.
+
+### Known limitations
+
+- **No per-teammate working directory** — all share lead's CWD. Open feature request (#23669).
+- **No per-teammate MCP/plugin config** — all load same project context.
+- **No session resumption** — `/resume` and `/rewind` don't restore teammates.
+- **No nested teams** — teammates can't spawn their own teams.
+- **One team per session.**
+- **Split panes require tmux or iTerm2** — not VS Code terminal or Windows Terminal.
+- **Copilot CLI: No.** Agent Teams is Claude Code-specific (internal process spawning, mailbox, task storage).
 
 ### Key differences from session-driver
 
@@ -142,15 +174,19 @@ This is a key strength — workers are fully independent sessions in different d
 |-----------|------------|----------------|
 | Communication | Built-in SendMessage + TaskList | JSONL file polling + tmux keystrokes |
 | Peer-to-peer | Yes | No (controller/worker only) |
-| Multi-repo | Limited (shared project dir) | Yes (per-worker workdir) |
+| Multi-repo | **No** (shared project dir) | Yes (per-worker workdir) |
+| Per-repo plugins/MCP | **No** (shared context) | Yes (each worker loads own) |
 | Tool approval | No granular control | Per-tool-call approve/deny |
+| Task dependencies | Built-in auto-unblock | Manual |
 | Persistence | Session-scoped, no resume | Workers persist, can re-engage |
 | Maturity | Experimental, Anthropic-backed | Community, 1 maintainer |
 | Platform | Claude Code only | Claude Code only |
 
 ### Critical gap for dx-hub
 
-**Agent Teams teammates share the lead's project directory.** They cannot easily work in separate repos with separate plugin configs. This is a fundamental mismatch with dx-hub's multi-repo model where each repo has its own plugins, config, and working directory.
+**Agent Teams teammates share the lead's project directory and plugin context.** They cannot work in separate repos with separate CLAUDE.md, MCP servers, or `.ai/config.yaml`. This is a fundamental mismatch with dx-hub's multi-repo model.
+
+**Watch:** Feature request #23669 (per-teammate working directory). When this ships with per-teammate MCP config, Agent Teams could subsume dx-hub dispatch — but dx-hub's config-driven conventions would still need a migration path.
 
 ---
 
@@ -158,14 +194,16 @@ This is a key strength — workers are fully independent sessions in different d
 
 | Requirement | vscode-automator (current) | smux | session-driver | Agent Teams |
 |-------------|---------------------------|------|----------------|-------------|
-| Launch sessions in different repos | Yes | No (manual) | Yes | No (shared dir) |
+| Launch sessions in different repos | Yes | No (manual) | Yes | **No** (shared dir) |
 | Inject prompts | Yes (AppleScript) | Yes (tmux-bridge) | Yes (tmux send-keys) | Yes (SendMessage) |
 | Monitor completion | No (file-based) | No | Yes (JSONL events) | Yes (built-in) |
+| Per-repo plugins/MCP/config | Yes | Yes (if manual) | Yes | **No** (shared context) |
+| Peer-to-peer messaging | No | Yes (tmux-bridge) | No (controller only) | Yes (SendMessage) |
+| Task dependencies | No | No | No | Yes (auto-unblock) |
 | Cross-platform | macOS only | Linux/macOS/WSL | Linux/macOS | Linux/macOS |
 | Copilot CLI support | No | N/A | No | No |
-| Full plugin access per repo | Yes | Yes (if manual) | Yes | No (shared context) |
-| Tool-call oversight | No | No | Yes | No |
-| Stability | Stable (simple) | Stable (simple) | Critical bug (Issue #9) | Experimental |
+| Tool-call oversight | No | No | Yes | No (hooks only) |
+| Stability | Stable (simple) | Stable (simple) | Critical bug (#9) | Experimental |
 | Complexity to integrate | Medium | High (no orchestration) | Low (plugin install) | Low (built-in) |
 
 ---
