@@ -355,6 +355,32 @@ Then `.vscode/mcp.json` should have:
 
 Same for Atlassian if present. Report "VS Code MCP config synced" or "Created .vscode/mcp.json".
 
+### 5g-quater. Configure VS Code Chat Settings
+
+VS Code Chat needs explicit settings to discover project instructions and plugin skills. After syncing MCP config (step 5g-ter), ensure `.vscode/settings.json` has the required Chat settings.
+
+1. **Check if `.vscode/settings.json` exists** (use Glob tool).
+2. **If it exists:** Read it. Check if `chat.instructionsFilesLocations` and `chat.agentSkillsLocations` are present. Add any missing keys — do NOT overwrite existing settings.
+3. **If it does not exist:** Create it with the settings below.
+
+Required settings:
+```json
+{
+  "chat.instructionsFilesLocations": {
+    ".claude/rules": true,
+    ".github/instructions": true
+  },
+  "chat.agentSkillsLocations": {
+    ".claude/skills": true
+  },
+  "chat.subagents.allowInvocationsFromSubagents": true
+}
+```
+
+When merging into an existing file, preserve all existing keys (formatOnSave, editor settings, etc.) — only add the Chat-specific keys if missing.
+
+Report "VS Code Chat settings configured" or "VS Code Chat settings already present".
+
 ### 5h. Ensure Attribution Settings
 
 Check if `.claude/settings.json` exists (use Glob tool).

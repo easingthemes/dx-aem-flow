@@ -383,3 +383,9 @@ When step 3 fails twice, triggers `dx-step-fix` in heal mode which analyzes the 
 ## Platform Compatibility
 
 This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.
+
+**Copilot CLI / VS Code Chat fallback:** If subagent skill invocation fails, run the skills manually in sequence for each plan step:
+1. `/dx-step <step-number>` — execute a single step (implement + test + review + commit)
+2. On failure: `/dx-step-fix <spec-dir>` — attempt repair (up to 2 tries)
+3. On persistent failure: `/dx-step-fix <spec-dir> --heal` — diagnose and create corrective steps
+4. Repeat from step 1 for each pending step in `implement.md`
