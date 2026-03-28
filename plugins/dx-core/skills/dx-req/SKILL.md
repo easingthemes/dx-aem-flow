@@ -232,18 +232,40 @@ After `/dx-dor` completes, read `$SPEC_DIR/dor-report.md` and extract:
 - **Blocking questions** — if the "Blocking" section is non-empty, present questions and wait for user input (even if verdict is "Can proceed")
 - **Extracted BA Data** — component name, dialog fields, Figma URL, scope → feed into Phase 3
 
-**GATE (always enforced — even on re-run):** After `/dx-dor` completes, read `dor-report.md` verdict. If verdict is "Needs more detail" OR blocking questions exist, you MUST stop and ask:
-```
-⚠️ <N> blocking questions found — development cannot proceed until resolved.
-
-<list blocking questions>
-
-Reply with answers or type "proceed" to continue with assumptions.
-```
-
-Wait for user input. If user provides answers, record as assumptions and continue. If user types "proceed", continue with existing assumptions.
+**GATE (always enforced — even on re-run):** After `/dx-dor` completes, read `dor-report.md` verdict. If verdict is "Needs more detail" OR blocking questions exist, run the **Interview Loop** below. If verdict is "Can proceed" with no blocking questions, skip the loop.
 
 **CRITICAL:** This gate applies to **every run**, not just the first. If a re-run produces a reused (Mode C) dor-report.md that still says "Needs more detail", the gate fires again. The user must explicitly approve continuation each time — prior approval does not carry over across sessions.
+
+### Interview Loop
+
+**Automation guard:** If the calling prompt contains "analyze only", "save results", or "unattended" (pipeline context — no human present), skip the interview loop entirely. Record all blocking questions as assumptions in `interview.md` and continue to Phase 3.
+
+When blocking questions or gaps exist, interview the user to fill them rather than dumping a wall of questions. Group related questions and ask them in rounds using `AskUserQuestion`.
+
+1. **Categorize gaps** — group blocking questions from `dor-report.md` into themes (e.g., scope, design, data/content, behavior, testing). Drop any questions that were already answered in story comments or AC.
+
+2. **Ask in rounds** — for each theme with 1-3 questions, use `AskUserQuestion`:
+   ```
+   AskUserQuestion(
+     question: "📋 <Theme> — <N> question(s) to clarify before we proceed:\n\n1. <question>\n2. <question>\n\nAnswer what you can. Reply 'skip' for unknowns, 'proceed' to continue with assumptions.",
+   )
+   ```
+   Keep rounds small (max 3 questions per round). If there are 6+ questions across themes, run 2-3 rounds — never dump all questions at once.
+
+3. **Record answers** — after each round, append user answers to `$SPEC_DIR/interview.md`:
+   ```markdown
+   ## Interview — <date>
+
+   ### <Theme>
+   **Q:** <question>
+   **A:** <user answer>
+   ```
+   If user replied "skip" for a question, record it as `**A:** _Assumed: <your best assumption from story context>_`.
+
+4. **Exit conditions:**
+   - User answered or skipped all questions → continue to Phase 3. Feed `interview.md` as additional input alongside `dor-report.md`.
+   - User replied "proceed" at any point → stop interviewing, record remaining questions as assumptions in `interview.md`, continue to Phase 3.
+   - All rounds complete → continue to Phase 3.
 
 ---
 
@@ -251,7 +273,7 @@ Wait for user input. If user provides answers, record as assumptions and continu
 
 **Output:** `explain.md` | **Idempotent:** skips if explain.md covers all current AC from raw-story.md
 
-Read `raw-story.md` and `dor-report.md` (if available). Generate `explain.md` — a concise, developer-oriented distillation.
+Read `raw-story.md`, `dor-report.md` (if available), and `interview.md` (if available). Generate `explain.md` — a concise, developer-oriented distillation. Interview answers override assumptions from the DoR report — they are direct clarifications from the user.
 
 1. **Check existing output** — if `explain.md` exists, compare title and AC coverage against `raw-story.md`. If valid → skip. If stale → regenerate.
 2. **Use DoR data** — pre-populate from dor-report.md: dialog fields, component name/type, brand/market scope, Figma URL
