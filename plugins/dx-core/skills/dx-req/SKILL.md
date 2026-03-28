@@ -238,6 +238,8 @@ After `/dx-dor` completes, read `$SPEC_DIR/dor-report.md` and extract:
 
 ### Interview Loop
 
+**Automation guard:** If the calling prompt contains "analyze only", "save results", or "unattended" (pipeline context — no human present), skip the interview loop entirely. Record all blocking questions as assumptions in `interview.md` and continue to Phase 3.
+
 When blocking questions or gaps exist, interview the user to fill them rather than dumping a wall of questions. Group related questions and ask them in rounds using `AskUserQuestion`.
 
 1. **Categorize gaps** — group blocking questions from `dor-report.md` into themes (e.g., scope, design, data/content, behavior, testing). Drop any questions that were already answered in story comments or AC.
