@@ -1,3 +1,16 @@
+# [2.82.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.81.1...v2.82.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* install Copilot CLI via npm instead of deprecated gh extension ([02ac80e](https://github.com/easingthemes/dx-aem-flow/commit/02ac80e3c9094b1e7656a82f2eb05045b97d4931))
+
+
+### Features
+
+* add devcontainer config for Codespaces and Copilot CLI on mobile ([1789053](https://github.com/easingthemes/dx-aem-flow/commit/1789053c1ddd233b7f316395a00011595b3fe313))
+* preinstall Claude Code and Copilot CLI in devcontainer ([d33ecb3](https://github.com/easingthemes/dx-aem-flow/commit/d33ecb3aead7cb5c96f7067cb578fa4125bdd476))
+
 ## [2.81.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.81.0...v2.81.1) (2026-03-28)
 
 
