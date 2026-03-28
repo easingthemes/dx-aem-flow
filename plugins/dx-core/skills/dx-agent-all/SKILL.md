@@ -627,3 +627,13 @@ If any phase fails:
 ## Platform Compatibility
 
 This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.
+
+**Copilot CLI / VS Code Chat fallback:** If subagent skill invocation fails, run the skills manually in sequence:
+1. `/dx-req <id>` — requirements (fetch, DoR, explain, research, share)
+2. `/dx-plan <id>` — generate implementation plan
+3. `/dx-plan-validate <id>` — validate plan
+4. `/dx-step-all <id>` — execute all steps (or run `/dx-step` per step)
+5. `/dx-step-build` — build and verify
+6. `/dx-step-verify` — full code review
+7. `/dx-pr-commit` — commit changes
+8. `/dx-pr` — create pull request

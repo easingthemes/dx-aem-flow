@@ -228,3 +228,8 @@ If any skill returns `FAIL`:
 ## Platform Compatibility
 
 This skill uses `Skill()` tool calls which work on both Claude Code and Copilot CLI.
+
+**Copilot CLI / VS Code Chat fallback:** If subagent skill invocation fails, run the skills manually in sequence:
+1. `/dx-bug-triage <id>` — fetch bug ticket and identify affected component
+2. `/dx-bug-verify <id>` — reproduce bug via browser automation
+3. `/dx-bug-fix <id>` — implement fix, verify locally, create PR

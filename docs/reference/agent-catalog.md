@@ -9,7 +9,7 @@
 | **Model** | Opus |
 | **File** | `plugins/dx-core/agents/dx-code-reviewer.md` |
 | **Used by** | `/dx-step-verify` |
-| **Tools** | All (read, write, edit, bash, glob, grep) |
+| **Tools** | All (unrestricted — no explicit tools list) |
 | **Permission mode** | `plan` (read-only by default) |
 | **Isolation** | `worktree` (runs in isolated git worktree) |
 
@@ -30,7 +30,7 @@ Deep code review with confidence-based filtering. Only reports issues at confide
 | **Model** | Sonnet |
 | **File** | `plugins/dx-core/agents/dx-pr-reviewer.md` |
 | **Used by** | `/dx-pr-review`, `/dx-pr-review-all` |
-| **Tools** | Read, Glob, Grep, Bash, Write, Edit |
+| **Tools** | Read, Glob, Grep, Bash |
 | **Permission mode** | `plan` (read-only by default) |
 
 PR diff analysis with structured findings. Fetches PR diff, loads project conventions, analyzes code changes, returns findings with severity (MUST-FIX, QUESTION) and line-level comments. Does NOT post to ADO directly — returns findings for user approval.
@@ -104,7 +104,7 @@ Discovers HTML and accessibility conventions from the consumer project — seman
 | **Model** | Haiku |
 | **File** | `plugins/dx-aem/agents/aem-file-resolver.md` |
 | **Used by** | `/aem-component`, `/dx-ticket-analyze` |
-| **Tools** | Glob, Grep, Read, mcp__ado__search_code |
+| **Tools** | Read, Grep, Glob, ToolSearch, mcp__ado__search_code |
 
 Resolves all source files for an AEM component across multiple repos and platforms. Reads `file-patterns.yaml` and `project.yaml` for path patterns. Uses local Glob for repos with local paths, ADO code search for remote-only repos. Returns file paths as clickable SCM URLs.
 
@@ -193,7 +193,7 @@ Finds all AEM pages using a given component. Searches configured content paths a
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-bug-executor.md` |
 | **Used by** | `/dx-bug-verify` (for AEM bugs) |
-| **Tools** | Read, Write, Glob, Grep, ToolSearch, Chrome DevTools MCP, AEM MCP |
+| **Tools** | Read, Write, Glob, Grep, Edit, ToolSearch, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools, `mcp__plugin_dx-aem_AEM__getNodeContent`, `mcp__plugin_dx-aem_AEM__scanPageComponents`, `mcp__plugin_dx-aem_AEM__searchContent`, `mcp__plugin_dx-aem_AEM__getPageProperties` |
 
 AEM bug verification agent. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, and optionally checks JCR state. Returns structured verification result with evidence table.
 
