@@ -1,3 +1,10 @@
+# [2.80.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.79.0...v2.80.0) (2026-03-28)
+
+
+### Features
+
+* add coordinator agent formalization plan (TODO [#51](https://github.com/easingthemes/dx-aem-flow/issues/51)) ([ebc155e](https://github.com/easingthemes/dx-aem-flow/commit/ebc155e241e7604082e070434e164f953c3b589e))
+
 # [2.79.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.78.0...v2.79.0) (2026-03-28)
 
 
