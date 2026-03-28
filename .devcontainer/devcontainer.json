@@ -1,0 +1,17 @@
+{
+  "name": "dx-aem-flow",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.copilot",
+        "github.copilot-chat"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code @github/copilot && cd website && npm install",
+  "remoteUser": "node"
+}
