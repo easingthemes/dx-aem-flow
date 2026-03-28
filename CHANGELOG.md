@@ -1,3 +1,11 @@
+# [2.79.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.78.0...v2.79.0) (2026-03-28)
+
+
+### Features
+
+* plan subagent improvements for plugin coordinators ([eac4f06](https://github.com/easingthemes/dx-aem-flow/commit/eac4f06f23eb25ac060a0138a3d3f4e523ffefb2))
+* plan subagent improvements for plugin coordinators ([960d331](https://github.com/easingthemes/dx-aem-flow/commit/960d331072ea27985f73d27060d537ec13bc1fdb))
+
 # [2.78.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.77.0...v2.78.0) (2026-03-27)
 
 
