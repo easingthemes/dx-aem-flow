@@ -12,6 +12,6 @@
       ]
     }
   },
-  "postCreateCommand": "cd website && npm install",
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && gh extension install github/gh-copilot && cd website && npm install",
   "remoteUser": "node"
 }
