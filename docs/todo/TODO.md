@@ -58,4 +58,16 @@
 | 48 | Subagent: MCP tool discovery resilience | Low | Open | 2026-03-27 | [todo-subagent-improvements.md#mcp-discovery](todo-subagent-improvements.md#mcp-tool-discovery-resilience--shared-reference) — standardize ToolSearch fallback in all MCP agents |
 | 49 | Subagent: coordinator output discipline — Tasks over text | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#output-discipline](todo-subagent-improvements.md#coordinator-output-discipline--tasks-over-text) — use Task updates as progress channel, not conversation text |
 
-**Counts:** 49 total — 9 done, 24 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 50 | Autoresearch: shared loop pattern reference | High | Open | 2026-03-28 | [todo-autoresearch.md#phase-1](todo-autoresearch.md#phase-1-shared-pattern-reference) |
+| 51 | Autoresearch: upgrade dx-step-fix (configurable retries + requirement-aware verify) | High | Open | 2026-03-28 | [todo-autoresearch.md#2a](todo-autoresearch.md#2a-dx-step-fix--configurable-retries--requirement-aware-verify) |
+| 52 | Autoresearch: upgrade aem-fe-verify (revert-on-drift + attempt log) | High | Open | 2026-03-28 | [todo-autoresearch.md#2b](todo-autoresearch.md#2b-aem-fe-verify--add-revert-on-drift--attempt-log) |
+| 53 | Autoresearch: upgrade dx-agent-all (outer requirement alignment) | High | Open | 2026-03-28 | [todo-autoresearch.md#2e](todo-autoresearch.md#2e-dx-agent-all--outer-requirement-alignment-after-healing) |
+| 54 | Autoresearch: upgrade dx-bug-fix (attempt memory) | Medium | Open | 2026-03-28 | [todo-autoresearch.md#2c](todo-autoresearch.md#2c-dx-bug-fix--attempt-memory-for-plan-revision) |
+| 55 | Autoresearch: upgrade dx-agent-dev (verify against RE spec) | Medium | Open | 2026-03-28 | [todo-autoresearch.md#2d](todo-autoresearch.md#2d-dx-agent-dev--verify-against-re-spec-not-just-build) |
+| 56 | Autoresearch: aem-verify fix-verify loop | Medium | Open | 2026-03-28 | [todo-autoresearch.md#3a](todo-autoresearch.md#3a-aem-verify--fix-gaps--re-verify-loop) |
+| 57 | Autoresearch: validate-resolve loop | Medium | Open | 2026-03-28 | [todo-autoresearch.md#3c](todo-autoresearch.md#3c-dx-plan-validate--dx-plan-resolve--validate-resolve-loop) |
+| 58 | Autoresearch: dx-req-dod score loop | Low | Open | 2026-03-28 | [todo-autoresearch.md#3d](todo-autoresearch.md#3d-dx-req-dod--loop-until-dod-score-threshold) |
+| 59 | Autoresearch: aem-qa auto-fix loop | Medium | Open | 2026-03-28 | [todo-autoresearch.md#3b](todo-autoresearch.md#3b-aem-qa--auto-fix-simple-bugs--re-qa-loop) |
+| 60 | Autoresearch: dx-autoresearch orchestrator skill | Low | Open | 2026-03-28 | [todo-autoresearch.md#phase-4](todo-autoresearch.md#phase-4-dx-autoresearch-orchestrator-skill-future) |
+
+**Counts:** 60 total — 9 done, 35 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
