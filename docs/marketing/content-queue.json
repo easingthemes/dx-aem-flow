@@ -1,0 +1,145 @@
+{
+  "_comment": "Marketing content queue — tracks which tips/docs to turn into social media posts. 50+ tips = a year of weekly content.",
+  "queue": [
+    {
+      "week": "W14",
+      "file": "website/src/content/tips/what-is-a-skill.md",
+      "angle": "AI skills > AI prompts. Structured output, not raw suggestions.",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W15",
+      "file": "website/src/content/tips/the-coordinator-pattern.md",
+      "angle": "The pattern that chains AI agents like microservices",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W16",
+      "file": "website/src/content/tips/figma-to-code-the-full-pipeline.md",
+      "angle": "Figma → verified prototype → production component. Structured at every step.",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W17",
+      "file": "website/src/content/tips/agent-model-tiering-cost-vs-quality.md",
+      "angle": "Opus for reasoning, Sonnet for execution, Haiku for lookups — structured cost control",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W18",
+      "file": "website/src/content/tips/three-levels-of-autonomous-ai-review-coding-agent-.md",
+      "angle": "3 levels of AI code review — most tools only do level 1",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W19",
+      "file": "website/src/content/tips/bug-triage-ticket-to-root-cause.md",
+      "angle": "Structured bug triage: ticket → root cause → verified fix. Not ad-hoc prompting.",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W20",
+      "file": "website/src/content/tips/chaining-skills-building-pipelines.md",
+      "angle": "Chaining AI skills into repeatable pipelines — enterprise workflow automation",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W21",
+      "file": "website/src/content/tips/context-window-why-ai-forgets.md",
+      "angle": "Why your AI coding assistant forgets mid-conversation — and how structured artifacts solve it",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W22",
+      "file": "website/src/content/tips/parallel-agents-three-ways-to-run-concurrent-work.md",
+      "angle": "3 ways to run concurrent AI agents — structured parallelism",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W23",
+      "file": "website/src/content/tips/token-budgets-and-cost-control.md",
+      "angle": "Enterprise AI cost control — structured budgets, not hope",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W24",
+      "file": "website/src/content/tips/hooks-event-driven-automation.md",
+      "angle": "Event-driven AI automation — hooks that trigger structured workflows",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W25",
+      "file": "website/src/content/tips/the-spec-directory-convention.md",
+      "angle": "File conventions > data passing. How structured artifacts enable team handoffs.",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W26",
+      "file": "website/src/content/tips/pre-flight-validation-dont-burn-tokens.md",
+      "angle": "Pre-flight validation: stop burning tokens on bad inputs",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W27",
+      "file": "website/src/content/tips/claude-md-your-projects-brain.md",
+      "angle": "CLAUDE.md — your project's brain. Config-driven AI, not ad-hoc prompting.",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W28",
+      "file": "website/src/content/tips/consumer-sync-one-source-many-projects.md",
+      "angle": "One source of truth, 50+ repos. Structured plugin distribution.",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W29",
+      "file": "website/src/content/tips/sessionstart-validate-on-every-launch.md",
+      "angle": "Validate your AI environment on every launch — structured guardrails",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W30",
+      "file": "website/src/content/tips/your-plugin-journey-zero-to-production.md",
+      "angle": "From zero to production AI plugins — the full journey",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    },
+    {
+      "week": "W31",
+      "file": "website/src/content/tips/skill-frontmatter-the-yaml-that-controls-everythin.md",
+      "angle": "YAML frontmatter that controls everything — structured skill configuration",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W32",
+      "file": "website/src/content/tips/worktree-isolation-safe-parallel-work.md",
+      "angle": "Worktree isolation — safe parallel AI work without merge conflicts",
+      "platforms": ["linkedin", "twitter"],
+      "status": "pending"
+    },
+    {
+      "week": "W33",
+      "file": "website/src/content/tips/what-is-mcp-works-everywhere-now.md",
+      "angle": "MCP works everywhere now — external tool integration for structured workflows",
+      "platforms": ["linkedin", "twitter", "devto"],
+      "status": "pending"
+    }
+  ]
+}
