@@ -52,4 +52,10 @@
 | 43 | Hub: cross-platform terminal automation | Medium | Open | 2026-03-27 | [todo-hub.md#cross-platform-terminal-automation](todo-hub.md#cross-platform-terminal-automation) |
 | 44 | Publish vscode-automator as standalone npm package | Medium | Open | 2026-03-27 | [todo-hub.md#publish-vscode-automator-as-standalone-npm-package](todo-hub.md#publish-vscode-automator-as-standalone-npm-package) |
 
-**Counts:** 44 total — 9 done, 19 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 45 | Subagent: parallel dispatch for independent AEM phases | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#parallel-dispatch](todo-subagent-improvements.md#parallel-dispatch-for-independent-aem-phases) — AEM Verify + FE Verify can run concurrently in dx-agent-all |
+| 46 | Subagent: error classification in Result envelope | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#error-classification](todo-subagent-improvements.md#error-classification-in-result-envelope) — transient/permanent/config enables coordinator retry logic |
+| 47 | Subagent: context budget worked examples | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#context-budget](todo-subagent-improvements.md#subagent-context-budget--worked-examples) — concrete examples for >5KB summarization in fork skills |
+| 48 | Subagent: MCP tool discovery resilience | Low | Open | 2026-03-27 | [todo-subagent-improvements.md#mcp-discovery](todo-subagent-improvements.md#mcp-tool-discovery-resilience--shared-reference) — standardize ToolSearch fallback in all MCP agents |
+| 49 | Subagent: coordinator output discipline — Tasks over text | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#output-discipline](todo-subagent-improvements.md#coordinator-output-discipline--tasks-over-text) — use Task updates as progress channel, not conversation text |
+
+**Counts:** 49 total — 9 done, 24 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
