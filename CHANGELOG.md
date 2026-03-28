@@ -1,3 +1,11 @@
+## [2.81.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.81.0...v2.81.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **docs:** correct MCP tool prefixes in agent catalog ([#13](https://github.com/easingthemes/dx-aem-flow/issues/13)) ([7bcbb41](https://github.com/easingthemes/dx-aem-flow/commit/7bcbb41d42337d05d9b74449268b38ad1857bbc3))
+* **dx-core:** add Copilot CLI fallback text to coordinators and VS Code Chat settings to dx-init ([#17](https://github.com/easingthemes/dx-aem-flow/issues/17), [#15](https://github.com/easingthemes/dx-aem-flow/issues/15)) ([ac8971b](https://github.com/easingthemes/dx-aem-flow/commit/ac8971b564e7fa169b0abb1a31a72d0817ffc706))
+
 # [2.81.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.80.0...v2.81.0) (2026-03-28)
 
 
