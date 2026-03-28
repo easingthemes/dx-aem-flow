@@ -238,20 +238,153 @@ jobs:
 
 ---
 
-## Claude Code /schedule (Remote Agents)
+## Claude Code Native Automation (Level 4)
 
-Claude Code has a `/schedule` command that creates remote agents running on a cron schedule. This is another option for Level 3:
+Claude Code itself has powerful automation features that go beyond shell scripts. These are smarter — they understand your codebase, use your CLAUDE.md context, and can chain complex multi-step tasks.
+
+### Option A: `/loop` Command (Session-Scoped Recurring Tasks)
+
+The `/loop` command runs a prompt on a recurring interval within your Claude Code session.
 
 ```bash
-# Schedule a weekly content generation agent
+# Generate content briefs every day at your work session start
+/loop 1d Read the next pending item from docs/marketing/content-queue.json, \
+generate LinkedIn + Twitter + Dev.to posts, save to docs/marketing/drafts/. \
+Commit to a marketing branch.
+
+# Check content performance weekly
+/loop 7d Summarize this week's marketing activity: \
+what was posted, engagement metrics if available, next week's queue items.
+```
+
+**How it works:** Uses `CronCreate`/`CronDelete`/`CronList` tools internally. Each task gets a unique ID.
+
+**Limitations:**
+- Tasks die when you exit the session (session-scoped)
+- Auto-expire after 3 days
+- Max 50 concurrent tasks
+- Disable with `CLAUDE_CODE_DISABLE_CRON=1`
+
+**Best for:** Daily content generation during active work sessions.
+
+### Option B: `claude -p` Headless Mode (Scriptable, Cron-Ready)
+
+The `-p` / `--print` flag runs Claude Code non-interactively — perfect for cron jobs and CI/CD.
+
+```bash
+# One-shot content generation from crontab or GitHub Actions
+claude -p "Read the next pending topic from docs/marketing/content-queue.json. \
+Generate a LinkedIn post (150 words, professional), a Twitter thread (5 tweets), \
+and a Dev.to article (500 words) based on the tip file. \
+Save drafts to docs/marketing/drafts/<slug>/. \
+Update the queue status to 'drafted'." \
+  --allowedTools Read,Write,Glob,Bash \
+  --output-format json \
+  --bare
+
+# In crontab (every Monday 9am):
+# 0 9 * * 1 cd /path/to/dx-aem-flow && ANTHROPIC_API_KEY=sk-... claude -p "..." --bare
+```
+
+**Key flags:**
+
+| Flag | Purpose |
+|------|---------|
+| `-p "prompt"` | Non-interactive mode — run, print result, exit |
+| `--bare` | Skip OAuth, keychain, skill walks (recommended for scripts) |
+| `--allowedTools "Read,Write,Bash"` | Whitelist tools (no permission prompts) |
+| `--output-format json` | Machine-readable output for piping |
+| `--max-turns 5` | Limit conversation rounds |
+| `--continue` / `--resume <id>` | Multi-turn sessions (24h persistence) |
+| `--append-system-prompt` | Add instructions while keeping defaults |
+
+**Auth:** Must use `ANTHROPIC_API_KEY` env var (OAuth disabled in headless mode).
+
+**Why this is better than raw API calls:** Claude Code in headless mode understands your entire repo — CLAUDE.md, marketing plan positioning, TLDR tips structure. Raw `curl` to the API doesn't.
+
+### Option C: Claude Code `/schedule` (Persistent Remote Agents)
+
+```bash
+# Schedule a weekly content generation remote agent
 /schedule "Every Monday at 9am, read the next pending topic from
 docs/marketing/content-queue.json, generate LinkedIn + Twitter + Dev.to
 posts using the TLDR tip file, and save drafts to docs/marketing/drafts/.
 Commit and push to a marketing/weekly-content branch."
 ```
 
-**Pro:** Uses Claude Code directly — smarter than shell scripts, understands your codebase.
+**Pro:** Persistent — survives session restarts. Smarter than scripts.
 **Con:** Requires Claude Code subscription with remote agent support; consumes API credits.
+
+### Option D: Cowork (Desktop — Non-Technical Content Work)
+
+If using Claude Desktop with Cowork:
+- **Scheduled tasks** that survive app restarts
+- **38+ connectors** (Slack, Google Drive, etc.) for cross-posting
+- **Computer Use** — Claude can literally open your browser, navigate to LinkedIn, and paste the post
+- **Sub-agent coordination** — break "generate a week of content" into parallel tasks
+
+```
+Schedule: Every Monday at 9am
+Task: "Read the content queue in my dx-aem-flow repo. Generate this week's
+social media posts. Save to drafts folder. Summarize what was generated."
+```
+
+### Option E: Agent SDK (Custom Content Pipeline)
+
+For maximum control, build a custom agent using the Claude Agent SDK:
+
+```javascript
+// scripts/marketing/content-agent.js
+import { Agent } from '@anthropic-ai/claude-agent-sdk';
+
+const agent = new Agent({
+  allowedTools: ['Read', 'Write', 'Glob', 'Bash'],
+  systemPrompt: `You are a content marketing assistant for dx-aem-flow.
+    Read the positioning from docs/marketing/MARKETING-PLAN.md.
+    Generate structured, enterprise-quality messaging — not hype.
+    Output platform-specific posts to docs/marketing/drafts/.`
+});
+
+for await (const event of agent.run(
+  'Process the next 3 pending items from docs/marketing/content-queue.json'
+)) {
+  console.log(event);
+}
+```
+
+**Pro:** Full programmatic control, can integrate MCP servers, run from CI/CD.
+**Con:** Most setup effort. Best for when you outgrow shell scripts.
+
+### Option F: Agent Teams (Experimental — Parallel Research)
+
+Multiple Claude Code sessions coordinating together:
+
+```bash
+# Enable experimental feature
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+
+# One agent researches trending topics, another generates posts,
+# a third reviews for brand voice consistency
+```
+
+One session acts as team lead, assigns tasks, synthesizes results. Strong for generating content across multiple topics simultaneously.
+
+---
+
+## Comparison: Which Automation Level to Use
+
+| Level | Tool | Setup | Persistence | Intelligence | Cost |
+|-------|------|-------|-------------|-------------|------|
+| **1** | Claude Code interactive | 0 min | None (manual) | Full codebase context | €0 (subscription) |
+| **2** | Shell scripts + Claude API | 30 min | Cron/manual | Prompt-only, no repo context | ~€0.15/mo |
+| **3** | GitHub Actions + scripts | 2 hours | Persistent (weekly cron) | Prompt-only | ~€0.15/mo |
+| **4a** | `/loop` command | 1 min | Session-scoped (3 days) | Full codebase context | €0 (subscription) |
+| **4b** | `claude -p` in cron | 15 min | Persistent (system cron) | Full codebase context | Subscription or API |
+| **4c** | `/schedule` remote agents | 5 min | Persistent | Full codebase context | Subscription |
+| **4d** | Cowork scheduled tasks | 10 min | Persistent (Desktop) | Full context + connectors | Subscription |
+| **4e** | Agent SDK | 2+ hours | Persistent (custom) | Full programmatic control | API tokens |
+
+**Recommendation:** Start with **4a** (`/loop`) for daily use, graduate to **4b** (`claude -p` in cron) or **4c** (`/schedule`) for persistent automation. Use **Level 3** (GitHub Actions) as the production backbone for the team-visible PR-based workflow.
 
 ---
 
@@ -322,11 +455,15 @@ With 50+ TLDR tips, this gives you **a year of weekly content** without repeatin
 
 | Week | Action | Level |
 |------|--------|-------|
-| **Now** | Start with Level 1 — use Claude Code to generate first batch of posts | 1 |
-| **Week 2** | Set up Dev.to API key, post first article programmatically | 2 |
-| **Week 3** | Set up X API, create `generate-posts.sh` script | 2 |
-| **Week 4** | Set up GitHub Actions workflow for weekly content generation | 3 |
-| **Month 2+** | Run on autopilot — review weekly PR, merge to auto-post | 3 |
+| **Now** | Use Claude Code to generate first batch of posts interactively | 1 |
+| **Now** | Try `/loop 1d generate content...` in your daily session | 4a |
+| **Week 2** | Set up Dev.to API key, post first article with `post-to-devto.sh` | 2 |
+| **Week 2** | Set up `claude -p` in a cron job for weekly content generation | 4b |
+| **Week 3** | Set up X API free tier for automated tweet posting | 2 |
+| **Week 4** | Set up GitHub Actions workflow as the production pipeline | 3 |
+| **Month 2** | Try `/schedule` for persistent remote content agents | 4c |
+| **Month 2+** | Run on autopilot — weekly PR with drafts, merge to auto-post | 3+4b |
+| **When needed** | Build custom Agent SDK pipeline for advanced workflows | 4e |
 
 ---
 
@@ -335,11 +472,12 @@ With 50+ TLDR tips, this gives you **a year of weekly content** without repeatin
 | Component | Monthly Cost |
 |-----------|-------------|
 | Claude API (Haiku, ~12 calls/month) | ~€0.15 |
+| Claude Code subscription (if using Level 4) | €0 (already paying for dev work) |
 | GitHub Actions (free tier) | €0 |
 | Dev.to API | €0 |
 | X/Twitter API (free tier) | €0 |
 | LinkedIn API | €0 |
 | Buffer free tier (optional) | €0 |
-| **Total** | **~€0.15/month** |
+| **Total** | **~€0.15/month** (or €0 if using Claude Code subscription for Level 4) |
 
-Even at Level 3 full automation, this costs less than a coffee per year.
+Even at full automation, this costs less than a coffee per year. If you already have a Claude Code subscription (Max plan), Level 4 options cost nothing additional.
