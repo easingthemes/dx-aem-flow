@@ -1,3 +1,15 @@
+# [2.81.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.80.0...v2.81.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **dx-req:** add automation guard to interview loop ([d9f1a36](https://github.com/easingthemes/dx-aem-flow/commit/d9f1a36e55009e9b38247b4106b7166cbf35fa6a))
+
+
+### Features
+
+* **dx-req:** add interview loop for thin requirements using AskUserQuestion ([be5016c](https://github.com/easingthemes/dx-aem-flow/commit/be5016c70a08bf8a9d386b4ff72019f64abc04bb))
+
 # [2.80.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.79.0...v2.80.0) (2026-03-28)
 
 
