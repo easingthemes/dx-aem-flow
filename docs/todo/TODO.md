@@ -59,5 +59,6 @@
 | 49 | Subagent: coordinator output discipline — Tasks over text | Medium | Open | 2026-03-27 | [todo-subagent-improvements.md#output-discipline](todo-subagent-improvements.md#coordinator-output-discipline--tasks-over-text) — use Task updates as progress channel, not conversation text |
 
 | 50 | Budget / token tracking for automation agents | Low | Open | 2026-03-28 | [todo-automation.md#budget-tracking](todo-automation.md#budget-tracking) |
+| 51 | Coordinator agent formalization (delegates-to / reports-to) | Medium | Open | 2026-03-28 | [todo-coordinator-formalization.md](todo-coordinator-formalization.md) |
 
-**Counts:** 50 total — 9 done, 25 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 51 total — 9 done, 26 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
