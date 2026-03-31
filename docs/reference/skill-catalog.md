@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 44 skills
+## dx-core plugin — 45 skills
 
 ### Estimation — 1 skill
 
@@ -80,6 +80,12 @@
 |-------|-----------|----------|-------------|--------|
 | dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Dialog/FE screenshots, Figma comparison, Authoring Guide. Screenshots use repo-relative paths. Posts to ADO Wiki/Confluence. | `docs/wiki-page.md` |
 | dx-doc-retro | `/dx-doc-retro` | `<work-item-id>` | Retroactive wiki docs for completed stories — fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed. | `docs/wiki-page.md` |
+
+### Decision Support — 1 skill
+
+| Skill | Invocation | Argument | Description | Output |
+|-------|-----------|----------|-------------|--------|
+| dx-council | `/dx-council` | `<question or 'the plan' / 'the implementation'>` | Run a decision through an LLM Council — 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: `council the plan`, `council the implementation`. Adapted from Karpathy's LLM Council. | `council-transcript.md` |
 
 ### Quality — 1 skill
 
