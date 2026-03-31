@@ -61,4 +61,8 @@
 | 50 | Budget / token tracking for automation agents | Low | Open | 2026-03-28 | [todo-automation.md#budget-tracking](todo-automation.md#budget-tracking) |
 | 51 | Coordinator agent formalization (delegates-to / reports-to) | Medium | Open | 2026-03-28 | [todo-coordinator-formalization.md](todo-coordinator-formalization.md) |
 
-**Counts:** 51 total — 9 done, 26 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 52 | Continuous learning / instinct system for automation agents | Medium | Open | 2026-03-31 | [todo-ecc-ideas.md#continuous-learning](todo-ecc-ideas.md#continuous-learning--instinct-system) |
+| 53 | De-sloppify pattern (dx-step-clean skill) | Low | Open | 2026-03-31 | [todo-ecc-ideas.md#de-sloppify](todo-ecc-ideas.md#de-sloppify-pattern-post-implementation-cleanup) |
+| 54 | Autonomous loop state persistence for automation agents | Medium | Open | 2026-03-31 | [todo-ecc-ideas.md#state-persistence](todo-ecc-ideas.md#autonomous-loop-state-persistence) |
+
+**Counts:** 54 total — 9 done, 29 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
