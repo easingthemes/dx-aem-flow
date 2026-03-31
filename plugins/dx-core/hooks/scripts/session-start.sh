@@ -2,6 +2,10 @@
 # session-start.sh — Validate project setup on session start
 # Returns warnings via additionalContext if issues found.
 
+# Profile gate — validation hook, skip in minimal mode
+source "$(dirname "$0")/hook-profile.sh"
+require_profile "standard" || exit 0
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 
 # Only run in dx-initialized projects
