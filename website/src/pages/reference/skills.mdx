@@ -304,6 +304,29 @@ import { stats } from '../../config/stats';
   </div>
 </Section>
 
+<SectionHeading
+  badge="dx-core"
+  badgeColor="primary"
+  title="Decision Support"
+  subtitle="1 skill"
+  bg="primary"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-council</code></td><td class="p-3"><code>&lt;question&gt;</code> or context shortcut</td><td class="p-3">Run a decision through an LLM Council -- 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: <code>council the plan</code>, <code>council the implementation</code>. Adapted from Karpathy's LLM Council.</td><td class="p-3"><code>council-transcript.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
 {/* ════════════════════════════════════════════════════════════════════════ */}
 {/* dx-aem                                                                  */}
 {/* ════════════════════════════════════════════════════════════════════════ */}
