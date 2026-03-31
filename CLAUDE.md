@@ -122,6 +122,18 @@ Plugin hooks and Copilot CLI hooks are **completely separate systems** with no o
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9h handles this for the branch-guard hook. See the docs site (`website/`) for full details.
 
+### Hook Profiles — `DX_HOOK_PROFILE`
+
+Control hook strictness via the `DX_HOOK_PROFILE` environment variable:
+
+| Profile | Level | Behavior |
+|---------|-------|----------|
+| `minimal` | 1 | Only blocking safety hooks (branch-guard). Skip informational hooks. |
+| `standard` | 2 | **Default.** All hooks enabled. |
+| `strict` | 3 | All hooks + extra guardrails (future use). |
+
+Set in your shell: `export DX_HOOK_PROFILE=minimal` to suppress informational hooks during focused work, or `strict` for CI/pipeline environments. Hook scripts use `source hook-profile.sh && require_profile "standard"` to gate themselves.
+
 ### Hook Authoring — Key Fields
 
 | Field | Purpose | Example |

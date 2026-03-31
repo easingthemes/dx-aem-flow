@@ -17,6 +17,16 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/context-loader.sh\"",
+            "statusMessage": "Loading ticket context..."
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/next-step.sh\"",
             "statusMessage": "Checking workflow state..."
           }
@@ -85,6 +95,16 @@
           {
             "type": "command",
             "command": "echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\"",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/compaction-reminder.sh\"",
             "async": true
           }
         ]
