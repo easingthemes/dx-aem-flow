@@ -1,3 +1,10 @@
+# [2.83.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.82.0...v2.83.0) (2026-03-31)
+
+
+### Features
+
+* add dx-council skill — LLM Council for pressure-testing decisions ([17eec36](https://github.com/easingthemes/dx-aem-flow/commit/17eec3603393e79eac2fc3a96fa95038ec2880f0))
+
 # [2.82.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.81.1...v2.82.0) (2026-03-28)
 
 
