@@ -1,3 +1,10 @@
+# [2.84.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.83.0...v2.84.0) (2026-03-31)
+
+
+### Features
+
+* add hook profiles, compaction reminder, and session context auto-loader ([95bb8b1](https://github.com/easingthemes/dx-aem-flow/commit/95bb8b15dc6813e31bec2c86033c128810e3fd85)), closes [#52](https://github.com/easingthemes/dx-aem-flow/issues/52) [-#54](https://github.com/-/issues/54)
+
 # [2.83.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.82.0...v2.83.0) (2026-03-31)
 
 
