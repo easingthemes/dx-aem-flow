@@ -54,17 +54,17 @@ public String getData(Map<String, Object> authInfo, String path) {
 **Verdict: REPORT — confidence 90**
 Severity: Critical | Issue: ResourceResolver leak — service resolver never closed | Why: Service resolvers are not request-scoped and will never be auto-closed. Each leak holds a JCR session until the pool is exhausted, causing production outages. | Fix: Wrap in try-with-resources: `try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(authInfo)) { ... }`. Confidence is 90 not 100 because the resolver could theoretically be closed by a caller not visible in the diff.
 
-**Example 2 — DROP (confidence: 35): `data-sly-unescape` on RTE-authored content**
+**Example 2 — DROP (confidence: 35): `@ context='html'` on RTE-authored content**
 
 ```html
 <div class="cmp-text__content"
-     data-sly-use.model="com.site.models.TextComponent"
-     data-sly-unescape="${model.richText}">
+     data-sly-use.model="com.site.models.TextComponent">
+    <p>${model.richText @ context='html'}</p>
 </div>
 ```
 
 **Verdict: DROP — confidence 35**
-Reasoning: `data-sly-unescape` looks like an XSS vector, but this is the documented HTL pattern for rendering rich text authored in AEM's RTE (see `be-htl.md` rule). The content is trusted author input from the dialog, not user-generated. Flagging this would be a false positive that erodes developer trust in the reviewer.
+Reasoning: `@ context='html'` disables HTL's auto-escaping, which looks like an XSS vector. But this is the standard HTL pattern for rendering rich text authored in AEM's RTE. The content is trusted author input from the dialog, not user-generated. Flagging this would be a false positive that erodes developer trust in the reviewer.
 
 **Example 3 — REPORT (confidence: 85, Important): Fetch failure silently returns null**
 
