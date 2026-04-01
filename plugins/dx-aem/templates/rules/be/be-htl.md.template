@@ -82,8 +82,8 @@ Use HTL conditionals, not JavaScript:
 <!--/* Always use data-sly-text for dynamic content */-->
 <h1 data-sly-text="${model.title}">Default Title</h1>
 
-<!--/* For HTML content (use with caution) */-->
-<div data-sly-unescape="${model.htmlContent}"></div>
+<!--/* For rich text / HTML content (use with caution) */-->
+<div>${model.htmlContent @ context='html'}</div>
 
 <!--/* Provide meaningful default values */-->
 <h2 data-sly-text="${model.title || 'Default Title'}">Default Title</h2>
@@ -131,10 +131,10 @@ Use HTL conditionals, not JavaScript:
 <!--/* Always use data-sly-text for user content to prevent XSS */-->
 <h2 data-sly-text="${model.userTitle}">Safe Title</h2>
 
-<!--/* Only use data-sly-unescape for trusted content */-->
-<div data-sly-unescape="${model.trustedHtmlContent}"></div>
+<!--/* Use context='html' for trusted rich text — sanitizes but allows markup */-->
+<div>${model.trustedHtmlContent @ context='html'}</div>
 
-<!--/* Never use context="unsafe" with user input */-->
+<!--/* Never use context='unsafe' with user input — it disables ALL filtering */-->
 ```
 
 ## 9. Performance and Optimization
