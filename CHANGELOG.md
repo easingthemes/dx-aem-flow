@@ -1,3 +1,17 @@
+# [2.85.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.84.0...v2.85.0) (2026-04-01)
+
+
+### Bug Fixes
+
+* balance reviewer examples — 2 generic + 2 AEM ([4d70c58](https://github.com/easingthemes/dx-aem-flow/commit/4d70c585207037654c5d7b7b91198692da07d4a1))
+* replace non-existent data-sly-unescape with correct HTL syntax ([b931f71](https://github.com/easingthemes/dx-aem-flow/commit/b931f71d4483da20c21c7c081279b8c20baf6889))
+* use correct HTL syntax in reviewer DROP example ([db0cc8c](https://github.com/easingthemes/dx-aem-flow/commit/db0cc8ced1502556f5dca606e067c88821320e89))
+
+
+### Features
+
+* add few-shot classification examples to dx-code-reviewer agent ([fccbfff](https://github.com/easingthemes/dx-aem-flow/commit/fccbfffbc144475096939e94b857cdcf10334c08))
+
 # [2.84.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.83.0...v2.84.0) (2026-03-31)
 
 
