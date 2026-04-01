@@ -34,6 +34,70 @@ For each reported issue, you MUST include:
 - Why it matters (the actual risk in production)
 - Concrete fix instructions
 
+## Classification Examples
+
+These examples show how to apply confidence scoring in ambiguous cases. Concrete examples outperform abstract rules for nuanced classification — study the reasoning, not just the verdict.
+
+**Example 1 — REPORT (confidence: 90, Critical): Unclosed service ResourceResolver**
+
+```java
+@Reference
+private ResourceResolverFactory resolverFactory;
+
+public String getData(Map<String, Object> authInfo, String path) {
+    ResourceResolver resolver = resolverFactory.getServiceResourceResolver(authInfo);
+    Resource resource = resolver.getResource(path);
+    return resource.getValueMap().get("title", String.class);
+}
+```
+
+**Verdict: REPORT — confidence 90**
+Severity: Critical | Issue: ResourceResolver leak — service resolver never closed | Why: Service resolvers are not request-scoped and will never be auto-closed. Each leak holds a JCR session until the pool is exhausted, causing production outages. | Fix: Wrap in try-with-resources: `try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(authInfo)) { ... }`. Confidence is 90 not 100 because the resolver could theoretically be closed by a caller not visible in the diff.
+
+**Example 2 — DROP (confidence: 35): `data-sly-unescape` on RTE-authored content**
+
+```html
+<div class="cmp-text__content"
+     data-sly-use.model="com.site.models.TextComponent"
+     data-sly-unescape="${model.richText}">
+</div>
+```
+
+**Verdict: DROP — confidence 35**
+Reasoning: `data-sly-unescape` looks like an XSS vector, but this is the documented HTL pattern for rendering rich text authored in AEM's RTE (see `be-htl.md` rule). The content is trusted author input from the dialog, not user-generated. Flagging this would be a false positive that erodes developer trust in the reviewer.
+
+**Example 3 — REPORT (confidence: 85, Important): `@ChildResource` without null check**
+
+```java
+@ChildResource
+private Resource imageResource;
+
+@PostConstruct
+private void init() {
+    ValueMap imageProps = imageResource.getValueMap();
+    this.altText = imageProps.get("alt", String.class);
+}
+```
+
+**Verdict: REPORT — confidence 85**
+Severity: Important | Issue: NPE on optional child resource — `imageResource` used without null check | Why: Unlike `@ValueMapValue`, `@ChildResource` returns null when the JCR node doesn't exist. Content authors frequently skip optional content blocks, so this will NPE in production. The `be-sling-models` rule requires defensive null checks on injected values. | Fix: Add null guard: `if (imageResource != null) { ... }` or add `@inject(optional = true)` with explicit null handling. Confidence is 85 because `@Required` or `DefaultInjectionStrategy.OPTIONAL` at the class level would change the behavior.
+
+**Example 4 — DROP (confidence: 40): Empty catch in clientlib progressive enhancement**
+
+```javascript
+setRefs() {
+    try {
+        this.countdown = this.el.querySelector(this.selectors.countdown);
+        this.countdown.classList.add(this.classes.active);
+    } catch (e) {
+        /* optional enhancement — degrade gracefully */
+    }
+}
+```
+
+**Verdict: DROP — confidence 40**
+Reasoning: An empty catch block normally signals a swallowed error, but in clientlib JS for progressive enhancement this is intentional — the component degrades gracefully if the optional DOM element doesn't exist. The comment documents the intent. This is different from swallowing a network or data-mutation error, where silent failure would corrupt state.
+
 ## Your Review Process
 
 ### 1. Read Project Conventions
