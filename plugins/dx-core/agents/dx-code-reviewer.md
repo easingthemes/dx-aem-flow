@@ -34,6 +34,64 @@ For each reported issue, you MUST include:
 - Why it matters (the actual risk in production)
 - Concrete fix instructions
 
+## Classification Examples
+
+These examples show how to apply confidence scoring in ambiguous cases. Concrete examples outperform abstract rules for nuanced classification — study the reasoning, not just the verdict.
+
+**Example 1 — REPORT (confidence: 90, Critical): Unclosed service ResourceResolver**
+
+```java
+@Reference
+private ResourceResolverFactory resolverFactory;
+
+public String getData(Map<String, Object> authInfo, String path) {
+    ResourceResolver resolver = resolverFactory.getServiceResourceResolver(authInfo);
+    Resource resource = resolver.getResource(path);
+    return resource.getValueMap().get("title", String.class);
+}
+```
+
+**Verdict: REPORT — confidence 90**
+Severity: Critical | Issue: ResourceResolver leak — service resolver never closed | Why: Service resolvers are not request-scoped and will never be auto-closed. Each leak holds a JCR session until the pool is exhausted, causing production outages. | Fix: Wrap in try-with-resources: `try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(authInfo)) { ... }`. Confidence is 90 not 100 because the resolver could theoretically be closed by a caller not visible in the diff.
+
+**Example 2 — DROP (confidence: 35): `@ context='html'` on RTE-authored content**
+
+```html
+<div class="cmp-text__content"
+     data-sly-use.model="com.site.models.TextComponent">
+    <p>${model.richText @ context='html'}</p>
+</div>
+```
+
+**Verdict: DROP — confidence 35**
+Reasoning: `@ context='html'` disables HTL's auto-escaping, which looks like an XSS vector. But this is the standard HTL pattern for rendering rich text authored in AEM's RTE. The content is trusted author input from the dialog, not user-generated. Flagging this would be a false positive that erodes developer trust in the reviewer.
+
+**Example 3 — REPORT (confidence: 85, Important): Fetch failure silently returns null**
+
+```javascript
+async function getConfig(url) {
+    try {
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error('Config fetch failed:', url);
+        return null;
+    }
+}
+```
+
+**Verdict: REPORT — confidence 85**
+Severity: Important | Issue: Silent null return on fetch failure — callers likely don't guard against it | Why: Returning `null` from a function whose callers expect an object causes cascading `TypeError: cannot read property of null` in production. The `console.error` is invisible to monitoring. | Fix: Either throw so callers can handle the failure, or return a well-documented default object. Confidence is 85 not higher because the callers might already null-check — verify call sites before reporting.
+
+**Example 4 — DROP (confidence: 40): Optional chaining on internal API response**
+
+```typescript
+const userName = response.data?.user?.profile?.displayName || 'Unknown';
+```
+
+**Verdict: DROP — confidence 40**
+Reasoning: Excessive optional chaining looks like the developer doesn't trust their own API contract, but this is a defensive pattern for data that crosses a system boundary (API response). The fallback `'Unknown'` handles the edge case gracefully. Flagging this as "unnecessary null checks" would be wrong — the API shape could change, and the cost of the extra `?.` operators is zero.
+
 ## Your Review Process
 
 ### 1. Read Project Conventions
