@@ -66,37 +66,31 @@ Severity: Critical | Issue: ResourceResolver leak — service resolver never clo
 **Verdict: DROP — confidence 35**
 Reasoning: `data-sly-unescape` looks like an XSS vector, but this is the documented HTL pattern for rendering rich text authored in AEM's RTE (see `be-htl.md` rule). The content is trusted author input from the dialog, not user-generated. Flagging this would be a false positive that erodes developer trust in the reviewer.
 
-**Example 3 — REPORT (confidence: 85, Important): `@ChildResource` without null check**
-
-```java
-@ChildResource
-private Resource imageResource;
-
-@PostConstruct
-private void init() {
-    ValueMap imageProps = imageResource.getValueMap();
-    this.altText = imageProps.get("alt", String.class);
-}
-```
-
-**Verdict: REPORT — confidence 85**
-Severity: Important | Issue: NPE on optional child resource — `imageResource` used without null check | Why: Unlike `@ValueMapValue`, `@ChildResource` returns null when the JCR node doesn't exist. Content authors frequently skip optional content blocks, so this will NPE in production. The `be-sling-models` rule requires defensive null checks on injected values. | Fix: Add null guard: `if (imageResource != null) { ... }` or add `@inject(optional = true)` with explicit null handling. Confidence is 85 because `@Required` or `DefaultInjectionStrategy.OPTIONAL` at the class level would change the behavior.
-
-**Example 4 — DROP (confidence: 40): Empty catch in clientlib progressive enhancement**
+**Example 3 — REPORT (confidence: 85, Important): Fetch failure silently returns null**
 
 ```javascript
-setRefs() {
+async function getConfig(url) {
     try {
-        this.countdown = this.el.querySelector(this.selectors.countdown);
-        this.countdown.classList.add(this.classes.active);
-    } catch (e) {
-        /* optional enhancement — degrade gracefully */
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error('Config fetch failed:', url);
+        return null;
     }
 }
 ```
 
+**Verdict: REPORT — confidence 85**
+Severity: Important | Issue: Silent null return on fetch failure — callers likely don't guard against it | Why: Returning `null` from a function whose callers expect an object causes cascading `TypeError: cannot read property of null` in production. The `console.error` is invisible to monitoring. | Fix: Either throw so callers can handle the failure, or return a well-documented default object. Confidence is 85 not higher because the callers might already null-check — verify call sites before reporting.
+
+**Example 4 — DROP (confidence: 40): Optional chaining on internal API response**
+
+```typescript
+const userName = response.data?.user?.profile?.displayName || 'Unknown';
+```
+
 **Verdict: DROP — confidence 40**
-Reasoning: An empty catch block normally signals a swallowed error, but in clientlib JS for progressive enhancement this is intentional — the component degrades gracefully if the optional DOM element doesn't exist. The comment documents the intent. This is different from swallowing a network or data-mutation error, where silent failure would corrupt state.
+Reasoning: Excessive optional chaining looks like the developer doesn't trust their own API contract, but this is a defensive pattern for data that crosses a system boundary (API response). The fallback `'Unknown'` handles the edge case gracefully. Flagging this as "unnecessary null checks" would be wrong — the API shape could change, and the cost of the extra `?.` operators is zero.
 
 ## Your Review Process
 
