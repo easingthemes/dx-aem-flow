@@ -266,6 +266,7 @@ Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai
 .ai/specs/
 .ai/run-context/
 .ai/research/
+.ai/me.md
 ```
 
 Do NOT auto-modify `.gitignore` — ask the user first.
@@ -549,7 +550,9 @@ Print a summary:
 
 ### 8d. Install cross-repo coordination rule (if multi-repo)
 
-Read `.ai/config.yaml`. If a `repos:` section exists with at least one entry:
+Read `.ai/config.yaml`. If the `repos:` section does not exist or is empty → **skip this step entirely** and move to Step 9.
+
+If a `repos:` section exists with at least one entry:
 
 1. Read `plugins/dx-core/templates/rules/cross-repo.md.template` (use Read tool).
 2. Build `{{REPOS_TABLE}}` from config:
@@ -571,8 +574,6 @@ Read `.ai/config.yaml`. If a `repos:` section exists with at least one entry:
    - If `.claude/rules/cross-repo.md` exists but differs, AND user has not customized it (differs from template in the same way) → update silently, report "cross-repo.md updated"
    - If `.claude/rules/cross-repo.md` exists and user has customized it → show diff, ask: **(A) Keep yours**, **(B) Use updated version**, **(C) Merge manually**
 5. Write the result to `.claude/rules/cross-repo.md` (use Write tool).
-
-If `repos:` section does not exist or is empty, skip this step entirely.
 
 ## 9. Copilot Support (optional)
 

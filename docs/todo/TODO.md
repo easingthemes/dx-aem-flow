@@ -65,4 +65,6 @@
 | 53 | De-sloppify pattern (dx-step-clean skill) | Low | Open | 2026-03-31 | [todo-ecc-ideas.md#de-sloppify](todo-ecc-ideas.md#de-sloppify-pattern-post-implementation-cleanup) |
 | 54 | Autonomous loop state persistence for automation agents | Medium | Open | 2026-03-31 | [todo-ecc-ideas.md#state-persistence](todo-ecc-ideas.md#autonomous-loop-state-persistence) |
 
-**Counts:** 54 total — 9 done, 29 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 55 | GitHub Issues/Projects as tracker platform | Medium | Open | 2026-04-02 | [todo-github-support.md](todo-github-support.md#github-as-trackerscm-platform) |
+
+**Counts:** 55 total — 9 done, 30 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
