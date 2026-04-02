@@ -4,10 +4,13 @@ import { Icon } from 'astro-icon/components';
 
 interface Props {
   title?: string;
+  description?: string;
 }
 
-const { title = 'KAI' } = Astro.props;
+const { title = 'KAI', description = 'Enterprise AI development platform with 70+ skills for Azure DevOps and Atlassian workflows. Four Claude Code plugins covering requirements, planning, execution, review, and PR creation.' } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(`${base}/kai-logo.svg`, Astro.site);
 const currentPath = Astro.url.pathname;
 
 function url(path: string): string {
@@ -40,11 +43,65 @@ function isActive(item: any): boolean {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalURL} />
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} — KAI`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content="KAI — Enterprise AI Development Platform" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`${title} — KAI`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- AI Agent Discovery -->
+    <link rel="alternate" type="text/plain" href={url('/llms.txt')} title="LLM-optimized documentation" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
     <title>{title} — KAI</title>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "KAI",
+      "description": "Enterprise AI development platform with 70+ skills for Azure DevOps and Atlassian workflows. Four Claude Code plugins covering the full sprint lifecycle from ticket to PR.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Cross-platform",
+      "url": "https://easingthemes.github.io/dx-aem-flow/",
+      "codeRepository": "https://github.com/easingthemes/dx-aem-flow",
+      "author": {
+        "@type": "Person",
+        "name": "Dragan Filipovic"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "70+ AI development skills",
+        "13 specialized Claude Code agents",
+        "25 Copilot CLI agent templates",
+        "Azure DevOps and Jira integration",
+        "Figma design-to-code pipeline",
+        "6-phase verification gate",
+        "24/7 autonomous pipeline agents",
+        "AEM (Adobe Experience Manager) specialization",
+        "Multi-repo orchestration",
+        "Config-driven architecture"
+      ]
+    })} />
   </head>
   <body class="min-h-screen flex flex-col bg-white text-gray-800 font-sans">
     <!-- Nav -->

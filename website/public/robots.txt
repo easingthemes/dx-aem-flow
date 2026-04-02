@@ -1,0 +1,13 @@
+# KAI - Enterprise AI Development Platform
+# https://easingthemes.github.io/dx-aem-flow/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://easingthemes.github.io/dx-aem-flow/sitemap-index.xml
+
+# AI Agent Discovery
+# See /dx-aem-flow/llms.txt for LLM-optimized project summary
+# See /dx-aem-flow/llms-full.txt for detailed documentation
+# See /dx-aem-flow/.well-known/ai-plugin.json for agent metadata

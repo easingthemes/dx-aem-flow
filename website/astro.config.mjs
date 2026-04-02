@@ -2,9 +2,10 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import tailwind from '@astrojs/tailwind';
 import icon from 'astro-icon';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  integrations: [mdx(), tailwind(), icon()],
+  integrations: [mdx(), tailwind(), icon(), sitemap()],
   site: 'https://easingthemes.github.io',
   base: '/dx-aem-flow',
   redirects: {

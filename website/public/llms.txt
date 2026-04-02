@@ -1,0 +1,36 @@
+# KAI — Enterprise AI Development Platform
+
+> Four Claude Code plugins for AI-assisted enterprise development on Azure DevOps and Atlassian. 70+ skills that run identically across Claude Code, GitHub Copilot CLI, and VS Code Chat — from ticket to PR, fully autonomous.
+
+## Overview
+
+KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes the full sprint lifecycle — requirements, planning, execution, review, PR — into skills that orchestrate multi-agent pipelines. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
+
+## Plugins
+
+- **dx-core**: Platform-agnostic ADO/Jira workflow — requirements, planning, execution, review, PR. 45 skills, 6 agents, 15 Copilot agent templates. Works with any tech stack.
+- **dx-aem**: AEM-specific verification, QA, and demo capture. 12 skills, 6 agents. Deep Adobe Experience Manager knowledge built in.
+- **dx-hub**: Multi-repo orchestration — hub init, config, status. 3 skills.
+- **dx-automation**: Autonomous AI agents (DoR checker, PR reviewer, BugFix agent, QA, DevAgent, etc.) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. 11 skills.
+
+## Key Concepts
+
+- **Config-driven**: All project-specific values in `.ai/config.yaml`. Skills read config at runtime — no hardcoded values.
+- **Spec directory convention**: Per-ticket output goes to `.ai/specs/<id>-<slug>/` with predictable filenames. Skills find each other's output by convention.
+- **Model tier strategy**: Opus for deep reasoning, Sonnet for execution, Haiku for lookups. Cost scales with complexity.
+- **MCP integrations**: Azure DevOps, Atlassian/Jira, Figma, axe accessibility, AEM JCR content, Chrome DevTools.
+
+## Documentation
+
+- [Setup Guide](https://easingthemes.github.io/dx-aem-flow/setup/)
+- [Usage Workflows](https://easingthemes.github.io/dx-aem-flow/usage/)
+- [Skill Catalog](https://easingthemes.github.io/dx-aem-flow/reference/skills/)
+- [Agent Catalog](https://easingthemes.github.io/dx-aem-flow/reference/agents/)
+- [Architecture Overview](https://easingthemes.github.io/dx-aem-flow/architecture/overview/)
+- [Automation Pipeline](https://easingthemes.github.io/dx-aem-flow/architecture/automation/)
+- [Cost Analysis](https://easingthemes.github.io/dx-aem-flow/costs/)
+- [Full LLM Documentation](https://easingthemes.github.io/dx-aem-flow/llms-full.txt)
+
+## Source Code
+
+- GitHub: https://github.com/easingthemes/dx-aem-flow
