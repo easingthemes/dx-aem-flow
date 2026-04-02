@@ -15,7 +15,7 @@
 ### Profile Optimization
 
 **Headline formula:**
-> "Building the future of AI-powered development | Creator of dx-aem-flow (73+ AI skills for enterprise dev teams) | Open Source"
+> "Building the future of AI-powered development | Creator of dx-aem-flow (72 AI skills for enterprise dev teams) | Open Source"
 
 **About section** — Tell the story:
 - Why you built this (pain point you experienced)
@@ -30,7 +30,7 @@
 - Link to a demo video (when available)
 
 **Banner image:**
-- Create a branded banner showing: "73 AI Skills | 4 Plugins | Every AI Platform"
+- Create a branded banner showing: "72 AI Skills | 4 Plugins | Every AI Platform"
 - Use the sprint lifecycle visual from the docs site
 
 ---
@@ -63,7 +63,7 @@ But here's what I noticed on enterprise projects:
 
 The problem isn't AI intelligence. It's structure.
 
-I built 73 structured skills that produce consistent,
+I built 72 structured skills that produce consistent,
 enterprise-quality output regardless of who runs them.
 
 Named artifacts at every step. Config-driven. Auditable.
@@ -88,7 +88,7 @@ That's the gap between "AI suggests code" and
 "AI delivers enterprise-grade structured output."
 
 I built an open-source plugin system that bridges this gap.
-73 skills. 4 plugins. Consistent results every time.
+72 skills. 4 plugins. Consistent results every time.
 
 Agree or disagree? 👇
 ```

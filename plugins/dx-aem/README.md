@@ -30,7 +30,7 @@ Install the `dx-core` plugin first:
 /aem-editorial-guide starterkit              # Screenshot dialog, write authoring guide
 ```
 
-## Skills (10)
+## Skills (12)
 
 ### Verification
 
@@ -38,6 +38,7 @@ Install the `dx-core` plugin first:
 |-------|-------------|
 | `/aem-snapshot` | Baseline component state before development — dialog fields, properties, pages |
 | `/aem-verify` | Check component after deployment, compare against baseline, create test page |
+| `/aem-fe-verify` | Visually verify frontend rendering on local AEM — screenshot, compare against Figma/requirements, fix in a loop |
 | `/aem-editorial-guide` | Open AEM editor, screenshot dialog, write authoring guide |
 
 ### QA
@@ -45,6 +46,7 @@ Install the `dx-core` plugin first:
 | Skill | Description |
 |-------|-------------|
 | `/aem-qa` | Full QA agent — navigate pages, check rendering/dialogs, capture screenshots, create Bug tickets |
+| `/aem-qa-handoff` | Post QA handoff comment to ADO with QA page URLs, prerequisites, and wiki link |
 
 ### Documentation
 
@@ -68,6 +70,7 @@ Install the `dx-core` plugin first:
 |-------|-------|---------|
 | `aem-inspector` | Sonnet | Dialog/component inspection, docs page creation, publishing via AEM MCP |
 | `aem-editorial-guide-capture` | Sonnet | Chrome DevTools screenshots, QA Basic Auth, dialog + publisher view capture |
+| `aem-fe-verifier` | Sonnet | Frontend rendering verification — screenshot components, compare against Figma/requirements via multimodal vision |
 | `aem-file-resolver` | Haiku | Resolve all source files for an AEM component across repos |
 | `aem-page-finder` | Haiku | Find AEM pages using a specific component |
 | `aem-bug-executor` | Sonnet | AEM-specific bug verification via Chrome DevTools and AEM MCP |

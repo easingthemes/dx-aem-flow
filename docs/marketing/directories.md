@@ -73,8 +73,8 @@ Submit dx-aem-flow to these directories for SEO backlinks, discovery, and credib
 
 For each directory submission, prepare:
 - [ ] Product name: dx-aem-flow
-- [ ] Tagline: "73 AI skills that turn tickets into production PRs"
-- [ ] Description (short): Open-source enterprise AI development platform. 4 plugins, 73+ skills, 12 autonomous agents. Works on Claude Code, GitHub Copilot CLI, and VS Code Chat.
+- [ ] Tagline: "72 AI skills that turn tickets into production PRs"
+- [ ] Description (short): Open-source enterprise AI development platform. 4 plugins, 72 skills, 12 autonomous agents. Works on Claude Code, GitHub Copilot CLI, and VS Code Chat.
 - [ ] Description (long): Full elevator pitch from MARKETING-PLAN.md
 - [ ] Category: Developer Tools / AI / Automation / DevOps
 - [ ] Logo/Icon: Prepare a 256x256 and 512x512 logo

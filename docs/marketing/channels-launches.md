@@ -19,7 +19,7 @@
 > "Structured AI skills for enterprise dev workflows"
 
 **Description:**
-> AI code generation is commoditized — every tool does it. dx-aem-flow bridges the gap to structured, enterprise-quality output. 73 skills that produce consistent, auditable artifacts from ticket to PR: requirements analysis, implementation plans, 6-phase verification, and autonomous quality gates. Config-driven, pure markdown, works on Claude Code, Copilot CLI, and VS Code Chat. Open source.
+> AI code generation is commoditized — every tool does it. dx-aem-flow bridges the gap to structured, enterprise-quality output. 72 skills that produce consistent, auditable artifacts from ticket to PR: requirements analysis, implementation plans, 6-phase verification, and autonomous quality gates. Config-driven, pure markdown, works on Claude Code, Copilot CLI, and VS Code Chat. Open source.
 
 **Topics/Categories:**
 - Developer Tools
@@ -73,7 +73,7 @@ Code. Code generation is commoditized. But on enterprise projects, I kept
 hitting the same wall: raw AI output is inconsistent, there's no process
 discipline, no structured artifacts, no verification pipeline.
 
-So I built 73 structured skills that produce consistent, enterprise-quality
+So I built 72 structured skills that produce consistent, enterprise-quality
 output. The key insight: the gap isn't AI intelligence — it's structure.
 
 What "structured" means concretely:

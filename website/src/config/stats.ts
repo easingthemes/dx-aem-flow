@@ -1,11 +1,11 @@
 /** Single source of truth for skill/agent/plugin counts shown across the website. */
 export const stats = {
-  totalSkills: 71,
+  totalSkills: 72,
   dxCoreSkills: 45,
   dxAemSkills: 12,
-  dxHubSkills: 3,
+  dxHubSkills: 4,
   dxAutomationSkills: 11,
-  claudeAgents: 13,
+  claudeAgents: 12,
   dxCoreAgents: 6,
   dxAemAgents: 6,
   copilotAgents: 25,

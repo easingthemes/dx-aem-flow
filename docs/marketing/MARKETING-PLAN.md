@@ -5,7 +5,7 @@
 **Context:** Solo developer, open-source passion project, not a company
 **Goal:** Promote the tool AND build personal reputation as an expert developer
 **Budget:** Max €100/month (mostly free/organic)
-**Product:** dx-aem-flow — Open-Source AI Development Plugins (4 plugins, 73+ skills)
+**Product:** dx-aem-flow — Open-Source AI Development Plugins (4 plugins, 72 skills)
 
 ---
 
@@ -47,10 +47,10 @@ Every developer already uses AI — Copilot, Cursor, Claude Code, Cody. Code gen
 **dx-aem-flow fills that gap.** Not another AI coding tool — a structured workflow system that produces consistent, auditable, enterprise-quality results from ticket to PR.
 
 ### One-Liner
-> "Not another AI coding tool. A structured enterprise workflow system — 73 skills that deliver consistent, production-grade results from ticket to PR."
+> "Not another AI coding tool. A structured enterprise workflow system — 72 skills that deliver consistent, production-grade results from ticket to PR."
 
 ### Elevator Pitch (Personal)
-> Everyone uses AI for coding now. The problem is that raw AI suggestions are inconsistent — quality depends on the prompt, there's no process, no verification, no traceability. I built 73 structured skills that encode enterprise workflow discipline: requirements analysis with named artifacts, plan verification before execution, domain-specific inspections, 6-phase quality gates, and autonomous agents in CI/CD. Same skills, same config, same results — across Claude Code, Copilot CLI, and VS Code Chat. Open source.
+> Everyone uses AI for coding now. The problem is that raw AI suggestions are inconsistent — quality depends on the prompt, there's no process, no verification, no traceability. I built 72 structured skills that encode enterprise workflow discipline: requirements analysis with named artifacts, plan verification before execution, domain-specific inspections, 6-phase quality gates, and autonomous agents in CI/CD. Same skills, same config, same results — across Claude Code, Copilot CLI, and VS Code Chat. Open source.
 
 ### Catchy Headlines (for social media)
 
@@ -59,12 +59,12 @@ Every developer already uses AI — Copilot, Cursor, Claude Code, Cody. Code gen
 | 1 | "Every dev team uses AI now. The difference is structure. Here's what I built." | LinkedIn, Twitter thread |
 | 2 | "Your AI coding tool generates suggestions. My plugins deliver verified PRs with full traceability." | Twitter/X |
 | 3 | "AI coding is commoditized. Enterprise-quality structured output is not. I open-sourced the bridge." | Hacker News, LinkedIn |
-| 4 | "73 structured skills. 4 plugins. Consistent results regardless of who runs them." | LinkedIn carousel |
+| 4 | "72 structured skills. 4 plugins. Consistent results regardless of who runs them." | LinkedIn carousel |
 | 5 | "The gap in AI dev tools isn't intelligence — it's process discipline. Here's the fix." | LinkedIn, Dev.to |
 | 6 | "I built 10 autonomous agents that run 24/7 on Azure DevOps — structured enterprise output, not raw suggestions." | Reddit, LinkedIn |
 | 7 | "From Figma design to production AEM component — structured pipeline, verified at every step" | Twitter, Dev.to |
 | 8 | "Why raw AI code generation fails enterprise teams (and what structured skills do differently)" | LinkedIn, Medium |
-| 9 | "Config-driven AI workflows: one YAML file, 73 skills, consistent output across 50+ repos" | Hacker News |
+| 9 | "Config-driven AI workflows: one YAML file, 72 skills, consistent output across 50+ repos" | Hacker News |
 | 10 | "Stop prompting ad-hoc. Start using structured AI skills that produce auditable artifacts." | Twitter thread |
 
 ### Key Differentiators (USPs)
@@ -72,7 +72,7 @@ Every developer already uses AI — Copilot, Cursor, Claude Code, Cody. Code gen
 1. **Structured output, not raw suggestions** — Every skill produces named artifacts (requirements, plans, verification reports) — consistent regardless of who runs them
 2. **Enterprise workflow discipline** — DoR validation before coding, 6-phase verification gate, DoD checks before merge — process that raw AI tools lack
 3. **Config-driven consistency** — One `.ai/config.yaml` drives all behavior. No ad-hoc prompting, no quality variance between developers
-4. **Works everywhere** — Same 73 skills on Claude Code, Copilot CLI, VS Code Chat — structured results on any platform
+4. **Works everywhere** — Same 72 skills on Claude Code, Copilot CLI, VS Code Chat — structured results on any platform
 5. **Autonomous quality gates** — 10 AI agents running 24/7 as ADO pipelines, enforcing enterprise standards in CI/CD
 6. **Domain expertise built in** — AEM components, dialogs, JCR, editorial guides — deep knowledge that generic tools can't prompt their way to
 7. **Persistent, auditable artifacts** — Every step writes to `.ai/specs/` — survives sessions, enables traceability and team handoffs
@@ -87,7 +87,7 @@ Every developer already uses AI — Copilot, Cursor, Claude Code, Cody. Code gen
 |---------|-----------|-------------|----------|
 | **Fellow developers (ADO/Jira)** | AI output is inconsistent, no process | "Structured skills = consistent enterprise output" | LinkedIn, Reddit, Dev.to |
 | **AEM developers** | Generic AI tools don't know AEM | "Deep AEM domain expertise built into structured skills" | AEM forums, LinkedIn |
-| **AI tool enthusiasts** | Looking for what's beyond raw code generation | "73 structured skills, open source, enterprise-quality output" | Product Hunt, AI directories, Twitter |
+| **AI tool enthusiasts** | Looking for what's beyond raw code generation | "72 structured skills, open source, enterprise-quality output" | Product Hunt, AI directories, Twitter |
 | **Open source contributors** | Want to contribute | "Plugin architecture, easy to extend" | GitHub, Reddit, HN |
 | **Recruiters / hiring managers** | Looking for strong developers | Your profile + this project = proof of skill | LinkedIn |
 
@@ -128,9 +128,9 @@ Everything is organic/free except one optional €100/month boost.
 ### Week 3-4: Content Blitz
 - [ ] Publish: "I Automated My Entire Sprint With AI — Here's the Open-Source Toolkit" (Dev.to + LinkedIn)
 - [ ] Publish: "From Figma to Production AEM Component in One Command" (Dev.to + Hashnode)
-- [ ] Twitter thread: "73 AI skills for enterprise dev workflows — my top 10"
+- [ ] Twitter thread: "72 AI skills for enterprise dev workflows — my top 10"
 - [ ] LinkedIn carousel: "The 4-Plugin Architecture for AI Development"
-- [ ] Reddit post on r/SideProject: "I built an open-source AI dev platform with 73 skills"
+- [ ] Reddit post on r/SideProject: "I built an open-source AI dev platform with 72 skills"
 
 ### Week 5-6: Launch Week
 - [ ] **Product Hunt launch** (Tuesday or Wednesday, 12:01 AM PT)

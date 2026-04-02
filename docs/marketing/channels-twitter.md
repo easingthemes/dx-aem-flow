@@ -34,7 +34,7 @@ But here's what nobody talks about:
 AI code generation is commoditized.
 What's NOT commoditized is structured, enterprise-quality output.
 
-I built 73 skills that bridge that gap. Open source. Here's what they do:
+I built 72 skills that bridge that gap. Open source. Here's what they do:
 
 (1/10)
 ---
@@ -180,7 +180,7 @@ Raw AI tools don't enforce any of this.
 ---
 The fix: Structured skills that encode process discipline.
 
-73 skills. Each produces named artifacts.
+72 skills. Each produces named artifacts.
 Config-driven — one YAML file, consistent across the team.
 Same skills run locally AND in CI/CD pipelines.
 

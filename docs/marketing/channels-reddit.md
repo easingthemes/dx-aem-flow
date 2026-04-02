@@ -11,7 +11,7 @@
 
 | Subreddit | Members | Rules | Post Angle |
 |-----------|---------|-------|------------|
-| **r/SideProject** | 503K | Welcomes project sharing | "I built an AI dev platform with 73 skills — here's my journey" |
+| **r/SideProject** | 503K | Welcomes project sharing | "I built an AI dev platform with 72 skills — here's my journey" |
 | **r/coolgithubprojects** | 60K | GitHub repos welcome | Direct repo link + description |
 | **r/alphaandbetausers** | 22K | Early testers wanted | "Looking for beta testers for an open-source AI dev toolkit" |
 | **r/shamelessplug** | 52K | Explicitly for promotion | Direct pitch |
@@ -31,7 +31,7 @@
 
 | Subreddit | Angle |
 |-----------|-------|
-| **r/ClaudeAI** | "I built a plugin system for Claude Code — 73 skills for enterprise dev" |
+| **r/ClaudeAI** | "I built a plugin system for Claude Code — 72 skills for enterprise dev" |
 | **r/ChatGPTCoding** | "What if your AI assistant could handle the entire sprint, not just coding?" |
 | **r/LocalLLaMA** | Technical architecture discussion (agent orchestration) |
 | **r/artificial** | "Autonomous AI agents running 24/7 on ADO pipelines" |
@@ -42,7 +42,7 @@
 
 ### r/SideProject Post
 ```
-Title: I built 73 structured AI skills for enterprise dev workflows — consistent output, not raw suggestions
+Title: I built 72 structured AI skills for enterprise dev workflows — consistent output, not raw suggestions
 
 Hey r/SideProject!
 
@@ -51,7 +51,7 @@ enterprise projects I kept seeing the same problem: raw AI output is
 inconsistent. Quality depends on the prompt, there's no process
 discipline, no audit trail, no verification.
 
-So I built dx-aem-flow — 4 plugins with 73 structured skills that
+So I built dx-aem-flow — 4 plugins with 72 structured skills that
 produce consistent, enterprise-quality output from ticket to PR.
 
 What makes it different from raw AI tools:

@@ -23,7 +23,7 @@ Best documentation pages and content to repurpose for marketing.
 | **AEM verification & QA** | `website/src/pages/usage/aem.mdx` | AEM community posts, niche marketing |
 | **Local developer workflow** | `website/src/pages/usage/local.mdx` | "Day in the life" blog, onboarding guide |
 | **Architecture overview** | `website/src/pages/architecture/overview.mdx` | Technical blog, conference talk |
-| **Skills catalog (70 skills)** | `website/src/pages/reference/skills.mdx` | Comparison charts, feature lists |
+| **Skills catalog (72 skills)** | `website/src/pages/reference/skills.mdx` | Comparison charts, feature lists |
 | **Cost/pricing models** | `website/src/pages/costs.mdx` | LinkedIn post about cost control, sales one-pager |
 | **DoR/DoD workflows** | `website/src/pages/usage/dor-dod.mdx` | Enterprise governance angle |
 
@@ -89,7 +89,7 @@ Location: `website/public/images/`
 ## Quick Reference: Key Stats for Copy
 
 Use these in any marketing material:
-- **73+ skills** across 4 plugins
+- **72 skills** across 4 plugins
 - **12+ autonomous agents** (10 run 24/7 on ADO pipelines)
 - **3 AI platforms** supported (Claude Code, Copilot CLI, VS Code Chat)
 - **6-phase verification gate** (compile, lint, test, secret scan, architecture, AI review)

@@ -94,8 +94,8 @@ ADO tag added  -->  webhook fires
 ```
 dx-aem-flow/              <-- Plugin source (Hub)
 ├── dx/plugins/
-│   ├── dx-core/    <-- Core: ADO workflow (43 skills, 5 agents)
-│   ├── dx-aem/               <-- AEM: component verification, project knowledge (10 skills, 5 agents)
+│   ├── dx-core/    <-- Core: ADO workflow (45 skills, 6 agents)
+│   ├── dx-aem/               <-- AEM: component verification, project knowledge (12 skills, 6 agents)
 │   └── dx-automation/        <-- Automation: CI/CD agents (11 skills)
 ```
 
