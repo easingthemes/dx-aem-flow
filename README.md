@@ -17,7 +17,7 @@ KAI is a structured development workflow built as a plugin system for enterprise
 **What makes it different:**
 - **Every AI platform** — same 70+ skills work identically in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config, same results — regardless of which IDE your team uses.
 - **Enterprise governance** — DoR validation, 6-phase verification gate (compile, lint, test, secret scan, architecture review, AI code review), autonomous PR review, and branch protection. Ship with confidence.
-- **AEM full-flow** — the deepest AI-powered AEM tooling available. Figma → component → dialog inspection → JCR content → editorial QA → browser automation → demo capture. The complete AEM development lifecycle.
+- **AEM full-flow** — purpose-built AEM tooling covering Figma → component → dialog inspection → JCR content → editorial QA → browser automation → demo capture. Includes the [AEM MCP server](https://www.npmjs.com/package/aem-mcp-server) for live dialog and JCR access. The complete AEM development lifecycle, config-driven for your project.
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
 - **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
@@ -60,7 +60,7 @@ Hub directory management for coordinating work across multiple consumer repos �
 
 ### [dx-aem](plugins/dx-aem/) — AEM Full-Flow
 
-The complete AEM development lifecycle: component dialog inspection, JCR content, page authoring, editorial QA with browser automation, snapshot/verify lifecycle, and demo capture. The deepest AI-powered AEM tooling available.
+The complete AEM development lifecycle: component dialog inspection, JCR content, page authoring, editorial QA with browser automation, snapshot/verify lifecycle, and demo capture. Includes the [AEM MCP server](https://www.npmjs.com/package/aem-mcp-server) for live JCR and dialog access. Purpose-built for AEM Cloud and on-premise projects.
 
 **12 skills, 6 agents.** Requires dx plugin.
 
