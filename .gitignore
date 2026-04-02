@@ -33,7 +33,6 @@ website/.astro/
 internal/
 docs/superpowers/
 docs/brainstorming/
-docs/todo
 .mcp.json
 logo.JPG
 tools/screenshots/
