@@ -96,10 +96,10 @@ The `aem.component-prefix` config is used by agents to construct CSS selectors w
 
 ## MCP Servers
 
-This plugin uses two MCP servers (configured automatically):
+This plugin bundles two MCP servers (configured automatically via `.mcp.json`):
 
-- **AEM MCP** — component management, page content, dialog fields, JCR queries
-- **Chrome DevTools MCP** — browser automation for screenshots and dialog interaction
+- **[AEM MCP](https://www.npmjs.com/package/aem-mcp-server)** (`aem-mcp-server`) — JCR content, component dialogs, page management, node queries. Supports multi-instance configurations (local + QA). Included with the plugin — no separate install needed.
+- **Chrome DevTools MCP** — browser automation for screenshots, navigation, and dialog interaction
 
 ## Full Workflow
 
