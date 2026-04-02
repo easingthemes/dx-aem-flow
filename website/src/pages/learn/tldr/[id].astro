@@ -26,7 +26,7 @@ function parsePoint(text: string) {
 }
 ---
 
-<SidebarLayout title={title} sidebar="learn">
+<SidebarLayout title={title} sidebar="learn" description={overview || `Learn about ${title} — agentic AI tip #${order ?? ''} from the KAI development platform.`}>
   <PageHero title={title} subtitle={`Day ${order ?? '?'} · Week ${week ?? '?'} · ${category}`} />
 
   <Section>
