@@ -1,3 +1,10 @@
+## [2.86.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.2...v2.86.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **dx-init:** add me.md to gitignore list, guard cross-repo step ([0c4dab0](https://github.com/easingthemes/dx-aem-flow/commit/0c4dab0544088189c7aac57f7283ceaea314192a)), closes [#55](https://github.com/easingthemes/dx-aem-flow/issues/55)
+
 ## [2.86.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.1...v2.86.2) (2026-04-02)
 
 
