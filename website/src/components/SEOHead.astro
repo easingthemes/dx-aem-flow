@@ -67,7 +67,12 @@ const jsonLd = {
 <meta name="description" content={description} />
 <meta name="author" content="Dragan Filipovic" />
 <link rel="canonical" href={canonical} />
-{noindex && <meta name="robots" content="noindex, nofollow" />}
+{noindex ? (
+  <meta name="robots" content="noindex, nofollow" />
+) : (
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+)}
+<link rel="alternate" type="text/plain" href={`${siteUrl}${base}/llms.txt`} title="LLMs.txt" />
 
 <!-- Open Graph -->
 <meta property="og:type" content={ogType} />
