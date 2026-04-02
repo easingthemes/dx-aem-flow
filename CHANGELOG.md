@@ -1,3 +1,10 @@
+# [2.86.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.85.0...v2.86.0) (2026-04-02)
+
+
+### Features
+
+* **website:** add comprehensive SEO — meta tags, OG, sitemap, structured data ([37ace9c](https://github.com/easingthemes/dx-aem-flow/commit/37ace9ceef7a16c5c28f0fa395e129d5f756592b))
+
 # [2.85.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.84.0...v2.85.0) (2026-04-01)
 
 
