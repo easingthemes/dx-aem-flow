@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://easingthemes.github.io/dx-aem-flow/sitemap-index.xml

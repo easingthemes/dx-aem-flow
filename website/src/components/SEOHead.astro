@@ -1,0 +1,88 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  ogType?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = 'KAI — Enterprise AI Development Platform. 70+ skills for Azure DevOps and Atlassian, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.',
+  canonicalUrl,
+  ogImage,
+  ogType = 'website',
+  noindex = false,
+} = Astro.props;
+
+const siteUrl = 'https://easingthemes.github.io';
+const base = '/dx-aem-flow';
+const fullTitle = `${title} — KAI`;
+const canonical = canonicalUrl || `${siteUrl}${Astro.url.pathname}`;
+const ogImageUrl = ogImage
+  ? `${siteUrl}${base}${ogImage}`
+  : `${siteUrl}${base}/kai-logo.svg`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'KAI',
+      description: 'Enterprise AI Development Platform',
+      url: `${siteUrl}${base}/`,
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'KAI',
+      applicationCategory: 'DeveloperApplication',
+      description: 'AI-powered development platform with 70+ skills for Azure DevOps and Atlassian workflows.',
+      operatingSystem: 'Cross-platform',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: Astro.url.pathname
+        .replace(base, '')
+        .split('/')
+        .filter(Boolean)
+        .map((segment, index, arr) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
+          item: `${siteUrl}${base}/${arr.slice(0, index + 1).join('/')}/`,
+        })),
+    },
+  ],
+};
+---
+
+<!-- Primary Meta Tags -->
+<meta name="description" content={description} />
+<meta name="author" content="Dragan Filipovic" />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Open Graph -->
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonical} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:site_name" content="KAI" />
+<meta property="og:locale" content="en_US" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
