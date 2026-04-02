@@ -1,3 +1,10 @@
+## [2.86.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.1...v2.86.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* **docs:** replace marketing superlatives with factual descriptions, highlight AEM MCP server ([5187fe6](https://github.com/easingthemes/dx-aem-flow/commit/5187fe66c22fb394cade83aafaa93c2fe8e125f4))
+
 ## [2.86.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.0...v2.86.1) (2026-04-02)
 
 
