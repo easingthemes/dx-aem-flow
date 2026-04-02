@@ -1,3 +1,10 @@
+## [2.86.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.0...v2.86.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* **website:** improve bot access — robots.txt, llms.txt, meta tags ([4ce90aa](https://github.com/easingthemes/dx-aem-flow/commit/4ce90aa22e86d2158de5d352df6090f57d091916))
+
 # [2.86.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.85.0...v2.86.0) (2026-04-02)
 
 
