@@ -1,0 +1,30 @@
+# KAI — Enterprise AI Development Platform
+
+> Four Claude Code plugins providing 70+ skills for AI-assisted Azure DevOps and Atlassian development workflows, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.
+
+## About
+
+KAI is an open-source AI development platform built as Claude Code plugins. It provides structured, config-driven workflows for the full software development lifecycle: requirements gathering, planning, implementation, code review, and pull request creation. KAI works with Azure DevOps, Atlassian (Jira/Confluence), Figma, and Adobe Experience Manager (AEM).
+
+## Plugins
+
+- **dx-core**: Platform-agnostic ADO/Jira workflow with 45 skills and 6 agents. Covers requirements, planning, execution, review, and PR creation.
+- **dx-hub**: Multi-repo orchestration with 3 skills for hub init, config, and status.
+- **dx-aem**: AEM-specific verification, QA, and demo capture with 12 skills and 6 agents.
+- **dx-automation**: Autonomous AI agents (DoR/DoD checkers, PR reviewer, BugFix agent, QA agent) running as ADO pipelines via AWS Lambda webhooks. 11 skills.
+
+## Key Features
+
+- Config-driven: all project values in `.ai/config.yaml`, no hardcoding
+- Three-layer override system: project rules > config overrides > plugin defaults
+- Model tier strategy: Opus for deep reasoning, Sonnet for execution, Haiku for lookups
+- Multi-platform: Claude Code CLI, GitHub Copilot CLI, VS Code Chat
+- MCP integrations: Azure DevOps, Atlassian, Figma, axe accessibility, AEM, Chrome DevTools
+
+## Links
+
+- Documentation: https://easingthemes.github.io/dx-aem-flow/
+- GitHub: https://github.com/easingthemes/dx-aem-flow
+- Setup Guide: https://easingthemes.github.io/dx-aem-flow/setup/
+- Skill Catalog: https://easingthemes.github.io/dx-aem-flow/reference/skills/
+- Architecture: https://easingthemes.github.io/dx-aem-flow/architecture/overview/
