@@ -66,5 +66,6 @@
 | 54 | Autonomous loop state persistence for automation agents | Medium | Open | 2026-03-31 | [todo-ecc-ideas.md#state-persistence](todo-ecc-ideas.md#autonomous-loop-state-persistence) |
 
 | 55 | GitHub Issues/Projects as tracker platform | Medium | Open | 2026-04-02 | [todo-github-support.md](todo-github-support.md#github-as-trackerscm-platform) |
+| 56 | dx-init: skip ADO-specific files for non-ADO providers | High | Open | 2026-04-02 | [todo-github-support.md#dx-init-skip](todo-github-support.md#dx-init-skip-ado-specific-files-when-scmprovider--ado) |
 
-**Counts:** 55 total — 9 done, 30 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 56 total — 9 done, 31 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
