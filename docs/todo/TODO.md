@@ -70,4 +70,9 @@
 | 57 | dx-init: provider-aware scaffolding (full flow, skip ADO ceremony) | High | Open | 2026-04-02 | [todo-provider-support.md#dx-init-provider](todo-provider-support.md#dx-init-provider-aware-scaffolding) |
 | 58 | dx-req from markdown file instead of ticket | Medium | Open | 2026-04-02 | [todo-provider-support.md#dx-req-markdown](todo-provider-support.md#dx-req-from-markdown-file-instead-of-ticket) |
 
-**Counts:** 58 total — 9 done, 33 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending
+| 59 | Azure Skills: conditional handoff integration points | Low | Watch | 2026-04-03 | [todo-azure-skills.md#conditional-domain-handoff](todo-azure-skills.md#recommended-integration-model-conditional-domain-handoff) |
+| 60 | Azure Skills: adopt `references/` pattern for per-skill docs | Medium | Open | 2026-04-03 | [todo-azure-skills.md#references-pattern](todo-azure-skills.md#1-references-pattern--bundled-domain-knowledge) |
+| 61 | Azure Skills: evaluate Context7 MCP for live doc lookup | Low | Open | 2026-04-03 | [todo-azure-skills.md#context7](todo-azure-skills.md#2-context7-mcp--live-documentation-lookup) |
+| 62 | Azure Skills: publish dx-core to microsoft/skills catalog | Low | Open | 2026-04-03 | [todo-azure-skills.md#publish](todo-azure-skills.md#4-publish-to-microsoftskills-catalog) |
+
+**Counts:** 62 total — 9 done, 36 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending
