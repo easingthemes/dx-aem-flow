@@ -1,8 +1,11 @@
 # Microsoft Azure Skills — Research & Integration Analysis
 
 Source: `github.com/microsoft/azure-skills` (mirror of `microsoft/GitHub-Copilot-for-Azure`)
-Related: `github.com/microsoft/azure-devops-skills` (5 basic ADO skills, loose — not a plugin)
-Ecosystem: `github.com/microsoft/skills` (community mega-catalog, 200+ skills)
+Related repos:
+- `github.com/microsoft/azure-devops-skills` — 5 basic ADO skills (loose, not a plugin)
+- `github.com/microsoft/skills` — 132 skills across 6 languages (Core, Python, .NET, TypeScript, Java, Rust) + custom agents + skill-creator tool
+- `github.com/MicrosoftDocs/Agent-Skills` — 193 curated skills across 19 categories from Microsoft Learn docs
+- `agentskills.io` — Open specification (originally by Anthropic, adopted by 30+ tools incl. Copilot, Claude Code, Codex, Cursor, Gemini CLI, Junie)
 
 **Added:** 2026-04-03
 
@@ -329,3 +332,49 @@ Azure Skills uses a `metadata:` block for machine-readable author/version info. 
 ```
 
 The conditional handoff pattern (not superpowers-style wrapping) is the right integration for the few workflow junctures where Azure infra meets dev lifecycle. The `references/` and Context7 patterns are worth adopting independently.
+
+---
+
+## Broader Microsoft Skills Ecosystem
+
+### `microsoft/skills` — SDK Pattern Library (132 skills)
+
+Not just Azure infra — this repo covers **programming patterns** across 6 languages:
+
+| Category | Languages | Examples |
+|----------|-----------|---------|
+| Core | Cross-language | `skill-creator` (meta-skill to create new skills) |
+| Python | Azure SDK for Python | Auth, storage, cosmos, key vault patterns |
+| .NET | Azure SDK for .NET | Identity, blobs, service bus, app config |
+| TypeScript | Azure SDK for TS | Event hubs, monitor, cognitive services |
+| Java | Azure SDK for Java | Same service coverage |
+| Rust | Azure SDK for Rust | Storage, identity |
+
+**Opportunity:** The `skill-creator` meta-skill could be adapted as `dx-skill-create` — a skill for generating new dx/aem skills from a template, reducing boilerplate when extending the plugin.
+
+### `MicrosoftDocs/Agent-Skills` — Learn-Derived Knowledge (193 skills)
+
+Curated from Microsoft Learn docs across 19 categories. These are **pure knowledge skills** (no MCP tools) — they inject Azure service expertise into agent context. Categories include networking, security, AI services, containers, serverless, databases, DevOps, monitoring.
+
+**Opportunity:** Similar pattern to our `shared/` reference docs, but packaged as discoverable skills. Could inform how we structure AEM project knowledge — instead of flat `data/` files, package as named knowledge skills that agents load on demand.
+
+### `agentskills.io` — Open Specification
+
+The Agent Skills format is now an **open standard** (originally by Anthropic). Our SKILL.md format is already compatible. Key spec fields we don't use yet:
+
+| Field | Spec definition | Our status |
+|-------|----------------|-----------|
+| `name` | Required, 1-64 chars, kebab-case | ✅ Used |
+| `description` | Required, max 1024 chars | ✅ Used |
+| `license` | Optional, max 500 chars | ❌ Not used — could add |
+| `compatibility` | Optional, environment requirements | ❌ Not used — could add for AEM skills ("Requires AEM 6.5+") |
+| `metadata` | Optional, string key-value map | ❌ Not used — could add author/version per skill |
+| `allowed-tools` | Experimental, pre-approved tools | ❌ Not used — would reduce permission prompts |
+| `model` | Our extension | ✅ Used (not in base spec) |
+| `effort` | Our extension | ✅ Used (not in base spec) |
+| `context` | Our extension | ✅ Used (not in base spec) |
+| `agent` | Our extension | ✅ Used (not in base spec) |
+| `paths` | Our extension | ✅ Used (not in base spec) |
+| `argument-hint` | Our extension | ✅ Used (not in base spec) |
+
+**Key insight:** Our frontmatter extensions (`model`, `effort`, `context`, `agent`, `paths`) go beyond the base spec — these are unique capabilities that other skill authors don't have. Worth documenting as proposed spec extensions if the `agentskills.io` spec accepts contributions.
