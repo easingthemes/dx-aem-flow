@@ -262,6 +262,62 @@ When triaging production bugs:
 
 ---
 
+## Design Patterns Worth Studying
+
+Azure Skills uses several patterns that differ from or complement our approach:
+
+### 1. Plan-as-Artifact with Status Gates
+
+Azure deploy workflow uses `.azure/deployment-plan.md` as shared state between skills:
+- `azure-prepare` creates the plan with status `Ready for Validation`
+- `azure-validate` is the ONLY skill authorized to set status to `Validated` (must record proof — actual commands + timestamps)
+- `azure-deploy` REFUSES to run unless plan status is `Validated` AND Section 7 "Validation Proof" is populated
+- Bold "FORBIDDEN" blocks prevent the agent from bypassing validation by manually editing status
+
+**Comparison:** Our `implement.md` tracks step status but doesn't enforce prerequisite gates between skills this strictly. The "validation proof" concept (requiring actual command output, not just a status flag) is stronger than our current step verification.
+
+### 2. Router Skill Pattern
+
+`azure-cost` routes to sub-workflows based on intent: Cost Query, Cost Optimization, Cost Forecast — each in its own subdirectory with a `workflow.md`. `azure-prepare` has Step 0 that scans codebase markers + prompt keywords to route to specialized skills.
+
+**Comparison:** Our coordinator skills (`dx-agent-all`, `dx-bug-all`) chain skills sequentially. The codebase-marker-based routing in `azure-prepare` is an interesting pattern for `dx-step` — detect what kind of change is being made and route to specialized handling.
+
+### 3. Per-Skill Reference Bundles
+
+Every Azure skill has a `references/` subdirectory:
+```
+azure-cost/
+├── SKILL.md
+├── cost-forecast/workflow.md
+├── cost-optimization/workflow.md
+└── cost-query/workflow.md
+
+azure-deploy/
+├── SKILL.md
+└── references/
+    ├── auth-best-practices.md
+    ├── global-rules.md
+    ├── troubleshooting.md
+    ├── recipes/container-apps.md
+    └── sdk/azd-quick-reference.md
+```
+
+**Comparison:** We use plugin-level `shared/` and `data/`. Per-skill references would reduce context loading — each skill only pulls its own relevant docs.
+
+### 4. Explicit MCP Tool Tables
+
+Each skill includes a table mapping tool names to purposes:
+```markdown
+| Tool | Purpose |
+|------|---------|
+| `azure__role` | Check role assignments |
+| `mcp_azure_mcp_azd` | Run azd commands |
+```
+
+**Comparison:** Our skills reference MCP tools inline. Explicit tables improve discoverability and make tool dependency auditing easier.
+
+---
+
 ## Improvement Ideas From Azure Skills
 
 ### 1. `references/` Pattern — Bundled Domain Knowledge
