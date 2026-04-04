@@ -40,7 +40,7 @@
 | 32 | Open Plugins: plugin logo (`logo` field) | Medium | Watch | 2026-03-26 | [todo-open-plugins.md#plugin-logo](todo-open-plugins.md#plugin-logo--icon) — `assets/logo.png` + `"logo"` field added to all 4 plugins; waiting on [vscode#304758](https://github.com/microsoft/vscode/issues/304758) |
 
 | 33 | Hook `if` field — conditional execution | High | Open | 2026-03-27 | [todo-review-plugin-improvements.md#hook-if-field](todo-review-plugin-improvements.md#hook-if-field--conditional-execution) |
-| 34 | Branch-guard exit code bug (exit 1 → exit 2) | High | Open | 2026-03-27 | [todo-review-plugin-improvements.md#branch-guard-exit-code](todo-review-plugin-improvements.md#branch-guard-exit-code-bug) |
+| 34 | ~~Branch-guard exit code bug (exit 1 → exit 2)~~ | High | **Done** | 2026-03-27 | [todo-review-plugin-improvements.md#branch-guard-exit-code](todo-review-plugin-improvements.md#branch-guard-exit-code-bug) — fixed in `d0caf60`; GitHub [#14](https://github.com/easingthemes/dx-aem-flow/issues/14) closeable |
 | 35 | Hook statusMessage for UX | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#hook-statusmessage](todo-review-plugin-improvements.md#hook-statusmessage-for-ux) |
 | 36 | Async screenshot hooks | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#async-screenshot](todo-review-plugin-improvements.md#async-screenshot-hooks) |
 | 37 | Skill `effort` field for model-tiered skills | Medium | Open | 2026-03-27 | [todo-review-plugin-improvements.md#skill-effort](todo-review-plugin-improvements.md#skill-effort-field) |
@@ -82,4 +82,4 @@
 | 67 | Harness design: externalized grading rubrics | Medium | Open | 2026-04-04 | [todo-harness-design.md#grading-criteria](todo-harness-design.md#6-grading-criteria-for-subjective-quality) — `.ai/rules/code-quality-rubric.md` for project-specific thresholds |
 | 68 | Harness design: sprint contract / plan testability review | Medium | Open | 2026-04-04 | [todo-harness-design.md#sprint-contracts](todo-harness-design.md#2-sprint-contracts-pre-agreed-definition-of-done) — evaluator reviews plan done-criteria before execution |
 
-**Counts:** 68 total — 9 done, 42 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending
+**Counts:** 68 total — 10 done, 41 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending

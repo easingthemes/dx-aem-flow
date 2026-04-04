@@ -1,5 +1,18 @@
 # TODO: Bugs & Fixes
 
+## GitHub Issue Sync
+
+Last synced: 2026-04-04
+
+| TODO # | Bug | TODO Status | GitHub Issue | Action |
+|--------|-----|-------------|-------------|--------|
+| 16 | Plugin install marketplace qualifier | Blocked (upstream) | [#23](https://github.com/easingthemes/dx-aem-flow/issues/23) | Keep open |
+| 17 | `updatedMCPToolOutput` image replacement | Open | [#16](https://github.com/easingthemes/dx-aem-flow/issues/16) | Keep open |
+| 18 | DoR comment deduplication | **Done** | — | No issue needed |
+| 19 | SubagentStart/SubagentStop hooks | Deferred | — | Feature request, not a bug |
+| 20 | Copilot CLI shared/ path resolution | Open | **None — needs issue** | Create: "Copilot CLI: shared/ path resolution — reference files silently skipped" |
+| 34 | Branch-guard exit code (exit 1 → exit 2) | **Done** (`d0caf60`) | [#14](https://github.com/easingthemes/dx-aem-flow/issues/14) | **Close #14** — branch guard deployed + exit code fixed |
+
 ## Plugin Install Marketplace Qualifier
 
 **Added:** 2026-03-03
