@@ -179,6 +179,19 @@ Build fails with missing import → fixes it → rebuilds → passes. Up to 6 fi
 **Cause:** Frontend builds compile to `dist/` but don't deploy to AEM. Only Maven builds auto-deploy.
 **Fix:** Use the Maven build command (from `build.command`) for local AEM verification.
 
+## Anti-Rationalization
+
+Common excuses for bad build-fix habits — and why they're wrong:
+
+| False Logic | Reality Check |
+|---|---|
+| "I'll suppress the warning with a flag" | Warnings become errors in the next upgrade. Fix the root cause. |
+| "Single-pass is faster — I'll fix all errors at once" | Feels faster until fix #3 undoes fix #1. One error at a time. |
+| "I'll refactor while fixing the build" | Build fixes must be minimal. Refactoring during fix loops introduces new failures. |
+| "The test is flaky, I'll skip it" | Flaky tests mask real regressions. Fix the test or mark it blocked, never skip. |
+| "It works on my machine" | Build must pass with the project's configured command, not a custom variant. |
+| "I'll add `@SuppressWarnings` / `// @ts-ignore`" | Suppression hides bugs. Fix the type or logic error the compiler found. |
+
 ## Rules
 
 - **Minimal fixes only** — don't refactor or improve code, just fix the build error
