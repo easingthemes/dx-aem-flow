@@ -1,3 +1,11 @@
+# [2.89.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.88.0...v2.89.0) (2026-04-04)
+
+
+### Features
+
+* add cross-platform agent support (AGENTS.md, Cursor, Gemini, Codex) ([03e6a52](https://github.com/easingthemes/dx-aem-flow/commit/03e6a5227f7f220c0c011b06de7312e253120642))
+* make scaffold agent-agnostic — always generate agents and AGENTS.md ([5cd2b4d](https://github.com/easingthemes/dx-aem-flow/commit/5cd2b4de2c4f314faf2150705faeb2cc0997cb74))
+
 # [2.88.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.87.0...v2.88.0) (2026-04-04)
 
 

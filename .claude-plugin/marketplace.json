@@ -8,28 +8,28 @@
       "name": "dx-core",
       "source": "./plugins/dx-core",
       "description": "Full-stack development workflow for Azure DevOps projects — requirements, planning, execution, review, bug fixes, and PR management",
-      "version": "2.88.0",
+      "version": "2.89.0",
       "author": { "name": "Dragan Filipovic" }
     },
     {
       "name": "dx-aem",
       "source": "./plugins/dx-aem",
       "description": "AEM component verification, dialog inspection, demo capture, QA automation, and multi-platform project knowledge for Adobe Experience Manager projects",
-      "version": "2.88.0",
+      "version": "2.89.0",
       "author": { "name": "Dragan Filipovic" }
     },
     {
       "name": "dx-hub",
       "source": "./plugins/dx-hub",
       "description": "Multi-repo hub orchestration — run dx skills across sibling repositories from a single hub directory",
-      "version": "2.88.0",
+      "version": "2.89.0",
       "author": { "name": "Dragan Filipovic" }
     },
     {
       "name": "dx-automation",
       "source": "./plugins/dx-automation",
       "description": "Autonomous AI agents for ADO workflows — Definition of Ready checker, Definition of Done checker, DoD fixer, PR reviewer, PR answerer. Runs as ADO pipelines triggered by AWS Lambda webhooks.",
-      "version": "2.88.0",
+      "version": "2.89.0",
       "author": { "name": "Dragan Filipovic" }
     }
   ]
