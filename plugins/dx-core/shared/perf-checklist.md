@@ -1,6 +1,6 @@
 # Performance Checklist
 
-Reference checklist used by `/dx-perf` and `/dx-ship`. Skills reference this — do not delete.
+Reference checklist used by `/dx-perf` and `/dx-step-verify`. Skills reference this — do not delete.
 
 ## Core Web Vitals Targets
 
