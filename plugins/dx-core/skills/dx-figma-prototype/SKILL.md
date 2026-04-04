@@ -36,7 +36,7 @@ If the script exits with error, ask the user for the work item ID.
 
 ## 4. Phase A — Conventions Research
 
-Launch two subagents in parallel using the Agent tool:
+Launch three subagents in parallel using the Agent tool:
 
 **Subagent 1 — Styles (dx-figma-styles):**
 ```
@@ -64,7 +64,22 @@ Agent tool:
     Return the full Markup Conventions report.
 ```
 
-**Wait for both to complete.** Combine results into `$SPEC_DIR/figma-conventions.md`:
+**Subagent 3 — Component Reuse (dx-figma-components):**
+```
+Agent tool:
+  subagent_type: dx-core:dx-figma-components
+  prompt: |
+    Analyze the Figma design and find existing codebase components to reuse.
+    spec_dir: <$SPEC_DIR>
+
+    Figma design reference (from figma-extract.md):
+    <paste the Reference Code section and component name from figma-extract.md>
+
+    Identify every UI building block in the design (buttons, images, cards, inputs, etc.)
+    and search the codebase for existing components that match. Return the Component Reuse Map.
+```
+
+**Wait for all three to complete.** Combine results into `$SPEC_DIR/figma-conventions.md`:
 
 ```markdown
 # Project Conventions (auto-discovered)
@@ -75,6 +90,8 @@ Agent tool:
 <Styles Conventions section from dx-figma-styles agent>
 
 <Markup Conventions section from dx-figma-markup agent>
+
+<Component Reuse Map section from dx-figma-components agent>
 ```
 
 ## 5. Phase B — Scaffold & Generate Prototype
@@ -120,7 +137,20 @@ This creates `prototype/index.html` (from template), empty `styles.css`, and emp
 
 **IMPORTANT:** Do NOT modify the scaffold structure (`.prototype-wrapper`, `.prototype-compare`, `.prototype-compare-col` elements or the inline `<style>` block). Only replace the two `{{...}}` placeholders with content. The comparison layout is provided by the template — do not reinvent it.
 
-### 5d. Generation Rules
+### 5d. Component Reuse Rule
+
+**Before generating any HTML/CSS, consult the Component Reuse Map in `figma-conventions.md`.**
+
+The Figma design is composed of multiple UI building blocks — buttons, images, cards, form inputs, etc. Most of these already exist in the codebase. The prototype must reflect the reuse strategy:
+
+- **Reuse as-is:** Use the existing component's class names, HTML structure, and variant configuration exactly as documented in the reuse map. Do NOT reinvent button styles, image wrappers, or other atomic components.
+- **Extend:** Use the existing component's structure and add the identified missing variant or modification. Add a CSS comment marking the extension: `/* EXTEND: <component> — added <what> */`
+- **Compose:** Assemble the Figma element from the listed existing components. The prototype HTML should reflect the composition hierarchy (e.g., Card wrapping Image + Button).
+- **Create new:** Only for elements explicitly marked "Create New" in the reuse map. Follow the nearest existing component's patterns.
+
+This ensures the prototype is grounded in the actual component library and implementation can reuse existing code rather than rebuilding from scratch.
+
+### 5e. Generation Rules
 
 **CSS (`prototype/styles.css`):**
 - Flat CSS (not SCSS) — no build system needed
@@ -199,7 +229,7 @@ Skip if: design is very simple (< 3 visual elements).
 
 ## Error Handling
 
-- **Subagent failure:** If one convention research agent fails, proceed with whatever the other returned. Note the gap in figma-conventions.md.
+- **Subagent failure:** If one convention research agent fails, proceed with whatever the others returned. Note the gap in figma-conventions.md. If the component reuse agent fails, proceed without the reuse map — the prototype will still work but implementation may miss reuse opportunities.
 - **No conventions found:** If neither agent finds anything (bare project with no rules/components), generate the prototype using Figma reference code directly with a warning.
 - **Token mapping impossible:** If project has no discoverable design tokens, use Figma values directly and flag all as "no project equivalent."
 
