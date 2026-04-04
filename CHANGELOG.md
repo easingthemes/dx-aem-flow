@@ -1,3 +1,16 @@
+# [2.87.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.3...v2.87.0) (2026-04-04)
+
+
+### Bug Fixes
+
+* address PR review — update agent count and remove double separator ([49f7976](https://github.com/easingthemes/dx-aem-flow/commit/49f79766825db9ef6f25c84d0cc32309f5fb7931))
+* use config-driven component paths instead of hardcoded globs ([5e1f152](https://github.com/easingthemes/dx-aem-flow/commit/5e1f15208e8891d21edd52e13d151e3ee3c0c24c))
+
+
+### Features
+
+* add component reuse discovery to Figma design-to-code flow ([c2bd81f](https://github.com/easingthemes/dx-aem-flow/commit/c2bd81f053d5f6750282e1f9b5ae03d1e65d69a3))
+
 ## [2.86.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.2...v2.86.3) (2026-04-02)
 
 
