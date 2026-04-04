@@ -1,3 +1,15 @@
+# [2.88.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.87.0...v2.88.0) (2026-04-04)
+
+
+### Bug Fixes
+
+* address PR review comments — stale refs, skill count, effort level ([1fd1235](https://github.com/easingthemes/dx-aem-flow/commit/1fd1235f079b0c72a976702d68107da9e949b7d5))
+
+
+### Features
+
+* add 5 new quality skills and harden existing skills with anti-rationalization ([da71c6d](https://github.com/easingthemes/dx-aem-flow/commit/da71c6d5b01f3a81b45b5c0e455699e99bc81dfd))
+
 # [2.87.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.86.3...v2.87.0) (2026-04-04)
 
 
