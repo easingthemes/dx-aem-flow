@@ -102,8 +102,6 @@ Analyzes Figma extraction to identify UI building blocks (buttons, images, cards
 
 ---
 
----
-
 > **Note:** The `dx-step-executor` agent has been removed. Coordinators now invoke skills directly via the Skill tool instead of delegating to an executor agent. Model tiering is now handled via `model:` frontmatter on individual skills (e.g., `model: opus` on dx-plan, dx-step-verify, dx-pr-review; `model: sonnet` on dx-step, dx-req, dx-step-fix; `model: haiku` on dx-ticket-analyze, dx-help).
 
 ---
