@@ -1,3 +1,10 @@
+# [2.92.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.91.0...v2.92.0) (2026-04-04)
+
+
+### Features
+
+* **website:** add social media preview image for OG/Twitter cards ([5544543](https://github.com/easingthemes/dx-aem-flow/commit/55445431bd5147bb4df0b116bf8b12d27e7c4e5f))
+
 # [2.91.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.90.0...v2.91.0) (2026-04-04)
 
 
