@@ -1,0 +1,16 @@
+{
+  "name": "dx-core",
+  "description": "Full-stack development workflow for Azure DevOps projects — requirements, planning, execution, review, bug fixes, and PR management",
+  "version": "2.88.0",
+  "author": {
+    "name": "Dragan Filipovic"
+  },
+  "homepage": "https://easingthemes.github.io/dx-aem-flow",
+  "repository": "https://github.com/easingthemes/dx-aem-flow",
+  "license": "MIT",
+  "logo": "./assets/logo.png",
+  "keywords": ["ado", "azure-devops", "workflow", "code-review", "planning", "execution"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks-cursor.json"
+}

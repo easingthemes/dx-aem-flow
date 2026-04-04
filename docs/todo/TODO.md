@@ -82,4 +82,11 @@
 | 67 | Harness design: externalized grading rubrics | Medium | Open | 2026-04-04 | [todo-harness-design.md#grading-criteria](todo-harness-design.md#6-grading-criteria-for-subjective-quality) — `.ai/rules/code-quality-rubric.md` for project-specific thresholds |
 | 68 | Harness design: sprint contract / plan testability review | Medium | Open | 2026-04-04 | [todo-harness-design.md#sprint-contracts](todo-harness-design.md#2-sprint-contracts-pre-agreed-definition-of-done) — evaluator reviews plan done-criteria before execution |
 
-**Counts:** 68 total — 9 done, 42 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending
+| 69 | Cross-platform: Cursor hooks-cursor.json | Medium | Open | 2026-04-04 | [todo-cross-platform.md#cursor-hooks](todo-cross-platform.md#cursor-hookscursorjson-for-dx-core-and-dx-aem) |
+| 70 | Cross-platform: tool name reference docs | Low | Open | 2026-04-04 | [todo-cross-platform.md#tool-names](todo-cross-platform.md#tool-name-reference-docs-for-non-claude-platforms) |
+| 71 | Cross-platform: Cursor marketplace registration | Low | Open | 2026-04-04 | [todo-cross-platform.md#cursor-marketplace](todo-cross-platform.md#cursor-plugin-marketplace-registration) |
+| 72 | Cross-platform: OpenCode plugin support | Low | Open | 2026-04-04 | [todo-cross-platform.md#opencode](todo-cross-platform.md#opencode-plugin-support) |
+| 73 | Cross-platform: shared hook platform detection | Medium | Open | 2026-04-04 | [todo-cross-platform.md#hook-detection](todo-cross-platform.md#sessionstart-hook-platform-detection-shared-script) |
+| 74 | Cross-platform: AGENTS.md ↔ CLAUDE.md sync | Low | Ongoing | 2026-04-04 | [todo-cross-platform.md#agents-sync](todo-cross-platform.md#agentsmd-maintenance--keep-in-sync-with-claudemd) |
+
+**Counts:** 74 total — 9 done, 48 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
