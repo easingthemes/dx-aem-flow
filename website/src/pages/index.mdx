@@ -1,7 +1,7 @@
 ---
 layout: ../layouts/BaseLayout.astro
 title: Enterprise AI Development Platform
-description: "KAI is an enterprise AI development platform with 70+ skills for Azure DevOps and Atlassian. Run identical workflows across Claude Code, Copilot CLI, and VS Code Chat."
+description: "KAI is an enterprise AI development platform with 75+ skills for Azure DevOps and Atlassian. Run identical workflows across Claude Code, Copilot CLI, and VS Code Chat."
 ---
 
 import PageHero from '../components/PageHero.astro';
@@ -16,29 +16,29 @@ export const base = import.meta.env.BASE_URL;
 
 <PageHero
   title="Enterprise AI Development Platform"
-  subtitle="For enterprise teams on Azure DevOps and Atlassian. 70+ skills that run identically across Claude Code, GitHub Copilot CLI, and VS Code Chat — from ticket to PR, fully autonomous. Deep AEM specialization built in."
+  subtitle={`For enterprise teams on Azure DevOps and Atlassian. ${stats.totalSkills}+ skills that run identically across Claude Code, GitHub Copilot CLI, and VS Code Chat — from ticket to PR, fully autonomous. Deep AEM specialization built in.`}
 />
 
 <Section>
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 text-center">
     <div>
-      <div class="text-4xl font-extrabold text-cyan">70</div>
+      <div class="text-4xl font-extrabold text-cyan">{stats.totalSkills}</div>
       <div class="text-sm text-gray-500">Skills</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">25</div>
+      <div class="text-4xl font-extrabold text-cyan">{stats.copilotAgents}</div>
       <div class="text-sm text-gray-500">Copilot Agents</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">4</div>
+      <div class="text-4xl font-extrabold text-cyan">{stats.totalPlugins}</div>
       <div class="text-sm text-gray-500">Plugins</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">3</div>
+      <div class="text-4xl font-extrabold text-cyan">{stats.aiPlatforms}</div>
       <div class="text-sm text-gray-500">AI Platforms</div>
     </div>
     <div>
-      <div class="text-4xl font-extrabold text-cyan">13</div>
+      <div class="text-4xl font-extrabold text-cyan">{stats.claudeAgents}</div>
       <div class="text-sm text-gray-500">Specialized Agents</div>
     </div>
   </div>
@@ -168,7 +168,7 @@ export const base = import.meta.env.BASE_URL;
   badge="Plugins"
   badgeColor="success"
   title="Four Plugins, Independently Installable"
-  subtitle="Core workflow for any stack. AEM specialization for teams that need it — 12 skills and 6 agents covering the full AEM development lifecycle."
+  subtitle={`Core workflow for any stack. AEM specialization for teams that need it — ${stats.dxAemSkills} skills and ${stats.dxAemAgents} agents covering the full AEM development lifecycle.`}
   bg="primary"
 />
 <Section>

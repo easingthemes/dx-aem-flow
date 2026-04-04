@@ -11,10 +11,11 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
+import { stats } from '../../config/stats';
 
 <PageHero
   title="Automation -- 24/7 Autonomous Agents"
-  subtitle="10 AI agents running as ADO pipelines, triggered by AWS Lambda webhooks. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned."
+  subtitle={`${stats.autonomousAgents} AI agents running as ADO pipelines, triggered by AWS Lambda webhooks. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned.`}
 />
 
 <SectionHeading
@@ -33,7 +34,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       { title: 'Service Hooks', subtitle: 'WI hook,\nPR Answer hook,\nPR Review policy', color: '#0891b2' },
       { title: 'API Gateway', subtitle: 'AWS entry point', color: '#8b5cf6' },
       { title: 'Lambda Routers', subtitle: 'Deduplicate,\nRate limit,\nToken budget', color: '#d97706' },
-      { title: 'ADO Pipelines', subtitle: '10 agent pipelines', color: '#059669' },
+      { title: 'ADO Pipelines', subtitle: `${stats.autonomousAgents} agent pipelines`, color: '#059669' },
     ]}
   />
 </Section>
@@ -164,7 +165,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       <code>/auto-deploy</code> &rarr; <code>/auto-lambda-env</code> &rarr; <code>/auto-webhooks</code> &rarr;
       <code>/auto-alarms</code>
 
-      Creates AWS resources, deploys Lambdas, configures all 10 pipelines, sets up monitoring.
+      Creates AWS resources, deploys Lambdas, configures all {stats.autonomousAgents} pipelines, sets up monitoring.
     </HighlightBox>
 
     <HighlightBox severity="success" title="Consumer (Lightweight)">
@@ -234,7 +235,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Pipelines</td>
-        <td class="p-3">10 (all agents)</td>
+        <td class="p-3">{stats.autonomousAgents} (all agents)</td>
         <td class="p-3">6 (PR Review, PR Answer, Eval, DevAgent, BugFix, DoD-Fix)</td>
       </tr>
       <tr class="border-t border-gray-200">
@@ -310,7 +311,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 <SectionHeading
   badge="Runtime"
   title="Pipeline Agent"
-  subtitle="pipeline-agent.js -- the universal runner that powers all 10 agents using the Claude Agent SDK."
+  subtitle={`pipeline-agent.js -- the universal runner that powers all ${stats.autonomousAgents} agents using the Claude Agent SDK.`}
   bg="alt"
 />
 <Section>

@@ -24,9 +24,9 @@ done
 
 ## What You Get
 
-- **dx-core:** 45 skills for requirements, planning, execution, review, and PR workflows
+- **dx-core:** 48 skills for requirements, planning, execution, review, and PR workflows
 - **dx-aem:** 12 skills for AEM component verification, QA, and demo capture
-- **dx-hub:** 3 skills for multi-repo orchestration
+- **dx-hub:** 4 skills for multi-repo orchestration
 - **dx-automation:** 11 skills for autonomous pipeline agents
 
 ## Prerequisites
