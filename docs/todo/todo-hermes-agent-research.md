@@ -280,6 +280,24 @@ Over time, calibrate the threshold: if findings at 80-85 confidence are consiste
 
 ---
 
+## Bonus: hermes-agent-self-evolution (Separate Repo)
+
+[NousResearch/hermes-agent-self-evolution](https://github.com/NousResearch/hermes-agent-self-evolution) implements **automated evolutionary improvement** without GPU training — using API calls at ~$2-10 per optimization cycle.
+
+**How it works:**
+1. Read current skill files / prompts / tools
+2. Generate evaluation data from existing capabilities
+3. **GEPA** (Genetic-Pareto Prompt Evolution) analyzes execution traces to understand **why** things fail
+4. Generate candidate variants based on trace insights
+5. Test variants against constraints (100% test pass, size limits, semantic fidelity)
+6. Submit best variant as PR for human review — **no direct commits**
+
+**Optimization phases:** Skill files (implemented) → Tool descriptions → System prompts → Tool implementation code → Continuous loop.
+
+**dx-aem-flow relevance:** This is the "outer loop" — while Hermes's in-session skill patching is the inner loop (immediate fixes), GEPA is the outer loop (deliberate optimization across many runs). For dx, this maps to periodically analyzing `.ai/learning/raw/*.jsonl` across multiple tickets to optimize skill prompts and plan templates.
+
+---
+
 ## Key Hermes Design Principles Worth Adopting
 
 1. **Frozen snapshot pattern**: Load memory/context at session start, never mutate mid-session. Write updates for next session. This preserves prefix cache and avoids mid-conversation drift.
