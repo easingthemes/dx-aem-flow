@@ -13,8 +13,8 @@ keyPointsTitle: "Three Tiers, Three Roles"
 actionItemsTitle: "The Cost Math"
 keyPoints:
   - "**Opus ($15/M tokens)** — 1 agent — `dx-code-reviewer` reviews code with confidence scoring. Needs deep reasoning to distinguish real bugs from style preferences. Worth the cost because a bad review wastes more human time than the tokens cost."
-  - "**Sonnet ($3/M tokens)** — 7 agents — `dx-pr-reviewer`, `aem-inspector`, `aem-editorial-guide-capture`, etc. Need good judgment AND they take actions (read files, run commands, edit code). Sonnet is the sweet spot for execution."
-  - "**Haiku ($0.25/M tokens)** — 4 agents — `dx-file-resolver`, `dx-doc-searcher`, `aem-file-resolver`, `aem-page-finder`. Pure lookups. 'Find files matching this pattern.' No reasoning needed, just fast execution."
+  - "**Sonnet ($3/M tokens)** — 5 agents — `dx-pr-reviewer`, `aem-inspector`, `aem-editorial-guide-capture`, `aem-bug-executor`, `aem-fe-verifier`. Need good judgment AND they take actions (read files, run commands, edit code). Sonnet is the sweet spot for execution."
+  - "**Haiku ($0.25/M tokens)** — 7 agents — `dx-file-resolver`, `dx-doc-searcher`, `dx-figma-components`, `dx-figma-markup`, `dx-figma-styles`, `aem-file-resolver`, `aem-page-finder`. Pure lookups. 'Find files matching this pattern.' No reasoning needed, just fast execution."
 actionItems:
   - "**The math** — Using Opus for all 13 agents costs ~60x more than our tiered approach. For a team running 50 pipelines/day, that's the difference between $500/month and $30,000/month."
   - |

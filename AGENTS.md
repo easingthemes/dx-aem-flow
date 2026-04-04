@@ -10,8 +10,8 @@ Four installable plugins for AI-assisted development workflows. Pure Markdown (s
 
 | Plugin | Directory | Purpose | Skills |
 |--------|-----------|---------|--------|
-| **dx-core** | `plugins/dx-core/` | Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR | 45 (`dx-*`) |
-| **dx-hub** | `plugins/dx-hub/` | Multi-repo orchestration | 3 (`dx-hub-*`) |
+| **dx-core** | `plugins/dx-core/` | Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR | 48 (`dx-*`) |
+| **dx-hub** | `plugins/dx-hub/` | Multi-repo orchestration | 4 (`dx-hub-*`) |
 | **dx-aem** | `plugins/dx-aem/` | AEM-specific verification, QA, demo capture | 12 (`aem-*`) |
 | **dx-automation** | `plugins/dx-automation/` | Autonomous AI agents running as ADO pipelines | 11 (`auto-*`) |
 
