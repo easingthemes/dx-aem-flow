@@ -129,154 +129,269 @@ skills/
 | Subagent delegation | `context: fork` + `agent:` frontmatter | Already present |
 | Context compression | — | Not applicable (harness handles) |
 
-**Key insight**: dx-aem-flow already has the **observation infrastructure** (learning files, fix tracking, promotion). What it lacks is the **active self-improvement loop** — skills that create skills, skills that patch themselves, and a memory layer that captures operational knowledge.
+**Key insight**: dx-aem-flow already has the **observation infrastructure** (learning files, fix tracking, promotion). What it lacks is the **active self-improvement loop**. But unlike Hermes (which owns its skills locally), dx plugins are **released from GitHub and updated via CLI** — they're immutable from the project's perspective. Self-improvement must happen in the **project layer** (`.ai/`), with plugin skills reading project-level enhancements at runtime.
+
+---
+
+## Architecture Constraint: Plugin vs Project Separation
+
+```
+IMMUTABLE (released from GitHub, updated via CLI)     MUTABLE (per-project, agent can write)
+─────────────────────────────────────────────         ──────────────────────────────────────
+~/.claude/plugins/dx-core/                            <project>/.ai/
+  skills/dx-plan/SKILL.md                               config.yaml
+  skills/dx-step/SKILL.md                               memory.md              ← NEW
+  agents/dx-code-reviewer.md                             learning/raw/*.jsonl
+  rules/plan-format.md                                   learning/skills/       ← NEW
+  shared/error-handling.md                                 dx-plan/
+                                                             enhancements.md    ← NEW
+~/.claude/plugins/dx-aem/                                  dx-step/
+  skills/aem-verify/SKILL.md                                 enhancements.md    ← NEW
+  skills/aem-component/SKILL.md                          specs/<id>-<slug>/
+  agents/aem-inspector.md                                rules/
+                                                           plan-format.md       (override)
+                                                           learned-fix-*.md     (promoted)
+                                                         preferences.md         ← NEW
+```
+
+**The pattern**: Plugin skills remain the canonical source of truth. Project-level enhancement files **augment** plugin behavior without modifying the plugin. When you release a new plugin version, enhancements layer on top of the updated skill.
 
 ---
 
 ## Actionable Ideas for dx-aem-flow
 
-### Idea 1: Self-Improving Fix Patterns (LOW EFFORT, HIGH VALUE)
+### Idea 1: Skill Enhancement Files (CORE MECHANISM)
 
-**What Hermes does**: After a complex task, the agent autonomously creates a skill capturing the workflow.
+**The Hermes problem adapted**: Hermes patches skills in-place. dx can't — plugins are immutable. Instead, plugin skills load project-level enhancement files if they exist.
 
-**What dx already has**: `fixes.jsonl` tracks error→fix pairs, promotes to `learned-fix-*.md` rules at 3+ successes.
+**Convention**: `.ai/learning/skills/<skill-name>/enhancements.md`
 
-**What to add**: Extend the promotion mechanism to generate richer "fix skills" instead of simple rules:
-
-```
-.ai/learning/promoted/
-  fix-compilation-missing-import/
-    SKILL.md          # Full diagnostic + fix workflow
-    patterns.md       # Error signatures that trigger this fix
-    evidence.md       # Ticket IDs, success rates, timestamps
+**How a plugin skill loads it** (add to SKILL.md):
+```markdown
+## Project-Learned Enhancements
+If `.ai/learning/skills/<this-skill>/enhancements.md` exists, read it.
+These are project-specific lessons learned from prior executions.
+Apply them as additional constraints/steps alongside the base skill.
 ```
 
-**Benefit**: Current `learned-fix-*.md` rules are one-liners. A promoted skill can include diagnostic steps, common variations, and verification commands — making the fix more reliable across diverse occurrences.
+**What goes in an enhancement file** (agent-generated):
+```markdown
+# Project Enhancements for dx-plan
 
-**Implementation**: Add a `dx-learning-promote` skill that runs periodically (or in the Stop hook) to scan `fixes.jsonl` and upgrade mature patterns into full skill directories under `.ai/learning/promoted/`.
+## Additional Steps (learned)
+- After component implementation steps, always add an /aem-verify step
+  (Evidence: 5 tickets required manual verification catch-up)
 
-### Idea 2: Skill Patching / Self-Improvement (MEDIUM EFFORT, HIGH VALUE)
+## Project-Specific Pitfalls
+- Import paths use `@project/` alias, not relative `../` paths
+  (Evidence: 4 compilation fixes across tickets 2435084, 2435091, ...)
 
-**What Hermes does**: `skill_manage(action='patch')` — when using a skill and finding it outdated or incomplete, patch it immediately.
-
-**What to add**: A `dx-skill-feedback` mechanism where skills can record improvement suggestions:
-
-```yaml
-# .ai/learning/raw/skill-feedback.jsonl
-{
-  "timestamp": "2026-04-04T10:00:00Z",
-  "skill": "dx-plan",
-  "ticket": "2435084",
-  "feedback_type": "missing_step",
-  "description": "Plan didn't include AEM dialog XML validation step",
-  "suggested_addition": "After component implementation, verify dialog XML with /aem-verify"
-}
+## Adjusted Defaults
+- Default test command for this project: `mvn test -pl ui.frontend`
+  (config.yaml has full build; this is faster for step-level checks)
 ```
 
-**How it works**:
-1. Skills log feedback when they encounter gaps (e.g., dx-step-fix finds a pattern the plan missed)
-2. A periodic `dx-skill-review` skill reads feedback, clusters by skill, and suggests patches
-3. Author reviews and applies (keeping human-in-the-loop for plugin skills)
+**How enhancements get created**:
+1. After `dx-step-all` completes, the post-completion reflection (see Idea 4) analyzes what went wrong/right
+2. Patterns that recur (from `fixes.jsonl`) get promoted into the relevant skill's enhancement file
+3. Enhancement files are bounded (e.g., 2,000 chars) — forced curation, not unbounded append
 
-For **project-level skills** (`.claude/skills/`), the agent could apply patches directly — these are project-specific and lower risk.
+**Why this works**:
+- Plugin gets updated via CLI → enhancement file still applies (additive, not override)
+- Different projects get different enhancements (per-project learning)
+- Can be `.gitignore`d (per-developer) or committed (shared team knowledge)
+- No plugin code changes needed — just add the "load if exists" line to skills
 
-### Idea 3: Agent Memory Layer (MEDIUM EFFORT, HIGH VALUE)
+### Idea 2: Agent Memory Layer (LOW-MEDIUM EFFORT, HIGH VALUE)
 
-**What Hermes does**: `MEMORY.md` — compact declarative memory (2,200 chars) capturing environment facts, tool quirks, and conventions. Frozen at session start, updated for next session.
+**What Hermes does**: `MEMORY.md` (2,200 chars) + `USER.md` (1,375 chars) — bounded declarative memory.
 
-**What to add**: Per-project agent memory file:
+**What to add**: Two files in `.ai/`:
 
 ```
-.ai/memory.md          # Project-level agent memory (persists across sessions)
+.ai/memory.md          # Project operational knowledge (shared, committable)
+.ai/preferences.md     # Developer preferences (personal, .gitignore'd)
 ```
 
-**Content examples**:
-- "Build takes ~4 minutes on this project; use `mvn -pl <module>` for faster iteration"
-- "AEM author instance runs on port 4502 but QA is behind VPN — use publish for remote checks"
-- "Component dialog fields use `granite/ui/components/coral/foundation/form/textfield`, not the deprecated `granite/ui/components/foundation/form/textfield`"
-- "Team prefers explicit null checks over Optional pattern"
+**memory.md** (project-level, bounded 3,000 chars):
+```markdown
+# Project Memory
 
-**How it works**:
-1. SessionStart hook loads `.ai/memory.md` into context (already possible via context-loader)
-2. Stop hook (or a new PostToolUse hook) nudges agent: "Anything worth remembering from this session?"
-3. Agent appends to `.ai/memory.md` (bounded, say 3,000 chars)
-4. `.gitignore` it (per-developer) or commit it (shared team knowledge)
+## Build & Deploy
+- Full build takes ~4 min; use `mvn -pl ui.frontend` for frontend-only (45s)
+- QA AEM instance is behind VPN — use publish URL for remote checks
 
-### Idea 4: Skill Nudge System (LOW EFFORT, MEDIUM VALUE)
+## Code Conventions
+- Component dialogs use coral3 widgets, NOT granite foundation
+- Import alias: `@project/` maps to `ui.frontend/src/`
 
-**What Hermes does**: Turn-based counter. After N tool iterations without creating a skill, nudge the agent.
+## Known Quirks
+- The `hero` component has a legacy variant that doesn't support multifield
+- CI fails silently on SCSS lint errors — always run `npm run lint:css` locally
+```
 
-**What to add**: A PostToolUse hook that counts significant actions (build fixes, complex file edits, multi-step debugging) and suggests: "You just completed a complex workflow. Consider saving this as a learned pattern."
+**preferences.md** (per-developer, bounded 1,500 chars):
+```markdown
+# Developer Preferences
 
-**Implementation**: Add to `dx-step-all` and `dx-bug-all`:
+## Communication
+- Prefer concise explanations, skip obvious context
+- Show file paths with line numbers in suggestions
+
+## Workflow
+- Always run tests before committing (don't ask, just do it)
+- Prefer fixing lint issues inline rather than in a separate step
+```
+
+**Loading mechanism**: SessionStart hook (`context-loader.sh`) already loads ticket context. Add:
+```bash
+# Load project memory if exists
+[ -f .ai/memory.md ] && echo "## Project Memory" && cat .ai/memory.md
+[ -f .ai/preferences.md ] && echo "## Developer Preferences" && cat .ai/preferences.md
+```
+
+**Writing mechanism**: Stop hook or post-completion reflection nudges:
+> "Before ending, consider: did you learn anything about this project's build, conventions, or quirks that would save time next session? If so, update `.ai/memory.md`."
+
+### Idea 3: Post-Completion Reflection / Skill Nudge (LOW EFFORT, MEDIUM VALUE)
+
+**What Hermes does**: Turn-based nudge counter + post-task skill creation prompt.
+
+**What to add**: Prompt additions to coordinator skills (`dx-step-all`, `dx-bug-all`, `dx-req-all`):
+
 ```markdown
 ## Post-Completion Reflection
-After completing all steps, review the session:
-1. Did you discover a non-obvious pattern? → Log to `fixes.jsonl`
-2. Did you develop a multi-step debugging workflow? → Log to `skill-feedback.jsonl`
-3. Did you find a project-specific convention? → Append to `.ai/memory.md`
+
+After completing all steps, spend 30 seconds reflecting:
+
+1. **Fix patterns**: Did any error→fix recur? Check `.ai/learning/raw/fixes.jsonl`.
+   If a pattern has 3+ successes, promote to `.ai/learning/skills/<skill>/enhancements.md`.
+
+2. **Missing steps**: Did the plan miss something you had to add manually?
+   Append to `.ai/learning/skills/dx-plan/enhancements.md`:
+   `- Always include <what was missing> (Evidence: ticket <id>)`
+
+3. **Project knowledge**: Did you discover a build quirk, convention, or shortcut?
+   Append to `.ai/memory.md` (keep under 3,000 chars total — curate, don't hoard).
+
+4. **Skill feedback**: Did a plugin skill give wrong/outdated guidance?
+   Log to `.ai/learning/raw/skill-feedback.jsonl`:
+   `{"skill":"<name>","ticket":"<id>","issue":"<what was wrong>","suggestion":"<fix>"}`
 ```
 
-This is the cheapest version — no new tooling, just prompt additions to existing coordinator skills.
+**No new skills or hooks needed** — just prompt additions to existing coordinators.
 
-### Idea 5: Cross-Session Search (HIGH EFFORT, HIGH VALUE)
+### Idea 4: Richer Fix Promotion (LOW EFFORT, HIGH VALUE)
 
-**What Hermes does**: SQLite + FTS5 full-text search over all past sessions, summarized by a cheap model.
+**What Hermes does**: Creates full skill directories with procedures, pitfalls, verification.
 
-**What dx already has**: Spec directories persist structured output per ticket.
+**What dx already has**: `learned-fix-*.md` in `.claude/rules/` — one-liner rules.
 
-**What to add**: A `dx-recall` skill that searches across spec directories:
+**What to change**: Instead of (or in addition to) promoting to `.claude/rules/learned-fix-*.md`, also update the relevant skill's enhancement file:
 
-```bash
-# Search all past specs for relevant patterns
-grep -r "dialog XML" .ai/specs/*/research.md .ai/specs/*/implement.md
+```
+Current flow:
+  fixes.jsonl → (3+ successes) → .claude/rules/learned-fix-<slug>.md
+
+New flow:
+  fixes.jsonl → (3+ successes) → .claude/rules/learned-fix-<slug>.md        (keep, for rules layer)
+                               → .ai/learning/skills/dx-step/enhancements.md  (NEW, for skill context)
 ```
 
-**Implementation**: A skill that:
-1. Takes a query (e.g., "how did we handle multi-field dialogs?")
-2. Searches `.ai/specs/*/` with Grep for relevant content
-3. Summarizes findings from matching specs
-4. Optionally checks `.ai/learning/raw/*.jsonl` for related fix patterns
+The enhancement file gives richer context to the skill than a standalone rule. The rule fires as an always-on convention; the enhancement adds diagnostic steps and verification.
 
-This is simpler than Hermes's SQLite approach because dx already structures output into searchable spec files.
+### Idea 5: Skill Feedback Loop → Plugin Author (MEDIUM EFFORT, HIGH VALUE)
 
-### Idea 6: Skills Hub / Community Sharing (HIGH EFFORT, LONG-TERM)
+**What Hermes does**: `skill_manage(patch)` modifies skills directly.
 
-**What Hermes does**: `agentskills.io` open standard for publishing and installing community skills.
+**Adapted for dx**: Since plugins are released from GitHub, project-level feedback can flow **upstream** to the plugin author.
 
-**What to add**: The plugin marketplace (`/plugin marketplace`) already exists. Extend it with:
-- A "community skills" section where teams can publish learned-fix skills
-- Cross-project pattern sharing (e.g., "AEM dialog validation" skill works for any AEM project)
-- Security scanning on install (similar to Hermes's `skills_guard.py`)
+**Mechanism**:
+```
+.ai/learning/raw/skill-feedback.jsonl
+```
 
-This is already partially in place with the marketplace architecture. The gap is enabling **agent-generated** skills to flow into the marketplace.
+A new `dx-skill-feedback-report` skill reads this file and generates a summary:
+```markdown
+# Skill Feedback Report (2026-Q1)
 
-### Idea 7: Confidence-Calibrated Reviews (LOW EFFORT, MEDIUM VALUE)
+## dx-plan (4 feedback items)
+- Missing step: AEM dialog validation after component impl (3 occurrences)
+- Missing step: Cross-repo sync check for shared components (2 occurrences)
 
-**What Hermes does**: Not directly — but its memory system enables tracking accuracy over time.
+## dx-step (2 feedback items)  
+- Wrong default: Uses `mvn install` but project needs `mvn install -P autoInstallPackage`
+```
 
-**What dx already has**: `dx-code-reviewer` uses >= 80 confidence threshold.
+This report can be:
+- Attached to a GitHub issue on the plugin repo
+- Used by the plugin author to improve the next release
+- Aggregated across projects (if teams share reports) to prioritize improvements
 
-**What to add**: Track review accuracy in learning files:
+This is the dx equivalent of Hermes's self-evolution outer loop — but with a human in the loop (plugin author reviews and releases).
+
+### Idea 6: Cross-Session Recall via Specs (MEDIUM EFFORT, HIGH VALUE)
+
+**What Hermes does**: SQLite + FTS5 full-text search over past sessions.
+
+**What dx already has**: `.ai/specs/<id>-<slug>/` with structured output per ticket.
+
+**What to add**: A `dx-recall` skill:
+```markdown
+---
+name: dx-recall
+description: "Search past specs and learning data for relevant patterns"
+argument-hint: "<query>"
+model: haiku
+effort: low
+---
+
+1. Search `.ai/specs/*/research.md` and `.ai/specs/*/implement.md` for query matches
+2. Search `.ai/learning/raw/fixes.jsonl` for related error types
+3. Search `.ai/learning/skills/*/enhancements.md` for relevant learned patterns
+4. Summarize findings: what worked, what didn't, which approach to reuse
+```
+
+Simpler than Hermes's SQLite approach — specs are already structured and searchable.
+
+### Idea 7: Confidence Calibration (LOW EFFORT, MEDIUM VALUE)
+
+Track review accuracy in `.ai/learning/raw/reviews.jsonl`:
 ```jsonl
-{"timestamp": "...", "review_id": "PR-123-finding-4", "confidence": 85, "outcome": "accepted|rejected|modified"}
+{"review_id":"PR-123-finding-4","confidence":85,"outcome":"accepted|rejected"}
 ```
 
-Over time, calibrate the threshold: if findings at 80-85 confidence are consistently rejected, raise the threshold. If findings at 75-80 are consistently accepted, lower it.
+Over time, `dx-code-reviewer` reads this to auto-adjust its confidence threshold per project. Some projects have stricter standards (raise threshold); others are more tolerant (lower it).
 
 ---
 
-## Priority Ranking
+## Priority Ranking (Revised)
 
-| # | Idea | Effort | Value | Hermes Parallel |
-|---|------|--------|-------|-----------------|
-| 1 | Skill nudge (prompt additions) | Low | Medium | Nudge system |
-| 2 | Self-improving fix patterns | Low | High | Skill auto-creation |
-| 3 | Agent memory layer | Medium | High | MEMORY.md |
-| 4 | Skill feedback/patching | Medium | High | skill_manage(patch) |
-| 5 | Cross-session search (dx-recall) | Medium | High | Session search |
-| 6 | Confidence calibration | Low | Medium | Memory + accuracy tracking |
-| 7 | Skills hub / community sharing | High | Long-term | agentskills.io |
+| # | Idea | Effort | Value | Where It Lives |
+|---|------|--------|-------|----------------|
+| 1 | **Skill enhancement files** | Low | High | `.ai/learning/skills/<name>/enhancements.md` |
+| 2 | **Post-completion reflection** | Low | Medium | Prompt additions to coordinator skills |
+| 3 | **Agent memory** | Low-Med | High | `.ai/memory.md` + `.ai/preferences.md` |
+| 4 | **Richer fix promotion** | Low | High | Enhancement files + existing `learned-fix-*.md` |
+| 5 | **Cross-session recall** | Medium | High | New `dx-recall` skill |
+| 6 | **Skill feedback → upstream** | Medium | High | `.ai/learning/raw/skill-feedback.jsonl` → reports |
+| 7 | **Confidence calibration** | Low | Medium | `.ai/learning/raw/reviews.jsonl` |
+
+## Implementation Order
+
+**Phase 1 (zero plugin code changes):**
+- Add "load enhancements.md if exists" line to 4-5 key skills (dx-plan, dx-step, dx-step-all, dx-step-fix, dx-req)
+- Add post-completion reflection prompt to dx-step-all and dx-bug-all
+- Add memory.md/preferences.md loading to context-loader.sh SessionStart hook
+
+**Phase 2 (one new skill + hook updates):**
+- Create `dx-recall` skill
+- Update fix promotion to also write to enhancement files
+- Add Stop hook nudge for memory.md updates
+
+**Phase 3 (feedback loop):**
+- Create `dx-skill-feedback-report` skill
+- Aggregate feedback across projects for plugin improvement
 
 ---
 
