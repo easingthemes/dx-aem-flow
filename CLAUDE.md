@@ -27,7 +27,7 @@ AEM project knowledge (seed data) is now built into dx-aem — no separate plugi
 /dx-init
 /aem-init
 
-# Test standalone scaffold (no Claude Code needed)
+# Test standalone scaffold (bootstraps for any AI agent)
 node cli/bin/dx-scaffold.js /tmp/test-project --all
 ```
 
@@ -35,9 +35,27 @@ No compilation, linting, or automated test suite — verify skills manually by r
 
 ### Standalone CLI (`cli/`)
 
-`cli/bin/dx-scaffold.js` is a zero-dependency Node.js utility that replicates `/dx-init` + `/aem-init` output for users without Claude Code. It reads templates from `plugins/` at runtime — no bundling needed. When adding new templates or data files, the scaffold picks them up automatically (it iterates directories). Only changes to the scaffolding logic itself (new file categories, new placeholders) require updating `cli/lib/scaffold.js`.
+`cli/bin/dx-scaffold.js` is a zero-dependency Node.js utility that replicates `/dx-init` + `/aem-init` output for any AI coding agent. It reads templates from `plugins/` at runtime — no bundling needed. When adding new templates or data files, the scaffold picks them up automatically (it iterates directories). Only changes to the scaffolding logic itself (new file categories, new placeholders) require updating `cli/lib/scaffold.js`.
+
+**Always-generated files:** `.github/agents/` (agent definitions) and `AGENTS.md` (agent discovery) are always generated regardless of flags — they're consumed by Copilot CLI, VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent. The `--copilot` flag only controls extra Copilot-specific files (`copilot-instructions.md`, `.github/README.md`).
 
 ## Architecture
+
+### Cross-Platform Agent Support
+
+This repo supports multiple AI coding agents:
+
+| File | Purpose | Platforms |
+|------|---------|-----------|
+| `CLAUDE.md` | Full contributor guide (primary) | Claude Code |
+| `AGENTS.md` | Cross-tool instructions (subset of CLAUDE.md) | Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI |
+| `GEMINI.md` | Gemini CLI context (references AGENTS.md) | Gemini CLI |
+| `gemini-extension.json` | Gemini extension manifest | Gemini CLI |
+| `.codex/INSTALL.md` | Codex skill symlink instructions | Codex |
+| `.claude-plugin/` | Claude Code + Copilot CLI manifests | Claude Code, Copilot CLI |
+| `.cursor-plugin/` | Cursor manifests (with explicit paths) | Cursor |
+
+When updating architecture sections in CLAUDE.md, check if AGENTS.md needs a corresponding update.
 
 ### Four-Plugin Design
 
@@ -45,6 +63,7 @@ Plugins are independently installable. Non-AEM projects only need dx-core (+ dx-
 ```
 plugin/
 ├── .claude-plugin/plugin.json   # Plugin manifest (shared by Claude Code + Copilot CLI)
+├── .cursor-plugin/plugin.json   # Cursor manifest (with explicit skill/agent/hook paths)
 ├── .mcp.json                    # MCP server config
 ├── agents/                      # Agent definitions (*.md with YAML frontmatter)
 ├── skills/                      # Skill directories (*/SKILL.md)
