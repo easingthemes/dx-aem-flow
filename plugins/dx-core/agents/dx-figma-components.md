@@ -37,28 +37,43 @@ Build a list of UI building blocks found in the design. Categorize each:
 | **Organism** | header, footer, hero, navigation, form, product-list, carousel |
 | **Layout** | grid, container, section, sidebar, modal, tabs, accordion |
 
-### Step 2: Read Project Config
+### Step 2: Read Project Config & Discover Component Paths
 
 Read `.ai/config.yaml` for:
-- `frontend.components-dir` — where components live
+- `frontend.components-dir` — where frontend components live
 - `frontend.framework` — technology stack hints
+- `components.base-path` — project-specific component root (if set)
+
+Also check `.claude/rules/` for any rules that describe project structure (e.g., `fe-javascript.md`, `naming.md`).
+
+**Build a component search path list** from config. If config values are present, use them as primary search roots. If not configured, discover paths heuristically:
+```
+Glob: **/components/**  (head_limit: 30)
+Glob: **/src/**/*.{tsx,jsx,vue,svelte,hbs,html,htm}  (head_limit: 30)
+```
+
+The discovered paths tell you where this project keeps its components — use those paths for all subsequent searches.
 
 ### Step 3: Search for Existing Components
 
-For each UI building block identified in Step 1, search the codebase:
+For each UI building block identified in Step 1, search the codebase using the paths discovered in Step 2.
 
-**3a. Direct name search:**
+**3a. Direct name search** (use discovered component roots, not hardcoded paths):
 ```
-Glob: **/components/**/*button*  (for "button" building block)
-Glob: **/components/**/*card*    (for "card" building block)
-Glob: **/components/**/*hero*    (for "hero" building block)
+Glob: <components-dir>/**/*button*  (for "button" building block)
+Glob: <components-dir>/**/*card*    (for "card" building block)
+Glob: <components-dir>/**/*hero*    (for "hero" building block)
+```
+
+If no `components-dir` is known, fall back to broad search:
+```
+Glob: **/*button*.{js,ts,jsx,tsx,hbs,html,htm,vue,svelte}
+Glob: **/*card*.{js,ts,jsx,tsx,hbs,html,htm,vue,svelte}
 ```
 
 **3b. Broader component inventory:**
 ```
-Glob: **/components/**/           (list all component directories)
-Glob: **/ui.frontend/**/components/**/*.{js,ts,jsx,tsx,hbs,html}
-Glob: **/ui.apps/**/components/**
+Glob: <components-dir>/**/          (list all component directories)
 ```
 
 Scan component directory names and file names for matches against the building blocks list.
