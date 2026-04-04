@@ -277,6 +277,30 @@ Before presenting the generated plan:
 - [ ] No duplicate step numbers
 - [ ] Steps ordered by dependency (no forward references)
 
+## Anti-Rationalization
+
+Common excuses for weak planning — and why they're wrong:
+
+| False Logic | Reality Check |
+|---|---|
+| "I'll figure it out as I code" | Coding without a plan produces twice the rework. Plan first, code once. |
+| "The requirements are obvious" | "Obvious" requirements produce the most bugs. Write them down explicitly. |
+| "We don't need tests in the plan" | Every step needs a verification command. Untested steps are unverified steps. |
+| "I'll create a new utility for this" | Search first. 80% of the time an existing utility covers the need. |
+| "This is too simple for a plan" | If it touches >2 files, it needs a plan. "Simple" changes cause unexpected ripple effects. |
+| "I'll plan all the edge cases later" | Edge cases discovered during coding cause scope creep and rework. Surface them now. |
+
+## Risk-First Slicing
+
+When ordering steps, tackle highest-uncertainty pieces first:
+
+- **Unknown APIs or integrations** → spike early, fail fast
+- **Core data model changes** → establish early, everything depends on them
+- **Complex algorithms** → prove feasibility before building UI around them
+- **Simple UI wiring** → leave for last, lowest risk
+
+**Change sizing:** Aim for steps that produce ~100 lines of diff each. Smaller is reviewable; larger hides problems.
+
 ## Rules
 
 - **Grounded in research** — every file reference must come from research.md findings
