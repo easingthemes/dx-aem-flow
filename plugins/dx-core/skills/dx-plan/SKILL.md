@@ -34,6 +34,13 @@ Also check for Figma prototype files (from `/dx-figma-prototype`):
 
 If prototype files exist, the plan MUST reference them. Implementation steps should adapt the prototype into project-native code rather than building from scratch.
 
+**Component Reuse Map:** If `figma-conventions.md` contains a `### Component Reuse Map` section, the plan MUST respect it:
+- Components marked **Reuse as-is** → plan step says "Use existing `<component>` at `<path>`" — NO new file creation
+- Components marked **Extend** → plan step modifies the existing component file, adding the identified variant
+- Components marked **Compose** → plan step assembles from listed existing components — NO new wrapper when composition suffices
+- Components marked **Create new** → plan step creates a new component following the nearest existing pattern
+- **Atomic components (button, image, icon, link, input, badge) should ALWAYS be reused.** A plan step that recreates an existing atomic component is a plan defect.
+
 ## Hub Mode Check
 
 Read `shared/hub-dispatch.md` for hub detection logic.
