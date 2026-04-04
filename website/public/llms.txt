@@ -1,6 +1,6 @@
 # KAI — Enterprise AI Development Platform
 
-> Four Claude Code plugins providing 70+ skills for AI-assisted Azure DevOps and Atlassian development workflows, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.
+> Four Claude Code plugins providing 75+ skills for AI-assisted Azure DevOps and Atlassian development workflows, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.
 
 ## About
 
@@ -8,8 +8,8 @@ KAI is an open-source AI development platform built as Claude Code plugins. It p
 
 ## Plugins
 
-- **dx-core**: Platform-agnostic ADO/Jira workflow with 45 skills and 6 agents. Covers requirements, planning, execution, review, and PR creation.
-- **dx-hub**: Multi-repo orchestration with 3 skills for hub init, config, and status.
+- **dx-core**: Platform-agnostic ADO/Jira workflow with 48 skills and 7 agents. Covers requirements, planning, execution, review, and PR creation.
+- **dx-hub**: Multi-repo orchestration with 4 skills for hub init, config, and status.
 - **dx-aem**: AEM-specific verification, QA, and demo capture with 12 skills and 6 agents.
 - **dx-automation**: Autonomous AI agents (DoR/DoD checkers, PR reviewer, BugFix agent, QA agent) running as ADO pipelines via AWS Lambda webhooks. 11 skills.
 

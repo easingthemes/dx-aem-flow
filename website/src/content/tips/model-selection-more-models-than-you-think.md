@@ -29,7 +29,7 @@ keyPoints:
   - "Copilot agent fallback chains — specify `model: [claude-sonnet-4-6, gpt-5.4]` in agent config. If Claude is down, fall back to GPT automatically. Claude Code doesn't support this."
 actionItemsTitle: "Tier Wisely, Save 10x"
 actionItems:
-  - "The tiering principle — use the cheapest model that can do the job. Our 13 agents use 3 tiers: 1 Opus agent (code review), 8 Sonnet agents (execution), 4 Haiku agents (lookups). This saves 10x vs using Opus for everything."
+  - "The tiering principle — use the cheapest model that can do the job. Our 13 agents use 3 tiers: 1 Opus agent (code review), 5 Sonnet agents (execution), 7 Haiku agents (lookups). This saves 10x vs using Opus for everything."
   - |
     Match model to task
     - Deep reasoning/architecture → Opus
