@@ -178,7 +178,7 @@ Implement the changes:
 
 If the step has a `Test:` line and `superpowers:test-driven-development` is available, invoke it to guide the RED-GREEN-REFACTOR cycle.
 
-**Fallback (if superpowers not installed):** When a step includes tests:
+**Fallback (if superpowers not installed):** Follow the Red-Green-Refactor cycle from `shared/testing-patterns.md`:
 1. **RED:** Write/locate the test first. Run it — confirm it fails (proves the test validates something).
 2. **GREEN:** Write the minimal implementation to pass the test. No extras (YAGNI).
 3. **REFACTOR:** Clean up only after green — duplication, naming, structure — while staying green.
