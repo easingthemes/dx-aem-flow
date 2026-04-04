@@ -75,4 +75,11 @@
 | 61 | Azure Skills: evaluate Context7 MCP for live doc lookup | Low | Open | 2026-04-03 | [todo-azure-skills.md#context7](todo-azure-skills.md#2-context7-mcp--live-documentation-lookup) |
 | 62 | Azure Skills: publish dx-core to microsoft/skills catalog | Low | Open | 2026-04-03 | [todo-azure-skills.md#publish](todo-azure-skills.md#4-publish-to-microsoftskills-catalog) |
 
-**Counts:** 62 total — 9 done, 36 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending
+| 63 | Harness design: structured progress handoff artifact | High | Open | 2026-04-04 | [todo-harness-design.md#progress-file](todo-harness-design.md#3-structured-progress-file-for-cross-session-handoff) — single `progress.md` per spec-dir for cross-session context |
+| 64 | Harness design: automation agent startup protocol | High | Open | 2026-04-04 | [todo-harness-design.md#context-resets](todo-harness-design.md#4-context-resets-over-compaction) — standardize artifact-reading preamble for Lambda agents |
+| 65 | Harness design: iterative verify→fix→re-verify loop | Medium | Open | 2026-04-04 | [todo-harness-design.md#generator-evaluator](todo-harness-design.md#1-generatorevaluator-separation-gan-style-loop) — structured feedback file + capped retry cycle |
+| 66 | Harness design: JSON step status tracking | Medium | Open | 2026-04-04 | [todo-harness-design.md#feature-list-json](todo-harness-design.md#5-feature-list-as-json-not-markdown) — `implement-status.json` alongside `implement.md` |
+| 67 | Harness design: externalized grading rubrics | Medium | Open | 2026-04-04 | [todo-harness-design.md#grading-criteria](todo-harness-design.md#6-grading-criteria-for-subjective-quality) — `.ai/rules/code-quality-rubric.md` for project-specific thresholds |
+| 68 | Harness design: sprint contract / plan testability review | Medium | Open | 2026-04-04 | [todo-harness-design.md#sprint-contracts](todo-harness-design.md#2-sprint-contracts-pre-agreed-definition-of-done) — evaluator reviews plan done-criteria before execution |
+
+**Counts:** 68 total — 9 done, 42 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending
