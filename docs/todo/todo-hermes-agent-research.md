@@ -117,7 +117,7 @@ skills/
 | Hermes Concept | dx-aem-flow Equivalent | Gap |
 |----------------|----------------------|-----|
 | Skills (procedural memory) | `plugins/*/skills/*/SKILL.md` — static, author-written | No dynamic creation or self-patching |
-| Memory (declarative) | `.ai/config.yaml` + `.ai/rules/*.md` | No session-level agent memory |
+| Memory (declarative) | `.ai/config.yaml` + `.ai/rules/*.md` + `.ai/project/*` | Already covered |
 | User model | — | No user preference modeling |
 | Session search (episodic) | — | No cross-session recall |
 | Skill nudge system | — | No prompts to create/improve skills |
@@ -140,18 +140,18 @@ IMMUTABLE (released from GitHub, updated via CLI)     MUTABLE (per-project, agen
 ─────────────────────────────────────────────         ──────────────────────────────────────
 ~/.claude/plugins/dx-core/                            <project>/.ai/
   skills/dx-plan/SKILL.md                               config.yaml
-  skills/dx-step/SKILL.md                               memory.md              ← NEW
-  agents/dx-code-reviewer.md                             learning/raw/*.jsonl
-  rules/plan-format.md                                   learning/skills/       ← NEW
-  shared/error-handling.md                                 dx-plan/
-                                                             enhancements.md    ← NEW
-~/.claude/plugins/dx-aem/                                  dx-step/
-  skills/aem-verify/SKILL.md                                 enhancements.md    ← NEW
-  skills/aem-component/SKILL.md                          specs/<id>-<slug>/
-  agents/aem-inspector.md                                rules/
+  skills/dx-step/SKILL.md                               project/component-index.md
+  agents/dx-code-reviewer.md                             project/file-patterns.yaml
+  rules/plan-format.md                                   learning/raw/*.jsonl
+  shared/error-handling.md                               learning/skills/       ← NEW
+                                                           dx-plan/
+~/.claude/plugins/dx-aem/                                    enhancements.md    ← NEW
+  skills/aem-verify/SKILL.md                               dx-step/
+  skills/aem-component/SKILL.md                              enhancements.md    ← NEW
+  agents/aem-inspector.md                                specs/<id>-<slug>/
+                                                         rules/
                                                            plan-format.md       (override)
                                                            learned-fix-*.md     (promoted)
-                                                         preferences.md         ← NEW
 ```
 
 **The pattern**: Plugin skills remain the canonical source of truth. Project-level enhancement files **augment** plugin behavior without modifying the plugin. When you release a new plugin version, enhancements layer on top of the updated skill.
@@ -202,56 +202,11 @@ Apply them as additional constraints/steps alongside the base skill.
 - Can be `.gitignore`d (per-developer) or committed (shared team knowledge)
 - No plugin code changes needed — just add the "load if exists" line to skills
 
-### Idea 2: Agent Memory Layer (LOW-MEDIUM EFFORT, HIGH VALUE)
+### ~~Idea 2: Agent Memory Layer~~ — ALREADY COVERED
 
-**What Hermes does**: `MEMORY.md` (2,200 chars) + `USER.md` (1,375 chars) — bounded declarative memory.
+Project memory already exists across `.ai/config.yaml`, `.ai/rules/*.md`, `.ai/project/component-index.md`, `.ai/project/file-patterns.yaml`, `.ai/project/project.yaml`, `.ai/project/content-paths.yaml`, and `.ai/learning/raw/*.jsonl`. Adding a separate `memory.md` would be redundant. Developer preferences are covered by `.claude/settings.local.json` and personal CLAUDE.md.
 
-**What to add**: Two files in `.ai/`:
-
-```
-.ai/memory.md          # Project operational knowledge (shared, committable)
-.ai/preferences.md     # Developer preferences (personal, .gitignore'd)
-```
-
-**memory.md** (project-level, bounded 3,000 chars):
-```markdown
-# Project Memory
-
-## Build & Deploy
-- Full build takes ~4 min; use `mvn -pl ui.frontend` for frontend-only (45s)
-- QA AEM instance is behind VPN — use publish URL for remote checks
-
-## Code Conventions
-- Component dialogs use coral3 widgets, NOT granite foundation
-- Import alias: `@project/` maps to `ui.frontend/src/`
-
-## Known Quirks
-- The `hero` component has a legacy variant that doesn't support multifield
-- CI fails silently on SCSS lint errors — always run `npm run lint:css` locally
-```
-
-**preferences.md** (per-developer, bounded 1,500 chars):
-```markdown
-# Developer Preferences
-
-## Communication
-- Prefer concise explanations, skip obvious context
-- Show file paths with line numbers in suggestions
-
-## Workflow
-- Always run tests before committing (don't ask, just do it)
-- Prefer fixing lint issues inline rather than in a separate step
-```
-
-**Loading mechanism**: SessionStart hook (`context-loader.sh`) already loads ticket context. Add:
-```bash
-# Load project memory if exists
-[ -f .ai/memory.md ] && echo "## Project Memory" && cat .ai/memory.md
-[ -f .ai/preferences.md ] && echo "## Developer Preferences" && cat .ai/preferences.md
-```
-
-**Writing mechanism**: Stop hook or post-completion reflection nudges:
-> "Before ending, consider: did you learn anything about this project's build, conventions, or quirks that would save time next session? If so, update `.ai/memory.md`."
+**Hermes needs MEMORY.md because it has no structured project layer.** dx-aem-flow already has one — `.ai/` IS the memory.
 
 ### Idea 3: Post-Completion Reflection / Skill Nudge (LOW EFFORT, MEDIUM VALUE)
 
@@ -371,23 +326,21 @@ Over time, `dx-code-reviewer` reads this to auto-adjust its confidence threshold
 |---|------|--------|-------|----------------|
 | 1 | **Skill enhancement files** | Low | High | `.ai/learning/skills/<name>/enhancements.md` |
 | 2 | **Post-completion reflection** | Low | Medium | Prompt additions to coordinator skills |
-| 3 | **Agent memory** | Low-Med | High | `.ai/memory.md` + `.ai/preferences.md` |
-| 4 | **Richer fix promotion** | Low | High | Enhancement files + existing `learned-fix-*.md` |
-| 5 | **Cross-session recall** | Medium | High | New `dx-recall` skill |
-| 6 | **Skill feedback → upstream** | Medium | High | `.ai/learning/raw/skill-feedback.jsonl` → reports |
-| 7 | **Confidence calibration** | Low | Medium | `.ai/learning/raw/reviews.jsonl` |
+| 3 | **Richer fix promotion** | Low | High | Enhancement files + existing `learned-fix-*.md` |
+| 4 | **Cross-session recall** | Medium | High | New `dx-recall` skill |
+| 5 | **Skill feedback → upstream** | Medium | High | `.ai/learning/raw/skill-feedback.jsonl` → reports |
+| 6 | **Confidence calibration** | Low | Medium | `.ai/learning/raw/reviews.jsonl` |
+| ~~7~~ | ~~Agent memory~~ | — | — | Already covered by `.ai/` structure |
 
 ## Implementation Order
 
-**Phase 1 (zero plugin code changes):**
+**Phase 1 (minimal plugin changes):**
 - Add "load enhancements.md if exists" line to 4-5 key skills (dx-plan, dx-step, dx-step-all, dx-step-fix, dx-req)
 - Add post-completion reflection prompt to dx-step-all and dx-bug-all
-- Add memory.md/preferences.md loading to context-loader.sh SessionStart hook
 
-**Phase 2 (one new skill + hook updates):**
+**Phase 2 (one new skill + promotion update):**
 - Create `dx-recall` skill
 - Update fix promotion to also write to enhancement files
-- Add Stop hook nudge for memory.md updates
 
 **Phase 3 (feedback loop):**
 - Create `dx-skill-feedback-report` skill
@@ -417,12 +370,10 @@ Over time, `dx-code-reviewer` reads this to auto-adjust its confidence threshold
 
 1. **Frozen snapshot pattern**: Load memory/context at session start, never mutate mid-session. Write updates for next session. This preserves prefix cache and avoids mid-conversation drift.
 
-2. **Bounded memory**: Hermes caps MEMORY.md at 2,200 chars and USER.md at 1,375 chars. Bounded stores force curation — the agent must decide what's truly worth remembering. Unbounded stores become noise.
+2. **Bounded enhancement files**: Hermes caps MEMORY.md at 2,200 chars. Enhancement files should be similarly bounded (e.g., 2,000 chars) to force curation — the agent must decide what's truly worth keeping. Unbounded files become noise.
 
 3. **Progressive disclosure for skills**: Don't dump all skill content into context. Show metadata (name, description) first, load full instructions only when invoked. dx-aem-flow already does this via SKILL.md frontmatter.
 
-4. **Security scanning on learned content**: Any agent-generated content (skills, memory, fix patterns) should be scanned for injection patterns before being loaded into future sessions. This prevents a compromised session from poisoning future ones.
+4. **Security scanning on learned content**: Any agent-generated content (enhancement files, fix patterns) should be scanned for injection patterns before being loaded into future sessions. This prevents a compromised session from poisoning future ones.
 
 5. **Nudge, don't force**: Hermes nudges the agent to consider saving skills/memory at intervals. It doesn't mandate it. This keeps the agent focused on the task while opportunistically capturing knowledge.
-
-6. **Separate agent memory from user memory**: Hermes splits MEMORY.md (agent's operational notes) from USER.md (user preferences). dx could split `.ai/memory.md` (project ops) from `.ai/preferences.md` (developer prefs).
