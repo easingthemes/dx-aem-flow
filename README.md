@@ -6,7 +6,7 @@
 [![semantic-release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Enterprise AI development platform for teams shipping on Azure DevOps and Atlassian. 70+ skills that run identically across **Claude Code**, **GitHub Copilot CLI**, and **VS Code Chat** — from ticket to PR, fully autonomous. Deep AEM specialization built in.
+Enterprise AI development platform for teams shipping on Azure DevOps and Atlassian. 71+ skills that run identically across **Claude Code**, **GitHub Copilot CLI**, and **VS Code Chat** — from ticket to PR, fully autonomous. Deep AEM specialization built in.
 
 ## Why This Exists
 
@@ -15,7 +15,7 @@ Enterprise teams run complex sprints across multiple repos, multiple IDEs, and m
 KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines across every major AI platform. A single command like `/dx-req-all` pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
 
 **What makes it different:**
-- **Every AI platform** — same 70+ skills work identically in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config, same results — regardless of which IDE your team uses.
+- **Every AI platform** — same 71+ skills work identically in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config, same results — regardless of which IDE your team uses.
 - **Enterprise governance** — DoR validation, 6-phase verification gate (compile, lint, test, secret scan, architecture review, AI code review), autonomous PR review, and branch protection. Ship with confidence.
 - **AEM full-flow** — purpose-built AEM tooling covering Figma → component → dialog inspection → JCR content → editorial QA → browser automation → demo capture. Includes the [AEM MCP server](https://www.npmjs.com/package/aem-mcp-server) for live dialog and JCR access. The complete AEM development lifecycle, config-driven for your project.
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
@@ -50,7 +50,7 @@ From a local clone:
 
 Full-stack development workflow for Azure DevOps and Jira projects: requirements gathering, implementation planning, step-by-step execution with testing and review, code review, bug fixes, and PR management.
 
-**42 skills, 6 agents.** Works with any tech stack.
+**45 skills, 6 agents.** Works with any tech stack.
 
 ### [dx-hub](plugins/dx-hub/) — Multi-Repo Orchestration
 
@@ -133,7 +133,7 @@ These plugins work across the AI coding agent ecosystem at three levels:
 
 | Level | Agents | What Works |
 |-------|--------|------------|
-| **Full workflow** | Claude Code, Copilot CLI | Plugin install, all 70+ skills, agent orchestration, hooks |
+| **Full workflow** | Claude Code, Copilot CLI | Plugin install, all 71+ skills, agent orchestration, hooks |
 | **Agents + rules** | VS Code Chat, Copilot coding agent, Codex CLI | `.github/agents/`, `AGENTS.md`, rules, MCP servers |
 | **Rules + MCP** | Cursor, Windsurf, Amazon Q, Cline, Continue | Coding conventions from `.claude/rules/`, MCP server configs |
 
