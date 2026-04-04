@@ -1,3 +1,10 @@
+# [2.91.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.90.0...v2.91.0) (2026-04-04)
+
+
+### Features
+
+* add CI check that stats.ts matches actual plugin counts ([3817311](https://github.com/easingthemes/dx-aem-flow/commit/3817311c0ea5aa89745f9172b8a383c8df979340))
+
 # [2.90.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.89.0...v2.90.0) (2026-04-04)
 
 
