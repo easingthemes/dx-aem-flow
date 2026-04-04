@@ -12,7 +12,7 @@ slackOneLiner: "🤖 Tip #51 — Don't plan a plugin — grow one. Start with on
 keyPointsTitle: "The Growth Path"
 actionItemsTitle: "Your First Steps"
 keyPoints:
-  - "**The meta-lesson** — Don't plan a plugin. Grow one. Our 71 skills across 4 plugins didn't start as a 'comprehensive AI development platform' — they started as 'I'm tired of typing the same build command.'"
+  - "**The meta-lesson** — Don't plan a plugin. Grow one. Our 75 skills across 4 plugins didn't start as a 'comprehensive AI development platform' — they started as 'I'm tired of typing the same build command.'"
   - |
     **Month-by-month evolution**
     - Month 1 — One skill solving one pain point (a build checker, a convention reminder)
