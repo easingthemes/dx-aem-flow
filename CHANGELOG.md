@@ -1,3 +1,15 @@
+# [2.90.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.89.0...v2.90.0) (2026-04-04)
+
+
+### Bug Fixes
+
+* update all counts to match actual plugin directories ([7f8af27](https://github.com/easingthemes/dx-aem-flow/commit/7f8af27a6186ff97129cadfeb9451938100437fe))
+
+
+### Features
+
+* centralize skill/agent counts into stats.ts config ([5e21e5e](https://github.com/easingthemes/dx-aem-flow/commit/5e21e5eb553be950c3735ed9469b0423dac1efab))
+
 # [2.89.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.88.0...v2.89.0) (2026-04-04)
 
 
