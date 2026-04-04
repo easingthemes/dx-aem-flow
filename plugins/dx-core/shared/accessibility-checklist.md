@@ -1,6 +1,6 @@
 # Accessibility Checklist
 
-Reference checklist used by `/dx-axe`, `/dx-ship`, and `/dx-step-verify`. Skills reference this — do not delete.
+Reference checklist used by `/dx-axe` and `/dx-step-verify`. Skills reference this — do not delete.
 
 ## WCAG 2.1 AA Requirements
 

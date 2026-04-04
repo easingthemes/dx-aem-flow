@@ -87,7 +87,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-council | `/dx-council` | `<question or 'the plan' / 'the implementation'>` | Run a decision through an LLM Council — 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: `council the plan`, `council the implementation`. Adapted from Karpathy's LLM Council. | `council-transcript.md` |
 
-### Quality & Hardening — 5 skills
+### Quality & Hardening — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|

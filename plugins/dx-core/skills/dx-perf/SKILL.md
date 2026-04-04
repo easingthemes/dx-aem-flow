@@ -3,6 +3,7 @@ name: dx-perf
 description: Performance audit — measure baseline, identify bottlenecks, fix, verify improvement. Covers Core Web Vitals, bundle analysis, N+1 queries, and profiling. Use when performance requirements exist or regressions are suspected.
 argument-hint: "[target: 'frontend' | 'backend' | 'bundle' | 'all' (default: all)]"
 model: sonnet
+effort: high
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
