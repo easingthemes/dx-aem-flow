@@ -76,14 +76,16 @@ Client-specific plugins can live alongside these plugins for project-specific en
 
 ## Quick Start
 
-### With Claude Code (interactive)
+Three ways to initialize — all produce the same project structure:
+
+### Claude Code
 
 ```bash
-# 1. Install
+# 1. Install plugins
 /plugin marketplace add easingthemes/dx-aem-flow
 /plugin install dx-core@dx-aem-flow
 
-# 2. Initialize your project
+# 2. Initialize (interactive — detects your project, asks a few questions)
 /dx-init
 
 # 3. Work on a story
@@ -95,18 +97,47 @@ Client-specific plugins can live alongside these plugins for project-specific en
 /dx-pr                      # Create pull request
 ```
 
-### Without Claude Code (standalone scaffold)
+### GitHub Copilot CLI
 
-For users who don't have Claude Code, the CLI utility creates the same project structure with default values:
+```bash
+# 1. Install plugins (same format, same skills)
+/plugin install easingthemes/dx-aem-flow/dx-core
+
+# 2. Initialize (same interactive flow)
+/dx-init
+
+# 3. Work on a story — same skills, same agents
+@DxReqAll 2416553          # Full requirements workflow
+@DxPlanExecutor             # Generate and execute plan
+@DxStepAll                  # Execute all steps
+@DxCodeReview               # Code review
+@DxCommit pr                # Commit and create PR
+```
+
+### Standalone scaffold (any agent or no agent)
+
+Bootstrap the project config without installing plugins first. Works with any AI coding agent — Claude Code, Copilot CLI, Codex, or others:
 
 ```bash
 # From a clone of this repo:
-node dx/cli/bin/dx-scaffold.js /path/to/your-project --all
+node cli/bin/dx-scaffold.js /path/to/your-project --all
 
-# Flags: --aem (AEM files), --copilot (Copilot agents), --all (both)
+# Flags: --aem (AEM-specific files), --all (everything)
 ```
 
-Auto-detects git remote, SCM provider, project type, and base branch. Outputs ~144 files with TODO placeholders — edit `.ai/config.yaml` afterwards. See [cli/README.md](cli/README.md) for details.
+Auto-detects git remote, SCM provider, project type, and base branch. Generates config, rules, agents, and `AGENTS.md` — edit `.ai/config.yaml` to set your actual values. See [cli/README.md](cli/README.md) for details.
+
+## Agent Compatibility
+
+These plugins work across the AI coding agent ecosystem at three levels:
+
+| Level | Agents | What Works |
+|-------|--------|------------|
+| **Full workflow** | Claude Code, Copilot CLI | Plugin install, all 70+ skills, agent orchestration, hooks |
+| **Agents + rules** | VS Code Chat, Copilot coding agent, Codex CLI | `.github/agents/`, `AGENTS.md`, rules, MCP servers |
+| **Rules + MCP** | Cursor, Windsurf, Amazon Q, Cline, Continue | Coding conventions from `.claude/rules/`, MCP server configs |
+
+The scaffold generates `AGENTS.md` (read by Codex CLI, Windsurf, Copilot coding agent) and `.github/agents/` (read by VS Code Chat, Copilot CLI) so agent profiles work even without plugin installation.
 
 ## Documentation
 

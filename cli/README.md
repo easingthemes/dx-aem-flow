@@ -1,6 +1,6 @@
 # dx-scaffold CLI
 
-Standalone Node.js utility that creates the same project structure as `/dx-init` + `/aem-init` Claude Code skills — without requiring Claude Code.
+Standalone Node.js utility that bootstraps the same project structure as `/dx-init` + `/aem-init` skills — for any AI coding agent (Claude Code, Copilot CLI, Codex CLI, VS Code Chat, Windsurf, and others).
 
 No interactive prompts. Auto-detects environment, scaffolds all files with defaults, user edits config afterwards.
 
@@ -22,13 +22,15 @@ node cli/bin/dx-scaffold.js /path/to/project --all --force
 | Flag | Description |
 |------|-------------|
 | `--aem` | Include AEM rules, instructions, seed data |
-| `--copilot` | Include Copilot agents and instructions |
+| `--copilot` | Include extra Copilot files (`copilot-instructions.md`, `.github/README.md`) |
 | `--all` | Both `--aem` and `--copilot` |
 | `--force` | Overwrite existing files (default: skip) |
 | `--quiet` | Suppress per-file output |
 | `--help` | Show help |
 
 AEM is auto-enabled when the project has AEM markers (`pom.xml` + `ui.apps`/`ui.content`/`jcr_root`).
+
+Agent definitions (`.github/agents/`) and `AGENTS.md` are **always generated** — they're consumed by multiple agents (Copilot CLI, VS Code Chat, Codex CLI, Windsurf, Copilot coding agent).
 
 ## What It Creates
 
@@ -45,9 +47,10 @@ AEM is auto-enabled when the project has AEM markers (`pom.xml` + `ui.apps`/`ui.
 | `.ai/project/` | 5 AEM seed data files | Generated with defaults |
 | `.claude/rules/` | 11 coding convention rules | `dx-core` + `dx-aem` templates |
 | `.claude/hooks/` | 1 lifecycle hook | `dx-core/data/hooks/` |
-| `.github/agents/` | 25 Copilot agents | `dx-core` + `dx-aem` templates |
+| `.github/agents/` | 25 agent definitions | `dx-core` + `dx-aem` templates |
 | `.github/instructions/` | 8 AEM instruction docs | `dx-aem/templates/instructions/` |
 | `.mcp.json` | MCP server config | Generated |
+| `AGENTS.md` | Agent discovery (Codex, Windsurf) | Generated from `.github/agents/` |
 | `agent.index.md` | Machine-readable doc map | `dx-core/templates/INDEX.md.template` |
 
 ## Auto-Detection
@@ -66,9 +69,21 @@ The CLI detects from the target project:
 1. **Edit `.ai/config.yaml`** — replace `TODO` and `YOUR_*` placeholders with actual values
 2. **If AEM** — set author/publish URLs, QA credentials, populate `.ai/project/component-index.md`
 3. **If AEM** — fill in `.ai/project/architecture.md` and `features.md`
-4. **If Copilot** — review `.github/agents/`
 
-The scaffold output is identical to what `/dx-init` + `/aem-init` produce. Running the Claude Code init skills later will re-detect and update values (existing files are preserved by default).
+The scaffold output is identical to what `/dx-init` + `/aem-init` produce. Running the init skills later (in Claude Code or Copilot CLI) will re-detect and update values interactively (existing files are preserved by default).
+
+## Agent Compatibility
+
+| Agent | What it uses from the scaffold |
+|-------|-------------------------------|
+| **Claude Code** | Everything — plugins add skills on top |
+| **Copilot CLI** | Everything — same plugin format, same skills |
+| **VS Code Chat** | `.github/agents/`, `.claude/rules/`, `.mcp.json` |
+| **Codex CLI** | `AGENTS.md`, `.github/agents/`, `.mcp.json` |
+| **Windsurf** | `AGENTS.md` (always-on), `.mcp.json` |
+| **Cursor** | `.claude/rules/` (via settings), `.mcp.json` |
+| **Amazon Q** | `.claude/rules/` (copy to `.amazonq/rules/`), MCP |
+| **Cline** | `.claude/rules/` (copy to `.clinerules/`), MCP |
 
 ## Requirements
 
