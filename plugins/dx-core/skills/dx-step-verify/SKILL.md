@@ -379,6 +379,20 @@ Return verdict so the pipeline STOPS. List remaining issues clearly. The calling
   **Cause:** A test fixture or config file contains a string matching the secret pattern regex (e.g., `password=test123`).
   **Fix:** Verify the flagged content is not a real secret. If it's a false positive, the skill stops at Phase 4 — you'll need to proceed manually or adjust the secret scan patterns.
 
+## Anti-Rationalization
+
+Common excuses for skipping or weakening verification — and why they're wrong:
+
+| False Logic | Reality Check |
+|---|---|
+| "Tests pass, that's enough" | Tests are necessary but not sufficient. They prove what you tested, not what you didn't. |
+| "AI-generated code is fine — it compiled" | AI-generated code has higher false-confidence risk. Review it MORE carefully, not less. |
+| "I wrote it, so I know it's correct" | Author blindness is real. The reviewer catches what the author's mental model skips. |
+| "We'll clean it up later" | Deferred cleanup rarely happens. Technical debt compounds like interest. |
+| "It's a small change, no review needed" | Small changes cause big outages. The 2-line off-by-one is the classic production incident. |
+| "The review is slowing us down" | Shipping a bug to production is slower. Reviews are the fastest way to catch issues. |
+| "This is just a config change" | Config changes can break entire environments. They deserve the same scrutiny as code. |
+
 ## Rules
 
 - **Never switch branches or stash** — all git operations stay on the current branch. Use `git diff` and `git merge-base` only. Never `git stash`, `git checkout`, or `git switch`.

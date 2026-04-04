@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 45 skills
+## dx-core plugin — 48 skills
 
 ### Estimation — 1 skill
 
@@ -87,11 +87,14 @@
 |-------|-----------|----------|-------------|--------|
 | dx-council | `/dx-council` | `<question or 'the plan' / 'the implementation'>` | Run a decision through an LLM Council — 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: `council the plan`, `council the implementation`. Adapted from Karpathy's LLM Council. | `council-transcript.md` |
 
-### Quality — 1 skill
+### Quality & Hardening — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-axe | `/dx-axe` | `<URL> [--fix] [--standard wcag2aa\|wcag21aa]` | Accessibility testing using axe MCP Server — analyze violations, get remediation guidance, apply fixes, verify. Requires Docker + Axe DevTools API key. | Violation report, fixes |
+| dx-perf | `/dx-perf` | `[frontend\|backend\|bundle\|all]` | Performance audit — measure baseline, identify bottlenecks (Core Web Vitals, N+1 queries, bundle size), fix, verify improvement with evidence. Measurement-first approach. | Performance report |
+| dx-security | `/dx-security` | `[changes\|full]` | Security hardening audit — OWASP Top 10 prevention, secrets scan, dependency audit, input validation, auth review. Three-tier boundary system (Always/Ask/Never). Uses `model: opus`. | Security audit report |
+| dx-simplify | `/dx-simplify` | `[file path or directory]` | Code simplification — reduce complexity while maintaining behavioral equivalence. Chesterton's Fence (understand before changing), Rule of 500, dead code removal. Uses `model: opus`. | Simplification report |
 
 ### Sync — 1 skill
 

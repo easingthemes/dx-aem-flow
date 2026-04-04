@@ -945,6 +945,52 @@ Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` wit
 - [ ] ≤ 10 findings (per max-findings rule)
 - [ ] Overall verdict present: Approve / Request Changes
 
+## Five-Axis Review Methodology
+
+Every review MUST evaluate changes across all five axes — not just "does it work":
+
+| Axis | What to Check | Common Misses |
+|------|---------------|---------------|
+| **Correctness** | Spec alignment, edge cases, error handling, null safety | Off-by-one, empty collections, race conditions |
+| **Readability** | Naming, control flow, code density, comments | Cryptic names, nested ternaries, magic numbers |
+| **Architecture** | Pattern consistency, module boundaries, dependency direction | Leaky abstractions, circular deps, wrong layer |
+| **Security** | Input validation, secrets, injection, auth checks | XSS via innerHTML, SQL concat, missing authz |
+| **Performance** | N+1 queries, unbounded loops, memory leaks, bundle size | Missing pagination, eager loading, no caching |
+
+### Severity Labels
+
+Use explicit labels to eliminate ambiguity in review comments:
+
+| Label | Meaning | Author Action |
+|-------|---------|---------------|
+| *(no prefix)* | **Mandatory** — blocks merge | Must fix |
+| **Critical** | **Blocking** — bug, security, data loss risk | Must fix before merge |
+| **Important** | **Blocking** — correctness or architecture issue | Must fix or justify |
+| **Nit** / **Optional** | **Discretionary** — style, naming, minor improvement | Author decides |
+| **FYI** | **Informational** — context, alternative approach | No action needed |
+
+### Change Sizing
+
+Optimal PR size is ~100-300 lines of diff. Larger PRs should be flagged:
+
+- **< 100 lines** — quick review, low risk
+- **100-300 lines** — ideal review size
+- **300-500 lines** — review in sections, flag in summary
+- **> 500 lines** — suggest splitting before review. Review quality degrades significantly beyond this.
+
+## Anti-Rationalization
+
+Common excuses for weak reviews — and why they're wrong:
+
+| False Logic | Reality Check |
+|---|---|
+| "It works, that's enough" | Working code can still have security holes, performance bugs, and maintenance nightmares. |
+| "Tests pass, so it's fine" | Tests prove what was tested, not what wasn't. Tests miss edge cases the author didn't think of. |
+| "The author is senior, no need for deep review" | Senior developers make different mistakes, not fewer. Fresh eyes catch what familiarity hides. |
+| "It's just a style issue" | Consistent style prevents bugs. Mixed patterns cause the next developer to misread intent. |
+| "I'll approve now, they can fix it later" | "Later" never comes. Post-merge fixes have 10x the cost of pre-merge fixes. |
+| "AI-generated code doesn't need review" | AI code needs MORE review — it produces plausible-looking bugs that pass superficial inspection. |
+
 ## Rules
 
 - **Agent handles analysis** — diff, context loading, and code review run inside the `dx-pr-reviewer` agent, keeping the main context lean
