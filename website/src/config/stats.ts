@@ -9,7 +9,10 @@ export const stats = {
   dxCoreAgents: 6,
   dxAemAgents: 6,
   copilotAgents: 25,
+  copilotDxCoreAgents: 15,
+  copilotDxAemAgents: 10,
   autonomousAgents: 10,
   totalPlugins: 4,
   mcpServers: 6,
+  aiPlatforms: 3,
 };
