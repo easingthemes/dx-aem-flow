@@ -39,12 +39,29 @@ No compilation, linting, or automated test suite — verify skills manually by r
 
 ## Architecture
 
+### Cross-Platform Agent Support
+
+This repo supports multiple AI coding agents:
+
+| File | Purpose | Platforms |
+|------|---------|-----------|
+| `CLAUDE.md` | Full contributor guide (primary) | Claude Code |
+| `AGENTS.md` | Cross-tool instructions (subset of CLAUDE.md) | Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI |
+| `GEMINI.md` | Gemini CLI context (references AGENTS.md) | Gemini CLI |
+| `gemini-extension.json` | Gemini extension manifest | Gemini CLI |
+| `.codex/INSTALL.md` | Codex skill symlink instructions | Codex |
+| `.claude-plugin/` | Claude Code + Copilot CLI manifests | Claude Code, Copilot CLI |
+| `.cursor-plugin/` | Cursor manifests (with explicit paths) | Cursor |
+
+When updating architecture sections in CLAUDE.md, check if AGENTS.md needs a corresponding update.
+
 ### Four-Plugin Design
 
 Plugins are independently installable. Non-AEM projects only need dx-core (+ dx-hub for multi-repo). Each plugin has:
 ```
 plugin/
 ├── .claude-plugin/plugin.json   # Plugin manifest (shared by Claude Code + Copilot CLI)
+├── .cursor-plugin/plugin.json   # Cursor manifest (with explicit skill/agent/hook paths)
 ├── .mcp.json                    # MCP server config
 ├── agents/                      # Agent definitions (*.md with YAML frontmatter)
 ├── skills/                      # Skill directories (*/SKILL.md)
