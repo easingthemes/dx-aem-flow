@@ -14,7 +14,7 @@ class Scaffold {
     this.dxPlugin = path.join(pluginsDir, 'dx-core');
     this.aemPlugin = path.join(pluginsDir, 'dx-aem');
     this.autoPlugin = path.join(pluginsDir, 'dx-automation');
-    this.options = options; // { aem, copilot, force }
+    this.options = options; // { aem, copilot, force, quiet }
     this.stats = { installed: 0, skipped: 0 };
     this.placeholders = {};
   }
@@ -71,8 +71,12 @@ class Scaffold {
       this.installAemProjectSeedData();
     }
 
+    // Always generate agents and AGENTS.md — consumed by Copilot CLI,
+    // VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent.
+    this.installCopilotAgents();
+    this.installAgentsMd();
+
     if (this.options.copilot) {
-      this.installCopilotAgents();
       this.installCopilotInstructions();
     }
 
@@ -91,8 +95,10 @@ class Scaffold {
     if (this.options.aem) {
       dirs.push('.ai/project');
     }
+    // Always create .github/agents/ — consumed by multiple AI agents
+    dirs.push('.github/agents');
     if (this.options.copilot) {
-      dirs.push('.github/agents', '.github/instructions');
+      dirs.push('.github/instructions');
     }
     for (const dir of dirs) {
       this.mkdirp(dir);
@@ -530,6 +536,68 @@ Each feature should include: what it does, which components are involved, key co
       const content = this.readTemplate(readmeSrc);
       this.writeFile('.github/README.md', content);
     }
+  }
+
+  // =============================================================
+  //  AGENTS.md — cross-agent discovery file
+  // =============================================================
+
+  /**
+   * Generate AGENTS.md at project root.
+   * Read by Codex CLI (primary instruction file), Windsurf (always-on),
+   * and the Copilot coding agent. Lists all available agents with
+   * invocation syntax.
+   */
+  installAgentsMd() {
+    const agentsDir = path.join(this.targetDir, '.github', 'agents');
+    if (!fs.existsSync(agentsDir)) return;
+
+    const agents = [];
+    for (const file of fs.readdirSync(agentsDir).sort()) {
+      if (!file.endsWith('.agent.md')) continue;
+      const name = file.replace('.agent.md', '');
+      const content = fs.readFileSync(path.join(agentsDir, file), 'utf8');
+      const desc = this.extractFrontmatterField(content, 'description') || '';
+      const shortDesc = desc.length > 80 ? desc.slice(0, 77) + '...' : desc;
+      agents.push({ name, desc: shortDesc });
+    }
+
+    if (agents.length === 0) return;
+
+    // Group agents by prefix
+    const dxAgents = agents.filter(a => a.name.startsWith('Dx'));
+    const aemAgents = agents.filter(a => a.name.startsWith('AEM'));
+    const otherAgents = agents.filter(a => !a.name.startsWith('Dx') && !a.name.startsWith('AEM'));
+
+    let md = `# Agents
+
+Available AI agents for this project. Invoke with \`@AgentName\` in Copilot CLI, VS Code Chat, or as subagents in Claude Code.
+
+`;
+
+    const writeTable = (title, list) => {
+      if (list.length === 0) return '';
+      let table = `## ${title}\n\n| Agent | Description | Invoke |\n|-------|-------------|--------|\n`;
+      for (const a of list) {
+        table += `| ${a.name} | ${a.desc} | \`@${a.name}\` |\n`;
+      }
+      return table + '\n';
+    };
+
+    md += writeTable('Development Workflow', dxAgents);
+    md += writeTable('AEM', aemAgents);
+    md += writeTable('Other', otherAgents);
+
+    this.writeFile('AGENTS.md', md.trimEnd() + '\n');
+  }
+
+  /**
+   * Extract a field value from YAML frontmatter in a markdown file.
+   */
+  extractFrontmatterField(content, field) {
+    const match = content.match(new RegExp(`^${field}:\\s*(.+)$`, 'm'));
+    if (!match) return null;
+    return match[1].replace(/^["']|["']$/g, '').trim();
   }
 
   // =============================================================
