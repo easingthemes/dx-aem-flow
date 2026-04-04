@@ -6,12 +6,14 @@ on:
     paths:
       - 'plugins/**'
       - 'scripts/validate-*.sh'
+      - 'website/src/config/stats.ts'
       - '.github/workflows/validate.yml'
   pull_request:
     branches: [main]
     paths:
       - 'plugins/**'
       - 'scripts/validate-*.sh'
+      - 'website/src/config/stats.ts'
 
 jobs:
   validate:
@@ -24,3 +26,5 @@ jobs:
         run: bash scripts/validate-agents.sh
       - name: Validate structure
         run: bash scripts/validate-structure.sh
+      - name: Validate stats
+        run: bash scripts/validate-stats.sh
