@@ -152,6 +152,16 @@ Three quick validation queries against AEM QA:
 
 ### Execute the step
 
+#### Incremental Implementation Principles
+
+Before writing code, apply these guardrails:
+
+- **Vertical slices** — implement the smallest complete piece of functionality. Each change should leave the system in a working state.
+- **Safe defaults** — new code opts into behavior conservatively. New features default to OFF.
+- **Rollback-friendly** — prefer additive changes (new files, new methods) over modifications. Additive changes are independently revertable.
+- **Scope discipline** — touch only files listed in the step's **Files:** section. Note adjacent improvements in a comment, don't fix them.
+- **No premature abstraction** — three similar lines of code beat a premature helper. Only abstract when the third use appears.
+
 Read the step's full instructions:
 - **Files** — which files to modify or create
 - **What** — specific instructions for changes
@@ -168,7 +178,7 @@ Implement the changes:
 
 If the step has a `Test:` line and `superpowers:test-driven-development` is available, invoke it to guide the RED-GREEN-REFACTOR cycle.
 
-**Fallback (if superpowers not installed):** When a step includes tests:
+**Fallback (if superpowers not installed):** Follow the Red-Green-Refactor cycle from `shared/testing-patterns.md`:
 1. **RED:** Write/locate the test first. Run it — confirm it fails (proves the test validates something).
 2. **GREEN:** Write the minimal implementation to pass the test. No extras (YAGNI).
 3. **REFACTOR:** Clean up only after green — duplication, naming, structure — while staying green.
@@ -393,6 +403,20 @@ If no pending steps remain, prints "All steps are done. Run `/dx-pr` to create a
 ### Review Rejection
 **Verdict:** CHANGES REQUESTED — hardcoded color `#FF0000` should use SCSS variable
 **Action:** Mark blocked with `{ status: "blocked", phase: "review", error: "Convention violation: use $primary-color instead of #FF0000" }`. Coordinator calls `/dx-step-fix`.
+
+## Anti-Rationalization
+
+Common excuses for cutting corners during step execution — and why they're wrong:
+
+| False Logic | Reality Check |
+|---|---|
+| "I'll test at the end" | Bugs cascade — a Step 1 error corrupts Steps 2-5. Test every step. |
+| "This is too small to commit separately" | Small commits are costless; large ones hide problems and block bisection. |
+| "I know what this file does, no need to read it" | Assumptions cause wrong edits. Reading is cheap, debugging is expensive. |
+| "I'll skip the review — it compiled and tests pass" | Compilation proves syntax, not correctness. Reviews catch logic bugs. |
+| "The plan is wrong, I'll improvise a better approach" | Mark the step blocked and let the user decide. Don't freelance. |
+| "I'll refactor this adjacent code while I'm here" | Scope creep causes merge conflicts and breaks unrelated tests. Touch only what the step requires. |
+| "Tests pass immediately, so they're fine" | A test that passes before implementation proves nothing — fix it. |
 
 ## Rules
 
