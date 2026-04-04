@@ -3,7 +3,7 @@ title: "Plugin = Skills + Agents + Hooks in a Box"
 category: "Plugins — Full Package"
 focus: "Claude Code"
 tags: ["Plugin","Bundle","Reusable"]
-overview: "A plugin bundles skills, agents, hooks, MCP configs, and rules into a single installable package. Install once, available in every project. Our four plugins (dx-core, dx-hub, dx-aem, dx-automation) contain 69 skills, 12 agents, and 4 hooks — all distributed from a single source."
+overview: "A plugin bundles skills, agents, hooks, MCP configs, and rules into a single installable package. Install once, available in every project. Our four plugins (dx-core, dx-hub, dx-aem, dx-automation) contain 75 skills, 13 agents, and 4 hooks — all distributed from a single source."
 screenshot: null
 week: 8
 weekLabel: "Skills — Advanced"
@@ -36,6 +36,6 @@ actionItems:
   - "**Install once, use everywhere** — Add to any project with one command. Versioned, shared across teams, and updateable by bumping a single version number."
   - "**Encapsulation** — MCP servers, hooks, and rules are bundled together. No scattered config files across your project — everything lives in one installable package."
   - "**Shared distribution** — The whole team uses the same skills without copy-pasting. Roll back if a new version breaks something. Everyone stays in sync."
-  - "**Our setup** — Four plugins (dx-core, dx-hub, dx-aem, dx-automation), 69 skills, 12 agents, distributed to 4 consumer repos from a single source."
+  - "**Our setup** — Four plugins (dx-core, dx-hub, dx-aem, dx-automation), 75 skills, 13 agents, distributed to 4 consumer repos from a single source."
   - "**Start exploring** — Open an installed plugin's plugin.json to see the manifest, then browse skills/ and agents/ to understand what's available."
 ---
