@@ -8,7 +8,7 @@ screenshot: null
 week: 5
 weekLabel: "Skills — Recipe Book"
 order: 23
-slackOneLiner: "🤖 Tip #23 — We run 12 agents but only ONE uses Opus — model tiering cuts costs by 60x without sacrificing quality where it matters."
+slackOneLiner: "🤖 Tip #23 — We run 13 agents but only ONE uses Opus — model tiering cuts costs by 60x without sacrificing quality where it matters."
 keyPointsTitle: "Three Tiers, Three Roles"
 actionItemsTitle: "The Cost Math"
 keyPoints:
@@ -16,7 +16,7 @@ keyPoints:
   - "**Sonnet ($3/M tokens)** — 7 agents — `dx-pr-reviewer`, `aem-inspector`, `aem-editorial-guide-capture`, etc. Need good judgment AND they take actions (read files, run commands, edit code). Sonnet is the sweet spot for execution."
   - "**Haiku ($0.25/M tokens)** — 4 agents — `dx-file-resolver`, `dx-doc-searcher`, `aem-file-resolver`, `aem-page-finder`. Pure lookups. 'Find files matching this pattern.' No reasoning needed, just fast execution."
 actionItems:
-  - "**The math** — Using Opus for all 12 agents costs ~60x more than our tiered approach. For a team running 50 pipelines/day, that's the difference between $500/month and $30,000/month."
+  - "**The math** — Using Opus for all 13 agents costs ~60x more than our tiered approach. For a team running 50 pipelines/day, that's the difference between $500/month and $30,000/month."
   - |
     **Use this tiering guide**
     - Opus — deep reasoning, judgment calls, confidence scoring

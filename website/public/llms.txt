@@ -1,6 +1,6 @@
 # KAI — Enterprise AI Development Platform
 
-> Four Claude Code plugins providing 70+ skills for AI-assisted Azure DevOps and Atlassian development workflows, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.
+> Four Claude Code plugins providing 71+ skills for AI-assisted Azure DevOps and Atlassian development workflows, running across Claude Code, GitHub Copilot CLI, and VS Code Chat.
 
 ## About
 

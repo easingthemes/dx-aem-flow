@@ -3,7 +3,7 @@ title: "How to Select an Agent: Three UIs, One Concept"
 category: "Meet Your AI Tools"
 focus: "All Tools"
 tags: ["Agent Selection","/agents","Dropdown","Auto-Dispatch"]
-overview: "Each tool selects agents differently. VSCode Chat: dropdown menu at the bottom — pick an agent, it becomes your assistant. Copilot CLI: /agents command shows a numbered list — arrow keys to select. Claude Code: /agents lists all 34 agents with plugin prefix, model tier, and memory. But most of the time, you don't pick manually — skills auto-dispatch to the right agent."
+overview: "Each tool selects agents differently. VSCode Chat: dropdown menu at the bottom — pick an agent, it becomes your assistant. Copilot CLI: /agents command shows a numbered list — arrow keys to select. Claude Code: /agents lists all 38 agents with plugin prefix, model tier, and memory. But most of the time, you don't pick manually — skills auto-dispatch to the right agent."
 screenshot: "/images/tldr/agents-selection.png"
 week: 1
 weekLabel: "Meet Your AI Tools"
