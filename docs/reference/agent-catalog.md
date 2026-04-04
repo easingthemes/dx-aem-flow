@@ -1,6 +1,6 @@
 # Agent Catalog
 
-## dx plugin — 6 agents
+## dx plugin — 7 agents
 
 ### dx-code-reviewer
 
@@ -88,6 +88,17 @@ Discovers CSS/SCSS conventions from the consumer project — variables, breakpoi
 Discovers HTML and accessibility conventions from the consumer project — semantic patterns, component structure, ARIA usage, keyboard handling. Reads `.claude/rules/fe-javascript.md`, `.claude/rules/accessibility.md`, and other convention rules. Returns structured convention data for prototype generation.
 
 ---
+
+### dx-figma-components
+
+| Property | Value |
+|----------|-------|
+| **Model** | Haiku |
+| **File** | `plugins/dx-core/agents/dx-figma-components.md` |
+| **Used by** | `/dx-figma-prototype` |
+| **Tools** | Read, Glob, Grep |
+
+Analyzes Figma extraction to identify UI building blocks (buttons, images, cards, forms, etc.) and searches the codebase for existing components that can be reused. Produces a Component Reuse Map categorizing each Figma element as reuse-as-is, extend, compose, or create-new — ensuring implementation prioritizes reuse of atomic components (button, image, icon, link, input) over creating new ones.
 
 ---
 
