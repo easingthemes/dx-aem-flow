@@ -121,14 +121,14 @@ tags:
   - "sling-model"
 
 tickets:
-  - id: "2416553"
-    decision: "Added pod-count dropdown to existing hero dialog"
-  - id: "2416780"
-    decision: "Added layout-variant dropdown to existing card dialog"
-  - id: "2417001"
+  - id: "WORK-101"
+    decision: "Added layout-mode dropdown to existing card dialog"
+  - id: "WORK-205"
     decision: "Added color-theme dropdown to existing banner dialog"
+  - id: "WORK-318"
+    decision: "Added display-variant dropdown to existing teaser dialog"
 
 files:
-  - "ui.apps/src/main/content/jcr_root/apps/project/components/hero/_cq_dialog/.content.xml"
-  - "core/src/main/java/com/project/core/models/HeroModel.java"
+  - "ui.apps/src/main/content/jcr_root/apps/project/components/card/_cq_dialog/.content.xml"
+  - "core/src/main/java/com/project/core/models/CardModel.java"
 ```
