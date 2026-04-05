@@ -75,7 +75,7 @@ If `.ai/rules/plan-format.md` exists (project override), read and follow it. Oth
 
 If `.github/instructions/` (or `.ai/instructions/`) exists, read instruction files relevant to the file types in this spec — these provide detailed code examples and framework patterns for generating concrete implementation steps.
 
-### Optional: Design Exploration
+### Design Exploration & Decision Capture
 
 If this is a complex feature with multiple valid approaches, check if `superpowers:brainstorming` is available and invoke it to explore the design space before planning.
 
@@ -85,6 +85,14 @@ If this is a complex feature with multiple valid approaches, check if `superpowe
 - Are there unknowns that need spiking first?
 
 If a brainstorming spec already exists in `docs/superpowers/specs/`, read it for design context.
+
+**Decision capture:** Any non-obvious design decision surfaced during exploration MUST be recorded in the `## Key Decisions` section of `implement.md`. This includes:
+- Architecture choices (extend existing component vs create new)
+- Pattern selection (which existing pattern to follow when multiple exist)
+- Scope tradeoffs (what was deliberately excluded and why)
+- Technology choices (when research.md shows multiple viable approaches)
+
+If the change is trivial (single-file edit, config-only, straightforward bug fix) or every decision is obvious from requirements, omit the Key Decisions section.
 
 ## AEM Component Intelligence Rules
 
@@ -151,6 +159,7 @@ Read `.ai/templates/spec/implement.md.template` and follow that structure exactl
 - Steps are ordered by implementation dependency
 - Be specific about property names, types, default values, file paths with line numbers
 - Include code snippets when helpful
+- Key Decisions section: record non-obvious choices with alternatives and rationale. OMIT for trivial changes.
 - Risks section: only REAL technical risks. OMIT if none.
 
 ## 5. Status Tracking
@@ -186,6 +195,7 @@ The step-* skills update these statuses as they execute.
 
 **<Title>**
 - Steps: <count> (all pending)
+- Key decisions: <count or "none">
 - Files to modify: <count>
 - Files to create: <count>
 - Tests planned: <count> unit, manual verification included
@@ -250,6 +260,16 @@ Change set identified →
 **Discovery:** `src/core/scripts/libs/forms.js` has `validateField()` with email, text, number patterns
 **Decision:** EXTEND — add phone regex to existing `validateField()`. Don't create new util.
 **Why:** Existing utility covers >70% of need. Only a new regex pattern is needed.
+
+**Key Decision entry:**
+```markdown
+### Form validation approach
+**Chosen:** Extend existing `validateField()` in `forms.js`
+**Why:** Covers >70% of need — only a new regex pattern is required
+**Alternatives considered:**
+- New `phoneValidator.js` utility — rejected because existing utility handles all other field types; a separate file fragments validation logic
+**Affects steps:** 2
+```
 
 ### When to Create New
 **Scenario:** Need color-coded severity badge component for QA dashboard
