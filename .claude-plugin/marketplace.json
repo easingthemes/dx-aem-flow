@@ -1,6 +1,6 @@
 {
   "name": "dx-aem-flow",
-  "description": "AI-powered development plugins for Claude Code & Copilot CLI — requirements to PR workflow, AEM tooling, multi-repo orchestration, and autonomous CI agents. 76 skills, 13 agents, 4 plugins.",
+  "description": "AI-powered development plugins for Claude Code & Copilot CLI — requirements to PR workflow, AEM tooling, multi-repo orchestration, and autonomous CI agents.",
   "owner": {
     "name": "Dragan Filipovic"
   },

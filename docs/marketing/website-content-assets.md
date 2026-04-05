@@ -23,7 +23,7 @@ Best documentation pages and content to repurpose for marketing.
 | **AEM verification & QA** | `website/src/pages/usage/aem.mdx` | AEM community posts, niche marketing |
 | **Local developer workflow** | `website/src/pages/usage/local.mdx` | "Day in the life" blog, onboarding guide |
 | **Architecture overview** | `website/src/pages/architecture/overview.mdx` | Technical blog, conference talk |
-| **Skills catalog (70 skills)** | `website/src/pages/reference/skills.mdx` | Comparison charts, feature lists |
+| **Skills catalog** | `website/src/pages/reference/skills.mdx` | Comparison charts, feature lists |
 | **Cost/pricing models** | `website/src/pages/costs.mdx` | LinkedIn post about cost control, sales one-pager |
 | **DoR/DoD workflows** | `website/src/pages/usage/dor-dod.mdx` | Enterprise governance angle |
 

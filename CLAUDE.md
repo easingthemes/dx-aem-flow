@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Four Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
 
-- **dx-core** (`plugins/dx-core/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. 49 skills (`dx-*`), 7 agents. 15 Copilot agent templates (incl. coordinators).
-- **dx-hub** (`plugins/dx-hub/`) — Multi-repo orchestration: hub init, config, status. 4 skills (`dx-hub-*`).
-- **dx-aem** (`plugins/dx-aem/`) — AEM-specific verification, QA, and demo capture. Includes AEM project knowledge (seed data). Requires dx. 12 skills (`aem-*`), 6 agents.
-- **dx-automation** (`plugins/dx-automation/`) — Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. Requires dx. 11 skills (`auto-*`).
+- **dx-core** (`plugins/dx-core/`) — Platform-agnostic ADO/Jira workflow: requirements → planning → execution → review → PR. Works with any tech stack. Skills prefixed `dx-*`.
+- **dx-hub** (`plugins/dx-hub/`) — Multi-repo orchestration: hub init, config, status. Skills prefixed `dx-hub-*`.
+- **dx-aem** (`plugins/dx-aem/`) — AEM-specific verification, QA, and demo capture. Includes AEM project knowledge (seed data). Requires dx. Skills prefixed `aem-*`.
+- **dx-automation** (`plugins/dx-automation/`) — Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. Requires dx. Skills prefixed `auto-*`.
 
 AEM project knowledge (seed data) is now built into dx-aem — no separate plugin needed.
 
