@@ -390,8 +390,8 @@ agent.index.md                                     ✓ present
 .ai/lib/queue-pipeline.sh                          ✓ up to date
 .claude/hooks/stop-guard.sh                        ⚠ STALE
   Plugin version updated — run /dx-upgrade
-Docs (8 templates)                                 ✓ 8 present, 0 stale
-Output templates (11 templates)                    ✓ 11 present, 0 stale
+Docs templates                                     ✓ all present, 0 stale
+Output templates                                   ✓ all present, 0 stale
 
 dx Rule Files                                      Status
 ─────────────────────────────────────────────────────────
@@ -423,9 +423,9 @@ Build tool (mvn)                                   ✓ pom.xml found
 
 Copilot Files                                      Status
 ─────────────────────────────────────────────────────────
-Copilot agents (14 templates)                      ✓ 14 present, 0 stale
-Copilot skills (31 templates)                      ✓ 31 present, 0 stale
-Shared files (7 files)                             ✓ 7 present, 0 stale
+Copilot agents                                     ✓ all present, 0 stale
+Copilot skills                                     ✓ all present, 0 stale
+Shared files                                       ✓ all present, 0 stale
 
 AEM Plugin                                         Status
 ─────────────────────────────────────────────────────────

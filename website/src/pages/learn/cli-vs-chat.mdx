@@ -197,12 +197,12 @@ import { stats } from '../../config/stats';
   badge="Skills"
   badgeColor="info"
   title="VS Code Chat -- Skill Compatibility"
-  subtitle={`38 of ${stats.totalSkills} skills work. 17 need context:fork or agent: dispatch (Claude Code-only features).`}
+  subtitle="Most skills work. Some need context:fork or agent: dispatch (Claude Code-only features)."
   bg="primary"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
-    <ContentCard icon="mdi:check" iconColor="bg-emerald-600" title="Works Well (38 skills)" tags={[{ label: 'No changes needed', color: 'success' }]}>
+    <ContentCard icon="mdi:check" iconColor="bg-emerald-600" title="Works Well" tags={[{ label: 'No changes needed', color: 'success' }]}>
       Skills that use codebase reading, file editing, and terminal commands.
       MCP-dependent skills work if servers are mirrored in <code>.vscode/mcp.json</code>.
 
@@ -213,7 +213,7 @@ import { stats } from '../../config/stats';
       <strong>With MCP:</strong> <code>dx-req</code>, <code>dx-bug-triage</code>,
       <code>dx-pr-commit</code>, <code>dx-pr-review</code>, <code>dx-ticket-analyze</code>
     </ContentCard>
-    <ContentCard icon="mdi:alert" iconColor="bg-amber-500" title="Limited (17 skills)" tags={[{ label: 'Degraded', color: 'warning' }]}>
+    <ContentCard icon="mdi:alert" iconColor="bg-amber-500" title="Limited" tags={[{ label: 'Degraded', color: 'warning' }]}>
       Skills using <code>context: fork</code> + <code>agent:</code> (subagent dispatch) or
       <code>disable-model-invocation</code> (coordinator pattern).
       VS Code Chat ignores these fields -- skills load but can't orchestrate subagents.

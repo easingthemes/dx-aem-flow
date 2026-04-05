@@ -1,6 +1,6 @@
 # Agent Catalog
 
-## dx plugin — 7 agents
+## dx plugin agents
 
 ### dx-code-reviewer
 
@@ -106,7 +106,7 @@ Analyzes Figma extraction to identify UI building blocks (buttons, images, cards
 
 ---
 
-## aem plugin — 6 agents
+## aem plugin agents
 
 ### aem-file-resolver
 
@@ -210,7 +210,7 @@ AEM bug verification agent. Navigates to affected AEM pages, follows reproductio
 
 ---
 
-## Copilot Agents — dx plugin (15 agents)
+## Copilot Agents — dx plugin
 
 Copilot agents are seeded into `.github/agents/` when Copilot support is enabled during `/dx-init`. They are the Copilot counterparts of the Claude Code agents and skills, using Copilot's `@AgentName` invocation syntax.
 
@@ -427,7 +427,7 @@ Figma design-to-code coordinator. Chains `/dx-figma-extract` → `/dx-figma-prot
 
 ---
 
-## Copilot Agents — aem plugin (10 agents)
+## Copilot Agents — aem plugin
 
 AEM Copilot agents are seeded into `.github/agents/` when Copilot support is enabled during `/aem-init`. They provide the AEM full-flow lifecycle — component dialogs, JCR content, editorial QA, browser automation, and demo capture.
 

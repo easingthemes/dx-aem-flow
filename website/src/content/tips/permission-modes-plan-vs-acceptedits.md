@@ -23,7 +23,7 @@ keyPoints:
 actionItemsTitle: "Safety Patterns in Practice"
 actionItems:
   - "Safety pattern — combine acceptEdits with isolation: 'worktree'. The agent works on a copy of the repo, not your active files. If it messes up, just delete the worktree."
-  - "Our practice — only 1 agent out of 13 has acceptEdits (the step executor). All others are read-only. Default to plan unless the agent's job is to write code."
+  - "Our practice — only one agent has acceptEdits (the step executor). All others are read-only. Default to plan unless the agent's job is to write code."
   - "Check your agent definitions — any agent with acceptEdits that doesn't need it? Switch it to plan"
   - |
     Choose permission mode by agent role

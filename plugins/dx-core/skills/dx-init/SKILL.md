@@ -159,7 +159,7 @@ This creates:
 - `.claude/rules`, `.claude/hooks`
 - Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, ensure-feature-branch.sh, queue-pipeline.sh) with chmod +x
 - Copies `stop-guard.sh` to `.claude/hooks/` with chmod +x
-- Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/ — 11 template files)
+- Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/)
 - Copies shared rule templates to `.ai/rules/`
 - Copies universal rule templates to `.claude/rules/`
 
