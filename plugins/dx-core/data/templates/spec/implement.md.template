@@ -1,3 +1,11 @@
+---
+provenance:
+  agent: dx-plan
+  model: <model-tier>
+  created: <ISO-8601 timestamp>
+  confidence: medium
+  verified: false
+---
 # Implementation Plan: <Title>
 
 **Repo:** <current repo name, detected from folder or git remote>

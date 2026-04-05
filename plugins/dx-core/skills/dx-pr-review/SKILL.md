@@ -280,9 +280,17 @@ Save review findings to disk **immediately** after the agent returns — BEFORE 
 mkdir -p .ai/pr-reviews
 ```
 
-Write `.ai/pr-reviews/pr-<id>-findings.md`:
+Read `shared/provenance-schema.md`. Write `.ai/pr-reviews/pr-<id>-findings.md` with provenance frontmatter:
 
 ```markdown
+---
+provenance:
+  agent: dx-pr-review
+  model: opus
+  created: <ISO-8601 timestamp>
+  confidence: high
+  verified: false
+---
 # PR Review Findings — PR #<id>
 
 ## Metadata

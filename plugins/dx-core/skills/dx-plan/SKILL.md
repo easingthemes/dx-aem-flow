@@ -143,6 +143,8 @@ If research.md has no Cross-Repo Scope section or scope is "This repo only", do 
 
 Analyze all inputs and write `implement.md` in the same spec directory.
 
+Read `shared/provenance-schema.md`. Include the provenance frontmatter block at the top of `implement.md`, before the `# Implementation Plan:` heading. Use `agent: dx-plan`, `model: opus`, confidence `medium` (planning involves synthesis). Downgrade to `low` if operating without `research.md`.
+
 Read `.ai/templates/spec/implement.md.template` and follow that structure exactly. Key rules:
 
 - Every step MUST have `**Status:** pending` (initial state)
