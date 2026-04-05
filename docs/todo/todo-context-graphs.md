@@ -327,12 +327,17 @@ Build the pattern promotion pipeline: findings that appear across 3+ tickets get
 - Dry-run mode for preview without writing
 - Idempotent: re-running merges new ticket evidence into existing patterns
 
-### Phase 4 — Decision Nodes as Structured YAML (Medium Effort, High Value)
+### Phase 4 — Decision Nodes as Structured YAML (Medium Effort, High Value) ✅ DONE
 
 Extract key decisions from `implement.md` into `.ai/graph/nodes/decisions/` as structured YAML with lineage edges. Currently decisions live inline in implement.md — this phase externalizes them for graph queries.
 
-**Scope:** New step in `dx-plan` that writes decision YAML files alongside `implement.md`.
-**Done-when:** `ls .ai/graph/nodes/decisions/` shows decision files after running `/dx-plan`.
+**Completed:**
+- Decision schema defined in `shared/decision-schema.md` (YAML format with lineage, tags, alternatives, trust tier)
+- `dx-plan` updated with new step 5: writes one YAML file per Key Decision to `.ai/graph/nodes/decisions/<ticket>-<slug>.yaml`
+- Content parity: YAML files contain the same information as the markdown Key Decisions section
+- `dx-pattern-extract` updated to scan decision YAML nodes as primary source (step 1a), falling back to implement.md markdown for pre-Phase 4 tickets (step 1b)
+- Matching heuristics enhanced: tags and files fields from YAML enable more reliable pattern detection than markdown parsing
+- Re-planning overwrites existing decision files and marks removed decisions as `superseded`
 
 ### Phase 5 — Full Graph With Edges (Higher Effort, Transformative)
 
