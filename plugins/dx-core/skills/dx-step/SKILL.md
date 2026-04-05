@@ -132,6 +132,8 @@ Update the step's status in implement.md:
 **Status:** in-progress
 ```
 
+**Note:** When updating status in implement.md, preserve the provenance frontmatter block at the top of the file unchanged.
+
 ### AEM MCP Pre-Check
 
 **Trigger:** Only runs when the current step modifies files under `aem.component-path` or frontend component paths from config. Skip for pure Java, config, test-only, or non-component steps.

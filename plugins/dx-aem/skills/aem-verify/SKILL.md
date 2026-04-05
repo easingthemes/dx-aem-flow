@@ -228,9 +228,17 @@ e. **Check if the component is already added** — use `mcp__plugin_dx-aem_AEM__
 **Determine author URL:** If `--qa` flag was passed, read `aem.author-url-qa` from `.ai/config.yaml`. Otherwise read `aem.author-url` (defaults to `http://localhost:4502`). Use this URL for all doc links in the output. (MCP calls use JCR paths — the MCP server handles which AEM instance to connect to.)
 Read the exporter selector from `.ai/config.yaml` `aem.selector` (if configured).
 
-Write `<spec-dir>/aem-after.md`:
+Read `shared/provenance-schema.md`. Write `<spec-dir>/aem-after.md` with provenance frontmatter (use `agent: aem-verify`, `model: sonnet`, confidence `high`):
 
 ```markdown
+---
+provenance:
+  agent: aem-verify
+  model: sonnet
+  created: <ISO-8601 timestamp>
+  confidence: high
+  verified: false
+---
 # AEM Verification: <title> (`<name>`)
 
 **Verified:** <date>

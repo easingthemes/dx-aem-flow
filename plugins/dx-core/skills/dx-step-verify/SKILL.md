@@ -238,6 +238,8 @@ Loop back to **Dispatch code review subagent** with the updated diff.
 
 ### Report PASS
 
+**Provenance update:** If `implement.md` has a provenance frontmatter block, update `verified: false` to `verified: true`. If it has no provenance frontmatter (pre-migration file), skip this update.
+
 Before claiming all phases passed, invoke `superpowers:verification-before-completion` if available.
 
 **Fallback (if superpowers not installed):** For every success claim:
