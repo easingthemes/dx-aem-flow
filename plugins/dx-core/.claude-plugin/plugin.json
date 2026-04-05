@@ -1,7 +1,7 @@
 {
   "name": "dx-core",
   "description": "Full-stack development workflow for Azure DevOps projects — requirements, planning, execution, review, bug fixes, and PR management",
-  "version": "2.94.0",
+  "version": "2.95.0",
   "author": {
     "name": "Dragan Filipovic"
   },
