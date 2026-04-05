@@ -1,3 +1,15 @@
+# [2.94.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.93.0...v2.94.0) (2026-04-05)
+
+
+### Bug Fixes
+
+* remove hardcoded model tiers from provenance examples ([6d62f9b](https://github.com/easingthemes/dx-aem-flow/commit/6d62f9b1968b5651b1c7a74181ef82b9ca4c9822))
+
+
+### Features
+
+* add provenance metadata to all spec output files ([f6d6253](https://github.com/easingthemes/dx-aem-flow/commit/f6d6253296a03fb50f5771f01ce7851b17fb8716))
+
 # [2.93.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.92.0...v2.93.0) (2026-04-05)
 
 
