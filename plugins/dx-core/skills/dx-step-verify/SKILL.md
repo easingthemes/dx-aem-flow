@@ -252,6 +252,23 @@ Loop back to **Dispatch code review subagent** with the updated diff.
 
 **Provenance update:** If `implement.md` has a provenance frontmatter block, update `verified: false` to `verified: true`. If it has no provenance frontmatter (pre-migration file), skip this update.
 
+**Edge update:** If `.ai/graph/edges/<ticket>.yaml` exists (written by dx-plan), append `verified-by` edges. Read `shared/edge-schema.md` for the schema.
+
+1. Read the existing edge file
+2. Find all active decision nodes for this ticket: `find .ai/graph/nodes/decisions/<ticket>-*.yaml`
+3. For each decision node with `status: active`, append an edge:
+   ```yaml
+   - from: attestation-<ticket>-verify
+     to: <decision-id>
+     type: verified-by
+     created: <ISO-8601>
+     agent: dx-step-verify
+   ```
+4. Deduplicate: skip if a `verified-by` edge already exists for that decision
+5. Update the `updated` timestamp on the edge file
+
+If no edge file exists (pre-Phase 5 ticket or no decisions were made), skip this step silently.
+
 Before claiming all phases passed, invoke `superpowers:verification-before-completion` if available.
 
 **Fallback (if superpowers not installed):** For every success claim:

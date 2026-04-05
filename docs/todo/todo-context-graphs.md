@@ -339,12 +339,18 @@ Extract key decisions from `implement.md` into `.ai/graph/nodes/decisions/` as s
 - Matching heuristics enhanced: tags and files fields from YAML enable more reliable pattern detection than markdown parsing
 - Re-planning overwrites existing decision files and marks removed decisions as `superseded`
 
-### Phase 5 — Full Graph With Edges (Higher Effort, Transformative)
+### Phase 5 — Full Graph With Edges (Higher Effort, Transformative) ✅ DONE
 
-Complete edge schema, index, and graph-aware query patterns in coordinator skills.
+Complete edge schema and graph-aware query patterns in coordinator skills.
 
-**Scope:** `.ai/graph/edges/` directory, `index.yaml`, graph-traversal helpers in a shared script.
-**Done-when:** `dx-agent-all` reads decision lineage from the graph when planning work on a ticket.
+**Completed:**
+- Edge schema defined in `shared/edge-schema.md` (per-ticket YAML files with typed edges: informed, implemented-as, verified-by, supersedes, reuses)
+- `dx-plan` updated to write per-ticket edge file alongside decision nodes (informed, implemented-as, reuses edges)
+- `dx-step-verify` updated to append `verified-by` edges on PASS verdict (attestation → decision)
+- `dx-agent-all` updated to read graph context before planning — shows decision/pattern/verification counts
+- Edge producer protocol: multiple skills append to same file, deduplicate, preserve other producers' edges
+- `index.yaml` deferred — grep/find sufficient at project scale; can add later if graph exceeds ~100 nodes
+- Shell helper script deferred — query patterns documented in edge-schema.md are already simple one-liners
 
 ---
 
