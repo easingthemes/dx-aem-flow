@@ -1,3 +1,10 @@
+# [2.99.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.98.0...v2.99.0) (2026-04-05)
+
+
+### Features
+
+* enrich marketplace metadata and plugin keywords for skill platform discoverability ([19855a9](https://github.com/easingthemes/dx-aem-flow/commit/19855a924a00247f725ac5e6b8ede6efabc3c605))
+
 # [2.98.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.97.0...v2.98.0) (2026-04-05)
 
 
