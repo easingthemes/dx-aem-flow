@@ -578,7 +578,7 @@ If a `repos:` section exists with at least one entry:
 ## 9. Copilot Support (optional)
 
 Ask:
-> **Support GitHub Copilot?** When enabled, Copilot agent definitions and instructions are generated alongside Claude Code for VS Code Copilot users.
+> **Support GitHub Copilot?** When enabled, Copilot agent definitions and instructions are generated alongside Claude Code for developers using Copilot Chat across supported development environments (VS Code, JetBrains IDEs...).
 > 1. **No** — Claude Code only (default)
 > 2. **Yes** — generate `.github/agents/` and `copilot-instructions.md`
 
