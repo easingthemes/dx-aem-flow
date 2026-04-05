@@ -2,13 +2,13 @@
 
 ## dx-core plugin
 
-### Estimation
+### Estimation — 1 skill
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-estimate | `/dx-estimate` | `<work-item-id(s) or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
 
-### Requirements + DoR
+### Requirements + DoR — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -18,7 +18,7 @@
 | dx-req-dod | `/dx-req-dod` | `<work-item-id>` | Check Definition of Done and auto-fix gaps — validates deliverables, auto-fixes what's possible, creates tasks for the rest | `dod.md` + fixes |
 | dx-req-import | `/dx-req-import` | `<path-to-file>` | Validate external (non-ADO) requirements document | `explain.md` |
 
-### Figma (`dx-figma-*`)
+### Figma (`dx-figma-*`) — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -27,7 +27,7 @@
 | dx-figma-prototype | `/dx-figma-prototype` | `<work-item-id>` (optional) | Research project conventions (2 parallel agents) + generate high-fidelity standalone HTML/CSS prototype | `figma-conventions.md`, `prototype/index.html`, `prototype/styles.css` |
 | dx-figma-verify | `/dx-figma-verify` | `<work-item-id>` (optional) | Visually verify prototype against Figma reference screenshot. Compares, fixes gaps (max 2 rounds). | `figma-gaps.md`, `prototype/prototype-screenshot.png` |
 
-### Planning (`dx-plan-*`)
+### Planning (`dx-plan-*`) — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -36,7 +36,7 @@
 | dx-plan-resolve | `/dx-plan-resolve` | `<work-item-id>` (optional) | Research and fix risks flagged by validation | Updated `implement.md` |
 | dx-pattern-extract | `/dx-pattern-extract` | `[--dry-run]` (optional) | Scan completed specs for recurring decisions/approaches. Promotes patterns appearing in 3+ tickets to `.ai/graph/nodes/patterns/` for cross-ticket knowledge reuse. | Pattern YAML files |
 
-### Execution (`dx-step-*`)
+### Execution (`dx-step-*`) — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -46,7 +46,7 @@
 | dx-step-build | `/dx-step-build` | none | Build and deploy using config build command, auto-fix errors iteratively | Build pass/fail |
 | dx-step-verify | `/dx-step-verify` | `<work-item-id>` (optional) | 6-phase verification: compile, lint, test, secret scan, architecture, code review (max 3 fix cycles). Uses `model: opus` frontmatter. Optionally invokes `superpowers:verification-before-completion` for evidence-based verification. | Verdict |
 
-### Pull Request (`dx-pr-*`)
+### Pull Request (`dx-pr-*`) — 7 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -58,7 +58,7 @@
 | dx-pr-review-report | `/dx-pr-review-report` | `<PR-id or URL>` | Generate categorized report from PR review — groups by category, tracks patch resolution, posts to wiki. Uses report template from `assets/report-template.md`. | Report + wiki page |
 | dx-pr-reviews-report | `/dx-pr-reviews-report` | `[--any] [PR URL | Repo URL | count] [count]` | Batch-generate review reports. Default: PRs where you are reviewer (excl. own), parallel agents. `--any`: all PRs with threads, sequential with selection. Helper script: `scripts/check-existing-reports.sh`. | Multiple reports + wiki |
 
-### Bug Fix (`dx-bug-*`)
+### Bug Fix (`dx-bug-*`) — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -67,7 +67,7 @@
 | dx-bug-verify | `/dx-bug-verify` | `<bug-id> [before\|after\|qa]` | Reproduce bug via Chrome DevTools. `before`: confirm bug exists. `after`: verify fix locally. `qa`: verify fix on QA post-merge. | `verification.md` / `-local.md` / `-qa.md` |
 | dx-bug-fix | `/dx-bug-fix` | `<bug-id>` (optional) | Generate fix plan from triage, execute, create PR | `implement.md` + PR |
 
-### Agent Roles (`dx-agent-*`)
+### Agent Roles (`dx-agent-*`) — 3 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -75,7 +75,7 @@
 | dx-agent-re | `/dx-agent-re` | `<work-item-id>` | RE Agent — analyze story, produce structured requirements spec, post ADO/Jira comment | `re.json` |
 | dx-agent-dev | `/dx-agent-dev` | `<work-item-id>` | Dev Agent — implement from RE spec, self-check (build/test/lint), commit | Code changes |
 
-### Documentation
+### Documentation — 2 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -88,7 +88,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-council | `/dx-council` | `<question or 'the plan' / 'the implementation'>` | Run a decision through an LLM Council — 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: `council the plan`, `council the implementation`. Adapted from Karpathy's LLM Council. | `council-transcript.md` |
 
-### Quality & Hardening
+### Quality & Hardening — 4 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
@@ -103,7 +103,7 @@
 |-------|-----------|----------|-------------|--------|
 | dx-sync | `/dx-sync` | `[--dry-run] [--parallel] [repo1 repo2 ...]` | Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options | Sync report |
 
-### Utility
+### Utility — 8 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
