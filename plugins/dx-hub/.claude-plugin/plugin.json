@@ -9,5 +9,5 @@
   "repository": "https://github.com/easingthemes/dx-aem-flow",
   "license": "MIT",
   "logo": "./assets/logo.png",
-  "keywords": ["multi-repo", "hub", "orchestration"]
+  "keywords": ["claude-code", "claude-plugin", "agent-skills", "copilot-cli", "cursor", "codex", "multi-repo", "hub", "orchestration", "monorepo", "mcp", "skill-marketplace"]
 }

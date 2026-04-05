@@ -9,5 +9,5 @@
   "repository": "https://github.com/easingthemes/dx-aem-flow",
   "license": "MIT",
   "logo": "./assets/logo.png",
-  "keywords": ["ado", "aws", "lambda", "automation", "ai-agents", "dor", "pr-review"]
+  "keywords": ["claude-code", "claude-plugin", "agent-skills", "copilot-cli", "cursor", "codex", "ado", "azure-devops", "aws", "lambda", "automation", "ai-agents", "dor", "dod", "pr-review", "ci-cd", "mcp", "skill-marketplace"]
 }
