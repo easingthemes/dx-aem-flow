@@ -1,3 +1,11 @@
+---
+provenance:
+  agent: dx-req
+  model: <model-tier>
+  created: <ISO-8601 timestamp>
+  confidence: high
+  verified: false
+---
 # Research: <Title> (ADO #<id>)
 
 ## Existing Components
