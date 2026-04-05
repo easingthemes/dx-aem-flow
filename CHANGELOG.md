@@ -1,3 +1,10 @@
+# [2.100.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.99.0...v2.100.0) (2026-04-05)
+
+
+### Features
+
+* Phase 5 — graph edges with typed relationships ([3dd3d88](https://github.com/easingthemes/dx-aem-flow/commit/3dd3d883ecf8dbd6b04dce1f36f027ac41134469))
+
 # [2.99.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.98.0...v2.99.0) (2026-04-05)
 
 
