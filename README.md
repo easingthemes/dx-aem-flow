@@ -50,25 +50,24 @@ From a local clone:
 
 Full-stack development workflow for Azure DevOps and Jira projects: requirements gathering, implementation planning, step-by-step execution with testing and review, code review, bug fixes, and PR management.
 
-**48 skills, 7 agents.** Works with any tech stack.
+Works with any tech stack.
 
 ### [dx-hub](plugins/dx-hub/) — Multi-Repo Orchestration
 
 Hub directory management for coordinating work across multiple consumer repos — init, config, status.
 
-**4 skills.**
 
 ### [dx-aem](plugins/dx-aem/) — AEM Full-Flow
 
 The complete AEM development lifecycle: component dialog inspection, JCR content, page authoring, editorial QA with browser automation, snapshot/verify lifecycle, and demo capture. Includes the [AEM MCP server](https://www.npmjs.com/package/aem-mcp-server) for live JCR and dialog access. Purpose-built for AEM Cloud and on-premise projects.
 
-**12 skills, 6 agents.** Requires dx plugin.
+Requires dx plugin.
 
 ### [dx-automation](plugins/dx-automation/) — Autonomous Agents
 
 Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks.
 
-**11 skills.** Requires dx plugin.
+Requires dx plugin.
 
 ## Client-Specific Plugins
 

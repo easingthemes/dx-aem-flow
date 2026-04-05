@@ -91,18 +91,18 @@ The script creates this structure:
 │   ├── dx-plan/SKILL.md
 │   ├── aem-component/SKILL.md
 │   ├── auto-deploy/SKILL.md
-│   └── ... (66 skills)
+│   └── ...
 ├── agents/           # All plugin agents (Claude Code local)
 │   ├── dx-pr-reviewer.md
 │   ├── dx-code-reviewer.md
 │   ├── aem-inspector.md
-│   └── ... (10 agents)
+│   └── ...
 └── hooks/            # Hooks (already installed by dx-init)
 
 .github/
 └── agents/           # Copilot agents
     ├── DxCodeReview.agent.md
-    └── ... (24 agents)
+    └── ...
 
 .ai/ejected/          # Plugin source-of-truth archive
 ├── plugin-rules/     # Plugin default rules (read-only reference)

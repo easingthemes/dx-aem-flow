@@ -16,7 +16,7 @@ keyPoints:
   - "**Cross-platform** — Works in both Claude Code and Copilot CLI. Install once, both tools discover skills, agents, rules, and MCP servers automatically."
   - "**No build step** — Plugins are pure Markdown + shell scripts. Install, init, use. No compilation or bundling needed."
   - "**Auto-discovery** — After install, everything is automatic. Skills show up as /commands, agents are available for dispatch, rules load based on file paths, and MCP servers connect on their own."
-  - "**Public marketplaces** — Adobe publishes AEM Edge Delivery skills (17 skills). You can create your own marketplace in any GitHub repo."
+  - "**Public marketplaces** — Adobe publishes AEM Edge Delivery skills. You can create your own marketplace in any GitHub repo."
 actionItems:
   - "**Browse Adobe's skills** — Run `/plugin marketplace add adobe/skills` to register, then `/plugin list` to see what's available."
   - |

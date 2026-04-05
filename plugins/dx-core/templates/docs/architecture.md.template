@@ -94,9 +94,9 @@ ADO tag added  -->  webhook fires
 ```
 dx-aem-flow/              <-- Plugin source (Hub)
 ├── dx/plugins/
-│   ├── dx-core/    <-- Core: ADO workflow (43 skills, 5 agents)
-│   ├── dx-aem/               <-- AEM: component verification, project knowledge (10 skills, 5 agents)
-│   └── dx-automation/        <-- Automation: CI/CD agents (11 skills)
+│   ├── dx-core/    <-- Core: ADO workflow (skills, agents)
+│   ├── dx-aem/               <-- AEM: component verification, project knowledge (skills, agents)
+│   └── dx-automation/        <-- Automation: CI/CD agents (skills)
 ```
 
 - **Hub project** owns the plugin source, AWS infrastructure, and all work-item webhooks
