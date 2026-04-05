@@ -314,19 +314,18 @@ Close the feedback loop — skills that READ provenance metadata and act on it.
 
 `dx-plan` captures non-obvious design decisions with alternatives and rationale in a `## Key Decisions` section of `implement.md`.
 
-### Phase 3 — Cross-Ticket Patterns (Medium Effort, Very High Value)
-
-Extend `dx-plan` to record decision rationale in `.ai/graph/nodes/decisions/`.
-
-**Scope:** New step in `dx-plan` that extracts key decisions and alternatives from the planning process into structured YAML.
-**Done-when:** `ls .ai/graph/nodes/decisions/` shows decision files after running `/dx-plan`.
-
-### Phase 3 — Cross-Ticket Patterns (Medium Effort, Very High Value)
+### Phase 3 — Cross-Ticket Pattern Promotion (Medium Effort, Very High Value) ✅ DONE
 
 Build the pattern promotion pipeline: findings that appear across 3+ tickets get promoted to `.ai/graph/nodes/patterns/` and referenced by `dx-plan`.
 
-**Scope:** New skill `dx-pattern-extract` (Haiku tier) that scans recent spec directories for recurring decisions/patterns.
-**Done-when:** `dx-plan` queries `.ai/graph/nodes/patterns/` and references relevant patterns in its output.
+**Completed:**
+- New skill `dx-pattern-extract` (Haiku tier) scans completed spec directories for recurring decisions and approaches
+- Pattern schema defined in `shared/pattern-schema.md` (YAML format with provenance, tags, ticket evidence, canonical files)
+- Promotion threshold: 3+ tickets with the same approach → pattern node created
+- `dx-plan` updated to read `.ai/graph/nodes/patterns/` before planning — matches patterns by tags, files, and description against research.md
+- Matched patterns included as `## Relevant Patterns` section in implement.md and referenced in step instructions
+- Dry-run mode for preview without writing
+- Idempotent: re-running merges new ticket evidence into existing patterns
 
 ### Phase 4 — Decision Nodes as Structured YAML (Medium Effort, High Value)
 
