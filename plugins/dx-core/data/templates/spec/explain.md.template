@@ -17,9 +17,9 @@ Combine the "what" and "why" into one tight paragraph. -->
 Combine and deduplicate from description + acceptance criteria + comments.
 This is the CORE of the document — everything else is supplementary.
 
-  1. Dialog shows a dropdown with options: "One Pod", "Two Pod"
-  2. When podCount is "two", render side-by-side layout
-  3. Default behavior (no selection) shows single pod layout
+  1. Dialog shows a dropdown with options: "Single Column", "Two Column"
+  2. When layoutMode is "two-column", render side-by-side layout
+  3. Default behavior (no selection) shows single column layout
 
 Each requirement = one testable statement. No sub-bullets.
 Target 8-12 items for a medium story.

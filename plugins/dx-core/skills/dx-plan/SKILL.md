@@ -112,6 +112,39 @@ If a brainstorming spec already exists in `docs/superpowers/specs/`, read it for
 
 If the change is trivial (single-file edit, config-only, straightforward bug fix) or every decision is obvious from requirements, omit the Key Decisions section.
 
+### Cross-Ticket Pattern Lookup
+
+Check if `.ai/graph/nodes/patterns/` exists and contains YAML files:
+
+```bash
+find .ai/graph/nodes/patterns/ -name "*.yaml" -type f 2>/dev/null
+```
+
+If pattern files exist, read `shared/pattern-schema.md` for the schema, then read each pattern file. Match patterns against the current ticket by:
+
+1. **Tag matching** — compare pattern `tags` against component names, file types, and architectural concepts from `research.md`
+2. **File matching** — compare pattern `files` against files listed in `research.md`'s `## Files Inventory` or `## Key Findings`
+3. **Decision matching** — compare pattern `description` against the current ticket's requirements in `explain.md`
+
+**If relevant patterns found:**
+- Print: "Found <N> relevant patterns from previous tickets"
+- Factor them into design decisions — if a pattern covers this ticket's approach, reference it rather than re-deriving the approach
+- Include a `## Relevant Patterns` section in `implement.md` (before `## Steps`):
+
+```markdown
+## Relevant Patterns
+
+| Pattern | Confidence | Tickets | Relevance |
+|---------|-----------|---------|-----------|
+| <title> | <confidence> | <count> | <why it matches> |
+
+> **<pattern-id>:** <approach summary from pattern>. (from <ticket list>)
+```
+
+- When a plan step relates to a known pattern, reference it in the step's `**What:**` section: "Follow established pattern `<pattern-id>` — <brief approach>."
+
+**If no patterns found** (directory empty or doesn't exist): continue without the section. This is normal for new projects or early tickets.
+
 ## AEM Component Intelligence Rules
 
 If `research.md` contains an `## AEM Component Intelligence` section, apply these three rules during step generation:
@@ -231,7 +264,7 @@ The step-* skills update these statuses as they execute.
 ```
 /dx-plan 2416553
 ```
-Reads `.ai/specs/2416553-add-pod-count-dropdown/explain.md` and `research.md`, generates `implement.md` with 6 steps covering model changes, dialog updates, HTL template, JS logic, SCSS, and tests. All steps start as `pending`.
+Reads `.ai/specs/2416553-add-layout-switcher/explain.md` and `research.md`, generates `implement.md` with 6 steps covering model changes, dialog updates, HTL template, JS logic, SCSS, and tests. All steps start as `pending`.
 
 ### Re-run after research update
 ```
