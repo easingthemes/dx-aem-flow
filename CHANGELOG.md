@@ -1,3 +1,10 @@
+# [2.95.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.94.0...v2.95.0) (2026-04-05)
+
+
+### Features
+
+* add Key Decisions section to implementation plans ([2a95fc7](https://github.com/easingthemes/dx-aem-flow/commit/2a95fc7c415bc0c3967ae1b9e73e062776c2c7f7)), closes [#76](https://github.com/easingthemes/dx-aem-flow/issues/76)
+
 # [2.94.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.93.0...v2.94.0) (2026-04-05)
 
 
