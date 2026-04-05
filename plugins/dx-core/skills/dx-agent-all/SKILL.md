@@ -318,6 +318,25 @@ Invoke `Skill(/dx-figma-all <id>)`.
 
 ### Phase 2: Planning (plan - validate - resolve)
 
+**Graph context (optional):** Before invoking the planner, check if decision lineage exists from previous tickets:
+
+```bash
+find .ai/graph/edges/ -name "*.yaml" -type f 2>/dev/null | head -20
+```
+
+If edge files exist, scan for `verified-by` edges — these indicate decisions that were confirmed by code review. Print a brief summary for the user:
+
+```markdown
+### Graph Context
+- **Decision nodes:** <count> across <ticket-count> tickets
+- **Verified decisions:** <count> (confirmed by code review)
+- Patterns available: <count> in `.ai/graph/nodes/patterns/`
+```
+
+This is informational only — dx-plan itself reads patterns and decisions during planning. The summary helps the user understand how much cross-ticket knowledge is available.
+
+If no edge files exist (new project or early tickets), skip silently.
+
 Invoke `Skill(/dx-plan <id>)`.
 
 Then invoke `Skill(/dx-plan-validate <id>)`.
