@@ -10,7 +10,7 @@ All Markdown spec files include provenance frontmatter — see `shared/provenanc
 | explain.md | 1.1 | dx-req (Phase 3) | Provenance, Requirements, Acceptance Criteria, Out of Scope | ≥1 requirement, no TBD |
 | research.md | 1.1 | dx-req (Phase 4) | Provenance, ≥1 of: Models, Services, Templates, Tests | ≥1 finding, valid paths |
 | dor-report.md | 1.0 | dx-req (Phase 2) | Checklist with pass/fail/unclear, Open Questions | ≥1 assessed |
-| implement.md | 2.2 | dx-plan | Provenance, Steps with Status/Files/What/Verification | Valid status values, no dupes |
+| implement.md | 2.3 | dx-plan | Provenance, Key Decisions (optional), Steps with Status/Files/What/Verification | Valid status values, no dupes |
 | share-plan.md | 1.1 | dx-req (Phase 5) | Provenance, Summary, Approach, Scope | Non-technical language |
 | triage.md | 1.0 | dx-bug-triage | Component, Scope, Root Cause Hypothesis | Component identified |
 | figma-extract.md | 1.0 | dx-figma-extract | Design Tokens, Component Mapping | ≥1 screenshot, tokens present |
