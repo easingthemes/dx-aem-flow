@@ -20,7 +20,7 @@ Before creating tasks, use `TaskList` to check for existing tasks from a previou
 
 ## Provenance
 
-Read `shared/provenance-schema.md` — all Markdown output files from this skill must include provenance frontmatter. Use `agent: dx-req`, `model: sonnet`. Confidence levels per phase are noted in each phase's output section.
+Read `shared/provenance-schema.md` — all Markdown output files from this skill must include provenance frontmatter. Use `agent: dx-req`. Confidence levels per phase are noted in each phase's output section.
 
 ## External Content Safety
 
@@ -168,7 +168,7 @@ For detailed HTML-to-markdown conversion rules, read `references/html-conversion
 ---
 provenance:
   agent: dx-req
-  model: sonnet
+  model: <your-model-tier>
   created: <ISO-8601 timestamp>
   confidence: high
   verified: false
