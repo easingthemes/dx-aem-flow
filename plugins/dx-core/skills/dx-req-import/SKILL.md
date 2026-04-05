@@ -40,7 +40,7 @@ If at or above threshold, continue.
 ## 3. Generate Slug
 
 Create a short slug from the document's main topic (2-4 words, lowercase, hyphenated).
-Example: "starter kit pod layout" → `starter-kit-pod-layout`
+Example: "card grid layout" → `card-grid-layout`
 
 ## 4. Create Spec Directory
 
@@ -107,7 +107,7 @@ If no specific code references are found, skip research.md.
 
 ## Examples
 
-1. `/dx-req-import docs/requirements/starter-kit-pods.md` — Reads the requirements document, scores it 6/8 (passes threshold), generates `.ai/specs/starter-kit-pods/explain.md` with distilled requirements, and runs a lightweight codebase search for referenced component names.
+1. `/dx-req-import docs/requirements/card-grid-layout.md` — Reads the requirements document, scores it 6/8 (passes threshold), generates `.ai/specs/card-grid-layout/explain.md` with distilled requirements, and runs a lightweight codebase search for referenced component names.
 
 2. `/dx-req-import ~/Downloads/ba-notes.txt` — Reads a plain-text BA document, scores it 3/8 (below threshold), prints specific gaps ("Missing: acceptance criteria, affected areas") and stops without creating any files.
 

@@ -5,13 +5,13 @@
 #
 # 1. As a CLI (from SKILL.md instructions):
 #    bash .ai/lib/dx-common.sh find-spec-dir 2416553
-#    bash .ai/lib/dx-common.sh slugify 2416553 "Enhance Starter Kit dropdown"
+#    bash .ai/lib/dx-common.sh slugify 2416553 "Enhance Card Layout Switcher"
 #    bash .ai/lib/dx-common.sh yaml-val compile
 #
 # 2. As a library (from other scripts):
 #    source .ai/lib/dx-common.sh
 #    SPEC_DIR=$(find_spec_dir "2416553")
-#    SLUG=$(slugify "2416553" "Enhance Starter Kit dropdown")
+#    SLUG=$(slugify "2416553" "Enhance Card Layout Switcher")
 #    CMD=$(yaml_val "compile")
 
 set -euo pipefail
