@@ -89,4 +89,9 @@
 | 73 | Cross-platform: shared hook platform detection | Medium | Open | 2026-04-04 | [todo-cross-platform.md#hook-detection](todo-cross-platform.md#sessionstart-hook-platform-detection-shared-script) |
 | 74 | Cross-platform: AGENTS.md ↔ CLAUDE.md sync | Low | Ongoing | 2026-04-04 | [todo-cross-platform.md#agents-sync](todo-cross-platform.md#agentsmd-maintenance--keep-in-sync-with-claudemd) |
 
-**Counts:** 74 total — 9 done, 48 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
+| 75 | Context graphs: provenance metadata on spec files | Medium | Open | 2026-04-05 | [todo-context-graphs.md#phase-1](todo-context-graphs.md#phase-1--provenance-metadata-low-effort-high-value) — add agent/model/confidence frontmatter to spec outputs |
+| 76 | Context graphs: decision nodes with alternatives | Medium | Open | 2026-04-05 | [todo-context-graphs.md#phase-2](todo-context-graphs.md#phase-2--decision-nodes-medium-effort-high-value) — record planning rationale in `.ai/graph/nodes/decisions/` |
+| 77 | Context graphs: cross-ticket pattern promotion | Medium | Open | 2026-04-05 | [todo-context-graphs.md#phase-3](todo-context-graphs.md#phase-3--cross-ticket-patterns-medium-effort-very-high-value) — patterns from 3+ tickets promoted to shared knowledge |
+| 78 | Context graphs: full graph with edges and index | Low | Open | 2026-04-05 | [todo-context-graphs.md#phase-4](todo-context-graphs.md#phase-4--full-graph-with-edges-higher-effort-transformative) — complete edge schema, index, graph-aware coordinators |
+
+**Counts:** 78 total — 9 done, 52 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
