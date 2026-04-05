@@ -213,7 +213,41 @@ Read `.ai/templates/spec/implement.md.template` and follow that structure exactl
 - Key Decisions section: record non-obvious choices with alternatives and rationale. OMIT for trivial changes.
 - Risks section: only REAL technical risks. OMIT if none.
 
-## 5. Status Tracking
+## 5. Write Decision Nodes
+
+If `implement.md` contains a `## Key Decisions` section (i.e., non-trivial decisions were made), externalize each decision as a structured YAML file.
+
+Read `shared/decision-schema.md` for the schema definition.
+
+### When to write
+
+- If the Key Decisions section was **omitted** (trivial change) → skip this step entirely
+- If Key Decisions section **exists** → write one YAML file per decision
+
+### How to write
+
+1. Create the directory if needed:
+```bash
+mkdir -p .ai/graph/nodes/decisions
+```
+
+2. For each decision in the `## Key Decisions` section, write a YAML file to `.ai/graph/nodes/decisions/<ticket>-<slug>.yaml`:
+   - `<ticket>` is the work item ID (from spec directory name)
+   - `<slug>` is a kebab-case summary of the decision title (e.g., `extend-layout-dropdown`)
+   - Map the markdown fields to YAML: `**Chosen:**` → `chosen:`, `**Why:**` → `why:`, `**Alternatives considered:**` → `alternatives:`, `**Affects steps:**` → `affects_steps:`
+   - Set `confidence` from the same propagation logic used for `implement.md` provenance
+   - Set `trust_tier: shared`, `status: active`
+   - Populate `tags` from technology names, component types, and architectural concepts mentioned in the decision
+   - Populate `lineage` with references to the input spec files that informed this decision (e.g., `requirement-<ticket>-raw`, `research-<ticket>`)
+   - Populate `files` from files mentioned in the decision or the affected steps
+
+3. If decision YAML files already exist for this ticket (re-planning), overwrite them. Set `status: superseded` on any old decision files that are no longer in the new plan's Key Decisions section.
+
+### Content parity
+
+The YAML files contain the **same information** as the markdown Key Decisions section — they are the structured counterpart for machine consumption. Do not add or remove decisions between the two formats.
+
+## 6. Status Tracking
 
 Every step MUST have a `**Status:**` line with one of:
 - `pending` — not yet started (initial state)
@@ -223,7 +257,7 @@ Every step MUST have a `**Status:**` line with one of:
 
 The step-* skills update these statuses as they execute.
 
-## 6. Planning Principles
+## 7. Planning Principles
 
 - **Reuse before create** — if research.md's "Existing Implementation Check" shows existing code covers a requirement (✅ or ⚡), the step MUST reuse/extend that code. Never create a new utility, helper, service, or component when an existing one can be extended. If research.md doesn't have this section, search the codebase yourself before planning a "Create new" step.
 - **Every step references specific files and line numbers** from research.md
@@ -239,14 +273,14 @@ The step-* skills update these statuses as they execute.
 - **No time estimates**
 - **Scale to complexity** — simple change = 3-4 steps, complex feature = 10+
 
-## 7. Present Summary
+## 8. Present Summary
 
 ```markdown
 ## implement.md created
 
 **<Title>**
 - Steps: <count> (all pending)
-- Key decisions: <count or "none">
+- Key decisions: <count or "none"> (decision nodes written to `.ai/graph/nodes/decisions/`)
 - Files to modify: <count>
 - Files to create: <count>
 - Tests planned: <count> unit, manual verification included

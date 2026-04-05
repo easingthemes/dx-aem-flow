@@ -9,7 +9,27 @@ allowed-tools: ["read", "search", "write"]
 
 You scan all completed spec directories for recurring decisions and approaches, then promote patterns that appear in 3+ tickets to `.ai/graph/nodes/patterns/` for cross-ticket knowledge reuse.
 
-## 1. Scan Spec Directories
+## 1. Scan Decision Sources
+
+Collect decisions from two sources — structured YAML (preferred) and markdown fallback.
+
+### 1a. Decision Nodes (primary source)
+
+Scan for structured decision YAML files:
+
+```bash
+find .ai/graph/nodes/decisions/ -name "*.yaml" -type f 2>/dev/null
+```
+
+Read `shared/decision-schema.md` for the schema definition. For each decision YAML file, extract:
+- `ticket` — the work item ID
+- `chosen` — what was chosen
+- `tags` — for grouping by similarity
+- `files` — for matching by file overlap
+- `alternatives` — the rejected options (useful for understanding the pattern's scope)
+- `status` — skip decisions with `status: superseded` or `status: rejected`
+
+### 1b. Implement.md fallback (for pre-Phase 4 tickets)
 
 Find all spec directories with completed work:
 
@@ -17,7 +37,9 @@ Find all spec directories with completed work:
 find .ai/specs/ -name "implement.md" -type f 2>/dev/null
 ```
 
-For each `implement.md` found, read:
+For each `implement.md` found, check if decision YAML files already exist for that ticket (by matching the ticket ID from the spec directory name against `.ai/graph/nodes/decisions/<ticket>-*.yaml`). If YAML files exist, **skip the markdown scan** for that ticket — the YAML is the authoritative source.
+
+For tickets without decision YAML files, read from `implement.md`:
 - The `## Key Decisions` section (if present) — these are explicit design choices with alternatives
 - The `## Approach` section — the overall strategy
 - The `## Steps` section — scan step titles and file references for recurring patterns
@@ -37,8 +59,9 @@ Group the extracted decisions and approaches by similarity. Two decisions are "t
 - **Same technology approach** — e.g., multiple tickets use the same library, config pattern, or API pattern
 
 **Matching heuristics:**
-- Decisions that reference the same files or directories
-- Decisions with the same "Chosen" approach (even if wording differs)
+- Decisions that share `tags` values (from YAML) or reference the same files or directories
+- Decisions with the same `chosen` approach (from YAML) or "Chosen" text (from markdown), even if wording differs
+- Decisions with overlapping `files` lists (from YAML) — strong signal of the same pattern
 - Steps that follow the same sequence (e.g., "modify model → update dialog → update template")
 - Reused utilities or services that appear in 3+ tickets' Key Findings
 
