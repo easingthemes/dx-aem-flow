@@ -385,7 +385,7 @@ Run these skills in order to complete the setup:
 
 ## Examples
 
-1. `/auto-init` (hub project) — User answers "yes" to "Is this the main project?" Scaffolds full `.ai/automation/` directory with `infra.json` containing AWS resource prefix, region, all 10 agent definitions (DoR, DoD, PR Review, PR Answer, DevAgent, BugFix, QA, DOCAgent, Estimation, DoD-Fix), Lambda handler templates, and deployment scripts. Prints next step: `/auto-provision`.
+1. `/auto-init` (hub project) — User answers "yes" to "Is this the main project?" Scaffolds full `.ai/automation/` directory with `infra.json` containing AWS resource prefix, region, agent definitions (DoR, DoD, PR Review, PR Answer, DevAgent, BugFix, QA, DOCAgent, Estimation, DoD-Fix), Lambda handler templates, and deployment scripts. Prints next step: `/auto-provision`.
 
 2. `/auto-init` (consumer project) — User answers "no" to hub question, provides hub project name. Scaffolds consumer-profile `infra.json` with only PR-related pipelines (PR Review, PR Answer), pipeline YAML files, and references to the hub's Lambda URLs. No AWS resources, no Lambda handlers. Prints next step: `/auto-pipelines`.
 

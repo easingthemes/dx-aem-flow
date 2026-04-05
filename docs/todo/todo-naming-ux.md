@@ -31,7 +31,7 @@
 
 **Added:** 2026-03-03
 **Problem:** All skill directories are prefixed with their plugin abbreviation (`dx-init`, `aem-doctor`) to work around broken `plugin:skill` resolution in Claude Code CLI. This makes directory names longer than necessary.
-**Scope:** All 68 skill directories across 4 plugins. Validation script: `scripts/validate-skills.sh`.
+**Scope:** All skill directories across 4 plugins. Validation script: `scripts/validate-skills.sh`.
 **Done-when:** Claude Code CLI correctly resolves `plugin:skill` names (check: `dx-core:init` triggers correctly instead of requiring `/dx-init`). Track at https://github.com/anthropics/claude-code/issues.
 **Approach:** Blocked on upstream fix. When resolved, rename all skill directories to drop the plugin prefix (e.g., `dx-init` → `init`), update `validate-skills.sh`, and update all cross-references.
 

@@ -88,7 +88,7 @@ That's the gap between "AI suggests code" and
 "AI delivers enterprise-grade structured output."
 
 I built an open-source plugin system that bridges this gap.
-73 skills. 4 plugins. Consistent results every time.
+4 plugins. Consistent results every time.
 
 Agree or disagree? 👇
 ```

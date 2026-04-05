@@ -43,12 +43,12 @@ Agent definitions (`.github/agents/`) and `AGENTS.md` are **always generated** â
 | `.ai/rules/` | 4 shared AI rules | `dx-core/templates/rules/` |
 | `.ai/docs/` | 10 documentation files | `dx-core/templates/docs/` |
 | `.ai/lib/` | 7 shell utility scripts | `dx-core/data/lib/` |
-| `.ai/templates/` | 14 output templates | `dx-core/data/templates/` |
-| `.ai/project/` | 5 AEM seed data files | Generated with defaults |
-| `.claude/rules/` | 11 coding convention rules | `dx-core` + `dx-aem` templates |
-| `.claude/hooks/` | 1 lifecycle hook | `dx-core/data/hooks/` |
-| `.github/agents/` | 25 agent definitions | `dx-core` + `dx-aem` templates |
-| `.github/instructions/` | 8 AEM instruction docs | `dx-aem/templates/instructions/` |
+| `.ai/templates/` | Output templates | `dx-core/data/templates/` |
+| `.ai/project/` | AEM seed data files | Generated with defaults |
+| `.claude/rules/` | Coding convention rules | `dx-core` + `dx-aem` templates |
+| `.claude/hooks/` | Lifecycle hooks | `dx-core/data/hooks/` |
+| `.github/agents/` | Agent definitions | `dx-core` + `dx-aem` templates |
+| `.github/instructions/` | AEM instruction docs | `dx-aem/templates/instructions/` |
 | `.mcp.json` | MCP server config | Generated |
 | `AGENTS.md` | Agent discovery (Codex, Windsurf) | Generated from `.github/agents/` |
 | `agent.index.md` | Machine-readable doc map | `dx-core/templates/INDEX.md.template` |
