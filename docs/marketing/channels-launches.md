@@ -19,7 +19,7 @@
 > "Structured AI skills for enterprise dev workflows"
 
 **Description:**
-> AI code generation is commoditized — every tool does it. dx-aem-flow bridges the gap to structured, enterprise-quality output. 73 skills that produce consistent, auditable artifacts from ticket to PR: requirements analysis, implementation plans, 6-phase verification, and autonomous quality gates. Config-driven, pure markdown, works on Claude Code, Copilot CLI, and VS Code Chat. Open source.
+> AI code generation is commoditized — every tool does it. dx-aem-flow bridges the gap to structured, enterprise-quality output. Skills that produce consistent, auditable artifacts from ticket to PR: requirements analysis, implementation plans, 6-phase verification, and autonomous quality gates. Config-driven, pure markdown, works on Claude Code, Copilot CLI, and VS Code Chat. Open source.
 
 **Topics/Categories:**
 - Developer Tools

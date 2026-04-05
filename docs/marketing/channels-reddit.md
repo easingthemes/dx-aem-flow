@@ -11,7 +11,7 @@
 
 | Subreddit | Members | Rules | Post Angle |
 |-----------|---------|-------|------------|
-| **r/SideProject** | 503K | Welcomes project sharing | "I built an AI dev platform with 73 skills — here's my journey" |
+| **r/SideProject** | 503K | Welcomes project sharing | "I built an AI dev platform with dozens of skills — here's my journey" |
 | **r/coolgithubprojects** | 60K | GitHub repos welcome | Direct repo link + description |
 | **r/alphaandbetausers** | 22K | Early testers wanted | "Looking for beta testers for an open-source AI dev toolkit" |
 | **r/shamelessplug** | 52K | Explicitly for promotion | Direct pitch |
@@ -31,7 +31,7 @@
 
 | Subreddit | Angle |
 |-----------|-------|
-| **r/ClaudeAI** | "I built a plugin system for Claude Code — 73 skills for enterprise dev" |
+| **r/ClaudeAI** | "I built a plugin system for Claude Code — dozens of skills for enterprise dev" |
 | **r/ChatGPTCoding** | "What if your AI assistant could handle the entire sprint, not just coding?" |
 | **r/LocalLLaMA** | Technical architecture discussion (agent orchestration) |
 | **r/artificial** | "Autonomous AI agents running 24/7 on ADO pipelines" |
@@ -85,7 +85,7 @@ The setup:
 - Agent does the work (review PR, fix bug, validate DoD, etc.)
 - Results posted back to ADO as comments/PRs
 
-Currently running 10 agents:
+Currently running these agents:
 1. PR Reviewer — reviews diffs, posts structured comments
 2. PR Answerer — responds to reviewer questions with codebase context
 3. DoR Checker — validates requirements before dev starts

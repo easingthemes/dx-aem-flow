@@ -8,12 +8,12 @@ Cross-tool agent instructions for [dx-aem-flow](https://easingthemes.github.io/d
 
 Four installable plugins for AI-assisted development workflows. Pure Markdown (skills, agents, rules, templates) with shell helper scripts. No build system.
 
-| Plugin | Directory | Purpose | Skills |
-|--------|-----------|---------|--------|
-| **dx-core** | `plugins/dx-core/` | Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR | 48 (`dx-*`) |
-| **dx-hub** | `plugins/dx-hub/` | Multi-repo orchestration | 4 (`dx-hub-*`) |
-| **dx-aem** | `plugins/dx-aem/` | AEM-specific verification, QA, demo capture | 12 (`aem-*`) |
-| **dx-automation** | `plugins/dx-automation/` | Autonomous AI agents running as ADO pipelines | 11 (`auto-*`) |
+| Plugin | Directory | Purpose | Skill prefix |
+|--------|-----------|---------|--------------|
+| **dx-core** | `plugins/dx-core/` | Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR | `dx-*` |
+| **dx-hub** | `plugins/dx-hub/` | Multi-repo orchestration | `dx-hub-*` |
+| **dx-aem** | `plugins/dx-aem/` | AEM-specific verification, QA, demo capture | `aem-*` |
+| **dx-automation** | `plugins/dx-automation/` | Autonomous AI agents running as ADO pipelines | `auto-*` |
 
 ## Plugin Structure
 

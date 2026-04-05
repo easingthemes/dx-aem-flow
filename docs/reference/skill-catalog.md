@@ -1,6 +1,6 @@
 # Skill Catalog
 
-## dx-core plugin — 49 skills
+## dx-core plugin
 
 ### Estimation — 1 skill
 
@@ -118,7 +118,7 @@
 
 ---
 
-## dx-hub plugin — 4 skills
+## dx-hub plugin
 
 Multi-repo orchestration plugin. Dispatches tickets to independent Claude Code sessions in VS Code terminals — one per repo. Each session has its own CWD, full plugin access, and MCP tools.
 
@@ -165,7 +165,7 @@ dx-bug-all ─┬─ dx-bug-triage
 dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, includes auto-fix)
 ```
 
-## dx-aem plugin — 12 skills
+## dx-aem plugin
 
 ### Verification (4)
 
@@ -203,7 +203,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 
 ---
 
-## dx-automation plugin (11 skills)
+## dx-automation plugin
 
 > Requires: `dx-core` plugin installed. Also requires AWS CLI and Azure CLI configured.
 >
