@@ -1,3 +1,10 @@
+## [2.100.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.100.0...v2.100.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* restore counts where they serve a functional purpose ([7891dd8](https://github.com/easingthemes/dx-aem-flow/commit/7891dd882a2471796fbc0627eef917b2d4c1256a))
+
 # [2.100.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.99.0...v2.100.0) (2026-04-05)
 
 
