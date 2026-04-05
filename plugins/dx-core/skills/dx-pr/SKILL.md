@@ -57,6 +57,28 @@ If any step is `pending`, `in-progress`, or `blocked`:
 - Print: "Not all steps are done. Complete remaining steps with `/dx-step` or `/dx-step-all` first."
 - STOP
 
+### Provenance Verification Check
+
+Parse `implement.md`'s YAML frontmatter `provenance:` block (if present):
+
+1. **Verified status** (hard gate):
+   - If `verified: false` → warn: "⚠ implement.md has not passed verification. Run `/dx-step-verify` before creating a PR." → STOP
+   - If `verified: true` → continue
+   - If no provenance block → skip this check (pre-migration file, no gate)
+
+2. **Confidence advisory** (soft warning, does not block):
+   - If `confidence: low` → print: "⚠ Implementation plan has low confidence — PR reviewers should scrutinize carefully."
+   - If `confidence: medium` or `high` → no warning
+
+3. **PR description enrichment:**
+   - If provenance exists, include a `### Provenance` section in the PR description:
+     ```
+     ### Provenance
+     - **Plan confidence:** <confidence>
+     - **Verified by:** dx-step-verify ✅
+     - **Model tier:** <model>
+     ```
+
 ### Branch Readiness Check
 
 If `superpowers:finishing-a-development-branch` is available, invoke it to verify branch readiness.
