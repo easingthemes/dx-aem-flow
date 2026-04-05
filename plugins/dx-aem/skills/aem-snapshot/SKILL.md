@@ -76,13 +76,13 @@ Look for the most recently modified `.ai/specs/*-*/` directory using Glob. If no
 
 ### 6. Write the baseline
 
-Read `shared/provenance-schema.md`. Write `<spec-dir>/aem-before.md` with provenance frontmatter (use `agent: aem-snapshot`, `model: sonnet`, confidence `high`):
+Read `shared/provenance-schema.md`. Write `<spec-dir>/aem-before.md` with provenance frontmatter (use `agent: aem-snapshot`, confidence `high`):
 
 ```markdown
 ---
 provenance:
   agent: aem-snapshot
-  model: sonnet
+  model: <your-model-tier>
   created: <ISO-8601 timestamp>
   confidence: high
   verified: false

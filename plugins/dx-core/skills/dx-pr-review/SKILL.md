@@ -286,7 +286,7 @@ Read `shared/provenance-schema.md`. Write `.ai/pr-reviews/pr-<id>-findings.md` w
 ---
 provenance:
   agent: dx-pr-review
-  model: opus
+  model: <your-model-tier>
   created: <ISO-8601 timestamp>
   confidence: high
   verified: false
