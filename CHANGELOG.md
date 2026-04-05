@@ -1,3 +1,10 @@
+# [2.98.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.97.0...v2.98.0) (2026-04-05)
+
+
+### Features
+
+* Phase 4 — decision nodes as structured YAML ([3230bc1](https://github.com/easingthemes/dx-aem-flow/commit/3230bc1466b9edbd60ae44a14feb4dd0a42ba016))
+
 # [2.97.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.96.0...v2.97.0) (2026-04-05)
 
 
