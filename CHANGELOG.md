@@ -1,3 +1,15 @@
+# [2.97.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.96.0...v2.97.0) (2026-04-05)
+
+
+### Bug Fixes
+
+* replace customer-specific data in pattern-schema.md example ([4528b4e](https://github.com/easingthemes/dx-aem-flow/commit/4528b4ea3804d1eed7576fbae7903628d757c240))
+
+
+### Features
+
+* add cross-ticket pattern promotion (context graphs Phase 3) ([43f1a9e](https://github.com/easingthemes/dx-aem-flow/commit/43f1a9e7b53e87a38b29a85fe8db920acaa7414e))
+
 # [2.96.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.95.0...v2.96.0) (2026-04-05)
 
 
