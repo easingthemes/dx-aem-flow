@@ -22,6 +22,22 @@ If research.md has an "Existing Implementation Check" section, reference it here
 - State which requirements need new code and what existing patterns to follow
 - If a feature is already implemented, state "Extend existing <path>" not "Create new" -->
 
+## Key Decisions
+<!-- Record non-obvious design decisions made during planning.
+ONLY include decisions where alternatives existed and the choice matters.
+OMIT this section for trivial changes (single-file edits, config-only, bug fixes).
+
+### <Decision title>
+**Chosen:** <what was chosen>
+**Why:** <1-2 sentences — the deciding factor>
+**Alternatives considered:**
+- <Alternative A> — rejected because <reason>
+- <Alternative B> — rejected because <reason>
+**Affects steps:** <which step numbers depend on this decision>
+
+Keep it tight: 1-3 decisions for a medium feature. If every decision is obvious
+from the requirements, omit this section entirely. -->
+
 ## Steps
 
 ### Step 1: <Short imperative description>
