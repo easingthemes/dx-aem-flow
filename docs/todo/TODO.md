@@ -94,6 +94,6 @@
 | 77 | Context graphs: provenance consumers | Medium | Done | 2026-04-05 | [todo-context-graphs.md#phase-1b](todo-context-graphs.md#phase-1b--provenance-consumers-low-effort-high-value) — dx-plan warns on low confidence, dx-pr gates on verified, dx-step-verify flags upstream quality |
 | 78 | Context graphs: cross-ticket pattern promotion | Medium | Done | 2026-04-05 | [todo-context-graphs.md#phase-3](todo-context-graphs.md#phase-3--cross-ticket-pattern-promotion-medium-effort-very-high-value) — dx-pattern-extract skill + dx-plan consumes patterns |
 | 79 | Context graphs: decision nodes as structured YAML | Medium | Done | 2026-04-05 | [todo-context-graphs.md#phase-4](todo-context-graphs.md#phase-4--decision-nodes-as-structured-yaml-medium-effort-high-value) — decision-schema.md + dx-plan writes YAML + dx-pattern-extract reads YAML |
-| 80 | Context graphs: full graph with edges and index | Low | Open | 2026-04-05 | [todo-context-graphs.md#phase-5](todo-context-graphs.md#phase-5--full-graph-with-edges-higher-effort-transformative) — complete edge schema, index, graph-aware coordinators |
+| 80 | Context graphs: full graph with edges | Low | Done | 2026-04-05 | [todo-context-graphs.md#phase-5](todo-context-graphs.md#phase-5--full-graph-with-edges-higher-effort-transformative) — edge-schema.md + dx-plan writes edges + dx-step-verify writes verified-by + dx-agent-all reads graph context |
 
-**Counts:** 80 total — 14 done, 49 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
+**Counts:** 80 total — 15 done, 48 open, 5 blocked, 10 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing

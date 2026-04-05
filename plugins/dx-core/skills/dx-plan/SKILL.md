@@ -247,6 +247,22 @@ mkdir -p .ai/graph/nodes/decisions
 
 The YAML files contain the **same information** as the markdown Key Decisions section — they are the structured counterpart for machine consumption. Do not add or remove decisions between the two formats.
 
+### Write edges
+
+After writing decision nodes, write (or update) the per-ticket edge file. Read `shared/edge-schema.md` for the schema.
+
+```bash
+mkdir -p .ai/graph/edges
+```
+
+Write `.ai/graph/edges/<ticket>.yaml` with edges derived from the planning context:
+
+1. **informed** edges — for each decision node, add edges from `requirement-<ticket>-raw` and `research-<ticket>` to the decision ID (these come from the decision's `lineage` field)
+2. **implemented-as** edges — for each decision node, add edges from the decision ID to `step-<ticket>-<N>` for each step in `affects_steps`
+3. **reuses** edges — if a plan step references a pattern from `## Relevant Patterns`, add an edge from `step-<ticket>-<N>` to the pattern ID
+
+If the edge file already exists (re-planning), replace all edges where `agent: dx-plan` but preserve edges from other agents (e.g., `dx-step-verify`).
+
 ## 6. Status Tracking
 
 Every step MUST have a `**Status:**` line with one of:
