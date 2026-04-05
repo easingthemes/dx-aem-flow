@@ -50,9 +50,30 @@ provenance:
 
 ## Consuming Provenance
 
+### Writers (modify provenance)
+
 - **dx-step-verify** — On PASS, update `implement.md` provenance to set `verified: true`.
 - **dx-step** — When updating step status in `implement.md`, preserve the provenance frontmatter block unchanged.
-- **All other consumers** — Read provenance if useful for context (e.g., trust filtering), but do not modify it.
+
+### Readers (act on provenance, do not modify)
+
+- **dx-plan** — Reads `research.md` and `explain.md` provenance before generating a plan:
+  - Warns on `confidence: low` (suggests re-running `/dx-req`)
+  - Notes `model: haiku` research (may need higher-tier re-run for complex features)
+  - **Confidence propagation:** Uses the lowest input confidence as the ceiling for `implement.md` provenance — a plan is only as reliable as its inputs.
+
+- **dx-pr** — Reads `implement.md` provenance before creating a PR:
+  - **Hard gate:** If `verified: false`, blocks PR creation (requires `/dx-step-verify` first)
+  - **Soft warning:** If `confidence: low`, advises reviewers to scrutinize carefully
+  - **PR enrichment:** Adds a Provenance section to the PR description (confidence, verification status, model tier)
+
+- **dx-step-verify** — Reads `implement.md` and `research.md` provenance before review:
+  - Flags low-confidence upstream inputs in the pre-review output
+  - Passes upstream confidence to the code review subagent so it applies extra scrutiny to low-confidence plans
+
+### Pre-migration files
+
+Files without a `provenance:` frontmatter block (created before provenance was added) are treated as unknown confidence. Consumer skills skip provenance checks for these files — they never block on missing provenance.
 
 ## Non-Markdown Files
 
