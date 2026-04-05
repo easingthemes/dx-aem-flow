@@ -63,6 +63,12 @@ Read from `$SPEC_DIR`:
 - `implement.md` — the full plan with all steps
 - `explain.md` — original requirements
 
+**Provenance awareness:** Parse the `provenance:` frontmatter from `implement.md` and `research.md` (if it exists). Report upstream confidence in the pre-review output:
+
+- If `implement.md` has `confidence: low` → print: "⚠ Plan was generated with low confidence — applying extra scrutiny to code review."
+- If `research.md` exists and has `confidence: low` → print: "⚠ Research had low confidence — verify file paths and patterns are correct."
+- Pass upstream confidence info to the code review subagent (in the Review Context section) so the reviewer knows to apply extra scrutiny to low-confidence plans.
+
 ### Run pre-review checks (compile/lint/test/secret/arch)
 
 Run the 5-phase pre-review gate before the expensive code review:
@@ -160,6 +166,12 @@ Use the Task tool with `dx-code-reviewer` subagent type (if available), otherwis
 ---
 
 ## Review Context
+
+### Upstream Provenance
+Plan confidence: <confidence from implement.md provenance, or "unknown" if no provenance>
+Research confidence: <confidence from research.md provenance, or "not available">
+<If any confidence is "low":>
+NOTE: Low-confidence upstream inputs — apply extra scrutiny to file paths, API usage, and pattern references that may be based on incomplete research.
 
 ### What Was Implemented
 <Summary from implement.md — list all completed steps>

@@ -294,27 +294,27 @@ This is the "compounding knowledge" that Karpathy describes — each ticket's le
 
 ## Implementation Approach
 
-### Phase 1 — Provenance Metadata (Low Effort, High Value)
+### Phase 1 — Provenance Metadata (Low Effort, High Value) ✅ DONE
 
 Add provenance headers to existing spec files. No new directory structure needed.
 
-```markdown
-<!-- .ai/specs/1234-auth/implement.md -->
----
-agent: dx-plan
-model: opus
-created: 2026-04-05T14:30:00Z
-confidence: high
-verified: false
----
-# Implementation Plan: Auth Layer
-...
-```
+**Completed:** Provenance schema (`shared/provenance-schema.md`), 7 producer skills emit provenance frontmatter, `dx-step-verify` sets `verified: true` on PASS, `dx-step` preserves provenance on status updates.
 
-**Scope:** Update `dx-plan`, `dx-req`, `dx-step-verify`, `dx-pr-review` to emit provenance frontmatter.
-**Done-when:** `grep -r "^agent:" .ai/specs/*/` returns provenance metadata for all spec files.
+### Phase 1b — Provenance Consumers (Low Effort, High Value) ✅ DONE
 
-### Phase 2 — Decision Nodes (Medium Effort, High Value)
+Close the feedback loop — skills that READ provenance metadata and act on it.
+
+**Completed:**
+- **dx-plan** reads `research.md`/`explain.md` provenance → warns on low confidence, notes Haiku-tier research, propagates lowest input confidence as ceiling for `implement.md`
+- **dx-pr** reads `implement.md` provenance → hard gate on `verified: false` (blocks PR creation), soft warning on low confidence, enriches PR description with provenance section
+- **dx-step-verify** reads upstream provenance → flags low-confidence inputs in pre-review output, passes confidence context to code review subagent for extra scrutiny
+- `shared/provenance-schema.md` updated with full consumer documentation (Writers vs Readers sections)
+
+### Phase 2 — Key Decisions in implement.md (Low Effort, High Value) ✅ DONE
+
+`dx-plan` captures non-obvious design decisions with alternatives and rationale in a `## Key Decisions` section of `implement.md`.
+
+### Phase 3 — Cross-Ticket Patterns (Medium Effort, Very High Value)
 
 Extend `dx-plan` to record decision rationale in `.ai/graph/nodes/decisions/`.
 
@@ -328,7 +328,14 @@ Build the pattern promotion pipeline: findings that appear across 3+ tickets get
 **Scope:** New skill `dx-pattern-extract` (Haiku tier) that scans recent spec directories for recurring decisions/patterns.
 **Done-when:** `dx-plan` queries `.ai/graph/nodes/patterns/` and references relevant patterns in its output.
 
-### Phase 4 — Full Graph With Edges (Higher Effort, Transformative)
+### Phase 4 — Decision Nodes as Structured YAML (Medium Effort, High Value)
+
+Extract key decisions from `implement.md` into `.ai/graph/nodes/decisions/` as structured YAML with lineage edges. Currently decisions live inline in implement.md — this phase externalizes them for graph queries.
+
+**Scope:** New step in `dx-plan` that writes decision YAML files alongside `implement.md`.
+**Done-when:** `ls .ai/graph/nodes/decisions/` shows decision files after running `/dx-plan`.
+
+### Phase 5 — Full Graph With Edges (Higher Effort, Transformative)
 
 Complete edge schema, index, and graph-aware query patterns in coordinator skills.
 

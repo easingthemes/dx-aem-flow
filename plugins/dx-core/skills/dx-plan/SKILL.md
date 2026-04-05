@@ -26,6 +26,24 @@ Read these files from `$SPEC_DIR` (in order of importance):
 
 If `research.md` doesn't exist, warn the user: "No research.md found — run `/dx-req` first for a better plan. Proceeding with explain.md only."
 
+### Provenance Check on Inputs
+
+Read `shared/provenance-schema.md` for the schema definition.
+
+After reading each input file, parse its YAML frontmatter `provenance:` block (if present). Evaluate input quality:
+
+1. **research.md provenance:**
+   - If `confidence: low` → warn: "⚠ research.md has low confidence (degraded mode or incomplete data). Plan quality may be affected — consider re-running `/dx-req` with better search hints."
+   - If `confidence: medium` or `high` → no warning needed
+   - If no provenance block → informational: "ℹ research.md has no provenance metadata (pre-migration file). Confidence unknown."
+   - If `model: haiku` → note: "ℹ research.md was produced at Haiku tier. For complex features, consider re-running `/dx-req` at higher tier."
+
+2. **explain.md provenance:**
+   - If `confidence: low` → warn: "⚠ explain.md has low confidence. Requirements may be incomplete — verify with the original ticket."
+   - If no provenance block → skip (informational only, don't block)
+
+**Confidence propagation:** Use the *lowest* confidence from input files as the ceiling for `implement.md` provenance. If research.md is `low`, implement.md cannot be higher than `low` — regardless of planning quality, the plan is only as reliable as its inputs.
+
 Also check for Figma prototype files (from `/dx-figma-prototype`):
 - `figma-conventions.md` — discovered project conventions (design tokens, naming, patterns)
 - `prototype/index.html` — standalone HTML prototype
@@ -151,7 +169,7 @@ If research.md has no Cross-Repo Scope section or scope is "This repo only", do 
 
 Analyze all inputs and write `implement.md` in the same spec directory.
 
-Read `shared/provenance-schema.md`. Include the provenance frontmatter block at the top of `implement.md`, before the `# Implementation Plan:` heading. Use `agent: dx-plan`, confidence `medium` (planning involves synthesis). Downgrade to `low` if operating without `research.md`.
+Include the provenance frontmatter block at the top of `implement.md`, before the `# Implementation Plan:` heading. Use `agent: dx-plan`. Set confidence using the propagation rule from the Provenance Check step: the *lowest* input confidence is the ceiling, then apply the standard downgrade rule (no `research.md` → `low`). Default is `medium` when all inputs have `medium` or `high` confidence.
 
 Read `.ai/templates/spec/implement.md.template` and follow that structure exactly. Key rules:
 
