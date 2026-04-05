@@ -1,3 +1,10 @@
+# [2.93.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.92.0...v2.93.0) (2026-04-05)
+
+
+### Features
+
+* research context graphs for multi-agent shared knowledge ([e786d23](https://github.com/easingthemes/dx-aem-flow/commit/e786d23ee78c5faf40661017012051789a19bee3))
+
 # [2.92.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.91.0...v2.92.0) (2026-04-04)
 
 
