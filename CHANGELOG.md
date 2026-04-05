@@ -1,3 +1,10 @@
+# [2.96.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.95.0...v2.96.0) (2026-04-05)
+
+
+### Features
+
+* add provenance consumers to dx-plan, dx-pr, and dx-step-verify ([0862ef3](https://github.com/easingthemes/dx-aem-flow/commit/0862ef3a77e2a0244e3af1ef54661a09d32b4243))
+
 # [2.95.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.94.0...v2.95.0) (2026-04-05)
 
 
