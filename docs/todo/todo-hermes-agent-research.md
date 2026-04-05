@@ -255,35 +255,9 @@ New flow:
 
 The enhancement file gives richer context to the skill than a standalone rule. The rule fires as an always-on convention; the enhancement adds diagnostic steps and verification.
 
-### Idea 5: Skill Feedback Loop → Plugin Author (MEDIUM EFFORT, HIGH VALUE)
+### ~~Idea 5: Skill Feedback Loop → Plugin Author~~ — NOT NEEDED
 
-**What Hermes does**: `skill_manage(patch)` modifies skills directly.
-
-**Adapted for dx**: Since plugins are released from GitHub, project-level feedback can flow **upstream** to the plugin author.
-
-**Mechanism**:
-```
-.ai/learning/raw/skill-feedback.jsonl
-```
-
-A new `dx-skill-feedback-report` skill reads this file and generates a summary:
-```markdown
-# Skill Feedback Report (2026-Q1)
-
-## dx-plan (4 feedback items)
-- Missing step: AEM dialog validation after component impl (3 occurrences)
-- Missing step: Cross-repo sync check for shared components (2 occurrences)
-
-## dx-step (2 feedback items)  
-- Wrong default: Uses `mvn install` but project needs `mvn install -P autoInstallPackage`
-```
-
-This report can be:
-- Attached to a GitHub issue on the plugin repo
-- Used by the plugin author to improve the next release
-- Aggregated across projects (if teams share reports) to prioritize improvements
-
-This is the dx equivalent of Hermes's self-evolution outer loop — but with a human in the loop (plugin author reviews and releases).
+Plugin authors already get feedback through normal channels (GitHub issues, PRs, team discussions). A formal JSONL-to-report pipeline adds complexity for a problem that doesn't exist.
 
 ### Idea 6: Cross-Session Recall via Specs (MEDIUM EFFORT, HIGH VALUE)
 
@@ -328,9 +302,9 @@ Over time, `dx-code-reviewer` reads this to auto-adjust its confidence threshold
 | 2 | **Post-completion reflection** | Low | Medium | Prompt additions to coordinator skills |
 | 3 | **Richer fix promotion** | Low | High | Enhancement files + existing `learned-fix-*.md` |
 | 4 | **Cross-session recall** | Medium | High | New `dx-recall` skill |
-| 5 | **Skill feedback → upstream** | Medium | High | `.ai/learning/raw/skill-feedback.jsonl` → reports |
-| 6 | **Confidence calibration** | Low | Medium | `.ai/learning/raw/reviews.jsonl` |
-| ~~7~~ | ~~Agent memory~~ | — | — | Already covered by `.ai/` structure |
+| 5 | **Confidence calibration** | Low | Medium | `.ai/learning/raw/reviews.jsonl` |
+| ~~6~~ | ~~Agent memory~~ | — | — | Already covered by `.ai/` structure |
+| ~~7~~ | ~~Skill feedback → upstream~~ | — | — | Normal channels (issues/PRs) suffice |
 
 ## Implementation Order
 
@@ -341,10 +315,6 @@ Over time, `dx-code-reviewer` reads this to auto-adjust its confidence threshold
 **Phase 2 (one new skill + promotion update):**
 - Create `dx-recall` skill
 - Update fix promotion to also write to enhancement files
-
-**Phase 3 (feedback loop):**
-- Create `dx-skill-feedback-report` skill
-- Aggregate feedback across projects for plugin improvement
 
 ---
 
