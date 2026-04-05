@@ -45,9 +45,9 @@ from the requirements, omit this section entirely. -->
 **Files:** `path/to/File.ext`, `path/to/other.ext`
 **What:**
 <!-- Concrete, specific instructions:
-- "Add `podCount` property with type String and default value `'one'`
-  following the same pattern as `layoutType` on line 45 of the existing model"
-- "Add a dropdown field to the config with options `'one'` and `'two'`,
+- "Add `layoutMode` property with type String and default value `'single'`
+  following the same pattern as `displayVariant` on line 45 of the existing model"
+- "Add a dropdown field to the config with options `'single'` and `'two-column'`,
   following the select pattern in `card/config.xml:28`"
 Be specific about property names, types, default values, structures.
 Include code snippets when helpful. -->

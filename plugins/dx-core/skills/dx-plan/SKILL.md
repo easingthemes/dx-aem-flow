@@ -264,7 +264,7 @@ The step-* skills update these statuses as they execute.
 ```
 /dx-plan 2416553
 ```
-Reads `.ai/specs/2416553-add-pod-count-dropdown/explain.md` and `research.md`, generates `implement.md` with 6 steps covering model changes, dialog updates, HTL template, JS logic, SCSS, and tests. All steps start as `pending`.
+Reads `.ai/specs/2416553-add-layout-switcher/explain.md` and `research.md`, generates `implement.md` with 6 steps covering model changes, dialog updates, HTL template, JS logic, SCSS, and tests. All steps start as `pending`.
 
 ### Re-run after research update
 ```

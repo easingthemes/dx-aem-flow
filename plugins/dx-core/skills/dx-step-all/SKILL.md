@@ -326,7 +326,7 @@ Print the blocked step number, the error type, and a summary of what was tried. 
 ```
 /dx-step-all 2416553
 ```
-Reads `implement.md` from `.ai/specs/2416553-add-pod-count-dropdown/`, finds 6 pending steps, and runs each through dx-step (which handles implement + test + review + commit internally). Prints progress after each step.
+Reads `implement.md` from `.ai/specs/2416553-add-layout-switcher/`, finds 6 pending steps, and runs each through dx-step (which handles implement + test + review + commit internally). Prints progress after each step.
 
 ### Resume after partial completion
 ```
