@@ -1,7 +1,7 @@
 ---
 name: aem-doctor
 description: Check health of AEM project infrastructure — verifies component definitions, OSGi configs, dispatcher rules, and content structure against expected state. Use to diagnose configuration drift or after making infrastructure changes.
-argument-hint: "[components|osgi|dispatcher|content|all]"
+argument-hint: "[components|osgi|dispatcher|content|code|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
 ---
 
@@ -28,6 +28,7 @@ Parse the argument:
 - `osgi` — check OSGi configurations only
 - `dispatcher` — check dispatcher rules only
 - `content` — check AEM content structure only
+- `code` — check Java code for anti-patterns only
 - `all` or no argument — check everything
 
 ## 3. Run Checks
@@ -115,6 +116,27 @@ If `aem.frontend-dir` is configured:
 - For each brand in `aem.brands`, verify brand-specific overrides directory exists
 - Check for orphaned brand files (brand override without a base component)
 
+### 3f. Code Anti-Pattern Scan
+
+Scan Java source files for patterns that cause issues in AEM as a Cloud Service. Each check is a targeted grep — report matches with file and line number.
+
+**Detect via grep patterns** in project Java source (`**/core/**/src/main/**/*.java`):
+
+| Anti-Pattern | Grep Pattern | Severity |
+|---|---|---|
+| Scheduler API (runs on all cluster instances) | `implements Runnable` in files with `Scheduler.PROPERTY_SCHEDULER` | ⚠ warn |
+| Static ResourceResolver (stale sessions) | `private static ResourceResolver` | ✗ error |
+| Administrative resolver (removed in Cloud Service) | `getAdministrativeResourceResolver` | ✗ error |
+| ResourceResolver not in try-with-resources | `getServiceResourceResolver` in files WITHOUT `try (ResourceResolver` | ⚠ warn |
+| Path-bound servlet (bypasses ACLs) | `sling.servlet.paths` | ⚠ warn |
+| Mutable state in OSGi service | `@Component` class with non-final `private.*Map\|List\|Set\|int\|long\|boolean` fields that aren't `@Reference`/`@Inject`/`@OSGiService`/`@ValueMapValue` | ⚠ warn |
+| Deprecated SCR annotations | `import org.apache.felix.scr.annotations` | ⚠ warn |
+| Hardcoded AEM paths | String literals matching `/content/dam/`, `/content/` followed by a specific site name, or `/apps/` | ⚠ warn |
+| JCR Session direct access | `.adaptTo(Session.class)` outside test files | ⚠ warn |
+| Absolute resource type in HTL | `resourceType='/apps/` in `*.html` files | ⚠ warn |
+
+**How to scan:** Run greps in parallel. For each hit, report the file path and line. Skip test files (`**/test/**`) for all checks except the HTL check. Keep output concise — list up to 5 matches per pattern, then `+N more`.
+
 ## 4. Print Results
 
 Use this exact format with status indicators:
@@ -161,6 +183,14 @@ Component coverage                                 ✓ N/M have FE files
 Brand overrides                                    ✓ N brands, no orphans
 ...
 
+Code Anti-Patterns                                 Status
+─────────────────────────────────────────────────────────
+Scheduler API (use Sling Jobs)                     ✓ none found
+Static ResourceResolver                            ✗ 2 hits
+  MyService.java:15, AnotherService.java:42
+Administrative resolver                            ✓ none found
+...
+
 Summary: X passed, Y warnings, Z errors
 ```
 
@@ -186,11 +216,13 @@ End with a summary line:
 
 ## Examples
 
-1. `/aem-doctor` — Runs all health checks: verifies 45 component definitions match source XML, validates OSGi configs exist, checks dispatcher rules for proper cache headers, and confirms content structure paths are accessible. Reports 2 warnings (missing dispatcher rule, stale OSGi config) and 0 errors.
+1. `/aem-doctor` — Runs all health checks: verifies 45 component definitions match source XML, validates OSGi configs exist, checks dispatcher rules for proper cache headers, confirms content structure paths are accessible, and scans Java code for anti-patterns. Reports 2 warnings (missing dispatcher rule, stale OSGi config) and 0 errors.
 
-2. `/aem-doctor` (AEM not running) — Checks local file structure (component definitions, OSGi configs, dispatcher rules) successfully. Skips AEM instance checks with warning: "AEM not reachable at http://localhost:4502. Skipping instance checks." Reports local-only results.
+2. `/aem-doctor code` — Runs only the code anti-pattern scan. Greps Java source for deprecated APIs, static ResourceResolvers, path-bound servlets, and other Cloud Service anti-patterns. Reports 1 warning (deprecated SCR annotation in LegacyService.java) and 0 errors.
 
-3. `/aem-doctor` (after failed deployment) — Detects 3 errors: component dialog XML has invalid field type, OSGi config references non-existent PID, and content path returns 404. Each error includes the file path and suggested fix action.
+3. `/aem-doctor` (AEM not running) — Checks local file structure (component definitions, OSGi configs, dispatcher rules) and code anti-patterns successfully. Skips AEM instance checks with warning: "AEM not reachable at http://localhost:4502. Skipping instance checks." Reports local-only results.
+
+4. `/aem-doctor` (after failed deployment) — Detects 3 errors: component dialog XML has invalid field type, OSGi config references non-existent PID, and content path returns 404. Each error includes the file path and suggested fix action.
 
 ## Troubleshooting
 
