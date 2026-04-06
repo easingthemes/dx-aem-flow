@@ -62,7 +62,18 @@ If any step is `pending`, `in-progress`, or `blocked`:
 Parse `implement.md`'s YAML frontmatter `provenance:` block (if present):
 
 1. **Verified status** (hard gate):
-   - If `verified: false` → warn: "⚠ implement.md has not passed verification. Run `/dx-step-verify` before creating a PR." → STOP
+   - If `verified: false` → print diagnostic and STOP:
+     ```
+     ⚠ PR blocked: implement.md has not passed verification.
+
+     Current state:
+       verified: false
+       confidence: <confidence>
+       last modified: <file mtime>
+
+     Next step: Run `/dx-step-verify` to validate build, lint, tests, and code review.
+     After verification passes, re-run `/dx-pr` to create the pull request.
+     ```
    - If `verified: true` → continue
    - If no provenance block → skip this check (pre-migration file, no gate)
 
