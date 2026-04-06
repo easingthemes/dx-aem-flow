@@ -20,9 +20,52 @@ import { stats } from '../../config/stats';
 />
 
 <SectionHeading
+  badge="Start Here"
+  badgeColor="success"
+  title="7 Skills That Cover 90% of Use Cases"
+  subtitle="New to KAI? Start with these. Everything else is for fine-tuning specific phases."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="Pick Your Entry Point">
+    You don't need to memorize 76 skills. These 7 cover the full development lifecycle.
+    Each one is a **coordinator** that handles its phase end-to-end, including sub-steps.
+  </HighlightBox>
+
+  <div class="overflow-x-auto mt-4">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-emerald-100">
+        <th class="text-left p-3 font-semibold text-emerald-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-emerald-900">What It Does</th>
+        <th class="text-left p-3 font-semibold text-emerald-900">When to Use</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr class="bg-emerald-50/50"><td class="p-3 font-mono font-semibold text-emerald-700">/dx-req &lt;id&gt;</td><td class="p-3">Fetch ticket, validate readiness, distill requirements, research codebase</td><td class="p-3">Starting any story or feature</td></tr>
+        <tr><td class="p-3 font-mono font-semibold text-emerald-700">/dx-plan</td><td class="p-3">Generate implementation plan with step tracking</td><td class="p-3">After requirements, before coding</td></tr>
+        <tr class="bg-emerald-50/50"><td class="p-3 font-mono font-semibold text-emerald-700">/dx-step-all</td><td class="p-3">Execute all plan steps with auto-fix on failure</td><td class="p-3">Hands-free implementation</td></tr>
+        <tr><td class="p-3 font-mono font-semibold text-emerald-700">/dx-pr</td><td class="p-3">Commit, push, create PR linked to ticket</td><td class="p-3">Code is done, ready to submit</td></tr>
+        <tr class="bg-emerald-50/50"><td class="p-3 font-mono font-semibold text-emerald-700">/dx-agent-all &lt;id&gt;</td><td class="p-3">Full pipeline: requirements through PR in one command</td><td class="p-3">Simple stories, hands-free delivery</td></tr>
+        <tr><td class="p-3 font-mono font-semibold text-emerald-700">/dx-figma-all &lt;url&gt;</td><td class="p-3">Extract design, generate prototype, verify visually</td><td class="p-3">Figma design-to-code</td></tr>
+        <tr class="bg-emerald-50/50"><td class="p-3 font-mono font-semibold text-emerald-700">/dx-bug-all &lt;id&gt;</td><td class="p-3">Triage, fix, verify, PR -- full bug lifecycle</td><td class="p-3">Bug reports</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="warning" title="Partial Flow? Jump In Anywhere">
+    Each skill reads from local spec files, not from the previous skill's session. So you can:
+    <ul class="list-none p-0 m-0 mt-2">
+      <li class="py-1"><strong>Already have requirements?</strong> Skip to <code>/dx-plan</code></li>
+      <li class="py-1"><strong>Already have a plan?</strong> Skip to <code>/dx-step-all</code></li>
+      <li class="py-1"><strong>Coded manually?</strong> Skip to <code>/dx-step-verify</code> then <code>/dx-pr</code></li>
+      <li class="py-1"><strong>Just need a PR?</strong> Run <code>/dx-pr</code> directly</li>
+    </ul>
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="Overview"
-  title="Skill Inventory"
-  subtitle="Skills grouped by plugin and category."
+  title="Full Skill Inventory"
+  subtitle="All skills grouped by plugin and category. The 7 primary skills above are marked with a star."
   bg="alt"
 />
 <Section>

@@ -141,6 +141,13 @@ If the MCP server supports attachment download, use it. If MCP attachment downlo
 DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
 ```
 
+**Title-change detection:** If `slugify` returned an existing directory (reuse path), compare the current work item title against the title in `raw-story.md` (first `# ` heading). If titles differ significantly:
+- Print: `Note: Work item title changed since spec directory was created.`
+  - `Old: <title from raw-story.md>`
+  - `New: <current work item title>`
+  - `Spec directory: .ai/specs/<DIR_NAME>/ (unchanged — lookup is by ID, not title)`
+- This is informational only — do NOT rename the directory or branch (would break git history and in-progress work). The ID-based lookup ensures all skills still find the spec directory.
+
 ### 8. Create Feature Branch and Directory
 
 ```bash
