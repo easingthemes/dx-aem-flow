@@ -106,6 +106,32 @@ import HighlightBox from '../components/HighlightBox.astro';
     To restore, remove this comment block. */}
 
 <SectionHeading
+  badge="Important"
+  badgeColor="error"
+  title="API vs Subscription: Know the Cost Difference"
+  subtitle="Direct API usage can cost up to 10x more than a monthly subscription for the same work."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="warning" title="API Usage Is Significantly More Expensive">
+    Running AI coding tools through direct API billing (pay-per-token) is roughly **8-10x more expensive**
+    than using the same models through a monthly subscription plan (e.g., Claude Max, GitHub Copilot,
+    Cursor Pro). This applies to Claude Code and likely other AI coding providers as well.
+
+    **Example -- Claude Code (Opus 4.6):**
+    A typical heavy development day might consume 5-10M input tokens and 200-500K output tokens.
+    On the API, that's **$30-75/day**. A $200/month Max 20x subscription covers the same usage for
+    roughly **$7-10/day equivalent**.
+
+    **Recommendation:**
+    - **Interactive development** -- always use a subscription plan (Standard $100/mo or Power $200/mo)
+    - **Automation agents** -- API billing is unavoidable (headless, no subscription option), so use
+      model tiering and cost controls aggressively
+    - Don't default to API keys for developer workflows when a subscription is available
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="Why"
   badgeColor="warning"
   title="Why It Costs What It Does"
