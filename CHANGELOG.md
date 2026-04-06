@@ -1,3 +1,10 @@
+# [2.101.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.100.1...v2.101.0) (2026-04-06)
+
+
+### Features
+
+* **aem-doctor:** add code anti-pattern scanning ([473fee5](https://github.com/easingthemes/dx-aem-flow/commit/473fee52f1ee75eb9c8fefd40b466cc274dd4ab2))
+
 ## [2.100.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.100.0...v2.100.1) (2026-04-05)
 
 
