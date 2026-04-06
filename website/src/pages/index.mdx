@@ -1,7 +1,7 @@
 ---
 layout: ../layouts/BaseLayout.astro
 title: Enterprise AI Development Platform
-description: "KAI is an enterprise AI development platform. Full agentic workflow from ticket to implementation with governance, testing, verification, and live AEM data. 75+ skills across Claude Code, Copilot CLI, and VS Code Chat."
+description: "KAI is an enterprise AI development platform. Full agentic workflow from ticket to implementation with governance, testing, verification, and live AEM data. 75+ skills across 10 AI platforms including Claude Code, Copilot CLI, VS Code Chat, Codex, Cursor, and Windsurf."
 ---
 
 import PageHero from '../components/PageHero.astro';
@@ -16,7 +16,7 @@ export const base = import.meta.env.BASE_URL;
 
 <PageHero
   title="Enterprise AI Development Platform"
-  subtitle={`Full agentic workflow from ticket to production — requirements, planning, implementation, testing, verification, and PR — fully autonomous. ${stats.totalSkills}+ skills across Claude Code, GitHub Copilot CLI, and VS Code Chat. Integrates with Azure DevOps, Jira, Figma, and live AEM data.`}
+  subtitle={`Full agentic workflow from ticket to production — requirements, planning, implementation, testing, verification, and PR — fully autonomous. ${stats.totalSkills}+ skills across ${stats.aiPlatforms} AI platforms — Claude Code, Copilot CLI, VS Code Chat, Codex, Cursor, Windsurf, and more. Integrates with Azure DevOps, Jira, Figma, and live AEM data.`}
 />
 
 <Section>
@@ -35,13 +35,14 @@ export const base = import.meta.env.BASE_URL;
     </div>
     <div>
       <div class="text-4xl font-extrabold text-cyan">{stats.aiPlatforms}</div>
-      <div class="text-sm text-gray-500">AI Platforms</div>
+      <div class="text-sm text-gray-500">AI Platforms*</div>
     </div>
     <div>
       <div class="text-4xl font-extrabold text-cyan">{stats.claudeAgents}</div>
       <div class="text-sm text-gray-500">Specialized Agents</div>
     </div>
   </div>
+
 </Section>
 
 <SectionHeading
@@ -71,7 +72,7 @@ export const base = import.meta.env.BASE_URL;
       The same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
     </ContentCard>
     <ContentCard icon="mdi:hammer-wrench" iconColor="bg-emerald-600" title="Every AI Platform" horizontal>
-      Same {stats.totalSkills} skills work in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config — install once, use everywhere.
+      Same {stats.totalSkills} skills work across {stats.aiPlatforms} AI platforms — Claude Code, Copilot CLI, VS Code Chat, Codex, Cursor, Windsurf, and more. Install once, use everywhere.
     </ContentCard>
     <ContentCard icon="mdi:shield-check" iconColor="bg-cyan-dark" title="Enterprise Governance" horizontal>
       DoR validation, 6-phase verification gate, autonomous PR review, secret scanning, and branch protection. Ship with confidence.
@@ -89,7 +90,7 @@ export const base = import.meta.env.BASE_URL;
   <div class="grid md:grid-cols-2 gap-4">
     <a href={`${base}/setup/`} class="no-underline">
       <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="Set Up Your Project" horizontal>
-        Install plugins, prepare seed data, run init. Three steps, works with Claude Code and Copilot CLI.
+        Install plugins, prepare seed data, run init. Three steps, works across {stats.aiPlatforms} AI platforms.
       </ContentCard>
     </a>
     <a href={`${base}/usage/`} class="no-underline">
@@ -203,7 +204,7 @@ export const base = import.meta.env.BASE_URL;
       Coordinators invoke skills directly via Skill() calls. No intermediary agent needed. Self-healing with 3 layers: fix, heal, retry loop.
     </ContentCard>
     <ContentCard icon="mdi:hammer-wrench" iconColor="bg-brand-700" title="Every AI Platform" horizontal>
-      Same {stats.totalSkills} skills work in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config — install once, use everywhere.
+      Same {stats.totalSkills} skills work across {stats.aiPlatforms} AI platforms — Claude Code, Copilot CLI, VS Code Chat, Codex, Cursor, Windsurf, and more. Install once, use everywhere.
     </ContentCard>
     <ContentCard icon="mdi:target" iconColor="bg-cyan" title="Model Tier Strategy" horizontal>
       Opus for deep code review. Sonnet for execution. Haiku for simple lookups. Cost scales with complexity, not volume.
@@ -247,3 +248,5 @@ export const base = import.meta.env.BASE_URL;
     </a>
   </div>
 </Section>
+
+<p class="text-xs text-gray-400 text-center mt-2 mb-4">*Fully tested with Claude Code, Copilot CLI, and VS Code Chat. Built on open standards (OpenSkills, OpenPlugins, AGENTS.md, MCP) so all compatible platforms work out of the box. Some agents that haven't fully adopted these standards yet are supported with platform-specific tweaks.</p>

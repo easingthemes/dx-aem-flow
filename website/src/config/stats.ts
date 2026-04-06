@@ -14,5 +14,5 @@ export const stats = {
   autonomousAgents: 10,
   totalPlugins: 4,
   mcpServers: 6,
-  aiPlatforms: 3,
+  aiPlatforms: 10,
 };
