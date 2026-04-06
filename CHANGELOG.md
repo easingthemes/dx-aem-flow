@@ -1,3 +1,10 @@
+## [2.102.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.102.0...v2.102.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* clarify SEO descriptions to focus on full agentic workflow ([19ef928](https://github.com/easingthemes/dx-aem-flow/commit/19ef928c8450f4e3da3a377ae9ec98475a486ba9))
+
 # [2.102.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.101.0...v2.102.0) (2026-04-06)
 
 
