@@ -4,9 +4,10 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 
 **What already works:** `plugin.json`, `marketplace.json`, SKILL.md, `.mcp.json`, hooks (`hooks.json` serves both), `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`, ToolSearch MCP discovery, `applyTo` arrays, plugin discovery via `--plugin-dir`, Open Plugins spec, Skill-to-Skill invocation (verified 2026-03-22).
 
-**Latest version:** v1.0.12 (2026-03-26). Key additions since v1.0.10:
+**Latest version:** v1.0.14 (2026-03-31). Key additions since v1.0.10:
 - v1.0.11: Hook merging across multiple plugins, `additionalContext` injection for SessionStart, `~/.agents/skills/` personal skill directory, monorepo skill discovery.
 - v1.0.12: `CLAUDE_PROJECT_DIR` and `CLAUDE_PLUGIN_DATA` env vars in plugin hooks, `{{project_dir}}` and `{{plugin_data_dir}}` template variables, workspace MCP servers loaded correctly.
+- v1.0.14: Built-in skills shipped with CLI, MCP OAuth HTTPS redirect URI support (self-signed cert fallback), faster `/resume` session picker, images sent correctly to Anthropic models via BYOM.
 
 **Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, HTTP/prompt/agent hook types. Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields.
 
