@@ -46,9 +46,22 @@ The directory check prevents skills from accidentally triggering hub logic when 
 When a skill detects hub mode is active:
 
 1. **STOP** — do not execute the skill's normal pipeline
-2. **Print** a message directing the user to `/dx-hub-dispatch`:
+2. **Print** a diagnostic message with clear next steps:
    ```
-   Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this ticket to repo terminals.
+   ⚠ Hub mode active — this skill cannot run directly in the hub directory.
+
+   Why: You're in a .hub/ coordinator directory. Individual skills run inside
+   each repo, not here. The hub dispatches work to repos, each with its own
+   plugins and context.
+
+   Next step: Run `/dx-hub-dispatch <ticket-id>` to:
+     - Fetch the ticket from ADO/Jira
+     - Determine which repos are involved
+     - Open a terminal per repo with the right context
+     - Pre-seed ticket data so each repo's skills pick up automatically
+
+   After dispatch: Each repo runs its own /dx-req, /dx-plan, etc. independently.
+   Use `/dx-hub-status` to track progress across all repos.
    ```
 3. **Do not** attempt to run `claude -p`, open terminals, or dispatch from within the skill
 
