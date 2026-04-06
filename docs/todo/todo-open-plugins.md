@@ -8,7 +8,7 @@ Tracking alignment with the [Open Plugins spec](https://open-plugins.com/) (v1.0
 **Problem:** Open Plugins defines a vendor-neutral `.plugin/plugin.json` alongside vendor-specific dirs (`.claude-plugin/`, `.cursor-plugin/`). Our plugins only have `.claude-plugin/plugin.json`, limiting cross-tool discoverability (Cursor, Codex).
 **Scope:** All 4 plugins — `plugins/dx-core/`, `plugins/dx-aem/`, `plugins/dx-hub/`, `plugins/dx-automation/`. Each needs a `.plugin/plugin.json` added.
 **Done-when:** Each plugin dir has both `.plugin/plugin.json` (vendor-neutral) and `.claude-plugin/plugin.json` (Claude-specific), and both contain consistent metadata.
-**Approach:** Wait until the Open Plugins GitHub repo (`vercel-labs/open-plugin`) goes public and Claude Code officially supports `.plugin/`. Adding it prematurely could cause conflicts. Monitor the spec.
+**Approach:** Copilot CLI (v1.0.14) now supports `.plugin/` manifest directories. `vercel-labs/open-plugin` repo is now accessible (updated 2026-04-03). Next step: verify Claude Code also supports `.plugin/` discovery, then add vendor-neutral manifests to all 4 plugins.
 
 ## Rules File Extension (.md → .mdc)
 
@@ -53,7 +53,8 @@ Tracking alignment with the [Open Plugins spec](https://open-plugins.com/) (v1.0
 ## Monitor Spec Finalization
 
 **Added:** 2026-03-26
-**Problem:** The Open Plugins GitHub repo (`vercel-labs/open-plugin`) returns 404. The spec is only on the website. Until the repo is public, the spec may change significantly.
+**Updated:** 2026-04-06 — `vercel-labs/open-plugin` repo now accessible (last updated 2026-04-03). Vercel actively using the spec for their own `vercel-plugin` (34 skills). Copilot CLI now supports `.plugin/` manifest directories alongside `.claude-plugin/`. Spec appears to be stabilizing.
+**Problem:** The Open Plugins GitHub repo (`vercel-labs/open-plugin`) was returning 404. The spec was only on the website. Until the repo is public, the spec may change significantly.
 **Scope:** All alignment items above depend on spec stability.
 **Done-when:** `github.com/vercel-labs/open-plugin` is public and has a tagged release.
 **Approach:** Periodic check (monthly). Once public, review the full spec and re-evaluate all items above. The Agent Skills layer (SKILL.md) is already stable and adopted — the packaging layer is the uncertain part.
