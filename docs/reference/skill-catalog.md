@@ -197,7 +197,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | aem-component | `/aem-component` | `<component-name>` | Find all source files, AEM pages, and dialog fields for a component (multi-platform, data-driven) | Component report |
 | aem-page-search | `/aem-page-search` | `<component-name>` | Find all AEM pages using a specific component | Page list |
 | aem-refresh | `/aem-refresh` | none | Update `.ai/project/` seed data from plugin, external docs repo, or manual sources | Seed data files |
-| aem-doctor | `/aem-doctor` | `[components\|osgi\|dispatcher\|all]` | Check AEM project infrastructure health | Status report |
+| aem-doctor | `/aem-doctor` | `[components\|osgi\|dispatcher\|content\|code\|all]` | Check AEM project infrastructure health — includes code anti-pattern scan | Status report |
 
 ---
 
