@@ -35,13 +35,14 @@ export const base = import.meta.env.BASE_URL;
     </div>
     <div>
       <div class="text-4xl font-extrabold text-cyan">{stats.aiPlatforms}</div>
-      <div class="text-sm text-gray-500">AI Platforms</div>
+      <div class="text-sm text-gray-500">AI Platforms*</div>
     </div>
     <div>
       <div class="text-4xl font-extrabold text-cyan">{stats.claudeAgents}</div>
       <div class="text-sm text-gray-500">Specialized Agents</div>
     </div>
   </div>
+  <p class="text-xs text-gray-400 text-center mt-3">*Fully tested with Claude Code, Copilot CLI, and VS Code Chat. All other platforms use the same open standards (AGENTS.md, .claude/rules/, MCP, .github/agents/) and are expected to work without changes.</p>
 </Section>
 
 <SectionHeading
