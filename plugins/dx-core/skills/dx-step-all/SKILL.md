@@ -191,7 +191,13 @@ dx-step-fix now handles both fix and heal modes internally.
 ### Heal result?
 
 Check the step-fix return:
-- **healed** → re-read implement.md to find the new corrective step(s). Proceed to "Execute corrective steps".
+- **healed** → re-read implement.md to find the new corrective step(s). Print a clear plan-mutation notice:
+  ```
+  ⚠ Plan modified by heal: <N> corrective step(s) added after Step <blocked-step>.
+  New steps: <list of step numbers and titles>
+  Total steps now: <updated total>
+  ```
+  Update TaskList to reflect the new steps. Proceed to "Execute corrective steps".
 - **unrecoverable** → print: `Step <N> unrecoverable after 2 fixes + healing. Human intervention needed.` Proceed to "STOP: Human intervention needed".
 
 ### Execute corrective steps

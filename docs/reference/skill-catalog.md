@@ -1,5 +1,32 @@
 # Skill Catalog
 
+## Primary Skills — Start Here
+
+These 7 skills cover 90% of use cases. Each is a coordinator that handles its phase end-to-end.
+
+| Skill | Invocation | What It Does | When to Use |
+|-------|-----------|-------------|-------------|
+| dx-req | `/dx-req <id>` | Fetch ticket, validate readiness, distill requirements, research codebase | Starting any story or feature |
+| dx-plan | `/dx-plan` | Generate implementation plan with step tracking | After requirements, before coding |
+| dx-step-all | `/dx-step-all` | Execute all plan steps with auto-fix on failure | Hands-free implementation |
+| dx-pr | `/dx-pr` | Commit, push, create PR linked to ticket | Code is done, ready to submit |
+| dx-agent-all | `/dx-agent-all <id>` | Full pipeline: requirements through PR in one command | Simple stories, hands-free delivery |
+| dx-figma-all | `/dx-figma-all [url]` | Extract design, generate prototype, verify visually | Figma design-to-code |
+| dx-bug-all | `/dx-bug-all <id>` | Triage, fix, verify, PR — full bug lifecycle | Bug reports |
+
+### Partial Flow — Jump In Anywhere
+
+Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the previous skill's session:
+
+- **Already have requirements?** Skip to `/dx-plan`
+- **Already have a plan?** Skip to `/dx-step-all`
+- **Coded manually?** Run `/dx-step-verify` then `/dx-pr`
+- **Just need a PR?** Run `/dx-pr` directly
+
+---
+
+## All Skills — Full Catalog
+
 ## dx-core plugin
 
 ### Estimation — 1 skill

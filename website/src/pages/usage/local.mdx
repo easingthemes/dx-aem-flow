@@ -42,6 +42,56 @@ export const base = import.meta.env.BASE_URL;
 </Section>
 
 <SectionHeading
+  badge="Start Here"
+  badgeColor="success"
+  title="Choose Your Entry Point"
+  subtitle="Don't memorize 76 skills. Pick the one that matches where you are right now."
+  bg="primary"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="border-2 border-emerald-200 rounded-lg p-4 bg-emerald-50/30">
+      <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Starting a story?</div>
+      <code class="text-sm font-bold text-emerald-800">/dx-req &lt;id&gt;</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Fetches ticket, validates, researches codebase</p>
+    </div>
+    <div class="border-2 border-violet-200 rounded-lg p-4 bg-violet-50/30">
+      <div class="text-xs font-semibold text-violet-600 uppercase tracking-wider mb-1">Ready to plan?</div>
+      <code class="text-sm font-bold text-violet-800">/dx-plan</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Reads existing specs, generates impl plan</p>
+    </div>
+    <div class="border-2 border-cyan-200 rounded-lg p-4 bg-cyan-50/30">
+      <div class="text-xs font-semibold text-cyan-600 uppercase tracking-wider mb-1">Ready to code?</div>
+      <code class="text-sm font-bold text-cyan-800">/dx-step-all</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Executes plan steps with auto-fix</p>
+    </div>
+    <div class="border-2 border-amber-200 rounded-lg p-4 bg-amber-50/30">
+      <div class="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">Code done?</div>
+      <code class="text-sm font-bold text-amber-800">/dx-pr</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Commits, pushes, creates PR</p>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-3 mt-3">
+    <div class="border border-gray-200 rounded-lg p-4">
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Want everything?</div>
+      <code class="text-sm font-bold">/dx-agent-all &lt;id&gt;</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Full pipeline: req through PR</p>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-4">
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Coded manually?</div>
+      <code class="text-sm font-bold">/dx-step-verify</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">then <code>/dx-pr</code> -- verify and submit</p>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-4">
+      <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bug report?</div>
+      <code class="text-sm font-bold">/dx-bug-all &lt;id&gt;</code>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Triage, fix, verify, PR</p>
+    </div>
+  </div>
+</Section>
+
+<SectionHeading
   badge="Full Pipeline"
   title="The Full Pipeline"
   subtitle="One command runs the entire sprint lifecycle. Or use individual skills for just the phase you need."
@@ -338,11 +388,6 @@ export const base = import.meta.env.BASE_URL;
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100">
-      <tr>
-        <td class="p-3"><code>/dx-req &lt;id&gt;</code></td>
-        <td class="p-3">Requirements</td>
-        <td class="p-3 text-[#4a4a5a]">Full requirements pipeline (fetch + DoR + explain + research + share)</td>
-      </tr>
       <tr>
         <td class="p-3"><code>/dx-req &lt;id&gt;</code></td>
         <td class="p-3">Requirements</td>
