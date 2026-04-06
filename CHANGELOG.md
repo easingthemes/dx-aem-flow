@@ -1,3 +1,10 @@
+# [2.104.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.103.0...v2.104.0) (2026-04-06)
+
+
+### Features
+
+* link side banner to Dragan Filipovic's LinkedIn profile ([b8989bf](https://github.com/easingthemes/dx-aem-flow/commit/b8989bfc27b9287b7d7b729b5efae89249bab7b6))
+
 # [2.103.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.102.1...v2.103.0) (2026-04-06)
 
 
