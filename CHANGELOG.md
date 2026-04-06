@@ -1,3 +1,17 @@
+# [2.103.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.102.1...v2.103.0) (2026-04-06)
+
+
+### Bug Fixes
+
+* move platform footnote to bottom of homepage ([3064ead](https://github.com/easingthemes/dx-aem-flow/commit/3064eada45672dee61f24e0813459b757bf6397b))
+* update platform footnote to mention open standards and tweaks ([1b2fd1a](https://github.com/easingthemes/dx-aem-flow/commit/1b2fd1a2ccab9400f2993cd3c060940434896fdd))
+
+
+### Features
+
+* add footnote clarifying tested vs supported platforms ([ecdce60](https://github.com/easingthemes/dx-aem-flow/commit/ecdce6062c3273480df716c0eabf736a2708c6ea))
+* expand AI platforms count from 3 to 10 ([cc9c371](https://github.com/easingthemes/dx-aem-flow/commit/cc9c3713a547abfd4959e87528bc569a9077ae20))
+
 ## [2.102.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.102.0...v2.102.1) (2026-04-06)
 
 
