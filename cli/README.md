@@ -15,6 +15,9 @@ node cli/bin/dx-scaffold.js /path/to/project --all
 
 # Overwrite existing files
 node cli/bin/dx-scaffold.js /path/to/project --all --force
+
+# Set pipeline preferences at scaffold time
+node cli/bin/dx-scaffold.js /path/to/project --auto-commit=true --auto-pr=false
 ```
 
 ## Flags
@@ -24,6 +27,8 @@ node cli/bin/dx-scaffold.js /path/to/project --all --force
 | `--aem` | Include AEM rules, instructions, seed data |
 | `--copilot` | Include Copilot agents and instructions |
 | `--all` | Both `--aem` and `--copilot` |
+| `--auto-commit[=true\|false]` | Set `preferences.auto-commit` in generated `.ai/config.yaml` (also supports `--no-auto-commit`) |
+| `--auto-pr[=true\|false]` | Set `preferences.auto-pr` in generated `.ai/config.yaml` (also supports `--no-auto-pr`) |
 | `--force` | Overwrite existing files (default: skip) |
 | `--quiet` | Suppress per-file output |
 | `--help` | Show help |
