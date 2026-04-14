@@ -10,9 +10,16 @@
 
 **Tech Stack:** Markdown skills + shell scripts (bash/POSIX). YAML for config, manifest, registers, context summaries. No build system. Runs inside Claude Code CLI.
 
-**Source of truth:** `docs/superpowers/specs/2026-04-14-dx-rfp-plugin-design-v2.md`
+**Source of truth:** `docs/research/2026-04-14-dx-rfp-plugin-design.md`
 
 **Location:** `plugins/dx-rfp/` alongside the existing 4 plugins.
+
+**Pre-flight conventions (apply to every task):**
+- Plugin internal validation system lives under `plugins/dx-rfp/validations/` (directory) and `validations.json` (registry). **Do not** name it `hooks/hooks.json` — that path is reserved by Claude Code's tool-event hook system (see `plugins/dx-core/hooks/hooks.json`).
+- Shell scripts invoked from a registry use `${CLAUDE_PLUGIN_ROOT}` (set by Claude Code at runtime). Shell libraries `source`d by other scripts derive their own root from `${BASH_SOURCE[0]}`. The placeholder `DX_RFP_ROOT` does **not** exist and must not appear in any file.
+- Bash compatibility target: **bash 3.2** (macOS default). No namerefs (`local -n`), no `readarray -d`, no `${var^^}` etc.
+- All plugin-scoped manifests (`.claude-plugin/plugin.json`, marketplace entry) use the repo-wide release version at merge time (currently `2.104.0`); do **not** introduce `0.1.0`. semantic-release keeps the four existing plugins in lockstep.
+- No `plugins/dx-rfp/.mcp.json` in v1 — dx-rfp is standalone and uses no MCP servers.
 
 ---
 
@@ -86,10 +93,10 @@ plugins/dx-rfp/
 │   ├── assume-not-ask.md
 │   ├── template-fidelity.md
 │   └── reviewer-charter.md
-├── hooks/
-│   ├── hooks.json
+├── validations/                       # NOT hooks/ — avoids collision with Claude Code
+│   ├── validations.json                # NOT hooks.json
 │   └── lib/
-│       └── validate-*.sh (22 hooks listed in §9 of spec)
+│       └── validate-*.sh (23 validation hooks listed in §9 of spec)
 └── lib/
     ├── include-resolver.sh
     ├── shadow-resolver.sh
@@ -100,8 +107,8 @@ plugins/dx-rfp/
 ### Contract: Shadow Resolution
 
 `lib/shadow-resolver.sh` exports function `resolve_shadow(relative_path)`:
-- If `.ai/rfp/<relative_path>` exists → echo `.ai/rfp/<relative_path>`
-- Else → echo `${DX_RFP_ROOT}/<relative_path>`
+- If `.ai/rfp/<relative_path>` exists in the current working directory → echo `.ai/rfp/<relative_path>`
+- Else → echo `${DX_RFP_PLUGIN_DIR}/<relative_path>` where `DX_RFP_PLUGIN_DIR` is derived at source-time from `${BASH_SOURCE[0]}` (i.e. the directory containing `shadow-resolver.sh` minus the trailing `/lib`). Do **not** rely on `CLAUDE_PLUGIN_ROOT` here; it is not guaranteed in contexts where the library is `source`d by unit tests or by other scripts.
 
 ### Contract: Include Expansion
 
@@ -135,20 +142,31 @@ Manifest format: see spec §8.6.
 
 - [ ] **Step 1: Write `.claude-plugin/plugin.json`**
 
+Version must match the repo-wide release version at merge time (semantic-release keeps all four plugins in lockstep — currently `2.104.0`). Read the current version from any existing `plugins/dx-*/\.claude-plugin/plugin.json` rather than hard-coding.
+
 ```json
 {
   "name": "dx-rfp",
   "description": "Generic Claude Code plugin for responding to formal enterprise RFPs. Multi-perspective pipeline with deterministic validation.",
-  "version": "0.1.0",
-  "author": "Dragan Filipovic"
+  "version": "2.104.0",
+  "author": { "name": "Dragan Filipovic" }
 }
 ```
 
-- [ ] **Step 2: Write `.cursor-plugin/plugin.json`** (mirror with explicit paths — follow dx-aem pattern from existing plugins)
+Do NOT add `agents`/`skills` fields (auto-discovered from default dirs — per CLAUDE.md plugin-manifest guidance).
 
-- [ ] **Step 3: Write minimal README.md** describing purpose, not yet usage (filled after skills land)
+- [ ] **Step 2: Write `.cursor-plugin/plugin.json`** with explicit paths (Cursor does not auto-discover). Minimum fields:
+  - `skills`: array of every `./skills/<name>/SKILL.md`
+  - `agents`: array of every `./agents/<name>.md`
+  - `hooks`: empty in v1 (plugin uses internal `validations/validations.json`, not Claude Code tool-event hooks)
 
-- [ ] **Step 4: Commit**
+  Use `plugins/dx-aem/.cursor-plugin/plugin.json` as the reference shape.
+
+- [ ] **Step 3: Decide `.mcp.json`** — dx-rfp is standalone in v1 with **no MCP servers**. Do **not** create `plugins/dx-rfp/.mcp.json`.
+
+- [ ] **Step 4: Write minimal README.md** describing purpose, not yet usage (filled after skills land)
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add plugins/dx-rfp/
@@ -160,12 +178,22 @@ git commit -m "feat(dx-rfp): scaffold plugin skeleton"
 **Files:**
 - Modify: `.claude-plugin/marketplace.json` (add dx-rfp entry)
 
-- [ ] **Step 1: Add dx-rfp entry** to the marketplace file matching the shape used for dx-core, dx-aem, dx-automation, dx-hub.
+- [ ] **Step 1: Add dx-rfp entry** to `.claude-plugin/marketplace.json` matching the exact shape used by the existing four plugins. Copy the `dx-hub` entry and adapt name/description. `version` must equal the other plugins' version at the time of the edit (read it from another entry, don't hard-code).
+
+```json
+{
+  "name": "dx-rfp",
+  "source": "./plugins/dx-rfp",
+  "description": "Generic RFP-response plugin — multi-perspective pipeline with deterministic validation, five-way estimation, and red-team critics for enterprise bids",
+  "version": "<same as dx-core at merge time>",
+  "author": { "name": "Dragan Filipovic" }
+}
+```
 
 - [ ] **Step 2: Verify install path**
 
 ```bash
-cat .claude-plugin/marketplace.json | jq '.plugins[] | select(.name == "dx-rfp")'
+jq '.plugins[] | select(.name == "dx-rfp")' .claude-plugin/marketplace.json
 ```
 
 - [ ] **Step 3: Commit**
@@ -181,25 +209,31 @@ cat .claude-plugin/marketplace.json | jq '.plugins[] | select(.name == "dx-rfp")
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(dirname "$0")/../shadow-resolver.sh"
+# Relocate a fake "plugin" dir next to the test script for BASH_SOURCE resolution.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 
-export DX_RFP_ROOT="$TMP/plugin"
-mkdir -p "$DX_RFP_ROOT/shared"
-echo "plugin version" > "$DX_RFP_ROOT/shared/methodology.md"
+# Simulate a plugin checkout layout: $TMP/plugin/lib/shadow-resolver.sh
+mkdir -p "$TMP/plugin/lib" "$TMP/plugin/shared"
+cp "$SCRIPT_DIR/../shadow-resolver.sh" "$TMP/plugin/lib/shadow-resolver.sh"
+echo "plugin version" > "$TMP/plugin/shared/methodology.md"
 
-# Case 1: no shadow → resolves to plugin
+source "$TMP/plugin/lib/shadow-resolver.sh"
+
+# Case 1: no shadow → resolves to plugin default
 cd "$TMP"
 result=$(resolve_shadow "shared/methodology.md")
-[[ "$result" == "$DX_RFP_ROOT/shared/methodology.md" ]] || { echo "FAIL case 1"; exit 1; }
+[[ "$result" == "$TMP/plugin/shared/methodology.md" ]] \
+  || { echo "FAIL case 1: got $result"; exit 1; }
 
 # Case 2: shadow present → resolves to shadow
 mkdir -p ".ai/rfp/shared"
 echo "user version" > ".ai/rfp/shared/methodology.md"
 result=$(resolve_shadow "shared/methodology.md")
-[[ "$result" == ".ai/rfp/shared/methodology.md" ]] || { echo "FAIL case 2"; exit 1; }
+[[ "$result" == ".ai/rfp/shared/methodology.md" ]] \
+  || { echo "FAIL case 2: got $result"; exit 1; }
 
 echo "PASS"
 ```
@@ -210,15 +244,19 @@ echo "PASS"
 
 ```bash
 #!/usr/bin/env bash
-# shadow-resolver.sh — resolve a relative path to either consumer shadow or plugin default
+# shadow-resolver.sh — resolve a relative path to either consumer shadow or plugin default.
+# Plugin root is derived from this file's own location (one dir up from lib/).
+# This avoids depending on CLAUDE_PLUGIN_ROOT or any other pre-set env var.
+
+DX_RFP_PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 resolve_shadow() {
   local rel_path="$1"
   local shadow_path=".ai/rfp/${rel_path}"
   if [[ -f "$shadow_path" ]]; then
-    echo "$shadow_path"
+    printf '%s\n' "$shadow_path"
   else
-    echo "${DX_RFP_ROOT}/${rel_path}"
+    printf '%s\n' "${DX_RFP_PLUGIN_DIR}/${rel_path}"
   fi
 }
 ```
@@ -241,40 +279,44 @@ resolve_shadow() {
 
 - [ ] **Step 2: Run → FAIL**
 
-- [ ] **Step 3: Implement**
+- [ ] **Step 3: Implement** — bash 3.2-compatible (macOS default). No namerefs, no associative arrays. Visited set is a colon-delimited string passed by value so recursive calls cannot pollute the caller's state.
 
 ```bash
 #!/usr/bin/env bash
-# include-resolver.sh — expand {{include: <path>}} directives recursively with shadow resolution
+# include-resolver.sh — expand {{include: <path>}} directives recursively with shadow resolution.
+# Bash 3.2+ compatible (no namerefs, no associative arrays).
 
-source "$(dirname "${BASH_SOURCE[0]}")/shadow-resolver.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/shadow-resolver.sh"
 
+# Usage: expand_includes <file> [<visited-colon-list>]
+#   <visited-colon-list> is ":pathA:pathB:" — outer colons are sentinels so
+#   substring match ":<path>:" detects membership unambiguously.
 expand_includes() {
   local file_path="$1"
-  local -n _visited="${2:-__default_visited}"
+  local visited="${2:-:}"
 
-  if [[ -n "${_visited[$file_path]:-}" ]]; then
-    echo "ERROR: circular include detected at $file_path" >&2
-    return 1
-  fi
-  _visited[$file_path]=1
+  case "$visited" in
+    *":${file_path}:"*)
+      printf 'ERROR: circular include at %s (chain: %s)\n' "$file_path" "$visited" >&2
+      return 1
+      ;;
+  esac
+  visited="${visited}${file_path}:"
 
-  while IFS= read -r line; do
-    if [[ "$line" =~ \{\{include:\ *([^}[:space:]]+)\ *\}\} ]]; then
-      local rel="${BASH_REMATCH[1]}"
-      local resolved
-      resolved=$(resolve_shadow "$rel")
-      expand_includes "$resolved" _visited
+  local line rel resolved
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ \{\{include:[[:space:]]*([^}[:space:]]+)[[:space:]]*\}\} ]]; then
+      rel="${BASH_REMATCH[1]}"
+      resolved="$(resolve_shadow "$rel")"
+      expand_includes "$resolved" "$visited" || return 1
     else
-      echo "$line"
+      printf '%s\n' "$line"
     fi
   done < "$file_path"
-
-  unset '_visited[$file_path]'
 }
-
-declare -A __default_visited
 ```
+
+Test matrix must include a bash-3.2 run (`bash --version` from macOS default, or `docker run --rm bash:3.2 bash -c …`) before this task is complete.
 
 - [ ] **Step 4: Run → PASS**
 - [ ] **Step 5: Commit**
@@ -426,13 +468,14 @@ Contains: 10 named RFP-response anti-patterns.
 
 - [ ] Write, commit.
 
-### Task B7: Prompt rules (4 files)
+### Task B7: Prompt rules (5 files)
 
 **Files:**
 - `plugins/dx-rfp/rules/pragmatism.md`
 - `plugins/dx-rfp/rules/assume-not-ask.md`
 - `plugins/dx-rfp/rules/template-fidelity.md`
 - `plugins/dx-rfp/rules/reviewer-charter.md`
+- `plugins/dx-rfp/rules/summarizer-charter.md` — rubric consumed by the orchestrator's summarization pass (spec §8.3). Defines what goes into `.state/context/<task>/<step>.yaml`: headline numbers, key_drivers, open_risks, perspective_deltas.
 
 - [ ] Write each, commit.
 
@@ -555,7 +598,7 @@ reconciliation:
 ### Task B11: Result templates — approach, ai-approach, clarifications, red-team
 
 Approach (4): `_primary`, `perspective`, `_reviewer`, `_consolidated`
-AI-approach (3): `_primary`, `_reviewer`, `_consolidated`
+AI-approach (3): `_primary`, `_reviewer`, `_consolidated` — **no `perspective` template**, per spec §7 (ai-approach is exempt from multi-perspective)
 Clarifications (4): same pattern; machine region is `questions: [{id, text, assumption, impact, category}]`
 Red-team (6): `_cost-critic`, `_timeline-critic`, `_risk-critic`, `_evaluator-critic`, `_compliance-critic`, `_consolidated`. Machine region per critic:
 
@@ -620,9 +663,20 @@ Functions:
 - `state_snapshot_before_overwrite(path)` — moves path to `.state/runs/<ts>/...` preserving structure
 - `state_write_lock(name, content)` / `state_read_lock(name)` / `state_invalidate_lock(name)`
 - `state_write_context(task, step, yaml)` / `state_read_context(task, step)`
-- `state_register_append(register_name, entry_yaml)` with fuzzy-dedup hook for `clarifications.yaml`
+- `state_register_append(register_name, entry_yaml)` — fuzzy-dedup applied by caller (`/rfp-clarifications` skill) using `config.rfp.clarifications.dedup_threshold`; library function itself is threshold-agnostic.
+- `state_invalidate_locks_for_config_change(section)` — implements spec §10.6 lock invalidation table:
 
-- [ ] TDD each function. Commit per function group.
+  | Trigger | Locks invalidated |
+  |---|---|
+  | Analysis re-run (any task) | `scope.md` (rebuilt after all tasks re-run) |
+  | Work-packages re-run (any task) | `roles.md`, `wbs.md` |
+  | `config.rfp.categories` or `config.rfp.specialists` edit | `scope.md` + `wbs.md` + `roles.md` |
+  | `config.rfp.roles` edit | `roles.md` + cascades to estimation |
+  | `config.rfp.estimation` edit | estimation shards only; locks untouched |
+
+  Inputs: the `config_section_hash` name from spec §11.3. Output: list of lock names invalidated (for logging).
+
+- [ ] TDD each function. Include a test case per row of the invalidation table. Commit per function group.
 
 ### Task C4: `rfp` orchestrator skill — SKILL.md
 
@@ -642,17 +696,22 @@ digraph rfp_orchestrator {
 
   "For each stale run: confirm cascade" [shape=diamond];
   "Snapshot before overwrite" [shape=box];
-  "Run step for task" [shape=box];
-  "Hooks pass?" [shape=diamond];
-  "Advance to next step/task" [shape=box];
-  "Report hook failures" [shape=box];
+  "pre-step validations" [shape=box];
+  "Run step for task lane" [shape=box];
+  "post-agent + pre-consolidation + post-consolidation + post-step" [shape=box];
+  "Blocking fail?" [shape=diamond];
+  "Mark task blocked; other lanes continue" [shape=box];
+  "Summarize step -> .state/context/<task>/<step>.yaml" [shape=box];
+  "Advance to next step" [shape=box];
+  "All tasks done?" [shape=diamond];
+  "pre-final validations" [shape=box];
   "Assemble _final per task" [shape=box];
   "Assemble cross-task SUMMARY + proposal" [shape=box];
   "Done" [shape=doublecircle];
 
   "Parse args" -> "Mode?";
   "Mode?" -> "all (delta)" [label="all"];
-  "Mode?" -> "task-id (+flags)" [label="task-id"];
+  "Mode?" -> "task-id (+flags)" [label="<task-id> + flags"];
   "Mode?" -> "status" [label="status"];
   "Mode?" -> "force" [label="--force"];
   "all (delta)" -> "For each stale run: confirm cascade";
@@ -660,27 +719,71 @@ digraph rfp_orchestrator {
   "force" -> "Snapshot before overwrite";
   "For each stale run: confirm cascade" -> "Snapshot before overwrite" [label="y"];
   "For each stale run: confirm cascade" -> "Done" [label="n"];
-  "Snapshot before overwrite" -> "Run step for task";
-  "Run step for task" -> "Hooks pass?";
-  "Hooks pass?" -> "Advance to next step/task" [label="pass"];
-  "Hooks pass?" -> "Report hook failures" [label="blocking fail"];
-  "Advance to next step/task" -> "Run step for task" [label="more"];
-  "Advance to next step/task" -> "Assemble _final per task" [label="done"];
+  "Snapshot before overwrite" -> "pre-step validations";
+  "pre-step validations" -> "Run step for task lane";
+  "Run step for task lane" -> "post-agent + pre-consolidation + post-consolidation + post-step";
+  "post-agent + pre-consolidation + post-consolidation + post-step" -> "Blocking fail?";
+  "Blocking fail?" -> "Mark task blocked; other lanes continue" [label="yes (this task only)"];
+  "Blocking fail?" -> "Summarize step -> .state/context/<task>/<step>.yaml" [label="no"];
+  "Mark task blocked; other lanes continue" -> "All tasks done?";
+  "Summarize step -> .state/context/<task>/<step>.yaml" -> "Advance to next step";
+  "Advance to next step" -> "pre-step validations" [label="more steps this lane"];
+  "Advance to next step" -> "All tasks done?" [label="lane done"];
+  "All tasks done?" -> "Run step for task lane" [label="no (another lane)"];
+  "All tasks done?" -> "pre-final validations" [label="yes"];
+  "pre-final validations" -> "Assemble _final per task";
   "Assemble _final per task" -> "Assemble cross-task SUMMARY + proposal";
   "Assemble cross-task SUMMARY + proposal" -> "Done";
   "status" -> "Done";
 }
 ```
 
-### Node Details sections cover:
-- Argument parsing (five scopes from spec §10.1)
-- Stale detection via manifest
-- Cascade confirmation UX (spec §10.2)
-- Snapshot procedure (spec §10.4)
-- Per-step skill dispatch — delegates to `/rfp-<step>` skill
-- Hook dispatch (reads hook registry, runs matching hooks by event)
-- `_final.md` assembly logic
-- `SUMMARY.md` and `proposal.md` cross-task assembly
+### Node Details sections MUST cover (one `### <node>` heading each, exact match):
+
+#### Parse args — six CLI scopes (spec §10.1)
+
+| Invocation | Parsed into |
+|---|---|
+| `/rfp` or `/rfp all` | `mode=all` (delta re-run) |
+| `/rfp <task-id>` | `mode=task`, `task=<task-id>` |
+| `/rfp <task-id> --from <step>` | `mode=task`, `task=<task-id>`, `from_step=<step>` |
+| `/rfp --step <step>` | `mode=step`, `step=<step>` (runs one step across all tasks) |
+| `/rfp <task-id> --step <step> --agent <id>` | `mode=agent`, `task`, `step`, `agent` (surgical single shard) |
+| `/rfp --force` | `mode=force` (full regen from scratch) |
+| `/rfp status` | `mode=status` |
+| `<any> --no-cascade` | flag applied to any mode; disables downstream invalidation |
+
+#### pre-step validations
+Runs all hooks whose `event: "pre-step"` matches the current step. Failure = task lane blocked, same semantics as below.
+
+#### Run step for task lane
+Per-task lanes run in parallel (bash coprocesses or sequential-with-isolated-state; either works for v1). Each lane delegates to `/rfp-<step>` skill for its `(task, step)` pair. The lane passes the agent input bundle assembled per spec §8.7. Step skills **do not** write `.state/context/` themselves — the orchestrator does it after step completion (per spec §8.3).
+
+#### post-agent + pre-consolidation + post-consolidation + post-step
+For each shard produced: `post-agent`. Before consolidator runs: `pre-consolidation` (all perspectives present?). After consolidator: `post-consolidation`. After all shards of the step written: `post-step`. Each event dispatches `validations_for_event(event, step, agent)` from `lib/validations.sh`.
+
+#### Blocking fail?
+Per spec §9.6 (step-scoped blocking):
+- **Within a task × step:** any hook returning exit 2 marks the step as failed, downstream steps for that task are skipped, the task's status is set to `blocked` in the run summary.
+- **Across tasks:** other lanes are NOT affected — they continue running. Parallelism is preserved.
+- Failure details recorded in manifest `hook_results` field and surfaced in the final report.
+
+#### Summarize step → .state/context/<task>/<step>.yaml
+Orchestrator-owned summarization pass per spec §8.3. Inputs: `_primary`, all perspectives, reviewer, consolidated shards for `(task, step)`. Output: ~200-word-equivalent structured YAML (example in spec §8.3). Prompt for the summarizer lives in `plugins/dx-rfp/rules/summarizer-charter.md` (new rule file — add to B7).
+
+#### pre-final validations
+Run once after all lanes finish, before `_final.md` assembly. The "full green gate" (spec §9.3). Any failure prevents `_final.md` write.
+
+#### Assemble _final per task
+Per-task deliverable is the user-readable roll-up: top of consolidated shards from every step, stitched under a common outline.
+
+#### Assemble cross-task SUMMARY + proposal
+- `SUMMARY.md`: PD totals by task, cluster aggregates, status roll-up (including any `blocked` tasks)
+- `proposal.md`: concatenation of each task's `_final.md` under a common structure
+- Regenerated on every orchestrator run (cheap)
+
+#### status
+Reads `manifest.yaml` + recomputes input hashes. Per spec §10.5 prints `FRESH` / `STALE` / `NOT_RUN` / `BLOCKED` per task × step. No side effects.
 
 - [ ] Write SKILL.md. Commit.
 
@@ -715,14 +818,14 @@ Each pipeline skill follows the same pattern:
 2. Resolve mode: `generate` (task pending) or `review` (task done)
 3. Assemble agent input bundle per spec §8.7
 4. Dispatch primary specialist → write `_primary.md` using template
-5. Dispatch perspectives in parallel → write `<perspective>.md` each
+5. Dispatch perspectives in parallel → write `<perspective>.md` each (**skipped for `/rfp-ai-approach` — see D5**)
 6. For `estimation`: additionally dispatch `_analogous`, `_parametric`, `_pert` methods
 7. Dispatch reviewer → write `_reviewer.md`
-8. Run `post-agent` hooks on each shard
+8. (orchestrator runs `post-agent` hooks between steps 4–7 as each shard is written; `pre-consolidation` fires before step 9)
 9. Dispatch consolidator → write `_consolidated.md`
-10. Run `post-step` hooks
-11. Write summary to `.state/context/<task>/<step>.yaml`
-12. Update registers (spec §8.5)
+10. Return control to orchestrator (orchestrator owns `post-consolidation` + `post-step` hooks, `.state/context/<task>/<step>.yaml` summarization — spec §8.3, and register updates per spec §8.5)
+
+Step skills therefore produce only shards. All hook dispatch, context summarization, and register bookkeeping are orchestrator responsibilities. This preserves the single summarization rubric across all steps.
 
 ### Task D1: `/rfp-analysis` SKILL.md
 
@@ -756,11 +859,13 @@ Machine hook dependencies:
 
 Optional — orchestrator skips if `config.rfp.skills.ai_approach.enabled: false`.
 
+**Exempt from multi-perspective** per spec §7 — produces only `_primary.md`, `_reviewer.md`, `_consolidated.md` (3 shards, not 4). No `<perspective>.md` dispatch in step 5 above. Template set (B11) matches: 3 templates, not 4.
+
 - [ ] Commit.
 
 ### Task D6: `/rfp-clarifications` SKILL.md
 
-Reads cross-task register to dedup. Writes merged entries back to register.
+Reads cross-task register to dedup. Writes merged entries back to register. Dedup threshold is read from `config.rfp.clarifications.dedup_threshold` (default `0.8`, spec §11.1) — never hard-coded in the skill or in `validate-clarification-dedup.sh`.
 
 - [ ] Commit.
 
@@ -792,35 +897,41 @@ Fixture: 1-task registry, stubbed agent invocations returning fixed outputs. Ass
 
 ---
 
-# SUBSYSTEM E — Hook Framework
+# SUBSYSTEM E — Validation-Hook Framework
 
-### Task E1: Hook registry format + loader
+> **Naming:** plugin's internal validation system lives under `plugins/dx-rfp/validations/` (NOT `hooks/` — that path is owned by Claude Code's tool-event system). Registry file is `validations.json` (NOT `hooks.json`). The term "hook" is kept in prose because it is the industry term for event-triggered validation, but files and paths always use `validations/`.
+
+### Task E1: Validation registry format + loader
 
 **Files:**
-- Create: `plugins/dx-rfp/lib/hooks.sh`
-- Test: `plugins/dx-rfp/lib/tests/test-hooks.sh`
+- Create: `plugins/dx-rfp/lib/validations.sh`
+- Test: `plugins/dx-rfp/lib/tests/test-validations.sh`
 
 Functions:
-- `hooks_load_registries()` — merges plugin `hooks/hooks.json` + user `.ai/rfp/hooks/hooks.json` (if present), applies `config.rfp.hooks.disabled` list
-- `hooks_for_event(event, step, agent)` — returns ordered list of hook ids whose declared event/steps/agents match
-- `hooks_run_one(hook_id, env_vars)` — runs the hook script, returns exit code, captures stdout/stderr
-- `hooks_run_all(hook_ids, env_vars, blocking_only=false)` — runs list, aggregates results
+- `validations_load_registries()` — merges plugin `validations/validations.json` + user `.ai/rfp/validations/validations.json` (if present), applies `config.rfp.validations.disabled` list. Collision (user redefines plugin hook id) → error with exit 1.
+- `validations_for_event(event, step, agent)` — returns ordered list of hook ids whose declared `event`/`steps`/`agents` match. Must handle **all 6 events** defined in spec §9.3: `pre-step`, `post-agent`, `post-step`, `pre-consolidation`, `post-consolidation`, `pre-final`.
+- `validations_run_one(hook_id, env_vars)` — runs the hook script, returns exit code, captures stdout/stderr. Env vars exported: `RFP_TASK_ID`, `RFP_STEP`, `RFP_AGENT`, `RFP_SHARD_PATH`, `RFP_CONFIG_PATH`, `RFP_STATE_DIR` (per spec §9.4).
+- `validations_run_all(hook_ids, env_vars, blocking_only=false)` — runs list, aggregates results, returns:
+  - `0` if all passed,
+  - `2` if any blocking hook failed (exit 2),
+  - `1` otherwise (non-blocking warnings).
 
-- [ ] TDD each function. Commit.
+- [ ] TDD each function, covering all 6 events. Commit.
 
-### Task E2: `hooks.json` — plugin registry
+### Task E2: `validations.json` — plugin registry
 
-Declare all 22 built-in hooks from spec §9.2 with event/steps/agents/blocking flags.
+Declare all **23** built-in validation hooks from spec §9.2 with `event`/`steps`/`agents`/`blocking` fields. Script path template: `${CLAUDE_PLUGIN_ROOT}/validations/lib/validate-<name>.sh`.
+
+Every entry must be keyed to one or more of the 6 events. Default `blocking: true` for arithmetic/cross-reference/uniqueness hooks; `blocking: false` for word-counts, date-format, and other soft schema checks.
 
 - [ ] Write, commit.
 
-### Task E3: Built-in hooks — arithmetic (4 scripts)
+### Task E3: Built-in hooks — arithmetic (3 scripts)
 
 **Files:**
-- `hooks/lib/validate-pd-matrix-sums.sh`
-- `hooks/lib/validate-bottom-up-times-multiplier.sh`
-- `hooks/lib/validate-pert-formula.sh`
-- `hooks/lib/validate-percent-totals-100.sh`
+- `validations/lib/validate-pd-matrix-sums.sh`
+- `validations/lib/validate-bottom-up-times-multiplier.sh`
+- `validations/lib/validate-pert-formula.sh`
 
 Each: parses YAML from shard via `yq`, runs arithmetic check, exits 0 or 2 with clear stderr.
 
@@ -890,7 +1001,7 @@ exit 0
 
 - [ ] TDD, commit.
 
-### Task E9: Built-in hooks — cross-step + policy (3 scripts)
+### Task E9: Built-in hooks — cross-step + policy (5 scripts)
 
 - `validate-estimation-wps-match-wbs.sh`
 - `validate-reconciliation-within-tolerance.sh`
@@ -900,12 +1011,42 @@ exit 0
 
 - [ ] TDD, commit.
 
+**Hook-count verification:** after E3–E9, enumerate every file under `plugins/dx-rfp/validations/lib/validate-*.sh`. Count must equal **23** (matches spec §9.2 canonical list). Run:
+
+```bash
+find plugins/dx-rfp/validations/lib -name 'validate-*.sh' | wc -l
+```
+
+Expected: `23`. If different, reconcile against spec §9.2 before proceeding.
+
 ### Task E10: User hook merge integration test
 
 **Files:**
-- Create: `plugins/dx-rfp/tests/test-user-hook-merge.sh`
+- Create: `plugins/dx-rfp/tests/test-user-validation-merge.sh`
 
-Assert: user hook appended after plugin hooks for same event; user disable list honored; collision errors.
+Assert: user hook appended after plugin hooks for same event; user disable list honored (via `config.rfp.validations.disabled`); collision on duplicate id exits 1 with a clear error.
+
+- [ ] Commit.
+
+### Task E11: Six-event dispatch test
+
+**Files:**
+- Create: `plugins/dx-rfp/tests/test-six-events.sh`
+
+Fixture registers one trivial hook per event (`pre-step`, `post-agent`, `post-step`, `pre-consolidation`, `post-consolidation`, `pre-final`). Run a stubbed one-step pipeline. Assert each hook fired exactly once, in the expected order. Guards against regressions where only `post-agent`/`post-step` are wired.
+
+- [ ] Commit.
+
+### Task E12: Step-scoped blocking test
+
+**Files:**
+- Create: `plugins/dx-rfp/tests/test-step-scoped-blocking.sh`
+
+Fixture: 2-task registry (`task-a`, `task-b`), both running in parallel lanes. Inject a blocking hook failure in `task-a` at `post-agent` of `estimation`. Assert (per spec §9.6):
+- `task-a`'s downstream steps (approach, clarifications, red-team) are skipped
+- `task-b`'s estimation and downstream steps still complete
+- Manifest records the failure against `task-a` only
+- Exit status non-zero (reports partial completion)
 
 - [ ] Commit.
 
@@ -951,11 +1092,13 @@ Each has a focused system prompt describing their adversarial angle + red-team c
 
 ### Task F4: Register management — clarifications dedup
 
+**Depends on:** E7 (`validate-clarification-dedup.sh`) and D6 (`/rfp-clarifications` skill). Do not start F4 until both are green.
+
 In `/rfp-clarifications`:
 1. Before generating: read `.state/registers/clarifications.yaml`
 2. Include in agent prompt: "Here are N questions already asked in other tasks. Do not repeat."
-3. After generating: fuzzy-dedup against register, append new entries
-4. Hook `validate-clarification-dedup.sh` catches slippage
+3. After generating: fuzzy-dedup against register using jaccard similarity at `config.rfp.clarifications.dedup_threshold` (default 0.8); append non-duplicate entries
+4. Hook `validate-clarification-dedup.sh` catches slippage (reads same threshold from config)
 
 - [ ] Implement in skill, TDD, commit.
 
@@ -1019,13 +1162,37 @@ Must print PASS.
 
 - [ ] Verify, commit any scrubbing.
 
+### Task X6: Update CLAUDE.md + AGENTS.md with dx-rfp
+
+Adding a 5th plugin requires reflecting it in both root-level agent instruction files (per CLAUDE.md "Cross-Platform Agent Support").
+
+**Files:**
+- Modify: `CLAUDE.md` (section "What This Is" — add a fifth bullet for dx-rfp; update the "Four-Plugin Design" heading to "Five-Plugin Design" and the plugin directory tree)
+- Modify: `AGENTS.md` (matching subset — see existing plugin entries for shape)
+
+- [ ] Grep-check afterwards: `grep -c "dx-rfp" CLAUDE.md AGENTS.md` both > 0.
+- [ ] Commit.
+
+### Task X7: Verify CLI scaffold integration (`cli/bin/dx-scaffold.js`)
+
+`cli/bin/dx-scaffold.js` iterates `plugins/` at runtime, so it should pick up dx-rfp templates automatically. Still verify no scaffold-logic change is needed:
+
+```bash
+node cli/bin/dx-scaffold.js /tmp/scaffold-test-dx-rfp --all
+ls /tmp/scaffold-test-dx-rfp/.ai/rfp/  # expect config.yaml, registry.yaml, etc. if dx-rfp scaffolding runs
+```
+
+If `.ai/rfp/` is not populated, dx-rfp's init flow is plugin-only (ran via `/rfp-init` inside Claude Code) and does not need scaffold-integration — confirm that explicitly in the task commit. Otherwise, update `cli/lib/scaffold.js` with any new file categories and add a test.
+
+- [ ] Verify, commit (either "no change needed" note or the scaffold update).
+
 ---
 
 ## Session Recovery Checklist
 
 If you're reading this after a session loss:
 
-1. **Check `docs/superpowers/specs/2026-04-14-dx-rfp-plugin-design-v2.md`** — the source of truth for every decision
+1. **Check `docs/research/2026-04-14-dx-rfp-plugin-design.md`** — the source of truth for every decision
 2. **Check git log for `feat(dx-rfp):`** commits — shows implementation progress
 3. **Check `plugins/dx-rfp/`** — if missing, start at Task A1
 4. **Check `.claude-plugin/marketplace.json`** — dx-rfp entry = Task A2 done
@@ -1036,13 +1203,18 @@ If you're reading this after a session loss:
 
 ## Self-Review Notes
 
-- **Spec coverage:** every section of the v2 spec has a task or cross-cutting item — §3 skills → D1-D7, §5 override → A3-A4, §6 specialists → A8/A9, §7 multi-perspective → D1-D7 + F1-F3, §8 `.state/` → C1-C3, §9 hooks → E1-E9, §10 re-run → C4, §11 config → A5, §12 idempotency → A9, §13 shared → B1-B6, §14 conventions → throughout, §16 done-when → F6.
+- **Spec coverage:** every section of the v2 spec has a task or cross-cutting item — §3 skills → D1-D7, §5 override → A3-A4, §6 specialists → A8/A9, §7 multi-perspective → D1-D7 + F1-F3, §8 `.state/` → C1-C3, §9 hooks (23 canonical) → E1-E12, §10 re-run → C4 + C3 (lock invalidation table), §11 config → A5 (+ spec §11.3 manifest fingerprint map), §12 idempotency → A9, §13 shared → B1-B6 + B7 summarizer-charter, §14 conventions → throughout, §16 done-when → F6.
 - **No placeholders.** Every task has concrete files, concrete steps, concrete code/shell snippets where code is produced.
-- **Type consistency:** shell function names (`resolve_shadow`, `expand_includes`, `manifest_record_run`, `state_write_lock`, etc.) used consistently across foundation tasks and consumers.
+- **Type consistency:** shell function names (`resolve_shadow`, `expand_includes`, `manifest_record_run`, `state_write_lock`, `validations_load_registries`, etc.) used consistently across foundation tasks and consumers.
+- **Naming hygiene:** plugin's internal validation system is `validations/validations.json`, never `hooks/hooks.json` (owned by Claude Code). `${CLAUDE_PLUGIN_ROOT}` is the only plugin-root env var; `DX_RFP_ROOT` does not exist. `${BASH_SOURCE[0]}` is used inside libraries to avoid env-var dependencies.
+- **Portability:** bash 3.2 (macOS default) is the compatibility target. No namerefs, no associative arrays, no bashisms post-3.2.
+- **Event coverage:** all 6 validation-hook events (`pre-step`, `post-agent`, `post-step`, `pre-consolidation`, `post-consolidation`, `pre-final`) are wired in C4 orchestrator and gated by E11 integration test. Step-scoped blocking semantics (§9.6) gated by E12.
+- **Single summarization rubric:** `.state/context/<task>/<step>.yaml` is orchestrator-owned. Step skills produce only shards — they do not touch `.state/`. This keeps the summarization rubric (B7 summarizer-charter) identical across every step.
+- **Responsibility boundaries:** step skill owns shard generation; orchestrator owns hook dispatch + context summarization + register updates + snapshot + lock invalidation + final assembly.
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-14-dx-rfp-plugin-backup.md`.
+Plan complete and saved to `docs/research/2026-04-14-dx-rfp-plugin-plan.md`.
 
 **Two execution options:**
 
@@ -1050,4 +1222,4 @@ Plan complete and saved to `docs/superpowers/plans/2026-04-14-dx-rfp-plugin-back
 
 2. **Inline Execution** — walk tasks A1 → F6 in order inside a session, commit between tasks.
 
-Either requires the spec at `docs/superpowers/specs/2026-04-14-dx-rfp-plugin-design-v2.md` to be the source of truth when ambiguity arises.
+Either requires the spec at `docs/research/2026-04-14-dx-rfp-plugin-design.md` to be the source of truth when ambiguity arises.

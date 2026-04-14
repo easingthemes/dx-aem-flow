@@ -110,8 +110,10 @@ plugins/dx-rfp/
 │   ├── red-team-criteria.md
 │   └── pitfalls.md
 ├── rules/                         # default prompt rules, shadow-overridable
-├── hooks/                         # deterministic validation
-│   ├── hooks.json                 # plugin hook registry
+├── validations/                   # deterministic validation system
+│   │                              # (named validations/ to avoid collision
+│   │                              #  with Claude Code's hooks/hooks.json)
+│   ├── validations.json           # plugin validation-hook registry
 │   └── lib/                       # shell scripts (see §9)
 ├── lib/                           # shared shell helpers
 │   ├── include-resolver.sh        # {{include:}} expansion
@@ -121,7 +123,11 @@ plugins/dx-rfp/
 └── README.md
 ```
 
-**Dependencies:** standalone. No dx-core, dx-aem, or dx-automation dependency. Optional ADO integration deferred to v2.
+**Plugin root env var:** scripts and registry entries use `${CLAUDE_PLUGIN_ROOT}` (set by Claude Code at runtime — see existing plugins such as `plugins/dx-core/hooks/hooks.json`). Shell libraries `source`d from other scripts derive their own path from `${BASH_SOURCE[0]}` and must not depend on env vars being pre-set.
+
+**Dependencies:** standalone. No dx-core, dx-aem, or dx-automation dependency. **No MCP servers in v1** (no `.mcp.json` — the plugin does no ADO/Jira/Figma/AEM integration). Optional ADO integration deferred to v2.
+
+**Terminology note:** throughout §9 and §10, "hook" / "validation hook" refers to this plugin's internal validation system (the `validations/` directory), **not** Claude Code's tool-event hooks (`hooks/hooks.json`, which dx-rfp does not use in v1).
 
 ## 5. Override Model (Shadow + Include)
 
@@ -138,7 +144,7 @@ Example:
 | `plugins/dx-rfp/shared/methodology.md` | `.ai/rfp/shared/methodology.md` |
 | `plugins/dx-rfp/rules/pragmatism.md` | `.ai/rfp/rules/pragmatism.md` |
 | `plugins/dx-rfp/templates/results/analysis/_primary.md.template` | `.ai/rfp/templates/results/analysis/_primary.md.template` |
-| `plugins/dx-rfp/hooks/hooks.json` | Merged with `.ai/rfp/hooks/hooks.json` (hook merge is additive — see §9) |
+| `plugins/dx-rfp/validations/validations.json` | Merged with `.ai/rfp/validations/validations.json` (additive merge — see §9) |
 
 User never partial-overrides — they take the whole file or none. Diff vs. plugin original is visible via git.
 
@@ -166,7 +172,7 @@ Specifically overridable:
 - `rules/*.md` — prompt rules
 - `templates/results/**/*.md.template` — strict output templates
 - `templates/agents/*.md.template` — starter specialist templates
-- `hooks/hooks.json` + `hooks/lib/*.sh` — via additive merge, not shadow (see §9)
+- `validations/validations.json` + `validations/lib/*.sh` — via additive merge, not shadow (see §9)
 
 ## 6. Specialists (User-Owned Agent Files)
 
@@ -222,7 +228,9 @@ Each category has:
 - **One primary specialist** (required) — owns the lead deliverable
 - **0..N perspectives** (optional) — other specialists contribute from their angle (security, performance, accessibility, SEO, compliance, cost, …)
 
-Perspectives run on **all 6 pipeline steps** (analysis, work-packages, estimation, approach, clarifications, red-team). Per user decision — multi-million enterprise bids warrant heavy inference at every step.
+Perspectives run on **all 6 core pipeline steps** (analysis, work-packages, estimation, approach, clarifications, red-team). Per user decision — multi-million enterprise bids warrant heavy inference at every step.
+
+**`/rfp-ai-approach` is exempt from multi-perspective.** It is an optional single-angle narrative (primary + reviewer + consolidated only; no `<perspective>.md` shards). Its templates therefore number 3, not 4.
 
 ### 7.1 Per-step composition
 
@@ -472,8 +480,8 @@ Templates exist for every shard type (primary, each perspective flavor, each est
 **Layout:**
 
 ```
-plugins/dx-rfp/hooks/
-├── hooks.json                    # plugin registry
+plugins/dx-rfp/validations/
+├── validations.json              # plugin validation-hook registry
 └── lib/
     ├── validate-pd-matrix-sums.sh
     ├── validate-bottom-up-times-multiplier.sh
@@ -500,17 +508,19 @@ plugins/dx-rfp/hooks/
     └── validate-no-placeholder-tokens.sh
 ```
 
+**Count: 23 built-in validation hooks** (canonical). Plan subtasks and registry entries must match this count exactly — do not add or drop without updating this list.
+
 ### 9.3 Registry format
 
 ```json
 {
-  "hooks": [
+  "validations": [
     {
       "id": "rfp-validate-pd-matrix-sums",
       "event": "post-agent",
       "steps": ["estimation"],
       "agents": ["_primary", "security-lead", "perf-lead"],
-      "script": "${DX_RFP_ROOT}/hooks/lib/validate-pd-matrix-sums.sh",
+      "script": "${CLAUDE_PLUGIN_ROOT}/validations/lib/validate-pd-matrix-sums.sh",
       "blocking": true,
       "description": "Verify role×WP matrix row/column sums equal declared totals"
     }
@@ -541,8 +551,8 @@ Events supported:
 Additive merge, not shadow:
 
 ```
-.ai/rfp/hooks/
-├── hooks.json                    # user registry (appended)
+.ai/rfp/validations/
+├── validations.json              # user registry (appended)
 ├── our-company-pd-cap.sh         # e.g., no WP > 20 PD per internal policy
 ├── our-min-qa-ratio.sh           # e.g., QA PD ≥ 25% of dev PD
 └── our-client-naming.sh
@@ -554,7 +564,7 @@ Additive merge, not shadow:
 - User disables plugin hooks by id via config (not by editing plugin file):
   ```yaml
   rfp:
-    hooks:
+    validations:
       disabled: [rfp-validate-word-counts]
   ```
 - Collision (user redefines plugin hook id) → error
@@ -702,14 +712,35 @@ rfp:
   red_team:
     critics: [cost, timeline, risk, evaluator, compliance]
 
-  hooks:
+  clarifications:
+    dedup_threshold: 0.8          # jaccard similarity threshold for cross-task dedup
+                                  # (consumed by validate-clarification-dedup.sh)
+
+  validations:
     disabled: []
     fail_on_warning: false
-    extra_dirs: [".ai/rfp/hooks"]
+    extra_dirs: [".ai/rfp/validations"]
 
   deliverables:
     format: markdown              # v1 only
 ```
+
+### 11.3 `config_section_hash` — manifest fingerprint map
+
+The manifest's `config_section_hash` (§8.6) is computed per run from a subset of `config.yaml`. The mapping below is the source of truth for stale detection:
+
+| Section hash | `yq` expression | Invalidates |
+|---|---|---|
+| `rfp_specialists` | `.rfp.specialists` | all tasks' analysis + work-packages onward |
+| `rfp_categories` | `.rfp.categories` | all tasks (perspectives may change) |
+| `rfp_roles` | `.rfp.roles` | all tasks' estimation onward |
+| `rfp_estimation` | `.rfp.estimation` | all tasks' estimation onward |
+| `rfp_red_team` | `.rfp.red_team` | all tasks' red-team step |
+| `rfp_clarifications` | `.rfp.clarifications` | all tasks' clarifications step |
+| `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
+| `rfp_skills.ai_approach` | `.rfp.skills.ai_approach` | ai-approach step (if toggled) |
+
+`manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this.
 
 ### 11.2 `.ai/rfp/registry.yaml`
 
@@ -733,7 +764,7 @@ tasks:
 | `.ai/rfp/shared/*.md` (shadows) | Diff + prompt |
 | `.ai/rfp/rules/*.md` (shadows) | Diff + prompt |
 | `.ai/rfp/templates/**/*.template` (shadows) | Diff + prompt |
-| `.ai/rfp/hooks/**` | Never modified (sample files only provided if absent) |
+| `.ai/rfp/validations/**` | Never modified (sample files only provided if absent) |
 | `.ai/rfp/.state/` | Preserved — never touched by init |
 | `.ai/rfp/client-docs/` | Never touched by init |
 | `.gitignore` | Check and add if missing: `.ai/rfp/client-docs/`, `.ai/rfp/.state/` |
