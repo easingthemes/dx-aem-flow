@@ -146,22 +146,26 @@ git apply pr-fixes.patch
 
 Determine vote from the verdict in the findings:
 
-| Verdict | Vote |
-|---------|------|
-| `approved` | Approve (10) |
-| `approved-with-suggestions` | Approve with suggestions (5) |
-| `changes-requested` | Wait for author (-5) |
+| Verdict | `vote` enum | ADO integer |
+|---------|-------------|-------------|
+| `approved` | `Approved` | 10 |
+| `approved-with-suggestions` | `ApprovedWithSuggestions` | 5 |
+| `changes-requested` | `WaitingForAuthor` | -5 |
+| `rejected` *(explicit block)* | `Rejected` | -10 |
+| *(clear existing vote)* | `NoVote` | 0 |
+
+Cast the vote via MCP (the tool auto-adds the caller as a reviewer if not already one):
 
 ```
-mcp__ado__repo_update_pull_request_reviewers
+mcp__ado__repo_vote_pull_request
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
-  vote: <vote value>
+  vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
 
-**In interactive mode** (user invoked directly): use `AskUserQuestion` to confirm the vote before setting it.
+**In interactive mode** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
 
-**In automation** (pipeline context — detected by prompt containing "analyze only" or "save results", or by being chained after `/dx-pr-review`): set the vote automatically based on the verdict. Do NOT call `AskUserQuestion`.
+**In automation** (pipeline context — detected by prompt containing "analyze only" or "save results", or by being chained after `/dx-pr-review`): cast the vote automatically based on the verdict. Do NOT call `AskUserQuestion`.
 
 ## 7. Update Session
 
