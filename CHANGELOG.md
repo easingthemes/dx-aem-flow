@@ -1,3 +1,10 @@
+## [2.104.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.104.0...v2.104.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* **dx-pr-review:** cast PR vote via mcp__ado__repo_vote_pull_request ([#125](https://github.com/easingthemes/dx-aem-flow/issues/125)) ([7a3c585](https://github.com/easingthemes/dx-aem-flow/commit/7a3c58539545085d23e25e7b56e2b232d6b1167c))
+
 # [2.104.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.103.0...v2.104.0) (2026-04-06)
 
 
