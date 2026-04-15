@@ -650,6 +650,26 @@ AskUserQuestion(
 )
 ```
 
+Map the user's choice to the `vote` enum and cast it via MCP:
+
+| Option | `vote` enum | ADO integer |
+|---|---|---|
+| Approve — no critical issues | `Approved` | 10 |
+| Approve with suggestions — minor improvements | `ApprovedWithSuggestions` | 5 |
+| Request changes — critical issues | `WaitingForAuthor` | -5 |
+| (reject variant, if needed) | `Rejected` | -10 |
+| (clear vote) | `NoVote` | 0 |
+| Skip voting — comments only | *(no-op — do not call the tool)* | — |
+
+```
+mcp__ado__repo_vote_pull_request
+  repositoryId: "<repo ID>"
+  pullRequestId: <PR ID>
+  vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
+```
+
+The tool auto-adds the caller as a reviewer if not already one. If the user picks **Skip voting — comments only**, do not call the tool.
+
 Never auto-approve or auto-decline without explicit user confirmation.
 
 ---
@@ -853,6 +873,7 @@ Write `.ai/pr-reviews/pr-<id>.md`:
 **Last reviewed:** <ISO date>
 **Review commit:** <SHA>
 **Status:** reviewed | follow-up-needed | complete
+**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped> — set via `mcp__ado__repo_vote_pull_request`
 
 ## My Threads
 
