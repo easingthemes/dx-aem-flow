@@ -6,6 +6,32 @@ const fs = require('fs');
 const { detectGitEnv, detectProject } = require('../lib/detect');
 const { Scaffold } = require('../lib/scaffold');
 
+function parseOptionalBooleanFlag(args, name) {
+  const enable = `--${name}`;
+  const disable = `--no-${name}`;
+
+  if (args.includes(disable)) return false;
+
+  const exact = args.indexOf(enable);
+  if (exact !== -1) {
+    const next = args[exact + 1];
+    // Support: --flag true|false (space-separated)
+    if (next === 'true') return true;
+    if (next === 'false') return false;
+    return true;
+  }
+
+  // Support: --flag=true|false
+  const withEquals = args.find(a => a.startsWith(`${enable}=`));
+  if (withEquals) {
+    const raw = withEquals.slice(enable.length + 1).toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(raw)) return true;
+    if (['false', '0', 'no', 'off'].includes(raw)) return false;
+  }
+
+  return undefined;
+}
+
 // --- Parse CLI arguments ---
 const args = process.argv.slice(2);
 const flags = {
@@ -15,6 +41,8 @@ const flags = {
   force: args.includes('--force'),
   help: args.includes('--help') || args.includes('-h'),
   quiet: args.includes('--quiet') || args.includes('-q'),
+  autoCommit: parseOptionalBooleanFlag(args, 'auto-commit'),
+  autoPr: parseOptionalBooleanFlag(args, 'auto-pr'),
 };
 
 // --all enables everything
@@ -47,6 +75,12 @@ Flags:
   --aem        Include AEM-specific files (rules, instructions, seed data)
   --copilot    Include extra Copilot files (copilot-instructions.md, README)
   --all        Enable all features (--aem + --copilot)
+  --auto-commit[=true|false]
+               Set preferences.auto-commit in generated config.yaml
+               (also supports --no-auto-commit)
+  --auto-pr[=true|false]
+               Set preferences.auto-pr in generated config.yaml
+               (also supports --no-auto-pr)
   --force      Overwrite existing files (default: skip)
   --quiet, -q  Suppress per-file output
   --help, -h   Show this help
@@ -60,6 +94,9 @@ Examples:
 
   # Scaffold into a specific directory
   node dx-scaffold.js /path/to/my-project --aem
+
+  # Scaffold with pipeline preferences
+  node dx-scaffold.js /path/to/my-project --auto-commit=true --auto-pr=false
 
 Output (always generated):
   .ai/config.yaml         Project configuration (SCM, build, AEM)
@@ -140,6 +177,13 @@ const placeholders = {
   frontendDir: projectEnv.frontendDir,
   scmProvider: gitEnv.scmProvider,
 };
+
+if (flags.autoCommit !== undefined) {
+  placeholders.AUTO_COMMIT = flags.autoCommit;
+}
+if (flags.autoPr !== undefined) {
+  placeholders.AUTO_PR = flags.autoPr;
+}
 
 // --- Scaffold ---
 console.log('Scaffolding files...');

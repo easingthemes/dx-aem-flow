@@ -28,7 +28,7 @@ The scaffold script handles utility and rule validation automatically. Template-
 Check if `.ai/config.yaml` exists at the project root (use Glob tool).
 
 - **If it exists:** Read and display the current config, then ask: "Config already exists. **(A) Keep as-is**, **(B) Modify**, or **(C) Start fresh**?"
-  - If **A**: Say "Config kept. Validating all project files..." — then **CONTINUE to step 5** to validate all generated files, scripts, rules, and templates. **DO NOT stop or exit.** The re-run must validate everything.
+  - If **A**: Say "Config kept. Validating all project files..." — then check if `.ai/config.yaml` has a `preferences:` section with both `auto-commit` and `auto-pr` keys. **If either key is missing:** run **Step 4** (Preferences) to ask the user, then append the `preferences:` section to the existing config.yaml. After that, **CONTINUE to step 5** to validate all generated files, scripts, rules, and templates. **DO NOT stop or exit.** The re-run must validate everything.
   - If **B**: Load existing values as defaults, go to step 2
   - If **C**: Go to step 2 with no defaults
 - **If it doesn't exist:** Say "No dx config found. Let's set up your project." Go to step 2.
@@ -144,6 +144,10 @@ Ask two separate questions:
 > 1. **No** — manual PR creation only (default)
 > 2. **Yes** — auto-PR
 
+Map the answers to booleans and carry them into step 5b:
+- Question 1: `1 => false`, `2 => true` (store as `AUTO_COMMIT`)
+- Question 2: `1 => false`, `2 => true` (store as `AUTO_PR`)
+
 ## 5. Generate Files
 
 ### 5a. Scaffold directories and static files
@@ -173,6 +177,18 @@ Review the script output. For any `REVIEW` items, read both the existing file an
 ### 5b. Write .ai/config.yaml
 
 Read `templates/config.yaml.template` from the plugin directory (use Read tool). Fill in the detected/confirmed values by replacing all `{{PLACEHOLDER}}` tokens. Write the result to `.ai/config.yaml` (use Write tool).
+
+Ensure the user preferences from step 4 are persisted in `.ai/config.yaml` under:
+
+```yaml
+preferences:
+  auto-commit: <true|false>
+  auto-pr: <true|false>
+```
+
+Populate template placeholders `{{AUTO_COMMIT}}` and `{{AUTO_PR}}` from the step 4 answers.
+
+**Re-run with "Keep as-is" (case A):** If step 1 chose A and step 4 ran only to backfill missing preferences, do NOT regenerate the full config.yaml. Instead, read the existing `.ai/config.yaml` and append the `preferences:` section at the end (before any commented-out sections). Use the Edit tool — do not overwrite the entire file.
 
 If the user selected sibling repos in step 2c, write them under `repos:` (uncommented) with `name`, `path` (default: `../<name>`), and `role` fields. `/aem-init` will later enrich these entries with `platform`, `ado-project`, and `base-branch` fields. If no siblings were selected, leave the `repos:` section commented out as in the template.
 
