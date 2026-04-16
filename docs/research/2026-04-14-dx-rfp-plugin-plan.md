@@ -444,7 +444,11 @@ Contains: three-gate filter (materiality, ambiguity, assumption cost), "ASSUME n
 
 ### Task B4: `shared/narrative-blocks.md`
 
-Contains: 5-block spec — Categorization, Assumptions, Exclusions, Uncertainties, Delivery. Word-count guidance per block.
+Contains: **6-block spec** — Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**. Word-count guidance per block.
+
+The AI & Automation block covers: where AI/automation is used in the delivery (code gen, QA, content ops, monitoring), tooling choices, human-in-the-loop boundaries, data-handling / IP considerations, and evidence for effort reduction claims. 250–400 words, same tier as the other blocks.
+
+Canonical block list is the single source of truth — referenced by `templates/results/approach/_primary.md.template`, `_reviewer.md.template` (completeness checklist), and `validations/lib/validate-required-sections-present.sh`. Bumping the count requires updating all four files in the same commit.
 
 - [ ] Write, commit.
 
@@ -589,7 +593,12 @@ reconciliation:
 
 ### Task B11: Result templates — approach, clarifications, red-team
 
-Approach (4): `_primary`, `perspective`, `_reviewer`, `_consolidated` — `_primary.md.template` includes all 6 narrative blocks (Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**) per spec §13.
+Approach (4): `_primary`, `perspective`, `_reviewer`, `_consolidated`.
+- `_primary.md.template` — 6 block headings (Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**) with word-count placeholders matching B4 narrative-blocks.md.
+- `_reviewer.md.template` — completeness checklist explicitly enumerates the 6 blocks (not "5 blocks"); reviewer fails if any block missing or under/over target word count by >30%.
+- `_consolidated.md.template` — 6-block structure in the roll-up.
+
+**E8 `validate-required-sections-present.sh` dependency:** this hook parses approach shards to assert all 6 block headings are present. Ship it with the canonical block list hardcoded in a single `readonly BLOCKS=(Categorization Assumptions Exclusions Uncertainties Delivery "AI & Automation")` array at the top — changes to the block list require one edit here + one in B4.
 Clarifications (4): same pattern; machine region is `questions: [{id, text, assumption, impact, category}]`
 Red-team (6): `_cost-critic`, `_timeline-critic`, `_risk-critic`, `_evaluator-critic`, `_compliance-critic`, `_consolidated`. Machine region per critic:
 
@@ -1020,7 +1029,7 @@ exit 0
 
 - [ ] TDD, commit.
 
-### Task E9: Built-in hooks — cross-step + policy + summary (7 scripts)
+### Task E9: Built-in hooks — cross-step + policy + summary + drift (8 scripts)
 
 - `validate-estimation-wps-match-wbs.sh`
 - `validate-reconciliation-within-tolerance.sh`
@@ -1029,17 +1038,18 @@ exit 0
 - `validate-no-placeholder-tokens.sh`
 - `validate-context-summary-schema.sh` — asserts `.state/context/<task>/<step>.yaml` conforms to `shared/context-summary.schema.yaml` (required fields, no extra fields per step). Runs on `post-step`.
 - `validate-summary-numbers-match-shards.sh` — asserts every numeric field in the summary is byte-equal to the corresponding field in the consolidated shard's fenced YAML or the manifest's recorded metrics. Catches summarizer hallucinations. Runs on `post-step`.
+- `validate-shard-sha-matches-manifest.sh` — asserts every `results/task-<id>/<step>/*.md` shard's current sha equals the `output.sha` recorded in the manifest for its most recent run. Catches the reverse drift case (shard written but manifest not updated, or shard edited but manifest not refreshed). Runs on `post-step`. Companion to the orchestrator's pre-run auto-resummarize pass (spec §8.3 "Mid-flight shard edits").
 
 - [ ] TDD, commit.
 
-**Canonical hook count is now 25** (23 from spec §9.2 + the 2 summary-validators added above). Update spec §9.2's "count" footer in the same PR.
+**Canonical hook count is now 26** (23 from spec §9.2 base + 3 summary/drift validators). Update spec §9.2's "count" footer to 26 in the same PR.
 
 **Programmatic count check (replaces the prose "must equal" guidance):** extend `scripts/validate-skills.sh` (or a new `scripts/validate-rfp-validations.sh`) to assert:
 
 ```bash
 ACTUAL=$(find plugins/dx-rfp/validations/lib -name 'validate-*.sh' | wc -l | tr -d ' ')
 DECLARED=$(jq '.validations | length' plugins/dx-rfp/validations/validations.json)
-EXPECTED=25   # single source of truth; bumping requires spec §9.2 update
+EXPECTED=26   # single source of truth; bumping requires spec §9.2 update
 
 if [[ "$ACTUAL" != "$EXPECTED" || "$DECLARED" != "$EXPECTED" ]]; then
   echo "Validation-hook count drift: files=$ACTUAL, registry=$DECLARED, expected=$EXPECTED" >&2
@@ -1047,7 +1057,29 @@ if [[ "$ACTUAL" != "$EXPECTED" || "$DECLARED" != "$EXPECTED" ]]; then
 fi
 ```
 
-CI runs this on every PR that touches `plugins/dx-rfp/validations/`. Adding validation #26 requires updating the number in the script in the same commit that adds the file — the script is the gate.
+CI runs this on every PR that touches `plugins/dx-rfp/validations/`. Adding validation #27 requires updating the number in the script in the same commit that adds the file — the script is the gate.
+
+### Task E13: Auto-resummarize pass (orchestrator)
+
+**Files:**
+- Modify: `plugins/dx-rfp/skills/rfp/SKILL.md` (C4) — add a pre-dispatch pass
+- Modify: `plugins/dx-rfp/lib/state.sh` (C3) — add `state_detect_shard_drift()` returning task×step list where any shard sha diverges from manifest `output.sha`
+
+**Flow (fits under C4 Node Details):** on every orchestrator run, before dispatching any step, walk every existing `.state/context/<task>/<step>.yaml` and compare the current sha of each contributing shard against the manifest's recorded `output.sha`. For any drift:
+1. Log `context-resummarized-due-to-shard-edit` in `.state/logs/<ts>-resummarize.log`
+2. Re-run the orchestrator's summarization pass for that task×step (no specialist/reviewer re-invocation)
+3. Update the manifest with the new shard shas under `inputs.manual_edit_sha`
+4. Continue with the user's requested run
+
+Explicit command path: `/rfp <task> --step <step> --resummarize` runs the same pass without any other work. Useful after a batch of manual edits.
+
+**Integration test:** `plugins/dx-rfp/tests/test-shard-edit-drift.sh` — run full pipeline against reference fixture (C7), hand-edit a shard, run orchestrator again, assert:
+- `validate-shard-sha-matches-manifest.sh` flagged drift
+- Summary regenerated (sha of `.state/context/<task>/<step>.yaml` changed)
+- No specialist/reviewer agent dispatched
+- `--resummarize` command produces the same result without a full run
+
+- [ ] TDD, commit.
 
 ### Task E10: User hook merge integration test
 

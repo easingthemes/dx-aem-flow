@@ -5,14 +5,22 @@ Tracking items from RFP spec review that are intentionally deferred so Subsystem
 ## Cost / inference budget controls
 
 **Added:** 2026-04-16
-**Problem:** Full `/rfp all` on an enterprise-scale RFP (13 categories × 6 core steps × ~5 shards including perspectives and reviewer) can easily reach 400+ agent invocations per regen. With `opus` on `/rfp-estimate` and `/rfp-red-team`, a full run is a significant cost per cascade-invalidated regeneration. Spec states "rigor over token efficiency" is the explicit trade — but without user-facing levers, accidental full regens on scope drift become expensive.
+**Problem:** Full `/rfp all` on an enterprise-scale RFP (~13 categories × 6 core steps × multiple shards including perspectives and two reviewer archetypes) reaches several hundred agent invocations per regen. With `opus` on `/rfp-estimate` and `/rfp-red-team`, a full run is a significant cost per cascade-invalidated regeneration. Spec states "rigor over token efficiency" is the explicit trade — but without user-facing levers, accidental full regens on scope drift become expensive.
 **Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` (orchestrator), `plugins/dx-rfp/templates/config.yaml.template`, new `--light` and `--budget` flag handling, plus a pre-run estimate report.
-**Done-when:** `/rfp --light` runs primary + reviewer only (no perspectives) and produces a complete (if lower-rigor) pipeline. `/rfp --budget <ceiling>` refuses to start if the estimated cost exceeds the ceiling. A pre-run estimate line is printed on every invocation: "Estimated agents: N primary + M perspectives + P reviewers + Q critics".
+**Done-when:** `/rfp --light` runs a reduced-rigor pipeline per the axes below and produces a complete deliverable set. `/rfp --budget <ceiling>` refuses to start if the estimated cost exceeds the ceiling. A pre-run estimate line is printed on every invocation: "Estimated agents: N primary + M perspectives + P reviewers + Q critics".
+
+**Pre-decided `--light` axes** (so the flag's semantics are fixed before it ships):
+1. **Perspectives:** skipped entirely. Only primary + reviewer + consolidated per step.
+2. **Reviewer:** one archetype only — `rfp-reviewer-bid-manager` (commercial). `rfp-reviewer-solution-architect` (technical) is skipped. Rationale: commercial defensibility is the harder-to-recover-from gap on an early draft; technical gaps surface naturally when a specialist re-reads. Early drafts are commercially-driven; technical review is the rigor pass.
+3. **Red-team:** 2 critics instead of 5 — `rfp-critic-cost` + `rfp-critic-evaluator`. The other three (timeline, risk, compliance) run only on full mode.
+4. **Estimation methods:** primary (bottom-up) + PERT only; analogous and parametric skipped. Reconciliation uses the 2 methods with wider tolerance (`reconciliation_tolerance = 0.25` in light mode, vs `0.15` default).
+5. **Model tier:** `/rfp-estimate` and `/rfp-red-team` drop from `opus` to `sonnet` in light mode; acceptable drop because the light pipeline is explicitly for drafts.
+
 **Approach:**
-1. Add `config.rfp.cost.light_mode.perspectives: false` (default false) — the flag toggles this at runtime.
-2. Batch-perspective mode: one perspective agent handles all its assigned categories in a single prompt, splitting output by category heading — reduces invocations from `C × P` to `P`.
-3. Add a `lib/cost-estimate.sh` helper that counts agents from registry + config.
-4. Document in README "Cost-aware runs" section once implemented.
+1. Add `config.rfp.cost.light_mode:` block in config template with keys matching the axes above (each defaulting to the full-mode value — the flag flips them at runtime).
+2. Batch-perspective mode (full mode only): one perspective agent handles all its assigned categories in a single prompt, splitting output by category heading — reduces invocations from `C × P` to `P`.
+3. Add a `lib/cost-estimate.sh` helper that counts agents from registry + config (respects light-mode toggles).
+4. Document in README "Cost-aware runs" section once implemented, with the 5-axis table as the source of truth for what `--light` actually does.
 
 ## Lock invalidation — scoped propagation
 

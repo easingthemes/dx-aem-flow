@@ -371,6 +371,17 @@ Later steps' agents read these YAMLs for prose context and the manifest for numb
 
 **Summary schema:** `plugins/dx-rfp/shared/context-summary.schema.yaml` defines the allowed fields per step. The summarizer rule (`rules/summarizer-charter.md`) references the schema; a `validate-context-summary-schema.sh` hook rejects summaries that add fields or omit required ones.
 
+**Mid-flight shard edits — output→context re-summarization:**
+The manifest hashes *inputs* (config, locks, prior context, agent file, template, rules). If a user hand-edits `results/task-<id>/<step>/*.md` between runs, the shard's sha changes but its inputs do not, so `manifest_is_stale()` returns false for that shard — yet the downstream `.state/context/<task>/<step>.yaml` is now stale because it was summarized from the pre-edit shard. The asymmetry is: inputs→output is tracked, output→context is not.
+
+**Fix (two-layer):**
+
+1. **Auto-detect on every orchestrator run** — before dispatching any step, the orchestrator walks every existing `.state/context/<task>/<step>.yaml` and compares the current sha of each contributing shard against the `output.sha` recorded in that shard's manifest entry. If any sha diverges, the context file is flagged stale and re-summarized in-place (no downstream re-run, unless further flags trigger it). Logged as `context-resummarized-due-to-shard-edit` in `.state/logs/`.
+
+2. **Explicit command** — `/rfp <task> --step <step> --resummarize` runs the summarization pass for one task×step without re-running any specialist/reviewer. Useful after multiple manual edits when the user wants to flush the context without waiting for the next orchestrator run.
+
+A post-step hook `validate-shard-sha-matches-manifest.sh` asserts no drift at the end of each step (catches the reverse case — a specialist wrote a shard but the manifest wasn't updated). **Count bumped: 25 → 26.**
+
 ### 8.4 Locks
 
 Global invariants frozen at step boundaries. Later steps receive them as read-only.
@@ -537,10 +548,11 @@ plugins/dx-rfp/validations/
     ├── validate-date-format.sh
     ├── validate-no-placeholder-tokens.sh
     ├── validate-context-summary-schema.sh        # §8.3 schema conformance
-    └── validate-summary-numbers-match-shards.sh  # §8.3 hallucination guard
+    ├── validate-summary-numbers-match-shards.sh  # §8.3 hallucination guard
+    └── validate-shard-sha-matches-manifest.sh    # §8.3 output→context drift guard
 ```
 
-**Count: 25 built-in validation hooks** (canonical). Count is enforced programmatically by `scripts/validate-rfp-validations.sh` (plan E9) — file-count, registry-count, and declared `EXPECTED` must all equal 25 or CI fails.
+**Count: 26 built-in validation hooks** (canonical). Count is enforced programmatically by `scripts/validate-rfp-validations.sh` (plan E9) — file-count, registry-count, and declared `EXPECTED` must all equal 26 or CI fails.
 
 ### 9.3 Registry format
 
@@ -768,14 +780,16 @@ The manifest's `config_section_hash` (§8.6) is computed per run from a subset o
 | Section hash | `yq` expression | Invalidates |
 |---|---|---|
 | `rfp_specialists` | `.rfp.specialists` | all tasks' analysis + work-packages onward |
-| `rfp_categories` | `.rfp.categories` | all tasks (perspectives may change) |
+| `rfp_categories_schema` | `.rfp.categories[] \| {id, label, specialist, perspectives}` | all tasks matching affected ids (perspectives may change) |
 | `rfp_roles` | `.rfp.roles` | all tasks' estimation onward |
 | `rfp_estimation` | `.rfp.estimation` | all tasks' estimation onward |
 | `rfp_red_team` | `.rfp.red_team` | all tasks' red-team step |
 | `rfp_clarifications` | `.rfp.clarifications` | all tasks' clarifications step |
 | `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
 
-`manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this.
+**Schema vs state split on `categories[]`:** the per-category `status`, `owner`, `notes` fields (§11.2) are *state*, not schema. They drive orchestrator gating (`parked`/`done`) but do not change what any agent would produce for a task. They must **not** contribute to `config_section_hash`. The fingerprint map above intentionally projects only the schema fields (`id`, `label`, `specialist`, `perspectives`). Flipping a task from `pending` to `done` or adding a note must not invalidate analysis.
+
+`manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this. The two-selector pattern (one yq expression over the same array for invalidating fields, state fields omitted entirely) is the standard approach — avoids moving state into a sibling file.
 
 ### 11.2 Task tracking lives in `categories[]`
 
@@ -834,7 +848,7 @@ Plugin content in `plugins/dx-rfp/shared/` (shadow-overridable, include-able):
 ## 16. v1 Done-When
 
 - `plugins/dx-rfp/` exists with **8 skills** (`/rfp-init`, `/rfp`, `/rfp-analysis`, `/rfp-work-packages`, `/rfp-estimate`, `/rfp-approach`, `/rfp-clarifications`, `/rfp-red-team`), shipped agents (2 reviewer archetypes, 5 critics, 2 researchers), starter agent templates, result templates, shared refs, validations lib, lib helpers
-- `validate-skills.sh` passes for dx-rfp (naming, collisions) **and** validates the 23-entry validation-hook count against `validations/validations.json` programmatically (fails on drift)
+- `validate-skills.sh` passes for dx-rfp (naming, collisions) **and** validates the 26-entry validation-hook count against `validations/validations.json` programmatically (fails on drift)
 - `/rfp-init` on clean test project generates `.ai/rfp/config.yaml` (including per-category `status/owner/notes`), scaffolded specialist agents, updates `.gitignore`
 - `/rfp` with a 2-category config runs end-to-end, producing all 6 steps (analysis, work-packages, estimation, approach [6 blocks incl. AI], clarifications, red-team) with primary + perspectives + reviewer + consolidated shards per step
 - `/rfp-red-team` produces all configured critic shards + consolidated scored summary (starter set = 5, user-extensible)
