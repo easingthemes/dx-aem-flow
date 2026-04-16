@@ -51,20 +51,24 @@ plugins/dx-rfp/
 ├── agents/
 │   ├── rfp-tech-researcher.md
 │   ├── rfp-client-researcher.md
-│   └── rfp-reviewer-bid-manager.md
+│   ├── rfp-reviewer-bid-manager.md          # commercial angle
+│   ├── rfp-reviewer-solution-architect.md   # technical angle
+│   ├── rfp-critic-cost.md
+│   ├── rfp-critic-timeline.md
+│   ├── rfp-critic-risk.md
+│   ├── rfp-critic-evaluator.md
+│   └── rfp-critic-compliance.md
 ├── skills/
 │   ├── rfp-init/SKILL.md
 │   ├── rfp/SKILL.md
 │   ├── rfp-analysis/SKILL.md
 │   ├── rfp-work-packages/SKILL.md
 │   ├── rfp-estimate/SKILL.md
-│   ├── rfp-approach/SKILL.md
-│   ├── rfp-ai-approach/SKILL.md
+│   ├── rfp-approach/SKILL.md                # 6 blocks incl. AI & Automation
 │   ├── rfp-clarifications/SKILL.md
 │   └── rfp-red-team/SKILL.md
 ├── templates/
-│   ├── config.yaml.template
-│   ├── registry.yaml.template
+│   ├── config.yaml.template                 # includes per-category status/owner/notes
 │   ├── gitignore-additions.template
 │   ├── agents/
 │   │   ├── rfp-fe-specialist.md.template
@@ -78,7 +82,6 @@ plugins/dx-rfp/
 │       ├── work-packages/{_primary,perspective,_reviewer,_consolidated}.md.template
 │       ├── estimation/{_primary,_analogous,_parametric,_pert,perspective,_reviewer,_reconciliation,_consolidated}.md.template
 │       ├── approach/{_primary,perspective,_reviewer,_consolidated}.md.template
-│       ├── ai-approach/{_primary,_reviewer,_consolidated}.md.template
 │       ├── clarifications/{_primary,perspective,_reviewer,_consolidated}.md.template
 │       └── red-team/{_cost-critic,_timeline-critic,_risk-critic,_evaluator-critic,_compliance-critic,_consolidated}.md.template
 ├── shared/
@@ -336,17 +339,9 @@ python3 -c "import yaml; yaml.safe_load(open('plugins/dx-rfp/templates/config.ya
 
 - [ ] **Step 3: Commit**
 
-### Task A6: `registry.yaml.template`
+### Task A6: ~~`registry.yaml.template`~~ (removed)
 
-**Files:**
-- Create: `plugins/dx-rfp/templates/registry.yaml.template`
-
-Template shape:
-```yaml
-tasks: []
-```
-
-- [ ] Commit.
+Per spec §11.2, per-task tracking (`status`, `owner`, `notes`) lives directly on each `categories[]` entry in `config.yaml`. No separate `registry.yaml` file. The `config.yaml.template` (A5) ships the combined shape. **Skip this task.**
 
 ### Task A7: `gitignore-additions.template`
 
@@ -388,9 +383,8 @@ digraph rfp_init {
   "Ask specialists list" [shape=box];
   "For each specialist: template or blank?" [shape=box];
   "Scaffold agent files" [shape=box];
-  "Ask categories list" [shape=box];
+  "Ask categories list (with per-category status)" [shape=box];
   "Write config.yaml from template + inputs" [shape=box];
-  "Write empty registry.yaml" [shape=box];
   "Seed .ai/rfp/ shadow dirs (empty)" [shape=box];
   "Patch .gitignore" [shape=box];
   "Final summary" [shape=doublecircle];
@@ -401,10 +395,9 @@ digraph rfp_init {
   "Diff & prompt per file" -> "Ask specialists list";
   "Ask specialists list" -> "For each specialist: template or blank?";
   "For each specialist: template or blank?" -> "Scaffold agent files";
-  "Scaffold agent files" -> "Ask categories list";
-  "Ask categories list" -> "Write config.yaml from template + inputs";
-  "Write config.yaml from template + inputs" -> "Write empty registry.yaml";
-  "Write empty registry.yaml" -> "Seed .ai/rfp/ shadow dirs (empty)";
+  "Scaffold agent files" -> "Ask categories list (with per-category status)";
+  "Ask categories list (with per-category status)" -> "Write config.yaml from template + inputs";
+  "Write config.yaml from template + inputs" -> "Seed .ai/rfp/ shadow dirs (empty)";
   "Seed .ai/rfp/ shadow dirs (empty)" -> "Patch .gitignore";
   "Patch .gitignore" -> "Final summary";
 }
@@ -420,8 +413,7 @@ Plus matching `### Node Details` per node. Idempotency matrix from spec §12.
 - Create: `plugins/dx-rfp/tests/test-init.sh`
 
 - [ ] **Step 1: Write test** — fresh tmpdir, run `/rfp-init` via scripted input, assert:
-  - `.ai/rfp/config.yaml` exists and parses
-  - `.ai/rfp/registry.yaml` exists and is `{tasks: []}`
+  - `.ai/rfp/config.yaml` exists, parses, and has `rfp.categories[*].status` defaulting to `pending`
   - `.claude/agents/rfp-*-specialist.md` exist per declared specialists
   - `.gitignore` contains `.ai/rfp/client-docs/` and `.ai/rfp/.state/`
 
@@ -595,10 +587,9 @@ reconciliation:
 
 - [ ] Write 8 templates, commit.
 
-### Task B11: Result templates — approach, ai-approach, clarifications, red-team
+### Task B11: Result templates — approach, clarifications, red-team
 
-Approach (4): `_primary`, `perspective`, `_reviewer`, `_consolidated`
-AI-approach (3): `_primary`, `_reviewer`, `_consolidated` — **no `perspective` template**, per spec §7 (ai-approach is exempt from multi-perspective)
+Approach (4): `_primary`, `perspective`, `_reviewer`, `_consolidated` — `_primary.md.template` includes all 6 narrative blocks (Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**) per spec §13.
 Clarifications (4): same pattern; machine region is `questions: [{id, text, assumption, impact, category}]`
 Red-team (6): `_cost-critic`, `_timeline-critic`, `_risk-critic`, `_evaluator-critic`, `_compliance-critic`, `_consolidated`. Machine region per critic:
 
@@ -808,9 +799,32 @@ Fixture: 2-task registry, mock skill runners that write canned outputs. Verify:
 
 - [ ] Commit.
 
+### Task C7: Reference fixture — generic 2-category pseudo-RFP
+
+**Files:**
+- Create: `plugins/dx-rfp/tests/fixtures/reference/config.yaml`
+- Create: `plugins/dx-rfp/tests/fixtures/reference/client-docs/brief.md` (generic public-sector portal brief — no real client names, no real URLs, no real budget figures)
+- Create: `plugins/dx-rfp/tests/fixtures/reference/.claude/agents/rfp-*-specialist.md` for each declared specialist
+- Create: `plugins/dx-rfp/tests/fixtures/reference/README.md` explaining the fixture's purpose
+
+Goal: a committed, client-free pseudo-RFP that reviewers can run the orchestrator against without owning real bid data. Two categories (e.g. `cms-authoring`, `api-integration`), two specialists, one perspective mapping per category. Budget: ~20 pages of brief, invented scope items, invented target users.
+
+**Hard constraint:** fixture must pass the `X5` client-leak grep gate against a synthetic client-names list. Test this explicitly:
+
+```bash
+printf 'AcmeCorp\nexamplebank.com\n$1,000,000\n' > /tmp/synthetic-names.txt
+grep -rniEf /tmp/synthetic-names.txt plugins/dx-rfp/tests/fixtures/reference/ && echo FAIL || echo PASS
+```
+
+- [ ] Write fixture, run orchestrator dry-run against it, commit.
+
+This fixture is the test target for C6 (orchestrator dry-run), D9 (pipeline smoke), and F6 (acceptance).
+
 ---
 
-# SUBSYSTEM D — Pipeline Skills (7)
+# SUBSYSTEM D — Pipeline Skills (6)
+
+Six pipeline skills after D5 was folded into D4: `/rfp-analysis`, `/rfp-work-packages`, `/rfp-estimate`, `/rfp-approach` (with AI block), `/rfp-clarifications`, `/rfp-red-team`.
 
 Each pipeline skill follows the same pattern:
 
@@ -818,7 +832,7 @@ Each pipeline skill follows the same pattern:
 2. Resolve mode: `generate` (task pending) or `review` (task done)
 3. Assemble agent input bundle per spec §8.7
 4. Dispatch primary specialist → write `_primary.md` using template
-5. Dispatch perspectives in parallel → write `<perspective>.md` each (**skipped for `/rfp-ai-approach` — see D5**)
+5. Dispatch perspectives in parallel → write `<perspective>.md` each
 6. For `estimation`: additionally dispatch `_analogous`, `_parametric`, `_pert` methods
 7. Dispatch reviewer → write `_reviewer.md`
 8. (orchestrator runs `post-agent` hooks between steps 4–7 as each shard is written; `pre-consolidation` fires before step 9)
@@ -851,17 +865,13 @@ Machine hook dependencies:
 
 ### Task D4: `/rfp-approach` SKILL.md
 
-5 blocks (spec §13 narrative-blocks.md).
+**6 blocks** (spec §13 narrative-blocks.md): Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**. The AI block is mandatory in v1 — no opt-in, no separate skill. Template (B11 `_primary.md.template`) ships all 6 block headings; the primary specialist fills them.
 
 - [ ] Commit.
 
-### Task D5: `/rfp-ai-approach` SKILL.md
+### Task D5: (removed — was `/rfp-ai-approach`)
 
-Optional — orchestrator skips if `config.rfp.skills.ai_approach.enabled: false`.
-
-**Exempt from multi-perspective** per spec §7 — produces only `_primary.md`, `_reviewer.md`, `_consolidated.md` (3 shards, not 4). No `<perspective>.md` dispatch in step 5 above. Template set (B11) matches: 3 templates, not 4.
-
-- [ ] Commit.
+Folded into D4 per spec §3 + §7. Skip this task; renumber if desired but keep the number as a deliberate gap so existing commits and docs referencing "D5" remain unambiguous.
 
 ### Task D6: `/rfp-clarifications` SKILL.md
 
@@ -875,16 +885,25 @@ Dispatches 5 critic agents from `config.rfp.red_team.critics` list.
 
 - [ ] Commit.
 
-### Task D8: Shipped agents
+### Task D8: Shipped agents (2 reviewers + 2 researchers)
 
 **Files:**
 - `plugins/dx-rfp/agents/rfp-tech-researcher.md`
 - `plugins/dx-rfp/agents/rfp-client-researcher.md`
-- `plugins/dx-rfp/agents/rfp-reviewer-bid-manager.md`
+- `plugins/dx-rfp/agents/rfp-reviewer-bid-manager.md`       — commercial angle
+- `plugins/dx-rfp/agents/rfp-reviewer-solution-architect.md` — technical angle
 
-Each: standard agent frontmatter, tools whitelist, system prompt. Researchers use WebSearch, WebFetch, Read, Grep, Glob. Reviewer uses Read, Grep, Glob only.
+Each: standard agent frontmatter, tools whitelist, system prompt.
+- Researchers use `WebSearch, WebFetch, Read, Grep, Glob`.
+- Reviewers use `Read, Grep, Glob` only.
 
-- [ ] Write all 3, commit.
+Both reviewers run on every step (spec §7.2). System prompts state their lane clearly so their critiques don't overlap:
+- Bid manager: pricing defensibility, scope/margin balance, compliance completeness
+- Solution architect: technical feasibility, integration risk, architectural gaps
+
+- [ ] Write all 4, commit.
+
+(Critic agents — 5 files — land in F3.)
 
 ### Task D9: End-to-end pipeline smoke test
 
@@ -1001,23 +1020,34 @@ exit 0
 
 - [ ] TDD, commit.
 
-### Task E9: Built-in hooks — cross-step + policy (5 scripts)
+### Task E9: Built-in hooks — cross-step + policy + summary (7 scripts)
 
 - `validate-estimation-wps-match-wbs.sh`
 - `validate-reconciliation-within-tolerance.sh`
 - `validate-no-client-name-leak.sh`
 - `validate-date-format.sh`
 - `validate-no-placeholder-tokens.sh`
+- `validate-context-summary-schema.sh` — asserts `.state/context/<task>/<step>.yaml` conforms to `shared/context-summary.schema.yaml` (required fields, no extra fields per step). Runs on `post-step`.
+- `validate-summary-numbers-match-shards.sh` — asserts every numeric field in the summary is byte-equal to the corresponding field in the consolidated shard's fenced YAML or the manifest's recorded metrics. Catches summarizer hallucinations. Runs on `post-step`.
 
 - [ ] TDD, commit.
 
-**Hook-count verification:** after E3–E9, enumerate every file under `plugins/dx-rfp/validations/lib/validate-*.sh`. Count must equal **23** (matches spec §9.2 canonical list). Run:
+**Canonical hook count is now 25** (23 from spec §9.2 + the 2 summary-validators added above). Update spec §9.2's "count" footer in the same PR.
+
+**Programmatic count check (replaces the prose "must equal" guidance):** extend `scripts/validate-skills.sh` (or a new `scripts/validate-rfp-validations.sh`) to assert:
 
 ```bash
-find plugins/dx-rfp/validations/lib -name 'validate-*.sh' | wc -l
+ACTUAL=$(find plugins/dx-rfp/validations/lib -name 'validate-*.sh' | wc -l | tr -d ' ')
+DECLARED=$(jq '.validations | length' plugins/dx-rfp/validations/validations.json)
+EXPECTED=25   # single source of truth; bumping requires spec §9.2 update
+
+if [[ "$ACTUAL" != "$EXPECTED" || "$DECLARED" != "$EXPECTED" ]]; then
+  echo "Validation-hook count drift: files=$ACTUAL, registry=$DECLARED, expected=$EXPECTED" >&2
+  exit 1
+fi
 ```
 
-Expected: `23`. If different, reconcile against spec §9.2 before proceeding.
+CI runs this on every PR that touches `plugins/dx-rfp/validations/`. Adding validation #26 requires updating the number in the script in the same commit that adds the file — the script is the gate.
 
 ### Task E10: User hook merge integration test
 
@@ -1141,7 +1171,7 @@ Add dx-rfp skills to the catalog.
 
 ### Task X3: Update `docs/reference/agent-catalog.md`
 
-Add shipped agents (`rfp-tech-researcher`, `rfp-client-researcher`, `rfp-reviewer-bid-manager`, 5 critics).
+Add shipped agents (`rfp-tech-researcher`, `rfp-client-researcher`, `rfp-reviewer-bid-manager`, `rfp-reviewer-solution-architect`, 5 critics).
 
 - [ ] Commit.
 
@@ -1179,7 +1209,7 @@ Adding a 5th plugin requires reflecting it in both root-level agent instruction 
 
 ```bash
 node cli/bin/dx-scaffold.js /tmp/scaffold-test-dx-rfp --all
-ls /tmp/scaffold-test-dx-rfp/.ai/rfp/  # expect config.yaml, registry.yaml, etc. if dx-rfp scaffolding runs
+ls /tmp/scaffold-test-dx-rfp/.ai/rfp/  # expect config.yaml, etc. if dx-rfp scaffolding runs
 ```
 
 If `.ai/rfp/` is not populated, dx-rfp's init flow is plugin-only (ran via `/rfp-init` inside Claude Code) and does not need scaffold-integration — confirm that explicitly in the task commit. Otherwise, update `cli/lib/scaffold.js` with any new file categories and add a test.

@@ -9,7 +9,7 @@
 
 | Area | v1 | v2 |
 |---|---|---|
-| Skill names | `rfp-questions`, `rfp-narrative`, `rfp-ai-usage` | `rfp-clarifications`, `rfp-approach`, `rfp-ai-approach` (optional) |
+| Skill names | `rfp-questions`, `rfp-narrative`, `rfp-ai-usage` | `rfp-clarifications`, `rfp-approach` (AI block folded in — no separate skill) |
 | Override model | Three-layer (`.ai/rules/` > `config.yaml` overrides > plugin defaults) | Two primitives: **shadow** (mirror file replaces plugin file) + **`{{include}}`** directive |
 | Specialists | Plugin-defined archetype list (FE/BE/Platform/AI/Generic) | Free-form, user-owned agent files. Plugin ships starter templates only. |
 | Perspectives | Not explicit | First-class: multiple agents per category across **all** pipeline steps + independent reviewer agent per step |
@@ -30,7 +30,7 @@ Optimized for **rigor, auditability, and defensibility** over token efficiency. 
 - **No client data** in plugin source, commits, examples, templates, or test fixtures
 - **No secrets.** Plugin does not read, store, or transmit credentials. Remote publishing (Drive/ADO/S3) is v2 scope.
 - **Generic archetypes only.** Roles, multipliers, phases, scope categories derive from RFP methodology research, not any specific client
-- **Config-driven.** No hardcoded task counts, specialist names, category lists, role lists, or deliverable formats in skills. Everything reads from `.ai/rfp/config.yaml` and `.ai/rfp/registry.yaml`.
+- **Config-driven.** No hardcoded task counts, specialist names, category lists, role lists, or deliverable formats in skills. Everything reads from `.ai/rfp/config.yaml` (single file — see §11.2).
 - **Idempotent re-runs** with manifest-driven change detection and full snapshotting
 - **Deterministic where possible.** Arithmetic, schema, references validated by shell-based hooks, not LLM judgment.
 
@@ -44,8 +44,7 @@ Optimized for **rigor, auditability, and defensibility** over token efficiency. 
 | `/rfp-analysis` | Discovery pipeline root. Produces primary + perspectives + reviewer + consolidated shards. | sonnet | medium |
 | `/rfp-work-packages` | WBS with 5–15 PD work packages, per-perspective additions, reviewer pass. | sonnet | medium |
 | `/rfp-estimate` | Five-way estimation: bottom-up, analogous, parametric, PERT, perspective. Reconciliation. | opus | high |
-| `/rfp-approach` | Technical approach: 5 blocks (Categorization, Assumptions, Exclusions, Uncertainties, Delivery). Per-perspective contributions. | sonnet | medium |
-| `/rfp-ai-approach` | **Optional** (enabled via `rfp.skills.ai_approach.enabled: true`). Dedicated AI & Automation approach narrative. | sonnet | medium |
+| `/rfp-approach` | Technical approach: 6 blocks (Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**). Per-perspective contributions. | sonnet | medium |
 | `/rfp-clarifications` | Generate clarification questions with three-gate filter + cross-task dedup via register. | sonnet | medium |
 | `/rfp-red-team` | Evaluator + critic simulation: cost-critic, timeline-critic, risk-critic, evaluator-critic, compliance-critic. | opus | high |
 
@@ -64,17 +63,21 @@ plugins/dx-rfp/
 │   ├── rfp-analysis/SKILL.md
 │   ├── rfp-work-packages/SKILL.md
 │   ├── rfp-estimate/SKILL.md
-│   ├── rfp-approach/SKILL.md
-│   ├── rfp-ai-approach/SKILL.md
+│   ├── rfp-approach/SKILL.md       # includes AI & Automation as 6th block
 │   ├── rfp-clarifications/SKILL.md
 │   └── rfp-red-team/SKILL.md
 ├── agents/                        # shipped generic agents
 │   ├── rfp-tech-researcher.md
 │   ├── rfp-client-researcher.md
-│   └── rfp-reviewer-bid-manager.md
+│   ├── rfp-reviewer-bid-manager.md
+│   ├── rfp-reviewer-solution-architect.md
+│   ├── rfp-critic-cost.md
+│   ├── rfp-critic-timeline.md
+│   ├── rfp-critic-risk.md
+│   ├── rfp-critic-evaluator.md
+│   └── rfp-critic-compliance.md
 ├── templates/
-│   ├── config.yaml.template
-│   ├── registry.yaml.template
+│   ├── config.yaml.template        # per-category status/owner/notes; no separate registry
 │   ├── agents/                    # starter specialist templates (user edits)
 │   │   ├── rfp-fe-specialist.md.template
 │   │   ├── rfp-be-specialist.md.template
@@ -98,8 +101,7 @@ plugins/dx-rfp/
 │       │   ├── _reviewer.md.template
 │       │   ├── _reconciliation.md.template
 │       │   └── _consolidated.md.template
-│       ├── approach/…
-│       ├── ai-approach/…
+│       ├── approach/…              # primary/perspective/reviewer/consolidated (incl. AI block)
 │       ├── clarifications/…
 │       └── red-team/…
 ├── shared/                        # read at runtime, shadow-overridable
@@ -228,9 +230,7 @@ Each category has:
 - **One primary specialist** (required) — owns the lead deliverable
 - **0..N perspectives** (optional) — other specialists contribute from their angle (security, performance, accessibility, SEO, compliance, cost, …)
 
-Perspectives run on **all 6 core pipeline steps** (analysis, work-packages, estimation, approach, clarifications, red-team). Per user decision — multi-million enterprise bids warrant heavy inference at every step.
-
-**`/rfp-ai-approach` is exempt from multi-perspective.** It is an optional single-angle narrative (primary + reviewer + consolidated only; no `<perspective>.md` shards). Its templates therefore number 3, not 4.
+Perspectives run on **all 6 pipeline steps** (analysis, work-packages, estimation, approach, clarifications, red-team). Per user decision — enterprise bids warrant heavy inference at every step. AI & Automation is folded into `/rfp-approach` as one of 6 narrative blocks (§13) — no separate skill, no opt-in flag, no multi-perspective exemption.
 
 ### 7.1 Per-step composition
 
@@ -246,7 +246,11 @@ Each step produces, per category task:
 
 ### 7.2 Reviewer agents
 
-Plugin ships `rfp-reviewer-bid-manager`. Additional reviewer agents can be shipped or added by the user (e.g., `rfp-reviewer-solution-architect`).
+Plugin ships **two** reviewer archetypes so reviews get at least two adversarial angles:
+- `rfp-reviewer-bid-manager` — commercial angle: pricing, margin, scope creep, compliance coverage
+- `rfp-reviewer-solution-architect` — technical angle: feasibility, integration risk, architecture gaps
+
+Both reviewers run on every step. Additional reviewers can be added by the user via config.
 
 Reviewer is dispatched **after** primary + perspectives complete, with context:
 - RFP scope (from `.state/locks/scope.md`)
@@ -289,7 +293,7 @@ rfp:
 
 ### 8.1 Purpose
 
-Separate plugin-managed working memory from user-facing deliverables. `.state/` is gitignored, regenerable from `results/` + `config.yaml` + `registry.yaml`.
+Separate plugin-managed working memory from user-facing deliverables. `.state/` is gitignored, regenerable from `results/` + `config.yaml`.
 
 ### 8.2 Layout
 
@@ -300,8 +304,7 @@ Separate plugin-managed working memory from user-facing deliverables. `.state/` 
 │       ├── analysis/ {shards}
 │       ├── work-packages/ {shards}
 │       ├── estimation/ {shards}
-│       ├── approach/ {shards}
-│       ├── ai-approach/ {shards}   # only if enabled
+│       ├── approach/ {shards}     # includes AI & Automation as 6th block
 │       ├── clarifications/ {shards}
 │       ├── red-team/ {shards}
 │       └── _final.md
@@ -336,6 +339,9 @@ At the end of each step for each task, the orchestrator runs a summarization pas
 - Input: all step-N shards for the task (`_primary`, perspectives, reviewer, consolidated)
 - Output: `.state/context/task-<id>/<step>.yaml` — structured ~200-word-equivalent extraction
 
+**Numbers-vs-prose split (hallucination guard):**
+Summaries contain both numeric fields (PDs, ranges, percentages) and prose fields (key_drivers, narratives, rationale). The numeric fields are **copies, not authorities** — every number in a summary must be byte-equal to the same field in either the consolidated shard's fenced YAML block or the manifest's `output.metrics` field. A post-summarize validation hook (`validate-summary-numbers-match-shards.sh`) enforces this on every `.state/context/*.yaml` write. Downstream agents are instructed — and the orchestrator's input-bundle assembly verifies — that **numbers are read from the manifest / consolidated shard, prose is read from the summary**.
+
 Example `estimation.yaml`:
 
 ```yaml
@@ -350,18 +356,20 @@ headline:
   reconciled_range: [82, 97]
   confidence: medium
 key_drivers:
-  - "integration complexity with SAP"
+  - "integration complexity with third-party ERP"
   - "performance SLAs require 3 rounds of optimization"
 open_risks:
   - id: R-003
-    text: "third-party API latency unknown"
+    text: "external API latency unknown"
     impact_pd_range: [3, 8]
 perspective_deltas:
   security-lead: "+12 PD on auth/audit"
   perf-lead: "+8 PD on caching layer"
 ```
 
-Later steps' agents read these YAMLs, not the raw shards. Raw shards remain reachable on demand.
+Later steps' agents read these YAMLs for prose context and the manifest for numbers. Raw shards remain reachable on demand.
+
+**Summary schema:** `plugins/dx-rfp/shared/context-summary.schema.yaml` defines the allowed fields per step. The summarizer rule (`rules/summarizer-charter.md`) references the schema; a `validate-context-summary-schema.sh` hook rejects summaries that add fields or omit required ones.
 
 ### 8.4 Locks
 
@@ -377,9 +385,16 @@ Lock invalidation: re-running a step invalidates its lock **globally** — scope
 
 ### 8.5 Cross-task registers
 
-As each task's clarifications/risks/assumptions/dependencies emerge, they're merged into dedup'd cross-task YAMLs. The `/rfp-clarifications` step reads `registers/clarifications.yaml` to avoid asking duplicate questions across 13 tasks.
+As each task's clarifications/risks/assumptions/dependencies emerge, they're merged into dedup'd cross-task YAMLs. The `/rfp-clarifications` step reads `registers/clarifications.yaml` to avoid asking duplicate questions across N tasks.
 
-Dedup is fuzzy (cosine similarity of question text, threshold configurable).
+**Dedup algorithm:** jaccard similarity (not cosine — keeps the no-MCP/no-embeddings constraint from §2). Tokenizer is deterministic and documented in `shared/question-filter.md`:
+1. Lowercase
+2. Strip punctuation
+3. Tokenize on whitespace
+4. Remove a fixed stop-word list (`shared/question-filter.md` ships the list)
+5. Compare as sets; `similarity = |A ∩ B| / |A ∪ B|`
+
+Threshold is `config.rfp.clarifications.dedup_threshold` (default `0.8`). Hook `validate-clarification-dedup.sh` reads the same algorithm from `lib/jaccard.sh` to enforce post-hoc.
 
 ### 8.6 Manifest
 
@@ -437,6 +452,21 @@ Every shard is a template-fill. Two tiers of strictness:
 
 - **Hard:** frontmatter + fenced YAML/table blocks — hooks depend on them, `post-agent` hook fails if missing/malformed
 - **Soft:** prose sections — guidance only, warnings logged but non-blocking
+
+**Classifying sections** — to avoid "is an assumption list hard or soft" debates:
+
+| Section example | Tier | Reason |
+|---|---|---|
+| YAML frontmatter (`task`, `step`, `agent`, `version`) | Hard | Every hook keys off these |
+| Fenced YAML `## PD Matrix` with `roles`, `totals`, `by_role`, `by_wp`, `bottom_up`, `top_line` | Hard | `validate-pd-matrix-sums.sh` and `validate-bottom-up-times-multiplier.sh` parse this |
+| Fenced YAML `## PERT` with `o`, `m`, `p`, `expected`, `stddev` | Hard | `validate-pert-formula.sh` recomputes `(O+4M+P)/6` |
+| Fenced YAML `## Risks` list (`id`, `likelihood`, `impact_pd_range`) | Hard | Cross-task risk register merges from this |
+| Fenced YAML `## Assumptions` list (`id`, `text`, `source`) | Hard | Reviewer cross-checks against clarifications register |
+| Prose `## Summary` (~150 words) | Soft | `validate-word-counts.sh` warns on overruns but never blocks |
+| Prose `## Narrative` blocks | Soft | Reviewed subjectively by reviewer agents |
+| Bullet list `## Findings` under a prose heading | Soft | Structure hint; hook does not parse |
+
+Rule of thumb: **if a hook needs to parse it, it's hard and lives in a fenced YAML block. If only humans or LLMs read it, it's soft prose.**
 
 Example — `templates/results/estimation/_primary.md.template`:
 
@@ -505,10 +535,12 @@ plugins/dx-rfp/validations/
     ├── validate-reconciliation-within-tolerance.sh
     ├── validate-no-client-name-leak.sh
     ├── validate-date-format.sh
-    └── validate-no-placeholder-tokens.sh
+    ├── validate-no-placeholder-tokens.sh
+    ├── validate-context-summary-schema.sh        # §8.3 schema conformance
+    └── validate-summary-numbers-match-shards.sh  # §8.3 hallucination guard
 ```
 
-**Count: 23 built-in validation hooks** (canonical). Plan subtasks and registry entries must match this count exactly — do not add or drop without updating this list.
+**Count: 25 built-in validation hooks** (canonical). Count is enforced programmatically by `scripts/validate-rfp-validations.sh` (plan E9) — file-count, registry-count, and declared `EXPECTED` must all equal 25 or CI fails.
 
 ### 9.3 Registry format
 
@@ -678,12 +710,15 @@ rfp:
     - { id: aem-content-lead, agent: rfp-aem-content-specialist,   grade: senior }
     # …
 
-  categories:                     # free-form, user-defined
+  categories:                     # free-form, user-defined; per-category status replaces the old registry.yaml
     - id: aem-authoring
       label: "AEM Content Authoring"
       specialist: aem-content-lead
       perspectives: [accessibility, seo-lead]
-    # … (13 typical for enterprise RFP)
+      status: pending             # pending | done | parked — orchestrator skips `parked` unless --force
+      owner: ""                   # optional bid-team owner
+      notes: ""                   # free-form
+    # … (13 typical for large enterprise RFP)
 
   roles:                          # estimation roles, referenced by agents
     - { id: solution-architect, grade: senior, cluster: architecture }
@@ -705,12 +740,13 @@ rfp:
     state:       .ai/rfp/.state/
     specs:       .ai/specs/
 
-  skills:
-    ai_approach:
-      enabled: false              # optional step, opt-in per project
-
   red_team:
-    critics: [cost, timeline, risk, evaluator, compliance]
+    critics:                      # user-extensible; starter set ships with plugin
+      - { id: cost,       agent: rfp-critic-cost }
+      - { id: timeline,   agent: rfp-critic-timeline }
+      - { id: risk,       agent: rfp-critic-risk }
+      - { id: evaluator,  agent: rfp-critic-evaluator }
+      - { id: compliance, agent: rfp-critic-compliance }
 
   clarifications:
     dedup_threshold: 0.8          # jaccard similarity threshold for cross-task dedup
@@ -738,28 +774,18 @@ The manifest's `config_section_hash` (§8.6) is computed per run from a subset o
 | `rfp_red_team` | `.rfp.red_team` | all tasks' red-team step |
 | `rfp_clarifications` | `.rfp.clarifications` | all tasks' clarifications step |
 | `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
-| `rfp_skills.ai_approach` | `.rfp.skills.ai_approach` | ai-approach step (if toggled) |
 
 `manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this.
 
-### 11.2 `.ai/rfp/registry.yaml`
+### 11.2 Task tracking lives in `categories[]`
 
-Tasks are derived from categories × special flags; registry is the per-task tracker:
-
-```yaml
-tasks:
-  - id: aem-authoring             # matches category.id
-    status: pending               # pending | done | parked
-    owner: ""
-    notes: ""
-```
+v1 collapses the previously-separate `registry.yaml` into `config.yaml`: per-task state (`status`, `owner`, `notes`) lives directly on each `categories[]` entry (§11.1). One file, one authority. The orchestrator skips `status: parked` categories unless `--force` is passed, and treats `status: done` as review-mode (per §3).
 
 ## 12. Init Idempotency Matrix
 
 | File category | Re-run behavior |
 |---|---|
 | `config.yaml` | Preserve user edits; offer to add new keys from template; never remove user keys |
-| `registry.yaml` | Never modified on re-run |
 | `.claude/agents/rfp-*-specialist.md` | Never modified without confirmation (diff + prompt) |
 | `.ai/rfp/shared/*.md` (shadows) | Diff + prompt |
 | `.ai/rfp/rules/*.md` (shadows) | Diff + prompt |
@@ -778,18 +804,21 @@ Plugin content in `plugins/dx-rfp/shared/` (shadow-overridable, include-able):
 | `methodology.md` | 5-phase process, role archetypes, effort distribution benchmarks |
 | `estimation-framework.md` | Cockburn calibration, overhead factors, PERT, five-way reconciliation |
 | `question-filter.md` | Three-gate filter, "ASSUME not ASK" philosophy, target density |
-| `narrative-blocks.md` | 5-block spec, word-count guidance |
+| `narrative-blocks.md` | 6-block spec (Categorization, Assumptions, Exclusions, Uncertainties, Delivery, **AI & Automation**), word-count guidance |
 | `red-team-criteria.md` | Critic rubrics, weak-section heuristics, evaluator simulation |
 | `pitfalls.md` | 10 named anti-patterns |
+| `context-summary.schema.yaml` | JSON-Schema for `.state/context/<task>/<step>.yaml` (consumed by `validate-context-summary-schema.sh`) |
 
 ## 14. Versioning & Conventions
 
 - Conventional commits: `feat(dx-rfp): …`, `fix(dx-rfp): …`, `docs(dx-rfp): …`
-- semantic-release handles version bumps
-- Skill naming: `{plugin}-{name}` → `rfp-init`, `rfp-analysis`, `rfp-work-packages`, etc.
+- semantic-release handles version bumps across **all** plugins in lockstep — dx-rfp's first release will publish at the same version as the other four plugins (e.g., `2.104.0`), not `0.1.0`. README should say so to avoid confusing first-time users.
+- Skill naming: `{plugin}-{name}` → `rfp-init`, `rfp-analysis`, `rfp-work-packages`, etc. Short plugin-prefix is consistent with dx-aem (`aem-*`) and dx-automation (`auto-*`).
 - Branching skills use DOT digraphs with matching `### Node Details` sections (dx-core pattern)
 - Linear skills use numbered steps
-- Shell scripts: `chmod +x`, POSIX-compatible where possible, bash where not
+- Shell scripts: `chmod +x`, bash 3.2+ target (macOS default), POSIX-compatible where possible
+- **Windows support:** WSL is required. README states this. CI runs on Linux.
+- **Mid-flight team overrides:** bid-team decisions made between runs (e.g. "bump BE PDs by 15%") are expressed via shadow files under `.ai/rfp/rules/*.md` or `{{include:}}` directives from per-task addenda — no third primitive. Direct edits to `results/*.md` are preserved by the snapshotting layer (§10.4); the manifest records the edited SHA so downstream staleness detection still works.
 
 ## 15. v2 Backlog (Deferred)
 
@@ -804,17 +833,19 @@ Plugin content in `plugins/dx-rfp/shared/` (shadow-overridable, include-able):
 
 ## 16. v1 Done-When
 
-- `plugins/dx-rfp/` exists with 9 skills, shipped agents, starter agent templates, result templates, shared refs, hook lib, lib helpers
-- `validate-skills.sh` passes for dx-rfp (naming, collisions)
-- `/rfp-init` on clean test project generates `.ai/rfp/config.yaml`, `.ai/rfp/registry.yaml`, scaffolded specialist agents, updates `.gitignore`
-- `/rfp` with a 2-task registry runs end-to-end, producing all 7 steps (analysis, work-packages, estimation, approach, clarifications, red-team; ai-approach if enabled) with primary + perspectives + reviewer + consolidated shards per step
-- `/rfp-red-team` produces all 5 critic shards + consolidated scored summary
+- `plugins/dx-rfp/` exists with **8 skills** (`/rfp-init`, `/rfp`, `/rfp-analysis`, `/rfp-work-packages`, `/rfp-estimate`, `/rfp-approach`, `/rfp-clarifications`, `/rfp-red-team`), shipped agents (2 reviewer archetypes, 5 critics, 2 researchers), starter agent templates, result templates, shared refs, validations lib, lib helpers
+- `validate-skills.sh` passes for dx-rfp (naming, collisions) **and** validates the 23-entry validation-hook count against `validations/validations.json` programmatically (fails on drift)
+- `/rfp-init` on clean test project generates `.ai/rfp/config.yaml` (including per-category `status/owner/notes`), scaffolded specialist agents, updates `.gitignore`
+- `/rfp` with a 2-category config runs end-to-end, producing all 6 steps (analysis, work-packages, estimation, approach [6 blocks incl. AI], clarifications, red-team) with primary + perspectives + reviewer + consolidated shards per step
+- `/rfp-red-team` produces all configured critic shards + consolidated scored summary (starter set = 5, user-extensible)
 - `/rfp status` correctly flags stale tasks after config/client-docs/agent edits
 - Re-running `/rfp-init` does not overwrite user edits
 - Re-running `/rfp <task>` cascades invalidation with confirmation, snapshots prior outputs
 - Shadow override works: a `.ai/rfp/shared/methodology.md` replaces plugin's version at runtime
 - `{{include:}}` directive expands recursively with circular-include detection
-- All plugin-shipped hooks pass on a clean fixture run
-- User hooks merge additively with plugin hooks; disabled list honored
+- All plugin-shipped validation hooks pass on a clean fixture run
+- Committed reference fixture (`plugins/dx-rfp/tests/fixtures/reference/`) exercises a 2-category pseudo-RFP end-to-end; CI runs it on every PR
+- User validation hooks merge additively with plugin hooks; disabled list honored
+- Context summaries pass `validate-summary-numbers-match-shards.sh` — no numeric drift between summary and manifest/consolidated shards
 - Grep of `plugins/dx-rfp/` returns zero matches for any known client name, URL, or domain term
 - Plugin installs cleanly via marketplace alongside existing 4 plugins

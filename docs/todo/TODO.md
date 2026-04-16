@@ -106,4 +106,8 @@
 | 79 | Context graphs: decision nodes as structured YAML | Medium | Done | 2026-04-05 | [todo-context-graphs.md#phase-4](todo-context-graphs.md#phase-4--decision-nodes-as-structured-yaml-medium-effort-high-value) — decision-schema.md + dx-plan writes YAML + dx-pattern-extract reads YAML |
 | 80 | Context graphs: full graph with edges | Low | Done | 2026-04-05 | [todo-context-graphs.md#phase-5](todo-context-graphs.md#phase-5--full-graph-with-edges-higher-effort-transformative) — edge-schema.md + dx-plan writes edges + dx-step-verify writes verified-by + dx-agent-all reads graph context |
 
-**Counts:** 80 total — 15 done, 49 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
+| 81 | dx-rfp: cost / inference budget controls | Medium | Open | 2026-04-16 | [todo-dx-rfp.md#cost--inference-budget-controls](todo-dx-rfp.md#cost--inference-budget-controls) — `--light` mode, batched perspectives, pre-run cost estimate, `--budget` ceiling |
+| 82 | dx-rfp: scoped lock invalidation (task-local vs cross-cutting) | Medium | Open | 2026-04-16 | [todo-dx-rfp.md#lock-invalidation--scoped-propagation](todo-dx-rfp.md#lock-invalidation--scoped-propagation) — diff-preview cascade narrows blast radius |
+| 83 | dx-rfp: token-efficient reviewer context bundles | Low | Open | 2026-04-16 | [todo-dx-rfp.md#token-efficient-context-bundles](todo-dx-rfp.md#token-efficient-context-bundles) — chunked reviewer dispatch for large step shards |
+
+**Counts:** 83 total — 15 done, 52 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
