@@ -110,5 +110,6 @@
 | 82 | dx-rfp: preview mode for bid/no-bid qualification | Low | Deferred | 2026-04-16 | [todo-dx-rfp.md#preview-mode---preview--draft-only-narrow-scope-deferred](todo-dx-rfp.md#preview-mode---preview--draft-only-narrow-scope-deferred) — narrow-scope exploratory run; no quality cuts, just limits which steps run |
 | 83 | dx-rfp: scoped lock invalidation (task-local vs cross-cutting) | Medium | Open | 2026-04-16 | [todo-dx-rfp.md#scoped-lock-invalidation--polish-for-cascade-ux](todo-dx-rfp.md#scoped-lock-invalidation--polish-for-cascade-ux) — diff-preview narrows cascade prompt when changes are task-local |
 | 84 | dx-rfp: reviewer context chunking (quality, not cost) | Low | Open | 2026-04-16 | [todo-dx-rfp.md#reviewer-context-chunking--polish-for-very-large-steps](todo-dx-rfp.md#reviewer-context-chunking--polish-for-very-large-steps) — chunked reviewer dispatch for large steps; reviewer attention quality concern |
+| 85 | dx-rfp: feedback ingestion from Drive / cloud-collab (v2) | Medium | Deferred | 2026-04-16 | [todo-dx-rfp.md#feedback-ingestion-from-drive--cloud-collab-tools-v2](todo-dx-rfp.md#feedback-ingestion-from-drive--cloud-collab-tools-v2) — `/rfp-comments` + `/rfp-triage-comments` + `/rfp-comments-reply`; requires MCP server, v1 ships consumption only |
 
-**Counts:** 84 total — 15 done, 52 open, 5 blocked, 9 watch, 2 deferred, 1 decision needed, 1 pending, 1 ongoing
+**Counts:** 85 total — 15 done, 52 open, 5 blocked, 9 watch, 3 deferred, 1 decision needed, 1 pending, 1 ongoing

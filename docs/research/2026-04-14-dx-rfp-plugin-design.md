@@ -10,7 +10,8 @@
 | Area | v1 | v2 |
 |---|---|---|
 | Skill names | `rfp-questions`, `rfp-narrative`, `rfp-ai-usage` | `rfp-clarifications`, `rfp-approach` (AI block folded in — no separate skill) |
-| Override model | Three-layer (`.ai/rules/` > `config.yaml` overrides > plugin defaults) | Two primitives: **shadow** (mirror file replaces plugin file) + **`{{include}}`** directive |
+| Override model | Three-layer (`.ai/rules/` > `config.yaml` overrides > plugin defaults) | Two primitives: **shadow** (mirror file replaces plugin file) + **`{{include}}`** directive (with glob expansion + `<task>` substitution — see §5.3) |
+| Feedback ingestion | Not addressed (assumed bid-team would hand-edit shards) | First-class: `feedback/shared/*.md` + `feedback/<task>/*.md` auto-included into specialist prompts via glob, hashed into manifest, surfaced in shards (§6.5) |
 | Specialists | Plugin-defined archetype list (FE/BE/Platform/AI/Generic) | Free-form, user-owned agent files. Plugin ships starter templates only. |
 | Perspectives | Not explicit | First-class: multiple agents per category across **all** pipeline steps + independent reviewer agent per step |
 | Estimation | "Five-way reconciliation" mentioned but not structured | Formal: bottom-up, analogous, parametric, PERT, perspective views → reconciliation |
@@ -177,9 +178,36 @@ Our team additions:
 
 - Same shadow resolution applies recursively (consumer's file included if present, else plugin's)
 - Circular includes error out with a clear message
-- Resolver is `plugins/dx-rfp/lib/include-resolver.sh` — ~30 lines of shell, uses `awk`/`sed`
+- Resolver is `plugins/dx-rfp/lib/include-resolver.sh` — uses `awk`/`sed`/`find`/`sort`
 
-### 5.3 What's overridable
+### 5.3 Glob includes and `<task>` substitution
+
+> `{{include:}}` accepts glob patterns and a literal `<task>` placeholder that the orchestrator substitutes per dispatch.
+
+This single primitive enhancement covers the **feedback layer** (§6.5) — the daily, high-cardinality stream of bid-team memos and reviewer comments that accumulates across an active RFP cycle. Without glob support, every memo would require either a new shadow file (cardinality nightmare) or hand-maintained concatenation (provenance loss). With it, the shipped specialist starter template stays generic and the consumer just drops files into `.ai/rfp/feedback/` as the cycle progresses.
+
+**Example — a shipped specialist starter template:**
+
+```markdown
+## Cross-cutting bid-team policies
+{{include: feedback/shared/*.md}}
+
+## Task-scoped feedback for this category
+{{include: feedback/<task>/*.md}}
+```
+
+**Behaviour:**
+
+- **Glob expansion:** matched files are sorted lexically (POSIX `sort`), then concatenated. Each file's content is preceded by `> source: <relative-path>` on its own line — a markdown blockquote that is human-readable, parser-ignorable, and gives the reviewer agent a per-file provenance trail it can cite back via `> Applied feedback: <path> — <reason>` lines in generated shards.
+- **Empty match is not an error:** `feedback/<task>/*.md` with no files expands to empty string. Critical for tasks early in the cycle that have no feedback yet, and for the `/rfp-init`-bootstrap state where every directory is empty.
+- **Shadow resolution applies per match:** the glob's directory part is shadow-resolved (so `feedback/shared/*.md` resolves against `.ai/rfp/feedback/shared/` if present, else `plugins/dx-rfp/feedback/shared/`). Plugin can ship default cross-cutting policies; consumer additions stack on top by virtue of being in the consumer's shadow directory. There is no merge logic — each directory is resolved separately by shadow rule, and only one directory's matches are concatenated per glob. To union both, write two `{{include:}}` lines.
+- **`<task>` substitution:** the orchestrator exports `RFP_TASK_ID` per step dispatch (§9.4); the resolver replaces literal `<task>` in include paths with this value before glob expansion. Outside a task-dispatch context (e.g. when `/rfp-init` previews a template), `<task>` substitutes to empty and the include emits a single warning comment, no error.
+- **Circular detection per file:** each matched file enters the visited set. Cycles through globs (a file in the glob result `{{include:}}`s back into the same dir) are detected and reported with the chain.
+- **Manifest fingerprint:** the manifest's `inputs.includes_hash` for a run records the sha256 of the post-expansion content (not the glob pattern string). Adding, editing, or removing a feedback file changes the expansion → hash differs → `manifest_is_stale()` flags the run → re-dispatch on next `/rfp`. This is what makes feedback a first-class input rather than a side-channel.
+
+**Why this fits the §0 two-primitive invariant:** still two primitives — shadow and include. Include just learned to expand globs. No new directory layer, no precedence engine, no merge semantics. Glob expansion is deterministic concatenation, not a merge.
+
+### 5.4 What's overridable
 
 Everything under `plugins/dx-rfp/` except `skills/*/SKILL.md` itself (skill logic is not user-overridable; behavior is controlled via templates, rules, shared refs, and hooks).
 
@@ -237,6 +265,59 @@ Orchestrator reads category → looks up specialist id → finds agent → invok
 ### 6.4 Capability matrix
 
 The N categories × M specialists mapping is a **capability matrix** — standard enterprise bid-management practice. Every specialist typically covers 2–4 adjacent categories. Plugin exposes the mapping mechanism; user fills in domain knowledge.
+
+### 6.5 Feedback layer — daily operating mode
+
+`feedback/` is **not a customization point. It is the default daily operating mode** for an active RFP. Bid teams accumulate dozens of memos and reviewer comments per task across a multi-week cycle; every regen must re-ingest them as input to the specialist, with provenance preserved.
+
+**Two-directory convention:**
+
+```
+.ai/rfp/feedback/
+├── shared/                       # cross-cutting policy memos (apply to all tasks)
+│   ├── compliance-gates.md
+│   ├── grade-mapping.md
+│   └── …
+└── <task>/                       # task-scoped memos and overrides
+    ├── scope-correction.md
+    ├── role-allocation.md
+    └── …
+```
+
+`<task>` is the category id from `config.yaml` (e.g. `be-api`, `aem-authoring`). Reserved name: a task may not be named `shared`. Both subdirectories are tracked in git (the team's work product, not generated state) and never gitignored.
+
+**How it ingests automatically:**
+
+Specialist starter templates (and any user-edited specialist agent) include two lines near the top of their prompt:
+
+```markdown
+{{include: feedback/shared/*.md}}
+{{include: feedback/<task>/*.md}}
+```
+
+The orchestrator substitutes `<task>` per dispatch (§5.3). Glob expansion sorts files lexically and prefixes each with `> source: <relative-path>` for provenance. The specialist sees every memo applicable to its current category, in deterministic order, with sources annotated. Empty match (no feedback yet) → empty expansion → no error.
+
+**Manifest awareness:** the post-expansion content is part of `inputs.includes_hash` (§5.3, §11.3). Adding a memo on Tuesday afternoon makes the next `/rfp <task>` re-dispatch the affected specialists automatically. No manual `--force`, no separate ingestion step, no out-of-band file watcher.
+
+**Provenance surfacing:** every consolidated shard is expected to surface applied feedback via `> Applied feedback: <path> — <one-line reason>` lines in its markdown body. The reviewer agent's charter (`rules/reviewer-charter.md`) instructs it to flag missing or fabricated `Applied feedback:` claims. Optional v1, mandatory by v2 — see `todo-dx-rfp.md`.
+
+**Precedence (recommended, documented in `shared/feedback-precedence.md`):**
+
+```
+RFP scope (locked)
+  > standing rules (.ai/rfp/rules/*.md)
+    > feedback (this layer)
+      > client docs (.ai/rfp/client-docs/*)
+        > skill defaults
+```
+
+Higher tiers override lower. Feedback sits above client docs because feedback is what corrects client-doc misinterpretations. Sits below standing rules because rules are the team's invariants (e.g. "always include a DR checklist") that survive any single bid. Precedence is conveyed by prompt ordering in the specialist template — there is no merge engine, no precedence YAML, no resolver code. Just consistent slot order in starter templates, documented in shared refs, shadow-overridable per project.
+
+**What the plugin does NOT ship in v1:**
+
+- No Drive (or other cloud-collab) ingestion skill — `feedback/` is populated by whatever flow the user chooses (manual paste, third-party tool, custom skill). Drive comment ingestion + triage + reply-posting is parked as v2 work in `todo-dx-rfp.md`.
+- No automatic feedback file generator. The plugin consumes; the user (or their separate tooling) produces.
+- No feedback-file schema. They are free-form markdown. The reviewer agent enforces semantic quality at the consolidation pass.
 
 ## 7. Multi-Perspective Model
 
@@ -462,6 +543,8 @@ runs:
       agent_file_hash: 6g7h8i
       template_hash: 9j0k1l
       rules_hashes: [rule-pragmatism:m2n3o4]
+      includes_hash: 7s8t9u           # sha256 of all post-glob-expansion {{include:}} content
+                                      #   (covers feedback/, shared refs, etc. — see §5.3)
     output:
       path: results/task-be-api/estimation/_primary.md
       sha: 5p6q7r
@@ -777,6 +860,7 @@ rfp:
 
   paths:
     client_docs: .ai/rfp/client-docs/
+    feedback:    .ai/rfp/feedback/      # bid-team daily memos + comments (§6.5)
     results:     .ai/rfp/results/
     state:       .ai/rfp/.state/
     specs:       .ai/specs/
@@ -817,6 +901,8 @@ The manifest's `config_section_hash` (§8.6) is computed per run from a subset o
 | `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
 | `rfp_run_mode` | runtime value of any future `--preview`/reduced-scope flag ⊕ `config.rfp.cost.*` toggles | all context summaries (not shards) — summarizer rubric differs per mode |
 
+**Note — feedback hashing is per-run, not per-config-section:** the feedback layer (§6.5) is hashed via the manifest's `inputs.includes_hash` field on each individual run (§8.6), not via `config_section_hash`. That is the right level: feedback files attach to specialist invocations, not to global config; hashing per-run gives task-granular invalidation when memos land, without invalidating unrelated tasks.
+
 **Schema vs state split on `categories[]`:** the per-category `status`, `owner`, `notes` fields (§11.2) are *state*, not schema. They drive orchestrator gating (`parked`/`done`) but do not change what any agent would produce for a task. They must **not** contribute to `config_section_hash`. The fingerprint map above intentionally projects only the schema fields (`id`, `label`, `specialist`, `perspectives`). Flipping a task from `pending` to `done` or adding a note must not invalidate analysis.
 
 `manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this. The two-selector pattern (one yq expression over the same array for invalidating fields, state fields omitted entirely) is the standard approach — avoids moving state into a sibling file.
@@ -839,7 +925,9 @@ v1 collapses the previously-separate `registry.yaml` into `config.yaml`: per-tas
 | `.ai/rfp/validations/**` | Never modified (sample files only provided if absent) |
 | `.ai/rfp/.state/` | Preserved — never touched by init |
 | `.ai/rfp/client-docs/` | Never touched by init |
-| `.gitignore` | Check and add if missing: `.ai/rfp/client-docs/`, `.ai/rfp/.state/` |
+| `.ai/rfp/feedback/shared/` | Created if absent; never overwritten. Tracked in git. |
+| `.ai/rfp/feedback/<task>/` | Created (empty) per declared task in `categories[]`; never overwritten. Tracked in git. |
+| `.gitignore` | Check and add if missing: `.ai/rfp/client-docs/`, `.ai/rfp/.state/`. **`feedback/` is NOT gitignored** — bid-team work product is part of the project history. |
 
 ## 13. Shared References
 
@@ -854,6 +942,7 @@ Plugin content in `plugins/dx-rfp/shared/` (shadow-overridable, include-able):
 | `red-team-criteria.md` | Critic rubrics, weak-section heuristics, evaluator simulation |
 | `pitfalls.md` | 10 named anti-patterns |
 | `context-summary.schema.yaml` | JSON-Schema for `.state/context/<task>/<step>.yaml` (consumed by `validate-context-summary-schema.sh`) |
+| `feedback-precedence.md` | Documented precedence ladder for the feedback layer (§6.5). Not enforced by code — conveyed via prompt ordering in starter specialist templates. |
 
 ## 14. Versioning & Conventions
 

@@ -273,12 +273,18 @@ resolve_shadow() {
 - Create: `plugins/dx-rfp/lib/include-resolver.sh`
 - Test: `plugins/dx-rfp/lib/tests/test-include-resolver.sh`
 
-- [ ] **Step 1: Write the test** covering:
-  - Plain file, no includes — passes through
-  - Single include — expands
-  - Nested include (A includes B includes C) — fully expanded
-  - Shadow-aware include (shadow version preferred) — resolves correctly
-  - Circular include (A → B → A) — errors with clear message
+Per spec §5.3 the resolver must handle four cases beyond the simple include:
+1. **Plain file** — no includes, pass through
+2. **Single include** — `{{include: shared/methodology.md}}`
+3. **Nested includes** — A → B → C, fully expanded
+4. **Shadow resolution** — consumer file preferred over plugin file
+5. **Circular detection** — A → B → A errors with clear chain
+6. **Glob expansion** — `{{include: feedback/shared/*.md}}` matches lexically-sorted files; each emits `> source: <path>` prefix; empty match is not an error
+7. **`<task>` substitution** — `{{include: feedback/<task>/*.md}}` substitutes literal `<task>` from `RFP_TASK_ID` env var before glob expansion; missing env → empty expansion + warning comment, no error
+8. **Glob + circular** — circular detection runs per matched file (cycles through globs detected)
+9. **Glob + shadow** — directory part of glob is shadow-resolved (`.ai/rfp/feedback/shared/` shadows `plugins/dx-rfp/feedback/shared/`)
+
+- [ ] **Step 1: Write the test** covering all 9 cases above. Bash 3.2 run required.
 
 - [ ] **Step 2: Run → FAIL**
 
@@ -286,14 +292,23 @@ resolve_shadow() {
 
 ```bash
 #!/usr/bin/env bash
-# include-resolver.sh — expand {{include: <path>}} directives recursively with shadow resolution.
+# include-resolver.sh — expand {{include: <path>}} directives recursively with
+# shadow resolution, glob expansion, and <task> substitution.
 # Bash 3.2+ compatible (no namerefs, no associative arrays).
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/shadow-resolver.sh"
 
+# resolve_shadow_dir <relative-dir> — like resolve_shadow but for directories.
+resolve_shadow_dir() {
+  local rel="$1"
+  if [[ -d ".ai/rfp/${rel}" ]]; then
+    printf '%s\n' ".ai/rfp/${rel}"
+  else
+    printf '%s\n' "${DX_RFP_PLUGIN_DIR}/${rel}"
+  fi
+}
+
 # Usage: expand_includes <file> [<visited-colon-list>]
-#   <visited-colon-list> is ":pathA:pathB:" — outer colons are sentinels so
-#   substring match ":<path>:" detects membership unambiguously.
 expand_includes() {
   local file_path="$1"
   local visited="${2:-:}"
@@ -310,8 +325,37 @@ expand_includes() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ \{\{include:[[:space:]]*([^}[:space:]]+)[[:space:]]*\}\} ]]; then
       rel="${BASH_REMATCH[1]}"
-      resolved="$(resolve_shadow "$rel")"
-      expand_includes "$resolved" "$visited" || return 1
+
+      # <task> substitution
+      if [[ "$rel" == *"<task>"* ]]; then
+        if [[ -z "${RFP_TASK_ID:-}" ]]; then
+          printf '<!-- include skipped: <task> placeholder outside task dispatch context -->\n'
+          continue
+        fi
+        rel="${rel//<task>/${RFP_TASK_ID}}"
+      fi
+
+      # Glob expansion (path contains *, ?, or [...])
+      case "$rel" in
+        *'*'*|*'?'*|*'['*)
+          local dir base pattern resolved_dir match
+          dir="${rel%/*}"          # directory part of the glob
+          pattern="${rel##*/}"     # filename pattern
+          resolved_dir="$(resolve_shadow_dir "$dir")"
+          # POSIX-deterministic enumeration: find + sort. find handles "no match"
+          # gracefully (empty output) where bash globs would error under nullglob.
+          while IFS= read -r match; do
+            [[ -z "$match" ]] && continue
+            printf '> source: %s\n' "${match#${DX_RFP_PLUGIN_DIR}/}"
+            expand_includes "$match" "$visited" || return 1
+            printf '\n'
+          done < <(find "$resolved_dir" -maxdepth 1 -name "$pattern" -type f 2>/dev/null | LC_ALL=C sort)
+          ;;
+        *)
+          resolved="$(resolve_shadow "$rel")"
+          expand_includes "$resolved" "$visited" || return 1
+          ;;
+      esac
     else
       printf '%s\n' "$line"
     fi
@@ -319,7 +363,7 @@ expand_includes() {
 }
 ```
 
-Test matrix must include a bash-3.2 run (`bash --version` from macOS default, or `docker run --rm bash:3.2 bash -c …`) before this task is complete.
+**Hash hook:** `lib/manifest.sh` (C2) calls `expand_includes` on every prompt-bearing input file (specialist agent, template) and stores `sha256(stdout)` as `inputs.includes_hash` in the manifest entry. New feedback file → glob expands differently → hash differs → re-run on next `/rfp`.
 
 - [ ] **Step 4: Run → PASS**
 - [ ] **Step 5: Commit**
@@ -352,6 +396,8 @@ Per spec §11.2, per-task tracking (`status`, `owner`, `notes`) lives directly o
 # dx-rfp
 .ai/rfp/client-docs/
 .ai/rfp/.state/
+# Note: .ai/rfp/feedback/ is intentionally NOT gitignored — bid-team
+# memos and reviewer comments are project history (§6.5 of design spec).
 ```
 
 ### Task A8: Starter agent templates (6 files)
@@ -364,7 +410,30 @@ Per spec §11.2, per-task tracking (`status`, `owner`, `notes`) lives directly o
 - Create: `plugins/dx-rfp/templates/agents/rfp-qa-specialist.md.template`
 - Create: `plugins/dx-rfp/templates/agents/rfp-generic-specialist.md.template`
 
-Each has standard agent YAML frontmatter + sections: Role, Responsibilities, Domain Knowledge (placeholder), Key Concerns. User edits after scaffolding.
+Each has standard agent YAML frontmatter + sections: Role, Responsibilities, Domain Knowledge (placeholder), Key Concerns, **Feedback ingestion**. User edits after scaffolding.
+
+**Feedback ingestion section (verbatim in every starter template) — wires the feedback layer (§6.5) into specialist prompts:**
+
+```markdown
+## Cross-cutting bid-team policies
+
+{{include: feedback/shared/*.md}}
+
+## Task-scoped feedback for this category
+
+{{include: feedback/<task>/*.md}}
+
+## How to use feedback
+
+- Apply the feedback above as overrides to your default reasoning.
+- For every override you apply that visibly changes a number, scope item,
+  assumption, or risk in your output, append a line to the bottom of your
+  shard's "## Applied feedback" section in this exact format:
+  > Applied feedback: <relative-path-from-source-prefix> — <one-line reason>
+- Precedence: see {{include: shared/feedback-precedence.md}}.
+```
+
+The `<task>` placeholder is substituted by the orchestrator per dispatch (lib/include-resolver.sh, A4). User editing a scaffolded specialist agent never has to touch the include lines — they come pre-wired in the starter and shadowing them is opt-in.
 
 - [ ] Commit after all 6.
 
@@ -386,7 +455,8 @@ digraph rfp_init {
   "Ask categories list (with per-category status)" [shape=box];
   "Write config.yaml from template + inputs" [shape=box];
   "Seed .ai/rfp/ shadow dirs (empty)" [shape=box];
-  "Patch .gitignore" [shape=box];
+  "Seed feedback/shared/ + feedback/<task>/ per category (empty)" [shape=box];
+  "Patch .gitignore (exclude client-docs/, .state/; KEEP feedback/ tracked)" [shape=box];
   "Final summary" [shape=doublecircle];
 
   "Detect existing .ai/rfp" -> "Scaffold fresh" [label="no"];
@@ -398,8 +468,9 @@ digraph rfp_init {
   "Scaffold agent files" -> "Ask categories list (with per-category status)";
   "Ask categories list (with per-category status)" -> "Write config.yaml from template + inputs";
   "Write config.yaml from template + inputs" -> "Seed .ai/rfp/ shadow dirs (empty)";
-  "Seed .ai/rfp/ shadow dirs (empty)" -> "Patch .gitignore";
-  "Patch .gitignore" -> "Final summary";
+  "Seed .ai/rfp/ shadow dirs (empty)" -> "Seed feedback/shared/ + feedback/<task>/ per category (empty)";
+  "Seed feedback/shared/ + feedback/<task>/ per category (empty)" -> "Patch .gitignore (exclude client-docs/, .state/; KEEP feedback/ tracked)";
+  "Patch .gitignore (exclude client-docs/, .state/; KEEP feedback/ tracked)" -> "Final summary";
 }
 ```
 
@@ -461,6 +532,25 @@ Contains: 5 critic rubrics (cost, timeline, risk, evaluator, compliance), weak-s
 ### Task B6: `shared/pitfalls.md`
 
 Contains: 10 named RFP-response anti-patterns.
+
+- [ ] Write, commit.
+
+### Task B6b: `shared/feedback-precedence.md` (new)
+
+**Files:**
+- Create: `plugins/dx-rfp/shared/feedback-precedence.md`
+
+Documents the recommended precedence ladder for the feedback layer (spec §6.5). The document is conveyed via prompt ordering in the starter specialist templates (A8) — there is no merge engine, no precedence YAML, no resolver code. Content:
+
+- Top of ladder: RFP scope (locked) — never overridden by feedback
+- Then: standing rules (`.ai/rfp/rules/*.md`)
+- Then: feedback layer (`feedback/shared/*.md` + `feedback/<task>/*.md`)
+- Then: client docs (`.ai/rfp/client-docs/*`) — feedback above this so feedback can correct client-doc misinterpretations
+- Bottom: skill defaults
+
+Plus 3–5 worked examples ("if a feedback memo says X but the client doc says Y, prefer X and surface as `> Applied feedback: ...`"). Plus the surfacing convention (`> Applied feedback: <path> — <reason>` lines in the consolidated shard).
+
+User can shadow this file to encode their own precedence — but the ordering they want appears in their shadowed specialist agent's prompt slots, not in this doc.
 
 - [ ] Write, commit.
 
@@ -614,12 +704,19 @@ recommendations: []
 
 - [ ] Write all templates, commit in chunks.
 
-### Task B12: Integration smoke — include-resolver exercises shared refs
+### Task B12: Integration smoke — include-resolver exercises shared refs + feedback layer
 
 **Files:**
 - Create: `plugins/dx-rfp/tests/test-shared-includes.sh`
+- Create: `plugins/dx-rfp/tests/test-feedback-glob.sh`
 
-- [ ] Write a fixture markdown file with `{{include: shared/methodology.md}}`, run resolver, assert output is non-empty and contains known marker strings from methodology.md.
+- [ ] **Shared smoke** — fixture markdown with `{{include: shared/methodology.md}}`, run resolver, assert output is non-empty and contains known marker strings from methodology.md.
+- [ ] **Feedback glob smoke** — under a tmp `.ai/rfp/feedback/` layout, exercise:
+  - `{{include: feedback/shared/*.md}}` with 0, 1, 5 files; assert lex-sorted concatenation
+  - Each file's content is preceded by `> source: <relative-path>`
+  - `{{include: feedback/<task>/*.md}}` with `RFP_TASK_ID=demo-task` substitutes correctly
+  - `{{include: feedback/<task>/*.md}}` with no `RFP_TASK_ID` set → empty expansion + warning comment, no error
+  - Adding a new file to the dir between two resolver runs → output bytes differ → sha differs (the property C2 manifest will rely on)
 - [ ] Commit.
 
 ---
@@ -647,10 +744,11 @@ Exports:
 - `manifest_last_run_for(task, step, agent)` — echoes YAML fragment or empty
 - `manifest_is_stale(task, step, agent, current_inputs_yaml)` — exit 0 if stale
 - `manifest_list_stale()` — prints task×step×agent triples that are stale
+- `manifest_compute_includes_hash(file_path)` — runs `expand_includes` on the file (with `RFP_TASK_ID` already exported by the orchestrator), pipes stdout through `sha256sum`, echoes the hex digest. Used by callers to populate `inputs.includes_hash` (spec §8.6, §6.5 feedback layer). The function is the bridge between A4's resolver and C2's manifest — manifest is hashing what the agent will actually see at prompt time, not the unexpanded template.
 
 Storage: `.ai/rfp/.state/manifest.yaml`. Uses `yq` for YAML manipulation.
 
-- [ ] Tests cover: first record, subsequent same-hash (fresh), different-hash (stale), missing file (stale).
+- [ ] Tests cover: first record, subsequent same-hash (fresh), different-hash (stale), missing file (stale), **feedback file added between runs (includes_hash differs → stale)**.
 - [ ] Commit.
 
 ### Task C3: `.state/` directory lifecycle
@@ -758,6 +856,10 @@ Runs all hooks whose `event: "pre-step"` matches the current step. Failure = tas
 
 #### Run step for task lane
 Per-task lanes run in parallel (bash coprocesses or sequential-with-isolated-state; either works for v1). Each lane delegates to `/rfp-<step>` skill for its `(task, step)` pair. The lane passes the agent input bundle assembled per spec §8.7. Step skills **do not** write `.state/context/` themselves — the orchestrator does it after step completion (per spec §8.3).
+
+**Env contract for the lane:** before invoking any agent, the orchestrator exports `RFP_TASK_ID=<task>` (and `RFP_STEP`, `RFP_AGENT`, `RFP_SHARD_PATH`, `RFP_CONFIG_PATH`, `RFP_STATE_DIR` per spec §9.4). The include-resolver (A4) reads `RFP_TASK_ID` to substitute the `<task>` placeholder in `{{include: feedback/<task>/*.md}}` lines that the starter specialist templates ship with (§6.5 feedback layer). No additional plumbing required — the env var already needed for hooks doubles as the include-substitution source.
+
+**Manifest fingerprint:** before each agent dispatch, the lane calls `manifest_compute_includes_hash(<resolved-agent-file>)` (C2) to compute `inputs.includes_hash`. This is what makes new feedback files trigger re-runs automatically: a glob expansion that picks up a new file produces different bytes → different sha → next `/rfp` flags this `(task, step, agent)` as stale.
 
 #### post-agent + pre-consolidation + post-consolidation + post-step
 For each shard produced: `post-agent`. Before consolidator runs: `pre-consolidation` (all perspectives present?). After consolidator: `post-consolidation`. After all shards of the step written: `post-step`. Each event dispatches `validations_for_event(event, step, agent)` from `lib/validations.sh`.

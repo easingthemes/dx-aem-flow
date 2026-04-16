@@ -64,3 +64,24 @@ Default answer is `Y` (re-run). User can decline to keep things fresher still pe
 **Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` (agent input bundle assembly).
 **Done-when:** Reviewer reads at most `config.rfp.reviewer.max_shards_per_invocation` (default 15). For larger steps, the orchestrator chunks the review and merges reviewer output under a `merged_from: [chunk-1, chunk-2, ...]` key. Merging is deterministic (concatenate + dedup findings).
 **Approach:** config key + chunked dispatch in orchestrator. Revisit after actual usage surfaces the number of tasks that ship per RFP.
+
+---
+
+## Feedback ingestion from Drive / cloud-collab tools (v2)
+
+**Added:** 2026-04-16
+**Problem:** v1 of the feedback layer (spec §6.5) consumes from `.ai/rfp/feedback/`. Files arrive there however the user wants — manual paste, third-party tool, custom skill. In actual practice, the high-volume channel is reviewer comments dropped on shared deliverables (Drive/SharePoint/Confluence) that need to be pulled, normalised into `feedback/comments/*.md`, and triaged into either `feedback/shared/` or `feedback/<task>/`. Doing this by hand on a 4-week cycle is the exact toil the plugin should eliminate, but it requires an MCP server v1 explicitly does not ship.
+**Scope:** new optional skill set under `plugins/dx-rfp/skills/`:
+- `/rfp-comments` — pull comments from a configured cloud-collab source into `feedback/comments/*.md` (one md per comment, frontmatter carries reviewer / round / source-doc-id / anchor). Incremental — uses a cursor in `.ai/rfp/.state/comments-cursor.yaml` so it only fetches new since last run.
+- `/rfp-triage-comments` — for each unrouted comment, decide whether it's task-scoped (move to `feedback/<task>/<short-name>.md`) or cross-cutting (move to `feedback/shared/<short-name>.md`) or pure ack (move to `feedback/comments/.acknowledged.md`). Keeps provenance frontmatter intact through the move.
+- `/rfp-comments-reply` — post replies back to the source per a `feedback/answers/.posted.json` ledger so reviewers see the response in-context.
+
+Requires an MCP server for whichever cloud-collab tool is in use. v1 plugin is `.mcp.json`-free; this v2 work would add an optional MCP entry users can opt into.
+**Done-when:** end-to-end loop closes — comment posted on Drive → `/rfp-comments` ingests it → `/rfp-triage-comments` files it under the right `feedback/` slot → next `/rfp <task>` re-dispatches affected specialists with the new memo in their prompt → reply posted via `/rfp-comments-reply`.
+**Approach (when v2 starts):**
+1. Decide MCP target (Drive vs Confluence vs platform-agnostic) based on actual usage spread.
+2. Add `config.rfp.feedback.source:` block (provider, doc id list, polling cadence, reviewer allowlist).
+3. Ship the three skills + a shared `rules/comment-triage.md` rubric.
+4. Reuse the §6.5 consumption layer unchanged — the v2 work is purely about populating `feedback/`, not changing how it's consumed.
+
+**Why deferred:** v1 needs to prove the consumption model (glob includes, manifest hashing, reviewer surfacing) on real bid-team workflows before the plugin commits to a particular cloud-collab integration. Users with their own ingestion tooling get full value from v1 without waiting.
