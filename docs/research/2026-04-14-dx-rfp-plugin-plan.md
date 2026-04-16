@@ -1059,27 +1059,57 @@ fi
 
 CI runs this on every PR that touches `plugins/dx-rfp/validations/`. Adding validation #27 requires updating the number in the script in the same commit that adds the file — the script is the gate.
 
-### Task E13: Auto-resummarize pass (orchestrator)
+### Task E13: Topological auto-resummarize pass (orchestrator)
 
 **Files:**
-- Modify: `plugins/dx-rfp/skills/rfp/SKILL.md` (C4) — add a pre-dispatch pass
-- Modify: `plugins/dx-rfp/lib/state.sh` (C3) — add `state_detect_shard_drift()` returning task×step list where any shard sha diverges from manifest `output.sha`
+- Modify: `plugins/dx-rfp/skills/rfp/SKILL.md` (C4) — add a pre-dispatch topological sweep
+- Modify: `plugins/dx-rfp/lib/state.sh` (C3) — add `context_is_stale(task, step)` + `state_sweep_contexts(tasks)`
 
-**Flow (fits under C4 Node Details):** on every orchestrator run, before dispatching any step, walk every existing `.state/context/<task>/<step>.yaml` and compare the current sha of each contributing shard against the manifest's recorded `output.sha`. For any drift:
-1. Log `context-resummarized-due-to-shard-edit` in `.state/logs/<ts>-resummarize.log`
-2. Re-run the orchestrator's summarization pass for that task×step (no specialist/reviewer re-invocation)
-3. Update the manifest with the new shard shas under `inputs.manual_edit_sha`
-4. Continue with the user's requested run
+**New lib function (C3 extension):**
 
-Explicit command path: `/rfp <task> --step <step> --resummarize` runs the same pass without any other work. Useful after a batch of manual edits.
+```bash
+# context_is_stale — returns 0 if stale, 1 if fresh
+# Stale := shard sha drift OR upstream context drift within same sweep
+context_is_stale() {
+  local task="$1" step="$2"
+  local ctx=".ai/rfp/.state/context/${task}/${step}.yaml"
+  [[ -f "$ctx" ]] || return 0   # missing = stale
 
-**Integration test:** `plugins/dx-rfp/tests/test-shard-edit-drift.sh` — run full pipeline against reference fixture (C7), hand-edit a shard, run orchestrator again, assert:
-- `validate-shard-sha-matches-manifest.sh` flagged drift
-- Summary regenerated (sha of `.state/context/<task>/<step>.yaml` changed)
-- No specialist/reviewer agent dispatched
-- `--resummarize` command produces the same result without a full run
+  # 1. Shard-sha check: any shard in results/task-<task>/<step>/*.md whose
+  #    current sha differs from manifest.output.sha for that shard.
+  _any_shard_sha_drifted "$task" "$step" && return 0
 
-- [ ] TDD, commit.
+  # 2. Upstream cascade: any upstream-step context for same task with
+  #    mtime >= this context's mtime. Upstream was re-summarized earlier
+  #    in this sweep or out-of-band; either way cascade to here.
+  _any_upstream_context_newer "$task" "$step" "$ctx" && return 0
+
+  return 1
+}
+```
+
+**Flow (fits under C4 Node Details):** on every orchestrator run, before dispatching any step, execute `state_sweep_contexts()` — a single-pass topological walk in canonical step order (analysis → work-packages → estimation → approach → clarifications → red-team) across every task. At each `(task, step)`:
+
+1. Evaluate `context_is_stale(task, step)`. If fresh, skip.
+2. If stale, classify the reason:
+   - Shard-sha drift → log `context-resummarized-due-to-shard-edit`
+   - Upstream drift only → log `context-resummarized-due-to-upstream-drift`
+   - Both → log both reasons
+3. Re-summarize in place (no specialist/reviewer re-invocation).
+4. `touch` the context yaml so downstream steps' `_any_upstream_context_newer` check fires on the same pass.
+5. Append a `resummarize` entry to the manifest capturing input shas + reason.
+
+The sweep is single-pass and monotone: step N's context mtime advances on re-summarize, so step N+1's check observes it on the same traversal. No second pass, no fixpoint loop.
+
+**Mode-as-hash input (Hook B):** the effective run mode (full vs `--light`, and which specific `light_mode.*` axes are enabled) is serialized into a `RFP_RUN_MODE` fingerprint and treated as a `config_section_hash` input (spec §11.3 `rfp_run_mode` row). Mode toggle → `manifest_is_stale()` flags every context yaml → sweep re-summarizes under the new rubric. Shards untouched.
+
+Explicit command path: `/rfp <task> --step <step> --resummarize` runs the topological sweep starting at `<step>` (inclusive) for `<task>` — not just one `(task, step)` — so cascade semantics are identical to auto-detect.
+
+**Integration tests:**
+- `plugins/dx-rfp/tests/test-shard-edit-drift.sh` — edit a step-3 shard, run orchestrator, assert step-3 context re-summarized AND step-4/5/6 contexts for the same task re-summarized (cascade) while other tasks untouched. Assert no specialist/reviewer dispatched.
+- `plugins/dx-rfp/tests/test-mode-toggle-invalidates-contexts.sh` — run light mode end-to-end on the C7 fixture; re-run without `--light`; assert all context yamls re-summarized, zero specialist invocations, shard shas unchanged between runs.
+
+- [ ] TDD both, commit.
 
 ### Task E10: User hook merge integration test
 

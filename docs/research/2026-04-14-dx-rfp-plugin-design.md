@@ -374,11 +374,26 @@ Later steps' agents read these YAMLs for prose context and the manifest for numb
 **Mid-flight shard edits — output→context re-summarization:**
 The manifest hashes *inputs* (config, locks, prior context, agent file, template, rules). If a user hand-edits `results/task-<id>/<step>/*.md` between runs, the shard's sha changes but its inputs do not, so `manifest_is_stale()` returns false for that shard — yet the downstream `.state/context/<task>/<step>.yaml` is now stale because it was summarized from the pre-edit shard. The asymmetry is: inputs→output is tracked, output→context is not.
 
-**Fix (two-layer):**
+**Fix (two-layer, topological):**
 
-1. **Auto-detect on every orchestrator run** — before dispatching any step, the orchestrator walks every existing `.state/context/<task>/<step>.yaml` and compares the current sha of each contributing shard against the `output.sha` recorded in that shard's manifest entry. If any sha diverges, the context file is flagged stale and re-summarized in-place (no downstream re-run, unless further flags trigger it). Logged as `context-resummarized-due-to-shard-edit` in `.state/logs/`.
+1. **Auto-detect on every orchestrator run** — before dispatching any step, the orchestrator performs a **topological sweep** in step order (analysis → work-packages → estimation → approach → clarifications → red-team) across every task. For each `(task, step)` it evaluates:
 
-2. **Explicit command** — `/rfp <task> --step <step> --resummarize` runs the summarization pass for one task×step without re-running any specialist/reviewer. Useful after multiple manual edits when the user wants to flush the context without waiting for the next orchestrator run.
+   ```
+   context_is_stale(task, step) :=
+     (any contributing shard's current sha != manifest.output.sha)
+     OR
+     (any upstream-step context yaml in the same task was rewritten
+      during THIS sweep, i.e. upstream.mtime > this.mtime after the
+      upstream was re-summarized)
+   ```
+
+   If stale, re-summarize in place (no specialist/reviewer re-dispatch). Logged as `context-resummarized-due-to-shard-edit` (direct edit) or `context-resummarized-due-to-upstream-drift` (cascade) in `.state/logs/`.
+
+   The sweep is single-pass and monotone: once step N's context is re-summarized, its mtime is advanced, so step N+1's staleness check sees the upstream drift on the same pass. No second traversal needed.
+
+   Why topological (not flat): the shard-drift check catches direct edits, but the downstream context was summarized from the *old* upstream context (§8.7 — downstream agents read prior-step context yaml). Drift at step N implies drift at N+1..N+k even when no shard at those steps changed. The upstream-mtime OR-clause is the dual of the shard-sha clause; without it the cascade is silent.
+
+2. **Explicit command** — `/rfp <task> --step <step> --resummarize` runs the topological sweep starting at the specified step, not just the one task×step. Useful after multiple manual edits when the user wants to flush contexts without a full orchestrator run.
 
 A post-step hook `validate-shard-sha-matches-manifest.sh` asserts no drift at the end of each step (catches the reverse case — a specialist wrote a shard but the manifest wasn't updated). **Count bumped: 25 → 26.**
 
@@ -786,10 +801,13 @@ The manifest's `config_section_hash` (§8.6) is computed per run from a subset o
 | `rfp_red_team` | `.rfp.red_team` | all tasks' red-team step |
 | `rfp_clarifications` | `.rfp.clarifications` | all tasks' clarifications step |
 | `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
+| `rfp_run_mode` | runtime value of `--light` ⊕ `config.rfp.cost.light_mode.*` | all context summaries (not shards) — summarizer rubric differs per mode |
 
 **Schema vs state split on `categories[]`:** the per-category `status`, `owner`, `notes` fields (§11.2) are *state*, not schema. They drive orchestrator gating (`parked`/`done`) but do not change what any agent would produce for a task. They must **not** contribute to `config_section_hash`. The fingerprint map above intentionally projects only the schema fields (`id`, `label`, `specialist`, `perspectives`). Flipping a task from `pending` to `done` or adding a note must not invalidate analysis.
 
 `manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this. The two-selector pattern (one yq expression over the same array for invalidating fields, state fields omitted entirely) is the standard approach — avoids moving state into a sibling file.
+
+**`rfp_run_mode` — mode as cache key:** the `--light` flag and its 5 axes (§`todo-dx-rfp.md`) change the summarizer's rubric even when shards are unchanged. If a light-mode run produces thinner summaries and the user then invokes `/rfp` without `--light`, the full run would read lower-rigor contexts unless something re-summarizes. Encoding the effective mode as a `config_section_hash` input solves this: mode toggle → all context yamls flagged stale → topological sweep (§8.3) re-summarizes from (unchanged) shards under the new rubric. Cost is summarizer-only, no specialist re-dispatch. Keeps the parallel build graph — shards vs contexts — coherent across mode switches.
 
 ### 11.2 Task tracking lives in `categories[]`
 
