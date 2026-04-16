@@ -2,47 +2,65 @@
 
 Tracking items from RFP spec review that are intentionally deferred so Subsystem A–F work can proceed without blocking on them.
 
-## Cost / inference budget controls
+## Pre-run cost visibility (keep — not gating, just transparency)
 
 **Added:** 2026-04-16
-**Problem:** Full `/rfp all` on an enterprise-scale RFP (~13 categories × 6 core steps × multiple shards including perspectives and two reviewer archetypes) reaches several hundred agent invocations per regen. With `opus` on `/rfp-estimate` and `/rfp-red-team`, a full run is a significant cost per cascade-invalidated regeneration. Spec states "rigor over token efficiency" is the explicit trade — but without user-facing levers, accidental full regens on scope drift become expensive.
-**Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` (orchestrator), `plugins/dx-rfp/templates/config.yaml.template`, new `--light` and `--budget` flag handling, plus a pre-run estimate report.
-**Done-when:** `/rfp --light` runs a reduced-rigor pipeline per the axes below and produces a complete deliverable set. `/rfp --budget <ceiling>` refuses to start if the estimated cost exceeds the ceiling. A pre-run estimate line is printed on every invocation: "Estimated agents: N primary + M perspectives + P reviewers + Q critics".
+**Problem:** Users should know before a full `/rfp all` how many agent invocations it will dispatch. Not for gating — for transparency. "About to dispatch ~N opus + ~M sonnet calls across C categories; proceed?" is useful UX. It is **not** a budget ceiling that refuses to run.
+**Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` orchestrator prologue, new `plugins/dx-rfp/lib/cost-estimate.sh`.
+**Done-when:** Every `/rfp` invocation prints a one-line estimate: `"Will dispatch: N×opus (estimate+red-team) + M×sonnet (analysis/work-packages/approach/clarifications) + P×reviewer + Q×critic across C categories"`. No prompt, no confirmation gate — just information. User Ctrl-C if they disagree.
+**Approach:** `cost-estimate.sh` reads `config.yaml` (categories, perspectives, critics) + manifest (stale count from `/rfp status`) and computes a static count. Cheap. Called once at orchestrator start.
 
-**Pre-decided `--light` axes** (so the flag's semantics are fixed before it ships):
-1. **Perspectives:** skipped entirely. Only primary + reviewer + consolidated per step.
-2. **Reviewer:** one archetype only — `rfp-reviewer-bid-manager` (commercial). `rfp-reviewer-solution-architect` (technical) is skipped. Rationale: commercial defensibility is the harder-to-recover-from gap on an early draft; technical gaps surface naturally when a specialist re-reads. Early drafts are commercially-driven; technical review is the rigor pass.
-3. **Red-team:** 2 critics instead of 5 — `rfp-critic-cost` + `rfp-critic-evaluator`. The other three (timeline, risk, compliance) run only on full mode.
-4. **Estimation methods:** primary (bottom-up) + PERT only; analogous and parametric skipped. Reconciliation uses the 2 methods with wider tolerance (`reconciliation_tolerance = 0.25` in light mode, vs `0.15` default).
-5. **Model tier:** `/rfp-estimate` and `/rfp-red-team` drop from `opus` to `sonnet` in light mode; acceptable drop because the light pipeline is explicitly for drafts.
+**Non-goals (rejected per §1.1 quality-first principle):**
+- No `--budget <ceiling>` flag that refuses to run. Enterprise RFPs are multi-year client relationships worth millions; the plugin should never refuse to do its job over token cost.
+- No automatic model downgrade. `/rfp-estimate` and `/rfp-red-team` stay on `opus`.
 
-**Approach:**
-1. Add `config.rfp.cost.light_mode:` block in config template with keys matching the axes above (each defaulting to the full-mode value — the flag flips them at runtime).
-2. Batch-perspective mode (full mode only): one perspective agent handles all its assigned categories in a single prompt, splitting output by category heading — reduces invocations from `C × P` to `P`.
-3. Add a `lib/cost-estimate.sh` helper that counts agents from registry + config (respects light-mode toggles).
-4. Document in README "Cost-aware runs" section once implemented, with the 5-axis table as the source of truth for what `--light` actually does.
+---
 
-## Lock invalidation — scoped propagation
+## Preview mode (`--preview`) — draft-only narrow scope, deferred
+
+**Added:** 2026-04-16 (originally drafted as `--light`; narrowed after §1.1 quality-first clarification)
+**Problem:** During very early exploratory work on an RFP (pre-qualification, "is this even worth bidding?"), a user may want a fast sketch against the client brief without triggering the full pipeline. This is distinct from the production workflow — it's throwaway analysis that either gets discarded or triggers a full `/rfp` if qualification passes.
+**Scope:** deferred — do not ship until clear demand emerges from actual usage. Core pipeline runs at full rigor regardless.
+**Done-when:** `/rfp --preview` runs only `/rfp-analysis` + `/rfp-clarifications` for one configurable task, with `perspectives: []` for that invocation only. Output is tagged `preview: true` in the summary front-matter so downstream full runs cannot confuse preview output for production output. No changes to model tier, reviewers, critics, or estimation methods anywhere in the pipeline.
+
+**Non-axes (explicitly not cut in preview mode):**
+- Model tier stays on the skill's configured tier. No `opus → sonnet` downgrade.
+- Both reviewer archetypes still run when reviewer dispatches.
+- All 5 critics still run when red-team dispatches.
+- All 5 estimation methods still run when estimate dispatches.
+
+The `rfp_run_mode` hash input (spec §11.3) still exists as mechanism — preview runs and full runs get separate context summaries so the two never cross-pollute. That mechanism is cheap and correct independent of whether `--preview` ships.
+
+**Approach:** when (if) this is built:
+1. Add `config.rfp.cost.preview_mode:` block — limits which steps run, nothing else.
+2. Tag preview outputs in front-matter; orchestrator warns if a preview-tagged context is the most recent context when a full run starts ("found preview output for task X; will regenerate at full rigor").
+3. Document in README that preview is for qualification / bid/no-bid, not for production drafts.
+
+---
+
+## Scoped lock invalidation — polish for cascade UX
 
 **Added:** 2026-04-16
-**Problem:** Spec §10.6 invalidates `scope.md` globally when any task's `/rfp-analysis` is re-run. Cascade-confirmation UX in §10.2 reports the blast radius but offers no way to narrow it. In practice, most scope tweaks affect 1–2 tasks; forcing global downstream re-runs inflates cost (see above) and discards work that is still valid.
+**Problem:** Spec §10.6 invalidates `scope.md` globally when any task's `/rfp-analysis` is re-run. In practice, most scope tweaks affect 1–2 tasks. Over-invalidation is defensible (err on re-run per §1.1) but the confirmation prompt could narrow the blast radius when the diff is trivially task-local.
 **Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` (cascade confirmation), `plugins/dx-rfp/lib/state.sh` (`state_invalidate_locks_for_config_change`), manifest diff logic.
-**Done-when:** On `/rfp-analysis` re-run for a task, orchestrator diffs the old vs new scope shards, classifies changes as `task-local` vs `cross-cutting`, and only globalizes when cross-cutting lines changed. Confirmation prompt shows:
+**Done-when:** On `/rfp-analysis` re-run, orchestrator diffs old vs new scope shards, classifies changes as `task-local` vs `cross-cutting`, and shows a narrowed prompt when all changes are task-local:
 ```
-Scope changed for: be-api, fe-perf
-Cross-cutting lines unchanged.
+Scope changed for: be-api, fe-perf (task-local lines only)
+No cross-cutting changes detected.
 Re-run only be-api, fe-perf downstream? [Y/n]
 ```
+Default answer is `Y` (re-run). User can decline to keep things fresher still per §1.1.
 **Approach:**
-1. Introduce `scope.md` section tags (`## task-local` vs `## cross-cutting`).
-2. Post-analysis diff pass classifies changes.
-3. Extend `state_invalidate_locks_for_config_change` with a `scope: task-local|global` param.
-4. Default to conservative (global) when classification is ambiguous.
+1. Introduce `## task-local` vs `## cross-cutting` section tags in `scope.md`.
+2. Post-analysis diff classifies.
+3. Default to conservative (global) when ambiguous.
 
-## Token-efficient context bundles
+---
+
+## Reviewer context chunking — polish for very large steps
 
 **Added:** 2026-04-16
-**Problem:** Spec §8.7 agent input protocol says reviewers read "**all** step-N raw outputs". On a 13-task × 5-shard step, that's 65 shards in one prompt. Context window and cost both suffer, and reviewer attention degrades on long contexts.
+**Problem:** Spec §8.7 has reviewers read "all step-N raw outputs". On a 13-task × 5-shard step, that's 65 shards in one prompt. Context window and reviewer attention both suffer. **Not a cost concern per §1.1 — a quality concern** (attention degrades on long contexts).
 **Scope:** `plugins/dx-rfp/skills/rfp/SKILL.md` (agent input bundle assembly).
-**Done-when:** Reviewer reads at most a configurable `reviewer.max_shards_per_invocation` (default 10). For larger tasks, the orchestrator shards the review into chunks and merges reviewer output.
-**Approach:** Add `config.rfp.reviewer.max_shards_per_invocation` and a chunked-review dispatch in the orchestrator. Defer until the basic pipeline is working end-to-end.
+**Done-when:** Reviewer reads at most `config.rfp.reviewer.max_shards_per_invocation` (default 15). For larger steps, the orchestrator chunks the review and merges reviewer output under a `merged_from: [chunk-1, chunk-2, ...]` key. Merging is deterministic (concatenate + dedup findings).
+**Approach:** config key + chunked dispatch in orchestrator. Revisit after actual usage surfaces the number of tasks that ship per RFP.

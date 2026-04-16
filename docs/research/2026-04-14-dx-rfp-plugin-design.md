@@ -23,7 +23,20 @@
 
 Generic, platform-agnostic Claude Code plugin for responding to formal enterprise RFPs. Ships a proven pipeline — decomposition, estimation with cross-validation, narrative, clarification questions, red-team review — with zero client-specific content. Consumer projects bootstrap their own RFP workspace via an interactive init skill; all client data stays in the consumer repo.
 
-Optimized for **rigor, auditability, and defensibility** over token efficiency. Multi-million bids justify heavy inference.
+### 1.1 Design principle — quality first, cost is not a tradeoff
+
+**Rigor is primary. Cost is secondary and deliberately so.**
+
+The target workload is enterprise RFPs worth millions of euros per year, typically leading to multi-year client relationships. A one-hour meeting with a bid manager, solution architect, or senior lead costs more than a thousand euros in fully-loaded time. The plugin replaces roughly ten such meetings per RFP, plus the research time around them, plus the manual narrative writing — and the downstream value of winning versus losing one bid is orders of magnitude larger again. Optimizing token spend at the expense of rigor inverts every side of that equation.
+
+Concretely:
+- **No default model downgrades.** `/rfp-estimate` and `/rfp-red-team` run on `opus` in every mode. Downgrading to `sonnet` saves tokens but gives back the defensibility that motivated the five-way estimation in the first place.
+- **No default skipping of perspectives, reviewers, or critics.** Every configured perspective, both reviewer archetypes, and every configured critic runs on every step, every full regen.
+- **Reduced-rigor modes are opt-in previews for drafts, not the default posture.** See `todo-dx-rfp.md` for the narrow-scope preview flag design (deferred; does **not** degrade the core pipeline when absent).
+- **Cost visibility, not cost-gating.** The orchestrator prints a pre-run estimate ("N primary + M perspectives + P reviewers + Q critics"); it does not refuse to run below a threshold. Users decide what's worth spending.
+- **Cascade invalidation errs on the side of re-running.** When scope drifts, re-running the full downstream pipeline is cheaper than discovering later that a downstream shard silently kept a stale assumption from pre-drift scope.
+
+The summarization, dedup, and validation infrastructure in §8–§9 is sized for the full-rigor pipeline. Any future light-mode feature is mechanism on top of that mechanism, never a replacement for it.
 
 ## 2. Hard Constraints
 
@@ -33,6 +46,7 @@ Optimized for **rigor, auditability, and defensibility** over token efficiency. 
 - **Config-driven.** No hardcoded task counts, specialist names, category lists, role lists, or deliverable formats in skills. Everything reads from `.ai/rfp/config.yaml` (single file — see §11.2).
 - **Idempotent re-runs** with manifest-driven change detection and full snapshotting
 - **Deterministic where possible.** Arithmetic, schema, references validated by shell-based hooks, not LLM judgment.
+- **Quality is never traded for cost in the default pipeline.** See §1.1.
 
 ## 3. Skill Roster
 
@@ -801,13 +815,13 @@ The manifest's `config_section_hash` (§8.6) is computed per run from a subset o
 | `rfp_red_team` | `.rfp.red_team` | all tasks' red-team step |
 | `rfp_clarifications` | `.rfp.clarifications` | all tasks' clarifications step |
 | `rfp_validations` | `.rfp.validations` | hook-dependent shards re-validated (no regen) |
-| `rfp_run_mode` | runtime value of `--light` ⊕ `config.rfp.cost.light_mode.*` | all context summaries (not shards) — summarizer rubric differs per mode |
+| `rfp_run_mode` | runtime value of any future `--preview`/reduced-scope flag ⊕ `config.rfp.cost.*` toggles | all context summaries (not shards) — summarizer rubric differs per mode |
 
 **Schema vs state split on `categories[]`:** the per-category `status`, `owner`, `notes` fields (§11.2) are *state*, not schema. They drive orchestrator gating (`parked`/`done`) but do not change what any agent would produce for a task. They must **not** contribute to `config_section_hash`. The fingerprint map above intentionally projects only the schema fields (`id`, `label`, `specialist`, `perspectives`). Flipping a task from `pending` to `done` or adding a note must not invalidate analysis.
 
 `manifest_is_stale()` compares the stored hash against the current hash of the matching yq subtree. `lib/hash.sh` exports `hash_config_section(path, yq_expr)` for this. The two-selector pattern (one yq expression over the same array for invalidating fields, state fields omitted entirely) is the standard approach — avoids moving state into a sibling file.
 
-**`rfp_run_mode` — mode as cache key:** the `--light` flag and its 5 axes (§`todo-dx-rfp.md`) change the summarizer's rubric even when shards are unchanged. If a light-mode run produces thinner summaries and the user then invokes `/rfp` without `--light`, the full run would read lower-rigor contexts unless something re-summarizes. Encoding the effective mode as a `config_section_hash` input solves this: mode toggle → all context yamls flagged stale → topological sweep (§8.3) re-summarizes from (unchanged) shards under the new rubric. Cost is summarizer-only, no specialist re-dispatch. Keeps the parallel build graph — shards vs contexts — coherent across mode switches.
+**`rfp_run_mode` — mode as cache key (future-proof mechanism):** v1 ships only full-rigor mode (§1.1). The hash row exists so that any future opt-in reduced-scope flag (e.g. the deferred `--preview` in `todo-dx-rfp.md`) automatically invalidates context summaries when toggled. A reduced-scope run writes thinner summaries; without mode-aware invalidation, a subsequent full run would read those summaries silently. Encoding the effective mode as a `config_section_hash` input means: mode toggle → all context yamls flagged stale → topological sweep (§8.3) re-summarizes from (unchanged) shards under the new rubric. Cost is summarizer-only, no specialist re-dispatch. Keeps the parallel build graph — shards vs contexts — coherent across any future mode additions without further spec changes.
 
 ### 11.2 Task tracking lives in `categories[]`
 

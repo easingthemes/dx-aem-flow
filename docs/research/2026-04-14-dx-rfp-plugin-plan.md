@@ -1101,13 +1101,13 @@ context_is_stale() {
 
 The sweep is single-pass and monotone: step N's context mtime advances on re-summarize, so step N+1's check observes it on the same traversal. No second pass, no fixpoint loop.
 
-**Mode-as-hash input (Hook B):** the effective run mode (full vs `--light`, and which specific `light_mode.*` axes are enabled) is serialized into a `RFP_RUN_MODE` fingerprint and treated as a `config_section_hash` input (spec §11.3 `rfp_run_mode` row). Mode toggle → `manifest_is_stale()` flags every context yaml → sweep re-summarizes under the new rubric. Shards untouched.
+**Mode-as-hash input (Hook B, future-proof mechanism):** the effective run mode is serialized into a `RFP_RUN_MODE` fingerprint and treated as a `config_section_hash` input (spec §11.3 `rfp_run_mode` row). In v1 this is always `full`; the hash exists so that any future reduced-scope flag (e.g. the deferred `--preview`) automatically invalidates context summaries when toggled, without further orchestrator changes. Mode toggle → `manifest_is_stale()` flags every context yaml → sweep re-summarizes under the new rubric. Shards untouched.
 
 Explicit command path: `/rfp <task> --step <step> --resummarize` runs the topological sweep starting at `<step>` (inclusive) for `<task>` — not just one `(task, step)` — so cascade semantics are identical to auto-detect.
 
 **Integration tests:**
 - `plugins/dx-rfp/tests/test-shard-edit-drift.sh` — edit a step-3 shard, run orchestrator, assert step-3 context re-summarized AND step-4/5/6 contexts for the same task re-summarized (cascade) while other tasks untouched. Assert no specialist/reviewer dispatched.
-- `plugins/dx-rfp/tests/test-mode-toggle-invalidates-contexts.sh` — run light mode end-to-end on the C7 fixture; re-run without `--light`; assert all context yamls re-summarized, zero specialist invocations, shard shas unchanged between runs.
+- `plugins/dx-rfp/tests/test-mode-toggle-invalidates-contexts.sh` — exercise the mechanism by forcing a mode-hash change (write an artificial `RFP_RUN_MODE=test` into the env), re-run, assert all context yamls re-summarized, zero specialist invocations, shard shas unchanged between runs. Test validates the mechanism even though no user-facing mode flag ships in v1.
 
 - [ ] TDD both, commit.
 
