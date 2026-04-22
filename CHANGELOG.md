@@ -1,3 +1,10 @@
+# [2.105.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.104.1...v2.105.0) (2026-04-22)
+
+
+### Features
+
+* **dx-req:** download and describe work-item images in Phase 1 ([#126](https://github.com/easingthemes/dx-aem-flow/issues/126)) ([94571db](https://github.com/easingthemes/dx-aem-flow/commit/94571db9f891f0ff0faa8a52a9605ed28c0459f9))
+
 ## [2.104.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.104.0...v2.104.1) (2026-04-15)
 
 
