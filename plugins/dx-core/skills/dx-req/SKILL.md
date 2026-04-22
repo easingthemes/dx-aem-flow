@@ -74,8 +74,10 @@ If no argument is provided, ask the user for the work item ID.
 mcp__ado__wit_get_work_item
   project: "<ADO project from config>"
   id: <work item ID>
-  expand: "relations"
+  expand: "all"
 ```
+
+`expand: "all"` returns fields + relations + `multilineFieldsFormat`. The format map is required by step 6 to know which fields hold HTML (and therefore may contain embedded `<img>` references to download).
 
 Extract ALL fields: ID, Title, Type, State, Assigned To, Area Path, Iteration Path, Tags, Description (`System.Description`), Acceptance Criteria (`Microsoft.VSTS.Common.AcceptanceCriteria`), Business Benefits (`Custom.BusinessBenefits`), UI Designs (`Custom.UIDesigns`), Priority, Relations.
 
@@ -131,11 +133,7 @@ Filter returned branches and PRs the same way — branch name must contain the i
 
 If no matching branches or PRs are found, omit the section from raw-story.md entirely.
 
-### 6. Fetch Attached Images
-
-If the MCP server supports attachment download, use it. If MCP attachment download fails or is not available, do NOT fall back to HTTP download — ADO/Jira attachments require authenticated sessions and HTTP fetches return login page HTML instead of images. Preserve inline `<img>` URLs as-is in `raw-story.md`.
-
-### 7. Generate Spec Directory Name
+### 6. Generate Spec Directory Name
 
 ```bash
 DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
@@ -148,7 +146,7 @@ DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
   - `Spec directory: .ai/specs/<DIR_NAME>/ (unchanged — lookup is by ID, not title)`
 - This is informational only — do NOT rename the directory or branch (would break git history and in-progress work). The ID-based lookup ensures all skills still find the spec directory.
 
-### 8. Create Feature Branch and Directory
+### 7. Create Feature Branch and Directory
 
 ```bash
 SPEC_DIR=".ai/specs/${DIR_NAME}"
@@ -157,6 +155,103 @@ bash .ai/lib/ensure-feature-branch.sh "$SPEC_DIR"
 ```
 
 Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` → `Sprint 41`), save to `$SPEC_DIR/.sprint`. Write `Unknown` if not recognizable.
+
+### 8. Download Embedded and Attached Images
+
+ADO work items carry images two ways that are often both relevant to the story: formal attachments (sidebar section → `relations[].rel == "AttachedFile"`) and pasted images embedded inline in HTML fields (description, acceptance criteria, custom HTML fields → `<img src="…/_apis/wit/attachments/{guid}">`). Both resolve to the same attachment endpoint. Images carry requirements info that text descriptions frequently omit (mockups, annotated screenshots, expected states) — later phases must be able to read them.
+
+**8a. Extract the image list** — write the work item JSON from step 2 to a temp file, pipe through `parse-wi-images.sh`:
+
+```bash
+WI_JSON_FILE=$(mktemp)
+# Save the JSON response from step 2 here
+bash .ai/lib/parse-wi-images.sh < "$WI_JSON_FILE" > "$SPEC_DIR/images/.manifest.tsv"
+```
+
+Each row is `<source>\t<guid>\t<filename>\t<size>`. Source is either `attachment` (for formal attachments) or the field name where an embedded `<img>` was found (e.g. `System.Description`, `Custom.UIDesigns`). Size is `-1` for embedded references (unknown until fetched).
+
+**8b. For each unique GUID, fetch via MCP and save to disk:**
+
+For each row in the manifest, call:
+```
+mcp__ado__wit_get_work_item_attachment
+  project: "<ADO project from config>"
+  attachmentId: "<guid from row>"
+  fileName: "<filename from row>"
+```
+
+The MCP returns the file as a base64 `blob`. Decode and write to `$SPEC_DIR/images/` using the filename policy below.
+
+**Filename policy:**
+- **Attachment rows** — keep the original filename. If it collides with an existing file, suffix with the 8-char GUID prefix: `screenshot.png` → `screenshot-cafebabe.png`.
+- **Embedded rows** — rename to `<sanitized-field>-<n>-<guid8>.<ext>`:
+  - Sanitize field name: strip `System.`, `Microsoft.VSTS.Common.`, `Microsoft.VSTS.`, `Custom.` prefixes, lowercase, non-alphanumerics → `-`.
+  - `<n>` is a per-field counter (1, 2, 3…) based on order of appearance in the manifest.
+  - `<guid8>` is the first 8 chars of the attachment GUID.
+  - `<ext>` comes from the filename in the manifest (typically `png` since ADO defaults pasted images to `image.png`).
+  - Example: `description-1-cafebabe.png`, `description-2-deadc0de.png`, `uidesigns-1-deadbeef.jpg`.
+
+**Size guard:** discard any file whose decoded size exceeds 5 MB (keeps the repo from bloating with unexpected large attachments). Log what was discarded.
+
+**Filter:** only keep files with image MIME types inferred from extension (`png`, `jpg`/`jpeg`, `gif`, `webp`, `svg`, `bmp`). Non-image attachments (zips, PDFs, logs) are skipped — they're rare on user stories and rarely what dx-req needs.
+
+**8c. Write `$SPEC_DIR/images/INDEX.md`** — human-readable table the model can skim without loading pixels:
+
+```markdown
+# Images — work item <id>
+
+| File | Source | Size | Type |
+| --- | --- | ---: | --- |
+| `description-1-cafebabe.png` | System.Description | 45231 | image/png |
+| `description-2-deadc0de.png` | System.Description | 12893 | image/png |
+| `screenshot.png` | attachment | 67412 | image/png |
+
+_3 downloaded, 0 skipped._
+```
+
+**8d. Map GUID → local path** — build a lookup table `{guid: "./images/<filename>"}` for use by step 10's HTML→markdown conversion. This lets inline `<img>` tags in the raw description be rewritten to relative markdown image references instead of preserving the ADO URL.
+
+**8e. Generate `$SPEC_DIR/images.md`** — read each downloaded PNG once and write a structured description. This file is the canonical textual record of what the BA's visuals contain; downstream phases (Distill, Research, Share) consume `images.md` instead of re-loading the PNGs, saving tokens and enabling Explore subagents (which can't receive image content) to benefit from visual intent.
+
+**Format — one `##` section per image, in manifest order:**
+
+```markdown
+---
+provenance:
+  agent: dx-req
+  model: <your-model-tier>
+  created: <ISO-8601 timestamp>
+  confidence: high
+  verified: false
+---
+# Image Descriptions — work item <id>
+
+_Generated by Phase 1. Later phases should read this file rather than re-loading the PNGs. If a phase needs a detail not captured here (e.g. exact hex, pixel-level spacing), it may Read the PNG directly — but that is the exception, not the default._
+
+## <filename-1>.png
+**Source:** <System.Description | attachment | Custom.UIDesigns | …>
+**What it shows:** <1-2 sentence description — mockup / annotated screenshot / diagram / table>
+**Key visual facts:**
+- <bulleted list of concrete facts: colors, text content, element positions, states shown>
+- <include callout annotations and what they point at>
+- <include any text visible in the image that isn't in the ticket description>
+**Implied requirements:**
+- <what this image implies must change, built, or preserved — written as actionable intent>
+**Unanswered:**
+- <what the image doesn't show that Phase 3 / human BA will need to clarify — e.g., "disabled state not pictured", "exact hex not provided">
+```
+
+**Guidelines for Phase 1 when writing each description:**
+
+- **Be specific, not generic.** "Shows a form" is useless; "shows an input field with placeholder text in WHITE against a dark primary-color background, with a red callout arrow labelled 'use white'" is usable.
+- **Transcribe any visible text verbatim** — annotations, labels, hint text. That text is a direct requirement the BA embedded visually.
+- **Correlate with the ticket text where possible** — if the description says "fix the CTA" and the image annotates a specific button, say so: "annotates the primary submit button referenced in AC item 1".
+- **Flag what's missing.** The `Unanswered:` section is how lazy-BA visual shorthand surfaces as open questions for Phase 3. Don't fill it with guesses — leave the gap honest.
+- **No editorializing.** Like `raw-story.md`, this is faithful extraction, not interpretation. Use plain noun phrases and facts.
+
+**Idempotency (combined for 8a-8e):** if `$SPEC_DIR/images/INDEX.md` already exists AND the GUID set in the current manifest matches the GUIDs listed in the existing index AND `$SPEC_DIR/images.md` exists AND its provenance frontmatter is present, skip steps 8b-8e entirely. Print `images + images.md up to date — skipping`. If any of these checks fail, regenerate everything to avoid partial state. This keeps re-runs cheap while preventing stale descriptions.
+
+**Jira note:** Jira attachments use a different API (`mcp__atlassian__jira_get_attachment`) and embed differently in descriptions. This step's shell helper is ADO-specific. For Jira provider, preserve inline image URLs as-is in `raw-story.md` and note "Jira image download not yet wired" in INDEX.md. Follow-up to implement parity.
 
 ### 9. Check Existing Output (idempotent)
 
@@ -204,6 +299,13 @@ provenance:
 
 ## UI Designs
 <If present — preserve Figma links, otherwise omit>
+
+## Images
+<!-- Inline image references already appear within Description / Acceptance Criteria / other HTML fields above using relative paths. Structured descriptions of every image (what they show, key visual facts, implied requirements, unanswered) live in ../images.md — later phases read that file instead of re-loading PNGs. -->
+
+- `./images/<file-1>` — from <source-field-name> — see `./images.md#<file-1>`
+- `./images/<file-2>` — from <source-field-name> — see `./images.md#<file-2>`
+<!-- Omit entire section if no images were downloaded. -->
 
 ---
 
@@ -292,11 +394,15 @@ When blocking questions or gaps exist, interview the user to fill them rather th
 
 **Output:** `explain.md` | **Idempotent:** skips if explain.md covers all current AC from raw-story.md
 
-Read `raw-story.md`, `dor-report.md` (if available), and `interview.md` (if available). Generate `explain.md` — a concise, developer-oriented distillation. Interview answers override assumptions from the DoR report — they are direct clarifications from the user.
+Read `raw-story.md`, `dor-report.md` (if available), `interview.md` (if available), and `$SPEC_DIR/images.md` (if present). Phase 1 already translated every downloaded image into a structured description with key visual facts, implied requirements, and unanswered gaps — treat `images.md` as first-class input alongside `raw-story.md`, not optional context.
+
+**Do not re-Read the PNG files.** The one-time description in `images.md` is authoritative. The only exception: if `images.md` explicitly says a detail wasn't captured (`Unanswered:` section), or if you notice a gap Phase 1 missed, you MAY Read the specific PNG to fill that gap. This is an escape hatch, not the default path.
+
+Generate `explain.md` — a concise, developer-oriented distillation. Interview answers override assumptions from the DoR report — they are direct clarifications from the user. Visual facts from `images.md` (e.g. "input placeholder currently renders in black; mockup shows white") go into requirements alongside textual facts, not as a separate section. Items from `images.md` `Unanswered:` sections become open questions if not already answered by interview or comments.
 
 1. **Check existing output** — if `explain.md` exists, compare title and AC coverage against `raw-story.md`. If valid → skip. If stale → regenerate.
 2. **Use DoR data** — pre-populate from dor-report.md: dialog fields, component name/type, brand/market scope, Figma URL
-3. **Generate explain.md** — read `.ai/templates/spec/explain.md.template` and follow that structure (includes provenance frontmatter — use confidence `medium`). Requirements are a flat numbered list (8-12 items), one testable statement each. Flag potential reuse: "(check: may overlap with existing <name>)".
+3. **Generate explain.md** — read `.ai/templates/spec/explain.md.template` and follow that structure (includes provenance frontmatter — use confidence `medium`). Requirements are a flat numbered list (8-12 items), one testable statement each. Flag potential reuse: "(check: may overlap with existing <name>)". Merge image-derived facts into the same numbered list.
 4. **Writing principles:**
    - Target 40-50 lines total
    - One sentence per requirement — no sub-bullets unless absolutely necessary
@@ -315,8 +421,8 @@ Read `raw-story.md`, `dor-report.md` (if available), and `interview.md` (if avai
 
 This phase spawns parallel Explore subagents for codebase searching. Read `references/research-patterns.md` for the complete research logic.
 
-1. **Read inputs** — `raw-story.md`, `explain.md` (if exists), plus pre-existing research data (ticket-research.md, dor-report.md, project index files)
-2. **Build $CONTEXT** — combine pre-discovered data (component names, file paths, pages/URLs, Figma links, market scope) to accelerate subagent work
+1. **Read inputs** — `raw-story.md`, `explain.md` (if exists), `$SPEC_DIR/images.md` (if exists), pre-existing research data (ticket-research.md, dor-report.md, project index files). `images.md` carries the structured visual facts from Phase 1 — mockups narrowing the search from a broad area ("the whole account section") to a specific control ("the activity list pagination"), component names visible in annotations, etc. Do not re-Read the PNGs; the descriptions in `images.md` are the authoritative textual record and are already subagent-ready prose.
+2. **Build $CONTEXT** — combine pre-discovered data (component names, file paths, pages/URLs, Figma links, market scope) to accelerate subagent work. If `images.md` exists, include an `$IMAGE_CONTEXT` block by copying or condensing each image's `What it shows` + `Implied requirements` lines. Explore subagents can't receive image content, so this textual carry-over is how visual intent reaches them. No re-synthesis from PNGs is needed — Phase 1 already did that work.
 2b. **Read AEM Component Discovery** — If `.ai/project/component-discovery.md` exists, read it. For each component named in `explain.md` or `raw-story.md`, extract its entry (dialog fields, variants, pages, authored values). Append to `$CONTEXT` as `$AEM_CONTEXT`. This enriches all 4 subagents with field semantics and variant awareness without any additional MCP calls.
 3. **Identify search targets** — component/feature names, class patterns, property names, resource types, endpoint paths, keywords
 4. **Check existing output** — if `research.md` exists, check staleness (title match, files still exist, explain.md changed). If current → skip.
@@ -371,7 +477,7 @@ If `repos:` doesn't exist or scope is this-repo-only, omit this section entirely
 
 Read `references/share-template.md` for the complete generation and posting logic.
 
-1. **Read inputs** — `raw-story.md` (required), `explain.md` (required), `research.md` (recommended), `dor-report.md` (optional), `implement.md` (optional — triggers post-plan mode)
+1. **Read inputs** — `raw-story.md` (required), `explain.md` (required), `research.md` (recommended), `dor-report.md` (optional), `implement.md` (optional — triggers post-plan mode). Read `$SPEC_DIR/images.md` only if the summary needs explicit visual scope ("three UI areas change — see mockups"); most share-plans are derived entirely from `explain.md`, which has already absorbed visual facts in Phase 3. Do not Read the PNGs directly.
 2. **Check existing output** — if `share-plan.md` exists, check staleness (title match, input changes, implement.md appearance). If current → skip.
 3. **Generate share-plan.md** — include provenance frontmatter (confidence `medium`). Non-technical summary with: Summary (2 sentences), Implementation Approach (3-5 bullets), What Won't Change, Scope & Blockers, Multi-Repo (if applicable), Assumptions, Open Questions (top 3 from dor-report.md)
 

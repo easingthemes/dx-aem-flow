@@ -90,6 +90,7 @@ install_utility "$PLUGIN_DIR/data/lib/dx-common.sh" ".ai/lib/dx-common.sh" ".ai/
 install_utility "$PLUGIN_DIR/data/lib/pre-review-checks.sh" ".ai/lib/pre-review-checks.sh" ".ai/lib/pre-review-checks.sh"
 install_utility "$PLUGIN_DIR/data/lib/plan-metadata.sh" ".ai/lib/plan-metadata.sh" ".ai/lib/plan-metadata.sh"
 install_utility "$PLUGIN_DIR/data/lib/gather-context.sh" ".ai/lib/gather-context.sh" ".ai/lib/gather-context.sh"
+install_utility "$PLUGIN_DIR/data/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh"
 install_utility "$PLUGIN_DIR/data/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh"
 
 # --- Install/validate output templates ---
