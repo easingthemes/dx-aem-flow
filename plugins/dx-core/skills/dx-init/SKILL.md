@@ -157,7 +157,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/scaffold.sh
 This creates:
 - `.ai/specs`, `.ai/rules`, `.ai/research`, `.ai/lib`, `.ai/templates`
 - `.claude/rules`, `.claude/hooks`
-- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, ensure-feature-branch.sh, queue-pipeline.sh) with chmod +x
+- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, parse-wi-images.sh, ensure-feature-branch.sh, queue-pipeline.sh) with chmod +x
 - Copies `stop-guard.sh` to `.claude/hooks/` with chmod +x
 - Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/)
 - Copies shared rule templates to `.ai/rules/`
