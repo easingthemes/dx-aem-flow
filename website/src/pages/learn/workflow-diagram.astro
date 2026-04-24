@@ -1,0 +1,16 @@
+---
+import SidebarLayout from '../../layouts/SidebarLayout.astro';
+import styles from './_workflow-diagram/styles.css?raw';
+import body from './_workflow-diagram/body.html?raw';
+import script from './_workflow-diagram/script.js?raw';
+---
+
+<SidebarLayout
+  title="Agentic Workflow Diagram"
+  sidebar="learn"
+  description="Interactive diagram of how Claude Code orchestrates models, context, tools, hooks, and subagents in an agentic workflow."
+>
+  <style is:inline set:html={styles}></style>
+  <div class="wd-scope" set:html={body}></div>
+  <script is:inline set:html={script}></script>
+</SidebarLayout>

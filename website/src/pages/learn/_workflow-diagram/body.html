@@ -1,0 +1,135 @@
+<div class="wrap">
+  <header>
+    <h1>Claude Code — Agentic Workflow</h1>
+    <p class="subtitle">From prompt to streamed response. Toggle layers to inspect what runs.</p>
+  </header>
+
+  <div class="controls">
+    <div class="controls-group">
+      <span class="controls-group-label">Layout</span>
+      <div class="controls-toggles">
+        <label class="toggle">
+          <input type="checkbox" id="t-show-files">
+          <span class="switch"></span>
+          <span>Show .claude/ files</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="t-show-diagram" checked>
+          <span class="switch"></span>
+          <span>Show diagram</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Default</span>
+      <div class="controls-toggles">
+        <label class="toggle locked" title="Always visible">
+          <input type="checkbox" checked disabled>
+          <span class="switch"></span>
+          <span>User prompt &amp; Response</span>
+          <span class="lock-hint">(always)</span>
+        </label>
+        <label class="toggle locked" title="Always visible">
+          <input type="checkbox" checked disabled>
+          <span class="switch"></span>
+          <span>Model</span>
+          <span class="lock-hint">(always)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Base</span>
+      <div class="controls-toggles">
+        <label class="toggle toggle--context">
+          <input type="checkbox" id="t-context">
+          <span class="switch"></span>
+          <span>Context assembly</span>
+        </label>
+        <label class="toggle toggle--hooks">
+          <input type="checkbox" id="t-hooks">
+          <span class="switch"></span>
+          <span>Hooks (lifecycle)</span>
+        </label>
+        <label class="toggle toggle--tool">
+          <input type="checkbox" id="t-loop">
+          <span class="switch"></span>
+          <span>Tool-use loop</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Extended</span>
+      <div class="controls-toggles">
+        <label class="toggle toggle--context">
+          <input type="checkbox" id="t-context-details">
+          <span class="switch"></span>
+          <span>Context details (schemas + examples)</span>
+        </label>
+        <label class="toggle toggle--hooks">
+          <input type="checkbox" id="t-hooks-details">
+          <span class="switch"></span>
+          <span>Hooks details (permissions + config + bash examples)</span>
+        </label>
+        <label class="toggle toggle--tool">
+          <input type="checkbox" id="t-loop-details">
+          <span class="switch"></span>
+          <span>Tool-use loop details (parallel batching)</span>
+        </label>
+        <label class="toggle toggle--subagent">
+          <input type="checkbox" id="t-subagent-fork">
+          <span class="switch"></span>
+          <span>Subagent fan-out (context fork)</span>
+        </label>
+        <label class="toggle toggle--model">
+          <input type="checkbox" id="t-interface">
+          <span class="switch"></span>
+          <span>Model interface (request payload)</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="simulator">
+    <div class="sim-row">
+      <span class="sim-label">Simulate context fill</span>
+      <input type="range" id="fill-slider" min="11" max="100" value="30" step="1">
+      <span class="sim-value" id="fill-value">30%</span>
+      <span class="sim-badge" id="compact-badge">auto-compacted</span>
+    </div>
+    <svg id="budget-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" style="display:block; width:100%; height:auto; margin-top:10px;"></svg>
+    <div class="sim-hint">Drag past 83.5% to trigger auto-compaction. The HISTORY block in the diagram grows as the slider rises, then collapses to a &lt;summary&gt; + recent turns.</div>
+  </div>
+
+  <div class="layout-2col">
+    <aside class="tree-panel">
+      <p class="tree-panel-title">.claude/ files in your project</p>
+      <div class="tree-tabs">
+        <button class="tree-tab active" data-tab="project" type="button">your-project/</button>
+        <button class="tree-tab" data-tab="global" type="button">~/</button>
+      </div>
+      <ul id="tree-list" class="tree-list"></ul>
+      <div id="detail-panel" class="detail-panel"></div>
+    </aside>
+    <div class="diagram-col">
+      <div class="diagram">
+        <svg id="diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diag-title diag-desc">
+          <title id="diag-title">Claude Code agentic workflow diagram</title>
+          <desc id="diag-desc">Interactive flowchart from user prompt to response, with optional layers for hooks and the tool-use loop.</desc>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--step-fill); border:1px solid var(--step-stroke);"></span>Step</span>
+        <span><span class="swatch" style="background:var(--context-fill); border:1px solid var(--context-stroke);"></span>Context</span>
+        <span><span class="swatch" style="background:var(--hook-fill); border:1px solid var(--hook-stroke);"></span>Hook (lifecycle)</span>
+        <span><span class="swatch" style="background:var(--model-fill); border:1px solid var(--model-stroke);"></span>Model / decision</span>
+        <span><span class="swatch" style="background:var(--tool-fill); border:1px solid var(--tool-stroke);"></span>Tool execution</span>
+        <span><span class="swatch" style="background:var(--subagent-fill); border:1px solid var(--subagent-stroke);"></span>Subagent</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>Toggle hooks and the tool-use loop to see Claude Code's minimum vs full processing path.</footer>
+</div>
