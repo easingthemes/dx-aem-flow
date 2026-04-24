@@ -12,8 +12,38 @@ import HighlightBox from '../components/HighlightBox.astro';
 
 <PageHero
   title="Costs & Pricing"
-  subtitle="Two pricing models -- fixed subscription for developers, pay-per-token for automation."
+  subtitle="What it costs to run the Agentic CLI tools that execute these workflows -- not a fee for the plugins themselves."
 />
+
+<SectionHeading
+  badge="Read First"
+  badgeColor="secondary"
+  title="These Are Tool Costs, Not Plugin Fees"
+  subtitle="The dx-aem-flow plugins are free. This page explains what the AI tools that run them cost."
+/>
+<Section>
+  <HighlightBox severity="info" title="What you are actually paying for">
+    The **dx-aem-flow plugins** (`dx-core`, `dx-aem`, `dx-hub`, `dx-automation`) are pure Markdown
+    skills, agents, and helper shell scripts. They have **no runtime, no subscription, and no per-token
+    cost** -- they are open-source workflow definitions.
+
+    To execute those workflows you run an **Agentic CLI tool** such as **Claude Code**, Copilot CLI,
+    Cursor, Codex, or similar. Those tools call large language models on your behalf, and *that* is
+    what generates the cost.
+
+    **The numbers on this page reflect:**
+    - Subscription plans for the host CLI (e.g. Claude Max for Claude Code)
+    - Per-token API pricing from the model provider (e.g. Anthropic) when running headless automation
+    - Typical token consumption patterns we observe when these plugins drive a full story
+
+    **They do not reflect:**
+    - Any fee paid to this project, its maintainers, or the plugins themselves
+    - Costs specific to your organisation's ADO / Jira / AEM infrastructure
+
+    If you switch host CLI or model provider, the cost structure changes accordingly -- the workflows
+    stay the same.
+  </HighlightBox>
+</Section>
 
 <SectionHeading
   badge="Pricing"
