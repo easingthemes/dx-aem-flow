@@ -517,7 +517,7 @@ Print: `Phase 5++: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR G
 
 **Guard:** Phase 4 (build) AND Phase 4.5 (code review) both passed. If either failed, skip entirely — do not commit broken or unreviewed code.
 
-Read `.ai/config.yaml` and check the **preferences** section for `auto_commit`:
+Read `.ai/config.yaml` and check the **preferences** section for `auto-commit` (fallback: legacy `auto_commit`):
 - **If `true`:** Invoke `Skill(/dx-pr-commit)`.
   Print: `Phase 5a: Commit — (<N>/<total>) committed.`
 - **If `false` or not found:** Print: `Phase 5a: Commit — (<N>/<total>) skipped (auto-commit disabled).`
@@ -526,7 +526,7 @@ Read `.ai/config.yaml` and check the **preferences** section for `auto_commit`:
 
 **Guard:** Phase 5a (commit) completed successfully. If commit was skipped or any prior phase failed, skip entirely.
 
-Read `.ai/config.yaml` and check the **preferences** section for `auto_pr`:
+Read `.ai/config.yaml` and check the **preferences** section for `auto-pr` (fallback: legacy `auto_pr`):
 - **If `true`:** Invoke the `/dx-pr` skill to create the pull request automatically.
   Print: `Phase 6: Pull Request — (<N>/<total>) PR created.`
 - **If `false` or not found:** Print: `Phase 6: Pull Request — (<N>/<total>) skipped (auto-PR disabled).`

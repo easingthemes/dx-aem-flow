@@ -74,8 +74,8 @@ repos:
 
 # Auto-commit and auto-PR preferences
 preferences:
-  auto_commit: true               # Auto-commit after each step
-  auto_pr: false                  # Auto-create PR after all steps
+  auto-commit: false               # Auto-commit after each step
+  auto-pr: false                  # Auto-create PR after all steps
 
 # Override plugin default prompts
 overrides:
@@ -263,8 +263,8 @@ Override plugin default prompts without replacing the full file.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `auto_commit` | bool | false | Commit after each step without asking |
-| `auto_pr` | bool | false | Create PR after all steps complete |
+| `auto-commit` | bool | false | Commit after each step without asking |
+| `auto-pr` | bool | false | Create PR after all steps complete |
 
 ## Learning Directory (auto-generated)
 
