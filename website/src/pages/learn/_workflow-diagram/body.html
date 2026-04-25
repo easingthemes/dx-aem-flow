@@ -9,14 +9,14 @@
       <span class="controls-group-label">Layout</span>
       <div class="controls-toggles">
         <label class="toggle">
-          <input type="checkbox" id="t-show-files">
+          <input type="checkbox" id="t-show-files" checked>
           <span class="switch"></span>
-          <span>Show .claude/ files</span>
+          <span>Files</span>
         </label>
         <label class="toggle">
           <input type="checkbox" id="t-show-diagram" checked>
           <span class="switch"></span>
-          <span>Show diagram</span>
+          <span>Diagram</span>
         </label>
       </div>
     </div>
@@ -27,15 +27,11 @@
         <label class="toggle locked" title="Always visible">
           <input type="checkbox" checked disabled>
           <span class="switch"></span>
-          <span>User prompt &amp; Response</span>
-          <span class="lock-hint">(always)</span>
-        </label>
+          <span>Prompt</span>        </label>
         <label class="toggle locked" title="Always visible">
           <input type="checkbox" checked disabled>
           <span class="switch"></span>
-          <span>Model</span>
-          <span class="lock-hint">(always)</span>
-        </label>
+          <span>Model</span>        </label>
       </div>
     </div>
 
@@ -45,17 +41,17 @@
         <label class="toggle toggle--context">
           <input type="checkbox" id="t-context">
           <span class="switch"></span>
-          <span>Context assembly</span>
+          <span>Context</span>
         </label>
         <label class="toggle toggle--hooks">
           <input type="checkbox" id="t-hooks">
           <span class="switch"></span>
-          <span>Hooks (lifecycle)</span>
+          <span>Hooks</span>
         </label>
         <label class="toggle toggle--tool">
           <input type="checkbox" id="t-loop">
           <span class="switch"></span>
-          <span>Tool-use loop</span>
+          <span>Tools</span>
         </label>
       </div>
     </div>
@@ -66,27 +62,27 @@
         <label class="toggle toggle--context">
           <input type="checkbox" id="t-context-details">
           <span class="switch"></span>
-          <span>Context details (schemas + examples)</span>
+          <span>Context</span>
         </label>
         <label class="toggle toggle--hooks">
           <input type="checkbox" id="t-hooks-details">
           <span class="switch"></span>
-          <span>Hooks details (permissions + config + bash examples)</span>
+          <span>Hooks</span>
         </label>
         <label class="toggle toggle--tool">
           <input type="checkbox" id="t-loop-details">
           <span class="switch"></span>
-          <span>Tool-use loop details (parallel batching)</span>
+          <span>Tools</span>
         </label>
         <label class="toggle toggle--subagent">
           <input type="checkbox" id="t-subagent-fork">
           <span class="switch"></span>
-          <span>Subagent fan-out (context fork)</span>
+          <span>Subagents</span>
         </label>
         <label class="toggle toggle--model">
           <input type="checkbox" id="t-interface">
           <span class="switch"></span>
-          <span>Model interface (request payload)</span>
+          <span>Model</span>
         </label>
       </div>
     </div>
@@ -110,8 +106,10 @@
         <button class="tree-tab active" data-tab="project" type="button">your-project/</button>
         <button class="tree-tab" data-tab="global" type="button">~/</button>
       </div>
-      <ul id="tree-list" class="tree-list"></ul>
-      <div id="detail-panel" class="detail-panel"></div>
+      <div class="tree-split">
+        <ul id="tree-list" class="tree-list"></ul>
+        <div id="detail-panel" class="detail-panel"></div>
+      </div>
     </aside>
     <div class="diagram-col">
       <div class="diagram">
