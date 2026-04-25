@@ -744,9 +744,12 @@ mkdir -p .github/hooks
 Copy `templates/hooks/branch-guard-hooks.json.template` to `.github/hooks/hooks.json`.
 
 The template includes:
-- **PreToolUse** — branch guard (prevents commits on main/master/develop)
 - **SessionStart** — config validation + next-step suggestions
+- **PreToolUse** — branch guard (prevents commits on main/master/develop)
+- **agentStop** — completion checks via `.claude/hooks/stop-guard.sh` (Stop event in Claude Code, `agentStop` in Copilot CLI v1.0.x+, both closed 2026-04-07)
 - **PostToolUse Edit** — validates plugin file edits
+
+Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` so the same template works in both Claude Code (which sets `CLAUDE_PLUGIN_ROOT`) and Copilot CLI v1.0.26+ (which sets `PLUGIN_ROOT` and `COPILOT_PLUGIN_ROOT`).
 
 If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 

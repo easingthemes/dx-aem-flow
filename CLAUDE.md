@@ -136,10 +136,10 @@ Plugin hooks and Copilot CLI hooks are **completely separate systems** with no o
 | Hook source | Active in |
 |-------------|-----------|
 | Plugin `hooks/hooks.json` | Claude Code CLI only |
-| `.github/hooks/hooks.json` | Copilot CLI only (v1.0.10+) |
+| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; agentStop/subagentStop closed 2026-04-07) |
 | Agent frontmatter `hooks:` | VS Code Chat only (1.111+) |
 
-To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9h handles this for the branch-guard hook. See the docs site (`website/`) for full details.
+To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard (via `agentStop`). See the docs site (`website/`) for full details. Latest platform research: `docs/research/2026-04-25-platform-state-update.md`.
 
 ### Hook Profiles — `DX_HOOK_PROFILE`
 
