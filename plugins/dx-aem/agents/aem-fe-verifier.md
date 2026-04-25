@@ -2,6 +2,7 @@
 name: aem-fe-verifier
 description: Verifies AEM component frontend rendering — creates/reuses demo pages, screenshots components in wcmmode=disabled via Chrome DevTools, compares against Figma reference or requirements using multimodal vision. Used by aem-fe-verify skill.
 tools: Read, Write, Glob, Grep, Edit, ToolSearch, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__listChildren, mcp__plugin_dx-aem_AEM__fetchSites, mcp__plugin_dx-aem_AEM__fetchLanguageMasters, mcp__plugin_dx-aem_AEM__getPageProperties, mcp__plugin_dx-aem_AEM__createPage, mcp__plugin_dx-aem_AEM__addComponent, mcp__plugin_dx-aem_AEM__updateComponent, mcp__plugin_dx-aem_AEM__getComponents, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__activatePage, mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page, mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot, mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot, mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script, mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for, mcp__plugin_dx-aem_chrome-devtools-mcp__click, mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page, mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages, mcp__plugin_dx-aem_chrome-devtools-mcp__select_page, mcp__plugin_dx-aem_chrome-devtools-mcp__new_page, mcp__plugin_dx-aem_chrome-devtools-mcp__close_page, mcp__plugin_dx-aem_chrome-devtools-mcp__emulate
+mcpServers: [AEM, chrome-devtools-mcp]
 model: sonnet
 memory: project
 maxTurns: 60

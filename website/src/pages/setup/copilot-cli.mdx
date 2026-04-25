@@ -53,31 +53,25 @@ import { stats } from '../../config/stats';
 
 <SectionHeading
   badge="MCP"
-  badgeColor="warning"
+  badgeColor="success"
   title="MCP Server Configuration"
-  subtitle="Copilot CLI reads MCP config from a different location than Claude Code."
+  subtitle="Project .mcp.json is now auto-loaded since Copilot CLI v1.0.12."
   bg="primary"
 />
 <Section>
-  <HighlightBox severity="warning" title="Copilot CLI Does Not Read Project .mcp.json">
-    Claude Code reads <code>.mcp.json</code> at the project root. Copilot CLI only reads from
-    <code>{"~"}/.copilot/mcp-config.json</code> (global) or plugin-bundled <code>.mcp.json</code> files.
-    Project-specific servers like ADO must be configured manually.
+  <HighlightBox severity="success" title="Project .mcp.json Auto-Loaded (v1.0.12+)">
+    As of Copilot CLI v1.0.12 (April 2026), <code>copilot</code> reads <code>.mcp.json</code> at the
+    project root automatically — same as Claude Code. The previous workaround
+    (<code>--additional-mcp-config</code> or a global <code>{"~"}/.copilot/mcp-config.json</code>) is no
+    longer required for project-specific servers like ADO.
   </HighlightBox>
 
-  <CommandBlock label="~/.copilot/mcp-config.json (create this file)">{`{
-  "servers": {
-    "ado": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@azure-devops/mcp", "<your-ado-org>"]
-    }
-  }
-}`}</CommandBlock>
-
-  <HighlightBox severity="info" title="Per-Session Alternative">
-    For multiple ADO organizations: <code>copilot --additional-mcp-config @.mcp-copilot.json</code>
-  </HighlightBox>
+  <p class="text-sm text-gray-300 mt-4">
+    Plugin-bundled MCP servers (Figma, axe, AEM, Chrome DevTools) load automatically from each plugin's
+    <code>.mcp.json</code>. Project servers (ADO, Atlassian) load from the repo-root <code>.mcp.json</code>
+    that <code>/dx-init</code> generates. If you previously created <code>{"~"}/.copilot/mcp-config.json</code>
+    as a workaround, you can keep it for personal global defaults or remove it.
+  </p>
 
   <div class="overflow-x-auto mt-4">
     <h4 class="text-sm font-semibold text-white mb-2">MCP Config Locations by Platform</h4>
@@ -93,7 +87,7 @@ import { stats } from '../../config/stats';
       <tbody>
         <tr class="border-t border-gray-200"><td class="p-3">Claude Code</td><td class="p-3"><code>.mcp.json</code></td><td class="p-3"><code>mcpServers</code></td><td class="p-3">Per-project</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">VS Code Chat</td><td class="p-3"><code>.vscode/mcp.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Per-project</td></tr>
-        <tr class="border-t border-gray-200"><td class="p-3">Copilot CLI</td><td class="p-3"><code>{"~"}/.copilot/mcp-config.json</code></td><td class="p-3"><code>servers</code></td><td class="p-3">Global</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Copilot CLI</td><td class="p-3"><code>.mcp.json</code> (project) or <code>{"~"}/.copilot/mcp-config.json</code> (global)</td><td class="p-3"><code>mcpServers</code></td><td class="p-3">Per-project (since v1.0.12) or global</td></tr>
       </tbody>
     </table>
   </div>
@@ -134,42 +128,49 @@ import { stats } from '../../config/stats';
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
-{/* v1.0.11 Features                                                        */}
+{/* Recent Releases                                                         */}
 {/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
-  badge="v1.0.11"
+  badge="v1.0.36"
   badgeColor="success"
-  title="What's New in v1.0.11"
-  subtitle="Key improvements for plugin-based workflows."
+  title="What's New (April 2026)"
+  subtitle="Highlights from v1.0.15 → v1.0.36 relevant to plugin workflows."
   bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
-    <ContentCard icon="mdi:folder-network" iconColor="bg-emerald-600" title="Monorepo Discovery">
-      Skills, agents, MCP servers, and custom instructions are now discovered at <strong>every directory level</strong>
-      from the working directory up to the git root. Users in <code>monorepo/apps/frontend/</code> automatically
-      find <code>.github/agents/</code> installed at the repo root by <code>/dx-init</code>.
+    <ContentCard icon="mdi:webhook" iconColor="bg-emerald-600" title="HTTP Hooks (v1.0.35)">
+      Hooks can now POST to an HTTP endpoint instead of running a local script. Useful for autonomous
+      pipelines and webhook-based observability — <code>dx-automation</code> Lambda agents can be reached
+      directly from <code>.github/hooks/hooks.json</code>.
     </ContentCard>
-    <ContentCard icon="mdi:merge" iconColor="bg-cyan" title="Hook Merging">
-      Hooks from multiple extensions now <strong>merge</strong> instead of overwriting. dx-core and dx-aem can each
-      contribute their own hooks without conflict. SessionStart <code>additionalContext</code> is injected into the
-      conversation context.
+    <ContentCard icon="mdi:stop-circle" iconColor="bg-cyan" title="Stop Events (agentStop / subagentStop)">
+      Both <code>agentStop</code> and <code>subagentStop</code> events now exist. The <code>/dx-init</code>
+      Stop guard (completion checks, code review prompts) now ports to Copilot CLI.
     </ContentCard>
-    <ContentCard icon="mdi:account" iconColor="bg-brand-700" title="Personal Skills Directory">
-      <code>{"~"}/.agents/skills/</code> is now a personal skill discovery directory (aligning with VS Code Chat).
-      Use it for individual developer customizations that don't belong in the shared repo.
+    <ContentCard icon="mdi:variable" iconColor="bg-brand-700" title="${PLUGIN_ROOT} env vars (v1.0.26)">
+      <code>PLUGIN_ROOT</code>, <code>COPILOT_PLUGIN_ROOT</code>, and <code>CLAUDE_PLUGIN_ROOT</code> are
+      injected into plugin hook scripts — no more path-derivation hacks.
     </ContentCard>
-    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="Session Management">
-      <code>/clear</code> abandons the session entirely. <code>/new</code> starts a fresh conversation while keeping
-      the old session backgrounded. Both accept an optional prompt. <code>/cd</code> now keeps a separate working
-      directory per session, restored when switching.
+    <ContentCard icon="mdi:bell-outline" iconColor="bg-amber-500" title="Notification Hook (v1.0.18)">
+      A new hook event with sub-types <code>agent_completion</code>, <code>permission_prompt</code>, and
+      <code>elicitation_dialog</code>. Useful for desktop notifications and audit trails.
+    </ContentCard>
+    <ContentCard icon="mdi:robot-outline" iconColor="bg-purple-600" title="Auto Model + Opus 4.7 (v1.0.29 / v1.0.32)">
+      Claude Opus 4.7 supported via BYOK (v1.0.29). <code>auto</code> model selection picks the right tier
+      automatically; <code>continueOnAutoMode</code> keeps long autonomous runs going.
+    </ContentCard>
+    <ContentCard icon="mdi:tag-outline" iconColor="bg-pink-600" title="Named Sessions (v1.0.35)">
+      <code>--name</code> and <code>--resume=&lt;name&gt;</code> let you keep multiple long-running sessions
+      addressable by name — improves multi-repo hub UX.
     </ContentCard>
   </div>
 
-  <HighlightBox severity="info" title="Atlassian MCP OAuth">
-    MCP OAuth authentication now works with the Atlassian Rovo MCP Server (Dynamic Client Registration with
-    non-standard auth metadata URLs). Teams using Jira/Confluence via MCP should see smoother setup.
+  <HighlightBox severity="info" title="Full release history">
+    See the <a href="https://github.com/github/copilot-cli/releases">Copilot CLI releases page</a> for the
+    complete changelog. Our state-of-the-tools snapshot is in
+    <code>docs/research/2026-04-25-platform-state-update.md</code>.
   </HighlightBox>
 </Section>
 

@@ -101,9 +101,12 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 
 | Tier | Effort | Use | Agents / Skills |
 |------|--------|-----|-----------------|
+| Opus 4.7 | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging (Claude Code v2.1.111+) | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
 | Opus | `high` | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
 | Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
 | Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
+
+**Tier escalation:** Default to `high` for Opus skills. Use `xhigh` only when a step has demonstrably failed at `high` effort or when reviewing >5 files of changes. The xhigh tier costs more and runs slower — it's not a free upgrade.
 
 ### MCP Servers
 
@@ -129,6 +132,20 @@ MCP servers in a plugin's `.mcp.json` get a prefixed tool name: `mcp__plugin_<pl
 
 **Why:** Subagents resolve tools by exact name or ToolSearch. The shorthand doesn't match the actual registered tool names, causing "tool not found" failures.
 
+#### Cross-platform tool naming
+
+Skill/agent files use the Claude Code prefix shown above. On other platforms the LLM transparently maps prefixed names to whatever is registered locally — they're prose hints to the model, not literal function calls. Reference for the registered name on each platform:
+
+| Platform | Registered name format | Example (AEM `getNodeContent`) |
+|----------|-----------------------|-------------------------------|
+| Claude Code | `mcp__plugin_<plugin>_<server>__<tool>` (double underscore) | `mcp__plugin_dx-aem_AEM__getNodeContent` |
+| Copilot CLI | bare name (no prefix; LLM maps from Claude prefix) | `getNodeContent` |
+| VS Code Chat | bare name | `getNodeContent` |
+| Codex CLI | TOML-configured `[mcp_servers.<server>]`; tool prefix scheme not yet publicly documented (track in `docs/todo/todo-cross-platform.md`) | TBD |
+| Gemini CLI | `mcp_<server>_<tool>` (single underscore, lowercase server name) | `mcp_aem_getnodecontent` |
+
+When adding a new MCP server, no per-platform action is needed — the LLM resolves names from the `tools:` and `mcpServers:` declarations in agent frontmatter.
+
 ### Hook System — Platform Separation
 
 Plugin hooks and Copilot CLI hooks are **completely separate systems** with no overlap:
@@ -136,10 +153,10 @@ Plugin hooks and Copilot CLI hooks are **completely separate systems** with no o
 | Hook source | Active in |
 |-------------|-----------|
 | Plugin `hooks/hooks.json` | Claude Code CLI only |
-| `.github/hooks/hooks.json` | Copilot CLI only (v1.0.10+) |
+| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; agentStop/subagentStop closed 2026-04-07) |
 | Agent frontmatter `hooks:` | VS Code Chat only (1.111+) |
 
-To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9h handles this for the branch-guard hook. See the docs site (`website/`) for full details.
+To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard (via `agentStop`). See the docs site (`website/`) for full details. Latest platform research: `docs/research/2026-04-25-platform-state-update.md`.
 
 ### Hook Profiles — `DX_HOOK_PROFILE`
 

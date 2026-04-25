@@ -33,10 +33,10 @@
 **Done-when:** `grep -n "DoRAgent\|BEFORE posting\|fetch.*comment.*search" plugins/dx-core/skills/dx-dor/SKILL.md plugins/dx-core/skills/dx-dor/references/comment-format.md` shows explicit instructions to (a) use `[DoRAgent]` signature and (b) fetch existing comments before posting.
 **Approach:** Standardize on `[DoRAgent]` signature in dx-dor skill and comment-format.md reference. The signature detection and comment-checking flow are now in the standalone `/dx-dor` skill.
 
-## Subagent Hooks
+## Subagent Hooks — RESOLVED 2026-04-25
 
 **Added:** 2026-03-03
-**Problem:** No visibility into which agents run during coordinator workflows, how long they take, or whether they succeed/fail. Makes it hard to optimize pipeline performance and debug failures.
-**Scope:** `.claude/settings.json` — would add `SubagentStart` and `SubagentStop` hook entries.
-**Done-when:** `grep "SubagentStart\|SubagentStop" .claude/settings.json` returns matches, AND the hooks log agent name + duration to a file (e.g., `.ai/logs/agents.log`).
-**Approach:** Add hooks that log agent name, start time, end time, and exit status. Useful for both local debugging and pipeline optimization.
+**Resolved:** 2026-04-25
+**Status:** Both Claude Code (`SubagentStart`/`SubagentStop` first-class events since v2.1.x) and Copilot CLI (`agentStop`/`subagentStop` shipped, [#1157](https://github.com/github/copilot-cli/issues/1157)/[#2253](https://github.com/github/copilot-cli/issues/2253) closed 2026-04-07) support these hooks natively. TaskCreate progress already covers most observability needs.
+**Implementation guidance (if needed):** Add hooks to `.claude/settings.json` and `.github/hooks/hooks.json` that log agent name, start time, end time, and exit status to `.ai/logs/agents.log`. Useful for pipeline performance optimization in `dx-automation`.
+**Evidence:** [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#now-closed--actionable)

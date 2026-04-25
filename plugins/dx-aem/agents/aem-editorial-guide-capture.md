@@ -2,6 +2,7 @@
 name: aem-editorial-guide-capture
 description: Captures AEM component editorial guide via Chrome DevTools — opens editor, triggers dialog, screenshots, and writes editor-friendly docs. Use for post-development documentation.
 tools: Read, Write, Glob, ToolSearch, mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages, mcp__plugin_dx-aem_chrome-devtools-mcp__select_page, mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page, mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot, mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot, mcp__plugin_dx-aem_chrome-devtools-mcp__click, mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script, mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
+mcpServers: [chrome-devtools-mcp]
 model: sonnet
 memory: project
 maxTurns: 40
