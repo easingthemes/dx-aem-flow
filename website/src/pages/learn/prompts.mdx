@@ -87,11 +87,60 @@ applyTo: "**/*.js"
 </Section>
 
 <SectionHeading
+  badge="Activation"
+  badgeColor="warning"
+  title="When does a rule activate?"
+  subtitle="Rules are reactive -- they load when the AI's tool calls touch matching files, not when a human opens the file."
+  bg="primary"
+/>
+<Section>
+  <HighlightBox severity="info" title="The trigger is tool-call path matching">
+    The AI doesn't know "the user wants JS." It only sees which files its tools are touching.
+    The moment a tool call returns or operates on a path matching <code>paths:</code>, the rule is
+    queued for the <strong>next</strong> model turn. The first matching tool call does NOT yet
+    benefit from the rule -- turn two onward does.
+  </HighlightBox>
+
+  <h3 class="text-lg font-semibold text-brand-900 mt-8 mb-2">Simulated loop: "build me a button component"</h3>
+  <p class="text-sm text-gray-600 mb-4">
+    Given a rule at <code>.claude/rules/fe-javascript.md</code> with <code>paths: ["**/*.js"]</code>.
+  </p>
+
+  <div class="grid gap-3">
+    <ContentCard icon="mdi:numeric-1-circle" iconColor="bg-gray-400" title="Turn 1 -- Claude plans" horizontal>
+      Rule NOT loaded yet. Claude calls <code>Glob("src/components/**/*.js")</code> to survey existing
+      components. The harness sees matching paths in the result and queues the rule for injection.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-2-circle" iconColor="bg-brand-700" title="Turn 2 -- rule injected" horizontal>
+      The <code>fe-javascript.md</code> contents now appear in Claude's context. Claude reads an
+      existing component (<code>Card.js</code>) with the rule visible, locking in style expectations
+      before any code is written.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-3-circle" iconColor="bg-brand-700" title="Turn 3 -- write with rule active" horizontal>
+      Claude calls <code>Write("Button.js", ...)</code>. Generated code conforms to the rule --
+      named exports, function declarations, no ES modules -- because the rule was in context during
+      generation.
+    </ContentCard>
+    <ContentCard icon="mdi:numeric-4-circle" iconColor="bg-gray-400" title="Turn 4 -- verify" horizontal>
+      Claude runs tests. The rule stays loaded for the rest of the session -- re-injection is
+      idempotent; it doesn't get re-added on every matching call.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Why exploration-first matters">
+    If Claude's very first action is <code>Write("Button.js", ...)</code> with no prior exploration,
+    the rule is NOT in context when the content is generated. The write itself matches the glob, but
+    by the time the rule injects on the next turn, the file is already on disk. This is why
+    "look before you write" workflows (Glob / Read first) produce better rule compliance.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="Shared"
   badgeColor="info"
   title="Shared Rules (.ai/rules/)"
   subtitle="Cross-tool rules read by both local skills and CI/CD automation agents."
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
@@ -117,7 +166,7 @@ applyTo: "**/*.js"
   badgeColor="secondary"
   title="AGENTS.md"
   subtitle="Agent inventory at repo root -- Copilot CLI reads it for context about available agents."
-  bg="alt"
+  bg="primary"
 />
 <Section>
   <ContentCard icon="mdi:account-group" iconColor="bg-cyan-dark" title="Agent Registry">
@@ -132,7 +181,7 @@ applyTo: "**/*.js"
   badge="Docs"
   badgeColor="info"
   title="Official Documentation"
-  bg="primary"
+  bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">

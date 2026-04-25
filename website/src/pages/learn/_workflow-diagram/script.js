@@ -1032,6 +1032,62 @@
       label: 'your-project/',
       children: [
         {
+          id: 'p-package-json', label: 'package.json', type: 'file', color: 'neutral', badge: 'committed',
+          oneLiner: 'Node manifest — declares build script and dependencies',
+          description: 'Standard npm manifest. Not part of Claude\'s workflow, but Claude reads it to understand the project and run build/test commands.',
+          target: null,
+          sample: `{
+  "name": "my-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "vite build"
+  }
+}`
+        },
+        {
+          id: 'p-src', label: 'src/', type: 'folder', color: 'neutral',
+          oneLiner: 'Application source — read on demand when Claude needs a file',
+          description: 'Your project code. Files enter context only when Claude reads them (not all at once).',
+          target: null,
+          children: [
+            {
+              id: 'p-src-index-js', label: 'index.js', type: 'file', color: 'neutral', badge: 'committed',
+              oneLiner: 'App entry point',
+              description: 'Imports styles and mounts to #app. Claude reads this when asked about app initialization.',
+              target: null,
+              sample: `import './index.scss';
+
+document.querySelector('#app').textContent = 'Hello world';`
+            },
+            {
+              id: 'p-src-index-scss', label: 'index.scss', type: 'file', color: 'neutral', badge: 'committed',
+              oneLiner: 'Root stylesheet',
+              description: 'Sass source compiled by the build step into a single CSS bundle.',
+              target: null,
+              sample: `$brand: #36c0cf;
+
+#app {
+  color: $brand;
+  font-family: system-ui;
+}`
+            },
+            {
+              id: 'p-src-index-html', label: 'index.html', type: 'file', color: 'neutral', badge: 'committed',
+              oneLiner: 'HTML shell loaded by the dev server',
+              description: 'Vite entry point. Loads the module that drives the app.',
+              target: null,
+              sample: `<!DOCTYPE html>
+<html>
+  <head><title>Demo</title></head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./index.js"><\/script>
+  </body>
+</html>`
+            }
+          ]
+        },
+        {
           id: 'p-claude-md', label: 'CLAUDE.md', type: 'file', color: 'context', badge: 'committed',
           oneLiner: 'Project instructions Claude reads every session',
           when: 'Loaded into context at session start',
@@ -1285,11 +1341,8 @@
   };
 
   let activeTab = 'project';
-  let selectedNodeId = 'p-claude-md';
-  const expandedFolders = new Set([
-    'p-claude-dir', 'p-rules', 'p-skills', 'p-skill-dir', 'p-agents', 'p-agent-mem', 'p-agent-mem-name',
-    'g-claude-dir', 'g-projects', 'g-proj-mem-dir', 'g-output-styles'
-  ]);
+  let selectedNodeId = 'p-src';
+  const expandedFolders = new Set(['p-src']);
 
   function findNode(nodes, id) {
     for (const node of nodes) {
@@ -1354,12 +1407,14 @@
     const linkHtml = node.target
       ? `<button class="detail-link-btn" id="see-in-diagram" data-target="${node.target}" data-enables="${(node.enables || []).join(',')}" type="button">→ See in diagram</button>`
       : '<span class="detail-when">Not part of the workflow diagram.</span>';
+    const sampleHtml = node.sample ? `<pre class="detail-sample">${escHtml(node.sample)}</pre>` : '';
     panel.innerHTML = `
       <p class="detail-path">${escHtml(path)}</p>
       ${badgeHtml}
       <div class="detail-oneliner">${escHtml(node.oneLiner || '')}</div>
       ${whenHtml}
       <div class="detail-description">${escHtml(node.description || '')}</div>
+      ${sampleHtml}
       ${linkHtml}
     `;
     const btn = document.getElementById('see-in-diagram');
