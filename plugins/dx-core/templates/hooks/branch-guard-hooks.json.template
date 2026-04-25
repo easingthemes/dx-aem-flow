@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh\"",
+            "command": "bash \"${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/hooks/scripts/session-start.sh\"",
             "statusMessage": "Validating environment..."
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/next-step.sh\"",
+            "command": "bash \"${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/hooks/scripts/next-step.sh\"",
             "statusMessage": "Checking workflow state..."
           }
         ]
@@ -35,6 +35,18 @@
         ]
       }
     ],
+    "agentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" ] && bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" || true",
+            "statusMessage": "Running completion checks..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit",
@@ -42,7 +54,7 @@
           {
             "type": "command",
             "if": "Edit(**/.claude-plugin/**)",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"",
+            "command": "bash \"${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"",
             "statusMessage": "Validating plugin edit..."
           }
         ]

@@ -228,6 +228,27 @@ For each `*.agent.md.template` in the plugin:
 
 Report count: `Copilot agents (<N> present, <M> stale, <K> missing out of <T> templates)`
 
+### 6.5b. Stale Copilot CLI MCP workaround
+
+Copilot CLI v1.0.12 (April 2026) closed [github/copilot-cli#2198](https://github.com/github/copilot-cli/issues/2198) — project `.mcp.json` is now auto-loaded. The previous `--additional-mcp-config` flag and global `~/.copilot/mcp-config.json` are no longer required.
+
+Warn if the user still has either:
+
+```bash
+# Check 1: project-level Copilot MCP override file
+[ -f .mcp-copilot.json ] && echo "FOUND .mcp-copilot.json"
+
+# Check 2: --additional-mcp-config flag in shell aliases or rc files
+grep -l "additional-mcp-config" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null
+```
+
+Reporting:
+- Neither present → `✓ Copilot CLI MCP config (using project .mcp.json — v1.0.12+ default)`
+- `.mcp-copilot.json` exists → `⚠ stale workaround: .mcp-copilot.json present (no longer needed since Copilot CLI v1.0.12 — safe to delete or keep as personal override)`
+- `--additional-mcp-config` in shell rc → `⚠ stale workaround: --additional-mcp-config alias in ~/.<shell>rc (Copilot CLI now reads project .mcp.json directly — alias is a no-op)`
+
+These are **informational warnings**, not blockers. The workaround still functions; it's just unnecessary.
+
 ## 7. AEM Plugin (conditional)
 
 Skip if aem plugin not configured or not in scope.

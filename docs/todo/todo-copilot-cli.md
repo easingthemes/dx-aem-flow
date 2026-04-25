@@ -4,12 +4,20 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 
 **What already works:** `plugin.json`, `marketplace.json`, SKILL.md, `.mcp.json`, hooks (`hooks.json` serves both), `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`, ToolSearch MCP discovery, `applyTo` arrays, plugin discovery via `--plugin-dir`, Open Plugins spec, Skill-to-Skill invocation (verified 2026-03-22).
 
-**Latest version:** v1.0.14 (2026-03-31). Key additions since v1.0.10:
-- v1.0.11: Hook merging across multiple plugins, `additionalContext` injection for SessionStart, `~/.agents/skills/` personal skill directory, monorepo skill discovery.
-- v1.0.12: `CLAUDE_PROJECT_DIR` and `CLAUDE_PLUGIN_DATA` env vars in plugin hooks, `{{project_dir}}` and `{{plugin_data_dir}}` template variables, workspace MCP servers loaded correctly.
-- v1.0.14: Built-in skills shipped with CLI, MCP OAuth HTTPS redirect URI support (self-signed cert fallback), faster `/resume` session picker, images sent correctly to Anthropic models via BYOM.
+**Latest version:** v1.0.36 (2026-04-24). Key additions since v1.0.14 — see [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md) for the full release table:
+- v1.0.15: postToolUseFailure hook; MCP OAuth device-code flow.
+- v1.0.16: PermissionRequest hook; MCP servers reload after login.
+- v1.0.18: **Notification hook** (agent_completion, permission_prompt, elicitation).
+- v1.0.22: Plugins persist across sessions; sub-agent depth/concurrency limits; Anthropic BYOK bearer-token.
+- v1.0.26: **`PLUGIN_ROOT`/`COPILOT_PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` env vars in plugin hooks.**
+- v1.0.29: Claude Opus 4.7 support; `COPILOT_AGENT_SESSION_ID` env in shells/MCP.
+- v1.0.32: `auto` model selection; document file attachments to prompts.
+- v1.0.35: **HTTP hook support**; `--name`/`--resume=<name>`; pattern-specific instruction files no longer inline body each turn.
+- v1.0.36: preToolUse `matcher` regex now actually filters; `~/.claude/` no longer sourced as Copilot config.
 
-**Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, HTTP/prompt/agent hook types. Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields.
+**Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, prompt/agent hook types. Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields. **Note:** HTTP hook type now supported as of v1.0.35.
+
+**`agentStop` / `subagentStop` events now exist** (Stop guard portable as of v1.0.x — see [#1157](https://github.com/github/copilot-cli/issues/1157), [#2253](https://github.com/github/copilot-cli/issues/2253), both closed 2026-04-07).
 
 ## MCP Tool Prefix Normalization
 
@@ -51,30 +59,35 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Approach:** Add stronger instruction to SKILL.md Phase 1: "Do NOT download attachments — ADO requires browser auth. Preserve `<img>` URLs as-is in the raw story." Current wording is too soft for Copilot CLI to follow.
 **Evidence:** `internal/learnings/2026-03-22-skill-simplification-refactor.md` bug #3
 
-## Hooks Porting
+## Hooks Porting — UNBLOCKED 2026-04-07
 
 **Added:** 2026-03-22
-**Problem:** 5 plugin hooks are not ported to Copilot CLI's `.github/hooks/hooks.json`. Only branch guard was deployed (dx-init step 9i). The remaining hooks (SessionStart, Stop guard, 2× Figma PostToolUse, Edit PostToolUse) only work in Claude Code.
+**Updated:** 2026-04-25
+**Problem:** Several plugin hooks not ported to Copilot CLI's `.github/hooks/hooks.json`. Only branch guard was deployed (dx-init step 9i).
+**Status:** Stop event now exists in Copilot CLI as `agentStop` / `subagentStop` (issues [#1157](https://github.com/github/copilot-cli/issues/1157), [#2253](https://github.com/github/copilot-cli/issues/2253) closed 2026-04-07). The Notification hook (v1.0.18) provides agent_completion signals as a complementary substitute. All previously blocked hooks are now portable.
 **Scope:**
 - Source: `plugins/dx-core/hooks/hooks.json` (all hooks defined here)
 - Target: `plugins/dx-core/templates/hooks/` or dx-init step that copies to `.github/hooks/`
-- Constraint: Copilot CLI 1.0.10 supports PreToolUse, PostToolUse, SessionStart, PreCompact, SubagentStart — but **no Stop event**
-**Done-when:** `grep -c "SessionStart\|PostToolUse" .github/hooks/hooks.json` (in a consumer repo after `/dx-init`) returns ≥3 (SessionStart + 2 Figma PostToolUse at minimum). Stop guard cannot be ported until Copilot CLI adds Stop event support.
+- Supported events in Copilot CLI v1.0.36: PreToolUse, PostToolUse, SessionStart, PreCompact, SubagentStart, **agentStop**, **subagentStop**, Notification, PermissionRequest, postToolUseFailure, **HTTP hooks** (v1.0.35)
+**Done-when:** `grep -c "SessionStart\|PostToolUse\|agentStop" .github/hooks/hooks.json` returns ≥4 (SessionStart + 2 Figma PostToolUse + Stop guard).
 **Approach:**
-1. Port SessionStart hook (config validation) — Copilot CLI supports the event
-2. Port Figma PostToolUse hooks — Copilot CLI supports PostToolUse
-3. Port Edit PostToolUse hook — same
-4. Stop guard: blocked until Copilot CLI adds Stop event
-**Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6
+1. Port SessionStart hook (config validation)
+2. Port Figma PostToolUse hooks
+3. Port Edit PostToolUse hook
+4. **Port Stop guard using `agentStop` event (newly available)**
+5. Audit existing `preToolUse` `matcher` patterns — v1.0.36 fixed regex matching, previously-loose patterns may now over-filter.
+**Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6; release notes for v1.0.18, v1.0.35, v1.0.36.
 
-## Project MCP Discovery
+## Project MCP Discovery — CLOSED 2026-04-07
 
 **Added:** 2026-03-22
-**Problem:** Copilot CLI does NOT read project-level `.mcp.json` at startup. Plugin MCP servers (figma, axe, AEM, chrome-devtools) load correctly, but project-specific servers (ADO, Atlassian) are invisible. This blocks all ADO/Jira operations in Copilot CLI without a manual workaround.
-**Scope:** Copilot CLI internals — not fixable in this repo. Workaround already documented on website (`website/src/pages/setup/copilot-cli.mdx`).
-**Done-when:** [github/copilot-cli#2198](https://github.com/github/copilot-cli/issues/2198) is closed AND `copilot` loads `.mcp.json` from project root without `--additional-mcp-config` flag.
-**Approach:** Blocked on upstream. Current workaround: add ADO MCP to `~/.copilot/mcp-config.json` (global) or use `copilot --additional-mcp-config @.mcp-copilot.json` per session. Already documented in setup guide.
-**Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 1
+**Resolved:** 2026-04-07 (Copilot CLI v1.0.12)
+**Problem:** Copilot CLI did NOT read project-level `.mcp.json` at startup. Plugin MCP servers loaded correctly, but project-specific servers (ADO, Atlassian) were invisible.
+**Status:** Closed — [github/copilot-cli#2198](https://github.com/github/copilot-cli/issues/2198) closed 2026-04-07. v1.0.12 added `CLAUDE_PROJECT_DIR` and `CLAUDE_PLUGIN_DATA` env vars; workspace MCP servers now load correctly.
+**Follow-up actions:**
+- [ ] Remove `--additional-mcp-config` workaround from `website/src/pages/setup/copilot-cli.mdx`.
+- [ ] Verify in workflows that previously needed `--additional-mcp-config`.
+**Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 1; release notes for v1.0.12.
 
 ## Experimental Features
 

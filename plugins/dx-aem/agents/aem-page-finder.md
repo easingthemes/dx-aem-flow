@@ -2,6 +2,7 @@
 name: aem-page-finder
 description: Finds all AEM pages that use a given component. Returns page paths with clickable author URLs. Used by aem-component and aem-page-search skills.
 tools: Grep, Read, ToolSearch, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__scanPageComponents
+mcpServers: [AEM]
 model: haiku
 user-invocable: false
 maxTurns: 20

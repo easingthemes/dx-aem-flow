@@ -2,6 +2,8 @@
 
 Research into cross-platform AI coding agent conventions, standardization efforts, and how dx-aem-flow compares.
 
+> **Latest update:** [2026-04-25-platform-state-update.md](2026-04-25-platform-state-update.md) — recent releases, gap closures, new features to adopt.
+
 ---
 
 ## 1. AGENTS.md — The Emerging Universal Standard

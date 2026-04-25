@@ -744,11 +744,19 @@ mkdir -p .github/hooks
 Copy `templates/hooks/branch-guard-hooks.json.template` to `.github/hooks/hooks.json`.
 
 The template includes:
-- **PreToolUse** — branch guard (prevents commits on main/master/develop)
 - **SessionStart** — config validation + next-step suggestions
+- **PreToolUse** — branch guard (prevents commits on main/master/develop)
+- **agentStop** — completion checks via `.claude/hooks/stop-guard.sh` (Stop event in Claude Code, `agentStop` in Copilot CLI v1.0.x+, both closed 2026-04-07)
 - **PostToolUse Edit** — validates plugin file edits
 
+Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` so the same template works in both Claude Code (which sets `CLAUDE_PLUGIN_ROOT`) and Copilot CLI v1.0.26+ (which sets `PLUGIN_ROOT` and `COPILOT_PLUGIN_ROOT`).
+
 If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
+
+**Matcher compatibility note (Copilot CLI v1.0.36+):** As of v1.0.36, `preToolUse` matcher patterns are evaluated as full regex and now actually filter (previously some patterns were silently ignored). Audit any custom matchers added to merged hook configs:
+- Exact tool names (`Edit`, `Task`, `Write`) — work as-is in both runtimes.
+- Claude-style permission rules like `Bash(git commit*)` — work in Claude Code but may be interpreted as literal regex in Copilot CLI. Inline commands in this template do their own `git commit` substring check, so the matcher acts only as a coarse filter; verification still happens in the script.
+- If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
 
 ## 10. Confirm
 
