@@ -753,6 +753,11 @@ Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}`
 
 If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 
+**Matcher compatibility note (Copilot CLI v1.0.36+):** As of v1.0.36, `preToolUse` matcher patterns are evaluated as full regex and now actually filter (previously some patterns were silently ignored). Audit any custom matchers added to merged hook configs:
+- Exact tool names (`Edit`, `Task`, `Write`) — work as-is in both runtimes.
+- Claude-style permission rules like `Bash(git commit*)` — work in Claude Code but may be interpreted as literal regex in Copilot CLI. Inline commands in this template do their own `git commit` substring check, so the matcher acts only as a coarse filter; verification still happens in the script.
+- If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
+
 ## 10. Confirm
 
 After writing, display:

@@ -101,9 +101,12 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 
 | Tier | Effort | Use | Agents / Skills |
 |------|--------|-----|-----------------|
+| Opus 4.7 | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging (Claude Code v2.1.111+) | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
 | Opus | `high` | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
 | Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
 | Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
+
+**Tier escalation:** Default to `high` for Opus skills. Use `xhigh` only when a step has demonstrably failed at `high` effort or when reviewing >5 files of changes. The xhigh tier costs more and runs slower — it's not a free upgrade.
 
 ### MCP Servers
 
