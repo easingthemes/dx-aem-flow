@@ -22,11 +22,11 @@
 | 16 | Plugin install ignores marketplace qualifier | Medium | Blocked (upstream) | 2026-03-03 | [todo-bugs.md#marketplace](todo-bugs.md#plugin-install-marketplace-qualifier) |
 | 17 | `updatedMCPToolOutput` not replacing inline image | Low | Open | 2026-03-03 | [todo-bugs.md#mcp-output](todo-bugs.md#updatedmcptooloutput-image-replacement) |
 | 18 | ~~DoR comment deduplication bug~~ | Medium | **Done** | 2026-03-22 | [todo-bugs.md#dor-dedup](todo-bugs.md#dor-comment-deduplication) — explicit `[DoRAgent]` check added to SKILL.md Phase 2 |
-| 19 | SubagentStart/SubagentStop logging hooks | Low | Deferred | 2026-03-03 | [todo-bugs.md#hooks](todo-bugs.md#subagent-hooks) — TaskCreate progress covers most use cases; revisit if pipeline debugging becomes painful |
+| 19 | ~~SubagentStart/SubagentStop logging hooks~~ | Low | **Done** | 2026-03-03 | [todo-bugs.md#hooks](todo-bugs.md#subagent-hooks) — first-class events in Claude Code (since v2.1.x); Copilot CLI added `agentStop`/`subagentStop` (closed 2026-04-07). Verified 2026-04-25 |
 | 20 | Copilot CLI shared/ path resolution bug | Medium | Open | 2026-03-22 | [todo-copilot-cli.md#shared-paths](todo-copilot-cli.md#shared-path-resolution) |
 | 21 | ~~Copilot CLI attachment download bug~~ | Low | **Done** | 2026-03-22 | [todo-copilot-cli.md#attachments](todo-copilot-cli.md#attachment-download) — explicit "Do NOT download" added to SKILL.md Phase 1 |
-| 22 | ~~Port hooks to Copilot CLI~~ | Medium | **Done** | 2026-03-22 | [todo-copilot-cli.md#hooks-porting](todo-copilot-cli.md#hooks-porting) — 3 ported (SessionStart×2, PostToolUse Edit); Figma blocked by #17, Stop blocked by Copilot CLI |
-| 23 | Copilot CLI project MCP not loaded | Medium | Blocked (upstream) | 2026-03-22 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery) |
+| 22 | Port hooks to Copilot CLI | Medium | Open | 2026-03-22 | [todo-copilot-cli.md#hooks-porting](todo-copilot-cli.md#hooks-porting--unblocked-2026-04-07) — Stop event now portable (`agentStop` shipped 2026-04-07); finish remaining ports + audit `preToolUse` matchers (v1.0.36 fixed regex) |
+| 23 | ~~Copilot CLI project MCP not loaded~~ | Medium | **Done** | 2026-03-22 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery--closed-2026-04-07) — closed 2026-04-07 (v1.0.12, [#2198](https://github.com/github/copilot-cli/issues/2198)). Follow-up: remove `--additional-mcp-config` workaround from setup docs |
 
 | 24 | Migrate DoD wiki to checkbox format | Low | Open | 2026-03-23 | [todo-config.md#dod-checkbox](todo-config.md#dod-checkbox-format) |
 | 25 | Cross-repo component-discovery.md consumption | Medium | Pending | 2026-03-24 | [todo-aem-discovery.md](todo-aem-discovery.md#cross-repo-discovery-consumption) |
@@ -106,4 +106,20 @@
 | 79 | Context graphs: decision nodes as structured YAML | Medium | Done | 2026-04-05 | [todo-context-graphs.md#phase-4](todo-context-graphs.md#phase-4--decision-nodes-as-structured-yaml-medium-effort-high-value) — decision-schema.md + dx-plan writes YAML + dx-pattern-extract reads YAML |
 | 80 | Context graphs: full graph with edges | Low | Done | 2026-04-05 | [todo-context-graphs.md#phase-5](todo-context-graphs.md#phase-5--full-graph-with-edges-higher-effort-transformative) — edge-schema.md + dx-plan writes edges + dx-step-verify writes verified-by + dx-agent-all reads graph context |
 
-**Counts:** 80 total — 15 done, 49 open, 5 blocked, 9 watch, 1 deferred, 1 decision needed, 1 pending, 1 ongoing
+| 81 | Adopt Opus 4.7 xhigh tier in model strategy | Medium | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — apply to `dx-step-verify`, `dx-pr-review`, `dx-plan` (Claude Code v2.1.111) |
+| 82 | Adopt agent `mcpServers` frontmatter for dx-aem agents | Medium | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — Claude Code v2.1.117 isolates AEM/Chrome MCP per-agent |
+| 83 | Adopt MCP tool hooks (`type: "mcp_tool"`) in dx-automation | Medium | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — Claude Code v2.1.118 simplifies ADO/Jira automation |
+| 84 | Pilot forked subagents (`CLAUDE_CODE_FORK_SUBAGENT=1`) | Low | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — start with `dx-ticket-analyze`, `aem-page-finder` |
+| 85 | Adopt HTTP hooks for dx-automation Lambda webhooks | Medium | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — Copilot CLI v1.0.35 |
+| 86 | Replace path derivation with `${PLUGIN_ROOT}` env vars | Low | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#new-features-from-latest-releases) — Copilot CLI v1.0.26 injects `PLUGIN_ROOT`/`COPILOT_PLUGIN_ROOT`/`CLAUDE_PLUGIN_ROOT` in plugin hooks |
+| 87 | Audit `preToolUse` matcher patterns for over-filtering | High | Open | 2026-04-25 | [todo-copilot-cli.md#hooks-porting](todo-copilot-cli.md#hooks-porting--unblocked-2026-04-07) — Copilot CLI v1.0.36 fixed regex matching; previously-loose patterns may now over-filter |
+| 88 | Codex first-class plugin support (`.codex-plugin/`) | High | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#tier-3--new-platform-support) — Codex v0.122–0.125 added native plugin system; supersedes `.codex/INSTALL.md` symlink hack |
+| 89 | Gemini CLI extension proper buildout | Medium | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#tier-3--new-platform-support) — currently 52-byte stub; Gemini v0.36+ supports full extension manifest with skills/agents/hooks/MCP |
+| 90 | Re-test `shared/` path resolution on Copilot v1.0.36 | Medium | Open | 2026-04-25 | [todo-copilot-cli.md#shared-paths](todo-copilot-cli.md#shared-path-resolution) — no public fix recorded but multiple skill-loading fixes shipped |
+| 91 | Re-test attachment download behavior on Copilot v1.0.36 | Low | Open | 2026-04-25 | [todo-copilot-cli.md#attachments](todo-copilot-cli.md#attachment-download) — v1.0.32 added document attachment support; could regress |
+| 92 | Update CLAUDE.md MCP-tool-naming table (Codex + Gemini rows) | Low | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#tier-3--new-platform-support) — Gemini uses `mcp_<server>_<tool>` (single underscore); Codex scheme TBD |
+| 93 | Remove `--additional-mcp-config` workaround from setup docs | Low | Open | 2026-04-25 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery--closed-2026-04-07) — `website/src/pages/setup/copilot-cli.mdx` |
+
+**Counts:** 93 total — 17 done, 60 open, 4 blocked, 9 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
+
+Last platform state research: [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md)
