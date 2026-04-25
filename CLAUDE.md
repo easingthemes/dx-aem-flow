@@ -132,6 +132,20 @@ MCP servers in a plugin's `.mcp.json` get a prefixed tool name: `mcp__plugin_<pl
 
 **Why:** Subagents resolve tools by exact name or ToolSearch. The shorthand doesn't match the actual registered tool names, causing "tool not found" failures.
 
+#### Cross-platform tool naming
+
+Skill/agent files use the Claude Code prefix shown above. On other platforms the LLM transparently maps prefixed names to whatever is registered locally — they're prose hints to the model, not literal function calls. Reference for the registered name on each platform:
+
+| Platform | Registered name format | Example (AEM `getNodeContent`) |
+|----------|-----------------------|-------------------------------|
+| Claude Code | `mcp__plugin_<plugin>_<server>__<tool>` (double underscore) | `mcp__plugin_dx-aem_AEM__getNodeContent` |
+| Copilot CLI | bare name (no prefix; LLM maps from Claude prefix) | `getNodeContent` |
+| VS Code Chat | bare name | `getNodeContent` |
+| Codex CLI | TOML-configured `[mcp_servers.<server>]`; tool prefix scheme not yet publicly documented (track in `docs/todo/todo-cross-platform.md`) | TBD |
+| Gemini CLI | `mcp_<server>_<tool>` (single underscore, lowercase server name) | `mcp_aem_getnodecontent` |
+
+When adding a new MCP server, no per-platform action is needed — the LLM resolves names from the `tools:` and `mcpServers:` declarations in agent frontmatter.
+
 ### Hook System — Platform Separation
 
 Plugin hooks and Copilot CLI hooks are **completely separate systems** with no overlap:
