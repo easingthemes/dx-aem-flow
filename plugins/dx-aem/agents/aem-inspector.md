@@ -2,6 +2,7 @@
 name: aem-inspector
 description: Inspects AEM components via MCP — captures dialog fields, finds pages, creates test pages, configures demo data. Use for pre/post development component verification.
 tools: Read, Write, Glob, Grep, ToolSearch, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__listChildren, mcp__plugin_dx-aem_AEM__executeJCRQuery, mcp__plugin_dx-aem_AEM__fetchSites, mcp__plugin_dx-aem_AEM__fetchLanguageMasters, mcp__plugin_dx-aem_AEM__getPageProperties, mcp__plugin_dx-aem_AEM__createPage, mcp__plugin_dx-aem_AEM__addComponent, mcp__plugin_dx-aem_AEM__updateComponent, mcp__plugin_dx-aem_AEM__getComponents, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__getTemplates, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__activatePage
+mcpServers: [AEM]
 model: sonnet
 memory: project
 maxTurns: 50
