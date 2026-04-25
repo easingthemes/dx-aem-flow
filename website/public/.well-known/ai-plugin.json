@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "KAI - Enterprise AI Development Platform",
+  "name_for_model": "kai_dev_platform",
+  "description_for_human": "Enterprise AI development platform with 75+ skills for Azure DevOps and Atlassian workflows. Four Claude Code plugins covering requirements, planning, execution, review, and PR creation — from ticket to PR, fully autonomous.",
+  "description_for_model": "KAI is an enterprise AI development platform built as four Claude Code plugins (dx-core, dx-aem, dx-hub, dx-automation) providing 75+ skills and 13 specialized agents for structured software development workflows. It covers the full sprint lifecycle: requirements analysis from Azure DevOps/Jira tickets, Figma design-to-code pipelines, implementation planning, autonomous code execution with self-healing, 6-phase verification gates, and PR creation. Skills run identically across Claude Code, GitHub Copilot CLI, and VS Code Chat. Includes deep AEM (Adobe Experience Manager) specialization and 24/7 autonomous pipeline agents triggered by AWS Lambda webhooks.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "none",
+    "url": ""
+  },
+  "logo_url": "https://easingthemes.github.io/dx-aem-flow/kai-logo.svg",
+  "contact_email": "",
+  "legal_info_url": "https://github.com/easingthemes/dx-aem-flow/blob/main/LICENSE",
+  "endpoints": {
+    "llms_txt": "https://easingthemes.github.io/dx-aem-flow/llms.txt",
+    "documentation": "https://easingthemes.github.io/dx-aem-flow/",
+    "source_code": "https://github.com/easingthemes/dx-aem-flow"
+  }
+}
