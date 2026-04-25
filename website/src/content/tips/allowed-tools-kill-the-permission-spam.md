@@ -14,7 +14,7 @@ actionItemsTitle: "Permission Levels by Skill Type"
 keyPoints:
   - "**The problem** — By default, Copilot CLI asks permission before every tool call. A skill that reads 5 files, runs a build, and edits 3 files triggers 13 permission prompts. It completely breaks the flow."
   - "**The fix** — Add allowed-tools to your skill's YAML frontmatter. Listed tools run automatically with no prompts. Unlisted tools still ask for permission — so you get automation where you want it and safety where you need it."
-  - "**Cross-tool compatibility** — Claude Code has its own permission system (acceptEdits mode), but allowed-tools works in both Claude Code and Copilot CLI. Adding it doesn't break anything."
+  - "**Cross-tool compatibility** — Claude Code has its own permission system (acceptEdits mode), but allowed-tools works in both Claude Code and Copilot CLI. Adding it doesn't break anything. Copilot CLI v1.0.10+ suppresses unknown field warnings — if you see 'Attribute allowed-tools is not supported', update your CLI with /update."
 actionItems:
   - |
     **Choose the right permission level for each skill**
