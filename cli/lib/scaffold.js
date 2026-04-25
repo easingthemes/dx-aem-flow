@@ -26,6 +26,14 @@ class Scaffold {
   setPlaceholders(values) {
     this.placeholders = { ...this.placeholders, ...values };
 
+    // Defaults for pipeline automation preferences in config.yaml
+    if (this.placeholders.AUTO_COMMIT === undefined) {
+      this.placeholders.AUTO_COMMIT = false;
+    }
+    if (this.placeholders.AUTO_PR === undefined) {
+      this.placeholders.AUTO_PR = false;
+    }
+
     // Derive projectRole from projectType if not explicitly provided
     if (!this.placeholders.projectRole && this.placeholders.projectType) {
       const typeToRole = {
@@ -614,7 +622,8 @@ Available AI agents for this project. Invoke with \`@AgentName\` in Copilot CLI,
     }
     let content = fs.readFileSync(filePath, 'utf8');
     for (const [key, value] of Object.entries(this.placeholders)) {
-      content = content.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
+      const replacement = value === undefined || value === null ? '' : String(value);
+      content = content.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), replacement);
     }
     return content;
   }
