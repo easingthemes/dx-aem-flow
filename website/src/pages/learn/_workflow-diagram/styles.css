@@ -122,7 +122,47 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 14px 18px;
-    margin: 0 0 20px;
+    margin: 0 0 16px;
+  }
+  .stage-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 6px;
+  }
+  .stage-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 50%;
+    font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-200);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .stage-btn:hover { background: #f5f5f4; color: var(--text-100); }
+  .stage-btn.active {
+    background: var(--model-stroke);
+    border-color: var(--model-stroke);
+    color: white;
+  }
+  .stage-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .stage-hint {
+    font-size: 10.5px;
+    color: var(--text-300);
+    margin: 0 0 12px;
+    font-style: italic;
+    line-height: 1.4;
   }
   .sim-row {
     display: flex;

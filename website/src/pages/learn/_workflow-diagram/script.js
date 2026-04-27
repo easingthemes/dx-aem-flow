@@ -1092,21 +1092,49 @@ document.querySelector('#app').textContent = 'Hello world';`
           oneLiner: 'Project instructions Claude reads every session',
           when: 'Loaded into context at session start',
           description: 'Project-specific instructions: conventions, common commands, architectural context. Lives in INSTRUCTIONS in the diagram.',
-          target: 'context-box', enables: ['t-context', 't-context-details']
+          target: 'context-box', enables: ['t-context', 't-context-details'],
+          sample: `# My App
+
+Build:  npm run build
+Test:   npm test
+Dev:    npm run dev
+
+## Conventions
+- TypeScript strict mode
+- Components in src/components/
+- Co-locate tests as *.test.ts`
         },
         {
           id: 'p-mcp-json', label: '.mcp.json', type: 'file', color: 'context', badge: 'committed',
           oneLiner: 'Project-scoped MCP servers, shared with the team',
           when: 'Servers connect at session start; tool schemas deferred',
           description: 'MCP server config. Each server\'s tools become available under TOOLS. Personal MCPs go in ~/.claude.json.',
-          target: 'context-box', enables: ['t-context', 't-context-details']
+          target: 'context-box', enables: ['t-context', 't-context-details'],
+          sample: `{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "postgres": {
+      "command": "uvx",
+      "args": ["mcp-server-postgres"]
+    }
+  }
+}`
         },
         {
           id: 'p-worktree', label: '.worktreeinclude', type: 'file', color: 'subagent', badge: 'committed',
           oneLiner: 'Gitignored files to copy into new worktrees',
           when: 'When a subagent runs with isolation: worktree',
           description: 'Lists gitignored files (like .env) to copy when Claude creates a worktree for an isolated subagent.',
-          target: 'subagent-fork', enables: ['t-loop', 't-subagent-fork']
+          target: 'subagent-fork', enables: ['t-loop', 't-subagent-fork'],
+          sample: `# Files to copy into isolated worktrees
+.env
+.env.local
+.npmrc
+
+# One pattern per line; comments allowed`
         },
         {
           id: 'p-claude-dir', label: '.claude/', type: 'folder', children: [
@@ -1115,14 +1143,36 @@ document.querySelector('#app').textContent = 'Hello world';`
               oneLiner: 'Permissions + hooks + enforced configuration',
               when: 'Session start; overrides ~/.claude/settings.json',
               description: 'Enforced (vs CLAUDE.md which is guidance). Defines static permission rules (allow/deny/ask) and hook scripts.',
-              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details']
+              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details'],
+              sample: `{
+  "permissions": {
+    "allow": ["Bash(npm:*)", "Bash(git:*)"],
+    "deny":  ["Read(./.env)"],
+    "ask":   ["Bash(git push *)"]
+  },
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{ "type": "command",
+                  "command": ".claude/hooks/format.sh" }]
+    }]
+  }
+}`
             },
             {
               id: 'p-settings-local', label: 'settings.local.json', type: 'file', color: 'hook', badge: 'gitignored',
               oneLiner: 'Personal settings overrides (not committed)',
               when: 'Session start; overrides project settings.json',
               description: 'Same JSON shape as settings.json but personal. Higher precedence than project settings; lower than CLI flags.',
-              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details']
+              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details'],
+              sample: `{
+  "permissions": {
+    "allow": ["Bash(docker:*)"]
+  },
+  "env": {
+    "ANTHROPIC_LOG": "debug"
+  }
+}`
             },
             {
               id: 'p-rules', label: 'rules/', type: 'folder', children: [
@@ -1131,14 +1181,33 @@ document.querySelector('#app').textContent = 'Hello world';`
                   oneLiner: 'Topic rule scoped by paths: glob',
                   when: 'When Claude reads a file matching paths:',
                   description: 'Path-scoped rule. Frontmatter paths: ["**/*.test.ts"] keeps it out of context until a matching file is read.',
-                  target: 'context-box', enables: ['t-context', 't-context-details']
+                  target: 'context-box', enables: ['t-context', 't-context-details'],
+                  sample: `---
+description: Testing conventions
+paths: ["**/*.test.ts", "**/*.spec.ts"]
+---
+
+# Testing
+- Use Vitest, never Jest
+- One assertion per test
+- Mock external HTTP only`
                 },
                 {
                   id: 'p-rules-api', label: 'api-design.md', type: 'file', color: 'context', badge: 'committed',
                   oneLiner: 'API conventions scoped to backend code',
                   when: 'When a file under src/api/ enters context',
                   description: 'Another path-scoped rule example. Conventions only loaded when relevant.',
-                  target: 'context-box', enables: ['t-context', 't-context-details']
+                  target: 'context-box', enables: ['t-context', 't-context-details'],
+                  sample: `---
+description: REST API conventions
+paths: ["src/api/**/*.ts"]
+---
+
+# API design
+- camelCase for fields
+- ISO 8601 timestamps
+- Always return { data, error }
+- Versioned at /v1, /v2`
                 }
               ]
             },
@@ -1151,14 +1220,32 @@ document.querySelector('#app').textContent = 'Hello world';`
                       oneLiner: 'Skill entrypoint (frontmatter + body)',
                       when: 'Frontmatter at session start; body loads when invoked',
                       description: 'Only frontmatter (name, description) is in context. Body loads on demand when /security-review fires or Claude auto-invokes.',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `---
+name: security-review
+description: Audit recent changes for OWASP top 10
+---
+
+# Security review
+
+1. Read changed files (git diff)
+2. Check ./checklist.md
+3. Report findings as confidence-rated list`
                     },
                     {
                       id: 'p-skill-checklist', label: 'checklist.md', type: 'file', color: 'context', badge: 'committed',
                       oneLiner: 'Bundled support file',
                       when: 'Read on demand while running the skill',
                       description: 'Skills can bundle supporting files (templates, scripts, refs). Claude reads them via $CLAUDE_SKILL_DIR.',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `# OWASP top 10 checklist
+
+- [ ] SQL / NoSQL injection
+- [ ] XSS in user-rendered fields
+- [ ] Secrets leaking into logs
+- [ ] Missing CSRF tokens
+- [ ] Broken access control
+- [ ] Insecure deserialization`
                     }
                   ]
                 }
@@ -1171,7 +1258,15 @@ document.querySelector('#app').textContent = 'Hello world';`
                   oneLiner: 'Single-file command (legacy — prefer skills/)',
                   when: 'User types /fix-issue <num>',
                   description: 'Single-file prompt. Skills supersede commands; new workflows should use skills/ instead.',
-                  target: 'context-box', enables: ['t-context', 't-context-details']
+                  target: 'context-box', enables: ['t-context', 't-context-details'],
+                  sample: `---
+description: Fix a GitHub issue
+argument-hint: "<issue-number>"
+---
+
+Read GitHub issue #$1 with \`gh issue view $1\`,
+locate the relevant code, propose a fix, and
+open a draft PR linking to the issue.`
                 }
               ]
             },
@@ -1189,7 +1284,17 @@ document.querySelector('#app').textContent = 'Hello world';`
                   oneLiner: 'Subagent: isolated context, own tools',
                   when: 'Spawned via Task tool or @-mention',
                   description: 'Frontmatter (name, description, tools, model, memory) registers the subagent. Body becomes its system prompt when spawned.',
-                  target: 'subagent-fork', enables: ['t-loop', 't-subagent-fork']
+                  target: 'subagent-fork', enables: ['t-loop', 't-subagent-fork'],
+                  sample: `---
+name: code-reviewer
+description: Reviews diffs for bugs and style
+tools: Read, Grep, Glob, Bash
+model: sonnet
+memory: true
+---
+
+You are a senior reviewer. Read the diff,
+flag bugs and style issues, rate confidence.`
                 }
               ]
             },
@@ -1202,7 +1307,16 @@ document.querySelector('#app').textContent = 'Hello world';`
                       oneLiner: 'Subagent persistent memory (project-scoped)',
                       when: 'Loaded when subagent starts (≤25 KB)',
                       description: 'Subagent with memory: project reads/writes its own MEMORY.md here. Distinct from main session auto-memory.',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `# code-reviewer memory (this project)
+
+## Conventions learned
+- Strict TypeScript (no any)
+- Prefer Result<T,E> over throws
+- Tests live next to source as *.test.ts
+
+## Past false positives
+- "unused export" in src/api/types.ts — public API`
                     }
                   ]
                 }
@@ -1220,7 +1334,15 @@ document.querySelector('#app').textContent = 'Hello world';`
           oneLiner: 'App state + UI preferences (not workflow)',
           when: 'Session start; mostly managed by /config',
           description: 'Holds OAuth, theme, trust decisions, personal MCP servers, UI toggles. Not part of the per-session workflow shown in the diagram.',
-          target: null
+          target: null,
+          sample: `{
+  "theme": "dark",
+  "outputStyle": "default",
+  "trustedFolders": ["/Users/me/projects/foo"],
+  "mcpServers": {
+    "linear": { "command": "linear-mcp" }
+  }
+}`
         },
         {
           id: 'g-claude-dir', label: '.claude/', type: 'folder', children: [
@@ -1229,21 +1351,41 @@ document.querySelector('#app').textContent = 'Hello world';`
               oneLiner: 'Personal instructions across every project',
               when: 'Session start; loaded with project CLAUDE.md',
               description: 'Your global instruction file. Project CLAUDE.md takes priority on conflict.',
-              target: 'context-box', enables: ['t-context', 't-context-details']
+              target: 'context-box', enables: ['t-context', 't-context-details'],
+              sample: `# Personal preferences
+
+- Conventional commits, lowercase
+- Concise PR descriptions, no emojis
+- Always use British spelling
+- Never run package installs without asking`
             },
             {
               id: 'g-settings', label: 'settings.json', type: 'file', color: 'hook', badge: 'local-only',
               oneLiner: 'Default settings for all projects',
               when: 'Session start; lowest precedence',
               description: 'Your defaults. Project settings.json and settings.local.json override these.',
-              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details']
+              target: 'hook-preToolUse', enables: ['t-hooks', 't-hooks-details'],
+              sample: `{
+  "permissions": {
+    "allow": ["Bash(ls:*)", "Bash(cat:*)", "Read(~/.zshrc)"]
+  },
+  "outputStyle": "default",
+  "model": "claude-sonnet-4-6"
+}`
             },
             {
               id: 'g-keybindings', label: 'keybindings.json', type: 'file', color: 'neutral', badge: 'local-only',
               oneLiner: 'Custom keyboard shortcuts (not workflow)',
               when: 'Session start; hot-reloaded',
               description: 'UI-only. Run /keybindings to edit. Not part of the workflow diagram.',
-              target: null
+              target: null,
+              sample: `{
+  "bindings": {
+    "submit": "ctrl+enter",
+    "newline": "shift+enter",
+    "clear":  "ctrl+l"
+  }
+}`
             },
             {
               id: 'g-themes', label: 'themes/', type: 'folder', color: 'neutral',
@@ -1261,14 +1403,31 @@ document.querySelector('#app').textContent = 'Hello world';`
                       oneLiner: 'Auto-memory — Claude writes, you read',
                       when: 'Session start (first 200 lines / 25 KB)',
                       description: 'Claude maintains this across sessions itself. Acts as an index pointing to topic files Claude creates when MEMORY.md grows.',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `# my-app — auto memory
+
+## Topic files
+- [architecture.md] — Vite + React + tRPC
+- [build-commands.md] — npm run build/dev/test
+- [debugging.md] — known gotchas
+
+## User preferences
+- Concise responses, no emojis
+- Always cite file:line in summaries`
                     },
                     {
                       id: 'g-debug-md', label: 'debugging.md', type: 'file', color: 'context', badge: 'claude-writes',
                       oneLiner: 'Topic file Claude split out of MEMORY.md',
                       when: 'Read on demand when relevant',
                       description: 'Auto-split topic file. Claude picks the filename (debugging, architecture, build-commands, …).',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `# Debugging notes
+
+- HMR breaks when X is renamed → restart dev server
+- Tests fail on Node 22 → pin to Node 20 LTS
+- "EADDRINUSE 4321" → \`lsof -ti:4321 | xargs kill\`
+
+Last updated by Claude on 2026-04-22.`
                     }
                   ]
                 }
@@ -1295,7 +1454,19 @@ document.querySelector('#app').textContent = 'Hello world';`
                   oneLiner: 'Output style — modifies the system prompt',
                   when: 'Active when outputStyle setting selects it',
                   description: 'Appends to the system prompt AND by default drops the built-in coding instructions. Lets you repurpose Claude Code for teaching/review/non-coding modes.',
-                  target: 'context-box', enables: ['t-context', 't-context-details']
+                  target: 'context-box', enables: ['t-context', 't-context-details'],
+                  sample: `---
+description: Explain code as you write it
+---
+
+# Teaching mode
+
+Before each code change, explain WHY in 2–3 lines.
+After each change, wrap insights in:
+
+  ★ Insight ─────────────────────
+  [educational point]
+  ─────────────────────────────`
                 }
               ]
             },
@@ -1315,7 +1486,16 @@ document.querySelector('#app').textContent = 'Hello world';`
                       oneLiner: 'Subagent memory (user-scoped)',
                       when: 'Loaded when subagent starts',
                       description: 'Subagent with memory: user stores knowledge here that persists across all projects.',
-                      target: 'context-box', enables: ['t-context', 't-context-details']
+                      target: 'context-box', enables: ['t-context', 't-context-details'],
+                      sample: `# code-reviewer memory (user-scoped)
+
+## Style preferences
+- British spelling
+- Always cite file:line
+- Group findings by severity
+
+## Repeat false positives across projects
+- "no-explicit-any" in test mocks`
                     }
                   ]
                 }
@@ -1343,6 +1523,68 @@ document.querySelector('#app').textContent = 'Hello world';`
   let activeTab = 'project';
   let selectedNodeId = 'p-src';
   const expandedFolders = new Set(['p-src']);
+
+  // Stage filter for the project tab. Each id maps to the minimum stage
+  // at which it becomes visible. Folders need their own entry so they
+  // appear together with the first child that shows up.
+  const STAGE_MAP = {
+    'p-package-json': 0,
+    'p-src': 0,
+    'p-src-index-js': 0,
+    'p-src-index-scss': 0,
+    'p-src-index-html': 0,
+    'p-claude-md': 1,
+    'p-claude-dir': 2,
+    'p-rules': 2,
+    'p-rules-testing': 2,
+    'p-rules-api': 2,
+    'p-skills': 3,
+    'p-skill-dir': 3,
+    'p-skill-md': 3,
+    'p-skill-checklist': 3,
+    'p-mcp-json': 4,
+    'p-settings': 5,
+    'p-settings-local': 5,
+    'p-agents': 6,
+    'p-agent-cr': 6,
+    'p-commands': 7,
+    'p-cmd-fix': 7,
+    'p-output-styles': 7,
+    'p-agent-mem': 7,
+    'p-agent-mem-name': 7,
+    'p-agent-mem-md': 7,
+    'p-worktree': 7
+  };
+  const STAGE_DESCRIPTIONS = [
+    'Plain project — only package.json and src/.',
+    'Add CLAUDE.md — project instructions Claude reads every session.',
+    'Add .claude/rules/ — path-scoped convention rules.',
+    'Add .claude/skills/ — invokable workflows with bundled support files.',
+    'Add .mcp.json — project-scoped MCP servers.',
+    'Add .claude/settings.json (+ settings.local.json) — permissions and hooks.',
+    'Add .claude/agents/ — subagents with isolated context.',
+    'Show everything — commands, output-styles, agent-memory, .worktreeinclude.'
+  ];
+  let currentStage = 0;
+  const MAX_STAGE = 7;
+
+  function filterTreeByStage(nodes) {
+    if (activeTab !== 'project') return nodes;
+    const out = [];
+    for (const node of nodes) {
+      const minStage = STAGE_MAP[node.id];
+      // Nodes without a stage entry are always shown (defensive default).
+      if (minStage !== undefined && minStage > currentStage) continue;
+      if (node.children && node.children.length) {
+        const filteredChildren = filterTreeByStage(node.children);
+        if (node.type === 'folder' && filteredChildren.length === 0 && minStage === undefined) continue;
+        out.push({ ...node, children: filteredChildren });
+      } else {
+        out.push(node);
+      }
+    }
+    return out;
+  }
 
   function findNode(nodes, id) {
     for (const node of nodes) {
@@ -1421,9 +1663,30 @@ document.querySelector('#app').textContent = 'Hello world';`
     if (btn) btn.addEventListener('click', handleSeeInDiagram);
   }
 
+  function collectVisibleIds(nodes, set) {
+    for (const node of nodes) {
+      set.add(node.id);
+      if (node.children) collectVisibleIds(node.children, set);
+    }
+    return set;
+  }
+
+  function getVisibleChildren() {
+    const sourceChildren = TREE[activeTab].children;
+    return activeTab === 'project'
+      ? filterTreeByStage(sourceChildren)
+      : sourceChildren;
+  }
+
   function renderTree() {
     const list = document.getElementById('tree-list');
-    list.innerHTML = renderTreeNodes(TREE[activeTab].children, 0);
+    const visibleChildren = getVisibleChildren();
+    const visibleIds = collectVisibleIds(visibleChildren, new Set());
+    if (!visibleIds.has(selectedNodeId)) {
+      const first = visibleChildren[0];
+      if (first) selectedNodeId = first.id;
+    }
+    list.innerHTML = renderTreeNodes(visibleChildren, 0);
     list.querySelectorAll('.tree-row').forEach(row => {
       row.addEventListener('click', handleTreeClick);
     });
@@ -1476,6 +1739,39 @@ document.querySelector('#app').textContent = 'Hello world';`
   document.querySelectorAll('.tree-tab').forEach(t => {
     t.addEventListener('click', () => switchTab(t.dataset.tab));
   });
+
+  // Stage buttons — progressively reveal project files.
+  function expandAllVisibleFolders() {
+    function walk(nodes) {
+      for (const n of nodes) {
+        if (n.type === 'folder') {
+          expandedFolders.add(n.id);
+          if (n.children) walk(n.children);
+        }
+      }
+    }
+    walk(getVisibleChildren());
+  }
+
+  function setStage(stage) {
+    if (stage < 0) stage = 0;
+    if (stage > MAX_STAGE) stage = MAX_STAGE;
+    currentStage = stage;
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      const active = Number(btn.dataset.stage) === currentStage;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    const hint = document.getElementById('stage-hint');
+    if (hint) hint.textContent = STAGE_DESCRIPTIONS[currentStage] || '';
+    expandAllVisibleFolders();
+    renderTree();
+  }
+
+  document.querySelectorAll('.stage-btn').forEach(btn => {
+    btn.addEventListener('click', () => setStage(Number(btn.dataset.stage)));
+  });
+  setStage(0);
 
   // Layout toggles — show/hide tree and diagram columns
   function updateLayout() {
