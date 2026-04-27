@@ -88,20 +88,20 @@
     </div>
   </div>
 
-  <div class="simulator">
-    <div class="sim-row">
-      <span class="sim-label">Simulate context fill</span>
-      <input type="range" id="fill-slider" min="11" max="100" value="30" step="1">
-      <span class="sim-value" id="fill-value">30%</span>
-      <span class="sim-badge" id="compact-badge">auto-compacted</span>
-    </div>
-    <svg id="budget-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" style="display:block; width:100%; height:auto; margin-top:10px;"></svg>
-    <div class="sim-hint">Drag past 83.5% to trigger auto-compaction. The HISTORY block in the diagram grows as the slider rises, then collapses to a &lt;summary&gt; + recent turns.</div>
-  </div>
-
   <div class="layout-2col">
     <aside class="tree-panel">
       <p class="tree-panel-title">.claude/ files in your project</p>
+      <div class="stage-buttons" id="stage-buttons" role="group" aria-label="File visibility stages">
+        <button class="stage-btn active" data-stage="0" type="button" aria-pressed="true">0</button>
+        <button class="stage-btn" data-stage="1" type="button" aria-pressed="false">1</button>
+        <button class="stage-btn" data-stage="2" type="button" aria-pressed="false">2</button>
+        <button class="stage-btn" data-stage="3" type="button" aria-pressed="false">3</button>
+        <button class="stage-btn" data-stage="4" type="button" aria-pressed="false">4</button>
+        <button class="stage-btn" data-stage="5" type="button" aria-pressed="false">5</button>
+        <button class="stage-btn" data-stage="6" type="button" aria-pressed="false">6</button>
+        <button class="stage-btn" data-stage="7" type="button" aria-pressed="false">7</button>
+      </div>
+      <p class="stage-hint" id="stage-hint">Project files only — pick a stage to add layers.</p>
       <div class="tree-tabs">
         <button class="tree-tab active" data-tab="project" type="button">your-project/</button>
         <button class="tree-tab" data-tab="global" type="button">~/</button>
@@ -112,6 +112,16 @@
       </div>
     </aside>
     <div class="diagram-col">
+      <div class="simulator">
+        <div class="sim-row">
+          <span class="sim-label">Simulate context fill</span>
+          <input type="range" id="fill-slider" min="11" max="100" value="30" step="1">
+          <span class="sim-value" id="fill-value">30%</span>
+          <span class="sim-badge" id="compact-badge">auto-compacted</span>
+        </div>
+        <svg id="budget-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" style="display:block; width:100%; height:auto; margin-top:10px;"></svg>
+        <div class="sim-hint">Drag past 83.5% to trigger auto-compaction. The HISTORY block in the diagram grows as the slider rises, then collapses to a &lt;summary&gt; + recent turns.</div>
+      </div>
       <div class="diagram">
         <svg id="diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diag-title diag-desc">
           <title id="diag-title">Claude Code agentic workflow diagram</title>
