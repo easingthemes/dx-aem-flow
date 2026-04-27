@@ -72,3 +72,26 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 - Task subject pattern: `Phase N: <name>` → on completion update to `Phase N: <name> — PASS (key metric)` or `— FAIL (error)`
 - `dx-agent-all` already uses TaskCreate (line 115) — ensure all coordinators follow the same pattern consistently
 - Interactive mode checkpoints still use text (they're decision points)
+
+## Coordinator observability — context-timeline hook
+
+**Added:** 2026-04-27
+**Problem:** When `dx-agent-all` (or any fan-out coordinator) dispatches 5+ `context: fork` subagents, there's no real-time view of which fork is running, how much of its context window each holds, or which one is the slowest. From the TUI you see Tasks updating, but you can't tell whether a fork is stuck on an MCP call vs. genuinely working. Debugging coordinator pipelines today means reading OTel logs after the fact.
+**Scope:** `website/src/pages/setup/` (recommended hooks page), `plugins/dx-core/hooks/hooks.json` (optional pre-registration), `docs/reference/agent-catalog.md` and skill catalog notes for the 5 coordinator skills.
+**Done-when:** The `monitoring/context-timeline` hook from `aitmpl.com` is documented as a recommended optional hook for users running coordinator skills. Install command (`npx claude-code-templates@latest --hook monitoring/context-timeline`) appears in the docs site. Decision recorded on whether to ship it pre-registered in `dx-core/hooks/hooks.json` or leave it user-installed.
+**Approach:**
+- Verify the hook composes cleanly with our existing branch-guard and Stop hooks (no `PreToolUse` / `Stop` matcher conflicts).
+- If compatible, add a "Recommended hooks" section under the website setup pages — clearly marked as optional and external (`aitmpl.com` / `claude-code-templates`).
+- Most useful for fan-out coordinators (`dx-agent-all`, `dx-step-all`, `dx-bug-all`, `dx-figma-all`, `dx-pr-review-all`); not needed for single-skill runs.
+- Source: https://x.com/dani_avila7/status/2048486242321662189
+
+## On-demand `/fork` slash command (complement to env var)
+
+**Added:** 2026-04-27
+**Problem:** TODO #84 covers the `CLAUDE_CODE_FORK_SUBAGENT=1` env var (session-wide fork mode), but Claude Code v2.1.117+ also exposes a `/fork` slash command for per-invocation forking. The env var is all-or-nothing; the slash command lets a coordinator fork only the subagents that actually need parent context (e.g., a verifier reading the plan) while keeping read-heavy ones (`dx-file-resolver`, `dx-doc-searcher`) on a clean blank context.
+**Scope:** `docs/research/2026-04-25-platform-state-update.md` (current entry mentions only the env var), `plugins/dx-core/shared/subagent-contract.md` (forking guidance section).
+**Done-when:** Platform-state doc lists both `CLAUDE_CODE_FORK_SUBAGENT=1` (session-wide) and `/fork` (per-invocation) with a one-line "when to use which". `subagent-contract.md` references `/fork` as the preferred surgical option for coordinators that mix context-heavy verifiers with stateless searchers.
+**Approach:**
+- Short addition to platform-state doc capturing the trade-off (env var = blanket session inheritance; `/fork` = surgical per-call inheritance, prompt cache shared with parent).
+- When piloting #84, prefer `/fork` for `dx-step-verify` (which needs plan + research context) over the env-var approach.
+- Source: https://x.com/dani_avila7/status/2048486242321662189
