@@ -92,9 +92,10 @@ bash .ai/lib/ensure-feature-branch.sh "$SPEC_DIR"
 Auth: `@azure-devops/mcp` defaults to interactive OAuth (browser). The MSAL
 token cache from Claude Code's own MCP session is reused — no second prompt.
 
-The script handles **steps 3, 4, 6, 7 (sprint extraction), 9, and 10** for
-ADO. After it runs, jump straight to **step 5** (PR fetch — script only emits
-branch names, not PR detail) and **step 8** (image download — vision-bound).
+The script handles **steps 3, 4, 6, 7 (sprint extraction), 8a–8d (image
+download, INDEX.md, URL rewriting in raw-story.md), 9, and 10** for ADO.
+After it runs, jump straight to **step 5** (PR fetch — script only emits
+branch names, not PR detail) and **step 8e** (`images.md` vision pass).
 
 **ADO (legacy / fallback path — only when the script cannot run):**
 ```
@@ -204,7 +205,14 @@ Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` 
 
 ### 8. Download Embedded and Attached Images
 
-ADO work items carry images two ways that are often both relevant to the story: formal attachments (sidebar section → `relations[].rel == "AttachedFile"`) and pasted images embedded inline in HTML fields (description, acceptance criteria, custom HTML fields → `<img src="…/_apis/wit/attachments/{guid}">`). Both resolve to the same attachment endpoint. Images carry requirements info that text descriptions frequently omit (mockups, annotated screenshots, expected states) — later phases must be able to read them.
+**ADO fast path:** the script in step 2 already handled **8a–8d** — it extracted
+the image manifest, called `wit_get_work_item_attachment` for each GUID,
+applied the size + MIME filters, named files per the policy below, wrote them
+to `$SPEC_DIR/images/`, generated `images/INDEX.md`, and rewrote inline `<img
+src=...>` URLs in `raw-story.md` to local paths. Skip 8a–8d and jump to **8e**
+(images.md generation — vision pass).
+
+**ADO legacy / Jira:** continue with 8a–8e below.
 
 **8a. Extract the image list** — write the work item JSON from step 2 to a temp file, pipe through `parse-wi-images.sh`:
 

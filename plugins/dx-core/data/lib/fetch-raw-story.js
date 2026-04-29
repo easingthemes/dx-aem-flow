@@ -86,8 +86,6 @@ async function main() {
     }
   }
 
-  await client.stop();
-
   if (!specDir) {
     const title = (wi && wi.fields && wi.fields['System.Title']) || '';
     if (!title) {
@@ -97,22 +95,30 @@ async function main() {
     specDir = path.join('.ai', 'specs', deriveSlug(id, title));
   }
   fs.mkdirSync(specDir, { recursive: true });
+  fs.mkdirSync(path.join(specDir, 'images'), { recursive: true });
 
   fs.writeFileSync(
     path.join(specDir, 'raw-workitem.json'),
     JSON.stringify({ workItem: wi, comments, parent }, null, 2)
   );
 
+  // Image fetch + INDEX.md happens BEFORE renderRawStory so the GUID→path map
+  // can rewrite embedded <img src="..."> URLs in the HTML→markdown pass.
+  const guidToPath = await fetchImages(client, wi, specDir);
+
+  await client.stop();
+
   const sprint = extractSprint(wi);
   if (sprint) fs.writeFileSync(path.join(specDir, '.sprint'), sprint + '\n');
 
-  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id });
+  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath });
   fs.writeFileSync(path.join(specDir, 'raw-story.md'), md);
 
   const branchCount = extractBranches(wi, id).length;
   console.log(
     `fetch-raw-story: wrote ${path.join(specDir, 'raw-story.md')} ` +
-    `(${md.length} bytes, ${comments.length} comments, ${branchCount} matching branches` +
+    `(${md.length} bytes, ${comments.length} comments, ${branchCount} matching branches, ` +
+    `${guidToPath.size} images` +
     (parent ? `, parent #${parent.id}` : '') + ')'
   );
   // Last line — parseable by the calling skill: `SPEC_DIR=$(node fetch-raw-story.js ... | tail -1 | cut -d= -f2)`
@@ -298,7 +304,7 @@ function isSystemComment(c) {
 // HTML to Markdown — rules from references/html-conversion.md
 // ------------------------------------------------------------------
 
-function htmlToMarkdown(html) {
+function htmlToMarkdown(html, guidToPath) {
   if (!html) return '';
   let s = String(html).replace(/\r\n/g, '\n');
 
@@ -308,7 +314,7 @@ function htmlToMarkdown(html) {
   s = s.replace(/<\/?(?:b|strong)>/gi, '**');
   s = s.replace(/<\/?(?:i|em)>/gi, '*');
   s = s.replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, t) => `[${stripTags(t).trim()}](${href})`);
-  s = s.replace(/<img\b[^>]*?>/gi, m => convertImg(m));
+  s = s.replace(/<img\b[^>]*?>/gi, m => convertImg(m, guidToPath));
 
   for (let i = 1; i <= 6; i++) {
     const re = new RegExp(`<h${i}\\b[^>]*>([\\s\\S]*?)</h${i}>`, 'gi');
@@ -330,9 +336,18 @@ function htmlToMarkdown(html) {
   return s.trim();
 }
 
-function convertImg(tag) {
+function convertImg(tag, guidToPath) {
   const src = (tag.match(/src="([^"]+)"/i) || [, ''])[1];
   const alt = (tag.match(/alt="([^"]*)"/i) || [, 'image'])[1];
+  // ADO inline image URL → rewrite to local path if we downloaded it.
+  if (guidToPath && guidToPath.size) {
+    const m = src.match(/_apis\/wit\/attachments\/([0-9a-fA-F-]{36})/);
+    if (m) {
+      const local = guidToPath.get(m[1].toLowerCase());
+      if (local) return `![${alt}](${local})`;
+      return `![${alt}](${src}) <!-- image not downloaded -->`;
+    }
+  }
   return `![${alt}](${src})`;
 }
 
@@ -378,10 +393,192 @@ function decodeEntities(s) {
 }
 
 // ------------------------------------------------------------------
+// Image fetch — extracts ADO attachments + embedded HTML <img> refs,
+// downloads each via wit_get_work_item_attachment, applies size + MIME
+// filters, names files per the policy in dx-req SKILL.md step 8, and
+// writes images/INDEX.md. Returns a Map<lowercase-guid, "./images/<file>">.
+// ------------------------------------------------------------------
+
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp']);
+const MIME_BY_EXT = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+  gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
+};
+
+async function fetchImages(client, wi, specDir) {
+  const map = new Map();
+  const rows = extractImageManifest(wi);
+  if (!rows.length) {
+    writeImageIndex(specDir, []);
+    return map;
+  }
+
+  const fieldCounters = new Map(); // sanitized field name → next index (1-based)
+  const usedFilenames = new Set();
+  const indexRows = [];
+  const skipped = [];
+
+  for (const row of rows) {
+    const ext = (row.filename.split('.').pop() || '').toLowerCase();
+    if (!IMAGE_EXTS.has(ext)) {
+      skipped.push({ ...row, reason: `non-image extension .${ext}` });
+      continue;
+    }
+    if (row.size > 0 && row.size > IMAGE_MAX_BYTES) {
+      skipped.push({ ...row, reason: `>${IMAGE_MAX_BYTES} bytes pre-fetch` });
+      continue;
+    }
+
+    let result;
+    try {
+      result = await client.callTool('wit_get_work_item_attachment', {
+        project,
+        attachmentId: row.guid,
+        fileName: row.filename,
+      });
+    } catch (e) {
+      console.error(`fetch-raw-story: image ${row.guid} fetch failed (${e.message})`);
+      skipped.push({ ...row, reason: `fetch error: ${e.message}` });
+      continue;
+    }
+
+    const buf = decodeAttachmentBlob(result);
+    if (!buf) {
+      skipped.push({ ...row, reason: 'no decodable blob in MCP response' });
+      continue;
+    }
+    if (buf.length > IMAGE_MAX_BYTES) {
+      skipped.push({ ...row, reason: `>${IMAGE_MAX_BYTES} bytes post-fetch` });
+      continue;
+    }
+
+    const target = chooseFilename(row, ext, fieldCounters, usedFilenames);
+    usedFilenames.add(target);
+    fs.writeFileSync(path.join(specDir, 'images', target), buf);
+
+    const localPath = `./images/${target}`;
+    map.set(row.guid.toLowerCase(), localPath);
+    indexRows.push({
+      file: target,
+      source: row.source,
+      size: buf.length,
+      mime: MIME_BY_EXT[ext] || 'application/octet-stream',
+    });
+  }
+
+  writeImageIndex(specDir, indexRows, skipped);
+  return map;
+}
+
+function extractImageManifest(wi) {
+  const out = [];
+  const seen = new Set();
+
+  // 1) AttachedFile relations
+  for (const r of (wi && wi.relations) || []) {
+    if (r.rel !== 'AttachedFile') continue;
+    const m = (r.url || '').match(/attachments\/([0-9a-fA-F-]{36})/);
+    if (!m) continue;
+    const guid = m[1];
+    if (seen.has(guid)) continue;
+    seen.add(guid);
+    out.push({
+      source: 'attachment',
+      guid,
+      filename: (r.attributes && r.attributes.name) || 'image.bin',
+      size: (r.attributes && r.attributes.resourceSize) || 0,
+    });
+  }
+
+  // 2) Embedded <img> in HTML fields (per multilineFieldsFormat)
+  const fmt = (wi && wi.multilineFieldsFormat) || {};
+  const fields = (wi && wi.fields) || {};
+  for (const [name, format] of Object.entries(fmt)) {
+    if (format !== 'html') continue;
+    const html = fields[name];
+    if (typeof html !== 'string') continue;
+    const re = /_apis\/wit\/attachments\/([0-9a-fA-F-]{36})[?&]fileName=([^"'&<> ]+)/g;
+    let m;
+    while ((m = re.exec(html))) {
+      const guid = m[1];
+      if (seen.has(guid)) continue;
+      seen.add(guid);
+      out.push({ source: name, guid, filename: decodeURIComponent(m[2]), size: -1 });
+    }
+  }
+  return out;
+}
+
+// MCP attachment responses come back wrapped in `content`. Different MCP
+// implementations use slightly different shapes — tolerate all the common ones.
+function decodeAttachmentBlob(result) {
+  const content = (result && result.content) || [];
+  for (const c of content) {
+    // Direct image content
+    if (c.type === 'image' && typeof c.data === 'string') {
+      return Buffer.from(c.data, 'base64');
+    }
+    // Resource wrapper: { type: 'resource', resource: { blob, mimeType, uri } }
+    if (c.type === 'resource' && c.resource && typeof c.resource.blob === 'string') {
+      return Buffer.from(c.resource.blob, 'base64');
+    }
+  }
+  return null;
+}
+
+function chooseFilename(row, ext, fieldCounters, usedFilenames) {
+  const guid8 = row.guid.replace(/-/g, '').slice(0, 8).toLowerCase();
+  if (row.source === 'attachment') {
+    const base = row.filename;
+    if (!usedFilenames.has(base)) return base;
+    const dot = base.lastIndexOf('.');
+    const stem = dot >= 0 ? base.slice(0, dot) : base;
+    const e = dot >= 0 ? base.slice(dot) : '';
+    return `${stem}-${guid8}${e}`;
+  }
+  // embedded — sanitize field name
+  const sanitized = row.source
+    .replace(/^System\./, '')
+    .replace(/^Microsoft\.VSTS\.Common\./, '')
+    .replace(/^Microsoft\.VSTS\./, '')
+    .replace(/^Custom\./, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const next = (fieldCounters.get(sanitized) || 0) + 1;
+  fieldCounters.set(sanitized, next);
+  return `${sanitized}-${next}-${guid8}.${ext}`;
+}
+
+function writeImageIndex(specDir, rows, skipped = []) {
+  const lines = [];
+  lines.push(`# Images — ${rows.length} downloaded${skipped.length ? `, ${skipped.length} skipped` : ''}`);
+  lines.push('');
+  if (rows.length) {
+    lines.push('| File | Source | Size | Type |');
+    lines.push('| --- | --- | ---: | --- |');
+    for (const r of rows) {
+      lines.push(`| \`${r.file}\` | ${r.source} | ${r.size} | ${r.mime} |`);
+    }
+  } else {
+    lines.push('_No images downloaded._');
+  }
+  if (skipped.length) {
+    lines.push('');
+    lines.push('## Skipped');
+    for (const s of skipped) {
+      lines.push(`- \`${s.filename}\` (guid \`${s.guid.slice(0, 8)}\`, source ${s.source}) — ${s.reason}`);
+    }
+  }
+  fs.writeFileSync(path.join(specDir, 'images', 'INDEX.md'), lines.join('\n') + '\n');
+}
+
+// ------------------------------------------------------------------
 // raw-story.md renderer
 // ------------------------------------------------------------------
 
-function renderRawStory({ wi, comments, parent, orgUrl, project, id }) {
+function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath }) {
   const f = (wi && wi.fields) || {};
   const title = f['System.Title'] || '';
   const type = f['System.WorkItemType'] || '';
@@ -392,10 +589,10 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id }) {
   const area = f['System.AreaPath'] || '';
   const iter = f['System.IterationPath'] || '';
   const tags = f['System.Tags'] || 'None';
-  const desc = htmlToMarkdown(f['System.Description'] || '');
-  const ac = htmlToMarkdown(f['Microsoft.VSTS.Common.AcceptanceCriteria'] || '');
-  const benefits = htmlToMarkdown(f['Custom.BusinessBenefits'] || '');
-  const designs = htmlToMarkdown(f['Custom.UIDesigns'] || '');
+  const desc = htmlToMarkdown(f['System.Description'] || '', guidToPath);
+  const ac = htmlToMarkdown(f['Microsoft.VSTS.Common.AcceptanceCriteria'] || '', guidToPath);
+  const benefits = htmlToMarkdown(f['Custom.BusinessBenefits'] || '', guidToPath);
+  const designs = htmlToMarkdown(f['Custom.UIDesigns'] || '', guidToPath);
 
   const orgBase = orgUrl.replace(/\/+$/, '');
   const adoLink = `${orgBase}/${encodeURIComponent(project)}/_workitems/edit/${id}`;
@@ -447,13 +644,27 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id }) {
       const date = c.createdDate ? c.createdDate.split('T')[0] : '';
       out.push('');
       out.push(`### ${author}${date ? ` — ${date}` : ''}`);
-      out.push(htmlToMarkdown(c.text));
+      out.push(htmlToMarkdown(c.text, guidToPath));
+    }
+  }
+
+  // Images section — table of contents pointing into images.md (model writes
+  // that file in step 8e). Helps later phases discover images without
+  // re-scanning the body.
+  if (guidToPath && guidToPath.size) {
+    out.push('');
+    out.push('---');
+    out.push('');
+    out.push('## Images');
+    out.push('<!-- Inline image references already appear in Description / AC / other HTML fields above. Structured descriptions live in ../images.md (written by Phase 1, vision pass). -->');
+    for (const [, p] of guidToPath) {
+      out.push(`- \`${p}\``);
     }
   }
 
   if (parent) {
     const pf = parent.fields || {};
-    const pdesc = htmlToMarkdown(pf['System.Description'] || '');
+    const pdesc = htmlToMarkdown(pf['System.Description'] || '', guidToPath);
     out.push('');
     out.push('---');
     out.push('');
