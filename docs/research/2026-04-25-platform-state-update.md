@@ -181,3 +181,10 @@ Earlier in window: plugin system became first-class with sub-agent addressing, t
 - Codex CLI: [changelog](https://developers.openai.com/codex/changelog) · [skills](https://developers.openai.com/codex/skills) · [AGENTS.md](https://developers.openai.com/codex/guides/agents-md) · [subagents](https://developers.openai.com/codex/subagents)
 - Gemini CLI: [releases](https://github.com/google-gemini/gemini-cli/releases) · [skills](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md) · [hooks](https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/index.md) · [extensions](https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/reference.md)
 - Standards: [agentskills.io](https://agentskills.io/specification) · [agents.md](https://agents.md/)
+
+## 5. Related docs in this repo
+
+- [Agent standards landscape](agent-standards-landscape-2026.md) — the foundational research this update extends
+- [`docs/reference/allowed-tools-compatibility.md`](../reference/allowed-tools-compatibility.md) — the `allowed-tools` frontmatter field across platforms (Copilot CLI v0.0.403 → v1.0.12 detail; full v1.0.14 → v1.0.36 release map lives here)
+- [`docs/todo/TODO.md`](../todo/TODO.md) — master tracker; rows #81–94 are follow-ups from this snapshot
+- [`docs/todo/todo-copilot-cli.md`](../todo/todo-copilot-cli.md) and [`todo-cross-platform.md`](../todo/todo-cross-platform.md) — per-topic detail files
