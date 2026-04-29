@@ -66,5 +66,6 @@ Machine-readable entry point for AI agents. All paths relative to repo root.
 | `.ai/lib/` | Shared utilities (audit.sh) | Yes |
 | `.ai/specs/` | Per-ticket output (raw-story, explain, research, implement) | No (gitignored) |
 | `.ai/pr-reviews/` | PR review session data | No (gitignored) |
+| `.ai/cache/` | Cached resources (DoR checklist, etc.) — saves tokens by avoiding refetch | No (gitignored) |
 | `.claude/rules/` | Auto-loaded coding conventions | Yes |
 | `.claude/hooks/` | Lifecycle hooks (stop-guard) | Yes |
