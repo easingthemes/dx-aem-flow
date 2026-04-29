@@ -18,7 +18,7 @@ provenance:
 ## Field Rules
 
 1. **agent** — Use the skill name exactly as it appears in the skill's frontmatter `name:` field. If a coordinator skill dispatched you (e.g., `dx-req` invokes `/dx-dor`), use the executing skill's name, not the coordinator's.
-2. **model** — Use the model you are currently running as (check your own skill frontmatter `model:` field, or the agent's `model:` field if running as a subagent). If no model is specified, use `sonnet` (the default tier). **Do not hardcode** — always reflect the actual model executing the skill.
+2. **model** — Use the model you are currently running as (check your own skill frontmatter `model:` field, or the agent's `model:` field if running as a subagent). If no model is specified, use `sonnet` (the default tier). **Do not hardcode** — always reflect the actual model executing the skill. Use `script` only when the file was produced entirely by a deterministic helper with no LLM in the loop (e.g. `.ai/lib/fetch-raw-story.js` writes `raw-story.md` directly from ADO MCP responses).
 3. **created** — ISO-8601 timestamp with timezone. Use the current time when writing the file.
 4. **confidence** — Self-assessed by the producing skill. See definitions below.
 5. **verified** — Always `false` when first written. Only `dx-step-verify` sets this to `true` after all verification phases pass. If the file has no provenance block (pre-migration), skip the update.
