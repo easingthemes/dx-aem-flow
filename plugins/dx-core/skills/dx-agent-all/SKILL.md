@@ -57,6 +57,29 @@ If the user said "autonomous", "auto", or "hands-free", use autonomous mode.
 - **Never read spec files in the main orchestrator** — trust skill return summaries
 - Keep dev-all's own context to orchestration only: phase status, short summaries, user interaction
 
+### Low-context mode (200k models)
+
+If the user is on a 200k-context model OR the env var `DX_LOW_CONTEXT=1` is set, apply these defaults before Phase 1 starts:
+
+- `DX_RESEARCH_PROFILE=minimal` (Phase 4 of `/dx-req` dispatches 2 agents instead of 4 — see issue #136)
+- `dor.cache-ttl-seconds` honored (24h cache on the DoR checklist)
+- After each phase, print: `phase <N> done — context budget: <free>/200k (used <delta>k)`. Use the harness's reported usage; do not estimate.
+
+These can also be set per-run via `/dx-agent-all <id> low-context` (the orchestrator exports the env var before invoking sub-skills).
+
+### Token instrumentation (optional)
+
+When `DX_TOKEN_TRACE=1`, write per-phase token deltas to `$SPEC_DIR/dev-all-tokens.tsv`:
+
+```
+phase	tokens_in	tokens_out	cumulative
+1-requirements	12000	48000	60000
+2-planning	2000	14000	76000
+...
+```
+
+This is the source of truth for diagnosing future context regressions — without it, "Phase X is too expensive" claims are unverifiable.
+
 ## Progress Logging
 
 Before starting the pipeline, count the total phases that will run (including optional ones that apply). Assign each phase a sequential number. Every phase log message MUST include the progress counter in `(current/total)` format.

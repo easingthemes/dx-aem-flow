@@ -29,6 +29,7 @@ website/.astro/
 .ai/pr-answers/
 .ai/pr-reviews/
 .ai/logs/
+.ai/cache/
 .ai/me.md
 internal/
 docs/superpowers/

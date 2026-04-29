@@ -266,6 +266,24 @@ Override plugin default prompts without replacing the full file.
 | `auto-commit` | bool | false | Commit after each step without asking |
 | `auto-pr` | bool | false | Create PR after all steps complete |
 
+### `research`
+
+Controls Phase 4 of `/dx-req` (codebase research). Mitigates the context blow-up documented in issue #136.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `profile` | string | `auto` | `auto` \| `minimal` \| `frontend` \| `backend` \| `full`. `auto` picks the smallest profile that covers the story (see `plugins/dx-core/skills/dx-req/references/research-patterns.md`). Override per run via `DX_RESEARCH_PROFILE`. |
+| `agent-word-cap` | number | `800` | Hard cap on words per Explore-agent report. The orchestrator summarizes anything longer to ≤300 words before writing into research.md. |
+| `agent-file-cap` | number | `10` | Maximum files an Explore-agent may list in its inventory. |
+
+### `dor`
+
+Controls `/dx-dor` wiki resolution + caching. Mitigates the wiki-tree blowup from issue #136.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `cache-ttl-seconds` | number | `86400` | TTL for `.ai/cache/dor-checklist.md`. Within this window, `/dx-dor` skips the wiki MCP call entirely. Set `0` to disable caching. |
+
 ## Learning Directory (auto-generated)
 
 Coordinator skills automatically create `.ai/learning/` to store run metrics and patterns. No config needed.
@@ -294,6 +312,8 @@ These environment variables are set on ADO pipeline runs and read by skills at r
 | `ADO_ORG_URL` | ADO org URL (e.g. `https://yourorg.visualstudio.com`). Used for plugin marketplace auth and cross-repo delegation. |
 | `ADO_ORG_NAME` | Short ADO org name (e.g. `myorg`). Read by `pipeline-agent.js` for org identification. Falls back to `"myorg"` if not set. |
 | `DX_MARKETPLACE_URL` | Git URL with ref for the plugin marketplace repo. Only used when `dx-aem-flow/` is not available locally (cross-repo pipelines). |
+| `DX_RESEARCH_PROFILE` | `minimal` \| `frontend` \| `backend` \| `full`. Forces the Phase 4 research profile (`/dx-req`). Overrides `research.profile` in `config.yaml`. Set to `minimal` on 200k-context models. |
+| `DX_HOOK_PROFILE` | `minimal` \| `standard` \| `strict`. Hook strictness — see "Hook Profiles" in CLAUDE.md. |
 
 ### Code-Writing Pipelines (BugFix, DevAgent, DoD-Fix)
 
