@@ -2,19 +2,61 @@
 
 ## Fetch DoR Checklist
 
+The DoR checklist rarely changes between tickets, but the wiki resolution path is expensive — a tree-traversal `wiki_get_page` call against a parent section can return a ~270kB JSON blob describing every nested page (≈65–80k tokens). Issue #136 showed that landing on every `/dx-dor` run was the second-largest Phase 1 context cost. The fetch path below caches the resolved content on disk and never lets the raw tree blob reach the parent thread.
+
+### Cache-first
+
+Before any MCP call, check `.ai/cache/dor-checklist.md`:
+
+```bash
+CACHE=.ai/cache/dor-checklist.md
+META=.ai/cache/dor-checklist.meta.json
+TTL_SECONDS=86400  # 24h — checklists are stable
+
+if [ -f "$CACHE" ] && [ -f "$META" ]; then
+  AGE=$(($(date +%s) - $(stat -c %Y "$CACHE" 2>/dev/null || stat -f %m "$CACHE")))
+  if [ "$AGE" -lt "$TTL_SECONDS" ]; then
+    echo "DoR checklist cache hit ($CACHE, age ${AGE}s)"
+    # Read $CACHE and proceed to "Parse Wiki Content"
+  fi
+fi
+```
+
+`$META` records the resolved source path / page ID and last-fetched timestamp so a re-run can short-circuit. To force a refresh: `rm .ai/cache/dor-checklist.md` or pass `--no-cache` to `/dx-dor`. Override TTL via `dor.cache-ttl-seconds` in `.ai/config.yaml` (default `86400`).
+
+### Cache miss — resolve once, cache the body
+
 Read `.ai/config.yaml` and attempt each source in order:
 
 1. **ADO Wiki** — if `scm.wiki-dor-url` is configured:
    ```
    mcp__ado__wiki_get_page_content  url: <scm.wiki-dor-url>
    ```
-   If fetch fails, try next source.
+   The URL form is the cheap path — no tree traversal. Pass the **full** URL exactly as configured. If `scm.wiki-dor-url` is missing or the call fails with a path-resolution error, fall back to the search path below.
+
+   **Search fallback (issue #136 — never traverse the parent tree):**
+   ```
+   mcp__ado__wiki_search  searchText: "<DoR page title from scm.wiki-dor-page-title or 'Definition of Ready'>"
+   ```
+   Take the top hit, then call `wiki_get_page_content` with that hit's path. Do **not** call `wiki_get_page` against a parent section to enumerate children — that returns the full subtree JSON (~270kB) which is the exact failure mode #136 documents.
+
+   **If a tree fetch is genuinely unavoidable** (e.g., disambiguating multiple candidate pages), dispatch it to a subagent with this contract:
+   > "Use `mcp__ado__wiki_get_page` for path `<X>`. Return ONLY the resolved `gitItemPath` of the page whose title matches `<title>`. Do not paste the JSON tree."
+   The raw blob then stays in the subagent context and only the resolved path crosses back.
+
+   On success, write the markdown body to `.ai/cache/dor-checklist.md` and metadata to `.ai/cache/dor-checklist.meta.json`:
+   ```json
+   {"source": "ado-wiki", "url": "...", "gitItemPath": "...", "fetched_at": "<ISO-8601>"}
+   ```
+
 2. **Confluence** — if `confluence.dor-page-title` + `confluence.space-key` are configured:
    ```
    mcp__atlassian__confluence_search  cql: "title = '<dor-page-title>' AND space = '<space-key>'"
    ```
-   Extract page ID, then `mcp__atlassian__confluence_get_page  page_id: "<id>"`.
-3. **Local file** — if `.ai/rules/dor-checklist.md` exists, read it (same checkbox format as wiki).
+   Extract page ID, then `mcp__atlassian__confluence_get_page  page_id: "<id>"`. Cache the body to `.ai/cache/dor-checklist.md` with `{"source":"confluence","page_id":"<id>","fetched_at":"<ts>"}`.
+
+3. **Local file** — if `.ai/rules/dor-checklist.md` exists, read it (same checkbox format as wiki). No caching needed (already on disk).
+
 4. **None available** — print error and STOP:
    `No DoR checklist source found. Configure scm.wiki-dor-url, confluence.dor-page-title, or create .ai/rules/dor-checklist.md.`
 
