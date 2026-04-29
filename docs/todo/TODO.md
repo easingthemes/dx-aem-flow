@@ -119,10 +119,11 @@
 | 91 | Re-test attachment download behavior on Copilot v1.0.36 | Low | Open | 2026-04-25 | [todo-copilot-cli.md#attachments](todo-copilot-cli.md#attachment-download) — v1.0.32 added document attachment support; could regress |
 | 92 | Update CLAUDE.md MCP-tool-naming table (Codex + Gemini rows) | Low | Open | 2026-04-25 | [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md#tier-3--new-platform-support) — Gemini uses `mcp_<server>_<tool>` (single underscore); Codex scheme TBD |
 | 93 | Remove `--additional-mcp-config` workaround from setup docs | Low | Open | 2026-04-25 | [todo-copilot-cli.md#project-mcp](todo-copilot-cli.md#project-mcp-discovery--closed-2026-04-07) — `website/src/pages/setup/copilot-cli.mdx` |
+| 94 | dx-automation CI/CD pipeline portability (non-ADO) | Low | Open | 2026-04-25 | [todo-automation.md#cicd-pipeline-portability-non-ado](todo-automation.md#cicd-pipeline-portability-non-ado) — pipelines are ADO-only today; GitHub Actions is the highest-value second target. auto-init now documents the constraint upfront |
 
-| 94 | Coordinator observability via `context-timeline` hook | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#coordinator-observability](todo-subagent-improvements.md#coordinator-observability--context-timeline-hook) — recommend external `aitmpl.com` hook for fan-out coordinators |
-| 95 | Document `/fork` slash command alongside fork env var | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#on-demand-fork](todo-subagent-improvements.md#on-demand-fork-slash-command-complement-to-env-var) — surgical per-invocation forking; complements TODO #84 |
+| 95 | Coordinator observability via `context-timeline` hook | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#coordinator-observability](todo-subagent-improvements.md#coordinator-observability--context-timeline-hook) — recommend external `aitmpl.com` hook for fan-out coordinators |
+| 96 | Document `/fork` slash command alongside fork env var | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#on-demand-fork](todo-subagent-improvements.md#on-demand-fork-slash-command-complement-to-env-var) — surgical per-invocation forking; complements TODO #84 |
 
-**Counts:** 95 total — 17 done, 62 open, 4 blocked, 9 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
+**Counts:** 96 total — 17 done, 63 open, 4 blocked, 9 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
 
 Last platform state research: [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md)

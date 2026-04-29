@@ -100,7 +100,6 @@ Examples:
 
 Output (always generated):
   .ai/config.yaml         Project configuration (SCM, build, AEM)
-  .ai/project.yaml        Detected project profile
   .ai/rules/              Shared AI behavior rules
   .ai/lib/                Utility shell scripts
   .ai/templates/          Output templates for skills
