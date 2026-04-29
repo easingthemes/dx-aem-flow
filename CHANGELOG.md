@@ -1,3 +1,17 @@
+## [2.106.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.0...v2.106.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **dx-req:** make ADO fast path actually work end-to-end ([#135](https://github.com/easingthemes/dx-aem-flow/issues/135)) ([#137](https://github.com/easingthemes/dx-aem-flow/issues/137)) ([862c29c](https://github.com/easingthemes/dx-aem-flow/commit/862c29c8d80a94e17668a3dcff986f4638385461)), closes [#2487969](https://github.com/easingthemes/dx-aem-flow/issues/2487969)
+
+# [2.106.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.105.0...v2.106.0) (2026-04-29)
+
+
+### Features
+
+* **hooks,dx-aem,dx-doctor:** trigger release for [#130](https://github.com/easingthemes/dx-aem-flow/issues/130) platform updates ([#132](https://github.com/easingthemes/dx-aem-flow/issues/132)) ([77e06ea](https://github.com/easingthemes/dx-aem-flow/commit/77e06ea5d9a0e3c26454dbea46a08958c24b3be5))
+
 # [2.105.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.104.1...v2.105.0) (2026-04-22)
 
 

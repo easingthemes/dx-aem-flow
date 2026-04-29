@@ -44,7 +44,6 @@ Agent definitions (`.github/agents/`) and `AGENTS.md` are **always generated** â
 | Directory | Files | Source |
 |-----------|-------|--------|
 | `.ai/config.yaml` | Project config (SCM, build, AEM) | `dx-core/templates/config.yaml.template` |
-| `.ai/project.yaml` | Detected project profile | Generated from detection |
 | `.ai/rules/` | 4 shared AI rules | `dx-core/templates/rules/` |
 | `.ai/docs/` | 10 documentation files | `dx-core/templates/docs/` |
 | `.ai/lib/` | 7 shell utility scripts | `dx-core/data/lib/` |
