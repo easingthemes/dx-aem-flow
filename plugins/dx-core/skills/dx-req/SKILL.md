@@ -69,7 +69,43 @@ If no argument is provided, ask the user for the work item ID.
 
 ### 2. Fetch Work Item Details
 
-**ADO:**
+**ADO (deterministic fast path — preferred):**
+
+Run `.ai/lib/fetch-raw-story.js`. It spawns `@azure-devops/mcp` over stdio,
+calls `wit_get_work_item` (`expand: "all"`), `wit_list_work_item_comments`,
+and a parent `wit_get_work_item` if a hierarchy-reverse relation exists, then
+writes the deterministic output: `raw-workitem.json`, `raw-story.md`, and
+`.sprint`. The work-item JSON never enters this skill's context — only the
+slim `raw-story.md` is read by later phases.
+
+```bash
+ORG=$(bash .ai/lib/dx-common.sh yaml-val org)
+PROJ=$(bash .ai/lib/dx-common.sh yaml-val project)
+# Last stdout line is `SPEC_DIR=<path>` — capture it.
+SCRIPT_OUT=$(node .ai/lib/fetch-raw-story.js "$ORG" "$PROJ" <work-item-id>)
+echo "$SCRIPT_OUT"
+SPEC_DIR=$(printf '%s\n' "$SCRIPT_OUT" | sed -n 's/^SPEC_DIR=//p' | tail -1)
+mkdir -p "$SPEC_DIR/images"
+bash .ai/lib/ensure-feature-branch.sh "$SPEC_DIR"
+```
+
+Auth: `@azure-devops/mcp` defaults to interactive OAuth (browser). The MSAL
+token cache from Claude Code's own MCP session is reused — no second prompt.
+
+The script handles **steps 3, 4, 5 (branches + PR detail), 6, 7 (sprint
+extraction), 8a–8d (image download, INDEX.md, URL rewriting in
+raw-story.md), 9 (idempotent re-runs + pre-seed short-circuit), and 10**
+for ADO. After it runs, jump straight to **step 8e** (`images.md` vision
+pass) — everything else in Phase 1 is already on disk.
+
+The script supports `--force` to bypass the idempotency check, and prints
+one of three exit lines on stdout:
+
+- `fetch-raw-story: wrote <path> ...` — full fetch + write
+- `SKIPPED: <path> already up to date` — payload unchanged from prior run
+- `PRESEEDED: <path> exists without raw-workitem.json — skipping fetch` — hub mode
+
+**ADO (legacy / fallback path — only when the script cannot run):**
 ```
 mcp__ado__wit_get_work_item
   project: "<ADO project from config>"
@@ -77,9 +113,13 @@ mcp__ado__wit_get_work_item
   expand: "all"
 ```
 
-`expand: "all"` returns fields + relations + `multilineFieldsFormat`. The format map is required by step 6 to know which fields hold HTML (and therefore may contain embedded `<img>` references to download).
-
-Extract ALL fields: ID, Title, Type, State, Assigned To, Area Path, Iteration Path, Tags, Description (`System.Description`), Acceptance Criteria (`Microsoft.VSTS.Common.AcceptanceCriteria`), Business Benefits (`Custom.BusinessBenefits`), UI Designs (`Custom.UIDesigns`), Priority, Relations.
+`expand: "all"` returns fields + relations + `multilineFieldsFormat`. Extract
+ALL fields: ID, Title, Type, State, Assigned To, Area Path, Iteration Path,
+Tags, Description (`System.Description`), Acceptance Criteria
+(`Microsoft.VSTS.Common.AcceptanceCriteria`), Business Benefits
+(`Custom.BusinessBenefits`), UI Designs (`Custom.UIDesigns`), Priority,
+Relations. Use this only if `.ai/lib/fetch-raw-story.js` is missing or fails
+(e.g. node not installed).
 
 **Jira:**
 ```
@@ -91,37 +131,58 @@ Map fields per `shared/provider-config.md` Field Mapping.
 
 ### 3. Fetch Comments
 
-**ADO:** `mcp__ado__wit_list_work_item_comments` — keep human comments with author and date, skip system comments.
+**ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2 — skip.
 
-**Jira:** Comments included in `jira_get_issue` response under `fields.comment.comments[]`.
+**ADO legacy / Jira:** `mcp__ado__wit_list_work_item_comments` (ADO) or
+`fields.comment.comments[]` from `jira_get_issue` (Jira). Keep human comments
+with author and date, skip system comments.
 
 ### 4. Fetch Parent Work Item (If Exists)
 
-If the work item has a parent relation, fetch it. Only the direct parent — do NOT recurse.
+**ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2 — skip.
+
+**ADO legacy / Jira:** if the work item has a parent relation, fetch it. Only
+the direct parent — do NOT recurse.
 
 ### 5. Check Linked Branches & PRs
 
-From the relations fetched in step 2, extract artifact links for branches (`vstfs:///Git/Ref/`) and pull requests (`vstfs:///Git/PullRequestId/`).
+**ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2.
+The script extracts `vstfs:///Git/Ref/` artifact links AND
+`vstfs:///Git/PullRequestId/` links, calls `repo_get_pull_request_by_id`
+for each PR (using the project GUID embedded in the artifact URL — PRs are
+often in a different project than the work item), derives missing branch
+names from `sourceRefName`, applies the WI-ID match filter, and renders
+both `### Branches` and `### Pull Requests` subsections in raw-story.md.
+Skip steps 5a–5b below.
 
-**Filter:** Only keep entries where the **branch name** contains the work item ID as a distinct segment. For PRs, check `sourceRefName` (the source branch), not the PR title.
+**ADO legacy / Jira:** continue with 5a–5b below.
+
+**5a.** From the relations fetched in step 2, extract artifact links for
+branches (`vstfs:///Git/Ref/`) and pull requests (`vstfs:///Git/PullRequestId/`).
+
+**Filter:** Only keep entries where the **branch name** contains the work item ID as a distinct segment. For PRs, check `sourceRefName` (the source branch), not the PR title. Separators that count as "distinct segment" boundaries are `/`, `_`, `-`, and `#` (the `#` prefix is a common dev convention, e.g., `feature/#1234-thing`).
 
 Match examples for ID `2435084`:
 - `feature/2435084-add-selector` → match
 - `bugfix/2435084-fix-dialog` → match
 - `refs/heads/feature/2435084-add-selector` → match
+- `feature/#2435084-with-hash` → match (# is a separator)
 - `feature/24350841-other` → no match (ID is substring of larger number)
 - `release/sprint-41` → no match
 
-**ADO — for each matching PR artifact link:**
+**5b — for each matching PR artifact link:**
 ```
-mcp__ado__git_get_pull_request
-  project: "<ADO project>"
+mcp__ado__repo_get_pull_request_by_id
+  project: "<projectId from the artifact URL — see note>"
+  repositoryId: "<repositoryId from the artifact URL>"
   pullRequestId: <PR ID extracted from vstfs URL>
 ```
 
-Record: PR ID, title, status (`active`, `completed`, `abandoned`), source branch, target branch, created date.
+Note: ADO returns PR `status` as a numeric enum (`0=notSet`, `1=active`, `2=abandoned`, `3=completed`); normalize to the string before rendering. The `project` parameter accepts either name or GUID — use the GUID from the `vstfs:///Git/PullRequestId/<projectGuid>/<repoGuid>/<prId>` URL because linked PRs often live in a different project than the work item.
 
-**ADO — for branch artifact links:** Extract branch name from the `vstfs:///Git/Ref/` URL. No additional MCP call needed — the branch name and repo are in the artifact URL.
+Record: PR ID, title, status (string), source branch, target branch, created date.
+
+**For branch artifact links:** Extract branch name from the `vstfs:///Git/Ref/` URL. No additional MCP call needed — the branch name and repo are in the artifact URL. Note that some ADO orgs only emit `Git/PullRequestId/` links and never `Git/Ref/` — derive the missing branch from `sourceRefName` of the linked PRs.
 
 **Jira:**
 ```
@@ -135,6 +196,11 @@ If no matching branches or PRs are found, omit the section from raw-story.md ent
 
 ### 6. Generate Spec Directory Name
 
+**ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2 (the
+script captured `SPEC_DIR` for you). Skip the `slugify` invocation below; only
+run the **title-change detection** check against the existing `raw-story.md`.
+
+**ADO legacy / Jira:**
 ```bash
 DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
 ```
@@ -148,6 +214,11 @@ DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<work item title>")
 
 ### 7. Create Feature Branch and Directory
 
+**ADO fast path:** the script already created `$SPEC_DIR` and wrote `.sprint`
+in step 2; only `mkdir -p "$SPEC_DIR/images"` and `bash .ai/lib/ensure-feature-branch.sh "$SPEC_DIR"`
+remain (already shown in the step 2 snippet).
+
+**ADO legacy / Jira:**
 ```bash
 SPEC_DIR=".ai/specs/${DIR_NAME}"
 mkdir -p "$SPEC_DIR/images"
@@ -158,7 +229,14 @@ Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` 
 
 ### 8. Download Embedded and Attached Images
 
-ADO work items carry images two ways that are often both relevant to the story: formal attachments (sidebar section → `relations[].rel == "AttachedFile"`) and pasted images embedded inline in HTML fields (description, acceptance criteria, custom HTML fields → `<img src="…/_apis/wit/attachments/{guid}">`). Both resolve to the same attachment endpoint. Images carry requirements info that text descriptions frequently omit (mockups, annotated screenshots, expected states) — later phases must be able to read them.
+**ADO fast path:** the script in step 2 already handled **8a–8d** — it extracted
+the image manifest, called `wit_get_work_item_attachment` for each GUID,
+applied the size + MIME filters, named files per the policy below, wrote them
+to `$SPEC_DIR/images/`, generated `images/INDEX.md`, and rewrote inline `<img
+src=...>` URLs in `raw-story.md` to local paths. Skip 8a–8d and jump to **8e**
+(images.md generation — vision pass).
+
+**ADO legacy / Jira:** continue with 8a–8e below.
 
 **8a. Extract the image list** — write the work item JSON from step 2 to a temp file, pipe through `parse-wi-images.sh`:
 
@@ -255,13 +333,27 @@ _Generated by Phase 1. Later phases should read this file rather than re-loading
 
 ### 9. Check Existing Output (idempotent)
 
-**Pre-seeded file check:** If `raw-story.md` already exists in the spec directory AND no data has been fetched yet from ADO/Jira (e.g., the file was pre-seeded by `/dx-hub-dispatch`), skip the fetch entirely — print `raw-story.md found (pre-seeded) — skipping fetch` and proceed to Phase 2. This avoids redundant ADO/Jira API calls when the hub has already provided the raw ticket.
+**ADO fast path:** handled by the script — no action needed. On re-runs the
+script compares the fetched payload against the prior `raw-workitem.json`
+and prints `SKIPPED: ... already up to date` when nothing changed,
+preserving the existing `raw-story.md` and image set. If a hub-dispatched
+`raw-story.md` exists without a `raw-workitem.json`, the script prints
+`PRESEEDED: ... skipping fetch` and exits before spawning MCP, so the
+seeded content is preserved verbatim. Pass `--force` if you need to bypass
+the idempotency check.
 
-**Normal idempotency (fetch already happened):** If `raw-story.md` exists and data was fetched, compare fetched data against it (title, state, description, AC, comment count, relations). If ALL match → print `raw-story.md already up to date — skipping Phase 1` and proceed to Phase 2. If changed → print what changed and continue to save.
+**ADO legacy / Jira — Pre-seeded file check:** If `raw-story.md` already exists in the spec directory AND no data has been fetched yet from ADO/Jira (e.g., the file was pre-seeded by `/dx-hub-dispatch`), skip the fetch entirely — print `raw-story.md found (pre-seeded) — skipping fetch` and proceed to Phase 2. This avoids redundant ADO/Jira API calls when the hub has already provided the raw ticket.
+
+**ADO legacy / Jira — Normal idempotency (fetch already happened):** If `raw-story.md` exists and data was fetched, compare fetched data against it (title, state, description, AC, comment count, relations). If ALL match → print `raw-story.md already up to date — skipping Phase 1` and proceed to Phase 2. If changed → print what changed and continue to save.
 
 ### 10. Save raw-story.md
 
-Write `.ai/specs/<id>-<slug>/raw-story.md` with EXACT ADO content converted from HTML to markdown. Do NOT editorialize, restructure, or interpret — faithful dump only.
+**ADO fast path:** already written by the script in step 2. Re-read it
+(small file) only if a later phase needs to enrich it — e.g. step 5 appends
+PR detail, step 8e rewrites embedded image URLs. Use `Edit` on the file
+rather than re-rendering from scratch.
+
+**ADO legacy / Jira:** Write `.ai/specs/<id>-<slug>/raw-story.md` with EXACT ADO content converted from HTML to markdown. Do NOT editorialize, restructure, or interpret — faithful dump only.
 
 For detailed HTML-to-markdown conversion rules, read `references/html-conversion.md`.
 
