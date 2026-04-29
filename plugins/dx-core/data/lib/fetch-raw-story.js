@@ -44,31 +44,28 @@ const { spawn, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const argv = process.argv.slice(2);
-if (argv.length < 3) {
-  console.error('Usage: fetch-raw-story.js <org-url> <project> <work-item-id> [<spec-dir>]');
-  process.exit(2);
-}
-const [orgUrl, project, idStr, specDirArg] = argv;
-let specDir = specDirArg;
-const id = Number(idStr);
-if (!Number.isInteger(id) || id <= 0) {
-  console.error('ERROR: work-item-id must be a positive integer');
-  process.exit(2);
-}
+// CLI entry point lives at the bottom of the file (inside a `require.main`
+// guard so the module is safe to import for unit tests). `class McpClient`
+// is in TDZ until its declaration line executes, so the entry must run
+// after the script body has finished evaluating.
 
-const org = parseOrg(orgUrl);
-if (!org) {
-  console.error(`ERROR: cannot extract org name from "${orgUrl}". Expected https://<org>.visualstudio.com/ or https://dev.azure.com/<org>/`);
-  process.exit(2);
-}
+async function main(opts) {
+  const { org, orgUrl, project, id, force } = opts;
+  let specDir = opts.specDirArg;
+  // Pre-seed short-circuit: hub mode (`/dx-hub-dispatch`) writes raw-story.md
+  // without raw-workitem.json. Don't refetch in that case — the hub is the
+  // source of truth. Only works when specDir was passed explicitly; auto-derived
+  // paths require the title from a fetch.
+  if (specDir) {
+    const rawStoryPath = path.join(specDir, 'raw-story.md');
+    const rawJsonPath = path.join(specDir, 'raw-workitem.json');
+    if (fs.existsSync(rawStoryPath) && !fs.existsSync(rawJsonPath)) {
+      console.log(`PRESEEDED: ${rawStoryPath} exists without raw-workitem.json — skipping fetch`);
+      console.log(`SPEC_DIR=${specDir}`);
+      return;
+    }
+  }
 
-main().catch(err => {
-  console.error(`fetch-raw-story: ${err.message}`);
-  process.exit(1);
-});
-
-async function main() {
   const client = new McpClient(['npx', '-y', '@azure-devops/mcp', org]);
   await client.start();
 
@@ -86,10 +83,16 @@ async function main() {
     }
   }
 
+  // Pull request detail. ADO does NOT consistently emit vstfs:///Git/Ref/
+  // relations for linked branches — most orgs only get vstfs:///Git/PullRequestId/
+  // links. Fetching each PR gives us authoritative branch info via sourceRefName.
+  const prs = await fetchPRs(client, extractPRRefs(wi));
+
   if (!specDir) {
     const title = (wi && wi.fields && wi.fields['System.Title']) || '';
     if (!title) {
       console.error('ERROR: work item has no title; cannot derive spec dir. Pass <spec-dir> explicitly.');
+      await client.stop();
       process.exit(1);
     }
     specDir = path.join('.ai', 'specs', deriveSlug(id, title));
@@ -97,28 +100,38 @@ async function main() {
   fs.mkdirSync(specDir, { recursive: true });
   fs.mkdirSync(path.join(specDir, 'images'), { recursive: true });
 
-  fs.writeFileSync(
-    path.join(specDir, 'raw-workitem.json'),
-    JSON.stringify({ workItem: wi, comments, parent }, null, 2)
-  );
+  // Idempotency: compare current fetched payload against the prior
+  // raw-workitem.json. If unchanged, skip image refetch + file rewrites.
+  const newPayload = { workItem: wi, comments, parent, prs };
+  if (!force && payloadUnchanged(specDir, newPayload)) {
+    await client.stop();
+    console.log(`SKIPPED: ${path.join(specDir, 'raw-story.md')} already up to date`);
+    console.log(`SPEC_DIR=${specDir}`);
+    return;
+  }
 
   // Image fetch + INDEX.md happens BEFORE renderRawStory so the GUID→path map
   // can rewrite embedded <img src="..."> URLs in the HTML→markdown pass.
-  const guidToPath = await fetchImages(client, wi, specDir);
+  const guidToPath = await fetchImages(client, wi, specDir, project);
 
   await client.stop();
+
+  fs.writeFileSync(
+    path.join(specDir, 'raw-workitem.json'),
+    JSON.stringify(newPayload, null, 2)
+  );
 
   const sprint = extractSprint(wi);
   if (sprint) fs.writeFileSync(path.join(specDir, '.sprint'), sprint + '\n');
 
-  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath });
+  const linked = collectLinkedDevelopment(wi, prs, id);
+  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked });
   fs.writeFileSync(path.join(specDir, 'raw-story.md'), md);
 
-  const branchCount = extractBranches(wi, id).length;
   console.log(
     `fetch-raw-story: wrote ${path.join(specDir, 'raw-story.md')} ` +
-    `(${md.length} bytes, ${comments.length} comments, ${branchCount} matching branches, ` +
-    `${guidToPath.size} images` +
+    `(${md.length} bytes, ${comments.length} comments, ${linked.branches.length} matching branches, ` +
+    `${linked.prs.length} matching PRs, ${guidToPath.size} images` +
     (parent ? `, parent #${parent.id}` : '') + ')'
   );
   // Last line — parseable by the calling skill: `SPEC_DIR=$(node fetch-raw-story.js ... | tail -1 | cut -d= -f2)`
@@ -256,6 +269,18 @@ function parseOrg(url) {
   return u.split('/').filter(Boolean).pop() || null;
 }
 
+// Idempotency: prior raw-workitem.json is the source of truth for "what we
+// fetched last time". Compare via deterministic JSON serialization. Returns
+// false if no prior file exists or if its parse/compare fails — the safe
+// default is to refetch.
+function payloadUnchanged(specDir, newPayload) {
+  const priorPath = path.join(specDir, 'raw-workitem.json');
+  if (!fs.existsSync(priorPath)) return false;
+  let prior;
+  try { prior = JSON.parse(fs.readFileSync(priorPath, 'utf8')); } catch { return false; }
+  return JSON.stringify(prior) === JSON.stringify(newPayload);
+}
+
 function findParentId(wi) {
   for (const r of (wi && wi.relations) || []) {
     if (r.rel !== 'System.LinkTypes.Hierarchy-Reverse') continue;
@@ -274,7 +299,17 @@ function extractSprint(wi) {
 }
 
 function isMatchingBranch(name, id) {
-  return new RegExp(`(?:^|[\\/_-])${id}(?:[\\/_-]|$)`).test(name);
+  // Separators include `#` because devs commonly write `feature/#<id>-<slug>`.
+  return new RegExp(`(?:^|[\\/_#-])${id}(?:[\\/_-]|$)`).test(name);
+}
+
+// ADO returns PR status as either a numeric enum or a string. Normalize to
+// the same lowercase strings ADO's REST docs use.
+const PR_STATUS_BY_INT = { 0: 'notSet', 1: 'active', 2: 'abandoned', 3: 'completed' };
+function normalizePRStatus(status) {
+  if (typeof status === 'number') return PR_STATUS_BY_INT[status] || String(status);
+  if (typeof status === 'string') return status;
+  return '';
 }
 
 function extractBranches(wi, id) {
@@ -290,6 +325,84 @@ function extractBranches(wi, id) {
     if (isMatchingBranch(branchName, id)) out.push({ branchName });
   }
   return out;
+}
+
+// Extract <projectId, repositoryId, prId> tuples from
+// vstfs:///Git/PullRequestId/<projectGuid>/<repoGuid>/<prId> artifact relations.
+// URL components are URL-encoded — `%2f` separates the IDs. Cross-project links
+// are common (a story in project A can link a PR in project B), so we keep the
+// embedded projectId rather than reusing the WI's project name.
+function extractPRRefs(wi) {
+  const out = [];
+  const seen = new Set();
+  for (const r of (wi && wi.relations) || []) {
+    if (r.rel !== 'ArtifactLink') continue;
+    const url = r.url || '';
+    if (!url.startsWith('vstfs:///Git/PullRequestId/')) continue;
+    const tail = url.slice('vstfs:///Git/PullRequestId/'.length);
+    const parts = decodeURIComponent(tail).split('/');
+    if (parts.length < 3) continue;
+    const [projectId, repositoryId, prIdStr] = parts;
+    const prId = Number(prIdStr);
+    if (!Number.isInteger(prId)) continue;
+    if (seen.has(prId)) continue;
+    seen.add(prId);
+    out.push({ projectId, repositoryId, prId });
+  }
+  return out;
+}
+
+async function fetchPRs(client, refs) {
+  const out = [];
+  for (const { projectId, repositoryId, prId } of refs) {
+    try {
+      // The MCP `project` arg accepts either name or GUID — using the GUID
+      // from the artifact URL means we don't have to resolve cross-project.
+      const pr = await client.callTool('repo_get_pull_request_by_id', {
+        project: projectId,
+        pullRequestId: prId,
+        repositoryId,
+      });
+      if (pr && Object.keys(pr).length) out.push(pr);
+      else console.error(`fetch-raw-story: PR #${prId} returned empty payload — skipping`);
+    } catch (e) {
+      console.error(`fetch-raw-story: PR #${prId} fetch failed (${e.message}) — continuing without`);
+    }
+  }
+  return out;
+}
+
+// Strip refs/heads/ from a fully-qualified ref name. Returns null for non-branch refs.
+function refNameToBranch(refName) {
+  if (typeof refName !== 'string') return null;
+  if (refName.startsWith('refs/heads/')) return refName.slice('refs/heads/'.length);
+  return refName || null;
+}
+
+// Combine branches from Git/Ref artifact links AND PR sourceRefName, applying
+// the WI-ID matching rule. PRs are filtered the same way (their branch must match).
+function collectLinkedDevelopment(wi, prs, id) {
+  const branchNames = new Set();
+  for (const b of extractBranches(wi, id)) branchNames.add(b.branchName);
+
+  const matchingPRs = [];
+  for (const pr of prs) {
+    const sourceBranch = refNameToBranch(pr && pr.sourceRefName);
+    if (!sourceBranch || !isMatchingBranch(sourceBranch, id)) continue;
+    matchingPRs.push({
+      id: pr.pullRequestId || pr.id,
+      title: pr.title || '',
+      status: normalizePRStatus(pr.status),
+      sourceBranch,
+      targetBranch: refNameToBranch(pr.targetRefName) || '',
+      createdDate: pr.creationDate || pr.createdDate || '',
+    });
+    branchNames.add(sourceBranch);
+  }
+  return {
+    branches: Array.from(branchNames).sort().map(branchName => ({ branchName })),
+    prs: matchingPRs.sort((a, b) => Number(a.id) - Number(b.id)),
+  };
 }
 
 function isSystemComment(c) {
@@ -406,10 +519,11 @@ const MIME_BY_EXT = {
   gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
 };
 
-async function fetchImages(client, wi, specDir) {
+async function fetchImages(client, wi, specDir, project) {
   const map = new Map();
   const rows = extractImageManifest(wi);
   if (!rows.length) {
+    removeStaleImages(specDir, new Set());
     writeImageIndex(specDir, []);
     return map;
   }
@@ -467,8 +581,26 @@ async function fetchImages(client, wi, specDir) {
     });
   }
 
+  removeStaleImages(specDir, usedFilenames);
   writeImageIndex(specDir, indexRows, skipped);
   return map;
+}
+
+// On re-runs (e.g. an attachment was removed from the WI), files left over
+// from the previous run would otherwise stay in images/ forever. Delete any
+// non-whitelisted file not in the new manifest. Hidden dotfiles (.gitkeep)
+// and INDEX.md are preserved.
+function removeStaleImages(specDir, keepFilenames) {
+  const dir = path.join(specDir, 'images');
+  let entries;
+  try { entries = fs.readdirSync(dir); } catch { return; }
+  for (const name of entries) {
+    if (name.startsWith('.')) continue;
+    if (name === 'INDEX.md') continue;
+    if (keepFilenames.has(name)) continue;
+    try { fs.unlinkSync(path.join(dir, name)); }
+    catch (e) { console.error(`fetch-raw-story: failed to remove stale image ${name} (${e.message})`); }
+  }
 }
 
 function extractImageManifest(wi) {
@@ -578,7 +710,7 @@ function writeImageIndex(specDir, rows, skipped = []) {
 // raw-story.md renderer
 // ------------------------------------------------------------------
 
-function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath }) {
+function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked }) {
   const f = (wi && wi.fields) || {};
   const title = f['System.Title'] || '';
   const type = f['System.WorkItemType'] || '';
@@ -623,14 +755,29 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath 
   if (benefits) pushSection(out, 'Business Benefits', benefits);
   if (designs)  pushSection(out, 'UI Designs', designs);
 
-  const branches = extractBranches(wi, id);
-  if (branches.length) {
+  const branches = (linked && linked.branches) || extractBranches(wi, id);
+  const prs = (linked && linked.prs) || [];
+  if (branches.length || prs.length) {
     out.push('');
     out.push('---');
     out.push('');
     out.push('## Linked Development');
-    out.push('### Branches');
-    for (const b of branches) out.push(`- \`${b.branchName}\``);
+    if (branches.length) {
+      out.push('### Branches');
+      for (const b of branches) out.push(`- \`${b.branchName}\``);
+    }
+    if (prs.length) {
+      if (branches.length) out.push('');
+      out.push('### Pull Requests');
+      for (const pr of prs) {
+        const date = pr.createdDate ? pr.createdDate.split('T')[0] : '';
+        out.push(
+          `- **PR #${pr.id}:** ${pr.title} — **${pr.status}**` +
+          ` | \`${pr.sourceBranch}\` → \`${pr.targetBranch}\`` +
+          (date ? ` | ${date}` : '')
+        );
+      }
+    }
   }
 
   const humanComments = (comments || []).filter(c => !isSystemComment(c));
@@ -684,3 +831,56 @@ function pushSection(out, heading, body) {
   out.push(`## ${heading}`);
   out.push(body);
 }
+
+function parseCliArgs(argv) {
+  const force = argv.includes('--force');
+  const positional = argv.filter(a => !a.startsWith('--'));
+  if (positional.length < 3) {
+    return { error: 'Usage: fetch-raw-story.js [--force] <org-url> <project> <work-item-id> [<spec-dir>]' };
+  }
+  const [orgUrl, project, idStr, specDirArg] = positional;
+  const id = Number(idStr);
+  if (!Number.isInteger(id) || id <= 0) {
+    return { error: 'ERROR: work-item-id must be a positive integer' };
+  }
+  const org = parseOrg(orgUrl);
+  if (!org) {
+    return { error: `ERROR: cannot extract org name from "${orgUrl}". Expected https://<org>.visualstudio.com/ or https://dev.azure.com/<org>/` };
+  }
+  return { opts: { org, orgUrl, project, id, specDirArg, force } };
+}
+
+if (require.main === module) {
+  const parsed = parseCliArgs(process.argv.slice(2));
+  if (parsed.error) {
+    console.error(parsed.error);
+    process.exit(2);
+  }
+  main(parsed.opts).catch(err => {
+    console.error(`fetch-raw-story: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  main,
+  parseCliArgs,
+  parseOrg,
+  findParentId,
+  extractSprint,
+  isMatchingBranch,
+  extractBranches,
+  extractPRRefs,
+  refNameToBranch,
+  normalizePRStatus,
+  collectLinkedDevelopment,
+  isSystemComment,
+  htmlToMarkdown,
+  convertImg,
+  decodeAttachmentBlob,
+  chooseFilename,
+  extractImageManifest,
+  payloadUnchanged,
+  removeStaleImages,
+  renderRawStory,
+};
