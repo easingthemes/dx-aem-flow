@@ -236,7 +236,9 @@ class Scaffold {
     const libDir = path.join(this.dxPlugin, 'data', 'lib');
     if (!fs.existsSync(libDir)) return;
     for (const file of fs.readdirSync(libDir)) {
-      if (!file.endsWith('.sh')) continue;
+      // .sh helpers + .js helpers; exclude tests and fixtures (dev-only artifacts).
+      if (!/\.(sh|js)$/.test(file)) continue;
+      if (file.endsWith('.test.js')) continue;
       this.copyFile(path.join(libDir, file), `.ai/lib/${file}`, { executable: true });
     }
   }

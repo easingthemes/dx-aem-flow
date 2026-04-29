@@ -1,0 +1,45 @@
+{
+  "id": 4242,
+  "fields": {
+    "System.Title": "Add fancy widget to checkout flow",
+    "System.WorkItemType": "User Story",
+    "System.State": "Active",
+    "System.AssignedTo": { "displayName": "Alex Sample", "uniqueName": "alex@example.com" },
+    "System.AreaPath": "MyOrg\\Web",
+    "System.IterationPath": "MyOrg\\Web\\Sprint41",
+    "System.Tags": "frontend; sprint41",
+    "Microsoft.VSTS.Common.Priority": 2,
+    "System.Description": "<p>Story body with <strong>bold</strong> text.</p><p>An embedded image: <img src=\"https://dev.azure.com/myorg/_apis/wit/attachments/aaaa1111-bbbb-2222-cccc-333344445555?fileName=mockup.png\" alt=\"mockup\"></p><ul><li>One</li><li>Two</li></ul>",
+    "Microsoft.VSTS.Common.AcceptanceCriteria": "<ol><li>Widget is visible on checkout</li><li>Widget responds to clicks</li></ol>",
+    "Custom.BusinessBenefits": "<p>Higher conversion.</p>",
+    "Custom.UIDesigns": ""
+  },
+  "multilineFieldsFormat": {
+    "System.Description": "html",
+    "Microsoft.VSTS.Common.AcceptanceCriteria": "html",
+    "Custom.BusinessBenefits": "html"
+  },
+  "relations": [
+    {
+      "rel": "System.LinkTypes.Hierarchy-Reverse",
+      "url": "https://dev.azure.com/myorg/_apis/wit/workItems/4000"
+    },
+    {
+      "rel": "ArtifactLink",
+      "url": "vstfs:///Git/Ref/proj-guid%2frepo-guid%2fGBfeature%2F4242-fancy-widget"
+    },
+    {
+      "rel": "ArtifactLink",
+      "url": "vstfs:///Git/PullRequestId/proj-guid%2frepo-guid%2f12345"
+    },
+    {
+      "rel": "ArtifactLink",
+      "url": "vstfs:///Git/PullRequestId/proj-guid%2frepo-guid%2f12346"
+    },
+    {
+      "rel": "AttachedFile",
+      "url": "https://dev.azure.com/myorg/_apis/wit/attachments/dddd4444-eeee-5555-ffff-666677778888?fileName=screenshot.png",
+      "attributes": { "name": "screenshot.png", "resourceSize": 12345 }
+    }
+  ]
+}
