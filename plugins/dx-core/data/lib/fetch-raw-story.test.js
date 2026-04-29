@@ -316,6 +316,54 @@ test('renderRawStory — full integration produces expected sections', () => {
   assert.match(md, /Parent body\./);
 });
 
+test('validate-image.sh — rejects vision-unsafe formats, accepts PNG', () => {
+  // The `fetchImages` loop shells out to `.ai/lib/validate-image.sh` to
+  // pre-screen each saved file before the model Reads it. If this helper
+  // ever stops rejecting SVG/BMP/etc., dx-req step 8e will hit
+  // `API Error: 400 — Could not process image` again. Lock down the
+  // contract here so a future edit can't quietly weaken the filter.
+  const { execFileSync } = require('child_process');
+  const validator = path.join(__dirname, 'validate-image.sh');
+  assert.ok(fs.existsSync(validator), 'validate-image.sh must ship next to fetch-raw-story.js');
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fetchraw-validate-'));
+  try {
+    // Tiny 1x1 transparent PNG
+    const tinyPng = Buffer.from(
+      '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489' +
+      '0000000d49444154789c63000100000500010d0a2db40000000049454e44ae426082',
+      'hex'
+    );
+    fs.writeFileSync(path.join(tmp, 'good.png'), tinyPng);
+    fs.writeFileSync(path.join(tmp, 'icon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+    fs.writeFileSync(path.join(tmp, 'empty.png'), '');
+
+    const run = (file) => {
+      try {
+        execFileSync('bash', [validator, file], { stdio: ['ignore', 'ignore', 'pipe'] });
+        return { status: 0, stderr: '' };
+      } catch (e) {
+        return { status: e.status, stderr: String(e.stderr || '') };
+      }
+    };
+
+    // PNG should pass
+    assert.equal(run(path.join(tmp, 'good.png')).status, 0);
+
+    // SVG must be rejected with exit 1 + a `skip:` reason on stderr
+    const svgRes = run(path.join(tmp, 'icon.svg'));
+    assert.equal(svgRes.status, 1);
+    assert.match(svgRes.stderr, /skip:.*unsupported MIME/);
+
+    // Empty file rejected
+    const emptyRes = run(path.join(tmp, 'empty.png'));
+    assert.equal(emptyRes.status, 1);
+    assert.match(emptyRes.stderr, /skip:.*empty/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('parseCliArgs — happy + error paths', () => {
   // Missing args
   assert.match(lib.parseCliArgs([]).error, /Usage:/);
