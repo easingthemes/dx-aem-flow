@@ -124,6 +124,12 @@
 | 95 | Coordinator observability via `context-timeline` hook | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#coordinator-observability](todo-subagent-improvements.md#coordinator-observability--context-timeline-hook) — recommend external `aitmpl.com` hook for fan-out coordinators |
 | 96 | Document `/fork` slash command alongside fork env var | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#on-demand-fork](todo-subagent-improvements.md#on-demand-fork-slash-command-complement-to-env-var) — surgical per-invocation forking; complements TODO #84 |
 
-**Counts:** 96 total — 17 done, 63 open, 4 blocked, 9 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
+| 97 | Cursor SDK provider in `pipeline-agent.js` | Medium | Open | 2026-04-29 | [todo-cursor-sdk.md#provider-abstraction](todo-cursor-sdk.md#provider-abstraction-in-pipeline-agentjs) — `DX_AGENT_PROVIDER=cursor` lets dx-automation pipelines run on `@cursor/sdk` instead of `@anthropic-ai/claude-agent-sdk` |
+| 98 | Cursor Cloud Agents API path from Lambda router | Medium | Open | 2026-04-29 | [todo-cursor-sdk.md#cloud-agents-api](todo-cursor-sdk.md#cloud-agents-api-path-from-lambda-router) — `POST /v1/agents` with `cloud: { repos, autoCreatePR: true }` collapses ADO pipeline + VM + checkout + PR-creation into one HTTPS call |
+| 99 | Adopt `agent-kanban` shape for Hub V2 (TODO #42 enabler) | Low | Watch | 2026-04-29 | [todo-cursor-sdk.md#agent-kanban](todo-cursor-sdk.md#adopt-agent-kanban-shape-for-hub-status-ui-todo-42-enabler) — cookbook Linear-style board is a near-1:1 match for Hub V2 phase tracking |
+| 100 | Cursor SDK skill / MCP compatibility POC | Medium | Open | 2026-04-29 | [todo-cursor-sdk.md#poc](todo-cursor-sdk.md#verify-cursor-sdk-skill--mcp-compatibility-poc) — verify `effort`, `paths`, `agent`, `context: fork` frontmatter and prefixed MCP tool names work via `@cursor/sdk` |
+
+**Counts:** 100 total — 17 done, 67 open, 4 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
 
 Last platform state research: [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md)
+Latest SDK / cookbook research: [2026-04-29-cursor-sdk-investigation.md](../research/2026-04-29-cursor-sdk-investigation.md)
