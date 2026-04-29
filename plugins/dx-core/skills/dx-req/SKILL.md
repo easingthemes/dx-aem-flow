@@ -518,10 +518,16 @@ This phase spawns parallel Explore subagents for codebase searching. Read `refer
 2b. **Read AEM Component Discovery** — If `.ai/project/component-discovery.md` exists, read it. For each component named in `explain.md` or `raw-story.md`, extract its entry (dialog fields, variants, pages, authored values). Append to `$CONTEXT` as `$AEM_CONTEXT`. This enriches all 4 subagents with field semantics and variant awareness without any additional MCP calls.
 3. **Identify search targets** — component/feature names, class patterns, property names, resource types, endpoint paths, keywords
 4. **Check existing output** — if `research.md` exists, check staleness (title match, files still exist, explain.md changed). If current → skip.
-5. **Dispatch 4 parallel Explore subagents:**
-   - **Agent 1: UI Layer** — templates, views, config/dialog files, frontend components
-   - **Agent 2: Models & Data** — model/entity classes, properties, service dependencies
-   - **Agent 3: Services & API** — services, exporters, endpoints, config interfaces
+4b. **Pick a research profile** — read `references/research-patterns.md` ("Adaptive Research Scope"). Resolve in this order: `DX_RESEARCH_PROFILE` env var → `research.profile` in `.ai/config.yaml` → `auto` heuristic from share-plan.md / explain.md scope. Default `auto` selects:
+   - `minimal` for copy / config / single-property tweaks (≤3 requirements, no service or model work)
+   - `frontend` for FE-only changes
+   - `backend` for API/service-only changes
+   - `full` for Medium/Large stories or anything touching backend + frontend
+   Print: `Phase 4: research profile = <profile> (<reason>)`. This is the dominant Phase 1 context cost — picking `minimal` instead of `full` saves ~400k tokens on a typical run (issue #136).
+5. **Dispatch the agents picked by the profile, in parallel.** Always pass the per-agent output budget (≤800 words, ≤10 files, no code >5 lines, early-exit) — see `references/research-patterns.md` "Per-Agent Output Budget":
+   - **Agent 1: UI Layer** — templates, views, config/dialog files, frontend components *(skipped in `backend` profile)*
+   - **Agent 2: Models & Data** — model/entity classes, properties, service dependencies *(skipped in `minimal` profile)*
+   - **Agent 3: Services & API** — services, exporters, endpoints, config interfaces *(skipped in `minimal` and `frontend` profiles)*
    - **Agent 4: Tests & Fixtures** — test classes, fixtures, coverage gaps
 5b. **AEM Discovery Fallback** — If `component-discovery.md` is missing, stale (>7 days), or doesn't cover a component named in `explain.md`, dispatch a 5th parallel agent (inline, not a named agent file) that queries AEM QA via `mcp__plugin_dx-aem_AEM__getNodeContent` and `mcp__plugin_dx-aem_AEM__searchContent` for the missing components only. Agent receives: component names, `aem.author-url-qa`, `aem.component-path` from config. Appends results to the synthesis. This is a safety net — if aem-init was run properly, Layer 1 (step 2b) covers it.
 6. **Synthesize into research.md** — follow `.ai/templates/spec/research.md.template` (includes provenance frontmatter — use confidence `high`; downgrade to `medium` if agents failed and fell back to partial results). Merge ticket-research data. Include Existing Implementation Check (MANDATORY). **Append `## AEM Component Intelligence` section** with per-component entries from `$AEM_CONTEXT` (or Layer 2 fallback): dialog fields with labels, variants (this repo + other repos), pages, field semantics (authored values revealing what each field actually contains). If no AEM data available, omit section.

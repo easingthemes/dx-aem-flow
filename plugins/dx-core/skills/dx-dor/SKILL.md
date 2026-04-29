@@ -78,7 +78,9 @@ digraph dx_dor {
 ### Fetch DoR wiki
 
 - Read `references/wiki-parsing.md` for the full parsing and fallback chain logic
-- Fetch the wiki page using the URL from config (`scm.wiki-dor-url`) or Confluence (`confluence.dor-page-title`)
+- **Cache first:** check `.ai/cache/dor-checklist.md` (TTL 24h, override via `dor.cache-ttl-seconds`). If hit, skip the MCP call entirely — the checklist rarely changes and a tree-traversal `wiki_get_page` against a parent section pulls ~270kB of JSON (≈65–80k tokens) into the parent thread. This is the second-largest Phase 1 context cost (issue #136).
+- **Cache miss:** fetch the wiki page using the URL from config (`scm.wiki-dor-url` — preferred, no tree traversal) or Confluence (`confluence.dor-page-title`). If URL resolution fails, use `wiki_search` with the page title — never `wiki_get_page` against a parent section. If a tree fetch is genuinely needed, dispatch it to a subagent so the raw JSON never lands here.
+- Write the resolved body to `.ai/cache/dor-checklist.md` with metadata in `.ai/cache/dor-checklist.meta.json`
 
 ### Existing [DoRAgent] comment?
 
