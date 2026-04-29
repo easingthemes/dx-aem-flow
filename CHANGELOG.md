@@ -1,3 +1,10 @@
+## [2.106.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.1...v2.106.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* **dx-req,dx-dor:** cap Phase 1 context — adaptive research scope + DoR checklist cache ([#136](https://github.com/easingthemes/dx-aem-flow/issues/136)) ([#139](https://github.com/easingthemes/dx-aem-flow/issues/139)) ([54f1842](https://github.com/easingthemes/dx-aem-flow/commit/54f184290057fa37c9df0a37f1b6214a3ae688e4))
+
 ## [2.106.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.0...v2.106.1) (2026-04-29)
 
 
