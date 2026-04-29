@@ -1,0 +1,475 @@
+#!/usr/bin/env node
+// fetch-raw-story.js — Fetch ADO work item + comments via @azure-devops/mcp,
+// convert HTML to markdown, and write raw-story.md WITHOUT routing the
+// work-item JSON through an LLM context.
+//
+// Why this exists:
+//   The dx-req Phase 1 flow used to call wit_get_work_item / wit_list_work_item_comments
+//   from the LLM, which forced the entire payload (often 50-200kB of HTML) into
+//   model context just to be re-emitted as markdown. This script bypasses the
+//   model: it spawns @azure-devops/mcp directly, talks JSON-RPC over stdio,
+//   and renders raw-story.md from disk. The skill afterwards only Reads the
+//   produced markdown — typically a tenth of the original payload.
+//
+// Auth:
+//   @azure-devops/mcp uses interactive OAuth by default (browser flow) and
+//   caches the token via MSAL on disk. When Claude Code's MCP session has
+//   already cached a token, this script reuses it — no second prompt. No az
+//   CLI needed; no PAT.
+//
+// Scope (v1):
+//   - Tools called: wit_get_work_item (main + parent if hierarchy-reverse exists),
+//     wit_list_work_item_comments.
+//   - Linked branches are extracted from artifact relations directly (no extra MCP call).
+//   - PR detail (git_get_pull_request) and image fetching (wit_get_work_item_attachment)
+//     are out of scope — the calling skill handles those after this script runs.
+//
+// Usage:
+//   node .ai/lib/fetch-raw-story.js <org-url> <project> <work-item-id> [<spec-dir>]
+//
+// If <spec-dir> is omitted, the script derives it from the fetched title via
+// `bash .ai/lib/dx-common.sh slugify <id> "<title>"` and creates
+// `.ai/specs/<id>-<slug>/` under the current working directory. The chosen
+// spec dir is printed on the last line of stdout as `SPEC_DIR=<path>` so the
+// caller can capture it.
+//
+// Outputs (under <spec-dir>):
+//   - raw-workitem.json  full ADO response (debug / re-run cache)
+//   - raw-story.md       structured markdown — same shape produced by dx-req Phase 1
+//   - .sprint            extracted sprint name (e.g. "Sprint 41")
+
+'use strict';
+
+const { spawn, execFileSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const argv = process.argv.slice(2);
+if (argv.length < 3) {
+  console.error('Usage: fetch-raw-story.js <org-url> <project> <work-item-id> [<spec-dir>]');
+  process.exit(2);
+}
+const [orgUrl, project, idStr, specDirArg] = argv;
+let specDir = specDirArg;
+const id = Number(idStr);
+if (!Number.isInteger(id) || id <= 0) {
+  console.error('ERROR: work-item-id must be a positive integer');
+  process.exit(2);
+}
+
+const org = parseOrg(orgUrl);
+if (!org) {
+  console.error(`ERROR: cannot extract org name from "${orgUrl}". Expected https://<org>.visualstudio.com/ or https://dev.azure.com/<org>/`);
+  process.exit(2);
+}
+
+main().catch(err => {
+  console.error(`fetch-raw-story: ${err.message}`);
+  process.exit(1);
+});
+
+async function main() {
+  const client = new McpClient(['npx', '-y', '@azure-devops/mcp', org]);
+  await client.start();
+
+  const wi = await client.callTool('wit_get_work_item', { project, id, expand: 'all' });
+  const commentsRaw = await client.callTool('wit_list_work_item_comments', { project, workItemId: id });
+  const comments = Array.isArray(commentsRaw) ? commentsRaw : (commentsRaw && commentsRaw.comments) || [];
+
+  let parent = null;
+  const parentId = findParentId(wi);
+  if (parentId) {
+    try {
+      parent = await client.callTool('wit_get_work_item', { project, id: parentId });
+    } catch (e) {
+      console.error(`fetch-raw-story: parent #${parentId} fetch failed (${e.message}) — continuing without parent context`);
+    }
+  }
+
+  await client.stop();
+
+  if (!specDir) {
+    const title = (wi && wi.fields && wi.fields['System.Title']) || '';
+    if (!title) {
+      console.error('ERROR: work item has no title; cannot derive spec dir. Pass <spec-dir> explicitly.');
+      process.exit(1);
+    }
+    specDir = path.join('.ai', 'specs', deriveSlug(id, title));
+  }
+  fs.mkdirSync(specDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(specDir, 'raw-workitem.json'),
+    JSON.stringify({ workItem: wi, comments, parent }, null, 2)
+  );
+
+  const sprint = extractSprint(wi);
+  if (sprint) fs.writeFileSync(path.join(specDir, '.sprint'), sprint + '\n');
+
+  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id });
+  fs.writeFileSync(path.join(specDir, 'raw-story.md'), md);
+
+  const branchCount = extractBranches(wi, id).length;
+  console.log(
+    `fetch-raw-story: wrote ${path.join(specDir, 'raw-story.md')} ` +
+    `(${md.length} bytes, ${comments.length} comments, ${branchCount} matching branches` +
+    (parent ? `, parent #${parent.id}` : '') + ')'
+  );
+  // Last line — parseable by the calling skill: `SPEC_DIR=$(node fetch-raw-story.js ... | tail -1 | cut -d= -f2)`
+  console.log(`SPEC_DIR=${specDir}`);
+}
+
+// Shell out to the project's slugify helper so we don't duplicate slug logic
+// here. Falls back to a minimal in-process implementation if the helper is
+// missing (e.g. running outside an initialized project).
+function deriveSlug(id, title) {
+  const helper = path.join('.ai', 'lib', 'dx-common.sh');
+  if (fs.existsSync(helper)) {
+    try {
+      const out = execFileSync('bash', [helper, 'slugify', String(id), title], { encoding: 'utf8' });
+      const trimmed = out.trim();
+      if (trimmed) return trimmed;
+    } catch (e) {
+      console.error(`fetch-raw-story: slugify helper failed (${e.message}); using fallback`);
+    }
+  }
+  // Fallback: 4-word kebab-case slug, no stop-word filtering.
+  const slug = title
+    .toLowerCase()
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 4)
+    .join('-');
+  return `${id}-${slug}`;
+}
+
+// ------------------------------------------------------------------
+// MCP stdio JSON-RPC client (line-delimited)
+// ------------------------------------------------------------------
+
+class McpClient {
+  constructor(cmd) {
+    this.cmd = cmd;
+    this.proc = null;
+    this.buffer = '';
+    this.nextId = 1;
+    this.pending = new Map();
+  }
+
+  async start() {
+    const [bin, ...args] = this.cmd;
+    this.proc = spawn(bin, args, { stdio: ['pipe', 'pipe', 'pipe'], env: process.env });
+    this.proc.stdout.setEncoding('utf8');
+    this.proc.stdout.on('data', chunk => this._onData(chunk));
+    this.proc.stderr.setEncoding('utf8');
+    this.proc.stderr.on('data', d => process.stderr.write(`[ado-mcp] ${d}`));
+    this.proc.on('error', err => this._failAll(err));
+    this.proc.on('exit', code => {
+      if (this.pending.size) this._failAll(new Error(`MCP process exited with code ${code} before answering`));
+    });
+
+    await this._send('initialize', {
+      protocolVersion: '2025-03-26',
+      capabilities: { tools: {} },
+      clientInfo: { name: 'dx-fetch-raw-story', version: '1.0.0' },
+    });
+    this._sendNotification('notifications/initialized', {});
+  }
+
+  stop() {
+    return new Promise(resolve => {
+      if (!this.proc || this.proc.killed) return resolve();
+      this.proc.once('close', () => resolve());
+      try { this.proc.stdin.end(); } catch (_) {}
+      const timer = setTimeout(() => { try { this.proc.kill(); } catch (_) {} resolve(); }, 5000);
+      timer.unref();
+    });
+  }
+
+  async callTool(name, args) {
+    const result = await this._send('tools/call', { name, arguments: args });
+    if (result && result.isError) {
+      const msg = (result.content || []).map(c => c.text || '').join(' ').trim();
+      throw new Error(`tool ${name} returned error: ${msg || JSON.stringify(result)}`);
+    }
+    const content = (result && result.content) || [];
+    const text = content.find(c => c.type === 'text');
+    if (!text) return result;
+    try { return JSON.parse(text.text); } catch (_) { return text.text; }
+  }
+
+  _onData(chunk) {
+    this.buffer += chunk;
+    let idx;
+    while ((idx = this.buffer.indexOf('\n')) !== -1) {
+      const line = this.buffer.slice(0, idx).trim();
+      this.buffer = this.buffer.slice(idx + 1);
+      if (!line) continue;
+      let msg;
+      try { msg = JSON.parse(line); } catch (_) { continue; }
+      if (msg.id != null && this.pending.has(msg.id)) {
+        const { resolve, reject } = this.pending.get(msg.id);
+        this.pending.delete(msg.id);
+        if (msg.error) reject(new Error(`MCP error ${msg.error.code}: ${msg.error.message}`));
+        else resolve(msg.result);
+      }
+    }
+  }
+
+  _send(method, params) {
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.proc.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+    });
+  }
+
+  _sendNotification(method, params) {
+    this.proc.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+  }
+
+  _failAll(err) {
+    for (const { reject } of this.pending.values()) reject(err);
+    this.pending.clear();
+  }
+}
+
+// ------------------------------------------------------------------
+// ADO field helpers
+// ------------------------------------------------------------------
+
+function parseOrg(url) {
+  if (!url) return null;
+  const u = url.replace(/\/+$/, '');
+  let m = u.match(/dev\.azure\.com\/([^\/]+)/);
+  if (m) return m[1];
+  m = u.match(/https?:\/\/([^.]+)\.visualstudio\.com/);
+  if (m) return m[1];
+  return u.split('/').filter(Boolean).pop() || null;
+}
+
+function findParentId(wi) {
+  for (const r of (wi && wi.relations) || []) {
+    if (r.rel !== 'System.LinkTypes.Hierarchy-Reverse') continue;
+    const m = (r.url || '').match(/\/workItems\/(\d+)/);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+
+function extractSprint(wi) {
+  const ip = wi && wi.fields && wi.fields['System.IterationPath'];
+  if (!ip) return null;
+  const last = ip.split('\\').pop().split('/').pop();
+  const m = last.match(/^Sprint(\d+)$/);
+  return m ? `Sprint ${m[1]}` : last;
+}
+
+function isMatchingBranch(name, id) {
+  return new RegExp(`(?:^|[\\/_-])${id}(?:[\\/_-]|$)`).test(name);
+}
+
+function extractBranches(wi, id) {
+  const out = [];
+  for (const r of (wi && wi.relations) || []) {
+    if (r.rel !== 'ArtifactLink') continue;
+    const url = r.url || '';
+    if (!url.startsWith('vstfs:///Git/Ref/')) continue;
+    const decoded = decodeURIComponent(url);
+    const m = decoded.match(/\/GB(.+)$/);
+    if (!m) continue;
+    const branchName = m[1];
+    if (isMatchingBranch(branchName, id)) out.push({ branchName });
+  }
+  return out;
+}
+
+function isSystemComment(c) {
+  const text = String((c && c.text) || '');
+  if (!text.trim()) return true;
+  if (/^State changed from /i.test(text)) return true;
+  if (/^Assigned To changed from /i.test(text)) return true;
+  return false;
+}
+
+// ------------------------------------------------------------------
+// HTML to Markdown — rules from references/html-conversion.md
+// ------------------------------------------------------------------
+
+function htmlToMarkdown(html) {
+  if (!html) return '';
+  let s = String(html).replace(/\r\n/g, '\n');
+
+  s = s.replace(/<!--[\s\S]*?-->/g, '');
+  s = s.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, body) => convertTable(body));
+  s = s.replace(/<br\s*\/?>/gi, '\n');
+  s = s.replace(/<\/?(?:b|strong)>/gi, '**');
+  s = s.replace(/<\/?(?:i|em)>/gi, '*');
+  s = s.replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, t) => `[${stripTags(t).trim()}](${href})`);
+  s = s.replace(/<img\b[^>]*?>/gi, m => convertImg(m));
+
+  for (let i = 1; i <= 6; i++) {
+    const re = new RegExp(`<h${i}\\b[^>]*>([\\s\\S]*?)</h${i}>`, 'gi');
+    s = s.replace(re, (_, body) => `\n\n${'#'.repeat(i)} ${stripTags(body).trim()}\n\n`);
+  }
+
+  s = s.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (_, body) => convertList(body, 'ol'));
+  s = s.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, body) => convertList(body, 'ul'));
+
+  s = s.replace(/<span[^>]*data-vss-mention[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  s = s.replace(/<\/(?:p|div)>/gi, '\n\n');
+  s = s.replace(/<(?:p|div)[^>]*>/gi, '');
+  s = s.replace(/<[^>]+>/g, '');
+
+  s = decodeEntities(s);
+  s = s.replace(/[ \t]+\n/g, '\n');
+  s = s.replace(/\n{3,}/g, '\n\n');
+
+  return s.trim();
+}
+
+function convertImg(tag) {
+  const src = (tag.match(/src="([^"]+)"/i) || [, ''])[1];
+  const alt = (tag.match(/alt="([^"]*)"/i) || [, 'image'])[1];
+  return `![${alt}](${src})`;
+}
+
+function convertList(body, type) {
+  const items = [];
+  body.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_, item) => {
+    items.push(stripTags(item).replace(/\s+/g, ' ').trim());
+  });
+  if (!items.length) return '';
+  const fmt = type === 'ol'
+    ? items.map((t, i) => `${i + 1}. ${t}`)
+    : items.map(t => `- ${t}`);
+  return '\n' + fmt.join('\n') + '\n';
+}
+
+function convertTable(body) {
+  const rows = [];
+  body.replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, (_, row) => {
+    const cells = [];
+    row.replace(/<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi, (_, c) => {
+      cells.push(stripTags(c).replace(/\s+/g, ' ').trim());
+    });
+    if (cells.length) rows.push(cells);
+  });
+  if (!rows.length) return '';
+  const head = rows[0];
+  const sep = head.map(() => '---');
+  const fmt = r => `| ${r.join(' | ')} |`;
+  return ['', fmt(head), fmt(sep), ...rows.slice(1).map(fmt), ''].join('\n');
+}
+
+function stripTags(s) { return String(s).replace(/<[^>]+>/g, ''); }
+
+function decodeEntities(s) {
+  return s
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+// ------------------------------------------------------------------
+// raw-story.md renderer
+// ------------------------------------------------------------------
+
+function renderRawStory({ wi, comments, parent, orgUrl, project, id }) {
+  const f = (wi && wi.fields) || {};
+  const title = f['System.Title'] || '';
+  const type = f['System.WorkItemType'] || '';
+  const state = f['System.State'] || '';
+  const priority = f['Microsoft.VSTS.Common.Priority'] != null ? String(f['Microsoft.VSTS.Common.Priority']) : '';
+  const assignedRaw = f['System.AssignedTo'];
+  const assigned = (assignedRaw && (assignedRaw.displayName || assignedRaw)) || 'Unassigned';
+  const area = f['System.AreaPath'] || '';
+  const iter = f['System.IterationPath'] || '';
+  const tags = f['System.Tags'] || 'None';
+  const desc = htmlToMarkdown(f['System.Description'] || '');
+  const ac = htmlToMarkdown(f['Microsoft.VSTS.Common.AcceptanceCriteria'] || '');
+  const benefits = htmlToMarkdown(f['Custom.BusinessBenefits'] || '');
+  const designs = htmlToMarkdown(f['Custom.UIDesigns'] || '');
+
+  const orgBase = orgUrl.replace(/\/+$/, '');
+  const adoLink = `${orgBase}/${encodeURIComponent(project)}/_workitems/edit/${id}`;
+
+  const out = [];
+  out.push('---');
+  out.push('provenance:');
+  out.push('  agent: dx-req');
+  out.push('  model: script');
+  out.push(`  created: ${new Date().toISOString()}`);
+  out.push('  confidence: high');
+  out.push('  verified: false');
+  out.push('---');
+  out.push(`# ${title}`);
+  out.push('');
+  out.push(`**ADO:** [#${id}](${adoLink})`);
+  out.push('');
+  out.push(`**Type:** ${type} | **State:** ${state}${priority ? ` | **Priority:** ${priority}` : ''}`);
+  out.push(`**Assigned To:** ${typeof assigned === 'string' ? assigned : (assigned.displayName || 'Unassigned')}`);
+  out.push(`**Area Path:** ${area}`);
+  out.push(`**Iteration Path:** ${iter}`);
+  out.push(`**Tags:** ${tags}`);
+  out.push('');
+  out.push('---');
+
+  if (desc)     pushSection(out, 'Description', desc);
+  if (ac)       pushSection(out, 'Acceptance Criteria', ac);
+  if (benefits) pushSection(out, 'Business Benefits', benefits);
+  if (designs)  pushSection(out, 'UI Designs', designs);
+
+  const branches = extractBranches(wi, id);
+  if (branches.length) {
+    out.push('');
+    out.push('---');
+    out.push('');
+    out.push('## Linked Development');
+    out.push('### Branches');
+    for (const b of branches) out.push(`- \`${b.branchName}\``);
+  }
+
+  const humanComments = (comments || []).filter(c => !isSystemComment(c));
+  if (humanComments.length) {
+    out.push('');
+    out.push('---');
+    out.push('');
+    out.push('## Comments');
+    for (const c of humanComments) {
+      const author = (c.createdBy && (c.createdBy.displayName || c.createdBy.uniqueName)) || 'Unknown';
+      const date = c.createdDate ? c.createdDate.split('T')[0] : '';
+      out.push('');
+      out.push(`### ${author}${date ? ` — ${date}` : ''}`);
+      out.push(htmlToMarkdown(c.text));
+    }
+  }
+
+  if (parent) {
+    const pf = parent.fields || {};
+    const pdesc = htmlToMarkdown(pf['System.Description'] || '');
+    out.push('');
+    out.push('---');
+    out.push('');
+    out.push('## Parent Feature Context');
+    out.push(`**#${parent.id}: ${pf['System.Title'] || ''}**`);
+    if (pdesc) {
+      out.push('');
+      out.push(pdesc);
+    }
+  }
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
+}
+
+function pushSection(out, heading, body) {
+  out.push('');
+  out.push(`## ${heading}`);
+  out.push(body);
+}
