@@ -1,3 +1,10 @@
+## [2.106.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.2...v2.106.3) (2026-04-29)
+
+
+### Bug Fixes
+
+* **dx-req:** pre-validate ADO images before Read to avoid 400 vision errors ([#138](https://github.com/easingthemes/dx-aem-flow/issues/138)) ([e3d1c9a](https://github.com/easingthemes/dx-aem-flow/commit/e3d1c9a7fec1e522937b0ef8158ceb31bad80708))
+
 ## [2.106.2](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.1...v2.106.2) (2026-04-29)
 
 
