@@ -94,7 +94,7 @@ Earlier in window: plugin system became first-class with sub-agent addressing, t
 | Opus 4.7 xhigh tier | Claude Code | v2.1.111 | `dx-step-verify`, `dx-pr-review`, `dx-plan` |
 | Agent `mcpServers` frontmatter | Claude Code | v2.1.117 | `dx-aem` agents (isolate AEM/Chrome access) |
 | MCP tool hooks (`type: "mcp_tool"`) | Claude Code | v2.1.118 | `dx-automation` ADO/Jira automation |
-| Forked subagents (`CLAUDE_CODE_FORK_SUBAGENT=1`) | Claude Code | v2.1.117 | Pilot with `dx-ticket-analyze`, `aem-page-finder` |
+| Forked subagents (`CLAUDE_CODE_FORK_SUBAGENT=1` env var, `/fork` slash command) | Claude Code | v2.1.117 | Pilot with `dx-ticket-analyze`, `aem-page-finder`. Env var = session-wide blanket inheritance; `/fork` = surgical per-call inheritance (prefer for coordinators that mix context-heavy verifiers with stateless searchers). |
 | Hook `once` field | Claude Code | recent | One-shot init scripts |
 | HTTP hooks | Copilot CLI | v1.0.35 | `dx-automation` Lambda webhooks |
 | `${PLUGIN_ROOT}` / `${COPILOT_PLUGIN_ROOT}` env vars | Copilot CLI | v1.0.26 | Replace path-derivation hacks in hook scripts |
