@@ -231,10 +231,19 @@ Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` 
 
 **ADO fast path:** the script in step 2 already handled **8a–8d** — it extracted
 the image manifest, called `wit_get_work_item_attachment` for each GUID,
-applied the size + MIME filters, named files per the policy below, wrote them
-to `$SPEC_DIR/images/`, generated `images/INDEX.md`, and rewrote inline `<img
-src=...>` URLs in `raw-story.md` to local paths. Skip 8a–8d and jump to **8e**
+applied the size + extension filters (vision-API-supported formats only:
+`png/jpg/jpeg/gif/webp`), ran `.ai/lib/validate-image.sh` on each saved file
+to reject anything Claude's vision API can't process (wrong MIME, > 5 MB,
+> 8000 px on a side), named files per the policy below, wrote them to
+`$SPEC_DIR/images/`, generated `images/INDEX.md` (downloaded table + a
+`## Skipped` section for rejected files), and rewrote inline `<img src=...>`
+URLs in `raw-story.md` to local paths. Skip 8a–8d and jump to **8e**
 (images.md generation — vision pass).
+
+Files listed under `## Skipped` in INDEX.md were either filtered before
+download or rejected by the validator. They are NOT on disk and MUST NOT
+be Read in step 8e — attempting to Read a vision-unsafe image triggers
+`API Error: 400 — Could not process image` and aborts the entire turn.
 
 **ADO legacy / Jira:** continue with 8a–8e below.
 
@@ -271,12 +280,22 @@ The MCP returns the file as a base64 `blob`. Decode and write to `$SPEC_DIR/imag
 
 **Size guard:** discard any file whose decoded size exceeds 5 MB (keeps the repo from bloating with unexpected large attachments). Log what was discarded.
 
-**Filter:** only keep files with image MIME types inferred from extension (`png`, `jpg`/`jpeg`, `gif`, `webp`, `svg`, `bmp`). Non-image attachments (zips, PDFs, logs) are skipped — they're rare on user stories and rarely what dx-req needs.
+**Format filter (extension):** only keep files whose extension is one of `png`, `jpg`/`jpeg`, `gif`, `webp`. Non-image attachments (zips, PDFs, logs) and formats Claude's vision API does NOT accept (`svg`, `bmp`, `tiff`, `ico`, `heic`, `avif`) are skipped. SVG/BMP/etc. would cause `API Error: 400 — Could not process image` later in step 8e and abort the entire turn, so we never download them.
 
-**8c. Write `$SPEC_DIR/images/INDEX.md`** — human-readable table the model can skim without loading pixels:
+**Vision-safety validation (mandatory):** AFTER each file is written to disk, run:
+
+```bash
+bash .ai/lib/validate-image.sh "$SPEC_DIR/images/<filename>"
+```
+
+The script checks MIME (must be `image/png`, `image/jpeg`, `image/gif`, or `image/webp`), file size (≤ 5 MB), and dimensions (≤ 8000 px on a side, > 0 px). Exit 0 = safe to Read in step 8e. Exit 1 = unsafe — record the file in `INDEX.md` with status `skipped: <reason from stderr>` and **do not Read it in step 8e**. Exit 2 = usage error (treat as skip).
+
+This validator is the load-bearing fix for the "Could not process image" 400 errors: any file that fails validation here MUST NOT reach step 8e's Read call, because once that Read attaches the bytes to the conversation, the API call fails as a whole and the session is blocked. If in doubt, skip — a missing description is fixable; a blocked turn is not.
+
+**8c. Write `$SPEC_DIR/images/INDEX.md`** — human-readable summary the model can skim without loading pixels. Two sections: a table of files actually saved to disk, and a `## Skipped` list for anything filtered before download or rejected by the validator. This matches the format `fetch-raw-story.js` produces, so fast-path and legacy specs are interchangeable.
 
 ```markdown
-# Images — work item <id>
+# Images — 3 downloaded, 2 skipped
 
 | File | Source | Size | Type |
 | --- | --- | ---: | --- |
@@ -284,12 +303,18 @@ The MCP returns the file as a base64 `blob`. Decode and write to `$SPEC_DIR/imag
 | `description-2-deadc0de.png` | System.Description | 12893 | image/png |
 | `screenshot.png` | attachment | 67412 | image/png |
 
-_3 downloaded, 0 skipped._
+## Skipped
+- `logo.svg` (guid `deadbeef`, source attachment) — non-image extension .svg
+- `huge.png` (guid `cafef00d`, source Custom.UIDesigns) — >5242880 bytes post-fetch
 ```
+
+Files in the table are safe to Read in step 8e. Files in the `## Skipped` section either never reached disk or were deleted after failing `validate-image.sh` — Step 8e MUST NOT Read them, because attempting to attach a vision-unsafe image to a turn produces `API Error: 400 — Could not process image` and aborts the whole request.
 
 **8d. Map GUID → local path** — build a lookup table `{guid: "./images/<filename>"}` for use by step 10's HTML→markdown conversion. This lets inline `<img>` tags in the raw description be rewritten to relative markdown image references instead of preserving the ADO URL.
 
-**8e. Generate `$SPEC_DIR/images.md`** — read each downloaded PNG once and write a structured description. This file is the canonical textual record of what the BA's visuals contain; downstream phases (Distill, Research, Share) consume `images.md` instead of re-loading the PNGs, saving tokens and enabling Explore subagents (which can't receive image content) to benefit from visual intent.
+**8e. Generate `$SPEC_DIR/images.md`** — for each file listed in the INDEX.md **table** (i.e. saved to disk and passed validation), Read it once and write a structured description. **Do not Read anything from the `## Skipped` section** — those files either don't exist on disk or were rejected by `validate-image.sh` because they would trigger `API Error: 400 — Could not process image` and abort the entire turn. For each skipped entry, still emit a `##` section in `images.md` with `**Status:** skipped — <reason copied from INDEX.md>` so downstream phases see the placeholder; just don't attempt the Read.
+
+This file is the canonical textual record of what the BA's visuals contain; downstream phases (Distill, Research, Share) consume `images.md` instead of re-loading the PNGs, saving tokens and enabling Explore subagents (which can't receive image content) to benefit from visual intent.
 
 **Format — one `##` section per image, in manifest order:**
 
@@ -317,6 +342,11 @@ _Generated by Phase 1. Later phases should read this file rather than re-loading
 - <what this image implies must change, built, or preserved — written as actionable intent>
 **Unanswered:**
 - <what the image doesn't show that Phase 3 / human BA will need to clarify — e.g., "disabled state not pictured", "exact hex not provided">
+
+## <filename-2>.svg
+**Source:** attachment
+**Status:** skipped — unsupported MIME type image/svg+xml (vision API accepts png/jpeg/gif/webp only)
+**What it shows:** _Not described — file is preserved on disk for human review at `./images/<filename-2>.svg`._
 ```
 
 **Guidelines for Phase 1 when writing each description:**

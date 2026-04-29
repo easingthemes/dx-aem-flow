@@ -513,11 +513,41 @@ function decodeEntities(s) {
 // ------------------------------------------------------------------
 
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp']);
+
+// Anthropic's vision API accepts only PNG / JPEG / GIF / WebP. SVG, BMP,
+// TIFF, ICO, HEIC, and AVIF cause `400 invalid_request_error — Could not
+// process image` when step 8e Reads them, which aborts the entire turn.
+// We drop them upfront so the model never sees them.
+const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
 const MIME_BY_EXT = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
-  gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
+  gif: 'image/gif', webp: 'image/webp',
 };
+
+// Locate validate-image.sh next to this script (.ai/lib/) so we can run a
+// post-decode safety check on every saved file. Returns null if the helper
+// is missing — older projects that haven't re-run /dx-init won't have it.
+function findValidator() {
+  const here = path.join(__dirname, 'validate-image.sh');
+  return fs.existsSync(here) ? here : null;
+}
+
+// Run validate-image.sh on a saved file. Returns null if the file is safe
+// for Read; returns a one-line reason string if it should be skipped.
+function validateImage(filepath, validatorPath) {
+  if (!validatorPath) return null; // helper missing — fail open
+  try {
+    execFileSync('bash', [validatorPath, filepath], { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'] });
+    return null;
+  } catch (e) {
+    if (e.status === 1 || e.status === 2) {
+      const stderr = String(e.stderr || '').trim();
+      const m = stderr.match(/^skip:\s*(.+)$/m);
+      return m ? m[1] : (stderr || `validator exited ${e.status}`);
+    }
+    return `validator error: ${e.message}`;
+  }
+}
 
 async function fetchImages(client, wi, specDir, project) {
   const map = new Map();
@@ -532,6 +562,7 @@ async function fetchImages(client, wi, specDir, project) {
   const usedFilenames = new Set();
   const indexRows = [];
   const skipped = [];
+  const validatorPath = findValidator();
 
   for (const row of rows) {
     const ext = (row.filename.split('.').pop() || '').toLowerCase();
@@ -568,9 +599,20 @@ async function fetchImages(client, wi, specDir, project) {
     }
 
     const target = chooseFilename(row, ext, fieldCounters, usedFilenames);
-    usedFilenames.add(target);
-    fs.writeFileSync(path.join(specDir, 'images', target), buf);
+    const targetPath = path.join(specDir, 'images', target);
+    fs.writeFileSync(targetPath, buf);
 
+    // Vision-safety gate: extension + size already passed, but Read still
+    // rejects images >8000 px on a side or with a MIME that doesn't match
+    // the extension (e.g. a renamed BMP). Delete-on-fail keeps images/ clean.
+    const skipReason = validateImage(targetPath, validatorPath);
+    if (skipReason) {
+      try { fs.unlinkSync(targetPath); } catch { /* ignore */ }
+      skipped.push({ ...row, reason: skipReason });
+      continue;
+    }
+
+    usedFilenames.add(target);
     const localPath = `./images/${target}`;
     map.set(row.guid.toLowerCase(), localPath);
     indexRows.push({
