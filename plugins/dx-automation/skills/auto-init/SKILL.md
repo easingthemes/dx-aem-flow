@@ -6,6 +6,23 @@ argument-hint: ""
 
 You scaffold and configure AI automation for the current project. First asks whether this is the **hub** (full setup: all agents + Lambda + webhooks + AWS resources) or a **consumer** (PR + delegation-ready pipelines, using the hub's shared infrastructure). Consumer repos never deploy or modify AWS resources.
 
+## Platform Compatibility
+
+This skill scaffolds **Azure DevOps + AWS Lambda** automation. It is intentionally narrower than the rest of the dx-* and aem-* skills.
+
+| Layer | Compatibility |
+|---|---|
+| **Skill invocation** (running `/auto-init` in your terminal) | Claude Code, Copilot CLI, VS Code Chat, Codex CLI, Gemini CLI — same as any other plugin skill |
+| **Generated pipelines** (`.ai/automation/pipelines/`) | **Azure DevOps only** — pipeline YAMLs target ADO. No GitHub Actions, GitLab CI, Jenkins, or CircleCI templates exist |
+| **Generated agent runtime** (`.ai/automation/agents/`) | **AWS Lambda only** — handlers assume Lambda invocation context, Anthropic API, and AWS Secrets Manager. No Cloud Functions, Azure Functions, or self-hosted variants |
+| **Webhooks → triggers** | **ADO service hooks → API Gateway → Lambda** (hub profile). Consumer profile uses ADO build validation policy (not a service hook) |
+| **AI provider** | Anthropic Claude API direct (Lambda agents); not Bedrock, Vertex, or other providers |
+| **Tracker integration** | ADO work items + PR APIs. Jira-only projects can install dx-core but not dx-automation |
+
+**If your project uses GitHub Actions, GitLab CI, or any CI/CD other than Azure DevOps, do not run `/auto-init` — it will produce pipeline YAMLs that target the wrong platform.** dx-core (`/dx-init`) and dx-aem (`/aem-init`) work fine on any tracker/CI combination; only dx-automation is ADO-locked.
+
+This is tracked as a backlog item — see [`docs/todo/todo-automation.md` § CI/CD pipeline portability](../../../../docs/todo/todo-automation.md#cicd-pipeline-portability-non-ado) for non-ADO CI work and [`docs/todo/todo-provider-support.md`](../../../../docs/todo/todo-provider-support.md) for tracker/SCM portability (GitHub as tracker).
+
 ## Re-run Validation Protocol
 
 **CRITICAL: When auto-init is re-run, EVERY step MUST execute. NEVER stop early.** If the user chooses "Keep config", skip to Phase 2 and continue through ALL remaining phases. Each step validates:

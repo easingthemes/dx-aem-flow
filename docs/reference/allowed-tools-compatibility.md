@@ -24,6 +24,7 @@
 | **1.0.10** | **2026-03-20** | **"Suppress unknown field warnings in skill and command frontmatter"** — no more errors |
 | 1.0.11 | 2026-03-23 | No frontmatter changes |
 | 1.0.12 | 2026-03-26 | No frontmatter changes |
+| 1.0.13 – 1.0.36 | Mar–Apr 2026 | No `allowed-tools`-specific changes — see [2026-04-25 platform state update](../research/2026-04-25-platform-state-update.md) for the full Copilot CLI v1.0.14 → v1.0.36 release table |
 
 Source: [Copilot CLI changelog](https://raw.githubusercontent.com/github/copilot-cli/v1.0.12/changelog.md)
 
@@ -53,3 +54,9 @@ If a user reports this error, they need to update Copilot CLI to v1.0.10+:
 ## Key Takeaway
 
 Do NOT remove `allowed-tools` from skill files. It is a valid, standards-backed field used by Claude Code. Copilot CLI versions that reject it are outdated — the fix is updating the CLI, not changing the plugin.
+
+## Related
+
+- [2026-04-25 platform state update](../research/2026-04-25-platform-state-update.md) — full release table for Copilot CLI v1.0.14 → v1.0.36, plus matching coverage for Claude Code, Codex CLI, and Gemini CLI
+- [Agent standards landscape](../research/agent-standards-landscape-2026.md) — convergence story for AGENTS.md, Agent Skills, MCP, A2A
+- [`docs/todo/todo-cross-platform.md`](../todo/todo-cross-platform.md) — open work for first-class Codex and Gemini support

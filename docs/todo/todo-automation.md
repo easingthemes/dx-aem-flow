@@ -18,3 +18,12 @@
 **Scope:** `plugins/dx-automation/` — all `auto-*` skills, `pipeline-agent.js`, `.ai/config.yaml` schema, `.ai/automation/prompts/`.
 **Done-when:** `grep -r "budget" plugins/dx-automation/skills/auto-init/SKILL.md` returns a match AND `.ai/config.yaml` template contains an `automation.budget:` section AND `pipeline-agent.js` tracks and enforces token limits per agent run.
 **Approach:** (1) Add `automation.agents.<name>.budget:` section to config.yaml schema with monthly token cap per agent. (2) Instrument `pipeline-agent.js` to log token usage per run to a DynamoDB table or CloudWatch metric. (3) Add a pre-run budget check that skips execution if monthly cap is reached. (4) Add `/auto-budget` skill to report usage across agents. Defer until local flow is solid — this is a post-stabilization improvement.
+
+## CI/CD pipeline portability (non-ADO)
+
+**Added:** 2026-04-25
+**Problem:** dx-automation pipelines target Azure DevOps exclusively — pipeline YAMLs in `plugins/dx-automation/data/pipelines/cli/` are ADO-specific (`azure-pipelines` schema, ADO service-hook triggers, ADO task-group references). Projects on GitHub Actions, GitLab CI, Jenkins, or CircleCI cannot install dx-automation. dx-core and dx-aem are CI-agnostic — only dx-automation is locked to ADO.
+**Scope:** `plugins/dx-automation/data/pipelines/cli/`, `plugins/dx-automation/skills/auto-pipelines/`, `plugins/dx-automation/skills/auto-webhooks/` (service hook → API Gateway plumbing), `plugins/dx-automation/skills/auto-init/SKILL.md` (Platform Compatibility section already documents the constraint).
+**Done-when:** `ls plugins/dx-automation/data/pipelines/` shows at least one non-`cli/` subdirectory (e.g., `github-actions/`) AND `auto-init` Phase 2 picks the right pipeline template based on `scm.provider` from `.ai/config.yaml` AND a non-ADO project can run `/auto-init` end-to-end without producing ADO-flavored YAMLs.
+**Approach:** GitHub Actions is the highest-value second target (dx-init already has provider-aware work tracked in `todo-provider-support.md`). Lambda agent runtime stays the same — only the pipeline YAML and webhook plumbing differ. Service hook → API Gateway becomes `repository_dispatch` → API Gateway, or alternatively a workflow-side direct invoke. Defer until at least one consumer asks; current installs are ADO-only.
+
