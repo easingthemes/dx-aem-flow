@@ -4,7 +4,7 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 
 **What already works:** `plugin.json`, `marketplace.json`, SKILL.md, `.mcp.json`, hooks (`hooks.json` serves both), `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`, ToolSearch MCP discovery, `applyTo` arrays, plugin discovery via `--plugin-dir`, Open Plugins spec, Skill-to-Skill invocation (verified 2026-03-22).
 
-**Latest version:** v1.0.36 (2026-04-24). Key additions since v1.0.14 — see [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md) for the full release table:
+**Latest version:** v1.0.40 (2026-05-01). Key additions since v1.0.14 — see [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md) (delta) and [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md) for the full release table:
 - v1.0.15: postToolUseFailure hook; MCP OAuth device-code flow.
 - v1.0.16: PermissionRequest hook; MCP servers reload after login.
 - v1.0.18: **Notification hook** (agent_completion, permission_prompt, elicitation).
@@ -14,6 +14,9 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 - v1.0.32: `auto` model selection; document file attachments to prompts.
 - v1.0.35: **HTTP hook support**; `--name`/`--resume=<name>`; pattern-specific instruction files no longer inline body each turn.
 - v1.0.36: preToolUse `matcher` regex now actually filters; `~/.claude/` no longer sourced as Copilot config.
+- v1.0.37: **Location-based permission persistence default** (closes the `PERSISTED_PERMISSIONS` watch); `copilot completion`; markdown in `/ask`.
+- v1.0.39: `ctrl+x → b` background tasks; ACP slash commands `/compact`, `/context`, `/usage`, `/env`.
+- v1.0.40: **`GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP` opt-in env-var gates** (BREAKING — see section below); MCP OAuth `client_credentials`; ADO auto-detect with GitHub MCP auto-disable; subagents respect own model; `/research` uses orchestrator/subagent model; autopilot capped at 5 continuations.
 
 **Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, prompt/agent hook types. Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields. **Note:** HTTP hook type now supported as of v1.0.35.
 
@@ -77,6 +80,35 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 4. **Port Stop guard using `agentStop` event (newly available)**
 5. Audit existing `preToolUse` `matcher` patterns — v1.0.36 fixed regex matching, previously-loose patterns may now over-filter.
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6; release notes for v1.0.18, v1.0.35, v1.0.36.
+
+## Prompt-Mode Gates v1.0.40
+
+**Added:** 2026-05-01
+**Problem:** Copilot CLI v1.0.40 (released 2026-05-01) gates two previously-default behaviors behind opt-in environment variables:
+- `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` — required for `.github/hooks/hooks.json` (repo-level hooks) to load.
+- `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1` — required for project-root `.mcp.json` (workspace MCP) to load.
+
+Without these, Copilot CLI silently ignores both. This breaks our entire Copilot setup on v1.0.40+ — branch-guard hooks, Stop guards, ADO MCP, Atlassian MCP — without any error message.
+
+**Scope:**
+- `/dx-init` step 9i — Copilot setup
+- `dx-doctor` (and `aem-doctor` if applicable) — env var verification
+- `website/src/pages/setup/copilot-cli.mdx` — user-facing instruction (already updated)
+- `CLAUDE.md` § Hook System — Platform Separation (already updated)
+- ADO auto-disable side effect: v1.0.40 auto-disables the GitHub MCP server when an ADO repo is detected. Audit `dx-automation` skills for `mcp__github__` references that may now silently no-op.
+
+**Done-when:**
+- `grep -r "GITHUB_COPILOT_PROMPT_MODE" plugins/dx-core/skills/dx-init/` returns the two exports.
+- `dx-doctor` checks both env vars and warns if missing on Copilot ≥ 1.0.40.
+- A test session on Copilot v1.0.40 with the env vars unset confirms hooks/MCP do not load (negative test).
+- A test session on Copilot v1.0.40 with the env vars set confirms `Stop` guard fires and ADO MCP servers are visible.
+
+**Approach:**
+1. Add an `init-copilot-shell-exports.sh` helper invoked from `/dx-init` step 9i that detects Copilot CLI version and appends the two exports to `~/.zshrc` / `~/.bashrc` (idempotently).
+2. Add a `doctor-copilot-prompt-mode.sh` check.
+3. Update auto-init for similar handling in CI environments.
+
+**Evidence:** Copilot CLI v1.0.40 release notes (2026-05-01); [2026-05-01 platform state update](../research/2026-05-01-platform-state-update.md).
 
 ## Project MCP Discovery — CLOSED 2026-04-07
 

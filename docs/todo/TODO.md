@@ -20,7 +20,7 @@
 | 14 | Remote Figma support for CI/CD pipelines | Medium | Open | 2026-03-03 | [todo-pipeline.md#figma](todo-pipeline.md#remote-figma-for-cicd) |
 | 15 | Pipeline pause-and-resume (human-in-the-loop) | Medium | Open | 2026-03-03 | [todo-pipeline.md#pause](todo-pipeline.md#pause-and-resume) |
 | 16 | Plugin install ignores marketplace qualifier | Medium | Blocked (upstream) | 2026-03-03 | [todo-bugs.md#marketplace](todo-bugs.md#plugin-install-marketplace-qualifier) |
-| 17 | `updatedMCPToolOutput` not replacing inline image | Low | Open | 2026-03-03 | [todo-bugs.md#mcp-output](todo-bugs.md#updatedmcptooloutput-image-replacement) |
+| 17 | `updatedMCPToolOutput` not replacing inline image — re-test on 2.1.121+ | Low | Re-test | 2026-03-03 | [todo-bugs.md#mcp-output](todo-bugs.md#updatedmcptooloutput-image-replacement) — Claude Code v2.1.121 (2026-04-28) generalized `PostToolUse.updatedToolOutput` to ALL tools (was MCP-only). Likely closed; verify on dx-aem chrome-devtools-mcp screenshot hooks |
 | 18 | ~~DoR comment deduplication bug~~ | Medium | **Done** | 2026-03-22 | [todo-bugs.md#dor-dedup](todo-bugs.md#dor-comment-deduplication) — explicit `[DoRAgent]` check added to SKILL.md Phase 2 |
 | 19 | ~~SubagentStart/SubagentStop logging hooks~~ | Low | **Done** | 2026-03-03 | [todo-bugs.md#hooks](todo-bugs.md#subagent-hooks) — first-class events in Claude Code (since v2.1.x); Copilot CLI added `agentStop`/`subagentStop` (closed 2026-04-07). Verified 2026-04-25 |
 | 20 | Copilot CLI shared/ path resolution bug | Medium | Open | 2026-03-22 | [todo-copilot-cli.md#shared-paths](todo-copilot-cli.md#shared-path-resolution) |
@@ -123,7 +123,13 @@
 
 | 95 | Coordinator observability via `context-timeline` hook | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#coordinator-observability](todo-subagent-improvements.md#coordinator-observability--context-timeline-hook) — recommend external `aitmpl.com` hook for fan-out coordinators |
 | 96 | Document `/fork` slash command alongside fork env var | Low | Open | 2026-04-27 | [todo-subagent-improvements.md#on-demand-fork](todo-subagent-improvements.md#on-demand-fork-slash-command-complement-to-env-var) — surgical per-invocation forking; complements TODO #84 |
+| 97 | Wire `GITHUB_COPILOT_PROMPT_MODE_*` env vars into `/dx-init` step 9i | High | Open | 2026-05-01 | [todo-copilot-cli.md#prompt-mode-gates-v1040](todo-copilot-cli.md#prompt-mode-gates-v1040) — Copilot CLI v1.0.40 silently disables repo hooks + workspace MCP without these env vars. `/dx-init` must export `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1` to user shell profile when Copilot ≥ 1.0.40 detected |
+| 98 | Add doctor check for Copilot v1.0.40 prompt-mode env vars | Medium | Open | 2026-05-01 | [todo-copilot-cli.md#prompt-mode-gates-v1040](todo-copilot-cli.md#prompt-mode-gates-v1040) — `dx-doctor` should verify both env vars are exported when Copilot CLI ≥ 1.0.40 is detected |
+| 99 | Adopt `PostToolBatch` hook for parallel-tool correlation | Low | Watch | 2026-05-01 | [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md#newly-opened--changed) — Claude Code event fires after parallel tool batches resolve; could replace some `async: true` PostToolUse patterns |
+| 100 | Pilot `claude_code.skill_activated` OTel event | Low | Open | 2026-05-01 | [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md#newly-opened--changed) — Claude Code v2.1.126 OTel event with `invocation_trigger` (`user-slash`/`claude-proactive`/`nested-skill`); useful telemetry for `dx-automation` |
+| 101 | Update `cli-vs-chat.mdx` for VS Code 1.118 (skill-isolated subagents) | Low | **Done** | 2026-05-01 | [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md#newly-closed) — `context: fork` row updated from "Ignored" to "Experimental (1.118+)"; hooks row updated to 29 events |
+| 102 | Audit `mcp__github__` references vs ADO auto-disable (Copilot v1.0.40) | Low | Open | 2026-05-01 | [todo-copilot-cli.md#prompt-mode-gates-v1040](todo-copilot-cli.md#prompt-mode-gates-v1040) — Copilot v1.0.40 auto-disables GitHub MCP on detected ADO repos; verify `dx-automation` skills do not break |
 
-**Counts:** 96 total — 17 done, 63 open, 4 blocked, 9 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing
+**Counts:** 102 total — 18 done, 67 open, 4 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test
 
-Last platform state research: [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md)
+Last platform state research: [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md) (delta to [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md))
