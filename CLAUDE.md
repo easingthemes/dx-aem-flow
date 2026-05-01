@@ -152,11 +152,22 @@ Plugin hooks and Copilot CLI hooks are **completely separate systems** with no o
 
 | Hook source | Active in |
 |-------------|-----------|
-| Plugin `hooks/hooks.json` | Claude Code CLI only |
-| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; agentStop/subagentStop closed 2026-04-07) |
-| Agent frontmatter `hooks:` | VS Code Chat only (1.111+) |
+| Plugin `hooks/hooks.json` | Claude Code CLI only — `Stop` / `SubagentStop` events |
+| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; `agentStop`/`subagentStop` closed 2026-04-07). **v1.0.40+ requires `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` exported in shell** — without it, repo hooks are silently ignored. |
+| Agent frontmatter `hooks:` | VS Code Chat (1.111+); skill-isolated subagents experimental in 1.118+ |
 
-To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard (via `agentStop`). See the docs site (`website/`) for full details. Latest platform research: `docs/research/2026-04-25-platform-state-update.md`.
+To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard. **Event-name mapping:** Claude Code uses `Stop` / `SubagentStop`; Copilot CLI uses `agentStop` / `subagentStop`. See the docs site (`website/`) for full details.
+
+Latest platform research: `docs/research/2026-05-01-platform-state-update.md` (delta to `2026-04-25-platform-state-update.md`).
+
+**Copilot CLI v1.0.40+ shell exports** — when targeting Copilot, add these to `~/.zshrc` / `~/.bashrc`:
+
+```bash
+export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1
+export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1
+```
+
+Without `WORKSPACE_MCP`, project-root `.mcp.json` is also silently ignored.
 
 ### Hook Profiles — `DX_HOOK_PROFILE`
 
@@ -178,7 +189,11 @@ Set in your shell: `export DX_HOOK_PROFILE=minimal` to suppress informational ho
 | `if` | Fine-grained permission rule filter (evaluated before spawning) | `"Bash(git commit*)"`, `"Edit(**/.claude-plugin/**)"` |
 | `statusMessage` | Spinner text while hook runs | `"Checking branch protection..."` |
 | `async` | Non-blocking background execution | `true` for observational hooks |
+| `asyncRewake` | Background execution that wakes Claude on exit-code-2 | `true` for long checks that must signal failure |
 | `timeout` | Seconds before canceling | `30` for quick checks |
+| `once` | One-shot per-session (skill/agent frontmatter only — NOT settings.json) | `true` for init scripts |
+
+**Available events (Claude Code):** `SessionStart`, `Setup`, `SessionEnd`, `UserPromptSubmit`, `UserPromptExpansion`, `Stop`, `StopFailure`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch` (parallel-tool batch), `PermissionRequest`, `PermissionDenied`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`, `FileChanged`, `ConfigChange`, `CwdChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `PreCompact`, `PostCompact`, `Elicitation`, `ElicitationResult`, `Notification`. Handler `type:` values: `command`, `http`, `mcp_tool`, `prompt`, `agent`.
 
 **Exit codes:** `0` = success (parse JSON from stdout), `2` = blocking error (stderr as feedback), other = non-blocking error. **Never use exit 1 for blocking** — it's treated as a non-blocking error (shown only in verbose mode).
 

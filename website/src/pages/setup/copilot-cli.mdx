@@ -55,15 +55,25 @@ import { stats } from '../../config/stats';
   badge="MCP"
   badgeColor="success"
   title="MCP Server Configuration"
-  subtitle="Project .mcp.json is now auto-loaded since Copilot CLI v1.0.12."
+  subtitle="Project .mcp.json auto-loads since v1.0.12, but v1.0.40+ requires an opt-in env var."
   bg="primary"
 />
 <Section>
+  <HighlightBox severity="warning" title="v1.0.40+ Opt-In Required for Repo Hooks and Workspace MCP">
+    Starting in <strong>Copilot CLI v1.0.40</strong> (2026-05-01), repo-level hooks
+    (<code>.github/hooks/hooks.json</code>) and workspace MCP (<code>.mcp.json</code>) are gated behind
+    two opt-in environment variables. Without them, our plugin hooks and ADO/Atlassian MCP servers
+    will silently not load. Add to your shell profile:
+    <pre class="mt-2 p-2 bg-gray-900 text-white rounded text-xs"><code>export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1
+export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code></pre>
+  </HighlightBox>
+
   <HighlightBox severity="success" title="Project .mcp.json Auto-Loaded (v1.0.12+)">
-    As of Copilot CLI v1.0.12 (April 2026), <code>copilot</code> reads <code>.mcp.json</code> at the
-    project root automatically — same as Claude Code. The previous workaround
-    (<code>--additional-mcp-config</code> or a global <code>{"~"}/.copilot/mcp-config.json</code>) is no
-    longer required for project-specific servers like ADO.
+    Since Copilot CLI v1.0.12 (April 2026), <code>copilot</code> reads <code>.mcp.json</code> at the
+    project root automatically — same as Claude Code. The legacy workaround
+    (<code>--additional-mcp-config</code> or a global <code>{"~"}/.copilot/mcp-config.json</code>) is
+    no longer required for project-specific servers like ADO. On v1.0.40+, also export
+    <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code> as shown above.
   </HighlightBox>
 
   <p class="text-sm text-gray-300 mt-4">
@@ -132,14 +142,24 @@ import { stats } from '../../config/stats';
 {/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
-  badge="v1.0.36"
+  badge="v1.0.40"
   badgeColor="success"
-  title="What's New (April 2026)"
-  subtitle="Highlights from v1.0.15 → v1.0.36 relevant to plugin workflows."
+  title="What's New (April–May 2026)"
+  subtitle="Highlights from v1.0.15 → v1.0.40 relevant to plugin workflows."
   bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:shield-lock-outline" iconColor="bg-red-600" title="Prompt-Mode Gates (v1.0.40)">
+      Repo hooks and workspace MCP now require explicit opt-in env vars
+      (<code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS</code>,
+      <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP</code>). Without them, plugin hooks and project
+      <code>.mcp.json</code> are silently ignored. <strong>Action required:</strong> see callout above.
+    </ContentCard>
+    <ContentCard icon="mdi:lock-check-outline" iconColor="bg-emerald-600" title="Persisted Permissions Default (v1.0.37)">
+      Location-based permission persistence is now on by default — approvals carry across sessions for
+      the same project path. No more re-approving the same tool calls each session.
+    </ContentCard>
     <ContentCard icon="mdi:webhook" iconColor="bg-emerald-600" title="HTTP Hooks (v1.0.35)">
       Hooks can now POST to an HTTP endpoint instead of running a local script. Useful for autonomous
       pipelines and webhook-based observability — <code>dx-automation</code> Lambda agents can be reached
@@ -165,12 +185,18 @@ import { stats } from '../../config/stats';
       <code>--name</code> and <code>--resume=&lt;name&gt;</code> let you keep multiple long-running sessions
       addressable by name — improves multi-repo hub UX.
     </ContentCard>
+    <ContentCard icon="mdi:autorenew" iconColor="bg-indigo-500" title="Autopilot Cap + ADO Detect (v1.0.40)">
+      Autopilot continuation defaults to 5 (override with <code>--max-autopilot-continues</code>).
+      Azure DevOps repos auto-detect and auto-disable the GitHub MCP server. MCP OAuth gains
+      <code>client_credentials</code> grant type for headless setups.
+    </ContentCard>
   </div>
 
   <HighlightBox severity="info" title="Full release history">
     See the <a href="https://github.com/github/copilot-cli/releases">Copilot CLI releases page</a> for the
-    complete changelog. Our state-of-the-tools snapshot is in
-    <code>docs/research/2026-04-25-platform-state-update.md</code>.
+    complete changelog. Latest snapshot:
+    <code>docs/research/2026-05-01-platform-state-update.md</code> (delta to
+    <code>docs/research/2026-04-25-platform-state-update.md</code>).
   </HighlightBox>
 </Section>
 
