@@ -33,6 +33,14 @@
 **Done-when:** `grep -n "DoRAgent\|BEFORE posting\|fetch.*comment.*search" plugins/dx-core/skills/dx-dor/SKILL.md plugins/dx-core/skills/dx-dor/references/comment-format.md` shows explicit instructions to (a) use `[DoRAgent]` signature and (b) fetch existing comments before posting.
 **Approach:** Standardize on `[DoRAgent]` signature in dx-dor skill and comment-format.md reference. The signature detection and comment-checking flow are now in the standalone `/dx-dor` skill.
 
+## ADO MCP `wit_get_work_item_attachment` truncates large attachments
+
+**Added:** 2026-05-04
+**Problem:** `mcp__ado__wit_get_work_item_attachment` silently truncates the base64 payload for some attachments above ~75 KB. The returned bytes decode to a file whose IHDR/dimensions/MIME look correct (so `file --mime-type`, `file -b`, and `PIL.Image.open()` all pass) but whose IDAT stream is incomplete (no IEND chunk). When that file is loaded via the Read tool, Anthropic's vision API does a full decode and returns `API Error: 400 — Could not process image`, aborting the whole turn. Reproducible: WI 2490722 attachment `47ead4d5-723c-413c-8aa2-afe8414ecf1d` returns 74967 bytes; clean MCP fetch and agent-improvised decode produce the same SHA256, so truncation is upstream of any client code. Likely cause: a JSON-RPC message-size cap inside `@azure-devops/mcp` truncating Resource blobs before base64-encoding.
+**Scope:** `@azure-devops/mcp` (microsoft/azure-devops-mcp). Local mitigation lives in `plugins/dx-core/data/lib/validate-image.sh` (PNG/JPEG/GIF/WebP structural decode that catches truncation before Read).
+**Done-when:** A 100 KB+ ADO attachment fetched via `mcp__ado__wit_get_work_item_attachment` returns the full byte stream — `bash plugins/dx-core/data/lib/validate-image.sh <saved-file>` exits 0 with `ok:` rather than `skip: truncated: ...`. Until then, the validator quarantines truncated files into INDEX.md's `## Skipped` section so dx-req can complete.
+**Approach:** File issue against `microsoft/azure-devops-mcp`. Until upstream fix lands, defense-in-depth in the validator is sufficient — affected attachments get skipped rather than 400-ing the turn. Optional follow-up: add a REST-API fallback in `fetch-raw-story.js` that re-fetches with curl + ADO PAT when MCP returns truncated bytes.
+
 ## Subagent Hooks — RESOLVED 2026-04-25
 
 **Added:** 2026-03-03
