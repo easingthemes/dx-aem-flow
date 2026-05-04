@@ -1,3 +1,10 @@
+## [2.106.5](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.4...v2.106.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* **dx-init:** stop scaffold from installing orphan cross-repo.md to .ai/rules/ ([#142](https://github.com/easingthemes/dx-aem-flow/issues/142)) ([cf3fb79](https://github.com/easingthemes/dx-aem-flow/commit/cf3fb795b72619ff1801b53933c25d697f14f65b))
+
 ## [2.106.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.3...v2.106.4) (2026-05-04)
 
 
