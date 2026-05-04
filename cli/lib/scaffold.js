@@ -275,6 +275,10 @@ class Scaffold {
     for (const file of fs.readdirSync(rulesDir)) {
       if (!file.endsWith('.template')) continue;
       if (file.startsWith('universal-')) continue; // handled separately
+      // Skip cross-repo.md — installed by dx-init Step 8d to .claude/rules/
+      // with {{REPOS_TABLE}} substitution. CLI scaffold has no Step 8d
+      // equivalent; users run /dx-init in Claude Code to install it.
+      if (file === 'cross-repo.md.template') continue;
       const name = file.replace('.template', '');
       this.copyFile(path.join(rulesDir, file), `.ai/rules/${name}`);
     }
