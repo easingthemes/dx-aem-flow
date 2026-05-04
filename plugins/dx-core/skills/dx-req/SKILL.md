@@ -288,7 +288,7 @@ The MCP returns the file as a base64 `blob`. Decode and write to `$SPEC_DIR/imag
 bash .ai/lib/validate-image.sh "$SPEC_DIR/images/<filename>"
 ```
 
-The script checks MIME (must be `image/png`, `image/jpeg`, `image/gif`, or `image/webp`), file size (≤ 5 MB), and dimensions (≤ 8000 px on a side, > 0 px). Exit 0 = safe to Read in step 8e. Exit 1 = unsafe — record the file in `INDEX.md` with status `skipped: <reason from stderr>` and **do not Read it in step 8e**. Exit 2 = usage error (treat as skip).
+The script checks MIME (must be `image/png`, `image/jpeg`, `image/gif`, or `image/webp`), file size (≤ 5 MB), dimensions (≤ 8000 px on a side, > 0 px), AND structural integrity — it walks the container's chunks/markers (PNG IHDR→IEND with CRCs, JPEG SOI/EOI, GIF trailer, WebP RIFF size) to catch truncated streams that header-only checks miss. The ADO MCP `wit_get_work_item_attachment` tool has been observed silently truncating large attachments around 75 KB — the file passes MIME/dimension checks because IHDR is intact but Anthropic's full-decode pass returns 400; the structural check rejects it before Read sees it. Exit 0 = safe to Read in step 8e. Exit 1 = unsafe — record the file in `INDEX.md` with status `skipped: <reason from stderr>` and **do not Read it in step 8e**. Exit 2 = usage error (treat as skip).
 
 This validator is the load-bearing fix for the "Could not process image" 400 errors: any file that fails validation here MUST NOT reach step 8e's Read call, because once that Read attaches the bytes to the conversation, the API call fails as a whole and the session is blocked. If in doubt, skip — a missing description is fixable; a blocked turn is not.
 

@@ -18,9 +18,17 @@
 #   * files larger than 5 MB after decode
 #   * dimensions that exceed 8000 px on either side, or are 0
 #   * empty or unreadable files
+#   * files that fail a structural decode (truncated stream, corrupt
+#     chunk CRC, missing terminator) — header-only checks (`file`) miss
+#     these because IHDR can be intact while IDAT is incomplete. Observed
+#     failure mode: the ADO MCP (`wit_get_work_item_attachment`) silently
+#     truncates large attachments, producing a file that passes MIME and
+#     dimension checks but trips Anthropic's full-decode pass with
+#     `API Error: 400 — Could not process image`.
 #
-# Pure POSIX tools — uses `file` (always present) for MIME and dimension
-# detection. ImageMagick is not required.
+# Uses `file` (always present) for MIME and dimensions, plus python3
+# stdlib (always present on macOS/Linux) for the structural decode.
+# ImageMagick is not required.
 #
 # Usage:
 #   validate-image.sh <path>
@@ -85,6 +93,79 @@ if [[ -n "$DIMS" ]]; then
   fi
   if (( W > 8000 || H > 8000 )); then
     echo "skip: dimensions ${W}x${H} exceed 8000 px on a side" >&2
+    exit 1
+  fi
+fi
+
+# 4. Structural integrity — walk the file's container format end-to-end so
+#    truncation or corruption inside the data stream is caught before the
+#    file ever reaches the Read tool. `file -b` only inspects the header,
+#    so a half-downloaded PNG with a valid IHDR but a missing IEND will
+#    pass steps 1-3. Skipped if python3 is unavailable (fail open — match
+#    the historical behavior so this script never becomes harder to install).
+if command -v python3 >/dev/null 2>&1; then
+  # Use `if !` so set -e doesn't kill the script before we report the reason.
+  REASON=""
+  if ! REASON=$(python3 - "$FILE" "$MIME" 2>&1 <<'PY'
+import sys, struct, zlib
+
+path, mime = sys.argv[1], sys.argv[2]
+with open(path, 'rb') as f:
+    data = f.read()
+
+def fail(msg):
+    print(msg)
+    sys.exit(1)
+
+if mime == 'image/png':
+    if data[:8] != b'\x89PNG\r\n\x1a\n':
+        fail("corrupt: PNG signature missing")
+    i = 8
+    seen_iend = False
+    while i < len(data):
+        if i + 12 > len(data):
+            fail(f"truncated: incomplete chunk header at offset {i}")
+        length = struct.unpack(">I", data[i:i+4])[0]
+        ctype = data[i+4:i+8]
+        ctype_s = ctype.decode('ascii', errors='replace')
+        end = i + 8 + length + 4
+        if end > len(data):
+            fail(f"truncated: {ctype_s} chunk length {length} would overrun file (have {len(data)-i-8} of {length+4} bytes)")
+        crc_stored = struct.unpack(">I", data[i+8+length:i+12+length])[0]
+        crc_calc = zlib.crc32(data[i+4:i+8+length]) & 0xffffffff
+        if crc_stored != crc_calc:
+            fail(f"corrupt: bad CRC in {ctype_s} chunk")
+        if ctype == b'IEND':
+            seen_iend = True
+            break
+        i = end
+    if not seen_iend:
+        fail("truncated: no IEND chunk")
+
+elif mime == 'image/jpeg':
+    if data[:2] != b'\xff\xd8':
+        fail("corrupt: JPEG missing SOI marker")
+    if data[-2:] != b'\xff\xd9':
+        fail("truncated: JPEG missing EOI marker")
+
+elif mime == 'image/gif':
+    if data[:6] not in (b'GIF87a', b'GIF89a'):
+        fail("corrupt: GIF header missing")
+    if data[-1:] != b'\x3b':
+        fail("truncated: GIF missing trailer (0x3B)")
+
+elif mime == 'image/webp':
+    if data[:4] != b'RIFF' or data[8:12] != b'WEBP':
+        fail("corrupt: WebP RIFF header missing")
+    riff_size = struct.unpack("<I", data[4:8])[0]
+    if riff_size != len(data) - 8:
+        fail(f"truncated: WebP RIFF size {riff_size} vs payload {len(data)-8}")
+
+# unknown MIMEs were filtered upstream; nothing to check here
+sys.exit(0)
+PY
+  ); then
+    echo "skip: ${REASON:-integrity check failed}" >&2
     exit 1
   fi
 fi
