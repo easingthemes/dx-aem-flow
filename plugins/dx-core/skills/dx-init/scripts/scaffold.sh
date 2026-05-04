@@ -113,6 +113,9 @@ for f in "$PLUGIN_DIR"/templates/rules/*.template; do
   name="$(basename "$f" .template)"
   # Skip universal-* (handled below)
   case "$name" in universal-*) continue ;; esac
+  # Skip cross-repo.md — installed by dx-init Step 8d to .claude/rules/
+  # with {{REPOS_TABLE}} substitution from config.yaml repos:
+  [ "$name" = "cross-repo.md" ] && continue
   install_rule "$f" ".ai/rules/$name" ".ai/rules/$name"
 done
 
