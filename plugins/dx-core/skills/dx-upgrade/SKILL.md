@@ -101,20 +101,12 @@ These are plugin-owned files — update without asking.
 
 ### 3a. Utility Scripts
 
-For each stale or missing script:
+**Discovery (mirrors dx-doctor section 1d — never hardcode the file list).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`, excluding `*.test.sh`, `*.test.js`, and anything under `<dx-plugin>/data/lib/fixtures/`. The remaining files plus the always-present hook form the utility manifest:
 
-| Installed | Plugin Source | Post-copy |
-|-----------|-------------|-----------|
-| `.ai/lib/audit.sh` | `<dx-plugin>/data/lib/audit.sh` | `chmod +x` |
-| `.ai/lib/dx-common.sh` | `<dx-plugin>/data/lib/dx-common.sh` | `chmod +x` |
-| `.ai/lib/pre-review-checks.sh` | `<dx-plugin>/data/lib/pre-review-checks.sh` | `chmod +x` |
-| `.ai/lib/plan-metadata.sh` | `<dx-plugin>/data/lib/plan-metadata.sh` | `chmod +x` |
-| `.ai/lib/gather-context.sh` | `<dx-plugin>/data/lib/gather-context.sh` | `chmod +x` |
-| `.ai/lib/ensure-feature-branch.sh` | `<dx-plugin>/data/lib/ensure-feature-branch.sh` | `chmod +x` |
-| `.ai/lib/queue-pipeline.sh` | `<dx-plugin>/data/lib/queue-pipeline.sh` | `chmod +x` |
-| `.claude/hooks/stop-guard.sh` | `<dx-plugin>/data/hooks/stop-guard.sh` | `chmod +x` |
+- `.ai/lib/<basename>` ← `<dx-plugin>/data/lib/<basename>` (one entry per discovered file)
+- `.claude/hooks/stop-guard.sh` ← `<dx-plugin>/data/hooks/stop-guard.sh`
 
-Read the plugin source file, Write to the installed location.
+For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` — Node entry points are invoked via `node` and don't need the executable bit).
 
 **Comment-only differences:** If dx-doctor reported the script as `✓ up to date (project-specific examples)` — meaning the only differences are in comment lines where the project uses real infrastructure names (e.g., `kai-dedupe`) instead of the plugin's generic placeholders (e.g., `myai-dedupe`) — do NOT overwrite. The project-specific names are intentional and correct. Only update scripts that have functional code changes.
 

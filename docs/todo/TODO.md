@@ -129,7 +129,8 @@
 | 100 | Pilot `claude_code.skill_activated` OTel event | Low | Open | 2026-05-01 | [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md#newly-opened--changed) — Claude Code v2.1.126 OTel event with `invocation_trigger` (`user-slash`/`claude-proactive`/`nested-skill`); useful telemetry for `dx-automation` |
 | 101 | Update `cli-vs-chat.mdx` for VS Code 1.118 (skill-isolated subagents) | Low | **Done** | 2026-05-01 | [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md#newly-closed) — `context: fork` row updated from "Ignored" to "Experimental (1.118+)"; hooks row updated to 29 events |
 | 102 | Audit `mcp__github__` references vs ADO auto-disable (Copilot v1.0.40) | Low | Open | 2026-05-01 | [todo-copilot-cli.md#prompt-mode-gates-v1040](todo-copilot-cli.md#prompt-mode-gates-v1040) — Copilot v1.0.40 auto-disables GitHub MCP on detected ADO repos; verify `dx-automation` skills do not break |
+| 103 | ADO MCP `wit_get_work_item_attachment` truncates >75 KB attachments | High | Blocked (upstream) | 2026-05-04 | [todo-bugs.md#ado-mcp-wit_get_work_item_attachment-truncates-large-attachments](todo-bugs.md#ado-mcp-wit_get_work_item_attachment-truncates-large-attachments) — silent base64 truncation produces files that pass header checks but 400 on Anthropic full decode. Mitigated locally in `validate-image.sh` v2 (structural decode); upstream fix needed in `microsoft/azure-devops-mcp` |
 
-**Counts:** 102 total — 18 done, 67 open, 4 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test
+**Counts:** 103 total — 18 done, 68 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test
 
 Last platform state research: [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md) (delta to [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md))
