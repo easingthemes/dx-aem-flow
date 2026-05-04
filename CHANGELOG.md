@@ -1,3 +1,10 @@
+## [2.106.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.3...v2.106.4) (2026-05-04)
+
+
+### Bug Fixes
+
+* **dx-core:** detect truncated ADO image attachments + auto-discover lib files ([#141](https://github.com/easingthemes/dx-aem-flow/issues/141)) ([8ffdfee](https://github.com/easingthemes/dx-aem-flow/commit/8ffdfee162f9915d92d9105b41fe0d10a886fb29)), closes [#138](https://github.com/easingthemes/dx-aem-flow/issues/138) [#138](https://github.com/easingthemes/dx-aem-flow/issues/138) [#138](https://github.com/easingthemes/dx-aem-flow/issues/138) [#103](https://github.com/easingthemes/dx-aem-flow/issues/103)
+
 ## [2.106.3](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.2...v2.106.3) (2026-04-29)
 
 
