@@ -87,24 +87,21 @@ Glob: "**/skills/dx-doctor/SKILL.md"
 ```
 Navigate up 3 levels from the skill directory to get the dx plugin root.
 
-Compare installed files against plugin source:
+**Discovery (do NOT hardcode the file list — every new utility script in `<dx-plugin>/data/lib/` must be picked up automatically).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`. From the result set, exclude:
+- Test files: `*.test.sh`, `*.test.js`
+- Anything under `<dx-plugin>/data/lib/fixtures/`
 
-| Installed | Plugin Source |
-|-----------|-------------|
-| `.ai/lib/audit.sh` | `<dx-plugin>/data/lib/audit.sh` |
-| `.ai/lib/dx-common.sh` | `<dx-plugin>/data/lib/dx-common.sh` |
-| `.ai/lib/pre-review-checks.sh` | `<dx-plugin>/data/lib/pre-review-checks.sh` |
-| `.ai/lib/plan-metadata.sh` | `<dx-plugin>/data/lib/plan-metadata.sh` |
-| `.ai/lib/gather-context.sh` | `<dx-plugin>/data/lib/gather-context.sh` |
-| `.ai/lib/ensure-feature-branch.sh` | `<dx-plugin>/data/lib/ensure-feature-branch.sh` |
-| `.ai/lib/queue-pipeline.sh` | `<dx-plugin>/data/lib/queue-pipeline.sh` |
-| `.claude/hooks/stop-guard.sh` | `<dx-plugin>/data/hooks/stop-guard.sh` |
+The remaining files form the utility manifest — each is expected to live at `.ai/lib/<basename>`.
+
+Plus one fixed entry from a different plugin directory:
+- `.ai/lib/<basename>` ← `<dx-plugin>/data/lib/<basename>` (one row per discovered file)
+- `.claude/hooks/stop-guard.sh` ← `<dx-plugin>/data/hooks/stop-guard.sh` (always check)
 
 For each:
 1. If installed file is missing → `✗ MISSING`
 2. If installed file exists, Read both files and compare content:
    - Identical → `✓ up to date`
-   - Different only in **comment lines** (lines starting with `#`) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
+   - Different only in **comment lines** (lines starting with `#` for shell, `//` or `/* */` for JS) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
    - Different in **functional code** (non-comment lines) → `⚠ STALE (plugin version updated — run /dx-upgrade)`
 
 ### 1e. (Removed — .ai/docs/ no longer managed by plugins)
