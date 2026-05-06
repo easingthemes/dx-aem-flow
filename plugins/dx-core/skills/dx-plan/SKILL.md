@@ -14,12 +14,26 @@ Use ultrathink for this skill — implementation planning benefits from deep rea
 
 ## Output discipline
 
-You run in a forked context. Two outputs are required:
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write all canonical artifacts to `$SPEC_DIR/<file>.md` (already documented below) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same canonical artifacts AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase / per-step progress lines during the run are allowed in both paths.
+
+Two outputs are always required regardless of path:
 
 1. **`$SPEC_DIR/implement.md`** — the canonical plan, format defined in `.ai/templates/spec/implement.md.template`. This is what the executor reads.
 2. **`$SPEC_DIR/plan-thinking.md`** — your reasoning trace: alternatives considered, dependencies analyzed, risks evaluated. Write this BEFORE writing `implement.md`. Maximum 1000 words.
-
-The skill MUST emit ONLY the `## Return` block to chat — no inline plan, no inline thinking, no preview tables.
 
 ## 1. Locate the Spec Directory
 
@@ -299,9 +313,35 @@ The step-* skills update these statuses as they execute.
 - **No time estimates**
 - **Scale to complexity** — simple change = 3-4 steps, complex feature = 10+
 
-## 8. Present Summary
+## 8. Present Summary (standalone path only)
 
-Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Output discipline` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/implement.md` and `$SPEC_DIR/plan-thinking.md` directly and presents the user with an appropriate next-steps message; the skill itself does not print a summary.
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+After all phases complete and only when running standalone, emit:
+
+```markdown
+## implement.md created
+
+**<Title>** (ADO #<id>)
+**Directory:** `.ai/specs/<id>-<slug>/`
+
+### Plan:
+- `implement.md` — <count> steps, <count> files referenced
+- `plan-thinking.md` — reasoning trace written
+
+### Key Decisions:
+<if Key Decisions section exists: list each decision title in one line>
+<if no Key Decisions: "(none — straightforward implementation)">
+
+### Risks:
+<if Risks section exists: list each risk in one line>
+<if no Risks: "(none identified)">
+
+### Next step:
+- `/dx-plan-validate` — cross-check plan against requirements
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Examples
 

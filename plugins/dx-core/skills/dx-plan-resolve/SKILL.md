@@ -12,7 +12,23 @@ Use ultrathink for this skill — solving risks requires deep reasoning about pa
 
 ## Output
 
-This skill writes its full report (per-issue resolution actions and updated `implement.md` diff summary) to `$SPEC_DIR/resolve-report.md`. The skill emits ONLY the `## Return` block.
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write the full report to `$SPEC_DIR/resolve-report.md` and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same report AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase progress lines during the run are allowed in both paths.
+
+This skill writes its full report (per-issue resolution actions and updated `implement.md` diff summary) to `$SPEC_DIR/resolve-report.md`.
 
 ## 1. Locate the Spec Directory
 
@@ -131,6 +147,30 @@ For each resolved issue:
 - **Preserve step numbering** — when inserting steps, renumber correctly and update any cross-references.
 - **Don't execute** — update the plan only. Execution happens in step-* skills.
 - **One pass** — resolve what you can, report what you can't. Don't loop.
+
+## Present Summary (standalone path only)
+
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit the resolve summary to chat:
+
+```markdown
+## Plan Risks Resolved
+
+| # | Risk/Issue | Resolution | Step Updated |
+|---|-----------|------------|--------------|
+| 1 | <risk description> | <one-line solution> | Step N |
+| 2 | <risk description> | <one-line solution> | New Step M |
+
+**Issues resolved:** <count>
+**Steps modified:** <count>
+**Steps added:** <count>
+
+### Next step:
+- `/dx-plan-validate` — re-validate the updated plan
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Return
 

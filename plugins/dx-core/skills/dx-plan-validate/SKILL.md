@@ -12,9 +12,23 @@ Use ultrathink for this skill — careful cross-referencing benefits from deep r
 
 ## Output
 
-This skill writes its full report to `$SPEC_DIR/validation-report.md` (overall verdict, per-requirement mapping, reuse check, warnings). The orchestrator reads this file only on demand.
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
 
-The skill itself emits ONLY the `## Return` block defined at the bottom — never inline tables.
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write the full report to `$SPEC_DIR/validation-report.md` and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same report AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase progress lines during the run are allowed in both paths.
+
+This skill writes its full report to `$SPEC_DIR/validation-report.md` (overall verdict, per-requirement mapping, reuse check, warnings). The orchestrator reads this file only on demand.
 
 ## 1. Locate the Spec Directory
 
@@ -137,6 +151,37 @@ Report:
 - **Be lenient on scope creep** — infrastructure steps (setup, testing) are legitimate even without a direct requirement mapping. Only flag clearly unrequested features.
 - **Don't fix — report** — this skill reports issues, it does not modify implement.md
 - **Fast feedback** — print results clearly so the developer can decide whether to fix or proceed
+
+## Present Summary (standalone path only)
+
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit the validation table to chat:
+
+```markdown
+## Plan Validation: <Title>
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Requirement Coverage | ✅/❌ | <N>/<total> covered |
+| No Scope Creep | ✅/⚠️ | <N> steps without requirement mapping |
+| Dependency Order | ✅/❌ | <details if issues> |
+| File Existence | ✅/❌ | <N> files verified |
+| Testing Coverage | ✅/⚠️ | <details> |
+| Reuse Check | ✅/❌/⚠️ | <N> reuse opportunities verified |
+
+**Overall: PASS / FAIL / PASS WITH WARNINGS**
+
+<If FAIL — list specific issues that must be fixed>
+<If PASS WITH WARNINGS — list items to review but not blocking>
+<If PASS — "Plan is ready for execution.">
+
+### Next step:
+<If PASS or WARN:> - `/dx-step-all` — execute the plan
+<If FAIL:> - `/dx-plan-resolve` — fix flagged issues, then re-validate
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Return
 

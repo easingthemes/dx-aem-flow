@@ -25,11 +25,21 @@ Read `shared/provenance-schema.md` — all Markdown output files from this skill
 
 ## Output discipline
 
-You run in a forked context. All outputs land in files (`raw-story.md`, `images.md`, `explain.md`, `research.md`, `share-plan.md`, `dor-report.md`, `interview.md`). Do NOT echo any of these to chat. The orchestrator reads them on demand.
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
 
-Per-phase progress lines (e.g. "Phase 1 fetch — done") are still allowed for the developer who is debugging the forked subagent.
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
 
-The final emitted block must be `## Return` per `plugins/dx-core/shared/skill-return-contract.md`.
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write all canonical artifacts to `$SPEC_DIR/<file>.md` (already documented below) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same canonical artifacts AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase / per-step progress lines during the run are allowed in both paths.
 
 ## External Content Safety
 
@@ -625,9 +635,31 @@ Read `references/share-template.md` for the complete generation and posting logi
 
 ---
 
-## Present Summary
+## Present Summary (standalone path only)
 
-Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Output discipline` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/share-plan.md` directly and presents an appropriate next-steps message; the skill itself does not print a summary.
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+After all phases complete and only when running standalone, emit:
+
+```markdown
+## Requirements Pipeline Complete
+
+**<Title>** (ADO #<id>)
+**Branch:** `feature/<id>-<slug>`
+**Directory:** `.ai/specs/<id>-<slug>/`
+
+### Outputs:
+- `raw-story.md` — <X> sections, <Y> comments, <Z> relations, <N> linked branches/PRs
+- `dor-report.md` — score <N>/<total> (<percentage>%) — <verdict>
+- `explain.md` — <count> requirements
+- `research.md` — <count> files found, <count> key findings
+- `share-plan.md` — scope: <Small/Medium/Large>
+
+### Next step:
+- `/dx-plan` — create implementation plan
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Examples
 

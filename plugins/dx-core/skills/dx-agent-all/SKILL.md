@@ -43,6 +43,29 @@ Maintain run state in `$SPEC_DIR/run-state.json`:
 **During execution:** Update after each phase.
 **On completion:** Delete run-state.json.
 
+### Orchestration Flag
+
+In addition to `run-state.json`, write a marker file `.ai/run-context/orchestrating.flag` at startup. Forked sub-skills check this file to determine whether they're running under the orchestrator (compact `## Return` only) or standalone (verbose summary + `## Return`).
+
+**On invocation, after `run-state.json` is created:**
+```bash
+mkdir -p .ai/run-context
+touch .ai/run-context/orchestrating.flag
+```
+
+**After each phase transition (alongside `run-state.json` update):**
+```bash
+touch .ai/run-context/orchestrating.flag
+```
+This refreshes the mtime so a long-running pipeline doesn't trip the 2h staleness check inside forked skills.
+
+**On any terminal state — Final Summary, STOP, validation failure, build/review failure routes:**
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
+
+The flag's existence (and freshness) is the signal that forked sub-skills (`dx-req`, `dx-plan`, `dx-plan-validate`, `dx-plan-resolve`, `dx-pr-commit`, `dx-step-all`) read to suppress their human-friendly summary output. See `plugins/dx-core/shared/orchestration-check.md`.
+
 ## Execution Mode
 
 Check if the user specified a mode:
@@ -404,6 +427,10 @@ Check the plan-validate result. If FAIL, stop. If PASS (with or without warnings
 
 ### STOP: Plan validation failed
 
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
+
 Terminal state. Print the validation report and instruct: "Plan validation failed. Fix implement.md and run `/dx-plan-validate` to retry."
 
 ### Phase 2.5: Create feature branch
@@ -447,6 +474,10 @@ Print: `Phase 3: Execution — (<N>/<total>) all steps executed.`
 Check if all steps in `implement.md` completed successfully. If any steps failed, stop. If all done, continue to build.
 
 ### STOP: Step failures
+
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
 
 Terminal state. Report which steps failed and suggest: "Run `/dx-step-all` to retry execution."
 
@@ -613,6 +644,10 @@ Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not foun
 **If executed:** Print: `Phase 7: Documentation — (<N>/<total>) generated.`
 
 ### Final Summary
+
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
 
 ```markdown
 ## Pipeline Complete: #<id>

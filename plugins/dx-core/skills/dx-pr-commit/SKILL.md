@@ -8,6 +8,24 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 
 You handle git commits and Azure DevOps pull requests.
 
+## Output discipline
+
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): complete the commit (and PR if requested) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): complete the commit (and PR if requested) AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-step progress lines during the run are allowed in both paths.
+
 **Before anything else**, read these two files:
 - `shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, commit format, staging, rebase, PRs)
 - `.ai/config.yaml` — project config, preferences (Auto-Commit, Auto-PR)
@@ -154,9 +172,26 @@ Commits, pushes, creates ADO PR targeting the configured base branch with work i
 **Cause:** An active PR already exists for this branch.
 **Fix:** The skill detects this and shows the existing PR URL. Update the existing PR instead.
 
-## 8. Present Summary
+## Present Summary (standalone path only)
 
-After commit:
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit:
+
+```markdown
+## Commit complete
+
+**<count> files** committed as `<SHA>` on `<branch>`.
+<If PR was created:>
+**PR:** <title>
+**URL:** <PR web URL>
+
+### Next steps:
+- Push branch: `git push -u origin <branch>`
+- Or run `/dx-pr` to create the PR (if not already created)
+```
+
+After commit (detailed form):
 ```markdown
 **Committed:** `#<ID> <message>`
 **Files:** <count> files
@@ -170,6 +205,8 @@ After PR:
 **Branch:** <source> → <$BASE_BRANCH>
 **URL:** <PR web URL from ADO response>
 ```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Return
 

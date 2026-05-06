@@ -10,7 +10,23 @@ You are a coordinator. You run the step pipeline for each step in implement.md, 
 
 ## Progress visibility
 
-You run in a forked context. The orchestrator (`dx-agent-all`) cannot see your TaskList directly. To preserve user-visible progress, you MUST update `$SPEC_DIR/dev-all-progress.md` after each step transition:
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write all canonical artifacts to `$SPEC_DIR/<file>.md` (already documented below) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same canonical artifacts AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase / per-step progress lines during the run are allowed in both paths.
+
+The orchestrator (`dx-agent-all`) cannot see your TaskList directly. To preserve user-visible progress, you MUST update `$SPEC_DIR/dev-all-progress.md` after each step transition:
 
 - Mark step in_progress at the start of execution
 - Mark step done | failed | healing immediately on transition
@@ -25,8 +41,6 @@ The orchestrator reads this file after this skill returns and prints a one-line 
 | 1: <title> | done | committed 4bf6fe5 |
 | 2: <title> | in_progress | — |
 | 3: <title> | — | — |
-
-The skill MUST emit ONLY the `## Return` block to chat at the end — no inline completion summary, no inline table, no execution log dump. Per-step progress messages during the run are still permitted for the developer who is debugging the forked subagent.
 
 ## Progress Tracking
 
@@ -272,11 +286,34 @@ If fix attempts occurred for this step, append one JSONL line per attempt to `.a
 
 After all steps are done:
 
-Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Progress visibility` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/dev-all-progress.md` directly to summarize step counts and present next-steps; the skill itself does not print a summary.
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
 
-The Cross-Repo Note (when `implement.md` has "Other repos required") still belongs in the orchestrator's Final Summary, not here. Pass it through via the `## Return` block's `summary` (truncated) and `next_action` fields.
+When running standalone (`$ORCHESTRATED == 0`), emit:
 
-The "Log run record" and "promote fixes" file-write actions described below this redirect note are unchanged — those are file-side, not chat-side.
+```markdown
+## Execution Complete
+
+**<count> steps** executed — <count> succeeded, <count> failed, <count> self-healed.
+
+| Step | Status | Note |
+|------|--------|------|
+| 1: <title> | done | committed <sha> |
+| 2: <title> | done | committed <sha> |
+<... one row per step ...>
+
+<If any steps failed:>
+### Blocked Steps
+- Step <N>: <title> — <error summary>
+
+<If cross-repo note from implement.md:>
+### Other repos required
+<repo list from implement.md>
+
+### Next step:
+- `/dx-step-build` — build and verify
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip the above block entirely. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/dev-all-progress.md` directly to summarize step counts and present next-steps. The Cross-Repo Note (when `implement.md` has "Other repos required") still belongs in the orchestrator's Final Summary — pass it through via the `## Return` block's `summary` (truncated) and `next_action` fields.
 
 **Log run record:**
 
