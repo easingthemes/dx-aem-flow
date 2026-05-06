@@ -362,19 +362,15 @@ If no edge files exist (new project or early tickets), skip silently.
 
 Invoke `Skill(/dx-plan <id>)`.
 
-Then invoke `Skill(/dx-plan-validate <id>)`.
+Then invoke `Skill(/dx-plan-validate <id>)` (context: fork).
 
-If validation FAILs:
-- Print the validation report
-- STOP — "Plan validation failed. Fix implement.md and run `/dx-plan-validate` to retry."
+The skill writes its full report to `$SPEC_DIR/validation-report.md` and returns a `## Return` block with `verdict: pass | warn | fail`.
 
-If validation PASSes WITH WARNINGS or risks were flagged:
+- On `verdict: pass` — continue to Phase 2.5.
+- On `verdict: warn` — continue (warnings are non-blocking) OR invoke `Skill(/dx-plan-resolve <id>)` if the user is in interactive mode and chooses to resolve.
+- On `verdict: fail` — invoke `Skill(/dx-plan-resolve <id>)` and re-validate. If still `fail` after resolve, STOP with: "Plan validation failed. See `$SPEC_DIR/validation-report.md`."
 
-Invoke `Skill(/dx-plan-resolve <id>)`.
-
-If plan-resolve updated steps, re-validate:
-
-Invoke `Skill(/dx-plan-validate <id>)`.
+Do NOT echo `validation-report.md` to chat — the user reads it on demand.
 
 Print: `Phase 2: Planning — (<N>/<total>) complete.`
 
