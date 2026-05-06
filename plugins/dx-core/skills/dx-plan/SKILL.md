@@ -4,12 +4,22 @@ description: Generate an implementation plan with status-tracked steps. Creates 
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
 effort: high
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You read the spec documents and use extended thinking to generate `implement.md` — a concrete, step-by-step development plan with status tracking for automated execution.
 
 Use ultrathink for this skill — implementation planning benefits from deep reasoning about dependencies, ordering, and edge cases.
+
+## Output discipline
+
+You run in a forked context. Two outputs are required:
+
+1. **`$SPEC_DIR/implement.md`** — the canonical plan, format defined in `.ai/templates/spec/implement.md.template`. This is what the executor reads.
+2. **`$SPEC_DIR/plan-thinking.md`** — your reasoning trace: alternatives considered, dependencies analyzed, risks evaluated. Write this BEFORE writing `implement.md`. Maximum 1000 words.
+
+The skill MUST emit ONLY the `## Return` block to chat — no inline plan, no inline thinking, no preview tables.
 
 ## 1. Locate the Spec Directory
 
@@ -291,22 +301,7 @@ The step-* skills update these statuses as they execute.
 
 ## 8. Present Summary
 
-```markdown
-## implement.md created
-
-**<Title>**
-- Steps: <count> (all pending)
-- Key decisions: <count or "none"> (decision nodes written to `.ai/graph/nodes/decisions/`)
-- Files to modify: <count>
-- Files to create: <count>
-- Tests planned: <count> unit, manual verification included
-- Risks identified: <count or "none">
-
-### Next steps:
-- `/dx-plan-validate` — verify plan covers all requirements
-- `/dx-step` — execute first step
-- `/dx-step-all` — execute all steps autonomously
-```
+Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Output discipline` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/implement.md` and `$SPEC_DIR/plan-thinking.md` directly and presents the user with an appropriate next-steps message; the skill itself does not print a summary.
 
 ## Examples
 
@@ -434,3 +429,19 @@ When ordering steps, tackle highest-uncertainty pieces first:
 - **Domain-aware** — use correct terminology for the project's technology stack
 - **Status on every step** — `**Status:** pending` is mandatory
 - **Current repo only** — only plan steps for files that exist in this repo. If research.md has a "Cross-Repo Scope" section, add the `**Other repos required:**` header line but do NOT create steps for those repos. The developer runs the workflow in each repo separately.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Generated 4-step plan covering 9 requirements; 3 key decisions documented; 2 risks flagged.
+artifacts:
+  - .ai/specs/2490722-microsite/implement.md
+  - .ai/specs/2490722-microsite/plan-thinking.md
+next_action: run /dx-plan-validate
+```

@@ -360,7 +360,7 @@ This is informational only — dx-plan itself reads patterns and decisions durin
 
 If no edge files exist (new project or early tickets), skip silently.
 
-Invoke `Skill(/dx-plan <id>)`.
+Invoke `Skill(/dx-plan <id>)` (context: fork). The plan is written to `$SPEC_DIR/implement.md`; the reasoning trace is written to `$SPEC_DIR/plan-thinking.md`. Do NOT echo plan content to chat — reference the files instead.
 
 Then invoke `Skill(/dx-plan-validate <id>)` (context: fork).
 
