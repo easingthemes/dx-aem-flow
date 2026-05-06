@@ -16,7 +16,7 @@ You run in a forked context. The orchestrator (`dx-agent-all`) cannot see your T
 - Mark step done | failed | healing immediately on transition
 - Update within the same logical action — never batch updates
 
-The orchestrator reads this file between Skill invocations and prints one-line status to the user. If you skip an update, the user sees stale progress.
+The orchestrator reads this file after this skill returns and prints a one-line status summary to the user. Skill invocations are blocking — the orchestrator does not poll mid-execution. If you skip an update, the user sees stale progress when they ask for a recap.
 
 **Format** — one row per step in a table (see `.ai/templates/spec/dev-all-progress.md.template` if it exists, else use the existing format from prior runs):
 
@@ -426,6 +426,6 @@ verdict: fail
 summary: Step 2 blocked after 2 fix attempts — JS test pollution; manual intervention needed.
 artifacts:
   - .ai/specs/2490722-microsite/dev-all-progress.md
-  - .ai/specs/2490722-microsite/step-2-failure.txt
+  - .ai/specs/2490722-microsite/run-state.json
 next_action: human fix Step 2; re-run /dx-step-all
 ```

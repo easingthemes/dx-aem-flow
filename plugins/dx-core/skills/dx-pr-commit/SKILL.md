@@ -190,8 +190,7 @@ next_action: open PR via printed URL
 ## Return
 verdict: fail
 summary: Commit aborted — pre-commit hook failed: lint-staged eslint no-shadow on token.
-artifacts:
-  - .ai/specs/2490722-microsite/commit-error.txt
+artifacts: []
 next_action: fix lint error and re-run /dx-pr-commit
 ```
 

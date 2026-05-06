@@ -568,7 +568,7 @@ Print: `Phase 5++: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR G
 **Guard:** Phase 4 (build) AND Phase 4.5 (code review) both passed. If either failed, skip entirely — do not commit broken or unreviewed code.
 
 Read `.ai/config.yaml` and check the **preferences** section for `auto-commit` (fallback: legacy `auto_commit`):
-- **If `true`:** Invoke `Skill(/dx-pr-commit)`.
+- **If `true`:** Invoke `Skill(/dx-pr-commit)` (context: fork).
   Print: `Phase 5a: Commit — (<N>/<total>) committed.`
 - **If `false` or not found:** Print: `Phase 5a: Commit — (<N>/<total>) skipped (auto-commit disabled).`
 
