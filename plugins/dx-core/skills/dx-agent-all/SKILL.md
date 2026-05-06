@@ -239,7 +239,7 @@ Check if the user specified a mode. If "autonomous", "auto", or "hands-free" was
 
 ### Phase 1: Requirements (fetch - dor - explain - research - share)
 
-Invoke `Skill(/dx-req <id>)` — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a single call.
+Invoke `Skill(/dx-req <id>)` (context: fork) — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a forked subagent. Spec files land in `.ai/specs/<id>-<slug>/`. Do NOT echo file content to chat — the user reads them on demand.
 
 Print: `Phase 1: Requirements — (<N>/<total>) complete.`
 

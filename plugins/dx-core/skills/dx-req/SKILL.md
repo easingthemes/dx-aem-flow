@@ -3,6 +3,7 @@ name: dx-req
 description: Full requirements pipeline — fetch ADO/Jira story, validate DoR, distill requirements, research codebase, generate team summary. Replaces the dx-req-fetch → dor → explain → research → share sequence. Use to start working on any ticket.
 argument-hint: "[ADO Work Item ID, Jira key, or URL]"
 model: sonnet
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "AEM/*"]
 ---
 
@@ -21,6 +22,14 @@ Before creating tasks, use `TaskList` to check for existing tasks from a previou
 ## Provenance
 
 Read `shared/provenance-schema.md` — all Markdown output files from this skill must include provenance frontmatter. Use `agent: dx-req`. Confidence levels per phase are noted in each phase's output section.
+
+## Output discipline
+
+You run in a forked context. All outputs land in files (`raw-story.md`, `images.md`, `explain.md`, `research.md`, `share-plan.md`, `dor-report.md`, `interview.md`). Do NOT echo any of these to chat. The orchestrator reads them on demand.
+
+Per-phase progress lines (e.g. "Phase 1 fetch — done") are still allowed for the developer who is debugging the forked subagent.
+
+The final emitted block must be `## Return` per `plugins/dx-core/shared/skill-return-contract.md`.
 
 ## External Content Safety
 
@@ -618,25 +627,7 @@ Read `references/share-template.md` for the complete generation and posting logi
 
 ## Present Summary
 
-After all phases complete:
-
-```markdown
-## Requirements Pipeline Complete
-
-**<Title>** (ADO #<id>)
-**Branch:** `feature/<id>-<slug>`
-**Directory:** `.ai/specs/<id>-<slug>/`
-
-### Outputs:
-- `raw-story.md` — <X> sections, <Y> comments, <Z> relations, <N> linked branches/PRs
-- `dor-report.md` — score <N>/<total> (<percentage>%) — <verdict>
-- `explain.md` — <count> requirements
-- `research.md` — <count> files found, <count> key findings
-- `share-plan.md` — scope: <Small/Medium/Large>
-
-### Next step:
-- `/dx-plan` — create implementation plan
-```
+Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Output discipline` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/share-plan.md` directly and presents an appropriate next-steps message; the skill itself does not print a summary.
 
 ## Examples
 
@@ -706,3 +697,25 @@ Each phase checks its output. If raw-story.md unchanged, skips Phase 1. If dor-r
 - **Never duplicate comments** — always check for existing signatures before posting
 - **Idempotent throughout** — each phase checks its output and skips if current
 - **Markdown format only** — always use `format: "markdown"` for ADO comments
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Fetched #2490722, DoR 15/19 (79%), distilled 9 requirements, researched codebase with 4 agents.
+artifacts:
+  - .ai/specs/2490722-microsite/raw-story.md
+  - .ai/specs/2490722-microsite/images.md
+  - .ai/specs/2490722-microsite/explain.md
+  - .ai/specs/2490722-microsite/research.md
+  - .ai/specs/2490722-microsite/share-plan.md
+  - .ai/specs/2490722-microsite/dor-report.md
+next_action: continue to Phase 1.5 or Phase 2
+```
+
+If DoR scoring is below the project threshold, set verdict: `warn` and add `next_action: review dor-report.md before planning`.
