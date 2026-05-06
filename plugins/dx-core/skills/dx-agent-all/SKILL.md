@@ -80,6 +80,21 @@ phase	tokens_in	tokens_out	cumulative
 
 This is the source of truth for diagnosing future context regressions — without it, "Phase X is too expensive" claims are unverifiable.
 
+### Status-table-once
+
+The Pipeline Phase Status table (the multi-row Status grid) is emitted EXACTLY ONCE — in the Final Summary at the end of the run. Per-phase progress goes to `dev-all-progress.md` (which the orchestrator updates after each phase) and is referenced, not quoted, in chat.
+
+Mid-run, every phase emits ONE single `Print:` line with status (e.g. `Phase 4: Build — (5/8) passed.`). Brief informational summaries (e.g. the Phase 2 Graph Context bullets, or the Phase 1 interactive review checkpoint) are allowed because they are not the Phase Status table — they are per-phase content the user needs at that moment.
+
+If the user asks for a recap mid-run, **read `dev-all-progress.md`** and print a one-line summary derived from the file. Do not quote a prior table emission. Re-emitting the table re-anchors the prior emission in main context, doubling the token cost of every recap.
+
+Anti-patterns:
+- Echoing the Final Summary template at intermediate phase boundaries to "show progress."
+- Re-printing the full table on every user `recap` / `status` request.
+- Duplicating `dev-all-progress.md` content in chat instead of referencing it.
+
+These all defeat the fork-based context discipline that the rest of the pipeline relies on.
+
 ## Progress Logging
 
 Before starting the pipeline, count the total phases that will run (including optional ones that apply). Assign each phase a sequential number. Every phase log message MUST include the progress counter in `(current/total)` format.
