@@ -2,6 +2,7 @@
 name: dx-pr-commit
 description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation via ADO MCP tools. Use when the user says "commit", "create PR", "open PR", "push changes", or any variation. This is the ONLY skill for commits and PRs — always use it instead of gh CLI or manual git workflows.
 argument-hint: "[optional: commit message or 'pr' to also create PR]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
@@ -169,3 +170,29 @@ After PR:
 **Branch:** <source> → <$BASE_BRANCH>
 **URL:** <PR web URL from ADO response>
 ```
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Committed 3 files as 26e7cb8 on feature/2490722-microsite; PR not created (auto-pr=false).
+artifacts:
+  - .ai/specs/2490722-microsite/commit-log.txt
+next_action: open PR via printed URL
+```
+
+```markdown
+## Return
+verdict: fail
+summary: Commit aborted — pre-commit hook failed: lint-staged eslint no-shadow on token.
+artifacts:
+  - .ai/specs/2490722-microsite/commit-error.txt
+next_action: fix lint error and re-run /dx-pr-commit
+```
+
+If a PR was created, include the PR URL in `summary` (truncated if needed) and the full URL in an artifact file.
