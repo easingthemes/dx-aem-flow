@@ -2,10 +2,31 @@
 name: dx-step-all
 description: Autonomous execution loop — runs each plan step (implement + test + review + commit internally), with step-fix for failures. Stops after 2 consecutive fix failures on the same step. Use to execute the full plan hands-free.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You are a coordinator. You run the step pipeline for each step in implement.md, delegating to skills via the Skill tool.
+
+## Progress visibility
+
+You run in a forked context. The orchestrator (`dx-agent-all`) cannot see your TaskList directly. To preserve user-visible progress, you MUST update `$SPEC_DIR/dev-all-progress.md` after each step transition:
+
+- Mark step in_progress at the start of execution
+- Mark step done | failed | healing immediately on transition
+- Update within the same logical action — never batch updates
+
+The orchestrator reads this file between Skill invocations and prints one-line status to the user. If you skip an update, the user sees stale progress.
+
+**Format** — one row per step in a table (see `.ai/templates/spec/dev-all-progress.md.template` if it exists, else use the existing format from prior runs):
+
+| Step | Status | Note |
+|---|---|---|
+| 1: <title> | done | committed 4bf6fe5 |
+| 2: <title> | in_progress | — |
+| 3: <title> | — | — |
+
+The skill MUST emit ONLY the `## Return` block to chat at the end — no inline completion summary, no inline table, no execution log dump. Per-step progress messages during the run are still permitted for the developer who is debugging the forked subagent.
 
 ## Progress Tracking
 
@@ -251,24 +272,11 @@ If fix attempts occurred for this step, append one JSONL line per attempt to `.a
 
 After all steps are done:
 
-```markdown
-## Execution Complete
+Suppressed — this skill runs in forked context. Emit ONLY the `## Return` block per `## Progress visibility` above. The orchestrator (`dx-agent-all`) reads `$SPEC_DIR/dev-all-progress.md` directly to summarize step counts and present next-steps; the skill itself does not print a summary.
 
-**<Title>**
-**Steps:** <N>/<N> done (including <H> healing steps)
-**Commits:** <N> commits created
-**Fix attempts:** <N> total (<M> succeeded, <K> failed)
-**Healing cycles:** <N> total (<M> healed, <K> unrecoverable)
+The Cross-Repo Note (when `implement.md` has "Other repos required") still belongs in the orchestrator's Final Summary, not here. Pass it through via the `## Return` block's `summary` (truncated) and `next_action` fields.
 
-### Cross-Repo Note:
-<If implement.md has "Other repos required", print:>
-> This plan covers **<current repo>** only. Switch to **<other repo(s)>** and run `/dx-req <id>` there to plan and execute those changes.
-<Otherwise omit this section.>
-
-### Next steps:
-- `/dx-pr` — create pull request
-- Review changes with `git log --oneline`
-```
+The "Log run record" and "promote fixes" file-write actions described below this redirect note are unchanged — those are file-side, not chat-side.
 
 **Log run record:**
 
@@ -395,3 +403,29 @@ This skill uses `Skill()` tool calls which work on both Claude Code and Copilot 
 2. On failure: `/dx-step-fix <spec-dir>` — attempt repair (up to 2 tries)
 3. On persistent failure: `/dx-step-fix <spec-dir> --heal` — diagnose and create corrective steps
 4. Repeat from step 1 for each pending step in `implement.md`
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Executed 4 steps; 3 commits; 1 self-heal cycle on Step 3 (lint no-shadow).
+artifacts:
+  - .ai/specs/2490722-microsite/dev-all-progress.md
+  - .ai/specs/2490722-microsite/run-state.json
+next_action: continue to Phase 4 (build)
+```
+
+```markdown
+## Return
+verdict: fail
+summary: Step 2 blocked after 2 fix attempts — JS test pollution; manual intervention needed.
+artifacts:
+  - .ai/specs/2490722-microsite/dev-all-progress.md
+  - .ai/specs/2490722-microsite/step-2-failure.txt
+next_action: human fix Step 2; re-run /dx-step-all
+```

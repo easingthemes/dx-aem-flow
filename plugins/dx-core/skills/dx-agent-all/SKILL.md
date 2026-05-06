@@ -405,9 +405,20 @@ Print: `Phase 2.5: Feature Branch — (<N>/<total>) <BRANCH> (<BRANCH_ACTION>)`
 
 ### Phase 3: Execution (invoke dx-step-all)
 
-Invoke `Skill(/dx-step-all <id>)` — it runs the full execution loop for all plan steps.
+Invoke `Skill(/dx-step-all <id>)` (context: fork). The skill writes per-step status to `$SPEC_DIR/dev-all-progress.md` and returns a `## Return` block when complete.
 
-If step-all stops due to fix failures, STOP and report.
+Skill invocations are blocking — the orchestrator does NOT poll mid-execution. After the skill returns, **read `$SPEC_DIR/dev-all-progress.md`** and emit a one-line summary derived from the file:
+
+```bash
+DONE=$(grep -c "| done " "$SPEC_DIR/dev-all-progress.md" || echo 0)
+TOTAL=$(grep -c "^| [0-9]" "$SPEC_DIR/dev-all-progress.md" || echo 0)
+HEAL=$(grep -c "| healing " "$SPEC_DIR/dev-all-progress.md" || echo 0)
+echo "Phase 3: Execution — $DONE/$TOTAL steps done; $HEAL heal cycles"
+```
+
+If the Return verdict is `fail`, STOP and report. If `pass`, continue to Phase 4.
+
+Do NOT echo the table from `dev-all-progress.md` to chat — reference the file in your one-liner.
 
 Print: `Phase 3: Execution — (<N>/<total>) all steps executed.`
 
