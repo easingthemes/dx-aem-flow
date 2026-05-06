@@ -2,12 +2,17 @@
 name: dx-plan-resolve
 description: Resolve risks and issues flagged by plan-validate. Researches codebase for concrete solutions and updates implement.md steps with fixes. Use after /dx-plan-validate reports warnings or risks.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You resolve risks and issues found during plan validation by researching the codebase for concrete solutions, then updating `implement.md` with specific fix instructions.
 
 Use ultrathink for this skill — solving risks requires deep reasoning about patterns and codebase specifics.
+
+## Output
+
+This skill writes its full report (per-issue resolution actions and updated `implement.md` diff summary) to `$SPEC_DIR/resolve-report.md`. The skill emits ONLY the `## Return` block.
 
 ## 1. Locate the Spec Directory
 
@@ -79,7 +84,9 @@ For each resolved issue:
 - ~~<original risk description>~~ → **Resolved:** <one-line solution> (Step N)
 ```
 
-## 5. Present Summary
+## 5. Write Resolve Report
+
+**Write** the following table and summary to `$SPEC_DIR/resolve-report.md`. Do not print to chat.
 
 ```markdown
 ## Plan Risks Resolved
@@ -92,10 +99,6 @@ For each resolved issue:
 **Issues resolved:** <count>
 **Steps modified:** <count>
 **Steps added:** <count>
-
-### Next steps:
-- `/dx-plan-validate` — re-validate the updated plan
-- `/dx-step-all` — execute all steps
 ```
 
 ## Examples
@@ -128,3 +131,19 @@ For each resolved issue:
 - **Preserve step numbering** — when inserting steps, renumber correctly and update any cross-references.
 - **Don't execute** — update the plan only. Execution happens in step-* skills.
 - **One pass** — resolve what you can, report what you can't. Don't loop.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Resolved 2 risks; updated implement.md (Step 3 split into 3a/3b for clearer commit boundary).
+artifacts:
+  - .ai/specs/2490722-microsite/resolve-report.md
+  - .ai/specs/2490722-microsite/implement.md
+next_action: re-run /dx-plan-validate
+```
