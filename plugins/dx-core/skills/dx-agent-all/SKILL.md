@@ -3,6 +3,11 @@ name: dx-agent-all
 description: Full pipeline from ADO story to executed code. Runs requirements, planning, execution, build, review, commit, and PR in sequence with optional human review checkpoints. Use for end-to-end story implementation.
 argument-hint: "[ADO Work Item ID or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
+hooks:
+  PreToolUse:
+    - matcher: Read
+      command: ${CLAUDE_PLUGIN_ROOT}/skills/dx-agent-all/scripts/no-source-reads.sh
+      timeout: 5
 ---
 
 You are the top-level coordinator. You orchestrate the entire development pipeline from ADO story to pull request.
