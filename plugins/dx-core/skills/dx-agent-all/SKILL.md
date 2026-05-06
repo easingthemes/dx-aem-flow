@@ -3,6 +3,11 @@ name: dx-agent-all
 description: Full pipeline from ADO story to executed code. Runs requirements, planning, execution, build, review, commit, and PR in sequence with optional human review checkpoints. Use for end-to-end story implementation.
 argument-hint: "[ADO Work Item ID or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
+hooks:
+  PreToolUse:
+    - matcher: Read
+      command: ${CLAUDE_PLUGIN_ROOT}/skills/dx-agent-all/scripts/no-source-reads.sh
+      timeout: 5
 ---
 
 You are the top-level coordinator. You orchestrate the entire development pipeline from ADO story to pull request.
@@ -37,6 +42,29 @@ Maintain run state in `$SPEC_DIR/run-state.json`:
 
 **During execution:** Update after each phase.
 **On completion:** Delete run-state.json.
+
+### Orchestration Flag
+
+In addition to `run-state.json`, write a marker file `.ai/run-context/orchestrating.flag` at startup. Forked sub-skills check this file to determine whether they're running under the orchestrator (compact `## Return` only) or standalone (verbose summary + `## Return`).
+
+**On invocation, after `run-state.json` is created:**
+```bash
+mkdir -p .ai/run-context
+touch .ai/run-context/orchestrating.flag
+```
+
+**After each phase transition (alongside `run-state.json` update):**
+```bash
+touch .ai/run-context/orchestrating.flag
+```
+This refreshes the mtime so a long-running pipeline doesn't trip the 2h staleness check inside forked skills.
+
+**On any terminal state — Final Summary, STOP, validation failure, build/review failure routes:**
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
+
+The flag's existence (and freshness) is the signal that forked sub-skills (`dx-req`, `dx-plan`, `dx-plan-validate`, `dx-plan-resolve`, `dx-pr-commit`, `dx-step-all`) read to suppress their human-friendly summary output. See `plugins/dx-core/shared/orchestration-check.md`.
 
 ## Execution Mode
 
@@ -79,6 +107,21 @@ phase	tokens_in	tokens_out	cumulative
 ```
 
 This is the source of truth for diagnosing future context regressions — without it, "Phase X is too expensive" claims are unverifiable.
+
+### Status-table-once
+
+The Pipeline Phase Status table (the multi-row Status grid) is emitted EXACTLY ONCE — in the Final Summary at the end of the run. Per-phase progress goes to `dev-all-progress.md` (which the orchestrator updates after each phase) and is referenced, not quoted, in chat.
+
+Mid-run, every phase emits ONE single `Print:` line with status (e.g. `Phase 4: Build — (5/8) passed.`). Brief informational summaries (e.g. the Phase 2 Graph Context bullets, or the Phase 1 interactive review checkpoint) are allowed because they are not the Phase Status table — they are per-phase content the user needs at that moment.
+
+If the user asks for a recap mid-run, **read `dev-all-progress.md`** and print a one-line summary derived from the file. Do not quote a prior table emission. Re-emitting the table re-anchors the prior emission in main context, doubling the token cost of every recap.
+
+Anti-patterns:
+- Echoing the Final Summary template at intermediate phase boundaries to "show progress."
+- Re-printing the full table on every user `recap` / `status` request.
+- Duplicating `dev-all-progress.md` content in chat instead of referencing it.
+
+These all defeat the fork-based context discipline that the rest of the pipeline relies on.
 
 ## Progress Logging
 
@@ -239,7 +282,7 @@ Check if the user specified a mode. If "autonomous", "auto", or "hands-free" was
 
 ### Phase 1: Requirements (fetch - dor - explain - research - share)
 
-Invoke `Skill(/dx-req <id>)` — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a single call.
+Invoke `Skill(/dx-req <id>)` (context: fork) — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a forked subagent. Spec files land in `.ai/specs/<id>-<slug>/`. Do NOT echo file content to chat — the user reads them on demand.
 
 Print: `Phase 1: Requirements — (<N>/<total>) complete.`
 
@@ -360,21 +403,17 @@ This is informational only — dx-plan itself reads patterns and decisions durin
 
 If no edge files exist (new project or early tickets), skip silently.
 
-Invoke `Skill(/dx-plan <id>)`.
+Invoke `Skill(/dx-plan <id>)` (context: fork). The plan is written to `$SPEC_DIR/implement.md`; the reasoning trace is written to `$SPEC_DIR/plan-thinking.md`. Do NOT echo plan content to chat — reference the files instead.
 
-Then invoke `Skill(/dx-plan-validate <id>)`.
+Then invoke `Skill(/dx-plan-validate <id>)` (context: fork).
 
-If validation FAILs:
-- Print the validation report
-- STOP — "Plan validation failed. Fix implement.md and run `/dx-plan-validate` to retry."
+The skill writes its full report to `$SPEC_DIR/validation-report.md` and returns a `## Return` block with `verdict: pass | warn | fail`.
 
-If validation PASSes WITH WARNINGS or risks were flagged:
+- On `verdict: pass` — continue to Phase 2.5.
+- On `verdict: warn` — continue (warnings are non-blocking) OR invoke `Skill(/dx-plan-resolve <id>)` if the user is in interactive mode and chooses to resolve.
+- On `verdict: fail` — invoke `Skill(/dx-plan-resolve <id>)` and re-validate. If still `fail` after resolve, STOP with: "Plan validation failed. See `$SPEC_DIR/validation-report.md`."
 
-Invoke `Skill(/dx-plan-resolve <id>)`.
-
-If plan-resolve updated steps, re-validate:
-
-Invoke `Skill(/dx-plan-validate <id>)`.
+Do NOT echo `validation-report.md` to chat — the user reads it on demand.
 
 Print: `Phase 2: Planning — (<N>/<total>) complete.`
 
@@ -387,6 +426,10 @@ Print: `Phase 2: Planning — (<N>/<total>) complete.`
 Check the plan-validate result. If FAIL, stop. If PASS (with or without warnings), continue to feature branch creation.
 
 ### STOP: Plan validation failed
+
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
 
 Terminal state. Print the validation report and instruct: "Plan validation failed. Fix implement.md and run `/dx-plan-validate` to retry."
 
@@ -409,9 +452,20 @@ Print: `Phase 2.5: Feature Branch — (<N>/<total>) <BRANCH> (<BRANCH_ACTION>)`
 
 ### Phase 3: Execution (invoke dx-step-all)
 
-Invoke `Skill(/dx-step-all <id>)` — it runs the full execution loop for all plan steps.
+Invoke `Skill(/dx-step-all <id>)` (context: fork). The skill writes per-step status to `$SPEC_DIR/dev-all-progress.md` and returns a `## Return` block when complete.
 
-If step-all stops due to fix failures, STOP and report.
+Skill invocations are blocking — the orchestrator does NOT poll mid-execution. After the skill returns, **read `$SPEC_DIR/dev-all-progress.md`** and emit a one-line summary derived from the file:
+
+```bash
+DONE=$(grep -c "| done " "$SPEC_DIR/dev-all-progress.md" || echo 0)
+TOTAL=$(grep -c "^| [0-9]" "$SPEC_DIR/dev-all-progress.md" || echo 0)
+HEAL=$(grep -c "| healing " "$SPEC_DIR/dev-all-progress.md" || echo 0)
+echo "Phase 3: Execution — $DONE/$TOTAL steps done; $HEAL heal cycles"
+```
+
+If the Return verdict is `fail`, STOP and report. If `pass`, continue to Phase 4.
+
+Do NOT echo the table from `dev-all-progress.md` to chat — reference the file in your one-liner.
 
 Print: `Phase 3: Execution — (<N>/<total>) all steps executed.`
 
@@ -420,6 +474,10 @@ Print: `Phase 3: Execution — (<N>/<total>) all steps executed.`
 Check if all steps in `implement.md` completed successfully. If any steps failed, stop. If all done, continue to build.
 
 ### STOP: Step failures
+
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
 
 Terminal state. Report which steps failed and suggest: "Run `/dx-step-all` to retry execution."
 
@@ -541,7 +599,7 @@ Print: `Phase 5++: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR G
 **Guard:** Phase 4 (build) AND Phase 4.5 (code review) both passed. If either failed, skip entirely — do not commit broken or unreviewed code.
 
 Read `.ai/config.yaml` and check the **preferences** section for `auto-commit` (fallback: legacy `auto_commit`):
-- **If `true`:** Invoke `Skill(/dx-pr-commit)`.
+- **If `true`:** Invoke `Skill(/dx-pr-commit)` (context: fork).
   Print: `Phase 5a: Commit — (<N>/<total>) committed.`
 - **If `false` or not found:** Print: `Phase 5a: Commit — (<N>/<total>) skipped (auto-commit disabled).`
 
@@ -586,6 +644,10 @@ Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not foun
 **If executed:** Print: `Phase 7: Documentation — (<N>/<total>) generated.`
 
 ### Final Summary
+
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
 
 ```markdown
 ## Pipeline Complete: #<id>
