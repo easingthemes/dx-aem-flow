@@ -2,12 +2,33 @@
 name: dx-plan-resolve
 description: Resolve risks and issues flagged by plan-validate. Researches codebase for concrete solutions and updates implement.md steps with fixes. Use after /dx-plan-validate reports warnings or risks.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You resolve risks and issues found during plan validation by researching the codebase for concrete solutions, then updating `implement.md` with specific fix instructions.
 
 Use ultrathink for this skill — solving risks requires deep reasoning about patterns and codebase specifics.
+
+## Output
+
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write the full report to `$SPEC_DIR/resolve-report.md` and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same report AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase progress lines during the run are allowed in both paths.
+
+This skill writes its full report (per-issue resolution actions and updated `implement.md` diff summary) to `$SPEC_DIR/resolve-report.md`.
 
 ## 1. Locate the Spec Directory
 
@@ -79,7 +100,9 @@ For each resolved issue:
 - ~~<original risk description>~~ → **Resolved:** <one-line solution> (Step N)
 ```
 
-## 5. Present Summary
+## 5. Write Resolve Report
+
+**Write** the following table and summary to `$SPEC_DIR/resolve-report.md`. Do not print to chat.
 
 ```markdown
 ## Plan Risks Resolved
@@ -92,10 +115,6 @@ For each resolved issue:
 **Issues resolved:** <count>
 **Steps modified:** <count>
 **Steps added:** <count>
-
-### Next steps:
-- `/dx-plan-validate` — re-validate the updated plan
-- `/dx-step-all` — execute all steps
 ```
 
 ## Examples
@@ -128,3 +147,43 @@ For each resolved issue:
 - **Preserve step numbering** — when inserting steps, renumber correctly and update any cross-references.
 - **Don't execute** — update the plan only. Execution happens in step-* skills.
 - **One pass** — resolve what you can, report what you can't. Don't loop.
+
+## Present Summary (standalone path only)
+
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit the resolve summary to chat:
+
+```markdown
+## Plan Risks Resolved
+
+| # | Risk/Issue | Resolution | Step Updated |
+|---|-----------|------------|--------------|
+| 1 | <risk description> | <one-line solution> | Step N |
+| 2 | <risk description> | <one-line solution> | New Step M |
+
+**Issues resolved:** <count>
+**Steps modified:** <count>
+**Steps added:** <count>
+
+### Next step:
+- `/dx-plan-validate` — re-validate the updated plan
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Resolved 2 risks; updated implement.md (Step 3 split into 3a/3b for clearer commit boundary).
+artifacts:
+  - .ai/specs/2490722-microsite/resolve-report.md
+  - .ai/specs/2490722-microsite/implement.md
+next_action: re-run /dx-plan-validate
+```

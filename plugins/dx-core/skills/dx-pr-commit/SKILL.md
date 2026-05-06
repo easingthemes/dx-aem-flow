@@ -2,10 +2,29 @@
 name: dx-pr-commit
 description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation via ADO MCP tools. Use when the user says "commit", "create PR", "open PR", "push changes", or any variation. This is the ONLY skill for commits and PRs — always use it instead of gh CLI or manual git workflows.
 argument-hint: "[optional: commit message or 'pr' to also create PR]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You handle git commits and Azure DevOps pull requests.
+
+## Output discipline
+
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): complete the commit (and PR if requested) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): complete the commit (and PR if requested) AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-step progress lines during the run are allowed in both paths.
 
 **Before anything else**, read these two files:
 - `shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, commit format, staging, rebase, PRs)
@@ -153,9 +172,26 @@ Commits, pushes, creates ADO PR targeting the configured base branch with work i
 **Cause:** An active PR already exists for this branch.
 **Fix:** The skill detects this and shows the existing PR URL. Update the existing PR instead.
 
-## 8. Present Summary
+## Present Summary (standalone path only)
 
-After commit:
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit:
+
+```markdown
+## Commit complete
+
+**<count> files** committed as `<SHA>` on `<branch>`.
+<If PR was created:>
+**PR:** <title>
+**URL:** <PR web URL>
+
+### Next steps:
+- Push branch: `git push -u origin <branch>`
+- Or run `/dx-pr` to create the PR (if not already created)
+```
+
+After commit (detailed form):
 ```markdown
 **Committed:** `#<ID> <message>`
 **Files:** <count> files
@@ -169,3 +205,30 @@ After PR:
 **Branch:** <source> → <$BASE_BRANCH>
 **URL:** <PR web URL from ADO response>
 ```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Committed 3 files as 26e7cb8 on feature/2490722-microsite; PR not created (auto-pr=false).
+artifacts:
+  - .ai/specs/2490722-microsite/commit-log.txt
+next_action: open PR via printed URL
+```
+
+```markdown
+## Return
+verdict: fail
+summary: Commit aborted — pre-commit hook failed: lint-staged eslint no-shadow on token.
+artifacts: []
+next_action: fix lint error and re-run /dx-pr-commit
+```
+
+If a PR was created, include the PR URL in `summary` (truncated if needed) and the full URL in an artifact file.

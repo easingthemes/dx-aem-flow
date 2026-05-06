@@ -3,6 +3,7 @@ name: dx-req
 description: Full requirements pipeline — fetch ADO/Jira story, validate DoR, distill requirements, research codebase, generate team summary. Replaces the dx-req-fetch → dor → explain → research → share sequence. Use to start working on any ticket.
 argument-hint: "[ADO Work Item ID, Jira key, or URL]"
 model: sonnet
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "AEM/*"]
 ---
 
@@ -21,6 +22,24 @@ Before creating tasks, use `TaskList` to check for existing tasks from a previou
 ## Provenance
 
 Read `shared/provenance-schema.md` — all Markdown output files from this skill must include provenance frontmatter. Use `agent: dx-req`. Confidence levels per phase are noted in each phase's output section.
+
+## Output discipline
+
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write all canonical artifacts to `$SPEC_DIR/<file>.md` (already documented below) and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same canonical artifacts AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase / per-step progress lines during the run are allowed in both paths.
 
 ## External Content Safety
 
@@ -616,9 +635,11 @@ Read `references/share-template.md` for the complete generation and posting logi
 
 ---
 
-## Present Summary
+## Present Summary (standalone path only)
 
-After all phases complete:
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+After all phases complete and only when running standalone, emit:
 
 ```markdown
 ## Requirements Pipeline Complete
@@ -637,6 +658,8 @@ After all phases complete:
 ### Next step:
 - `/dx-plan` — create implementation plan
 ```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
 ## Examples
 
@@ -706,3 +729,25 @@ Each phase checks its output. If raw-story.md unchanged, skips Phase 1. If dor-r
 - **Never duplicate comments** — always check for existing signatures before posting
 - **Idempotent throughout** — each phase checks its output and skips if current
 - **Markdown format only** — always use `format: "markdown"` for ADO comments
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Fetched #2490722, DoR 15/19 (79%), distilled 9 requirements, researched codebase with 4 agents.
+artifacts:
+  - .ai/specs/2490722-microsite/raw-story.md
+  - .ai/specs/2490722-microsite/images.md
+  - .ai/specs/2490722-microsite/explain.md
+  - .ai/specs/2490722-microsite/research.md
+  - .ai/specs/2490722-microsite/share-plan.md
+  - .ai/specs/2490722-microsite/dor-report.md
+next_action: continue to Phase 1.5 or Phase 2
+```
+
+If DoR scoring is below the project threshold, set verdict: `warn` and add `next_action: review dor-report.md before planning`.
