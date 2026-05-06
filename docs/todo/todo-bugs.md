@@ -41,7 +41,23 @@
 **Done-when:** A 100 KB+ ADO attachment fetched via `mcp__ado__wit_get_work_item_attachment` returns the full byte stream — `bash plugins/dx-core/data/lib/validate-image.sh <saved-file>` exits 0 with `ok:` rather than `skip: truncated: ...`. Until then, the validator quarantines truncated files into INDEX.md's `## Skipped` section so dx-req can complete.
 **Approach:** File issue against `microsoft/azure-devops-mcp`. Until upstream fix lands, defense-in-depth in the validator is sufficient — affected attachments get skipped rather than 400-ing the turn. Optional follow-up: add a REST-API fallback in `fetch-raw-story.js` that re-fetches with curl + ADO PAT when MCP returns truncated bytes.
 
-## Subagent Hooks — RESOLVED 2026-04-25
+## Forked skills break standalone UX
+
+**Added:** 2026-05-06
+**Problem:** Tasks 3-8 of the orchestration-context-pollution rollout (PR #143) added `context: fork` to 6 skills (`dx-pr-commit`, `dx-plan-validate`, `dx-plan-resolve`, `dx-plan`, `dx-req`, `dx-step-all`) and suppressed their inline summary blocks (`## Present Summary`, `## 8.`, `## Execution Complete` → "Suppressed — emit ONLY the `## Return` block"). That's correct when the skill is called by `dx-agent-all`, but `context: fork` is static at skill-definition time — there's no caller-side toggle. So a user running `/dx-req 2435084` standalone now sees only the `## Return` block instead of the human-friendly summary they used to see. Five of the six forked skills (all except `dx-step-all`) are routinely run standalone.
+**Scope:**
+- `plugins/dx-core/skills/dx-pr-commit/SKILL.md`
+- `plugins/dx-core/skills/dx-plan/SKILL.md` (the suppressed Section 8)
+- `plugins/dx-core/skills/dx-plan-validate/SKILL.md`
+- `plugins/dx-core/skills/dx-plan-resolve/SKILL.md`
+- `plugins/dx-core/skills/dx-req/SKILL.md` (the suppressed `## Present Summary`)
+- `plugins/dx-core/skills/dx-agent-all/SKILL.md` (each `Skill(...)` call site needs `DX_ORCHESTRATED=1` exported beforehand)
+**Done-when:** `/dx-req 2435084` run by a user (no orchestrator) prints the full `## Requirements Pipeline Complete` summary block AND the `## Return` block. `/dx-agent-all <id>` run still emits ONLY the `## Return` block from each forked sub-skill into the orchestrator's tool-result. `grep "DX_ORCHESTRATED" plugins/dx-core/skills/dx-agent-all/SKILL.md` shows the env var being set before each forked-skill invocation. `grep -n "DX_ORCHESTRATED" plugins/dx-core/skills/{dx-req,dx-plan,dx-plan-validate,dx-plan-resolve,dx-pr-commit,dx-step-all}/SKILL.md` shows each skill body branching on it.
+**Approach:** Conditional output via env var.
+1. In `dx-agent-all`, wrap each forked-skill invocation with `export DX_ORCHESTRATED=1` (and `unset` after, or scope it to the Skill call).
+2. In each forked skill body, restore the previously suppressed verbose summary block, but guard with: "When `DX_ORCHESTRATED=1` is set (orchestrator path), emit ONLY the `## Return` block at the end. When unset (standalone path), emit the canonical summary AND the `## Return` block at the end."
+3. The `## Return` block stays mandatory as the LAST emitted block in both paths — that way the orchestrator's "read only the Return block" instruction still works (the verbose part is in its tool result but not echoed to the user's main context).
+4. Verify both paths empirically: standalone gives full UX, orchestrator path keeps the lean tool-result.
 
 **Added:** 2026-03-03
 **Resolved:** 2026-04-25

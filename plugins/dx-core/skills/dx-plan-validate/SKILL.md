@@ -2,12 +2,33 @@
 name: dx-plan-validate
 description: Cross-check the implementation plan against requirements. Verifies every requirement has a step, no unrequested features snuck in, and dependencies flow correctly. Use after /dx-plan and before /dx-step.
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You cross-check implement.md against explain.md to verify the plan is complete, correct, and ready for execution.
 
 Use ultrathink for this skill — careful cross-referencing benefits from deep reasoning.
+
+## Output
+
+You run in a forked context. Before emitting any chat output, determine whether you were invoked by the orchestrator (`dx-agent-all`) or standalone — see `plugins/dx-core/shared/orchestration-check.md`:
+
+```bash
+ORCHESTRATED=0
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && ORCHESTRATED=1
+fi
+```
+
+- **If `$ORCHESTRATED == 1`** (orchestrator path): write the full report to `$SPEC_DIR/validation-report.md` and emit ONLY the `## Return` block to chat.
+- **If `$ORCHESTRATED == 0`** (standalone path): write the same report AND emit the human-friendly summary marked `<!-- standalone-only -->` below, followed by the `## Return` block at the very end.
+
+Per-phase progress lines during the run are allowed in both paths.
+
+This skill writes its full report to `$SPEC_DIR/validation-report.md` (overall verdict, per-requirement mapping, reuse check, warnings). The orchestrator reads this file only on demand.
 
 ## 1. Locate the Spec Directory
 
@@ -78,7 +99,9 @@ Report:
 - ❌ Step N creates new `<thing>` but existing `<path>` already provides this functionality
 - ⚠️ Step N creates new code — verify no existing equivalent exists
 
-## 3. Present Validation Report
+## 3. Write Validation Report
+
+**Write** the following table and overall verdict to `$SPEC_DIR/validation-report.md`. Do not print to chat.
 
 ```markdown
 ## Plan Validation: <Title>
@@ -97,13 +120,6 @@ Report:
 <If FAIL — list specific issues that must be fixed>
 <If PASS WITH WARNINGS — list items to review but not blocking>
 <If PASS — "Plan is ready for execution.">
-
-### Next steps:
-<If PASS:>
-- `/dx-step` — execute first step
-- `/dx-step-all` — execute all steps autonomously
-<If FAIL:>
-- Fix issues in implement.md and re-run `/dx-plan-validate`
 ```
 
 ## Examples
@@ -135,3 +151,67 @@ Report:
 - **Be lenient on scope creep** — infrastructure steps (setup, testing) are legitimate even without a direct requirement mapping. Only flag clearly unrequested features.
 - **Don't fix — report** — this skill reports issues, it does not modify implement.md
 - **Fast feedback** — print results clearly so the developer can decide whether to fix or proceed
+
+## Present Summary (standalone path only)
+
+<!-- standalone-only — emit only when $ORCHESTRATED == 0 -->
+
+When running standalone, emit the validation table to chat:
+
+```markdown
+## Plan Validation: <Title>
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Requirement Coverage | ✅/❌ | <N>/<total> covered |
+| No Scope Creep | ✅/⚠️ | <N> steps without requirement mapping |
+| Dependency Order | ✅/❌ | <details if issues> |
+| File Existence | ✅/❌ | <N> files verified |
+| Testing Coverage | ✅/⚠️ | <details> |
+| Reuse Check | ✅/❌/⚠️ | <N> reuse opportunities verified |
+
+**Overall: PASS / FAIL / PASS WITH WARNINGS**
+
+<If FAIL — list specific issues that must be fixed>
+<If PASS WITH WARNINGS — list items to review but not blocking>
+<If PASS — "Plan is ready for execution.">
+
+### Next step:
+<If PASS or WARN:> - `/dx-step-all` — execute the plan
+<If FAIL:> - `/dx-plan-resolve` — fix flagged issues, then re-validate
+```
+
+When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`.
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: All 9 requirements covered by 4 plan steps; no scope creep; reuse check clean.
+artifacts:
+  - .ai/specs/2490722-microsite/validation-report.md
+next_action: continue to Phase 2.5 (feature branch)
+```
+
+```markdown
+## Return
+verdict: warn
+summary: Plan covers all reqs but has 2 non-blocking warnings (no test infra; 2 open PO questions).
+artifacts:
+  - .ai/specs/2490722-microsite/validation-report.md
+next_action: continue (warnings non-blocking) or run /dx-plan-resolve
+```
+
+```markdown
+## Return
+verdict: fail
+summary: Requirement #5 (test coverage) has no corresponding plan step.
+artifacts:
+  - .ai/specs/2490722-microsite/validation-report.md
+next_action: run /dx-plan-resolve
+```
