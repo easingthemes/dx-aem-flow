@@ -1,3 +1,10 @@
+## [2.106.6](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.5...v2.106.6) (2026-05-06)
+
+
+### Bug Fixes
+
+* **orchestration:** fork inner-loop skills to cut dx-agent-all context pollution ([#143](https://github.com/easingthemes/dx-aem-flow/issues/143)) ([2bdf6ee](https://github.com/easingthemes/dx-aem-flow/commit/2bdf6ee97ce02d6f665c8b8e4a5c7ca8eb90d760)), closes [#104](https://github.com/easingthemes/dx-aem-flow/issues/104) [#104](https://github.com/easingthemes/dx-aem-flow/issues/104) [#104](https://github.com/easingthemes/dx-aem-flow/issues/104)
+
 ## [2.106.5](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.4...v2.106.5) (2026-05-04)
 
 
