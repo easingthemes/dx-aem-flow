@@ -1,0 +1,53 @@
+name: Waza Eval
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'evals/**'
+      - 'plugins/**/skills/**/SKILL.md'
+      - '.github/workflows/waza-eval.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'evals/**'
+      - 'plugins/**/skills/**/SKILL.md'
+  workflow_dispatch:
+    inputs:
+      executor:
+        description: 'Waza executor (mock | copilot-sdk)'
+        type: choice
+        default: mock
+        options:
+          - mock
+          - copilot-sdk
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install waza
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
+          echo "$HOME/.waza/bin" >> "$GITHUB_PATH"
+
+      - name: Show waza version
+        run: waza version
+
+      - name: Run dx-ticket-analyze eval (mock)
+        env:
+          WAZA_EXECUTOR: ${{ github.event.inputs.executor || 'mock' }}
+        run: |
+          waza run evals/dx-ticket-analyze/eval.yaml \
+            --executor "$WAZA_EXECUTOR" \
+            --report results/dx-ticket-analyze.json
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: waza-eval-results
+          path: results/
+          retention-days: 14

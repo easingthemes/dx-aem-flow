@@ -1,0 +1,40 @@
+# No argument — skill should ask the user for a ticket reference,
+# not invent one or proceed with a bogus ID.
+id: no-arg
+name: No argument provided
+description: |
+  When invoked with no argument, the skill must prompt the user for the
+  ticket URL/ID instead of fetching anything.
+
+tags:
+  - input-parsing
+  - error-handling
+
+inputs:
+  prompt: "/dx-ticket-analyze"
+  files:
+    - path: .ai/config.yaml
+      source: ../fixtures/config-ado.yaml
+
+expected:
+  output_contains:
+    - "ticket"
+
+graders:
+  - name: asks_for_input
+    type: text
+    config:
+      regex_match:
+        # Some form of "what ticket?" prompt
+        - "(?i)(provide|paste|specify|which|enter|give me).{0,40}(ticket|url|id|issue)"
+      regex_not_match:
+        # Must NOT have produced a fabricated ticket reference
+        - "^## Ticket: #"
+
+  - name: no_mcp_calls_yet
+    type: behavior
+    config:
+      max_tool_calls: 5
+      forbidden_tools:
+        - "mcp__ado__wit_get_work_item"
+        - "mcp__atlassian__jira_get_issue"

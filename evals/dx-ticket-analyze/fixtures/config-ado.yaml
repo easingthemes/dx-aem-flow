@@ -1,0 +1,12 @@
+# Canned .ai/config.yaml for ADO-provider eval tasks.
+tracker:
+  provider: ado
+
+scm:
+  provider: ado
+  org: myorg
+  project: DefaultProject
+  base-branch: develop
+
+build:
+  command: mvn clean install

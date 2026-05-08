@@ -1,0 +1,14 @@
+# Canned .ai/config.yaml for Jira-provider eval tasks.
+tracker:
+  provider: jira
+
+jira:
+  url: https://example.atlassian.net
+  project-key: PROJ
+
+scm:
+  provider: jira
+  base-branch: main
+
+build:
+  command: mvn clean install
