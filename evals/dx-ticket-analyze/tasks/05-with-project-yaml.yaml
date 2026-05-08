@@ -16,11 +16,17 @@ inputs:
   prompt: "/dx-ticket-analyze 2435084"
   files:
     - path: .ai/config.yaml
-      source: ../fixtures/config-ado.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
+        aem:
+          active-markets: [de]
     - path: .ai/project/project.yaml
-      source: ../fixtures/project.yaml
     - path: .ai/project/component-index.md
-      source: ../fixtures/component-index.md
 
 expected:
   output_contains:
@@ -41,4 +47,4 @@ graders:
     config:
       matching_mode: any_order_match
       expected_actions:
-        - "Task"   # parallel sub-agent dispatch
+        - "Task"

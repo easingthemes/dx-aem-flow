@@ -14,7 +14,13 @@ inputs:
   prompt: "/dx-ticket-analyze"
   files:
     - path: .ai/config.yaml
-      source: ../fixtures/config-ado.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
 
 expected:
   output_contains:
@@ -25,10 +31,8 @@ graders:
     type: text
     config:
       regex_match:
-        # Some form of "what ticket?" prompt
         - "(?i)(provide|paste|specify|which|enter|give me).{0,40}(ticket|url|id|issue)"
       regex_not_match:
-        # Must NOT have produced a fabricated ticket reference
         - "^## Ticket: #"
 
   - name: no_mcp_calls_yet

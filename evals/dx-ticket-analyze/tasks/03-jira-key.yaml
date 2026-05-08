@@ -14,7 +14,15 @@ inputs:
   prompt: "/dx-ticket-analyze PROJ-123"
   files:
     - path: .ai/config.yaml
-      source: ../fixtures/config-jira.yaml
+      content: |
+        tracker:
+          provider: jira
+        jira:
+          url: https://example.atlassian.net
+          project-key: PROJ
+        scm:
+          provider: jira
+          base-branch: main
 
 expected:
   output_contains:

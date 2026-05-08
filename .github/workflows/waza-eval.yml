@@ -36,13 +36,27 @@ jobs:
       - name: Show waza version
         run: waza version
 
-      - name: Run dx-ticket-analyze eval (mock)
+      # Mock executor returns dummy output that won't satisfy real graders,
+      # so we use --skip-graders here. This still validates: eval YAML schema,
+      # fixture loading, task dispatch, and grader config parsing.
+      # Live runs (workflow_dispatch with executor=copilot-sdk) drop the flag.
+      - name: Run dx-ticket-analyze eval
         env:
           WAZA_EXECUTOR: ${{ github.event.inputs.executor || 'mock' }}
         run: |
-          waza run evals/dx-ticket-analyze/eval.yaml \
-            --executor "$WAZA_EXECUTOR" \
-            --report results/dx-ticket-analyze.json
+          mkdir -p results
+          if [ "$WAZA_EXECUTOR" = "mock" ]; then
+            waza run evals/dx-ticket-analyze/eval.yaml \
+              --executor mock \
+              --skip-graders \
+              --output results/dx-ticket-analyze.json \
+              --no-update-check
+          else
+            waza run evals/dx-ticket-analyze/eval.yaml \
+              --executor "$WAZA_EXECUTOR" \
+              --output results/dx-ticket-analyze.json \
+              --no-update-check
+          fi
 
       - name: Upload eval results
         if: always()

@@ -15,7 +15,13 @@ inputs:
   prompt: "/dx-ticket-analyze 2416553"
   files:
     - path: .ai/config.yaml
-      source: ../fixtures/config-ado.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
     # NOTE: no project.yaml fixture — this is the point of the test.
 
 expected:

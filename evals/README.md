@@ -24,11 +24,25 @@ evals/
 # Install (one-time)
 curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
 
-# From repo root
-waza run evals/dx-ticket-analyze/eval.yaml --executor mock
+# Mock — validates schema, fixture loading, and task dispatch.
+# Real graders will fail here (mock output is dummy), so use --skip-graders.
+waza run evals/dx-ticket-analyze/eval.yaml --executor mock --skip-graders
+
+# Live — runs the skill against a real model and grades output.
+# Requires `copilot login` first.
+waza run evals/dx-ticket-analyze/eval.yaml --executor copilot-sdk
 ```
 
-For live runs against a real model, switch to `--executor copilot-sdk` (requires a GitHub token). Cost estimate for `dx-ticket-analyze` (Haiku 4.5, 6 tasks × 3 trials): **~$0.50 per full live run**.
+Cost estimate for `dx-ticket-analyze` (Haiku 4.5, 6 tasks × 3 trials): **~$0.50 per full live run**.
+
+### Mock vs live — what each catches
+
+| Mode | Catches | Misses |
+|------|---------|--------|
+| `mock --skip-graders` | YAML schema breakage, fixture path errors, missing skills, task glob misses | All skill behavior |
+| `copilot-sdk` (live) | Behavioral regressions, missing headings, broken provider routing, rule violations | Nothing — but costs tokens |
+
+CI runs the mock variant on every PR. Live runs are gated behind `workflow_dispatch` so they only fire when you explicitly request them.
 
 ## Skill resolution
 
