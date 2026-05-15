@@ -1,196 +1,306 @@
 # Skill Authoring Conventions
 
-Items derived from [2026-05-15-google-skills-best-practices.md](../research/2026-05-15-google-skills-best-practices.md).
+Items derived from [2026-05-15-google-skills-best-practices.md](../research/2026-05-15-google-skills-best-practices.md),
+**reality-checked against [official Claude Code skills docs](https://code.claude.com/docs/en/skills)
+and [agent-skills best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)**.
+
 Each item is independent — adopt incrementally.
 
-## Audit and expand skill descriptions for trigger coverage
+> **Reading order:** items are listed in **recommended adoption order** (small
+> wins first, biggest refactors last). The "Dropped after reality check"
+> section at the bottom records what we considered and rejected.
+
+## 1. Adopt the dedicated `when_to_use` frontmatter field
 
 **Added:** 2026-05-15
-**Problem:** Most of our skill descriptions cover one canonical trigger phrase
-(e.g., `aem-component`: *"Use when a developer asks 'where is component X?'"*).
-Google bundles 4-6 trigger phrases per description (*"Use when X, Y, or Z.
-Also use when A or B."*), which improves auto-activation accuracy across
-Claude Code, Copilot CLI, VS Code Chat, and Cursor — all of which match on
-description text.
-**Scope:** All `plugins/*/skills/*/SKILL.md` frontmatter `description:` fields
-(40+ skills across 4 plugins). Frontmatter-only change; no body edits.
-**Done-when:** Each `description:` lists at least 3 distinct trigger phrases
-(verify with `grep -c "Use when\|Also use\|use this when"
-plugins/*/skills/*/SKILL.md`) AND the existing `tests/run-evals.sh --quick`
-suite still passes (existing prompts must still match their target skill).
-**Approach:** Reference Google's `bigquery-basics` description as a template.
-Group skills by plugin, do dx-core first (highest install rate). Update the
-eval prompts in `tests/prompts/` to cover any newly added triggers.
+**Problem:** Anthropic provides a dedicated `when_to_use` field separate from
+`description`, designed for trigger phrases and example requests. The
+description field is capped at 1024 chars; combined with `when_to_use` the
+listing shows up to 1,536 chars. None of our 40+ skills currently use
+`when_to_use` — we stuff triggers into `description`, which both bloats the
+"what it does" purpose and risks overflow against the listing budget when
+the user has many skills installed. Anthropic explicitly recommends the
+split: description = what it does, when_to_use = trigger phrasing.
+**Scope:** All `plugins/*/skills/*/SKILL.md` frontmatter. Frontmatter-only
+change.
+**Done-when:** Every skill's frontmatter has both `description:` (what it
+does, third-person) and `when_to_use:` (trigger phrases and example user
+requests). Verify with `grep -L "when_to_use:" plugins/*/skills/*/SKILL.md`
+returning empty.
+**Approach:** Mechanical pass. For each skill, move trigger phrasing
+("Use when...") out of `description` and into `when_to_use:`. Keep
+`description` to the "what it does" verb phrase only. Run
+`tests/run-evals.sh --quick` to confirm no regressions.
 
-## Codify `references/` progressive-disclosure pattern
+## 2. Audit and expand skill descriptions for trigger coverage
 
 **Added:** 2026-05-15
-**Problem:** 7 skills already have `references/` subdirectories
-(`dx-pr-review`, `dx-req`, `dx-pr-answer`, `dx-figma-extract`, `dx-figma-verify`,
-`dx-figma-prototype`, `dx-dor`, `aem-fe-verify`) but the pattern isn't
-documented as a convention. Some skills exceed 250 lines
-(`aem-component` is 263) where splitting into `references/` would aid
-scannability. Google's rule of thumb: SKILL.md stays ~50-150 lines, depth
-moves to `references/<topic>.md`, and SKILL.md ends with a "Reference
-Directory" section.
+**Problem:** Most of our skill descriptions cover one canonical trigger
+phrase (e.g., `aem-component`: *"Use when a developer asks 'where is
+component X?'"*). Anthropic's documented examples include 3-5 distinct
+trigger phrases per skill (e.g., *"Use when working with PDF files or when
+the user mentions PDFs, forms, or document extraction"*). More triggers →
+better auto-activation across Claude Code, Copilot CLI, VS Code Chat,
+and Cursor. Pairs naturally with TODO #1 — extra triggers live in
+`when_to_use:`.
+**Scope:** All `plugins/*/skills/*/SKILL.md` frontmatter — bundle with #1.
+**Done-when:** Each `when_to_use:` lists at least 3 distinct trigger
+phrases AND `tests/run-evals.sh --quick` still passes (existing prompts
+must still match their target skill, and no skill should now match
+prompts intended for a different skill).
+**Approach:** Use Anthropic's `bigquery-basics` and PDF skill descriptions
+as templates. Group skills by plugin, do `dx-core` first (highest install
+rate). Update `tests/prompts/` to cover any newly added triggers and
+guard against false-positive cross-matches.
+
+## 3. Replace weak imperatives with MUST / MUST NOT
+
+**Added:** 2026-05-15
+**Problem:** Anthropic explicitly recommends *"stronger language like
+'MUST filter' instead of 'always filter'"* when rules must not be
+skipped. Our skills are full of soft verbs: `should`, `consider`,
+`try to`, `you may want to`, `you can`. For workflow steps where
+skipping causes real harm (committing on main, amending published
+commits, writing to repo root from `aem-init`, etc.), these soft verbs
+let Claude rationalize a skip.
+**Scope:** All `plugins/*/skills/*/SKILL.md` and `plugins/*/agents/*.md`.
+**Done-when:** Procedural steps that must run produce zero matches for
+`\b(should|try to|consider|may want to|you can)\b` in the imperative
+contexts. Verify with:
+```bash
+grep -rE "\b(should|try to|consider|may want to|you can)\b" \
+  plugins/*/skills/*/SKILL.md | grep -v "user may" | wc -l
+# Target: significant reduction, not zero (some uses are legitimate prose)
+```
+**Approach:** Editorial pass with judgement — not every "should" is wrong
+(prose like "the agent should expect X" is fine). Focus on numbered
+workflow steps and rules. Replace `you should commit on branch X` with
+`you MUST commit on branch X`. Drop hedges (`try to use X` → `use X`).
+Pairs with the dropped Core Directives idea — same goal, simpler fix.
+
+## 4. Codify `references/` progressive-disclosure at the documented 500-line threshold
+
+**Added:** 2026-05-15
+**Problem:** 7 of our skills already use `references/`
+(`dx-pr-review`, `dx-req`, `dx-pr-answer`, `dx-figma-extract`,
+`dx-figma-verify`, `dx-figma-prototype`, `dx-dor`, `aem-fe-verify`), but
+the pattern isn't documented as a convention. Anthropic's explicit
+guidance: *"Keep SKILL.md body under 500 lines for optimal performance.
+Split content into separate files when approaching this limit."* Once a
+skill loads, its content stays in context across turns — every line is a
+recurring token cost.
 **Scope:** `CLAUDE.md` (Skill Structure section), website docs (Skill
-Authoring page), and the 5-8 skills currently >150 lines:
-`plugins/dx-aem/skills/aem-component/SKILL.md`,
-`plugins/dx-aem/skills/aem-verify/SKILL.md`,
-plus audit results.
+Authoring page), and any skill exceeding ~400 lines.
 **Done-when:** (1) `CLAUDE.md` Skill Structure section documents the
-`references/` pattern with a max-line guideline; (2) website Skill
-Authoring page has a "Progressive Disclosure" sub-section; (3) skills
-matching `find plugins -name SKILL.md | xargs wc -l | awk '$1 > 200'`
-either have `references/` or have a tracked exception.
-**Approach:** Define the convention first (CLAUDE.md edit), then refactor
-the 2-3 largest offending skills as exemplars before fanning out.
+500-line guideline + `references/` pattern citing the official docs;
+(2) website Skill Authoring page has a "Progressive Disclosure" sub-section;
+(3) `find plugins -name SKILL.md | xargs wc -l | awk '$1 > 500'` returns
+empty or each remaining offender has a documented exception.
+**Approach:** Document the convention first (CLAUDE.md edit). Audit
+current line counts:
+`find plugins -name SKILL.md | xargs wc -l | sort -rn | head -10`. Only
+refactor skills genuinely above 500 — the earlier 150-line threshold
+from the Google review was too aggressive.
 
-## Add "Core Directives" with ALWAYS / DO NOT pairs to skills with anti-patterns
+## 5. Enforce one-level-deep reference structure
 
 **Added:** 2026-05-15
-**Problem:** Several of our skills have implicit anti-patterns
-(`dx-step`: never commit on main; `dx-pr`: never amend published commits;
-`aem-init`: never write to repo root; `aem-verify`: never trust visual diff
-alone) that are scattered through prose rather than surfaced in a single
-declarative block. Google's `gemini-api` skill collects these into a "Core
-Directives" section with paired ALWAYS / DO NOT statements followed by a
-`> [!WARNING]` callout. Much easier to scan and harder for the LLM to miss.
-**Scope:** `plugins/dx-core/skills/dx-step/SKILL.md`,
-`plugins/dx-core/skills/dx-pr/SKILL.md`,
+**Problem:** Anthropic explicit rule: *"Keep references one level deep
+from SKILL.md."* Claude may partially read files via `head -100` when
+they are reached through nested references, resulting in incomplete
+information. Our existing `references/` directories may have files that
+link to other reference files (nested), which silently degrades skill
+quality.
+**Scope:** All existing `references/` subdirectories: `dx-pr-review`,
+`dx-req`, `dx-pr-answer`, `dx-figma-extract`, `dx-figma-verify`,
+`dx-figma-prototype`, `dx-dor`, `aem-fe-verify`.
+**Done-when:** No reference file links to another reference file in the
+same skill. Verify with:
+```bash
+for f in plugins/*/skills/*/references/*.md; do
+  grep -l 'references/\|\.\./references' "$f" 2>/dev/null
+done
+# Target: empty output
+```
+**Approach:** For each nested link found, either (a) inline the target
+content into the linking file, or (b) move both targets up to SKILL.md
+as siblings. Small mechanical pass.
+
+## 6. Add table of contents to reference files longer than 100 lines
+
+**Added:** 2026-05-15
+**Problem:** Anthropic explicit guidance: *"For reference files longer
+than 100 lines, include a table of contents at the top. This ensures
+Claude can see the full scope of available information even when
+previewing with partial reads."* Claude `head -100`s reference files when
+deciding whether to load them; a TOC in the first 100 lines preserves
+discoverability.
+**Scope:** All reference files >100 lines:
+```bash
+find plugins -path '*/references/*.md' | xargs wc -l | awk '$1 > 100'
+```
+**Done-when:** Every file in the audit list above starts with a
+`## Contents` (or `## Table of contents`) section listing its top-level
+headings within the first 100 lines.
+**Approach:** Mechanical pass. Auto-generate TOCs from existing headings.
+
+## 7. Adopt workflow-with-checklist pattern for procedural skills
+
+**Added:** 2026-05-15
+**Problem:** Anthropic documents a "Workflows for complex tasks" pattern
+with an embedded checkbox checklist Claude copies into its response and
+checks off as it progresses (see the PDF form-filling example in the
+best-practices docs). Our procedural skills (`dx-init`, `aem-init`,
+`dx-hub-init`, `dx-bug`, `dx-pr`) all have multi-step flows but none use
+this pattern. Checklists prevent step-skipping and give the user a
+progress signal. **Note:** the earlier "Recipe archetype" proposal had
+extra sections like "Clarifying Questions" that Anthropic does not
+document — drop those, keep the core (numbered steps + checklist +
+validation gates).
+**Scope:** `plugins/dx-core/skills/dx-init/SKILL.md`,
 `plugins/dx-aem/skills/aem-init/SKILL.md`,
-`plugins/dx-aem/skills/aem-verify/SKILL.md`,
-`plugins/dx-core/skills/dx-step-fix/SKILL.md`.
-**Done-when:** Each listed skill has a `## Core Directives` section near
-the top (after the one-liner intro) containing ≥2 ALWAYS/DO NOT pairs,
-verified with `grep -l "## Core Directives" plugins/*/skills/*/SKILL.md`.
-**Approach:** Extract existing implicit rules — don't invent new ones.
-Keep each directive to 1-2 lines.
+`plugins/dx-hub/skills/dx-hub-init/SKILL.md`,
+`plugins/dx-core/skills/dx-bug/SKILL.md`,
+`plugins/dx-core/skills/dx-pr/SKILL.md`.
+**Done-when:** Each listed skill has (a) a checkbox progress checklist
+at the start of the workflow section, and (b) numbered steps with a
+clear validation gate before "done" (see TODO #8).
+**Approach:** Use Anthropic's "PDF form filling workflow" as the
+template. Start with `dx-init` as the exemplar (most visible skill).
 
-## Standardize on GFM markdown alerts for hard rules
-
-**Added:** 2026-05-15
-**Problem:** We currently use a mix of **bold**, ALL-CAPS, and prefixed
-phrases like "CRITICAL RULE:" / "IMPORTANT:" for emphasis. GitHub-flavored
-markdown alerts (`> [!WARNING]`, `> [!IMPORTANT]`, `> [!TIP]`, `> [!NOTE]`,
-`> [!CAUTION]`) render natively on GitHub, VS Code, Cursor IDE, and most
-modern renderers — they're more semantic and visually distinct than bold
-text. Google's skills use them consistently.
-**Scope:** All `plugins/*/skills/*/SKILL.md` and all `plugins/*/agents/*.md`.
-Find-replace pass with editorial judgement.
-**Done-when:** Zero matches for `^\*\*CRITICAL` or `^\*\*IMPORTANT:\*\*` at
-the start of a line in `plugins/`, replaced with `> [!CRITICAL]` /
-`> [!IMPORTANT]` blocks. Spot-check rendering on GitHub PR preview.
-**Approach:** Low priority polish. Best done alongside the Core Directives
-work (which already needs `> [!WARNING]` blocks per Google's template).
-
-## Formalize the "Recipe" skill archetype
+## 8. Add machine-verifiable validation gates to workflow skills
 
 **Added:** 2026-05-15
-**Problem:** Our procedural / first-run skills (`dx-init`, `aem-init`,
-`dx-hub-init`, `dx-bug`, `dx-pr`) each invented their own shape. Google
-defines a clean Recipe template:
-**Overview → Clarifying Questions → Prerequisites → Steps → Validation
-Logic**. Adopting this would make first-run flows more consistent and
-reduce per-skill structural decisions.
-**Scope:** New docs page at `website/src/pages/conventions/recipe-skills.mdx`
-(or similar) and refactor of the 5 listed skills to match the template.
-**Done-when:** (1) Docs page exists with template + example; (2) the 5
-init/procedural skills above have all five archetype sections (verify with
-`grep -l "## Clarifying Questions\|## Validation Logic"
-plugins/*/skills/{dx-init,aem-init,dx-hub-init,dx-bug,dx-pr}/SKILL.md`);
-(3) `CLAUDE.md` Conventions section references the Recipe archetype.
-**Approach:** Write the docs page first using `google-cloud-recipe-onboarding`
-as the model. Refactor `dx-init` as the first exemplar — it's the most
-visible skill — then fan out.
+**Problem:** Anthropic's documented validation-loop pattern is *"validator
+→ fix errors → repeat"* with the explicit gate *"Only proceed when
+validation passes"*. Our procedural skills currently end without a
+machine-verifiable "done" check — Claude declares success and moves on.
+The TODO `Done-when:` field in this very tracker uses the same principle
+applied to backlog items; lifting it into skill execution closes the
+loop.
+**Scope:** Bundled with TODO #7 — same 5 skills.
+**Done-when:** Each procedural skill has a final `## Verification` (or
+similar) section listing at least 3 verifiable checks. Each check is a
+command, file glob, or grep the agent can run — not a human checklist.
+Verify by spot-check: pick one skill, run the checks manually, confirm
+they actually catch a fault when one is injected.
+**Approach:** Implement as part of the workflow rollout in #7. Reuse the
+TODO Done-when discipline. Example: `dx-init` should end with
+*"Verify: `.ai/config.yaml` exists with non-empty `scm.base-branch` and
+`build.command`; `.claude/settings.local.json` exists; `git status` is
+clean."*
 
-## Embed failure-mode triage blocks in operational skills
+## 9. Concise-body audit for skills over ~200 lines
 
 **Added:** 2026-05-15
-**Problem:** Google's Cloud Run skill includes an inline "What to do if
-deployment fails:" block with 3-5 numbered symptom → cause → exact-command
-entries. Inline triage is much faster than navigating to a linked file. We
-do this in places (`dx-step-fix`, `aem-doctor`) but unevenly.
+**Problem:** Anthropic's first principle: *"Default assumption: Claude is
+already very smart. Only add context Claude doesn't already have."* Our
+largest skills include explanatory prose that Claude doesn't need
+(definitions of common terms, justifications for design choices,
+narrative about why something matters). `aem-component` is 263 lines;
+several others exceed 200. Once a skill loads, all of it stays in
+context across turns — every paragraph competes with conversation
+history.
+**Scope:** Top 10 longest skills:
+`find plugins -name SKILL.md | xargs wc -l | sort -rn | head -10`.
+Start with `aem-component` (263 lines).
+**Done-when:** The top-10 longest skills have been audited line-by-line
+with the test *"does this paragraph justify its token cost?"* and
+verbose explanations have been removed. No skill exceeds 500 lines
+(threshold from #4). For each audited skill, run the relevant eval
+prompts and confirm no regression.
+**Approach:** This is editorial work, not mechanical. Pair with #10
+(consistent terminology) since both touch the same files.
+
+## 10. Consistent terminology audit
+
+**Added:** 2026-05-15
+**Problem:** Anthropic explicit guidance: *"Choose one term and use it
+throughout the Skill."* Our skills mix:
+- *ticket* / *story* / *work-item* / *issue* (across ADO/Jira skills)
+- *component* / *module* / *block* (in AEM skills)
+- *PR* / *pull-request* / *pull request*
+- *branch* / *feature branch* / *topic branch*
+Inconsistency makes it harder for Claude to follow chained instructions.
+**Scope:** All `plugins/*/skills/*/SKILL.md` and `plugins/*/agents/*.md`.
+Bundle with #9 since both are line-by-line audits.
+**Done-when:** Documented canonical term list in `docs/reference/terminology.md`
+and zero violations across `plugins/`. Verify with a per-pair grep, e.g.
+`grep -rE "\b(ticket|story|work-item)\b" plugins/` should consistently
+use only the canonical term.
+**Approach:** Build the canonical list first (one row per concept),
+then do a find-replace pass with judgement (some quoted strings or
+external references must stay as-is).
+
+## 11. Embed failure-mode triage in operational skills (low priority)
+
+**Added:** 2026-05-15
+**Problem:** Not explicitly in Anthropic's docs, but consistent with the
+"solve, don't punt" principle. Symptom → diagnostic command → fix inline
+beats "if something fails, ask Claude" for ops skills.
 **Scope:** `plugins/dx-aem/skills/aem-doctor/SKILL.md`,
 `plugins/dx-aem/skills/aem-verify/SKILL.md`,
 `plugins/dx-aem/skills/aem-fe-verify/SKILL.md`,
 `plugins/dx-core/skills/dx-step-fix/SKILL.md`,
 `plugins/dx-core/skills/dx-pr-answer/SKILL.md`.
-**Done-when:** Each listed skill has a `## When <X> fails` (or
-`### Troubleshooting`) section with at least 3 numbered entries in
-**symptom → diagnostic command → fix** form.
-**Approach:** Mine the existing failure modes from
-`docs/research/*.md` and `docs/todo/todo-bugs.md` — most are already
-documented, just not embedded in the skills that need them at runtime.
+**Done-when:** Each listed skill has a `## When <X> fails` section with
+at least 3 numbered entries in **symptom → diagnostic command → fix** form.
+**Approach:** Mine existing failure modes from `docs/research/*.md` and
+`docs/todo/todo-bugs.md`.
 
-## Adopt MCP fallback escape hatch as a template line
+## 12. Source-of-truth doc pointers in externally-dependent skills (lowest priority)
 
 **Added:** 2026-05-15
-**Problem:** Google's reference-using skills end the "Reference Directory"
-section with a one-liner: *"If you need product information not found in
-these references, use the Developer Knowledge MCP server `search_documents`
-tool."* Clean escape hatch when the LLM hits a gap. We have `context7`
-(`mcp__97246f63-...__query-docs`) and Microsoft Docs MCP available but
-don't systematically tell skills to fall through to them.
-**Scope:** The 7 skills with `references/`:
-`plugins/dx-core/skills/{dx-pr-review,dx-req,dx-pr-answer,dx-figma-extract,
-dx-figma-verify,dx-figma-prototype,dx-dor}/SKILL.md`,
-`plugins/dx-aem/skills/aem-fe-verify/SKILL.md`.
-**Done-when:** Each Reference Directory section in those 8 SKILL.md files
-ends with a fallback line pointing to `context7` (`query-docs` /
-`resolve-library-id`) or — for AEM-specific skills — to `mcp__plugin_dx-aem_AEM__`
-search tools. Verified with `grep -l "If you need.*not found.*MCP"
-plugins/*/skills/*/SKILL.md`.
-**Approach:** Single template line, varied per skill domain. Trivial PR.
-
-## Add "Related Skills" cross-links to chained workflows
-
-**Added:** 2026-05-15
-**Problem:** Our dx workflow has natural chains
-(`dx-req` → `dx-plan` → `dx-step` → `dx-step-verify` → `dx-pr` →
-`dx-pr-review`) but skills don't cross-link to their predecessors and
-successors. Google's `bigquery-basics` ends with a "Related Skills" section
-linking to `bigquery-ai-ml`. Cross-links help the LLM (and the human reader)
-chain skills correctly.
-**Scope:** Workflow skills:
-`plugins/dx-core/skills/{dx-req,dx-plan,dx-step,dx-step-verify,dx-step-fix,
-dx-pr,dx-pr-review,dx-pr-answer,dx-dor,dx-dod}/SKILL.md`.
-**Done-when:** Each listed skill has a `## Related Skills` section near
-the bottom listing predecessor + successor with one-line role descriptions.
-Verified with `grep -L "## Related Skills"
-plugins/dx-core/skills/{dx-req,dx-plan,dx-step,dx-step-verify,dx-step-fix,
-dx-pr,dx-pr-review,dx-pr-answer,dx-dor,dx-dod}/SKILL.md` returning empty.
-**Approach:** Build the chain map once (it's in `docs/reference/skill-catalog.md`
-already), then mechanically apply.
-
-## Add source-of-truth doc pointer at bottom of externally-dependent skills
-
-**Added:** 2026-05-15
-**Problem:** Skills that wrap external systems (AEM, ADO, Jira, Figma, axe)
-have references that can go stale as upstream evolves. Google's skills end
-with a "Source of truth" link to canonical upstream docs even when
-`references/` is present. We don't do this consistently.
+**Problem:** Skills wrapping external systems (AEM, ADO, Jira, Figma, axe)
+can drift from upstream over time. A single canonical-doc link at the
+bottom is a cheap insurance policy. Aligns with Anthropic's "avoid
+time-sensitive information" guidance.
 **Scope:** All AEM skills (`plugins/dx-aem/skills/*`), Figma skills
-(`plugins/dx-core/skills/dx-figma-*`), ADO/Jira-specific skills (`dx-req`,
-`dx-pr-*`, `dx-dor`, `dx-dod`).
-**Done-when:** Each listed skill has a final section
-(`## Documentation` or `## Source of Truth`) linking to canonical upstream
-docs (AEM developer site, Figma plugin API, ADO REST reference, etc.).
-Verified by spot-check.
-**Approach:** Lowest priority of the set — pure polish. Bundle with one of
-the larger refactors (B or E) rather than its own pass.
+(`plugins/dx-core/skills/dx-figma-*`), ADO/Jira-specific skills
+(`dx-req`, `dx-pr-*`, `dx-dor`, `dx-dod`).
+**Done-when:** Each listed skill has a final `## Documentation` section
+linking to canonical upstream docs.
+**Approach:** Bundle with whichever larger refactor next touches each
+skill. Don't do as its own pass.
 
-## Lift "Validation Logic" section into Recipe template
+---
 
-**Added:** 2026-05-15
-**Problem:** Our TODO format already requires a `Done-when:` field — concrete,
-verifiable checks. Google applies the same idea at skill-execution level:
-every Recipe skill ends with **Validation Logic** listing the checks the
-agent should run to confirm successful completion. Lifting this into the
-Recipe archetype gives every procedural skill a deterministic "done" gate.
-**Scope:** Bundled with the Recipe archetype TODO (above) — same 5 skills.
-**Done-when:** Each of the 5 procedural skills has a `## Validation Logic`
-section with ≥3 verifiable checks (each check has a command, file glob,
-or grep the agent can run).
-**Approach:** Implement as part of the Recipe-archetype rollout. Don't ship
-as a separate pass.
+## Dropped after reality check against Claude Code docs
+
+These were in the initial Google-derived list but were rejected against
+Anthropic's documented best practices. Recorded here so the decision is
+traceable.
+
+### Core Directives blocks (ALWAYS / DO NOT pairs)
+
+**Dropped.** Anthropic doesn't endorse extracted directive blocks. The
+"concise is key" principle says every line is a recurring cost — a Core
+Directives section duplicates rules that appear elsewhere in the skill.
+**Replaced by:** TODO #3 (replace weak imperatives with MUST / MUST NOT
+**inline**). Same intent, smaller token cost, documented Anthropic
+guidance.
+
+### GFM markdown alerts (`> [!WARNING]` etc.)
+
+**Dropped.** Anthropic's own docs use Mintlify `<Note>`/`<Tip>`/`<Warning>`
+components, but their **skill examples never use GFM alerts**. Pure
+aesthetics with no documented behavioral effect on Claude. The
+emphasis-via-stronger-language approach (TODO #3) is what Anthropic
+actually documents.
+
+### MCP fallback escape-hatch line
+
+**Dropped.** Anthropic explicit guidance: *"Avoid offering too many
+options. Don't present multiple approaches unless necessary."* Adding
+"if X doesn't cover it, try MCP server Y" is exactly the kind of
+optionality that bloats SKILL.md without behavior gain. Better fix:
+write reference docs that are complete enough that fallback isn't needed.
+
+### Related Skills cross-link sections
+
+**Dropped.** Claude already has all skill descriptions in context — cross-
+links don't aid discovery. Skill content stays in context across turns,
+so cross-link sections add **recurring** token cost for every turn after
+invocation. Violates "every line is a recurring token cost". The natural
+chain (`dx-req` → `dx-plan` → `dx-step`) is documented in
+`docs/reference/skill-catalog.md` for humans — that's the right home.
