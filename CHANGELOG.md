@@ -1,3 +1,17 @@
+## [2.106.6](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.5...v2.106.6) (2026-05-06)
+
+
+### Bug Fixes
+
+* **orchestration:** fork inner-loop skills to cut dx-agent-all context pollution ([#143](https://github.com/easingthemes/dx-aem-flow/issues/143)) ([2bdf6ee](https://github.com/easingthemes/dx-aem-flow/commit/2bdf6ee97ce02d6f665c8b8e4a5c7ca8eb90d760)), closes [#104](https://github.com/easingthemes/dx-aem-flow/issues/104) [#104](https://github.com/easingthemes/dx-aem-flow/issues/104) [#104](https://github.com/easingthemes/dx-aem-flow/issues/104)
+
+## [2.106.5](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.4...v2.106.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* **dx-init:** stop scaffold from installing orphan cross-repo.md to .ai/rules/ ([#142](https://github.com/easingthemes/dx-aem-flow/issues/142)) ([cf3fb79](https://github.com/easingthemes/dx-aem-flow/commit/cf3fb795b72619ff1801b53933c25d697f14f65b))
+
 ## [2.106.4](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.3...v2.106.4) (2026-05-04)
 
 
