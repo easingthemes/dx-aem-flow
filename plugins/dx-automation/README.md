@@ -109,7 +109,7 @@ These run as ADO pipelines (YAML) invoked by Lambda. The Lambda receives ADO web
 
 ## Pipeline YAML Templates
 
-Pipeline YAML files in `data/pipelines/cli/` use `{{ADO_PROJECT}}/{{ADO_REPO}}` placeholders for the repository reference. These are filled by `/auto-pipelines` during import based on `infra.json` values. The `pipeline-agent.js` entry point reads `ADO_ORG_NAME` from environment (falls back to `"myorg"`).
+Pipeline YAML files in `data/pipelines/cli/` fetch dx-aem-flow plugin sources from the public GitHub repo (`https://github.com/easingthemes/dx-aem-flow`, `main` branch) at run time via `git clone`, then load them through the Claude Agent SDK's `plugins:` option (`PLUGIN_BASE_DIR` points at the cloned checkout). No template-placeholder substitution and no ADO mirror repo are required. The `pipeline-agent.js` entry point reads `ADO_ORG_NAME` from environment (falls back to `"myorg"`).
 
 ## Audit Logging
 

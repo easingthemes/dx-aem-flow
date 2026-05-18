@@ -57,8 +57,8 @@ const targetDir = path.resolve(
 );
 
 // Resolve plugins directory relative to this CLI tool
-// CLI is at: dx-aem-flow/dx/cli/bin/dx-scaffold.js
-// Plugins:   dx-aem-flow/dx/plugins/
+// CLI is at: dx-aem-flow/cli/bin/dx-scaffold.js
+// Plugins:   dx-aem-flow/plugins/
 const pluginsDir = path.resolve(__dirname, '..', '..', 'plugins');
 
 if (flags.help) {

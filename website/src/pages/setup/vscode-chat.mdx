@@ -178,8 +178,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     Add to <code>.vscode/settings.json</code>:
     <CommandBlock label=".vscode/settings.json">{`"chat.agentSkillsLocations": {
   ".claude/skills": true,
-  "dx-aem-flow/dx/plugins/dx-core/skills": true,
-  "dx-aem-flow/dx/plugins/dx-aem/skills": true
+  "dx-aem-flow/plugins/dx-core/skills": true,
+  "dx-aem-flow/plugins/dx-aem/skills": true
 },
 "chat.subagents.allowInvocationsFromSubagents": true`}</CommandBlock>
     The subagent setting (VS Code 1.113+) lets coordinator agents dispatch subagents.
