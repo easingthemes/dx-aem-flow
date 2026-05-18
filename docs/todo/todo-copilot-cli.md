@@ -110,6 +110,38 @@ Without these, Copilot CLI silently ignores both. This breaks our entire Copilot
 
 **Evidence:** Copilot CLI v1.0.40 release notes (2026-05-01); [2026-05-01 platform state update](../research/2026-05-01-platform-state-update.md).
 
+## PostToolUse `matcher` Ignored on Plugin Hooks
+
+**Added:** 2026-05-16
+**Problem:** Copilot CLI v1.0.45 fires every `PostToolUse` hook entry in `~/.copilot/installed-plugins/.../hooks/hooks.json` after every AI turn, regardless of (a) whether any tool was called and (b) whether the entry's `matcher` field matches the tool that was called. This produces:
+- `[ERROR] Hook execution failed` log noise for hooks that call project-level scripts which don't exist (e.g., `.ai/lib/figma-screenshot-hook.sh` in a fresh project)
+- Spurious side-effect files (e.g., `.ai/screenshots/screenshot-log.txt` with `unknown` rows appearing in projects that never used AEM)
+- Counter pollution (`compaction-reminder.sh` ticks on every turn instead of just Edit/Write)
+- Wasted bash subprocess spawns per AI turn
+
+Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466/PROJECTS/AI/kai-team/` (a project with no `.ai/`, no `.claude/`, no `.github/hooks/`) triggers 5 distinct plugin PostToolUse hooks within 80ms of the model response — full trace in [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md).
+
+**Scope:**
+- `plugins/dx-core/hooks/hooks.json` — 5 `PostToolUse` entries (figma×2, validate-plugin-edit, Task, compaction-reminder)
+- `plugins/dx-aem/hooks/hooks.json` — 2 `PostToolUse` entries (take_screenshot, take_snapshot)
+- `plugins/dx-core/hooks/scripts/compaction-reminder.sh`, `plugins/dx-aem/hooks/scripts/screenshot-log.sh` — defensive guards required at script level
+- `CLAUDE.md` § Hook System — Platform Separation table is wrong: "Plugin `hooks/hooks.json` is active in Claude Code CLI only" — Copilot CLI also consumes the file.
+
+**Done-when:**
+- Run `grep -lE "CLAUDE_TOOL_NAME" plugins/{dx-core,dx-aem}/hooks/scripts/*.sh` and confirm every PostToolUse script has a tool-name guard.
+- Run `grep -E "CLAUDE_TOOL_NAME" plugins/dx-core/hooks/hooks.json | wc -l` returns ≥4 (each PostToolUse inline command guarded).
+- Reproduce: open a fresh project with no `.ai/` in Copilot CLI, type "hi", confirm `~/.copilot/logs/process-*.log` has zero `[ERROR] Hook execution failed` lines for plugin hooks.
+- Upstream issue filed against `github/copilot-cli` with reproduction steps.
+
+**Approach:**
+1. ✅ Mitigation (shipped 2026-05-16): added `case "$CLAUDE_TOOL_NAME" in ... ) ;; *) exit 0 ;; esac` guards to plugin scripts; wrapped `hooks.json` inline commands with `[ "${CLAUDE_TOOL_NAME:-}" = "<exact-tool>" ] && [ -f <script> ] && bash <script> || true`.
+2. File upstream Copilot CLI bug. Title: "PostToolUse hooks fire on every AI turn regardless of matcher (plugin hooks at ~/.copilot/installed-plugins/)". Include the empirical trace.
+3. Update CLAUDE.md § Hook System — Platform Separation: change row to reflect that Copilot CLI also reads `hooks/hooks.json` but ignores `matcher` on PostToolUse.
+4. Test whether the same bug affects `PreToolUse`. Our branch-guard `Bash(git commit*)` matcher has not been reported as misfiring, suggesting v1.0.36's regex fix may have included matcher-honoring behavior for the pre side. Confirm with a targeted test.
+5. After upstream fix lands, audit our guards — they're defense-in-depth and harmless to keep, but the redundancy noise in `hooks.json` commands could be removed.
+
+**Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.
+
 ## Project MCP Discovery — CLOSED 2026-04-07
 
 **Added:** 2026-03-22

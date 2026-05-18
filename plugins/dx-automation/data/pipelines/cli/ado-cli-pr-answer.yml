@@ -1,12 +1,6 @@
 trigger: none
 pr: none
 
-resources:
-  repositories:
-    - repository: dx-hub
-      type: git
-      name: {{ADO_PROJECT}}/{{ADO_REPO}}
-      ref: development
 # Claude Agent SDK pipeline — PR Answer via /dx-pr-answer skill.
 # Triggered by Lambda webhook on PR comment events.
 
@@ -32,9 +26,11 @@ steps:
     persistCredentials: true
     path: s
 
-  - checkout: dx-hub
-    fetchDepth: 1
-    path: dx-hub
+  - bash: |
+      git clone --depth 1 --branch main \
+        https://github.com/easingthemes/dx-aem-flow.git \
+        "$(Pipeline.Workspace)/dx-aem-flow"
+    displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
       npm install -g @anthropic-ai/claude-code
@@ -47,9 +43,7 @@ steps:
         PROMPT="$PROMPT (dry run — draft answers but do NOT post replies or push code)"
       fi
 
-      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-flow/dx/plugins"
-      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-flow/dx/plugins"
-      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"

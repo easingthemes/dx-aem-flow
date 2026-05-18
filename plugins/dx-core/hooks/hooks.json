@@ -63,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\"",
+            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"mcp__plugin_dx-core_figma__get_screenshot\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
             "statusMessage": "Saving Figma screenshot..."
           }
         ]
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\"",
+            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"mcp__plugin_dx-core_figma__get_design_context\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
             "statusMessage": "Saving Figma design context..."
           }
         ]
@@ -84,7 +84,7 @@
           {
             "type": "command",
             "if": "Edit(**/.claude-plugin/**)",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"",
+            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"Edit\" ] && [ -n \"${CLAUDE_TOOL_ARG_file_path:-}\" ] && bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\" || true",
             "statusMessage": "Validating plugin edit..."
           }
         ]
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\"",
+            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"Task\" ] && mkdir -p \"$CLAUDE_PROJECT_DIR/.claude\" && echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\" || true",
             "async": true
           }
         ]
