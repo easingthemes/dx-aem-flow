@@ -1,12 +1,6 @@
 trigger: none
 pr: none
 
-resources:
-  repositories:
-    - repository: dx-hub
-      type: git
-      name: {{ADO_PROJECT}}/{{ADO_REPO}}
-      ref: development
 # Claude Agent SDK pipeline — DevAgent via /dx-agent-all skill.
 # Triggered by Lambda webhook on work item tag KAI-DEV-AUTOMATION.
 # Full autonomous development: requirements > plan > implement > test > review > commit > PR.
@@ -37,9 +31,11 @@ steps:
     persistCredentials: true
     path: s
 
-  - checkout: dx-hub
-    fetchDepth: 1
-    path: dx-hub
+  - bash: |
+      git clone --depth 1 --branch main \
+        https://github.com/easingthemes/dx-aem-flow.git \
+        "$(Pipeline.Workspace)/dx-aem-flow"
+    displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
       npm install -g @anthropic-ai/claude-code
@@ -52,9 +48,7 @@ steps:
         PROMPT="$PROMPT (dry run — analyze, plan, and generate requirements only. Do NOT create branches, write code, push, or open PRs)"
       fi
 
-      PLUGIN_DIR="$(Build.SourcesDirectory)/dx-aem-flow/dx/plugins"
-      [ -d "$PLUGIN_DIR" ] || PLUGIN_DIR="$(Pipeline.Workspace)/dx-hub/dx-aem-flow/dx/plugins"
-      export PLUGIN_BASE_DIR="$PLUGIN_DIR"
+      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
