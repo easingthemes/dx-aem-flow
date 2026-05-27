@@ -168,6 +168,14 @@ run "progress: note with pipe and hash chars" \
 run "progress: file has clean row (no sed error, no extra | columns)" \
   bash -c "grep -q '| Phase 1 | done |' $TMPSPEC3/simple-progress.md"
 
+# ===== rollback-authoring + aem-revert tests (offline — no actual HTTP) =====
+expect_exit "rollback: missing file exits 5" 5 \
+  "$SCRIPTS/rollback-authoring.sh" "/nonexistent/diff.json"
+
+# aem-revert.js without env vars must exit 2 immediately (fail-fast on missing creds)
+expect_exit "aem-revert: missing env exits 2" 2 \
+  bash -c "unset AEM_QA_URL AEM_QA_USER AEM_QA_PASSWORD; node \"$(cd $SCRIPTS/.. && pwd)/../../data/lib/aem-revert.js\" $FIXTURES/authoring-diff-sample.json"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
