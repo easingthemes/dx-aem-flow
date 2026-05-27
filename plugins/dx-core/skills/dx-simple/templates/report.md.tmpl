@@ -1,0 +1,49 @@
+---
+agent: dx-simple
+model: sonnet
+created: {CREATED_ISO}
+confidence: {OVERALL_CONFIDENCE}
+verified: {VERIFIED}
+---
+
+# /dx-simple Report — #{TICKET} {TITLE}
+
+## Summary
+- Authoring changes applied: {AUTH_COUNT} (activated: {AUTH_ACTIVATED})
+- Code changes applied: {CODE_FILES} files / {CODE_LINES} lines (PR: {PR_LINK})
+- Visual verification: {VERIFY_STATUS} ({VERIFY_REASON})
+- Run duration: {DURATION_MIN} min
+- Pipeline build: {BUILD_URL}
+
+## Confidence
+| Gate | Score | Threshold | Status |
+|---|---|---|---|
+| G1 Locator | {G1_SCORE} | exactly 1 | {G1_STATUS} |
+| G2 Allowlist | {G2_TYPE} | listed | {G2_STATUS} |
+| G3 Classification | {G3_LEVEL} | high or medium | {G3_STATUS} |
+| G4 Edit | {G4_SCORE} | ≥85% | {G4_STATUS} |
+| G5 Visual non-target | {G5_SCORE} | ≥99% identical | {G5_STATUS} |
+| G6 Visual target | {G6_SCORE} | ≥5% different | {G6_STATUS} |
+| G7 Review blockers | {G7_BLOCKERS} | 0 | {G7_STATUS} |
+| G8 Cost | ${G8_COST} | ≤${G8_LIMIT} | {G8_STATUS} |
+| G9 Time | {G9_DURATION} | ≤12m | {G9_STATUS} |
+
+## Authoring Changes
+{AUTHORING_TABLE}
+
+## Code Changes
+{CODE_TABLE}
+
+## Verification
+{SCREENSHOTS}
+
+## Notes
+{NOTES}
+
+## Revert (authoring only)
+```bash
+node .ai/lib/aem-revert.js {SPEC_DIR}/authoring-diff.json
+```
+
+## Manual Steps
+{MANUAL_STEPS}
