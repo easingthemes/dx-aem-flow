@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "AEM": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y", "aem-mcp-server@1.6.2", "-t", "stdio",
+        "-I", "qa=${AEM_QA_URL},${AEM_QA_USER},${AEM_QA_PASSWORD}"
+      ]
+    },
+    "chrome-devtools-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y", "chrome-devtools-mcp@1.1.1",
+        "--headless",
+        "--isolated",
+        "--viewport=1440x900",
+        "--channel=stable"
+      ]
+    }
+  }
+}

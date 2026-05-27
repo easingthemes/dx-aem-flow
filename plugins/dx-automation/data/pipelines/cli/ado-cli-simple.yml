@@ -1,0 +1,104 @@
+trigger: none
+pr: none
+
+# Claude Agent SDK pipeline — SimpleAgent via /dx-simple skill.
+# Triggered by Lambda webhook on work item tag KAI-SIMPLE-AUTOMATION.
+# Authoring + code split with 9 confidence gates. 15 min timeout.
+
+parameters:
+  - name: workItemId
+    displayName: "ADO Work Item ID"
+    type: string
+  - name: dryRun
+    displayName: "Dry run (analyze + plan only, no JCR writes, no code edits, no PR)"
+    type: boolean
+    default: false
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+
+variables:
+  - name: CHROME_DEVTOOLS_MCP_VERSION
+    value: "1.1.1"
+  - name: AEM_MCP_VERSION
+    value: "1.6.2"
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+    path: s
+
+  - bash: |
+      git clone --depth 1 --branch main \
+        https://github.com/easingthemes/dx-aem-flow.git \
+        "$(Pipeline.Workspace)/dx-aem-flow"
+    displayName: "Fetch dx-aem-flow plugins from GitHub"
+
+  - task: Cache@2
+    inputs:
+      key: 'chrome-devtools-mcp | "$(Agent.OS)" | "$(CHROME_DEVTOOLS_MCP_VERSION)"'
+      path: '$(HOME)/.cache/chrome-devtools-mcp'
+    displayName: "Cache Chrome download"
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+      npm install --no-save @anthropic-ai/claude-agent-sdk
+    displayName: "Install Claude Code + Agent SDK"
+    workingDirectory: $(Build.SourcesDirectory)
+
+  - bash: |
+      cp "$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json" \
+         "$(Build.SourcesDirectory)/.mcp.json"
+    displayName: "Install pipeline MCP overrides"
+
+  - bash: |
+      PROMPT="/dx-simple ${{ parameters.workItemId }}"
+      if [ "${{ parameters.dryRun }}" = "True" ]; then
+        PROMPT="$PROMPT (dry run — analyze only, do not write or commit)"
+      fi
+      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
+      echo "prompt: $PROMPT"
+      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+    displayName: "AI SimpleAgent"
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      AEM_QA_URL: $(AEM_QA_URL)
+      AEM_QA_USER: $(AEM_QA_USER)
+      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+      DX_PIPELINE_MODE: "true"
+      DX_HOOK_PROFILE: "minimal"
+      CI: "true"
+      CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
+      MAX_TURNS: "30"
+      ALLOWED_TOOLS: >-
+        Skill,Read,Write,Edit,Glob,Grep,Agent,
+        Bash(git *),Bash(mvn *),Bash(npm *),
+        mcp__plugin_dx-aem_AEM__getNodeContent,
+        mcp__plugin_dx-aem_AEM__scanPageComponents,
+        mcp__plugin_dx-aem_AEM__getPageProperties,
+        mcp__plugin_dx-aem_AEM__listChildren,
+        mcp__plugin_dx-aem_AEM__updateComponent,
+        mcp__plugin_dx-aem_AEM__activatePage,
+        mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page,
+        mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot,
+        mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot,
+        mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script,
+        mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for,
+        mcp__ado__wit_add_work_item_comment,
+        mcp__ado__wit_get_work_item,
+        mcp__ado__repo_create_pull_request
+    timeoutInMinutes: 15
+
+  - bash: |
+      if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then
+        echo "Uploading spec artifacts..."
+        find "$(Build.SourcesDirectory)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
+      fi
+    displayName: "List spec artifacts (for retention)"
+    condition: always()
