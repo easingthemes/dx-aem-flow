@@ -45,20 +45,23 @@ declare -A PATTERNS=(
 
 PATTERN="${PATTERNS[$CHANGE_TYPE]:-}"
 AUTH_FIELD=""
+AUTH_TYPE=""
 AUTH_CONF=0
 ALTERNATIVES=()
+ALT_TYPES=()
 
 if [[ -n "$PATTERN" && "$CHANGE_TYPE" != "css-class" ]]; then
   while IFS=$'\t' read -r FIELD TYPE; do
     if echo "$FIELD" | grep -qiE "$PATTERN"; then
       ALTERNATIVES+=("$FIELD")
+      ALT_TYPES+=("$TYPE")
     fi
   done < <(jq -r '.fields | to_entries[] | "\(.key)\t\(.value)"' "$DIALOG")
 
   case "${#ALTERNATIVES[@]}" in
-    0) AUTH_CONF=0 ;;
-    1) AUTH_FIELD="${ALTERNATIVES[0]}"; AUTH_CONF=92 ;;
-    *) AUTH_FIELD="${ALTERNATIVES[0]}"; AUTH_CONF=75 ;;  # medium: ambiguous
+    0) AUTH_CONF=0; AUTH_TYPE="" ;;
+    1) AUTH_FIELD="${ALTERNATIVES[0]}"; AUTH_TYPE="${ALT_TYPES[0]}"; AUTH_CONF=92 ;;
+    *) AUTH_FIELD="${ALTERNATIVES[0]}"; AUTH_TYPE="${ALT_TYPES[0]}"; AUTH_CONF=75 ;;  # medium: ambiguous
   esac
 fi
 
@@ -71,13 +74,14 @@ if [[ "$AUTH_CONF" -ge 75 ]]; then
     --arg prop "$AUTH_FIELD" \
     --arg before "$BEFORE" \
     --arg after "$CHANGE_VALUE" \
-    --argjson conf "$(echo "scale=2; $AUTH_CONF/100" | bc)" \
+    --arg ftype "${AUTH_TYPE:-textfield}" \
+    --argjson conf "$(jq -n --argjson n "$AUTH_CONF" '$n / 100')" \
     '[{
       "jcr-path": $path,
       "property": $prop,
       "before": $before,
       "after": $after,
-      "field-type": "textfield",
+      "field-type": $ftype,
       "confidence": $conf
     }]')
 fi

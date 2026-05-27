@@ -27,6 +27,12 @@ if [[ ! -f "$RAW" ]]; then
   exit 2
 fi
 
+# Extract optional ticket from frontmatter (between --- markers at top of file)
+TICKET_LINE=$(awk '
+  /^---[[:space:]]*$/ { count++; if (count == 2) exit; next }
+  count == 1 && /^ticket:/ { print; exit }
+' < <(tr -d '\r' < "$RAW"))
+
 # Normalize CRLF -> LF so awk fence patterns match on Windows-authored files.
 RAW_CLEAN=$(tr -d '\r' < "$RAW")
 
@@ -92,4 +98,10 @@ esac
 
 # Write YAML output (line-by-line, preserve order)
 echo "$CLEAN" > "$OUT"
+
+# Prepend frontmatter ticket if present
+if [[ -n "$TICKET_LINE" ]]; then
+  { echo "$TICKET_LINE"; cat "$OUT"; } > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+fi
+
 echo "OK: parsed simple block to $OUT" >&2

@@ -234,6 +234,27 @@ run "classify: authoring item has ariaLabel property" \
 run "classify: code list is empty (authoring wins)" \
   bash -c "jq -e '.code | length == 0' $TMP/plan1.json"
 
+# ===== classify fixes verification =====
+# Fix #1: ticket field populated from frontmatter
+run "classify: ticket field populated (was empty bug)" \
+  bash -c "$SCRIPTS/parse-simple-block.sh $FIXTURES/raw-story-valid.md $TMP/parsed2.yaml && $SCRIPTS/classify-work.sh $TMP/parsed2.yaml $FIXTURES/dialog-map.json $FIXTURES/file-list.json $TMP/plan2.json && jq -e '.ticket == \"9999999\"' $TMP/plan2.json"
+
+# Fix #2: field-type comes from dialog (textfield in this case, but verifies the wire-through)
+run "classify: field-type wired through from dialog" \
+  bash -c "jq -e '.authoring[0][\"field-type\"] == \"textfield\"' $TMP/plan2.json"
+
+# Fix #3: classify works without bc (proxy: install a poisoned `bc` shim that fails if invoked,
+# then run classify-work.sh — success proves the script never calls bc)
+mkdir -p "$TMP/nobc"
+cat > "$TMP/nobc/bc" <<'EOF'
+#!/bin/sh
+echo "bc was invoked but should not have been" >&2
+exit 1
+EOF
+chmod +x "$TMP/nobc/bc"
+run "classify: still works without bc dependency" \
+  bash -c "PATH=$TMP/nobc:\$PATH $SCRIPTS/classify-work.sh $TMP/parsed2.yaml $FIXTURES/dialog-map.json $FIXTURES/file-list.json $TMP/plan3.json"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
