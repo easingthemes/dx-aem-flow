@@ -40,12 +40,46 @@ def read_png(path):
   raw = zlib.decompress(idat)
   bpp = 3 if ctype == 2 else 4 if ctype == 6 else None
   assert bpp is not None, f'unsupported color type {ctype}'
-  stride = w * bpp + 1
-  pixels = []
+  stride = w * bpp + 1  # +1 for filter byte
+
+  def paeth(a, b, c):
+    p = a + b - c
+    pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+    if pa <= pb and pa <= pc: return a
+    if pb <= pc: return b
+    return c
+
+  prior = bytearray(w * bpp)
+  rows = []
   for y in range(h):
     line = raw[y*stride : (y+1)*stride]
-    pixels.append(line[1:])
-  return w, h, bpp, pixels
+    ftype = line[0]
+    filt = line[1:]
+    cur = bytearray(w * bpp)
+    if ftype == 0:
+      cur[:] = filt
+    elif ftype == 1:  # Sub
+      for x in range(w * bpp):
+        left = cur[x - bpp] if x >= bpp else 0
+        cur[x] = (filt[x] + left) & 0xff
+    elif ftype == 2:  # Up
+      for x in range(w * bpp):
+        cur[x] = (filt[x] + prior[x]) & 0xff
+    elif ftype == 3:  # Average
+      for x in range(w * bpp):
+        left = cur[x - bpp] if x >= bpp else 0
+        cur[x] = (filt[x] + ((left + prior[x]) >> 1)) & 0xff
+    elif ftype == 4:  # Paeth
+      for x in range(w * bpp):
+        left = cur[x - bpp] if x >= bpp else 0
+        up = prior[x]
+        upleft = prior[x - bpp] if x >= bpp else 0
+        cur[x] = (filt[x] + paeth(left, up, upleft)) & 0xff
+    else:
+      raise ValueError(f'unsupported filter type {ftype}')
+    rows.append(bytes(cur))
+    prior = cur
+  return w, h, bpp, rows
 
 bp, ap, bb = sys.argv[1], sys.argv[2], sys.argv[3]
 bw, bh, bbpp, brows = read_png(bp)

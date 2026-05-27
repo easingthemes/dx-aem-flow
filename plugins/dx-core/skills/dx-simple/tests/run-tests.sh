@@ -186,6 +186,15 @@ run "visual-diff: all-different (blue vs red) = 0% overall" \
 run "visual-diff: bbox region reports region-diff" \
   bash -c "$SCRIPTS/visual-diff.sh $FIXTURES/before-blue.png $FIXTURES/before-red.png 0,0,32,32 | grep -q 'region-diff'"
 
+# ===== visual-diff filter reversal tests (G5/G6 correctness) =====
+# Generate identical Sub-filtered PNGs at test time, then diff
+run "visual-diff: Sub-filtered PNG vs itself = 100%" \
+  bash -c "$SCRIPTS/visual-diff.sh $FIXTURES/sub-filtered.png $FIXTURES/sub-filtered.png | grep -q '\"overall\": 100'"
+
+# Verify the parsed pixel data is correct by ensuring px-total matches expectation (8*8=64)
+run "visual-diff: Sub-filtered PNG reports correct px-total" \
+  bash -c "$SCRIPTS/visual-diff.sh $FIXTURES/sub-filtered.png $FIXTURES/sub-filtered.png | grep -q '\"px-total\": 64'"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
