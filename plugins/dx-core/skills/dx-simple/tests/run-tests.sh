@@ -195,6 +195,35 @@ run "visual-diff: Sub-filtered PNG vs itself = 100%" \
 run "visual-diff: Sub-filtered PNG reports correct px-total" \
   bash -c "$SCRIPTS/visual-diff.sh $FIXTURES/sub-filtered.png $FIXTURES/sub-filtered.png | grep -q '\"px-total\": 64'"
 
+# ===== preflight tests =====
+# Create temp project with minimal config
+TMPPROJ="$TMP/proj1"
+mkdir -p "$TMPPROJ/.ai/lib"
+touch "$TMPPROJ/.ai/lib/dx-common.sh"
+cat > "$TMPPROJ/.ai/config.yaml" <<EOF
+dx-simple:
+  allowed-resource-types:
+    - mysite/components/hero
+build:
+  compile: "mvn compile"
+EOF
+
+run "preflight: valid config passes" \
+  bash -c "cd $TMPPROJ && $SCRIPTS/preflight.sh"
+
+# Missing dx-simple section
+TMPPROJ2="$TMP/proj2"
+mkdir -p "$TMPPROJ2/.ai/lib"
+touch "$TMPPROJ2/.ai/lib/dx-common.sh"
+echo "build: {compile: mvn compile}" > "$TMPPROJ2/.ai/config.yaml"
+
+expect_exit "preflight: missing dx-simple block exits 6" 6 \
+  bash -c "cd $TMPPROJ2 && $SCRIPTS/preflight.sh"
+
+# Pipeline mode without AEM vars
+expect_exit "preflight: pipeline mode without AEM_QA_* exits 7" 7 \
+  bash -c "cd $TMPPROJ && unset AEM_QA_URL AEM_QA_USER AEM_QA_PASSWORD; DX_PIPELINE_MODE=true $SCRIPTS/preflight.sh"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
