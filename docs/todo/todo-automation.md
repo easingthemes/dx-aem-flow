@@ -27,3 +27,50 @@
 **Done-when:** `ls plugins/dx-automation/data/pipelines/` shows at least one non-`cli/` subdirectory (e.g., `github-actions/`) AND `auto-init` Phase 2 picks the right pipeline template based on `scm.provider` from `.ai/config.yaml` AND a non-ADO project can run `/auto-init` end-to-end without producing ADO-flavored YAMLs.
 **Approach:** GitHub Actions is the highest-value second target (dx-init already has provider-aware work tracked in `todo-provider-support.md`). Lambda agent runtime stays the same — only the pipeline YAML and webhook plumbing differ. Service hook → API Gateway becomes `repository_dispatch` → API Gateway, or alternatively a workflow-side direct invoke. Defer until at least one consumer asks; current installs are ADO-only.
 
+## `build.compile` deploys to localhost in pipelines
+
+**Added:** 2026-05-28
+**Problem:** `build.command` in `.ai/config.yaml` is typically `mvn clean install -PautoInstallPackage` which DEPLOYS to localhost AEM. Pipelines that invoke `/dx-step-build` use this command and fail because localhost AEM isn't reachable from the pipeline VM. Skills should honor `DX_PIPELINE_MODE=true` and prefer `build.compile` (e.g., `mvn compile`) — no deploy.
+**Scope:** `plugins/dx-core/skills/dx-step-build/SKILL.md`, `plugins/dx-core/skills/dx-agent-dev/SKILL.md`, `plugins/dx-core/skills/dx-agent-all/SKILL.md`.
+**Done-when:** `grep -n 'build.compile' plugins/dx-core/skills/dx-step-build/SKILL.md` finds an explicit branch on `DX_PIPELINE_MODE` that prefers compile over `build.command`. `grep -n 'autoInstallPackage' plugins/dx-automation/data/pipelines/` finds no matches in active pipeline YAMLs.
+**Approach:** Add `is_pipeline_mode` check at the top of dx-step-build. Read `build.compile-fast` → `build.compile` → fallback. Never `build.command` in pipeline mode.
+
+## AEM MCP localhost dependency in pipelines
+
+**Added:** 2026-05-28
+**Problem:** Phases 5, 5+, 5++ of `/dx-agent-all` and `/aem-editorial-guide` assume AEM is at `localhost:4502` (from `aem.author-url`). In pipeline mode, AEM is not available locally. Currently these phases either time out or "succeed" silently with empty results.
+**Scope:** `plugins/dx-aem/skills/aem-snapshot/`, `aem-verify/`, `aem-fe-verify/`, `aem-editorial-guide/`. Possibly add an `aem.qa-author-url` config key alongside the existing `aem.author-url`.
+**Done-when:** Run any of these skills with `DX_PIPELINE_MODE=true` and an unreachable `aem.author-url` — skill exits non-zero with clear message instead of silently producing empty output.
+**Approach:** Each AEM skill should detect pipeline mode and either use `aem.qa-author-url` or skip with a comment.
+
+## Pipeline `ALLOWED_TOOLS` missing MCP tools
+
+**Added:** 2026-05-28
+**Problem:** `plugins/dx-automation/data/pipelines/cli/ado-cli-dev-agent.yml` sets `ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"` — no MCP tools at all. Skills that call AEM MCP / Chrome MCP / ADO MCP would silently fail. The new `ado-cli-simple.yml` has the right whitelist; other pipelines should match.
+**Scope:** All YAMLs in `plugins/dx-automation/data/pipelines/cli/`.
+**Done-when:** `grep 'ALLOWED_TOOLS' plugins/dx-automation/data/pipelines/cli/*.yml` shows explicit MCP tool prefixes in every pipeline that uses MCP.
+**Approach:** Per pipeline, enumerate the MCP tools the underlying skill calls and append to `ALLOWED_TOOLS`. Wildcards are fine for `mcp__ado__*` if the skill needs many ADO operations.
+
+## Interactive prompts in autonomous pipeline mode
+
+**Added:** 2026-05-28
+**Problem:** Several skills (editorial-guide, FE-only confirmation in dx-agent-all) ask "y/n" prompts that block forever in pipeline mode. The pipeline times out and the run hangs.
+**Scope:** Audit all skills under `plugins/dx-core/skills/` and `plugins/dx-aem/skills/` for `(y/n)` patterns. Each should detect `DX_PIPELINE_MODE=true` and auto-default (typically "no" / skip).
+**Done-when:** `grep -rn '(y/n)\|(yes/no)' plugins/dx-core/skills plugins/dx-aem/skills` finds no patterns without a paired `DX_PIPELINE_MODE` branch.
+**Approach:** Sweep each match, add a `DX_PIPELINE_MODE` branch that picks the safe default and continues.
+
+## MCP health check before agent run
+
+**Added:** 2026-05-28
+**Problem:** When AEM MCP or Chrome MCP fails to start in a pipeline, the agent doesn't notice — it tries to call tools, gets errors, retries, and burns turns. The first step after MCP startup should be a deterministic health check (e.g., `fetchSites` for AEM, `list_pages` for Chrome) that exits the run if MCP isn't healthy.
+**Scope:** `plugins/dx-core/data/lib/mcp-health-check.sh` (extend), pipeline YAMLs (add step before agent invocation).
+**Done-when:** Every pipeline YAML has a `health check` step that fails fast if MCP startup didn't succeed.
+**Approach:** Run `mcp-health-check.sh aem chrome` as a pre-agent bash step in each pipeline.
+
+## QA AEM network reachability
+
+**Added:** 2026-05-28
+**Problem:** Microsoft-hosted ADO agents (`ubuntu-latest`) have egress to the public internet. If your QA AEM is on a private network (VPN-only, IP-allowlisted), pipelines will fail to reach it. Solution: self-hosted agent pool with network access, OR public-but-authed QA AEM, OR IP-allowlist Microsoft-hosted ranges.
+**Scope:** Infra documentation (`plugins/dx-automation/README.md`); possibly add a `/auto-doctor` check that hits `aem.qa-author-url` from the pipeline VM and reports reachability.
+**Done-when:** README has a "Network requirements" section that explains the three options. `/auto-doctor` (or a new dry-run mode) confirms reachability before /dx-simple is enabled.
+**Approach:** Document. Optionally extend `/auto-doctor` to spawn a one-shot pipeline that curls `$AEM_QA_URL/libs/granite/core/content/login.html` and reports 200.
