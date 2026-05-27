@@ -6,8 +6,16 @@
 # Usage: parse-simple-block.sh <raw-story.md> <output-yaml-path>
 # Exit codes:
 #   0  — block parsed successfully
-#   2  — block missing
-#   3  — block malformed (missing required field)
+#   2  — block missing (file not found or no fenced block)
+#   3  — block malformed (missing required field, bad enum, duplicate
+#         field, or unterminated fence)
+#
+# Comment handling: only WHOLE-LINE comments are stripped (lines whose
+# first non-whitespace character is `#`). Inline `#` characters inside
+# values are preserved verbatim (e.g. `change-value: "use #FF0000 hex"`).
+# If you need a comment, put it on its own line.
+#
+# Line endings: CRLF input is normalized to LF before parsing.
 
 set -euo pipefail
 
@@ -19,20 +27,41 @@ if [[ ! -f "$RAW" ]]; then
   exit 2
 fi
 
-# Extract content between ```simple and the next ```
-BLOCK=$(awk '
+# Normalize CRLF -> LF so awk fence patterns match on Windows-authored files.
+RAW_CLEAN=$(tr -d '\r' < "$RAW")
+
+# Extract content between ```simple and the next ```.
+# awk exits 1 if the opening fence was seen but never closed.
+set +e
+BLOCK=$(echo "$RAW_CLEAN" | awk '
   /^```simple[[:space:]]*$/ { in_block=1; next }
-  in_block && /^```[[:space:]]*$/ { in_block=0; exit }
+  in_block && /^```[[:space:]]*$/ { in_block=0; found_close=1; exit }
   in_block { print }
-' "$RAW")
+  END { if (in_block && !found_close) exit 1 }
+')
+AWK_STATUS=$?
+set -e
+
+if [[ "$AWK_STATUS" != "0" ]]; then
+  echo "ERROR: simple block opened but never closed (missing \`\`\` fence) in $RAW" >&2
+  exit 3
+fi
 
 if [[ -z "$BLOCK" ]]; then
   echo "ERROR: no \`\`\`simple block found in $RAW" >&2
   exit 2
 fi
 
-# Strip inline comments (# ...) and blank lines, keep key: value
-CLEAN=$(echo "$BLOCK" | sed -E 's/[[:space:]]*#.*$//' | sed -E '/^[[:space:]]*$/d')
+# Clean:
+#  - Drop whole-line comments (first non-whitespace is `#`).
+#  - Strip trailing whitespace from every line so downstream enum/value
+#    checks aren't confused by stray tabs/spaces.
+#  - Drop blank lines.
+# Inline `#` is preserved — see header comment.
+CLEAN=$(echo "$BLOCK" \
+  | sed -E '/^[[:space:]]*#/d' \
+  | sed -E 's/[[:space:]]+$//' \
+  | sed -E '/^[[:space:]]*$/d')
 
 # Required fields
 for FIELD in page-url component-locator change-type change-value; do
@@ -42,7 +71,16 @@ for FIELD in page-url component-locator change-type change-value; do
   fi
 done
 
-# Validate change-type enum
+# Duplicate-field check: every required field must appear exactly once.
+for FIELD in page-url component-locator change-type change-value; do
+  COUNT=$(echo "$CLEAN" | grep -cE "^${FIELD}:" || true)
+  if [[ "$COUNT" -gt 1 ]]; then
+    echo "ERROR: duplicate field '${FIELD}' in simple block" >&2
+    exit 3
+  fi
+done
+
+# Validate change-type enum (trailing whitespace already stripped above).
 CHANGE_TYPE=$(echo "$CLEAN" | grep -E '^change-type:' | head -1 | sed -E 's/^change-type:[[:space:]]*//')
 case "$CHANGE_TYPE" in
   aria-label|color-token|spacing|copy|css-class|icon) ;;
