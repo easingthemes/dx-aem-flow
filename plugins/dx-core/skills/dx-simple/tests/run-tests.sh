@@ -224,6 +224,16 @@ expect_exit "preflight: missing dx-simple block exits 6" 6 \
 expect_exit "preflight: pipeline mode without AEM_QA_* exits 7" 7 \
   bash -c "cd $TMPPROJ && unset AEM_QA_URL AEM_QA_USER AEM_QA_PASSWORD; DX_PIPELINE_MODE=true $SCRIPTS/preflight.sh"
 
+# ===== classify-work tests (chained: parse → classify) =====
+run "classify: parse first then classify (high confidence)" \
+  bash -c "$SCRIPTS/parse-simple-block.sh $FIXTURES/raw-story-valid.md $TMP/parsed1.yaml && $SCRIPTS/classify-work.sh $TMP/parsed1.yaml $FIXTURES/dialog-map.json $FIXTURES/file-list.json $TMP/plan1.json && jq -e '.confidence.\"G3-classification\" == \"high\"' $TMP/plan1.json"
+
+run "classify: authoring item has ariaLabel property" \
+  bash -c "jq -e '.authoring[0].property == \"ariaLabel\"' $TMP/plan1.json"
+
+run "classify: code list is empty (authoring wins)" \
+  bash -c "jq -e '.code | length == 0' $TMP/plan1.json"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
