@@ -18,10 +18,18 @@ MAX_JCR_WRITES=10
 
 # Use jq when available, else fall back to grep counts (less accurate but functional)
 if command -v jq >/dev/null 2>&1; then
-  FILES=$(jq '.code | length' "$PLAN")
-  JCR_WRITES=$(jq '.authoring | length' "$PLAN")
+  # Validate JSON before reading individual keys so malformed input fails
+  # with our documented exit code 4 instead of leaking jq's exit code 5.
+  if ! jq empty "$PLAN" 2>/dev/null; then
+    echo "ERROR: invalid JSON in $PLAN" >&2
+    exit 4
+  fi
+  # Default missing .code / .authoring keys to [] so an empty {} or partial
+  # object is treated as "no items" rather than a jq null-iteration error.
+  FILES=$(jq '(.code // []) | length' "$PLAN")
+  JCR_WRITES=$(jq '(.authoring // []) | length' "$PLAN")
   # Sum estimated lines per code item (rough: 1 line per replacement)
-  LINES=$(jq '[.code[] | if (.["match-context"] | length) > 0 then 1 else 0 end] | add // 0' "$PLAN")
+  LINES=$(jq '[(.code // [])[] | if ((.["match-context"] // "") | length) > 0 then 1 else 0 end] | add // 0' "$PLAN")
 else
   FILES=$(grep -c '"file":' "$PLAN" || true)
   JCR_WRITES=$(grep -c '"property":' "$PLAN" || true)

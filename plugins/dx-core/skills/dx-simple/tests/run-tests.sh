@@ -134,6 +134,40 @@ run "progress: third call appends new row" \
 run "progress: file now has 2 phase rows" \
   bash -c "test \$(grep -cE '^\| Phase [0-9]+ \|' $TMPSPEC/simple-progress.md) -eq 2"
 
+
+# ===== scope-check + progress edge cases =====
+
+# C3: malformed JSON exits 4 (was 5)
+echo 'not json' > "$TMP/bad.json"
+expect_exit "scope: invalid JSON exits 4" 4 \
+  "$SCRIPTS/scope-check.sh" "$TMP/bad.json"
+
+# C3: empty {} object exits 0 (treats missing keys as empty arrays)
+echo '{}' > "$TMP/empty.json"
+run "scope: empty object passes (defaults to empty arrays)" \
+  "$SCRIPTS/scope-check.sh" "$TMP/empty.json"
+
+# C3: missing .code key still works
+echo '{"authoring":[]}' > "$TMP/noCode.json"
+run "scope: missing .code key defaults to empty" \
+  "$SCRIPTS/scope-check.sh" "$TMP/noCode.json"
+
+# C1: phase name with regex metachars (parens, dot) is treated literally
+TMPSPEC2="$TMP/8888888-edge"
+run "progress: phase 'Phase(A.1)' creates row" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Phase(A.1)" "pending"
+run "progress: same phase updates same row (no duplicate)" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Phase(A.1)" "done"
+run "progress: file has exactly 1 row for 'Phase(A.1)'" \
+  bash -c "test \$(grep -cF '| Phase(A.1) |' $TMPSPEC2/simple-progress.md) -eq 1"
+
+# C2: note with pipe and hash is sanitized, doesn't break table
+TMPSPEC3="$TMP/7777777-special"
+run "progress: note with pipe and hash chars" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC3" "Phase 1" "done" "color #FF0000 | reverted"
+run "progress: file has clean row (no sed error, no extra | columns)" \
+  bash -c "grep -q '| Phase 1 | done |' $TMPSPEC3/simple-progress.md"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
