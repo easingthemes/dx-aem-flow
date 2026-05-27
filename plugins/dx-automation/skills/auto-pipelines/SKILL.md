@@ -25,8 +25,8 @@ Read `.ai/config.yaml` to get `scm.repo` (repository name for pipeline import).
 Print: `Profile: <profile> — importing <N> pipelines`
 
 Expected pipelines per profile:
-- **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix
-- **full-hub**: all enabled pipelines
+- **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix, simple
+- **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, tag `KAI-SIMPLE-AUTOMATION`, YAML `ado-cli-simple.yml`)
 
 ## 1. Import Pipelines
 
@@ -249,6 +249,51 @@ Set these on the DOCAgent pipeline (in addition to `ANTHROPIC_API_KEY`):
 | `AEM_PUBLISH_URL` | Remote AEM publisher URL (same as QA pipeline) | No |
 | `AEM_USER` | AEM username (same as QA pipeline) | No |
 | `AEM_PASS` | AEM password (same as QA pipeline) | Yes |
+
+### SimpleAgent pipeline additional variables
+
+The SimpleAgent pipeline (`ado-cli-simple.yml`, triggered by tag **`KAI-SIMPLE-AUTOMATION`**) runs the `/dx-simple` skill via the Claude Agent SDK against the **QA AEM environment**. It needs its own AEM credentials separate from the QA/DOC pipelines (which may target a different environment).
+
+Set these on the SimpleAgent pipeline (in addition to `ANTHROPIC_API_KEY` + plugin marketplace variables above):
+
+| Variable | Value | Secret? |
+|----------|-------|---------|
+| `AEM_QA_URL` | QA author URL (e.g. `https://qa-author.example.com`) | No |
+| `AEM_QA_USER` | Service-account username on QA | Yes |
+| `AEM_QA_PASSWORD` | Service-account password on QA | Yes |
+| `CHROME_DEVTOOLS_MCP_VERSION` | Chrome DevTools MCP version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
+| `AEM_MCP_VERSION` | AEM MCP version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
+
+> **AEM QA author URL?** For SimpleAgent visual verification + authoring writes (e.g. `https://qa-author.example.com`)
+
+> **AEM QA service-account username?** (secret)
+
+> **AEM QA service-account password?** (secret)
+
+```bash
+az_pipelines_variable create \
+  --name "AEM_QA_URL" \
+  --value "<qa-url>" \
+  --pipeline-name "<simple-pipeline-name>" \
+  --project "<adoProject>" \
+  --organization "<adoOrg>"
+
+az_pipelines_variable create \
+  --name "AEM_QA_USER" \
+  --value "<user>" --secret true \
+  --pipeline-name "<simple-pipeline-name>" \
+  --project "<adoProject>" \
+  --organization "<adoOrg>"
+
+az_pipelines_variable create \
+  --name "AEM_QA_PASSWORD" \
+  --value "<password>" --secret true \
+  --pipeline-name "<simple-pipeline-name>" \
+  --project "<adoProject>" \
+  --organization "<adoOrg>"
+```
+
+The MCP version variables (`CHROME_DEVTOOLS_MCP_VERSION`, `AEM_MCP_VERSION`) have inline defaults in the YAML — only set as pipeline variables to override.
 
 ## 3. Summary Report
 
