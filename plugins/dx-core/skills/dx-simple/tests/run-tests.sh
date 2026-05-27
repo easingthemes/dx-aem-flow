@@ -100,6 +100,40 @@ run "parse: hex color in change-value preserved" \
 run "parse: CRLF line endings work" \
   "$SCRIPTS/parse-simple-block.sh" "$FIXTURES/raw-story-crlf.md" "$TMP/crlf.yaml"
 
+# ===== scope-check tests =====
+run "scope: mixed plan passes (1 code, 1 auth)" \
+  "$SCRIPTS/scope-check.sh" "$FIXTURES/work-plan-mixed.json"
+
+# Generate an oversize fixture in-place
+python3 -c "
+import json
+data = {'authoring': [], 'code': [{'file': f'f{i}.html', 'match-context': 'x'} for i in range(6)]}
+print(json.dumps(data))
+" > "$TMP/over.json"
+
+expect_exit "scope: 6 files exits 4" 4 \
+  "$SCRIPTS/scope-check.sh" "$TMP/over.json"
+
+# ===== update-progress tests =====
+TMPSPEC="$TMP/9999999-test"
+run "progress: first append creates file" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC" "Phase 1" "pending"
+
+run "progress: file exists with header" \
+  bash -c "test -f $TMPSPEC/simple-progress.md && grep -q '#9999999' $TMPSPEC/simple-progress.md"
+
+run "progress: second call updates same row" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC" "Phase 1" "done" "ok"
+
+run "progress: row reflects 'done' status" \
+  bash -c "grep -q '| Phase 1 | done' $TMPSPEC/simple-progress.md"
+
+run "progress: third call appends new row" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC" "Phase 2" "in_progress"
+
+run "progress: file now has 2 phase rows" \
+  bash -c "test \$(grep -cE '^\| Phase [0-9]+ \|' $TMPSPEC/simple-progress.md) -eq 2"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
