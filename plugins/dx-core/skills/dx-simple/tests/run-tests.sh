@@ -255,6 +255,18 @@ chmod +x "$TMP/nobc/bc"
 run "classify: still works without bc dependency" \
   bash -c "PATH=$TMP/nobc:\$PATH $SCRIPTS/classify-work.sh $TMP/parsed2.yaml $FIXTURES/dialog-map.json $FIXTURES/file-list.json $TMP/plan3.json"
 
+# ===== block-mvn-deploy hook tests =====
+HOOK="$SCRIPT_DIR/../hooks/block-mvn-deploy.sh"
+
+expect_exit "hook: blocks autoInstallPackage in pipeline mode" 2 \
+  bash -c "echo '{\"input\":{\"command\":\"mvn clean install -PautoInstallPackage\"}}' | DX_PIPELINE_MODE=true $HOOK"
+
+run "hook: allows mvn compile in pipeline mode" \
+  bash -c "echo '{\"input\":{\"command\":\"mvn compile -pl core\"}}' | DX_PIPELINE_MODE=true $HOOK"
+
+run "hook: allows autoInstallPackage when not in pipeline mode" \
+  bash -c "echo '{\"input\":{\"command\":\"mvn clean install -PautoInstallPackage\"}}' | $HOOK"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
