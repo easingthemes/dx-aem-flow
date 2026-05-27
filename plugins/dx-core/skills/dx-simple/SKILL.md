@@ -319,3 +319,189 @@ For each item in `work-plan.code[]`:
    Exit 4 → rollback authoring + exit non-zero.
 
 Update progress.
+
+### Phase 4: Compile (≤3 retries)
+
+**Only if Phase 3b ran (code edits were applied).** Skip if authoring-only.
+
+Read build command from `.ai/config.yaml`:
+- Prefer `dx-simple.build-compile-fast` if set
+- Else `build.compile-fast`
+- Else `build.compile`
+- Else abort: "no compile command configured"
+
+```bash
+COMPILE=$(bash .ai/lib/dx-common.sh yaml-val 'dx-simple.build-compile-fast' || \
+          bash .ai/lib/dx-common.sh yaml-val 'build.compile-fast' || \
+          bash .ai/lib/dx-common.sh yaml-val 'build.compile')
+```
+
+Run the compile, capturing output to `$SPEC_DIR/compile.log`. Loop up to 3 attempts:
+
+```bash
+for ATTEMPT in 1 2 3; do
+  $COMPILE > "$SPEC_DIR/compile.log" 2>&1 && break
+  if [[ "$ATTEMPT" -eq 3 ]]; then
+    # Rollback + exit
+    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
+    exit 1
+  fi
+  # Read the last 50 lines of compile.log, identify the error, edit the file, retry.
+done
+```
+
+The agent's job between attempts: read `compile.log` tail, identify which file/line caused the error, Edit it, then re-loop.
+
+Update progress with attempt count.
+
+### Phase 5: Visual verify
+
+**When mandatory:** authoring with `activate=true`, OR mixed (authoring + code), OR code-only with `activate=true` flag in the simple block.
+**When optional:** code-only visual change-type. Run if Chrome MCP available; skip otherwise.
+**When skipped:** code-only non-visual change-type (aria-label, copy in HTL).
+
+If running:
+
+1. Navigate Chrome to the page (note: same QA author URL, NOT publish, so authoring writes are visible):
+   ```
+   mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page with url=<page-url>
+   ```
+
+2. Take AFTER screenshot:
+   ```
+   mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot with filePath=$SPEC_DIR/after.png
+   ```
+
+3. Run visual-diff:
+   ```bash
+   BBOX=$(cat $SPEC_DIR/locator-bbox.json | jq -r '"\(.x),\(.y),\(.w),\(.h)"')
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/visual-diff.sh \
+        "$SPEC_DIR/before.png" "$SPEC_DIR/after.png" "$BBOX" \
+        > "$SPEC_DIR/visual-diff.json"
+   ```
+
+4. **G5 — Visual non-target identical:** `non-target-identical ≥ 99%`
+5. **G6 — Visual target changed:** `region-diff ≥ 5%`
+
+Either gate fail:
+- Authoring-only OR retry-exhausted → rollback authoring + exit
+- Code-path with re-edit budget remaining → invoke ONE re-edit cycle: open the staged file, show the agent the screenshot diff, ask "this change didn't render as expected — re-edit." Then loop back to Phase 4 (recompile).
+
+### Phase 5.5: Diff review (only if code path)
+
+If Phase 3b ran (code edits applied), invoke `dx-pr-reviewer` for a single-pass review on the working tree:
+
+```
+Agent(subagent_type: dx-pr-reviewer, prompt: "Review the staged diff (git diff HEAD) for the following changes. Context: this is a small ≤50-line tweak via /dx-simple targeting <change-type> on component <resource-type>. Focus on:
+- Does the change actually accomplish what the requirement says?
+- Any obvious bug (wrong variable, missing semicolon, off-by-one)?
+- Any accessibility regression (e.g., removing existing aria text)?
+Return findings as JSON: [{ \"severity\": \"blocker|suggestion\", \"confidence\": 0.0-1.0, \"file\": \"...\", \"line\": N, \"comment\": \"...\" }]
+")
+```
+
+Write the review to `$SPEC_DIR/diff-review.md`.
+
+**G7 — Zero blockers at ≥80% confidence:**
+- Any `severity: blocker AND confidence ≥ 0.8` → rollback authoring + exit non-zero, no PR.
+- Suggestions are recorded in PR description as "Reviewer notes" but do not block.
+
+### Phase 6: Activate + Commit + PR
+
+1. **Activate authoring** (only if work-plan has authoring items AND `simple-block.yaml` `activate: true` AND all gates passed):
+   For each unique JCR path in `authoring-diff.json`:
+   ```
+   mcp__plugin_dx-aem_AEM__activatePage with path=<jcr-path>
+   ```
+   Log each activation to audit. Update `authoring-diff.json` to set `activated: true` per item.
+
+2. **Commit + PR** (only if Phase 3b ran):
+   Delegate to `/dx-pr-commit`:
+   ```
+   Skill(/dx-pr-commit)
+   ```
+   The conventional commit message: `feat(<scope>): <change-value summary>`. Include in the PR body:
+   - Link to `report.md`
+   - Reviewer notes from Phase 5.5 (if any)
+   - Authoring changes summary (if any, with "activated: yes" flag)
+   - Before/after screenshots
+
+### Phase 7: Write report + ADO comment
+
+Render `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/report.md.tmpl` into `$SPEC_DIR/report.md`, substituting all `{PLACEHOLDER}` tokens from `confidence.json`, `work-plan.json`, `authoring-diff.json`.
+
+Post a truncated version to ADO:
+```
+mcp__ado__wit_add_work_item_comment with id=<ticket>, comment=<truncated report>
+```
+
+Update final progress row to `done`.
+
+Clean up:
+```bash
+rm -f .ai/run-context/orchestrating.flag
+```
+
+## Return contract
+
+When this skill is invoked from an orchestrator (future composition), emit at the end:
+
+```markdown
+## Return
+verdict: pass | warn | fail
+summary: <one sentence>
+artifacts:
+  - $SPEC_DIR/report.md
+  - $SPEC_DIR/work-plan.json
+  - $SPEC_DIR/authoring-diff.json
+next_action: <human-readable next step or "none">
+```
+
+If running standalone (no `orchestrating.flag`), also print a human summary above the Return block.
+
+## ABORT path (any gate failure)
+
+When any G1–G9 gate fails:
+
+1. Rollback authoring (if any writes were applied):
+   ```bash
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
+   ```
+
+2. Discard code edits:
+   ```bash
+   git checkout -- .
+   ```
+
+3. Write a failure report at `$SPEC_DIR/report.md` (using the same template, with `verified: false` and the failing gate's row marked `fail`).
+
+4. Post ADO comment with the failure summary + which gate failed + suggested human action.
+
+5. Clean up orchestrating flag.
+
+6. Exit non-zero.
+
+## Examples
+
+1. `/dx-simple 9999999` — runs the full pipeline against ticket 9999999. Pauses only on errors.
+
+2. `/dx-simple https://dev.azure.com/org/proj/_workitems/edit/9999999` — same, but parses the ID from the URL.
+
+## Troubleshooting
+
+- **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA author?), `component-locator` (matches visible element?), QA content sync (component exists on QA?).
+
+- **"Ambiguous locator"** — Multiple DOM matches. Use `jcr-path=...` form for unambiguous targeting.
+
+- **"Resource type not allowlisted"** — Component isn't in `.ai/config.yaml > dx-simple.allowed-resource-types`. Add it (intentional opt-in).
+
+- **"Edit confidence too low (G4)"** — Agent couldn't identify which file/line to edit unambiguously. Either the source isn't deterministic from the locator, or the change is too ambiguous for /dx-simple. Re-tag as `KAI-DEV-AUTOMATION` to use full DevAgent.
+
+- **"Visual verify failed (G5 or G6)"** — Either the change caused side-effects (G5 fail: page-wide change) or no visible change rendered (G6 fail: edit was a no-op). Check the visual-diff.json + the before/after screenshots in spec dir.
+
+## Rules
+
+- **Coordinator only** — read state, dispatch subagents, never directly read codebase or write code outside the well-defined phases.
+- **Strict gate enforcement** — never proceed past a failing gate; never "best effort" guess.
+- **Audit every AEM write** — `audit.sh` with `AUDIT_LOG_PREFIX=simple`.
+- **Don't echo file content** — reference paths instead.
