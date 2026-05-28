@@ -1,0 +1,22 @@
+{
+  "ticket": "9999999",
+  "started": "2026-05-28T10:00:00Z",
+  "writes": [
+    {
+      "jcr-path": "/content/site/en/home/jcr:content/root/hero",
+      "property": "ariaLabel",
+      "before": "",
+      "after": "Get started today",
+      "applied": true,
+      "applied-at": "2026-05-28T10:00:05Z"
+    },
+    {
+      "jcr-path": "/content/site/en/home/jcr:content/root/cta",
+      "property": "buttonText",
+      "before": "Sign up",
+      "after": "Get started",
+      "applied": true,
+      "applied-at": "2026-05-28T10:00:08Z"
+    }
+  ]
+}

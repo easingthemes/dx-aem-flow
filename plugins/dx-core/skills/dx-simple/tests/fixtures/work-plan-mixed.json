@@ -1,0 +1,32 @@
+{
+  "ticket": "9999999",
+  "component": {
+    "jcr-path": "/content/site/en/home/jcr:content/root/hero",
+    "resource-type": "mysite/components/hero",
+    "page-url": "https://qa-author.example.com/editor.html/content/site/en/home.html"
+  },
+  "authoring": [
+    {
+      "jcr-path": "/content/site/en/home/jcr:content/root/hero",
+      "property": "ariaLabel",
+      "before": "",
+      "after": "Get started today",
+      "field-type": "textfield",
+      "confidence": 0.92
+    }
+  ],
+  "code": [
+    {
+      "file": "ui.apps/src/.../hero.html",
+      "match-line": 42,
+      "match-context": "data-aria-label=\"Sign up\"",
+      "replacement": "data-aria-label=\"Get started today\"",
+      "rationale": "only match in hero component template",
+      "confidence": 0.88
+    }
+  ],
+  "confidence": {
+    "G3-classification": "high",
+    "rationale": "ariaLabel field exists in dialog and matches change-type unambiguously"
+  }
+}

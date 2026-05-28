@@ -1,0 +1,16 @@
+**Cannot run /dx-simple — required `simple` block is missing or malformed.**
+
+Add this block to the story description:
+
+```simple
+page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
+component-locator: heading-text="Get started today"
+  # alternates: jcr-path=/content/site/en/home/jcr:content/root/hero
+  #             dialog-title="Hero CTA"
+change-type: aria-label    # one of: aria-label | color-token | spacing | copy | css-class | icon
+change-value: "Get started with our product today"
+brand: site                # optional; defaults to brands[0] in .ai/config.yaml
+activate: true             # optional; defaults to true; set false to skip auto-activation
+```
+
+After updating the story, re-tag with `KAI-SIMPLE-AUTOMATION` to retry.
