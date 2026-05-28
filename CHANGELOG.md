@@ -1,3 +1,10 @@
+# [2.107.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.7...v2.107.0) (2026-05-28)
+
+
+### Features
+
+* **dx-simple:** new skill + SimpleAgent automation pipeline ([#147](https://github.com/easingthemes/dx-aem-flow/issues/147)) ([c6372a9](https://github.com/easingthemes/dx-aem-flow/commit/c6372a97ee85e80f2ff590a96d68b86563b147ae)), closes [#132](https://github.com/easingthemes/dx-aem-flow/issues/132)
+
 ## [2.106.7](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.6...v2.106.7) (2026-05-18)
 
 
