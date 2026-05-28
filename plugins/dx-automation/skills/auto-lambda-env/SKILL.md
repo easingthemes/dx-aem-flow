@@ -27,6 +27,7 @@ Pre-fill these from infra.json (don't ask for values already known):
 - `ADO_DEV_PIPELINE_ID` ← `pipelines.devagent.id` (WI Router)
 - `ADO_DOC_PIPELINE_ID` ← `pipelines.docagent.id` (WI Router)
 - `ADO_ESTIMATION_PIPELINE_ID` ← `pipelines.estimation.id` (WI Router)
+- `ADO_SIMPLE_PIPELINE_ID` ← `pipelines.simple.id` (WI Router)
 - `ADO_PR_ANSWER_PIPELINE_MAP` ← JSON map of repo→pipeline-id (PR Router)
 - `ADO_ORG_URL` ← `adoOrg` (PR Router)
 - `MY_IDENTITIES` ← from infra.json if set (PR Router)
@@ -57,6 +58,8 @@ Ask these **one at a time** — these cannot be pre-filled from infra.json:
 
 > **Estimation trigger tag?** (Lambda env var `TAG_GATE_ESTIMATION` — WI Router) Default: `KAI-ESTIMATION-AUTOMATION`
 
+> **SimpleAgent trigger tag?** (Lambda env var `TAG_GATE_SIMPLE` — WI Router) Default: `KAI-SIMPLE-AUTOMATION`
+
 ## 2. Apply to WI Router Lambda
 
 The WI Router (`<PREFIX>-WI-Router`) handles all work-item webhook events and routes to the appropriate pipeline (DoR, DoD, BugFix, QA, DevAgent, DOCAgent, Estimation) based on tag gates.
@@ -78,6 +81,7 @@ aws_lambda_config "$WI_ROUTER_FUNC" \
     ADO_DEV_PIPELINE_ID=<pipeline-id>,
     ADO_DOC_PIPELINE_ID=<pipeline-id>,
     ADO_ESTIMATION_PIPELINE_ID=<pipeline-id>,
+    ADO_SIMPLE_PIPELINE_ID=<pipeline-id>,
     TAG_GATE_DOR=<tag>,
     TAG_GATE_DOD=<tag>,
     TAG_GATE_BUGFIX=<tag>,
@@ -85,12 +89,34 @@ aws_lambda_config "$WI_ROUTER_FUNC" \
     TAG_GATE_DEV=<tag>,
     TAG_GATE_DOC=<tag>,
     TAG_GATE_ESTIMATION=<tag>,
+    TAG_GATE_SIMPLE=<tag>,
     DYNAMODB_DEDUPE_TABLE=<table>,
     DYNAMODB_RATE_LIMIT_TABLE=<table>,
     SQS_DLQ_URL=<url>
   }" \
   --region "$REGION"
 ```
+
+### SimpleAgent routing (WI Router tag map)
+
+The WI Router routes tagged work-item events to pipelines via a tag-to-pipeline-ID lookup. After this skill runs, the WI Router's effective routing table includes:
+
+```json
+{
+  "KAI-DOR-AUTOMATION":        "<dor-pipeline-id>",
+  "KAI-DOD-AUTOMATION":        "<dod-pipeline-id>",
+  "KAI-BUGFIX-AUTOMATION":     "<bugfix-pipeline-id>",
+  "KAI-QA-AUTOMATION":         "<qa-pipeline-id>",
+  "KAI-DEV-AUTOMATION":        "<devagent-pipeline-id>",
+  "KAI-DOC-AUTOMATION":        "<docagent-pipeline-id>",
+  "KAI-ESTIMATION-AUTOMATION": "<estimation-pipeline-id>",
+  "KAI-SIMPLE-AUTOMATION":     "<simple-pipeline-id>"
+}
+```
+
+### SimpleAgent Lambda env (none beyond pipeline ID + tag)
+
+The SimpleAgent pipeline (`ado-cli-simple.yml`) reads its config from **pipeline variables** (set by `/auto-pipelines` — `AEM_QA_URL`, `AEM_QA_USER`, `AEM_QA_PASSWORD`, MCP version pins). The Lambda only needs to know the pipeline ID (`ADO_SIMPLE_PIPELINE_ID`) and the trigger tag (`TAG_GATE_SIMPLE`) so it can route `workitem.updated` events with that tag to the right pipeline. No additional Lambda env vars are required for SimpleAgent.
 
 ## 3. Apply to PR Router Lambda (merge-safe)
 
@@ -152,6 +178,7 @@ done
 | ADO_DEV_PIPELINE_ID | ✓ | — |
 | ADO_DOC_PIPELINE_ID | ✓ | — |
 | ADO_ESTIMATION_PIPELINE_ID | ✓ | — |
+| ADO_SIMPLE_PIPELINE_ID | ✓ | — |
 | ADO_PR_ANSWER_PIPELINE_MAP | — | ✓ |
 | ADO_ORG_URL | — | ✓ |
 | MY_IDENTITIES | — | ✓ |
@@ -162,6 +189,7 @@ done
 | TAG_GATE_DEV | ✓ | — |
 | TAG_GATE_DOC | ✓ | — |
 | TAG_GATE_ESTIMATION | ✓ | — |
+| TAG_GATE_SIMPLE | ✓ | — |
 | DYNAMODB_DEDUPE_TABLE | ✓ | ✓ |
 | DYNAMODB_RATE_LIMIT_TABLE | ✓ | ✓ |
 | SQS_DLQ_URL | ✓ | ✓ |

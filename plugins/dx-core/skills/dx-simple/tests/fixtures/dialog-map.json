@@ -1,0 +1,14 @@
+{
+  "jcr-path": "/content/site/en/home/jcr:content/root/hero",
+  "resource-type": "mysite/components/hero",
+  "fields": {
+    "headingText": "textfield",
+    "ariaLabel": "textfield",
+    "ctaUrl": "pathfield"
+  },
+  "values": {
+    "headingText": "Get started today",
+    "ariaLabel": "",
+    "ctaUrl": "/content/cta"
+  }
+}

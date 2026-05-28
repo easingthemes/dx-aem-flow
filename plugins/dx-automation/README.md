@@ -1,6 +1,6 @@
 # dx-automation — Autonomous Agent Infrastructure Plugin for Claude Code
 
-Deploys ten autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) that run 24/7 as Azure DevOps pipelines triggered by AWS Lambda webhooks. Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines triggered by AWS Lambda webhooks. Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
 
 ## Prerequisites
 
@@ -64,7 +64,7 @@ After setup, verify everything works:
 
 ## What Gets Deployed
 
-Ten autonomous agents:
+Eleven autonomous agents:
 
 | Agent | Trigger | What it does |
 |-------|---------|--------------|
@@ -78,6 +78,7 @@ Ten autonomous agents:
 | **DevAgent** | Work item tag `KAI-DEV-AUTOMATION` (ADO webhook → Lambda) | Full autonomous development: requirements → plan → implement → test → review → commit → PR. Supports Figma design-to-code. |
 | **DOCAgent** | Work item tag `KAI-DOC-AUTOMATION` (ADO webhook → Lambda) | Generate wiki documentation + AEM authoring guides with screenshots |
 | **Estimation** | Work item tag `KAI-ESTIMATION-AUTOMATION` (ADO webhook → Lambda) | Estimate story points by analyzing codebase complexity |
+| **SimpleAgent** | Work item tag `KAI-SIMPLE-AUTOMATION` (ADO webhook → Lambda) | Apply small AEM change (a11y label / color / spacing / copy) via authoring (AEM MCP write) OR code (file edits → PR) split. 9 confidence gates. ≤5 files / ≤50 lines / ≤10 JCR writes. |
 
 These run as ADO pipelines (YAML) invoked by Lambda. The Lambda receives ADO webhooks via API Gateway, enqueues to SQS, and triggers the correct pipeline.
 

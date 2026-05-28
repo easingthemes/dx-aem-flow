@@ -1,0 +1,3 @@
+# Pin CRLF fixture's line endings so the CRLF parser test stays meaningful
+# on every checkout, regardless of the user's core.autocrlf setting.
+raw-story-crlf.md -text eol=crlf

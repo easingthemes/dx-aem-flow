@@ -164,6 +164,44 @@ Save the profile name in `automationProfile` in infra.json alongside the enabled
 >
 > **Note:** Figma integration in CI/CD pipelines (headless environments without a local Figma app) is not yet supported. See TODO for remote Figma API support.
 
+### SimpleAgent secrets (only required if you intend to enable KAI-SIMPLE-AUTOMATION)
+
+Prompt the user for:
+
+| Prompt | Stored as | Where used |
+|---|---|---|
+| QA AEM author URL (e.g., `https://qa-author.example.com`) | ADO pipeline variable `AEM_QA_URL` | Pipeline `ado-cli-simple.yml` env |
+| QA AEM service-account username | ADO pipeline variable `AEM_QA_USER` (secret) | Same |
+| QA AEM service-account password | ADO pipeline variable `AEM_QA_PASSWORD` (secret) | Same |
+
+Document in the generated `infra.json`:
+```json
+{
+  "simpleAgent": {
+    "qaAemUrl": "<from prompt>",
+    "pipelineVariables": ["AEM_QA_URL", "AEM_QA_USER", "AEM_QA_PASSWORD"],
+    "allowlistConfigPath": ".ai/config.yaml#dx-simple.allowed-resource-types"
+  }
+}
+```
+
+### After /auto-init completes — add dx-simple block to .ai/config.yaml
+
+If the user opted into SimpleAgent, instruct them to add this block to `.ai/config.yaml`:
+
+```yaml
+dx-simple:
+  allowed-resource-types:
+    # Add resource types here that are eligible for auto-tweaks.
+    # Use "*" to allow any (NOT recommended for production).
+    # - mysite/components/hero
+    # - mysite/components/cta
+  cost-ceiling-usd: 2.0
+  build-compile-fast: "mvn compile -pl ui.frontend,core -am"
+```
+
+Until at least one resource type is allowlisted, `/dx-simple` will reject all runs.
+
 ## Phase 2: Scaffold
 
 Scaffolding is profile-aware. Consumer profile gets a minimal subset — only pipeline YAMLs and config. They NEVER get Lambda handlers, webhook config, or AWS resource definitions.
