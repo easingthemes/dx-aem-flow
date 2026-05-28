@@ -52,9 +52,64 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)
 
   - bash: |
-      cp "$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json" \
-         "$(Build.SourcesDirectory)/.mcp.json"
-    displayName: "Install pipeline MCP overrides"
+      set -e
+      SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json"
+      DST="$(Build.SourcesDirectory)/.mcp.json"
+      if [ -f "$DST" ]; then
+        # Merge: pipeline servers (AEM, chrome-devtools-mcp) WIN, but any
+        # other servers already declared in the consumer repo (e.g., ADO,
+        # Atlassian) are preserved. Backup first for forensics.
+        cp "$DST" "$DST.pre-simple-bak"
+        jq -s '.[0] * .[1]' "$DST" "$SRC" > "$DST.merged"
+        mv "$DST.merged" "$DST"
+        echo "Merged $SRC into existing $DST (backup at $DST.pre-simple-bak)"
+      else
+        cp "$SRC" "$DST"
+        echo "Installed fresh $DST from $SRC"
+      fi
+    displayName: "Install pipeline MCP overrides (merge)"
+
+  - bash: |
+      set -e
+      # Pre-flight: AEM QA must be reachable from this agent. If it's not
+      # (corp firewall, VPN-only), fail fast with a clear message rather
+      # than burning agent turns on MCP ToolSearch loops.
+      echo "Probing AEM QA at $AEM_QA_URL ..."
+      HTTP=$(curl -fsS -o /dev/null -w '%{http_code}' \
+                  -u "$AEM_QA_USER:$AEM_QA_PASSWORD" \
+                  --max-time 15 \
+                  "$AEM_QA_URL/system/console/bundles.json" || echo "000")
+      if [ "$HTTP" != "200" ]; then
+        echo "ERROR: AEM QA not reachable (HTTP $HTTP from ubuntu-latest agent)" >&2
+        echo "  url: $AEM_QA_URL" >&2
+        echo "  Likely causes: corp firewall blocks Microsoft-hosted agents, or QA is VPN-only." >&2
+        echo "  Fix: use a self-hosted ADO agent in the corp network." >&2
+        exit 1
+      fi
+      echo "OK: AEM QA reachable"
+    displayName: "Pre-flight: AEM QA reachability"
+    env:
+      AEM_QA_URL: $(AEM_QA_URL)
+      AEM_QA_USER: $(AEM_QA_USER)
+      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+
+  - bash: |
+      set -e
+      # Pre-flight: spin up AEM MCP briefly to confirm the npx package +
+      # argv format work. Without this, a broken MCP launch wastes the
+      # agent's first ~6 turns on ToolSearch.
+      echo "Smoke-testing aem-mcp-server@${AEM_MCP_VERSION} ..."
+      timeout 30s npx -y "aem-mcp-server@${AEM_MCP_VERSION}" --help >/dev/null 2>&1 || {
+        echo "ERROR: aem-mcp-server@${AEM_MCP_VERSION} --help failed — check version pin or npm registry" >&2
+        exit 1
+      }
+      echo "Smoke-testing chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION} ..."
+      timeout 30s npx -y "chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}" --help >/dev/null 2>&1 || {
+        echo "ERROR: chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION} --help failed" >&2
+        exit 1
+      }
+      echo "OK: MCP packages resolvable"
+    displayName: "Pre-flight: MCP health check"
 
   - bash: |
       PROMPT="/dx-simple ${{ parameters.workItemId }}"
@@ -75,7 +130,10 @@ steps:
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
       CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
-      MAX_TURNS: "30"
+      # Coordinator + 3 parallel research subagents + up to 10 JCR writes +
+      # visual verify + diff review + PR creation. 30 was too tight and
+      # left writes stranded when the cap hit mid-Phase-3a.
+      MAX_TURNS: "60"
       ALLOWED_TOOLS: >-
         Skill,Read,Write,Edit,Glob,Grep,Agent,
         Bash(git *),Bash(mvn *),Bash(npm *),
@@ -93,7 +151,7 @@ steps:
         mcp__ado__wit_add_work_item_comment,
         mcp__ado__wit_get_work_item,
         mcp__ado__repo_create_pull_request
-    timeoutInMinutes: 15
+    timeoutInMinutes: 20
 
   - bash: |
       if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then

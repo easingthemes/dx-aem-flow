@@ -208,8 +208,12 @@ build:
   compile: "mvn compile"
 EOF
 
+# Preflight requires CLAUDE_PLUGIN_ROOT to point at a real plugin tree
+# containing dx-simple. tests/ → dx-simple → skills → dx-core (the plugin).
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
 run "preflight: valid config passes" \
-  bash -c "cd $TMPPROJ && $SCRIPTS/preflight.sh"
+  bash -c "cd $TMPPROJ && CLAUDE_PLUGIN_ROOT='$PLUGIN_ROOT' $SCRIPTS/preflight.sh"
 
 # Missing dx-simple section
 TMPPROJ2="$TMP/proj2"
@@ -218,11 +222,20 @@ touch "$TMPPROJ2/.ai/lib/dx-common.sh"
 echo "build: {compile: mvn compile}" > "$TMPPROJ2/.ai/config.yaml"
 
 expect_exit "preflight: missing dx-simple block exits 6" 6 \
-  bash -c "cd $TMPPROJ2 && $SCRIPTS/preflight.sh"
+  bash -c "cd $TMPPROJ2 && CLAUDE_PLUGIN_ROOT='$PLUGIN_ROOT' $SCRIPTS/preflight.sh"
 
 # Pipeline mode without AEM vars
 expect_exit "preflight: pipeline mode without AEM_QA_* exits 7" 7 \
-  bash -c "cd $TMPPROJ && unset AEM_QA_URL AEM_QA_USER AEM_QA_PASSWORD; DX_PIPELINE_MODE=true $SCRIPTS/preflight.sh"
+  bash -c "cd $TMPPROJ && unset AEM_QA_URL AEM_QA_USER AEM_QA_PASSWORD; DX_PIPELINE_MODE=true CLAUDE_PLUGIN_ROOT='$PLUGIN_ROOT' $SCRIPTS/preflight.sh"
+
+# CLAUDE_PLUGIN_ROOT missing -> exit 9 (new in this PR — fails fast before
+# touching config so we know plugin loader is wired correctly).
+expect_exit "preflight: unset CLAUDE_PLUGIN_ROOT exits 9" 9 \
+  bash -c "cd $TMPPROJ && unset CLAUDE_PLUGIN_ROOT; $SCRIPTS/preflight.sh"
+
+# CLAUDE_PLUGIN_ROOT pointing somewhere without the skill -> exit 9.
+expect_exit "preflight: wrong CLAUDE_PLUGIN_ROOT exits 9" 9 \
+  bash -c "cd $TMPPROJ && CLAUDE_PLUGIN_ROOT='/tmp' $SCRIPTS/preflight.sh"
 
 # ===== classify-work tests (chained: parse → classify) =====
 run "classify: parse first then classify (high confidence)" \
@@ -328,6 +341,99 @@ expect_exit "aem-revert: rejects jcr-path with scheme (URL injection guard)" 1 \
   bash -c "AEM_QA_URL=http://localhost:4502 AEM_QA_USER=u AEM_QA_PASSWORD=p node $REVERTER $TMP/diff-bad-path.json"
 run "aem-revert: prints INVALID for url-like jcr-path" \
   bash -c "AEM_QA_URL=http://localhost:4502 AEM_QA_USER=u AEM_QA_PASSWORD=p node $REVERTER $TMP/diff-bad-path.json 2>&1 | grep -q 'INVALID jcr-path'"
+
+# ===== check-g4 tests =====
+# Empty .code[] -> trivially pass (authoring-only run).
+cat > "$TMP/g4-authoring-only.json" <<'EOF'
+{ "code": [], "authoring": [{"jcr-path":"/x","property":"p","before":"a","after":"b","field-type":"textfield","confidence":0.92}] }
+EOF
+run "g4: empty code array passes" \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-authoring-only.json"
+
+# Deferred placeholder (what classify-work.sh emits) -> MUST fail with exit 4.
+cat > "$TMP/g4-deferred.json" <<'EOF'
+{
+  "code": [
+    {"file": "ui/style.css", "match-line": 0, "match-context": "", "replacement": "", "confidence": 0}
+  ]
+}
+EOF
+expect_exit "g4: deferred placeholder fails with exit 4" 4 \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-deferred.json"
+run "g4: deferred placeholder stderr mentions confidence" \
+  bash -c "$SCRIPTS/check-g4.sh $TMP/g4-deferred.json 2>&1 | grep -q 'conf=0'"
+
+# Below threshold (0.84 with min 0.85) -> fail.
+cat > "$TMP/g4-below.json" <<'EOF'
+{
+  "code": [
+    {"file": "ui/style.css", "match-line": 12, "match-context": "color: red", "replacement": "color: blue", "confidence": 0.84}
+  ]
+}
+EOF
+expect_exit "g4: below threshold fails with exit 4" 4 \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-below.json"
+
+# Above threshold with all fields populated -> pass.
+cat > "$TMP/g4-pass.json" <<'EOF'
+{
+  "code": [
+    {"file": "ui/style.css", "match-line": 12, "match-context": "color: red", "replacement": "color: blue", "confidence": 0.92},
+    {"file": "ui/style.css", "match-line": 14, "match-context": "padding: 4px", "replacement": "padding: 8px", "confidence": 0.88}
+  ]
+}
+EOF
+run "g4: all items above threshold pass" \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-pass.json"
+
+# Confidence ok but match-context empty -> fail (agent didn't actually identify the match).
+cat > "$TMP/g4-empty-ctx.json" <<'EOF'
+{
+  "code": [
+    {"file": "ui/style.css", "match-line": 12, "match-context": "", "replacement": "color: blue", "confidence": 0.95}
+  ]
+}
+EOF
+expect_exit "g4: empty match-context fails even with high confidence" 4 \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-empty-ctx.json"
+
+# Invalid JSON -> exit 8.
+echo "not json" > "$TMP/g4-bad.json"
+expect_exit "g4: invalid JSON exits 8" 8 \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-bad.json"
+
+# Missing file -> exit 8.
+expect_exit "g4: missing file exits 8" 8 \
+  "$SCRIPTS/check-g4.sh" "/nonexistent/work-plan.json"
+
+# Tunable threshold: 0.84 confidence passes when min=0.80.
+run "g4: tunable threshold (0.80 min lets 0.84 through)" \
+  "$SCRIPTS/check-g4.sh" "$TMP/g4-below.json" "0.80"
+
+# ===== preflight: build-command fallback (only check the grep pattern) =====
+# A minimal config with only build.command (no compile / compile-fast) must
+# satisfy the build-command check. Preflight has other deps (CLAUDE_PLUGIN_ROOT,
+# .ai/lib/dx-common.sh) so we test the grep in isolation.
+cat > "$TMP/cfg-cmd-only.yaml" <<'EOF'
+build:
+  command: mvn clean install
+dx-simple:
+  allowed-resource-types:
+    - mysite/components/hero
+EOF
+run "preflight: build.command satisfies build-command check" \
+  bash -c "grep -qE '^\s*(compile(-fast)?|command):' $TMP/cfg-cmd-only.yaml"
+
+# Negative: a config with neither -> the grep must fail.
+cat > "$TMP/cfg-neither.yaml" <<'EOF'
+build:
+  artifact: target/app.jar
+dx-simple:
+  allowed-resource-types:
+    - mysite/components/hero
+EOF
+expect_exit "preflight: missing all three build keys is detected" 1 \
+  bash -c "grep -qE '^\s*(compile(-fast)?|command):' $TMP/cfg-neither.yaml"
 
 # Summary
 echo "---"

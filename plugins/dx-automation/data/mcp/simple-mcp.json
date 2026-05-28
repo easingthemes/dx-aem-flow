@@ -1,4 +1,10 @@
 {
+  "_comment": "Pipeline MCP overrides for SimpleAgent (KAI-SIMPLE-AUTOMATION). Merged into consumer .mcp.json by ado-cli-simple.yml step 'Install pipeline MCP overrides (merge)'. Version pins MUST be smoke-tested by the 'Pre-flight: MCP health check' step before the agent runs.",
+  "_todo": [
+    "Verify aem-mcp-server@1.6.2 accepts '-t stdio -I qa:URL:USER:PASS' argv shape — this is a major-version jump from earlier 0.5.x; argv schema is not version-stable. Smoke check in pipeline catches gross failures but not silent semantic drift.",
+    "Verify chrome-devtools-mcp@1.1.1 accepts --viewport=1440x900 form (some upstreams use separate --viewport-width / --viewport-height flags).",
+    "If either upstream changes argv, the env-var interpolation (AEM_QA_URL etc.) must still be expanded by the SDK before the npx invocation — confirm with a dry-run."
+  ],
   "mcpServers": {
     "AEM": {
       "type": "stdio",

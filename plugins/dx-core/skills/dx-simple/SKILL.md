@@ -294,6 +294,8 @@ Update progress.
 
 **Only if work-plan.json has code items (G3 was low OR change-type is css-class).**
 
+`classify-work.sh` populates `.code[]` with placeholder items (confidence=0, empty contexts). The agent MUST fill them in and rewrite `work-plan.json` to disk BEFORE the G4 gate runs.
+
 For each item in `work-plan.code[]`:
 
 1. Read the file:
@@ -301,18 +303,27 @@ For each item in `work-plan.code[]`:
    Read(file=<path>)
    ```
 
-2. Identify the exact match line. The agent fills in `match-line`, `match-context`, `replacement`, `rationale`, and `confidence` (LLM self-rated, 0.0–1.0):
-   - High confidence: only one match in the file matching the locator's context. Rationale: "only `color: red` occurrence in .hero-cta selector".
-   - Medium (rejected): multiple matches with unclear precedence.
+2. Identify the exact match line. Fill in `match-line`, `match-context`, `replacement`, `rationale`, and `confidence` (LLM self-rated, 0.0–1.0):
+   - High confidence (≥0.85): one unambiguous match in the file for the locator's context. Rationale example: "only `color: red` occurrence inside .hero-cta selector".
+   - Below 0.85: multiple matches with unclear precedence, or no clear anchor. Do NOT guess.
 
-3. **G4 — Per-file edit confidence (HARD GATE):** if any item has confidence < 0.85 → abort + rollback authoring.
+3. **Persist the updated work-plan to disk** (the deterministic G4 check reads this file):
+   ```
+   Write(file=$SPEC_DIR/work-plan.json, content=<work-plan JSON with all .code[] items populated>)
+   ```
 
-4. Apply the Edit:
+4. **G4 — Per-file edit confidence (HARD GATE):**
+   ```bash
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/check-g4.sh "$SPEC_DIR/work-plan.json" 0.85
+   ```
+   Exit 4 → rollback authoring + exit non-zero. Record `G4` status in `confidence.json`.
+
+5. Apply the Edits (only after G4 passes):
    ```
    Edit(file=<path>, old_string=<match-context>, new_string=<replacement>)
    ```
 
-5. After all code items applied: run scope-check:
+6. After all code items applied: run scope-check:
    ```bash
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/scope-check.sh "$SPEC_DIR/work-plan.json"
    ```
@@ -356,9 +367,16 @@ Update progress with attempt count.
 
 ### Phase 5: Visual verify
 
-**When mandatory:** authoring with `activate=true`, OR mixed (authoring + code), OR code-only with `activate=true` flag in the simple block.
-**When optional:** code-only visual change-type. Run if Chrome MCP available; skip otherwise.
-**When skipped:** code-only non-visual change-type (aria-label, copy in HTL).
+The classifier produces EITHER authoring OR code items, never both — `classify-work.sh` routes by G3 confidence. Visual-verify rules differ by path:
+
+**Authoring path (Phase 3a ran):** mandatory if `activate: true` in the simple block (writes are visible on author immediately). Skip only when `activate: false` AND no rendered preview is expected.
+
+**Code path (Phase 3b ran):** **visual verify is skipped in pipeline mode** because `mvn compile` (the only build allowed by `block-mvn-deploy.sh`) does NOT deploy to AEM. The QA author serves the old bundle, so `before.png` and `after.png` would be identical and G6 (target changed ≥5%) would always fail. The change is verified post-merge by the normal CI deploy + QA cycle.
+
+  - To request visual verify for a code-path run anyway, add `force-visual-verify: true` to the simple block. The pipeline will navigate and screenshot, but G5/G6 are downgraded to WARN (recorded in report.md, do not abort). Useful only when an external job pre-deploys the branch to QA before SimpleAgent runs.
+  - Local dev (non-pipeline) is free to run visual verify when the developer has deployed locally — the same `force-visual-verify: true` flag opts in.
+
+**When skipped:** code-only non-visual change-type (aria-label, copy in HTL) — recorded as "verify-deferred-to-qa" in the report.
 
 If running:
 
@@ -384,8 +402,9 @@ If running:
 5. **G6 — Visual target changed:** `region-diff ≥ 5%`
 
 Either gate fail:
-- Authoring-only OR retry-exhausted → rollback authoring + exit
-- Code-path with re-edit budget remaining → invoke ONE re-edit cycle: open the staged file, show the agent the screenshot diff, ask "this change didn't render as expected — re-edit." Then loop back to Phase 4 (recompile).
+- Authoring path → rollback authoring + exit non-zero.
+- Code path with `force-visual-verify: true` AND re-edit budget remaining → invoke ONE re-edit cycle: open the staged file, show the agent the screenshot diff, ask "this change didn't render as expected — re-edit." Then loop back to Phase 4 (recompile).
+- Code path WITHOUT `force-visual-verify` → unreachable (Phase 5 skipped — see selection rules above).
 
 ### Phase 5.5: Diff review (only if code path)
 
