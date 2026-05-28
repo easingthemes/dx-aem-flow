@@ -5,7 +5,7 @@
       "command": "npx",
       "args": [
         "-y", "aem-mcp-server@1.6.2", "-t", "stdio",
-        "-I", "qa=${AEM_QA_URL},${AEM_QA_USER},${AEM_QA_PASSWORD}"
+        "-I", "qa:${AEM_QA_URL}:${AEM_QA_USER}:${AEM_QA_PASSWORD}"
       ]
     },
     "chrome-devtools-mcp": {
