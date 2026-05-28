@@ -35,6 +35,20 @@ The deploy script reads function names and files from `infra.json`, packages eac
 
 Report output from the script.
 
+### What ships with the Lambda
+
+The Lambda zip contains **only** the webhook router code (`wi-router.mjs` / `pr-router.mjs`) and shared libs (`dedupe.js`, `dlq.js`, `rate-limiter.js`, `aws-sig.js`, `retry.js`). The Lambda's job is to route webhook events to ADO pipelines — it does not run agents.
+
+Agent code, MCP config, and pipeline YAML are **not** in the Lambda zip. They live in the `dx-aem-flow` plugin repo and are pulled by each pipeline at runtime:
+
+| Asset | Location | Distributed via |
+|-------|----------|-----------------|
+| Agent skills (`/dx-simple`, `/dx-pr-review`, …) | `plugins/dx-*/skills/` | Marketplace clone in pipeline YAML (`git clone dx-aem-flow.git`) |
+| Pipeline YAML (`ado-cli-simple.yml`, …) | `plugins/dx-automation/data/pipelines/cli/` | Imported into ADO once via `/auto-pipelines` |
+| Pipeline MCP overrides (`simple-mcp.json`, …) | `plugins/dx-automation/data/mcp/` | Marketplace clone — pipeline copies into `.mcp.json` at runtime |
+
+So **`data/mcp/simple-mcp.json` does NOT need to be bundled into the Lambda zip** — the pipeline (`ado-cli-simple.yml`) already copies it from the plugin clone (`$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json` → `$(Build.SourcesDirectory)/.mcp.json`) on every pipeline run. Adding new MCP overrides under `data/mcp/` and committing/pushing to the plugin repo is sufficient — no re-deploy of Lambda is required.
+
 ## 3. Verify Deployment
 
 After deploy, check the last modified timestamp for each deployed function:

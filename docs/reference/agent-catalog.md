@@ -29,7 +29,7 @@ Deep code review with confidence-based filtering. Only reports issues at confide
 |----------|-------|
 | **Model** | Sonnet |
 | **File** | `plugins/dx-core/agents/dx-pr-reviewer.md` |
-| **Used by** | `/dx-pr-review`, `/dx-pr-review-all` |
+| **Used by** | `/dx-pr-review`, `/dx-pr-review-all`, `/dx-simple` (Phase 5.5: single-pass diff review on code path) |
 | **Tools** | Read, Glob, Grep, Bash |
 | **Permission mode** | `plan` (read-only by default) |
 
@@ -114,7 +114,7 @@ Analyzes Figma extraction to identify UI building blocks (buttons, images, cards
 |----------|-------|
 | **Model** | Haiku |
 | **File** | `plugins/dx-aem/agents/aem-file-resolver.md` |
-| **Used by** | `/aem-component`, `/dx-ticket-analyze` |
+| **Used by** | `/aem-component`, `/dx-ticket-analyze`, `/dx-simple` (Phase 2: parallel file resolution) |
 | **Tools** | Read, Grep, Glob, ToolSearch, mcp__ado__search_code |
 
 Resolves all source files for an AEM component across multiple repos and platforms. Reads `file-patterns.yaml` and `project.yaml` for path patterns. Uses local Glob for repos with local paths, ADO code search for remote-only repos. Returns file paths as clickable SCM URLs.
@@ -127,7 +127,7 @@ Resolves all source files for an AEM component across multiple repos and platfor
 |----------|-------|
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-inspector.md` |
-| **Used by** | `/aem-snapshot`, `/aem-verify`, `/aem-doc-gen` |
+| **Used by** | `/aem-snapshot`, `/aem-verify`, `/aem-doc-gen`, `/dx-simple` (Phase 2: dialog inspection) |
 | **Tools** | Read, Write, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools |
 
 AEM component inspector. Queries the AEM author instance via MCP tools for dialog fields, page searches, test/docs page creation, publishing, and demo data configuration. Returns compact markdown summaries — never raw JSON.
@@ -161,6 +161,8 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 - Multimodal visual comparison against Figma reference or requirements
 - Fix loop (edit source → rebuild → redeploy → re-screenshot)
 
+> **Note:** `/dx-simple` performs visual verification directly via Chrome MCP (Phase 5) rather than invoking this agent, to keep screenshot data in the main context for diff comparison. See `aem-fe-verifier` for the full FE verification used by `/aem-fe-verify`.
+
 ---
 
 ### aem-editorial-guide-capture
@@ -190,7 +192,7 @@ Browser automation agent for AEM editor interaction. Opens AEM author/publisher 
 |----------|-------|
 | **Model** | Haiku |
 | **File** | `plugins/dx-aem/agents/aem-page-finder.md` |
-| **Used by** | `/aem-component`, `/aem-page-search` |
+| **Used by** | `/aem-component`, `/aem-page-search`, `/dx-simple` (Phase 2: page resolution) |
 | **Tools** | Grep, Read, ToolSearch, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__scanPageComponents |
 
 Finds all AEM pages using a given component. Searches configured content paths and Experience Fragments. Returns clickable author URLs using the QA author URL from config.

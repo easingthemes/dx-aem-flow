@@ -115,13 +115,14 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 |-------|-----------|----------|-------------|--------|
 | dx-council | `/dx-council` | `<question or 'the plan' / 'the implementation'>` | Run a decision through an LLM Council — 3 advisors (Critic, Architect, Operator) analyze independently, peer-review anonymously, chairman synthesizes verdict. Context shortcuts: `council the plan`, `council the implementation`. Adapted from Karpathy's LLM Council. | `council-transcript.md` |
 
-### Quality & Hardening — 4 skills
+### Quality & Hardening — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-axe | `/dx-axe` | `<URL> [--fix] [--standard wcag2aa\|wcag21aa]` | Accessibility testing using axe MCP Server — analyze violations, get remediation guidance, apply fixes, verify. Requires Docker + Axe DevTools API key. | Violation report, fixes |
 | dx-perf | `/dx-perf` | `[frontend\|backend\|bundle\|all]` | Performance audit — measure baseline, identify bottlenecks (Core Web Vitals, N+1 queries, bundle size), fix, verify improvement with evidence. Measurement-first approach. | Performance report |
 | dx-security | `/dx-security` | `[changes\|full]` | Security hardening audit — OWASP Top 10 prevention, secrets scan, dependency audit, input validation, auth review. Three-tier boundary system (Always/Ask/Never). Uses `model: opus`. | Security audit report |
+| dx-simple | `/dx-simple` | `<work-item-id>` | Apply a small AEM change (a11y label, color token, spacing, copy, css-class, icon) by splitting work into authoring (AEM MCP JCR writes) and code (file edits → PR) paths. Story MUST include a `\`\`\`simple` fenced block (`page-url`, `component-locator`, `change-type`, `change-value`). Enforces 9 confidence gates and ≤5 files / ≤50 lines / ≤10 JCR writes. Reuses `aem-file-resolver`, `aem-inspector`, `aem-page-finder`, `dx-pr-reviewer` agents. Uses `model: sonnet`. Also runs autonomously via ADO tag `KAI-SIMPLE-AUTOMATION` (see SimpleAgent in dx-automation). | `.ai/specs/<id>-simple/report.md` + ADO comment + PR (if code path) |
 | dx-simplify | `/dx-simplify` | `[file path or directory]` | Code simplification — reduce complexity while maintaining behavioral equivalence. Chesterton's Fence (understand before changing), Rule of 500, dead code removal. Uses `model: opus`. | Simplification report |
 
 ### Sync — 1 skill
@@ -234,7 +235,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 
 > Requires: `dx-core` plugin installed. Also requires AWS CLI and Azure CLI configured.
 >
-> Sets up ten autonomous agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) running as ADO pipelines triggered by AWS Lambda webhooks. All agents use Claude Code CLI (reuses dx skills directly in pipelines).
+> Sets up eleven autonomous agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) running as ADO pipelines triggered by AWS Lambda webhooks. All agents use Claude Code CLI (reuses dx skills directly in pipelines).
 >
 > **Cross-repo delegation:** Code-writing pipelines (BugFix, DevAgent, DoD-Fix) detect when a work item targets another repo and automatically queue the equivalent pipeline there via `delegate.json` + ADO REST API. See `docs/architecture/automation-design.md`.
 >
