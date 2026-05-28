@@ -42,7 +42,8 @@ verified: {VERIFIED}
 
 ## Revert (authoring only)
 ```bash
-node .ai/lib/aem-revert.js {SPEC_DIR}/authoring-diff.json
+# Requires AEM_QA_URL, AEM_QA_USER, AEM_QA_PASSWORD env vars.
+bash {PLUGIN_ROOT}/skills/dx-simple/scripts/rollback-authoring.sh {SPEC_DIR}/authoring-diff.json
 ```
 
 ## Manual Steps

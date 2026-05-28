@@ -18,8 +18,11 @@ CMD=$(echo "$INPUT" | jq -r '.input.command // ""' 2>/dev/null || echo "")
 # Only restrict in pipeline mode
 [[ "${DX_PIPELINE_MODE:-}" != "true" ]] && exit 0
 
-# Look for the dangerous patterns
-if echo "$CMD" | grep -qE 'mvn[^|;&]*(-PautoInstallPackage|autoInstallPackage|clean install([^a-zA-Z]|$))' ; then
+# Look for the dangerous (deploy-to-AEM) patterns only.
+# Allows `mvn clean install -DskipTests`, `mvn clean install -pl core -am`,
+# and other compile-only / install-to-local-repo invocations that don't push
+# a package to a running AEM instance.
+if echo "$CMD" | grep -qE 'mvn[^|;&]*(-PautoInstallPackage|autoInstallPackage|sling:install|content-package:install)' ; then
   echo "BLOCKED: dx-simple does not allow mvn deploy in pipeline mode." >&2
   echo "Detected: $CMD" >&2
   echo "Use build.compile or build.compile-fast (e.g., 'mvn compile -pl ui.frontend,core -am')." >&2

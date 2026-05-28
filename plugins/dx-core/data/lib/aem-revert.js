@@ -39,10 +39,19 @@ const auth = Buffer.from(`${AEM_QA_USER}:${AEM_QA_PASSWORD}`).toString('base64')
 let failures = 0;
 
 async function revertOne(w) {
+  // Defense-in-depth: jcr-path must be an absolute JCR path, not a URL or
+  // host-redirect. Rejects "https://...", "//host/...", and bare strings.
+  if (typeof w['jcr-path'] !== 'string' || !w['jcr-path'].startsWith('/') || w['jcr-path'].includes('://')) {
+    console.error(`INVALID jcr-path (must start with "/" and contain no scheme): ${w['jcr-path']}`);
+    return false;
+  }
   const url = `${AEM_QA_URL.replace(/\/$/, '')}${w['jcr-path']}`;
   const body = new URLSearchParams();
-  body.set(w.property, w.before ?? '');
-  if ((w.before ?? '') === '') body.set(`${w.property}@Delete`, 'true');
+  if ((w.before ?? '') === '') {
+    body.set(`${w.property}@Delete`, 'true');
+  } else {
+    body.set(w.property, w.before);
+  }
 
   const res = await fetch(url, {
     method: 'POST',

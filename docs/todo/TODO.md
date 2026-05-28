@@ -159,6 +159,7 @@
 | 129 | Interactive prompts in autonomous pipeline mode | Medium | Open | 2026-05-28 | [todo-automation.md#interactive-prompts-in-autonomous-pipeline-mode](todo-automation.md#interactive-prompts-in-autonomous-pipeline-mode) — `(y/n)` prompts block forever in pipelines; need `DX_PIPELINE_MODE` auto-default branches |
 | 130 | MCP health check missing before agent run | Low | Open | 2026-05-28 | [todo-automation.md#mcp-health-check-before-agent-run](todo-automation.md#mcp-health-check-before-agent-run) — silent MCP startup failures burn turns; add deterministic pre-agent probe |
 | 131 | Verify QA AEM reachability from ADO-hosted agents | Medium | Open | 2026-05-28 | [todo-automation.md#qa-aem-network-reachability](todo-automation.md#qa-aem-network-reachability) — Microsoft-hosted agents may not reach private QA AEM; document options + add reachability check |
+| 132 | Pipelines clone `--branch main`, no release pinning | Medium | Open | 2026-05-28 | [todo-automation.md#pipelines-clone-branch-main-no-release-pinning](todo-automation.md#pipelines-clone-branch-main-no-release-pinning) — all 11 cli/*.yml clone `--branch main`; any push to main affects every consumer's running agents. Pin to release tag or document rollback. Surfaced by PR #147 review |
 
 **Counts:** 131 total — 18 done, 95 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test, 1 mitigated
 

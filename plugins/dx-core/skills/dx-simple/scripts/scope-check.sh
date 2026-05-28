@@ -28,8 +28,16 @@ if command -v jq >/dev/null 2>&1; then
   # object is treated as "no items" rather than a jq null-iteration error.
   FILES=$(jq '(.code // []) | length' "$PLAN")
   JCR_WRITES=$(jq '(.authoring // []) | length' "$PLAN")
-  # Sum estimated lines per code item (rough: 1 line per replacement)
-  LINES=$(jq '[(.code // [])[] | if ((.["match-context"] // "") | length) > 0 then 1 else 0 end] | add // 0' "$PLAN")
+  # Sum predicted lines per code item: split `replacement` on "\n" and count
+  # the resulting segments. Items with empty replacement but a `match-context`
+  # still count as 1 (a single-line deletion). Items with neither count as 0.
+  LINES=$(jq '[(.code // [])[] |
+    if ((.replacement // "") | length) > 0 then
+      (.replacement | split("\n") | length)
+    elif ((.["match-context"] // "") | length) > 0 then 1
+    else 0
+    end
+  ] | add // 0' "$PLAN")
 else
   FILES=$(grep -c '"file":' "$PLAN" || true)
   JCR_WRITES=$(grep -c '"property":' "$PLAN" || true)

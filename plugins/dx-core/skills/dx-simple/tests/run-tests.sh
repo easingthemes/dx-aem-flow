@@ -267,6 +267,68 @@ run "hook: allows mvn compile in pipeline mode" \
 run "hook: allows autoInstallPackage when not in pipeline mode" \
   bash -c "echo '{\"input\":{\"command\":\"mvn clean install -PautoInstallPackage\"}}' | $HOOK"
 
+# Regression for PR #147 review (medium): `mvn clean install -DskipTests`
+# must NOT be blocked — it builds locally without deploying to AEM.
+run "hook: allows 'mvn clean install -DskipTests' in pipeline mode" \
+  bash -c "echo '{\"input\":{\"command\":\"mvn clean install -DskipTests\"}}' | DX_PIPELINE_MODE=true $HOOK"
+
+run "hook: allows 'mvn clean install -pl core -am' in pipeline mode" \
+  bash -c "echo '{\"input\":{\"command\":\"mvn clean install -pl core -am\"}}' | DX_PIPELINE_MODE=true $HOOK"
+
+expect_exit "hook: blocks sling:install in pipeline mode" 2 \
+  bash -c "echo '{\"input\":{\"command\":\"mvn sling:install -Dsling.url=http://localhost:4502\"}}' | DX_PIPELINE_MODE=true $HOOK"
+
+# ===== scope-check line counter regression (PR #147 medium) =====
+# A 2-file plan with multi-line replacements (15 + 20 = 35 lines) must be
+# counted as 35 lines, not 2. Budget MAX_LINES=50 → still passes.
+python3 -c "
+import json
+data = {
+  'authoring': [],
+  'code': [
+    {'file': 'a.html', 'match-context': 'foo', 'replacement': '\n'.join(['x'] * 15)},
+    {'file': 'b.html', 'match-context': 'bar', 'replacement': '\n'.join(['y'] * 20)}
+  ]
+}
+print(json.dumps(data))
+" > "$TMP/multiline.json"
+run "scope: 2 files × 15+20 lines passes (35 ≤ 50)" \
+  "$SCRIPTS/scope-check.sh" "$TMP/multiline.json"
+run "scope: reports the actual 35 lines, not '2'" \
+  bash -c "$SCRIPTS/scope-check.sh $TMP/multiline.json 2>&1 | grep -q 'lines=35'"
+
+# A 2-file plan with 30 + 30 lines = 60 → must FAIL the 50-line budget
+python3 -c "
+import json
+data = {
+  'authoring': [],
+  'code': [
+    {'file': 'a.html', 'match-context': 'foo', 'replacement': '\n'.join(['x'] * 30)},
+    {'file': 'b.html', 'match-context': 'bar', 'replacement': '\n'.join(['y'] * 30)}
+  ]
+}
+print(json.dumps(data))
+" > "$TMP/over-lines.json"
+expect_exit "scope: 2 files × 30+30 lines exits 4 (60 > 50)" 4 \
+  "$SCRIPTS/scope-check.sh" "$TMP/over-lines.json"
+
+# ===== aem-revert URL safety regression (PR #147 high) =====
+# A diff with a jcr-path containing "://" must be REJECTED (no HTTP attempt).
+# We need fake AEM_QA_* env so the script reaches revertOne(); we expect
+# it to print "INVALID jcr-path" and exit 1 (1+ failures).
+cat > "$TMP/diff-bad-path.json" <<'EOF'
+{
+  "writes": [
+    {"applied": true, "jcr-path": "https://attacker.example.com/foo", "property": "p", "before": "old"}
+  ]
+}
+EOF
+REVERTER="$(cd $SCRIPTS/.. && pwd)/../../data/lib/aem-revert.js"
+expect_exit "aem-revert: rejects jcr-path with scheme (URL injection guard)" 1 \
+  bash -c "AEM_QA_URL=http://localhost:4502 AEM_QA_USER=u AEM_QA_PASSWORD=p node $REVERTER $TMP/diff-bad-path.json"
+run "aem-revert: prints INVALID for url-like jcr-path" \
+  bash -c "AEM_QA_URL=http://localhost:4502 AEM_QA_USER=u AEM_QA_PASSWORD=p node $REVERTER $TMP/diff-bad-path.json 2>&1 | grep -q 'INVALID jcr-path'"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"

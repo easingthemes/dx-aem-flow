@@ -74,3 +74,11 @@
 **Scope:** Infra documentation (`plugins/dx-automation/README.md`); possibly add a `/auto-doctor` check that hits `aem.qa-author-url` from the pipeline VM and reports reachability.
 **Done-when:** README has a "Network requirements" section that explains the three options. `/auto-doctor` (or a new dry-run mode) confirms reachability before /dx-simple is enabled.
 **Approach:** Document. Optionally extend `/auto-doctor` to spawn a one-shot pipeline that curls `$AEM_QA_URL/libs/granite/core/content/login.html` and reports 200.
+
+## Pipelines clone `--branch main`, no release pinning
+
+**Added:** 2026-05-28
+**Problem:** All 11 ADO CLI pipeline YAMLs (`plugins/dx-automation/data/pipelines/cli/ado-cli-*.yml`) clone the dx-aem-flow plugins repo with `git clone --depth 1 --branch main`. Any push to `main` — including routine `chore:` commits or accidental breakage — affects every consumer's running agents the next time a webhook fires. There is no documented rollback procedure when `main` breaks. Surfaced by PR #147 review.
+**Scope:** All 11 pipeline YAMLs in `plugins/dx-automation/data/pipelines/cli/`.
+**Done-when:** `grep -n '\\-\\-branch main' plugins/dx-automation/data/pipelines/cli/*.yml` shows no matches (replaced with a release tag or pinned SHA), OR a section in `plugins/dx-automation/README.md` documents the rollback procedure when `main` breaks.
+**Approach:** Two viable options: (1) Pin to a release tag (`--branch v2.106.7`) — semantic-release already bumps version files on every merge, so the pipeline can read the tag from a pipeline variable updated as part of release cuts. (2) Document a manual rollback (`git revert` on `main`, delete affected pipeline runs). Option 1 is safer but requires release-cut tooling; option 2 is cheaper. Decide at the project level — not changing in PR #147 because all 11 pipelines share this pattern; fixing only `ado-cli-simple.yml` would diverge from the established convention.

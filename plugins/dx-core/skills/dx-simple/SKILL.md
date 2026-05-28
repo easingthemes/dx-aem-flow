@@ -428,7 +428,7 @@ Write the review to `$SPEC_DIR/diff-review.md`.
 
 ### Phase 7: Write report + ADO comment
 
-Render `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/report.md.tmpl` into `$SPEC_DIR/report.md`, substituting all `{PLACEHOLDER}` tokens from `confidence.json`, `work-plan.json`, `authoring-diff.json`.
+Render `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/report.md.tmpl` into `$SPEC_DIR/report.md`, substituting all `{PLACEHOLDER}` tokens from `confidence.json`, `work-plan.json`, `authoring-diff.json`. Also substitute `{PLUGIN_ROOT}` with the literal value of `$CLAUDE_PLUGIN_ROOT` (so the printed revert command is copy-pasteable) and `{SPEC_DIR}` with the absolute spec directory.
 
 Post a truncated version to ADO:
 ```
