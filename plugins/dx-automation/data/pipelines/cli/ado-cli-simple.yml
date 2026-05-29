@@ -3,7 +3,7 @@ pr: none
 
 # Claude Agent SDK pipeline — SimpleAgent via /dx-simple skill.
 # Triggered by Lambda webhook on work item tag KAI-SIMPLE-AUTOMATION.
-# Authoring + code split with 9 confidence gates. 15 min timeout.
+# Authoring + code split with 9 confidence gates. ~45 min step budget.
 
 parameters:
   - name: workItemId
@@ -131,9 +131,12 @@ steps:
       CI: "true"
       CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
       # Coordinator + 3 parallel research subagents + up to 10 JCR writes +
-      # visual verify + diff review + PR creation. 30 was too tight and
-      # left writes stranded when the cap hit mid-Phase-3a.
-      MAX_TURNS: "60"
+      # visual verify + diff review + PR creation. 30 and then 60 were both
+      # too tight — a real run hit the cap mid-Phase-4 (compile), stranding the
+      # edits before the report/ADO comment could be posted. 200 gives headroom
+      # for the full pipeline incl. retries; the wall-clock cap (timeoutInMinutes
+      # below + the wrapper's TIMEOUT_MINUTES) is the real backstop.
+      MAX_TURNS: "200"
       ALLOWED_TOOLS: >-
         Skill,Read,Write,Edit,Glob,Grep,Agent,
         Bash(git *),Bash(mvn *),Bash(npm *),
@@ -151,7 +154,11 @@ steps:
         mcp__ado__wit_add_work_item_comment,
         mcp__ado__wit_get_work_item,
         mcp__ado__repo_create_pull_request
-    timeoutInMinutes: 20
+    # ~11s/turn observed; 200 turns can run ~35-40 min. Give the Azure step
+    # enough wall-clock to actually reach MAX_TURNS rather than being killed at
+    # the step boundary first. The wrapper's own TIMEOUT_MINUTES (default 60)
+    # remains the outer backstop.
+    timeoutInMinutes: 45
 
   - bash: |
       if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then
@@ -160,3 +167,32 @@ steps:
       fi
     displayName: "List spec artifacts (for retention)"
     condition: always()
+
+  # Fallback ADO comment. The /dx-simple skill posts its own comment at Phase 7
+  # (success) and on the ABORT path (gate failure), touching the flag below when
+  # it does. If the agent was killed before it could post (MAX_TURNS, timeout,
+  # ToolSearch-loop, crash) or a pre-flight step failed, the flag is absent and
+  # this step posts a short failure note so the ticket never goes silent.
+  - bash: |
+      set -e
+      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      if [ -f "$FLAG" ]; then
+        echo "Skill already posted an ADO comment — skipping fallback."
+        exit 0
+      fi
+      ORG_URL="$(System.CollectionUri)"
+      PROJECT="$(System.TeamProject)"
+      WID="${{ parameters.workItemId }}"
+      RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
+      TEXT="SimpleAgent did not finish cleanly — it likely hit the turn/time limit or errored before posting its report. No changes were committed or merged. Pipeline run: ${RUN_URL}"
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST \
+        -u ":$ADO_PAT" \
+        -H "Content-Type: application/json" \
+        -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted fallback failure comment to work item ${WID}."
+    displayName: "Post fallback ADO comment (on failure)"
+    condition: failed()
+    env:
+      ADO_PAT: $(ADO_PAT)

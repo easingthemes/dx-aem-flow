@@ -511,9 +511,15 @@ Post a truncated version to ADO:
 mcp__ado__wit_add_work_item_comment with id=<ticket>, comment=<truncated report>
 ```
 
+After the comment posts successfully, record it so the pipeline's fallback step
+does not post a duplicate failure note:
+```bash
+mkdir -p .ai/run-context && touch .ai/run-context/ado-comment-posted.flag
+```
+
 Update final progress row to `done`.
 
-Clean up:
+Clean up (leave `ado-comment-posted.flag` in place — the pipeline inspects it):
 ```bash
 rm -f .ai/run-context/orchestrating.flag
 ```
@@ -551,9 +557,12 @@ When any G1–G9 gate fails:
 
 3. Write a failure report at `$SPEC_DIR/report.md` (using the same template, with `verified: false` and the failing gate's row marked `fail`).
 
-4. Post ADO comment with the failure summary + which gate failed + suggested human action.
+4. Post ADO comment with the failure summary + which gate failed + suggested human action. Then record it so the pipeline fallback does not double-post:
+   ```bash
+   mkdir -p .ai/run-context && touch .ai/run-context/ado-comment-posted.flag
+   ```
 
-5. Clean up orchestrating flag.
+5. Clean up orchestrating flag (leave `ado-comment-posted.flag` for the pipeline).
 
 6. Exit non-zero.
 
