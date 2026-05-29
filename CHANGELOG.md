@@ -1,3 +1,10 @@
+## [2.108.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.108.0...v2.108.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **dx-simple:** relax contract + pipeline fixes (headless Chrome, turn cap, ADO comment) ([#149](https://github.com/easingthemes/dx-aem-flow/issues/149)) ([e180de3](https://github.com/easingthemes/dx-aem-flow/commit/e180de3bb08b53fd2eb96726f57e52525f9b5f2c)), closes [#134-140](https://github.com/easingthemes/dx-aem-flow/issues/134-140) [#81](https://github.com/easingthemes/dx-aem-flow/issues/81) [#134-140](https://github.com/easingthemes/dx-aem-flow/issues/134-140)
+
 # [2.108.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.107.0...v2.108.0) (2026-05-29)
 
 
