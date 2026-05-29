@@ -9,5 +9,6 @@
   "repository": "https://github.com/easingthemes/dx-aem-flow",
   "license": "MIT",
   "logo": "./assets/logo.png",
-  "keywords": ["claude-code", "claude-plugin", "agent-skills", "copilot-cli", "cursor", "codex", "aem", "adobe", "adobe-experience-manager", "component", "dialog", "verification", "qa", "seed-data", "multi-platform", "mcp", "skill-marketplace"]
+  "keywords": ["claude-code", "claude-plugin", "agent-skills", "copilot-cli", "cursor", "codex", "aem", "adobe", "adobe-experience-manager", "component", "dialog", "verification", "qa", "seed-data", "multi-platform", "mcp", "skill-marketplace"],
+  "dependencies": ["dx-core"]
 }
