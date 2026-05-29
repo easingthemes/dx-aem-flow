@@ -112,6 +112,81 @@ steps:
     displayName: "Pre-flight: MCP health check"
 
   - bash: |
+      set -e
+      # Pre-warm the build environment so the agent doesn't burn turns (and the
+      # step timeout) on first-run downloads. Everything installed here lives on
+      # disk and persists into the agent step (same job, same agent). The agent
+      # sources nvm itself per CLAUDE.md (`source ~/.nvm/nvm.sh && nvm use`), so
+      # it doesn't need to be on PATH here.
+      #
+      # Generic by design — adapts to whatever the consumer repo contains:
+      #   - nvm + latest Node (default) + the project's pinned Node if a .nvmrc exists
+      #   - frontend node_modules (npm ci) for the detected FE module
+      #   - Maven local repo (~/.m2) via dependency:go-offline if a root pom exists
+      # Projects with a non-standard layout should tailor the detection below
+      # (the consumer copy in .ai/automation/pipelines/ is the place to do that).
+      export NVM_DIR="$HOME/.nvm"
+      if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        echo "Installing nvm ..."
+        curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+      fi
+      \. "$NVM_DIR/nvm.sh"
+
+      # Latest Node as the default alias (general tooling, claude-code).
+      nvm install node >/dev/null
+      nvm alias default node >/dev/null
+      echo "Latest Node: $(nvm version node) (default)"
+
+      SRC="$(Build.SourcesDirectory)"
+
+      # Detect the frontend module: prefer the AEM archetype's ui.frontend, else
+      # the first package.json (depth<=2) that isn't under node_modules.
+      FE_DIR=""
+      if [ -f "$SRC/ui.frontend/package.json" ]; then
+        FE_DIR="$SRC/ui.frontend"
+      else
+        FE_DIR=$(find "$SRC" -maxdepth 2 -name package.json -not -path '*/node_modules/*' -printf '%h\n' 2>/dev/null | head -1)
+      fi
+
+      if [ -n "$FE_DIR" ]; then
+        echo "Frontend module: $FE_DIR"
+        # Use the module's pinned Node if it declares one.
+        if [ -f "$FE_DIR/.nvmrc" ]; then
+          NVMRC_VERSION="$(tr -d '[:space:]' < "$FE_DIR/.nvmrc")"
+          nvm install "$NVMRC_VERSION" >/dev/null
+          nvm use "$NVMRC_VERSION" >/dev/null
+          echo "Project Node: $(nvm version "$NVMRC_VERSION") (from .nvmrc: $NVMRC_VERSION)"
+        fi
+        if [ -f "$FE_DIR/package-lock.json" ]; then
+          ( cd "$FE_DIR" && npm ci )
+          # node-sass pins to a Node ABI — rebuild it after a Node switch if present.
+          if [ -d "$FE_DIR/node_modules/node-sass" ]; then
+            ( cd "$FE_DIR" && npm rebuild node-sass )
+          fi
+          echo "OK: $FE_DIR/node_modules installed"
+        else
+          echo "No package-lock.json in $FE_DIR — skipping npm ci."
+        fi
+      else
+        echo "No frontend package.json found — skipping Node module pre-warm."
+      fi
+
+      # Pre-warm the Maven local repo so the agent's build is mostly offline.
+      # Non-fatal: go-offline is flaky on some plugin graphs, and the agent can
+      # still resolve any remaining artifacts live at build time.
+      nvm use default >/dev/null
+      if [ -f "$SRC/pom.xml" ]; then
+        if ( cd "$SRC" && mvn -B dependency:go-offline ); then
+          echo "OK: Maven dependencies cached in ~/.m2"
+        else
+          echo "WARN: mvn dependency:go-offline did not finish cleanly — agent resolves the rest at build time."
+        fi
+      else
+        echo "No root pom.xml — skipping Maven pre-warm."
+      fi
+    displayName: "Pre-warm: nvm + Node + node_modules + Maven deps"
+
+  - bash: |
       PROMPT="/dx-simple ${{ parameters.workItemId }}"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze only, do not write or commit)"
