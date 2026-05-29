@@ -1,3 +1,10 @@
+# [2.109.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.108.1...v2.109.0) (2026-05-29)
+
+
+### Features
+
+* **dx-automation:** generalized build pre-warm in ado-cli-simple pipeline ([#150](https://github.com/easingthemes/dx-aem-flow/issues/150)) ([c3b2d71](https://github.com/easingthemes/dx-aem-flow/commit/c3b2d71a4f06e6bd807f7b8cf37fec76a93a7dc4))
+
 ## [2.108.1](https://github.com/easingthemes/dx-aem-flow/compare/v2.108.0...v2.108.1) (2026-05-29)
 
 
