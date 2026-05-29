@@ -8,7 +8,12 @@
     "chrome-devtools-mcp": {
       "type": "stdio",
       "command": "npx",
-      "args": ["chrome-devtools-mcp@latest"]
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--headless",
+        "--isolated",
+        "--viewport=1440x900"
+      ]
     }
   }
 }
