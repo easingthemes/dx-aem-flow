@@ -1,6 +1,6 @@
 ---
 name: dx-simple
-description: Apply a small AEM change (a11y label, color, spacing, copy, css-class, icon) by splitting work into authoring (JCR writes) and code (file edits → PR) paths. Use after the ADO story contains a structured ```simple``` block. Trigger on "simple change", "small tweak", "apply tweak".
+description: Apply a small AEM change (a11y label, color, spacing, copy, css-class, icon, focus trap, or other small behavior tweak) by splitting work into authoring (JCR writes) and code (file edits → PR) paths. Reads the ADO story directly — a structured ```simple``` block is recommended but optional. Trigger on "simple change", "small tweak", "apply tweak".
 argument-hint: "<ADO Work Item ID or full URL>"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 model: sonnet
@@ -79,14 +79,13 @@ touch .ai/run-context/orchestrating.flag
 | `simple-progress.md` | initialized in pre-flight; updated per phase | Phase status table |
 | `report.md` | Phase 7 (rendered from template) | Final human-readable report |
 
-## Confidence model (gates G1–G9)
+## Confidence model (gates G1, G3–G9)
 
-This skill enforces 9 confidence gates. **Any gate failure → rollback authoring (if applied) + ADO comment + exit non-zero.** Track scores in `$SPEC_DIR/confidence.json`; the final report quotes them.
+This skill enforces 8 confidence gates. **Any gate failure → rollback authoring (if applied) + ADO comment + verdict: fail (pipeline exits non-zero).** Track scores in `$SPEC_DIR/confidence.json`; the final report quotes them.
 
 | Gate | Phase | Threshold |
 |---|---|---|
 | G1 Locator match | 1 | exactly 1 DOM match for component-locator |
-| G2 Allowlist | 1 | resource-type in `.ai/config.yaml > dx-simple.allowed-resource-types` |
 | G3 Classification | 2 | high or medium |
 | G4 Per-file edit confidence | 3b | ≥ 0.85 |
 | G5 Visual non-target identical | 5 | ≥ 99% |
@@ -95,14 +94,17 @@ This skill enforces 9 confidence gates. **Any gate failure → rollback authorin
 | G8 Cost | global | ≤ $2 (configurable) |
 | G9 Time | global | ≤ 12 min |
 
+> **Note:** G2 (resource-type allowlist) was removed — the skill now runs on
+> any component. The G* numbering is preserved for backwards compatibility
+> with existing reports.
+
 ## Flow
 
 ```dot
 digraph dx_simple {
     "Preflight + spec dir" [shape=box];
-    "Phase 1: Fetch + parse simple block" [shape=box];
+    "Phase 1: Fetch + extract change details" [shape=box];
     "G1: locator match exactly 1?" [shape=diamond];
-    "G2: resource-type allowlisted?" [shape=diamond];
     "Phase 2: Classify (parallel subagents)" [shape=box];
     "G3: classification high or medium?" [shape=diamond];
     "Phase 3a: Apply authoring writes" [shape=box];
@@ -121,16 +123,16 @@ digraph dx_simple {
     "Phase 7: Write report + ADO comment" [shape=doublecircle];
     "ABORT: Rollback + comment + exit" [shape=doublecircle];
 
-    "Preflight + spec dir" -> "Phase 1: Fetch + parse simple block";
-    "Phase 1: Fetch + parse simple block" -> "G1: locator match exactly 1?";
+    "Preflight + spec dir" -> "Phase 1: Fetch + extract change details";
+    "Phase 1: Fetch + extract change details" -> "G1: locator match exactly 1?";
     "G1: locator match exactly 1?" -> "ABORT: Rollback + comment + exit" [label="no"];
-    "G1: locator match exactly 1?" -> "G2: resource-type allowlisted?" [label="yes"];
-    "G2: resource-type allowlisted?" -> "ABORT: Rollback + comment + exit" [label="no"];
-    "G2: resource-type allowlisted?" -> "Phase 2: Classify (parallel subagents)" [label="yes"];
+    "G1: locator match exactly 1?" -> "Phase 2: Classify (parallel subagents)" [label="yes"];
     "Phase 2: Classify (parallel subagents)" -> "G3: classification high or medium?";
-    "G3: classification high or medium?" -> "Phase 3a: Apply authoring writes" [label="high or medium → authoring"];
-    "G3: classification high or medium?" -> "Phase 3b: Apply code edits" [label="low → code fallback"];
-    "Phase 3a: Apply authoring writes" -> "Phase 5: Visual verify";
+    "G3: classification high or medium?" -> "ABORT: Rollback + comment + exit" [label="no — abort"];
+    "G3: classification high or medium?" -> "Phase 3a: Apply authoring writes" [label="yes — if authoring items"];
+    "G3: classification high or medium?" -> "Phase 3b: Apply code edits" [label="yes — if code items"];
+    "Phase 3a: Apply authoring writes" -> "Phase 5: Visual verify" [label="if no code items"];
+    "Phase 3a: Apply authoring writes" -> "G4: per-file edit confidence ≥85%?" [label="if code items also queued"];
     "Phase 3b: Apply code edits" -> "G4: per-file edit confidence ≥85%?";
     "G4: per-file edit confidence ≥85%?" -> "ABORT: Rollback + comment + exit" [label="no"];
     "G4: per-file edit confidence ≥85%?" -> "Scope-check ok?" [label="yes"];
@@ -154,7 +156,7 @@ digraph dx_simple {
 
 ## Node Details
 
-### Phase 1: Fetch + parse simple block
+### Phase 1: Fetch + extract change details
 
 1. Fetch the work item:
    ```
@@ -162,16 +164,46 @@ digraph dx_simple {
    ```
    Write the description + comments to `$SPEC_DIR/raw-story.md` with provenance frontmatter.
 
-2. Parse the `simple` block:
+2. Parse the `simple` block (recommended but not required):
    ```bash
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/parse-simple-block.sh \
         "$SPEC_DIR/raw-story.md" "$SPEC_DIR/simple-block.yaml"
    ```
-   - Exit 2 (missing) → post the template at `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/simple-block.md.tmpl` as an ADO comment. STOP.
-   - Exit 3 (malformed) → post the specific error from stderr as an ADO comment. STOP.
+   - Exit 0 (parsed) → continue to step 2a (fill in inferred fields if any are missing).
+   - Exit 2 (no block) → fall through to step 2b (LLM extraction from story prose).
+   - Exit 3 (malformed: missing `page-url`, duplicate field, or unclosed fence) → post the specific error from stderr as an ADO comment. STOP.
+
+2a. **Fill in missing fields** (block was present but partial):
+    Read `simple-block.yaml`. For each missing optional field, infer it
+    from the surrounding story text and overwrite `simple-block.yaml`:
+    - `component-locator` missing → infer from the story's element references.
+      Examples: "Language Selector button" → `dialog-title="Language Selector"`;
+      "Get started heading" → `heading-text="Get started"`. If the story
+      gives a JCR path, use `jcr-path=...`.
+    - `change-value` missing → use the story's natural-language description
+      of the change in plain English (this is the input the model uses to
+      decide whether the change is content, code, or both).
+    The classifier (Phase 2) uses these as hints; nothing here gates execution.
+
+2b. **LLM extraction** (no block found): read `raw-story.md` and extract
+    the same fields directly from the story description, acceptance
+    criteria, and comments:
+    - `page-url` (REQUIRED): find the QA author URL in the story. If
+      multiple, prefer the one nearest the change description; if still
+      ambiguous, post the template at
+      `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/simple-block.md.tmpl`
+      as an ADO comment and STOP.
+    - `component-locator`: derive from the story's element references
+      (visible text, dialog title, JCR path).
+    - `change-value`: take the most specific change description in the story.
+      Keep it as natural language — the model decides downstream whether each
+      part is a content edit or a code edit.
+    Write the inferred values to `$SPEC_DIR/simple-block.yaml` with a
+    `# inferred: true` comment at the top so downstream phases can flag
+    lower confidence in the report.
 
 3. Semantic validation (Safeguard #1):
-   - Read `simple-block.yaml`; extract `page-url`, `component-locator`, `change-type`, `change-value`.
+   - Read `simple-block.yaml`; extract `page-url`, `component-locator`, `change-value`.
    - Navigate Chrome to `page-url`:
      ```
      mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page with url=<page-url>
@@ -181,9 +213,10 @@ digraph dx_simple {
      mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot
      ```
    - Match the locator. The locator is one of:
-     - `heading-text="..."` → look for element with that exact visible text in headings
+     - `heading-text="..."` / `button-text="..."` / `link-text="..."` → look for elements with that exact visible text
      - `jcr-path=...` → use AEM MCP `getNodeContent` to confirm node exists; locator match count = 1 if node exists, 0 if not
      - `dialog-title="..."` → ambiguous on its own; require AEM MCP `scanPageComponents` to resolve to a unique component instance
+     - free-form description (from LLM extraction) → use the Chrome snapshot + scanPageComponents to find the single best match; if more than one element matches, ABORT G1 with the ambiguous-locator message
 
 4. **Take BEFORE screenshot** (Safeguard #6): capture and save as `$SPEC_DIR/before.png`:
    ```
@@ -192,18 +225,14 @@ digraph dx_simple {
    Also record the locator's bounding box (from snapshot) to `$SPEC_DIR/locator-bbox.json` for the visual-diff step.
 
 5. **G1 — Locator match (HARD GATE):**
-   - If 0 matches: post ADO comment "Component not found on page. Verified by: <snapshot-id>. Check page-url + component-locator." Exit non-zero. NO file reads beyond this point.
-   - If >1 matches: post "Ambiguous locator: <N> matches. Specify jcr-path=... instead." Exit non-zero.
+   - If 0 matches: post ADO comment "Component not found on page. Verified by: <snapshot-id>. Check page-url + the element you wanted to change." Exit non-zero. NO file reads beyond this point.
+   - If >1 matches: post "Ambiguous locator: <N> matches. Add a `jcr-path=...` to the `simple` block, or describe the element more specifically." Exit non-zero.
    - If exactly 1: continue. Record `G1 = 1 match` in `confidence.json`.
 
-6. **G2 — Resource type allowlist:**
-   Read `.ai/config.yaml > dx-simple.allowed-resource-types`. If `*`, allow any. Otherwise check the resolved component's `sling:resourceType` is in the list.
-   - Not in list → post ADO comment "Resource type `<type>` not allowlisted for /dx-simple. Add to .ai/config.yaml > dx-simple.allowed-resource-types." Exit non-zero.
-
-7. Update progress:
+6. Update progress:
    ```bash
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
-        "$SPEC_DIR" "Phase 1: DoR" "done" "G1+G2 passed"
+        "$SPEC_DIR" "Phase 1: Extract + locate" "done" "G1 passed"
    ```
 
 ### Phase 2: Classify (parallel subagents)
@@ -232,7 +261,7 @@ Dispatch THREE subagents in a single message (parallel):
    Agent(subagent_type: aem-file-resolver, prompt: "Resolve source files for resource type <resource-type>. Return JSON: {\"files\": [{\"path\": \"...\"}, ...]}.")
    ```
 
-Synthesize the three returns into `$SPEC_DIR/dialog-map.json` and `$SPEC_DIR/file-list.json`. Then run the deterministic classifier:
+Synthesize the three returns into `$SPEC_DIR/dialog-map.json` and `$SPEC_DIR/file-list.json`. Then build a **baseline** work-plan with the deterministic heuristic:
 
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/classify-work.sh \
@@ -242,22 +271,46 @@ bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/classify-work.sh \
      "$SPEC_DIR/work-plan.json"
 ```
 
-Read `work-plan.json` and extract `confidence.G3-classification`.
+`classify-work.sh` only suggests obvious matches based on keywords in
+`change-value` against dialog field names. **You — the orchestrator — are
+responsible for the final classification.** Read `work-plan.json`, read
+`change-value` and `raw-story.md`, and decide what to do:
 
-**G3 — Classification:**
-- `high` (1 unambiguous match) → take authoring path
-- `medium` (>1 candidate, picked best by name heuristic) → take authoring path, log alternatives in report Notes
-- `low` (no dialog field match) → fall back to code-path. If code-path also can't identify the file with high confidence (Phase 3b), exit.
+- The change is a content edit that matches a dialog field → keep / add
+  an item in `.authoring[]`.
+- The change involves hardcoded strings, JS behavior (focus traps,
+  keyboard handlers, click handlers), HTL templates, or CSS classes →
+  keep / add items in `.code[]`.
+- The change requires **both** (e.g. "rename the heading **and** trap
+  focus in the modal") → populate **both** arrays. Phase 3a and Phase 3b
+  will both run.
+- The locator pointed at a component whose dialog has no matching field,
+  but the change-value clearly describes a content change → that string
+  is hardcoded; route to `.code[]` and let the file-resolver candidates
+  in there carry it.
+
+If the deterministic baseline missed items, append them to `work-plan.json`
+via `Write`. If the baseline included items the model rejects on inspection,
+remove them. Once `work-plan.json` reflects the model's final plan, set
+`confidence."G3-classification"` to one of:
+
+- `high` — at least one path (authoring or code) has an unambiguous target
+- `medium` — at least one path has a target, but with ambiguity worth noting
+  in the report
+- `low` — neither path has a workable target → abort with G3 fail
 
 Update progress:
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
-     "$SPEC_DIR" "Phase 2: Classify" "done" "G3=<level>"
+     "$SPEC_DIR" "Phase 2: Classify" "done" "G3=<level>, authoring=<n>, code=<n>"
 ```
 
 ### Phase 3a: Apply authoring writes
 
-**Only if work-plan.json has authoring items.**
+**Runs whenever `work-plan.authoring[]` is non-empty.** If `work-plan.code[]`
+is also non-empty, Phase 3b runs immediately after Phase 3a (sequential, not
+parallel — Phase 3a must record the JCR before-state in main context for
+rollback before Phase 3b touches anything).
 
 For each item in `work-plan.authoring[]`:
 
@@ -292,9 +345,13 @@ Update progress.
 
 ### Phase 3b: Apply code edits
 
-**Only if work-plan.json has code items (G3 was low OR change-type is css-class).**
+**Runs whenever `work-plan.code[]` is non-empty** — independently of whether
+Phase 3a ran. The code path now covers any change that touches source
+files: hardcoded strings, HTL templates, CSS classes, focus traps and
+other JS behavior, click/keyboard handlers, etc. The model chose this
+path in Phase 2 based on the change-value text and dialog map.
 
-`classify-work.sh` populates `.code[]` with placeholder items (confidence=0, empty contexts). The agent MUST fill them in and rewrite `work-plan.json` to disk BEFORE the G4 gate runs.
+`classify-work.sh` populates `.code[]` with placeholder items (confidence=0, empty contexts) for each candidate file. The agent MUST fill them in (or remove them) and rewrite `work-plan.json` to disk BEFORE the G4 gate runs. For changes that add new code (focus traps, new event listeners) rather than replace an existing line, set `match-context` to the anchor line you're inserting **after**, and `replacement` to the anchor line followed by the new code.
 
 For each item in `work-plan.code[]`:
 
@@ -376,7 +433,7 @@ The classifier produces EITHER authoring OR code items, never both — `classify
   - To request visual verify for a code-path run anyway, add `force-visual-verify: true` to the simple block. The pipeline will navigate and screenshot, but G5/G6 are downgraded to WARN (recorded in report.md, do not abort). Useful only when an external job pre-deploys the branch to QA before SimpleAgent runs.
   - Local dev (non-pipeline) is free to run visual verify when the developer has deployed locally — the same `force-visual-verify: true` flag opts in.
 
-**When skipped:** code-only non-visual change-type (aria-label, copy in HTL) — recorded as "verify-deferred-to-qa" in the report.
+**When skipped:** code-only non-visual changes (aria-label edits, copy in HTL, etc.) — recorded as "verify-deferred-to-qa" in the report.
 
 If running:
 
@@ -411,7 +468,7 @@ Either gate fail:
 If Phase 3b ran (code edits applied), invoke `dx-pr-reviewer` for a single-pass review on the working tree:
 
 ```
-Agent(subagent_type: dx-pr-reviewer, prompt: "Review the staged diff (git diff HEAD) for the following changes. Context: this is a small ≤50-line tweak via /dx-simple targeting <change-type> on component <resource-type>. Focus on:
+Agent(subagent_type: dx-pr-reviewer, prompt: "Review the staged diff (git diff HEAD) for the following changes. Context: this is a small ≤50-line tweak via /dx-simple on component <resource-type> — change described as <change-value>. Focus on:
 - Does the change actually accomplish what the requirement says?
 - Any obvious bug (wrong variable, missing semicolon, off-by-one)?
 - Any accessibility regression (e.g., removing existing aria text)?
@@ -510,9 +567,7 @@ When any G1–G9 gate fails:
 
 - **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA author?), `component-locator` (matches visible element?), QA content sync (component exists on QA?).
 
-- **"Ambiguous locator"** — Multiple DOM matches. Use `jcr-path=...` form for unambiguous targeting.
-
-- **"Resource type not allowlisted"** — Component isn't in `.ai/config.yaml > dx-simple.allowed-resource-types`. Add it (intentional opt-in).
+- **"Ambiguous locator"** — Multiple DOM matches. Use `jcr-path=...` form for unambiguous targeting, or describe the element more specifically (e.g. add the surrounding section name).
 
 - **"Edit confidence too low (G4)"** — Agent couldn't identify which file/line to edit unambiguously. Either the source isn't deterministic from the locator, or the change is too ambiguous for /dx-simple. Re-tag as `KAI-DEV-AUTOMATION` to use full DevAgent.
 
