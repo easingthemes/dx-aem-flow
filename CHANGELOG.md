@@ -1,3 +1,10 @@
+# [2.108.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.107.0...v2.108.0) (2026-05-29)
+
+
+### Features
+
+* **dx-simple:** relax contract — page-url only required, model decides path ([#148](https://github.com/easingthemes/dx-aem-flow/issues/148)) ([624c807](https://github.com/easingthemes/dx-aem-flow/commit/624c80770a36062626509d44935e01d936b3278d))
+
 # [2.107.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.106.7...v2.107.0) (2026-05-28)
 
 
