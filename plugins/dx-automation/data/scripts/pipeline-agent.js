@@ -201,6 +201,26 @@ let lastLogTime = Date.now();
 // Set of tool_use IDs we've already logged via stream_event (to avoid double-logging)
 const streamedToolIds = new Set();
 
+// Track final-text verdict so the pipeline can fail when the agent's Return
+// block says fail/warn. The skill's contract emits:
+//   verdict: pass | warn | fail
+// in its closing message. We tail the last assistant text chunks and match
+// the first such line.
+let lastAssistantText = "";
+function captureAssistantText(text) {
+  if (!text) return;
+  lastAssistantText += text;
+  // Keep the buffer bounded — the verdict is always near the end.
+  if (lastAssistantText.length > 16000) {
+    lastAssistantText = lastAssistantText.slice(-16000);
+  }
+}
+function detectVerdict() {
+  if (!lastAssistantText) return null;
+  const match = lastAssistantText.match(/^\s*verdict:\s*(pass|warn|fail)\b/im);
+  return match ? match[1].toLowerCase() : null;
+}
+
 // ToolSearch loop detection — catch agents stuck searching for unavailable tools
 let consecutiveToolSearches = 0;
 const MAX_CONSECUTIVE_TOOL_SEARCHES = 6;
@@ -326,6 +346,9 @@ if (process.env.CLAUDE_MODEL) {
             // Flush any pending tool before text
             flushTool();
             log.write(prefix() + delta.text);
+            // Capture top-level assistant text (not subagent text) so we can
+            // detect the final `verdict: ...` line emitted by the skill.
+            if (!isSubagent) captureAssistantText(delta.text);
           } else if (delta && delta.type === "input_json_delta") {
             currentToolInput += delta.partial_json || "";
           }
@@ -359,10 +382,15 @@ if (process.env.CLAUDE_MODEL) {
               const inp = formatToolInput(block.name, block.input);
               log.write(inp ? `${prefix()}-> ${block.name}: ${inp}\n` : `${prefix()}-> ${block.name}\n`);
             }
-          } else if (block.type === "text" && !streamedToolIds.size && message.parent_tool_use_id) {
-            // Subagent text that wasn't streamed — show it
+          } else if (block.type === "text") {
             const text = block.text || "";
-            if (text.trim()) log.write(prefix() + text + "\n");
+            if (!streamedToolIds.size && message.parent_tool_use_id && text.trim()) {
+              // Subagent text that wasn't streamed — show it
+              log.write(prefix() + text + "\n");
+            }
+            // Always capture top-level assistant text for verdict detection
+            // (in case includePartialMessages is off and we never saw deltas).
+            if (!message.parent_tool_use_id) captureAssistantText(text);
           }
         }
 
@@ -409,6 +437,19 @@ if (process.env.CLAUDE_MODEL) {
 
         if (message.subtype !== "success") {
           process.exit(1);
+        }
+
+        // Verdict-based exit: skills that declare a Return contract (e.g.
+        // /dx-simple) emit `verdict: pass|warn|fail` in their final message.
+        // Pipelines must fail when the agent reports a failed verdict, even
+        // if the SDK itself terminated cleanly. `warn` exits 0 with a notice.
+        const verdict = detectVerdict();
+        if (verdict === "fail") {
+          log.write(`\n!! verdict: fail — exiting non-zero so the pipeline reflects the agent outcome.\n`);
+          process.exit(1);
+        }
+        if (verdict === "warn") {
+          log.write(`\n!! verdict: warn — pipeline succeeds, review the agent report.\n`);
         }
 
       } else if (type === "rate_limit_event") {

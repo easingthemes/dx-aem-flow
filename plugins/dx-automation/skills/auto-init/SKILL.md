@@ -179,28 +179,24 @@ Document in the generated `infra.json`:
 {
   "simpleAgent": {
     "qaAemUrl": "<from prompt>",
-    "pipelineVariables": ["AEM_QA_URL", "AEM_QA_USER", "AEM_QA_PASSWORD"],
-    "allowlistConfigPath": ".ai/config.yaml#dx-simple.allowed-resource-types"
+    "pipelineVariables": ["AEM_QA_URL", "AEM_QA_USER", "AEM_QA_PASSWORD"]
   }
 }
 ```
 
-### After /auto-init completes — add dx-simple block to .ai/config.yaml
+### Optional — tune `/dx-simple` in `.ai/config.yaml`
 
-If the user opted into SimpleAgent, instruct them to add this block to `.ai/config.yaml`:
+`/dx-simple` runs out of the box on any component once SimpleAgent is enabled.
+For faster compile cycles or a custom cost ceiling, add an optional block to
+`.ai/config.yaml`:
 
 ```yaml
 dx-simple:
-  allowed-resource-types:
-    # Add resource types here that are eligible for auto-tweaks.
-    # Use "*" to allow any (NOT recommended for production).
-    # - mysite/components/hero
-    # - mysite/components/cta
   cost-ceiling-usd: 2.0
   build-compile-fast: "mvn compile -pl ui.frontend,core -am"
 ```
 
-Until at least one resource type is allowlisted, `/dx-simple` will reject all runs.
+Both keys are optional — defaults are applied when the block is absent.
 
 ## Phase 2: Scaffold
 
