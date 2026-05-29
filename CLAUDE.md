@@ -102,12 +102,12 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 
 | Tier | Effort | Use | Agents / Skills |
 |------|--------|-----|-----------------|
-| Opus 4.7 | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging (Claude Code v2.1.111+) | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
-| Opus | `high` | Deep reasoning (code review, planning, verification) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
+| Opus 4.8 | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the new `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
+| Opus 4.8 | `high` | Deep reasoning (code review, planning, verification). **`high` is the default effort for Opus 4.8** (Claude Code v2.1.154+) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
 | Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
 | Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
-**Tier escalation:** Default to `high` for Opus skills. Use `xhigh` only when a step has demonstrably failed at `high` effort or when reviewing >5 files of changes. The xhigh tier costs more and runs slower — it's not a free upgrade.
+**Tier escalation:** As of Claude Code v2.1.154 Opus 4.8 is the default model and runs at `high` effort by default — so every `model: opus` skill/agent already gets deep reasoning without setting `effort`. Use `xhigh` only as a deliberate step **above** that baseline: when a step has demonstrably failed at `high`, or when reviewing >5 files of changes. `xhigh` costs more and runs slower — it's not a free upgrade. The **lean system prompt is also default** as of v2.1.154 (all models except Haiku/Sonnet/Opus ≤4.7), so skills need less hand-holding prose — see the concise-body audit ([TODO #113](docs/todo/todo-skill-conventions.md)).
 
 ### MCP Servers
 
