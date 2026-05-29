@@ -3,12 +3,20 @@
 # simple-block.yaml. Exits non-zero with a printable error if the block is
 # missing or malformed.
 #
+# Required field: page-url only.
+# Optional fields: component-locator, change-value, brand, activate.
+# Anything else is preserved verbatim — the skill's LLM phases use these
+# as hints. The kind of change (authoring vs code, what field to edit, etc.)
+# is inferred entirely from the natural-language change-value + story prose
+# by classify-work.sh and the Phase 2 subagents.
+#
 # Usage: parse-simple-block.sh <raw-story.md> <output-yaml-path>
 # Exit codes:
 #   0  — block parsed successfully
-#   2  — block missing (file not found or no fenced block)
-#   3  — block malformed (missing required field, bad enum, duplicate
-#         field, or unterminated fence)
+#   2  — block missing (file not found or no fenced block) — skill falls
+#         back to LLM extraction from the story prose
+#   3  — block malformed (missing page-url, duplicate field, or
+#         unterminated fence)
 #
 # Comment handling: only WHOLE-LINE comments are stripped (lines whose
 # first non-whitespace character is `#`). Inline `#` characters inside
@@ -69,32 +77,23 @@ CLEAN=$(echo "$BLOCK" \
   | sed -E 's/[[:space:]]+$//' \
   | sed -E '/^[[:space:]]*$/d')
 
-# Required fields
-for FIELD in page-url component-locator change-type change-value; do
-  if ! echo "$CLEAN" | grep -qE "^${FIELD}:"; then
-    echo "ERROR: required field '${FIELD}' missing from simple block" >&2
-    exit 3
-  fi
-done
+# Only page-url is strictly required — everything else can be inferred from
+# story prose by the LLM phases (component-locator from a Chrome snapshot of
+# the page, the kind of change from the change-value text, etc.).
+if ! echo "$CLEAN" | grep -qE '^page-url:'; then
+  echo "ERROR: required field 'page-url' missing from simple block" >&2
+  exit 3
+fi
 
-# Duplicate-field check: every required field must appear exactly once.
-for FIELD in page-url component-locator change-type change-value; do
+# Duplicate-field check: every known field must appear at most once.
+# Legacy `change-type` is silently tolerated (it's ignored downstream).
+for FIELD in page-url component-locator change-value brand activate change-type; do
   COUNT=$(echo "$CLEAN" | grep -cE "^${FIELD}:" || true)
   if [[ "$COUNT" -gt 1 ]]; then
     echo "ERROR: duplicate field '${FIELD}' in simple block" >&2
     exit 3
   fi
 done
-
-# Validate change-type enum (trailing whitespace already stripped above).
-CHANGE_TYPE=$(echo "$CLEAN" | grep -E '^change-type:' | head -1 | sed -E 's/^change-type:[[:space:]]*//')
-case "$CHANGE_TYPE" in
-  aria-label|color-token|spacing|copy|css-class|icon) ;;
-  *)
-    echo "ERROR: change-type '${CHANGE_TYPE}' not in allowed enum (aria-label|color-token|spacing|copy|css-class|icon)" >&2
-    exit 3
-    ;;
-esac
 
 # Write YAML output (line-by-line, preserve order)
 echo "$CLEAN" > "$OUT"

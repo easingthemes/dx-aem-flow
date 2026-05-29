@@ -3,11 +3,10 @@
 # Checks:
 #   1. CLAUDE_PLUGIN_ROOT is set and resolves to an existing dir containing
 #      this very script (catches Agent SDK plugin-load misconfig fast).
-#   2. .ai/config.yaml exists and has dx-simple section
-#   3. Required keys present: dx-simple.allowed-resource-types, AND one of
-#      build.compile / build.compile-fast / build.command
+#   2. .ai/config.yaml exists
+#   3. One of build.compile / build.compile-fast / build.command is declared
 #   4. (Pipeline mode) AEM_QA_URL/USER/PASSWORD env vars set
-#   5. .ai/lib/dx-common.sh exists and find-spec-dir works
+#   5. .ai/lib/dx-common.sh exists
 #
 # Does NOT do the live HEAD-test on the page-url — that runs from the skill body
 # via Chrome MCP. This script is the env/config check only.
@@ -41,12 +40,7 @@ fi
 # 2. config.yaml
 [[ -f .ai/config.yaml ]] || ERRORS+=("missing .ai/config.yaml — run /dx-init")
 
-# 3. dx-simple section
-if [[ -f .ai/config.yaml ]] && ! grep -qE '^dx-simple:' .ai/config.yaml; then
-  ERRORS+=("missing dx-simple: block in .ai/config.yaml — see plugins/dx-core/skills/dx-simple/README for schema")
-fi
-
-# 4. Build command available — accept any one of compile, compile-fast, or
+# 3. Build command available — accept any one of compile, compile-fast, or
 # command (legacy: many consumer repos only declare build.command).
 if [[ -f .ai/config.yaml ]]; then
   if ! grep -qE '^\s*(compile(-fast)?|command):' .ai/config.yaml; then

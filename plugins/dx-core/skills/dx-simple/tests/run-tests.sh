@@ -57,24 +57,38 @@ expect_exit "parse: missing block exits 2" 2 \
 expect_exit "parse: missing file exits 2" 2 \
   "$SCRIPTS/parse-simple-block.sh" "/nonexistent/file.md" "$TMP/missing.yaml"
 
-# Build a fixture with no change-value field for the missing-field test.
-cat > "$TMP/raw-no-change-value.md" <<'EOF'
+# page-url is the only strictly required field. Other fields can be inferred
+# from story prose by the LLM phases.
+cat > "$TMP/raw-no-page-url.md" <<'EOF'
 ---
 ticket: 9999996
 ---
 
 ```simple
-page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
 component-locator: heading-text="Get started today"
-change-type: aria-label
+change-value: "anything"
 brand: site
 ```
 EOF
-expect_exit "parse: missing change-value field exits 3" 3 \
-  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-no-change-value.md" "$TMP/no-change-value.yaml"
+expect_exit "parse: missing page-url exits 3" 3 \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-no-page-url.md" "$TMP/no-page-url.yaml"
 
-# Build a fixture with an invalid change-type enum value.
-cat > "$TMP/raw-bad-enum.md" <<'EOF'
+# A block with ONLY page-url should parse cleanly — everything else is optional.
+cat > "$TMP/raw-page-only.md" <<'EOF'
+---
+ticket: 9999997
+---
+
+```simple
+page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
+```
+EOF
+run "parse: only page-url is enough (everything else inferred)" \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-page-only.md" "$TMP/page-only.yaml"
+
+# change-type is no longer a field the parser cares about — legacy stories
+# that still set it must parse cleanly, and the value is ignored downstream.
+cat > "$TMP/raw-legacy-type.md" <<'EOF'
 ---
 ticket: 9999995
 ---
@@ -82,14 +96,13 @@ ticket: 9999995
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
 component-locator: heading-text="Get started today"
-change-type: not-a-real-type
-change-value: "anything"
+change-type: aria-label
+change-value: "trap focus inside modal until Escape"
 brand: site
 EOF
-# Close fence on its own line to avoid heredoc indentation issues.
-echo '```' >> "$TMP/raw-bad-enum.md"
-expect_exit "parse: invalid change-type exits 3" 3 \
-  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-bad-enum.md" "$TMP/bad-enum.yaml"
+echo '```' >> "$TMP/raw-legacy-type.md"
+run "parse: legacy change-type field tolerated and ignored" \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-legacy-type.md" "$TMP/legacy-type.yaml"
 
 # Hex-color fixture: parse must succeed AND output must retain literal `#FF0000`
 # (proves inline `#` inside a quoted value is preserved — C1 fix).
@@ -196,14 +209,12 @@ run "visual-diff: Sub-filtered PNG reports correct px-total" \
   bash -c "$SCRIPTS/visual-diff.sh $FIXTURES/sub-filtered.png $FIXTURES/sub-filtered.png | grep -q '\"px-total\": 64'"
 
 # ===== preflight tests =====
-# Create temp project with minimal config
+# Create temp project with minimal config (a build command is the only
+# required key — the dx-simple block itself is now optional).
 TMPPROJ="$TMP/proj1"
 mkdir -p "$TMPPROJ/.ai/lib"
 touch "$TMPPROJ/.ai/lib/dx-common.sh"
 cat > "$TMPPROJ/.ai/config.yaml" <<EOF
-dx-simple:
-  allowed-resource-types:
-    - mysite/components/hero
 build:
   compile: "mvn compile"
 EOF
@@ -212,17 +223,8 @@ EOF
 # containing dx-simple. tests/ → dx-simple → skills → dx-core (the plugin).
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-run "preflight: valid config passes" \
+run "preflight: minimal config passes (no dx-simple block needed)" \
   bash -c "cd $TMPPROJ && CLAUDE_PLUGIN_ROOT='$PLUGIN_ROOT' $SCRIPTS/preflight.sh"
-
-# Missing dx-simple section
-TMPPROJ2="$TMP/proj2"
-mkdir -p "$TMPPROJ2/.ai/lib"
-touch "$TMPPROJ2/.ai/lib/dx-common.sh"
-echo "build: {compile: mvn compile}" > "$TMPPROJ2/.ai/config.yaml"
-
-expect_exit "preflight: missing dx-simple block exits 6" 6 \
-  bash -c "cd $TMPPROJ2 && CLAUDE_PLUGIN_ROOT='$PLUGIN_ROOT' $SCRIPTS/preflight.sh"
 
 # Pipeline mode without AEM vars
 expect_exit "preflight: pipeline mode without AEM_QA_* exits 7" 7 \
@@ -417,9 +419,6 @@ run "g4: tunable threshold (0.80 min lets 0.84 through)" \
 cat > "$TMP/cfg-cmd-only.yaml" <<'EOF'
 build:
   command: mvn clean install
-dx-simple:
-  allowed-resource-types:
-    - mysite/components/hero
 EOF
 run "preflight: build.command satisfies build-command check" \
   bash -c "grep -qE '^\s*(compile(-fast)?|command):' $TMP/cfg-cmd-only.yaml"
@@ -428,9 +427,6 @@ run "preflight: build.command satisfies build-command check" \
 cat > "$TMP/cfg-neither.yaml" <<'EOF'
 build:
   artifact: target/app.jar
-dx-simple:
-  allowed-resource-types:
-    - mysite/components/hero
 EOF
 expect_exit "preflight: missing all three build keys is detected" 1 \
   bash -c "grep -qE '^\s*(compile(-fast)?|command):' $TMP/cfg-neither.yaml"
