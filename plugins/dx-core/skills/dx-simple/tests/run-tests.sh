@@ -477,6 +477,31 @@ run "repos_table: emits 5 rows" \
 run "repos_table: LegacyBrandX row has brand=brandx" \
   bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && repos_table | grep -q \"\$(printf 'LegacyBrandX\tfrontend\tlegacy\tbrandx')\""
 
+# ===== repo-guard =====
+GUARD="$SCRIPTS/repo-guard.sh"
+mkblock() { printf '%s\n' "$@" > "$TMP/blk.yaml"; }
+
+# Wrong platform -> abort (3)
+mkblock "page-url: http://x" "platform: dxn" "scope: fe"
+expect_exit "guard: wrong platform aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# Wrong brand on a frontend self -> abort (3)  [config-multi self is frontend/legacy/brandx]
+mkblock "page-url: http://x" "platform: legacy" "brand: brandy" "scope: fe"
+expect_exit "guard: wrong brand aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# scope=both in one half -> proceed (0)
+mkblock "page-url: http://x" "platform: legacy" "brand: brandx" "scope: both"
+expect_exit "guard: both proceeds" 0 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# single fullstack repo, no fields -> proceed (0) + AUTHORING_OWNER=true
+mkblock "page-url: http://x"
+run "guard: single fullstack proceeds as owner" \
+  bash -c "$GUARD $TMP/blk.yaml $FIXTURES/config-single-platform.yaml | grep -q 'AUTHORING_OWNER=true'"
+
+# frontend self with be-only scope -> abort (3)
+mkblock "page-url: http://x" "platform: legacy" "scope: be"
+expect_exit "guard: fe repo + be scope aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"

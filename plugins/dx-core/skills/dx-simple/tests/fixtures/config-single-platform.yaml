@@ -1,0 +1,6 @@
+project:
+  name: solo
+  role: fullstack
+  platform: legacy
+aem:
+  author-url: http://localhost:4502
