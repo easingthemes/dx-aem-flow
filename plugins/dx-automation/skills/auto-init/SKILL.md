@@ -164,7 +164,7 @@ Save the profile name in `automationProfile` in infra.json alongside the enabled
 >
 > **Note:** Figma integration in CI/CD pipelines (headless environments without a local Figma app) is not yet supported. See TODO for remote Figma API support.
 
-### SimpleAgent secrets (only required if you intend to enable KAI-SIMPLE-AUTOMATION)
+### SimpleAgent secrets (only required if you intend to enable SimpleAgent / `@kai-simple`)
 
 Prompt the user for:
 
