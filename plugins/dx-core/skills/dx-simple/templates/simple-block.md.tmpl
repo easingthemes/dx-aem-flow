@@ -2,10 +2,14 @@
 
 Add the change request as a small block in the story description. Only the
 **page URL** is required — leave the rest blank and the agent will read the
-story prose to figure them out.
+story prose to figure them out. `platform`/`brand` are only needed in
+multi-platform/multi-brand projects — single-repo projects can omit them.
 
 ```simple
 page-url:   https://qa-author.example.com/editor.html/content/example/en/home.html
+platform:   legacy        # required only if your project spans >1 platform
+brand:      brandx         # required only for split platforms with >1 brand frontend
+scope:      fe             # optional: fe | be | both — which side(s) the change touches
 element:    "Get started today" heading
             # any of: visible text, button label, image alt, dialog title,
             # or paste a JCR path like /content/example/en/home/jcr:content/root/hero
