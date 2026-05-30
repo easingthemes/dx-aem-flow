@@ -20,7 +20,7 @@ The fix: make the **per-ticket git branch the durable state store**, commit to i
 - New template: `plugins/dx-core/skills/dx-simple/templates/resume-state.json.tmpl`.
 - Modified template: `plugins/dx-core/skills/dx-simple/templates/report.md.tmpl` (add a **Recovery** section).
 - Pipeline: `plugins/dx-automation/data/pipelines/cli/ado-cli-simple.yml` — reword the `failed()` fallback comment to mention automatic resume.
-- Docs: `CLAUDE.md` SimpleAgent blurb, `docs/reference/skill-catalog.md`, a website page.
+- Docs: `CLAUDE.md` SimpleAgent blurb, `docs/reference/skill-catalog.md`, a website page. **Plus a consumer prerequisite note:** to use SimpleAgent recovery, `.ai/specs/` must be tracked (remove it from `.gitignore` — it's ignored by default in the `/dx-init` template). Document this wherever SimpleAgent setup is described (website + `auto-init` / `dx-init` notes).
 - **Untouched on purpose:** the Lambda router (`wi-router.mjs`) and `dx-pr-commit`. The `@kai-simple` comment webhook already exists; `ensure-feature-branch.sh` already no-ops on an existing branch.
 
 **Done-when** (verifiable once implemented):
@@ -101,15 +101,13 @@ Initialized as `status: in-progress` in pre-flight; `last-completed-phase` updat
 ### Commit cadence — `save-state.sh`
 
 New `scripts/save-state.sh <spec-dir> <phase>`:
-- Stages **only** the recovery set under the ticket's spec dir (text files: `resume-state.json`, `simple-block.yaml`, `work-plan.json`, `dialog-map.json`, `file-list.json`, `confidence.json`, `simple-progress.md`, `report.md`). **Not** PNGs (large, not needed to resume the decision).
+- Stages (plain `git add`, specific paths — no `git add .`/`-A` per git-rules.md) the recovery set under the ticket's spec dir (text files: `resume-state.json`, `simple-block.yaml`, `work-plan.json`, `dialog-map.json`, `file-list.json`, `confidence.json`, `simple-progress.md`, `report.md`). PNGs are skipped from checkpoints (large, not needed to resume the decision; Phase 6 commits them normally).
 - Commits `chore(dx-simple): checkpoint <phase> [#<id>]`.
 - Pushes `-u origin <branch>` with exponential backoff (2s/4s/8s/16s) per the repo's git-push policy.
 
 Called after Phases 1, 2, 3a/3b, after every gate, and — critically — **before the ABORT `git checkout -- .`** so the report + state survive (today they're wiped).
 
-> **Key constraint — `.ai/specs/` is gitignored.** Both this repo and consumer repos (`/dx-init` template) gitignore `.ai/specs/`. So `save-state.sh` must `git add -f` the recovery files. Two ways to keep them out of the eventual PR diff (decide at implementation; the requester already accepted `chore` commits on the branch):
-> - **(recommended)** force-add the minimal text recovery set in `chore` commits; at Phase 6 the final code commit is the only thing that matters for the PR, and a `git rm --cached -r .ai/specs/<id>-*` step can drop the state from the PR's net diff while leaving it in branch history for resume.
-> - **(alt)** keep recovery state on a dedicated `dx-simple-state/<id>` branch so the PR branch stays pristine — cleaner PRs, more orchestration. Not chosen now (requester is fine with `chore` commits on the work branch).
+> **Assumption — `.ai/specs/` is tracked.** We assume the consumer repo tracks `.ai/specs/` (a plain `git add` works; no `-f`, no `rm --cached`, no state branch needed). The `/dx-init` gitignore template ignores `.ai/specs/` only as an *initial default*; consumers who enable SimpleAgent recovery must remove that line so the per-ticket state can be committed. **This is a documentation note for plugin users, not a code change** — see Scope (docs) below.
 
 ### ABORT path (rewritten)
 
@@ -188,7 +186,7 @@ Phase 0 becomes the entry node with three out-edges (`fresh → Phase 1`, `in-pr
 
 ## Constraints / gotchas
 
-- **`.ai/specs/` is gitignored** → `git add -f` required (see Key constraint above).
+- **`.ai/specs/` must be tracked** in the consumer repo (it's an initial-default gitignore in `/dx-init`; consumers using recovery remove that line). Plain `git add` — no `-f`. Documentation note only.
 - **Slug drift** → resume must key on ticket id, not slug; reuse any existing `*<id>*` branch.
 - **Deterministic re-apply** → `work-plan.json` must carry filled `match-context`/`replacement` so code edits regenerate identically on resume (already true post-Phase-3b; ensure it's committed before any abort that happens after 3b).
 - **comment-cursor idempotency** → a stray webhook (field edit, duplicate delivery) must not reprocess an old answer; compare against the stored cursor.
