@@ -2,8 +2,22 @@ trigger: none
 pr: none
 
 # Claude Agent SDK pipeline — SimpleAgent via /dx-simple skill.
-# Triggered by Lambda webhook on work item tag KAI-SIMPLE-AUTOMATION.
+#
+# Trigger (fully Azure-native — no Lambda): a comment containing the configured
+# token (default @kai-simple; dx-simple.recovery.trigger-token) on the work item
+# fires an ADO Service Hook (event: "work item commented on", filter: comment
+# contains the token) → an Incoming WebHook service connection → the `kai-simple`
+# webhook resource below. The SAME event covers the first run AND every recovery
+# re-trigger; Phase 0 (resume-check.sh) decides fresh-vs-resume. The agent reads
+# the work item id + comment from the webhook payload / work item itself.
+# NOTE: `connection:` must match the Incoming WebHook service connection name
+# configured in ADO (Project Settings → Service connections).
 # Authoring + code split with 9 confidence gates. ~45 min step budget.
+
+resources:
+  webhooks:
+    - webhook: kai-simple                 # alias referenced by the pipeline
+      connection: kai-simple-trigger-sc   # ADO "Incoming WebHook" service connection
 
 parameters:
   - name: workItemId

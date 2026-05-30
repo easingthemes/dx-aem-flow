@@ -1,6 +1,6 @@
 # dx-automation — Autonomous Agent Infrastructure Plugin for Claude Code
 
-Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines triggered by AWS Lambda webhooks. Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines. Most are triggered by AWS Lambda webhooks; **SimpleAgent is triggered by an Azure-native Service Hook (no Lambda)** — see [Trigger mechanisms](#trigger-mechanisms). Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
 
 ## Prerequisites
 
@@ -78,9 +78,31 @@ Eleven autonomous agents:
 | **DevAgent** | Work item tag `KAI-DEV-AUTOMATION` (ADO webhook → Lambda) | Full autonomous development: requirements → plan → implement → test → review → commit → PR. Supports Figma design-to-code. |
 | **DOCAgent** | Work item tag `KAI-DOC-AUTOMATION` (ADO webhook → Lambda) | Generate wiki documentation + AEM authoring guides with screenshots |
 | **Estimation** | Work item tag `KAI-ESTIMATION-AUTOMATION` (ADO webhook → Lambda) | Estimate story points by analyzing codebase complexity |
-| **SimpleAgent** | Work item tag `KAI-SIMPLE-AUTOMATION` (ADO webhook → Lambda) | Apply small AEM change (a11y label / color / spacing / copy) via authoring (AEM MCP write) OR code (file edits → PR) split. 9 confidence gates. ≤5 files / ≤50 lines / ≤10 JCR writes. |
+| **SimpleAgent** | `@kai-simple` comment → **Azure-native Service Hook** (no Lambda); same event starts the first run and recovery | Apply small AEM change (a11y label / color / spacing / copy) via authoring (AEM MCP write) OR code (file edits → PR) split. 9 confidence gates. ≤5 files / ≤50 lines / ≤10 JCR writes. |
 
-These run as ADO pipelines (YAML) invoked by Lambda. The Lambda receives ADO webhooks via API Gateway, enqueues to SQS, and triggers the correct pipeline.
+These run as ADO pipelines (YAML). For ten agents the Lambda router receives ADO webhooks via API Gateway, enqueues to SQS, and triggers the correct pipeline. **SimpleAgent is the exception** — it has no Lambda in its path (see below).
+
+## Trigger mechanisms
+
+Two paths start pipelines:
+
+- **AWS Lambda webhook router** — the WI Router (`wi-router.mjs`) and PR Router (`pr-router.mjs`) receive ADO service-hook events via API Gateway, deduplicate, rate-limit, apply the token budget, classify by tag / PR event, and queue the right pipeline. Used by every agent **except** SimpleAgent. (PR Reviewer is the other non-Lambda case: it runs from an ADO **build validation policy**, not a hook.)
+- **Azure-native Service Hook** — an ADO Service Hook with a simple subscription filter posts to an **Incoming WebHook service connection** that the pipeline declares under `resources.webhooks`. No AWS infra, nothing to deploy. Used by **SimpleAgent**: event *work item commented on*, filter *comment contains `@kai-simple`* → service connection → `ado-cli-simple.yml`. The same event drives both the first run and recovery; the pipeline's Phase 0 decides fresh-vs-resume.
+
+**Tradeoffs.** The Lambda path adds dedupe (ADO retry storms), per-agent rate limiting, monthly token-budget gating, and central tag-classification (one hook fans out to many pipelines; adding an agent is just env vars). The Azure-native path drops all of that infrastructure in exchange for one Service Hook + one service connection + one `resources.webhooks` block **per agent**, and any loop-prevention / dedupe must live in the pipeline itself. It fits low-frequency, human-initiated agents (a person types `@kai-simple`) better than high-volume autonomous ones.
+
+**Which other pipelines could adopt it?** ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**, **state/field change**, and **PR events** — so technically any event-driven agent can be triggered this way (each needs its own hook + service connection + pipeline webhook resource):
+
+| Agent | Current trigger | Azure-native option | Notes |
+|-------|-----------------|---------------------|-------|
+| **SimpleAgent** | `@kai-simple` comment | ✅ in use (reference impl) | comment-contains filter |
+| **PR Reviewer** | build validation policy | already Lambda-free | keep policy, or use a "PR created" hook |
+| **PR Answerer** | PR comment → Lambda | ✅ "PR commented on" + `@kai-…` filter | but loses the Lambda's cheap identity/loop/dedupe gates — they'd move into the pipeline |
+| **DoR / DoD / QA / DevAgent / DOCAgent / Estimation** | tag `KAI-*` + `KAI-TRIGGER` → Lambda | ✅ per-agent hook filtered on the agent tag (or a `@kai-…` comment, or a State transition) | loses dedupe + rate-limit + token-budget governance; one hook + connection per agent |
+| **BugFix** | tag `KAI-BUGFIX-AUTOMATION` → Lambda | ✅ same as above (Bug work-item type) | same tradeoff |
+| **DoD Fixer** | chained after DoD check | n/a | not event-triggered — stays an internal chain |
+
+Recommended migration candidates: **human-initiated, low-volume** agents (like PR Answerer via a `@kai-answer` keyword). Keep the **high-volume autonomous** WI agents on the Lambda router so they retain dedupe, rate-limiting, and the token budget. Full write-up: [Automation Infrastructure → Azure-native Service Hook trigger](../../website/src/pages/architecture/automation-infra.mdx).
 
 ## Configuration
 

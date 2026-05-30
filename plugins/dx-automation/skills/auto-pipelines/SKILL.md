@@ -26,7 +26,7 @@ Print: `Profile: <profile> — importing <N> pipelines`
 
 Expected pipelines per profile:
 - **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix, simple
-- **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, tag `KAI-SIMPLE-AUTOMATION`, YAML `ado-cli-simple.yml`)
+- **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, `@kai-simple` comment trigger, YAML `ado-cli-simple.yml`)
 
 ## 1. Import Pipelines
 
@@ -252,7 +252,7 @@ Set these on the DOCAgent pipeline (in addition to `ANTHROPIC_API_KEY`):
 
 ### SimpleAgent pipeline additional variables
 
-The SimpleAgent pipeline (`ado-cli-simple.yml`, triggered by tag **`KAI-SIMPLE-AUTOMATION`**) runs the `/dx-simple` skill via the Claude Agent SDK against the **QA AEM environment**. It needs its own AEM credentials separate from the QA/DOC pipelines (which may target a different environment).
+The SimpleAgent pipeline (`ado-cli-simple.yml`, triggered by a **`@kai-simple`** comment via an Azure-native Service Hook — no Lambda) runs the `/dx-simple` skill via the Claude Agent SDK against the **QA AEM environment**. It needs its own AEM credentials separate from the QA/DOC pipelines (which may target a different environment).
 
 Set these on the SimpleAgent pipeline (in addition to `ANTHROPIC_API_KEY` + plugin marketplace variables above):
 
