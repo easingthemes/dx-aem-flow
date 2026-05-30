@@ -1,3 +1,10 @@
+# [2.110.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.109.0...v2.110.0) (2026-05-30)
+
+
+### Features
+
+* **dx-simple:** resumable error recovery (branch-as-state + classified blocker loop) ([#151](https://github.com/easingthemes/dx-aem-flow/issues/151)) ([3bc47cd](https://github.com/easingthemes/dx-aem-flow/commit/3bc47cd6217cc7a4b1b436e1d81f500c891c9ee5))
+
 # [2.109.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.108.1...v2.109.0) (2026-05-29)
 
 
