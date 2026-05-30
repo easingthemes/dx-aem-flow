@@ -334,7 +334,7 @@ az_pipelines_variable create \
 
 ## Examples
 
-1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 10 enabled agents. Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 10 imported successfully.
+1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 11 enabled agents (the 10 core agents + `simple`; `simple-router` is `disabled` by default). Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 11 imported successfully.
 
 2. `/auto-pipelines` (consumer project) — Reads consumer-profile `infra.json` with 2 pipelines (PR Review, PR Answer). Imports `KAI-BrandB-PR-Review-Agent` and `KAI-BrandB-PR-Answer-Agent` with repo-specific names. Sets pipeline variables including hub Lambda URLs. Reminds user to register pipeline IDs with the hub's Lambda env vars.
 
