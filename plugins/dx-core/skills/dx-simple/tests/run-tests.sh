@@ -113,6 +113,28 @@ run "parse: hex color in change-value preserved" \
 run "parse: CRLF line endings work" \
   "$SCRIPTS/parse-simple-block.sh" "$FIXTURES/raw-story-crlf.md" "$TMP/crlf.yaml"
 
+run "parse: platform+brand+scope block exits 0" \
+  "$SCRIPTS/parse-simple-block.sh" "$FIXTURES/raw-story-platform.md" "$TMP/plat.yaml"
+
+run "parse: yaml preserves platform" \
+  bash -c "grep -q '^platform: legacy' $TMP/plat.yaml"
+
+run "parse: yaml preserves scope" \
+  bash -c "grep -q '^scope: fe' $TMP/plat.yaml"
+
+# Heredoc fixture (the inline-printf form is fragile: backticks in a `bash -c`
+# single-quoted string get command-substituted by the outer shell). Same
+# assertion — a duplicate platform field must exit 3.
+cat > "$TMP/dup.md" <<'EOF'
+```simple
+page-url: http://x
+platform: a
+platform: b
+```
+EOF
+expect_exit "parse: duplicate platform exits 3" 3 \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/dup.md" "$TMP/dup.yaml"
+
 # ===== scope-check tests =====
 run "scope: mixed plan passes (1 code, 1 auth)" \
   "$SCRIPTS/scope-check.sh" "$FIXTURES/work-plan-mixed.json"

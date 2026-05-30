@@ -4,7 +4,7 @@
 # missing or malformed.
 #
 # Required field: page-url only.
-# Optional fields: component-locator, change-value, brand, activate.
+# Optional fields: component-locator, change-value, brand, platform, scope, activate.
 # Anything else is preserved verbatim — the skill's LLM phases use these
 # as hints. The kind of change (authoring vs code, what field to edit, etc.)
 # is inferred entirely from the natural-language change-value + story prose
@@ -87,7 +87,7 @@ fi
 
 # Duplicate-field check: every known field must appear at most once.
 # Legacy `change-type` is silently tolerated (it's ignored downstream).
-for FIELD in page-url component-locator change-value brand activate change-type; do
+for FIELD in page-url component-locator change-value brand platform scope activate change-type; do
   COUNT=$(echo "$CLEAN" | grep -cE "^${FIELD}:" || true)
   if [[ "$COUNT" -gt 1 ]]; then
     echo "ERROR: duplicate field '${FIELD}' in simple block" >&2
