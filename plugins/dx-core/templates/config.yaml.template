@@ -78,7 +78,7 @@ preferences:
 #   - name: My-Backend-Repo
 #     path: ../My-Backend-Repo        # Relative path to local checkout
 #     role: backend                    # backend | frontend | fullstack | config
-#     platform: Legacy                 # Legacy | DXN (AEM only, added by /aem-init)
+#     platform: alpha                  # opaque, project-defined platform identifier, e.g. alpha | beta (AEM only, added by /aem-init)
 #     ado-project: "My Project"        # ADO project (if different from scm.project)
 #     base-branch: develop             # Default branch (defaults to scm.base-branch)
 

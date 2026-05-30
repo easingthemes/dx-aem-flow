@@ -79,7 +79,7 @@ Run these searches **in parallel** (all variations in one regex pattern):
 3. Read `.ai/config.yaml` for project structure — repos, component paths, SCM URLs
 
 From `component-index-project.md` extract (if found):
-- **Platform** column — Legacy, DXN, or both
+- **Platform** column — your project's platform identifiers (e.g. alpha, beta), or both
 - **FE** column — B, C, B C, Yes, N/A
 - **Source Link** — ADO URL with exact component path
 - **Repo** column — which repo the component lives in
@@ -141,7 +141,7 @@ If neither source is available, note "Dialog fields not available."
 ## Component: <name>
 
 **Resource type:** `<resource-type>`
-**Platform:** <Legacy | DXN | both>
+**Platform:** <platform identifier, e.g. alpha | beta | both>
 **FE:** <B | C | B C | Yes | N/A>
 
 ---

@@ -66,7 +66,7 @@ markets:
 repos:
   - name: My-Backend-Repo
     role: backend                      # required — frontend | backend | fullstack | config
-    platform: Legacy                   # optional — opaque consumer-defined platform identifier
+    platform: alpha                    # optional — opaque consumer-defined platform identifier
     brand: brand-a                     # optional — repo's brand identity (split-platform FE selection)
     path: ../My-Backend-Repo          # optional — local filesystem path for cross-repo checks
     ado-project: "My Backend Project"  # optional — ADO project (if different from scm.project)
@@ -121,7 +121,7 @@ aem:
   demo-parent-path: "/content/mysite/en/demo"  # Parent path for all AI-created demo pages (aem-verify, aem-doc-gen)
   selector: "model"               # Exporter selector (if project uses custom selector)
   current-repo: "My-Repo"         # Current repo name (for cross-repo awareness)
-  platform: "legacy"              # AEM platform: legacy (custom Web Components/Gulp) or dxn (@netcentric/Webpack)
+  platform: "alpha"               # opaque, project-defined platform identifier (e.g. alpha, beta) — declared in project.yaml
   active-brands: [brand-a]           # Active brands for this repo (scopes component/page searches)
   active-markets:                 # Active markets (scopes searches by brand + country)
     - brand: brand-a
@@ -252,7 +252,7 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `publish-url-qa` | string | no | Remote QA publisher URL — for user-facing verification on QA environment |
 | `selector` | string | no | Exporter selector for JSON endpoints |
 | `current-repo` | string | no | Current repo name (for cross-repo scope detection) |
-| `platform` | string | no | AEM platform: `legacy` (custom Web Components/Gulp) or `dxn` (@netcentric/Webpack) |
+| `platform` | string | no | Opaque, project-defined platform identifier (e.g. `alpha`, `beta`) — declared in project.yaml |
 | `active-brands` | list | no | Active brands for this repo (scopes component and page searches) |
 | `active-markets` | list | no | Active markets with brand + countries (scopes searches by market) |
 | `qa-basic-auth` | object | no | QA/Stage HTTP Basic Auth credentials (`username`, `password`). Used by `aem-editorial-guide-capture` and `aem-doc-gen` for authenticated QA environments. Also install `.claude/rules/qa-basic-auth.md` via `/aem-init` for the full auth handling pattern. |
@@ -264,7 +264,7 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 |-------|------|----------|-------------|
 | `name` | string | yes | Repo name |
 | `role` | string | yes | Repo role: `frontend` \| `backend` \| `fullstack` \| `config` |
-| `platform` | string | no | Opaque consumer-defined platform identifier (e.g., `Legacy`, `DXN`) |
+| `platform` | string | no | Opaque, project-defined platform identifier (e.g., `alpha`, `beta`) |
 | `brand` | string | no | Repo's brand identity — used by `/dx-simple` routing to select the correct per-brand frontend repo on split platforms |
 | `path` | string | no | Local filesystem path for cross-repo checks (relative or absolute) |
 | `ado-project` | string | no | ADO project name if different from `scm.project` |
