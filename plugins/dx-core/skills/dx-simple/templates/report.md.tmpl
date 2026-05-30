@@ -36,6 +36,18 @@ verified: {VERIFIED}
 ## Verification
 {SCREENSHOTS}
 
+## Recovery
+- Status: {STATUS}
+- Blocker class: {BLOCKER_CLASS} (recoverable: {RECOVERABLE})
+- Failed at: {BLOCKED_AT_PHASE} — {BLOCKER_REASON}
+- Answer-attempt: {ANSWER_ATTEMPTS} of {MAX_ATTEMPTS}
+- To continue: {RECOVERY_INSTRUCTION}
+<!-- dx-simple:blocked phase={BLOCKED_AT_PHASE} reason={BLOCKER_SLUG} answer-attempts={ANSWER_ATTEMPTS} comment-cursor={COMMENT_CURSOR} -->
+
+> To resume, reply on the ticket beginning your comment with the kai-simple
+> keyword prefixed with `@` (rendered here as `@<keyword>` so this report does
+> not self-trigger the resume hook), followed by the precise input requested above.
+
 ## Notes
 {NOTES}
 

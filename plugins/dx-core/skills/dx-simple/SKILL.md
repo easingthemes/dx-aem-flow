@@ -38,20 +38,43 @@ mcp__ado__wit_add_work_item_comment with the preflight error text
 
 Exit non-zero. **No other action.**
 
-## Spec directory
+## Recovery config (read once, after pre-flight)
+
+Resumable recovery (TODO #141) is config-driven — never hardcode the token or the
+attempt cap. Read both from `.ai/config.yaml` (defaults applied if unset):
 
 ```bash
-SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir $ARGUMENTS)
-[[ -z "$SPEC_DIR" ]] && SPEC_DIR=".ai/specs/${ARGUMENTS}-simple" && mkdir -p "$SPEC_DIR"
+# Trigger keyword (default @kai-simple). The bot NEVER emits the literal token —
+# it writes the keyword bare and instructs the human to prefix it with @.
+TRIGGER_TOKEN=$(bash .ai/lib/dx-common.sh yaml-val 'dx-simple.recovery.trigger-token'); TRIGGER_TOKEN=${TRIGGER_TOKEN:-@kai-simple}
+KEYWORD=${TRIGGER_TOKEN#@}                 # bare form used in bot-emitted text
+MAX_ATTEMPTS=$(bash .ai/lib/dx-common.sh yaml-val 'dx-simple.recovery.max-attempts'); MAX_ATTEMPTS=${MAX_ATTEMPTS:-3}
 ```
 
-Initialize state files:
+> The documented ADO Service Hook filter string MUST match `trigger-token` — this
+> is the single source of truth (see the pipeline + website docs). The comment
+> hook fires only on comments containing the token; the bot's own comments never
+> contain the literal token, so they cannot self-trigger.
+
+## Spec directory + branch (established by Phase 0)
+
+`SPEC_DIR` and the per-ticket `BRANCH` are NOT computed here — **Phase 0**
+(`resume-check.sh`) establishes them, because a fresh pipeline container can't
+recompute run 1's slug and must discover the ticket's existing branch + committed
+state. Phase 0 emits `SPEC_DIR=…` / `BRANCH=…`; capture those values.
+
+**Fresh-run state init (only when Phase 0 dispatch is `fresh`):**
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh "$SPEC_DIR" "Preflight" "done"
-# Initialize confidence-tracking file used across all gates
 echo '{"gates":{}}' > "$SPEC_DIR/confidence.json"
+# resume-state.json — the durable status the next run dispatches on.
+sed "s/{TICKET}/$ARGUMENTS/" \
+    "$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/resume-state.json.tmpl" \
+    > "$SPEC_DIR/resume-state.json"
 # authoring-diff.json is created lazily by Phase 3a when the first write happens
 ```
+On a **resume** dispatch, these files already exist on the branch (committed by a
+prior run) — do NOT re-initialize them; read them.
 
 Touch the orchestration flag (in case a future orchestrator wraps this skill):
 ```bash
@@ -63,6 +86,7 @@ touch .ai/run-context/orchestrating.flag
 
 | File | Created in | Purpose |
 |---|---|---|
+| `resume-state.json` | Phase 0 (fresh) / read on resume | Durable recovery status — `status`, `last-completed-phase`, `blocked-at-phase`, `blocker{}`, `answer-attempts`, `comment-cursor`, `run-history[]`. Phase 0 dispatches on it. Committed every checkpoint. |
 | `raw-story.md` | Phase 1 | ADO story dump |
 | `simple-block.yaml` | Phase 1 (after parse) | Parsed DoR block |
 | `before.png` | Phase 1 (after G1) | Pre-change Chrome screenshot |
@@ -81,7 +105,7 @@ touch .ai/run-context/orchestrating.flag
 
 ## Confidence model (gates G1, G3–G9)
 
-This skill enforces 8 confidence gates. **Any gate failure → rollback authoring (if applied) + ADO comment + verdict: fail (pipeline exits non-zero).** Track scores in `$SPEC_DIR/confidence.json`; the final report quotes them.
+This skill enforces 8 confidence gates. **Any gate failure → ABORT path: classify the blocker, conditionally roll back authoring (terminal only — C3), persist state, ADO comment, verdict: fail (pipeline exits non-zero).** Track scores in `$SPEC_DIR/confidence.json`; the final report quotes them. A blocker on a **resumed** run feeds the re-ask loop (see ABORT path) instead of a flat abort.
 
 | Gate | Phase | Threshold |
 |---|---|---|
@@ -102,7 +126,10 @@ This skill enforces 8 confidence gates. **Any gate failure → rollback authorin
 
 ```dot
 digraph dx_simple {
-    "Preflight + spec dir" [shape=box];
+    "Preflight" [shape=box];
+    "Phase 0: Resume (branch + dispatch)" [shape=box];
+    "Read resume comment + apply answer" [shape=box];
+    "Replay code edits from work-plan.json" [shape=box];
     "Phase 1: Fetch + extract change details" [shape=box];
     "G1: locator match exactly 1?" [shape=diamond];
     "Phase 2: Classify (parallel subagents)" [shape=box];
@@ -121,40 +148,175 @@ digraph dx_simple {
     "G7: zero blockers ≥80% conf?" [shape=diamond];
     "Phase 6: Activate + Commit + PR" [shape=box];
     "Phase 7: Write report + ADO comment" [shape=doublecircle];
-    "ABORT: Rollback + comment + exit" [shape=doublecircle];
 
-    "Preflight + spec dir" -> "Phase 1: Fetch + extract change details";
+    // --- ABORT, expanded (classify → conditional rollback → persist → comment) ---
+    "ABORT: classify blocker" [shape=box];
+    "Terminal (hard/final)?" [shape=diamond];
+    "Rollback authoring (terminal only)" [shape=box];
+    "Keep authoring (recoverable)" [shape=box];
+    "Write report.md (Recovery section)" [shape=box];
+    "save-state.sh: commit + push state" [shape=box];
+    "git checkout -- . (discard source edits)" [shape=box];
+    "Post classified ADO comment + exit" [shape=doublecircle];
+
+    // --- re-ask loop on a failed RESUMED gate ---
+    "Resumed gate still fails?" [shape=diamond];
+    "answer-attempts < max?" [shape=diamond];
+    "Post sharper question (blocked-needs-input)" [shape=box];
+    "Downgrade to blocked-hard → DevAgent" [shape=box];
+
+    // --- terminal resume exits ---
+    "Re-post hard note + exit" [shape=doublecircle];
+    "No-op: already done (PR exists)" [shape=doublecircle];
+
+    "Preflight" -> "Phase 0: Resume (branch + dispatch)";
+
+    // Phase 0 dispatch out-edges
+    "Phase 0: Resume (branch + dispatch)" -> "Phase 1: Fetch + extract change details" [label="fresh"];
+    "Phase 0: Resume (branch + dispatch)" -> "Replay code edits from work-plan.json" [label="in-progress (past 3b)"];
+    "Phase 0: Resume (branch + dispatch)" -> "Phase 1: Fetch + extract change details" [label="in-progress (at/before 3b) → last+1"];
+    "Phase 0: Resume (branch + dispatch)" -> "Read resume comment + apply answer" [label="blocked-needs-input"];
+    "Phase 0: Resume (branch + dispatch)" -> "Re-post hard note + exit" [label="blocked-hard"];
+    "Phase 0: Resume (branch + dispatch)" -> "No-op: already done (PR exists)" [label="done"];
+    "Phase 0: Resume (branch + dispatch)" -> "Read resume comment + apply answer" [label="ambiguous-branch (asks which branch)"];
+
+    "Read resume comment + apply answer" -> "Replay code edits from work-plan.json" [label="re-enter past 3b"];
+    "Read resume comment + apply answer" -> "Phase 1: Fetch + extract change details" [label="re-enter ≤ 3b"];
+    "Replay code edits from work-plan.json" -> "Phase 4: Compile (≤3 retries)" [label="re-enter target phase"];
+
     "Phase 1: Fetch + extract change details" -> "G1: locator match exactly 1?";
-    "G1: locator match exactly 1?" -> "ABORT: Rollback + comment + exit" [label="no"];
+    "G1: locator match exactly 1?" -> "ABORT: classify blocker" [label="no"];
     "G1: locator match exactly 1?" -> "Phase 2: Classify (parallel subagents)" [label="yes"];
     "Phase 2: Classify (parallel subagents)" -> "G3: classification high or medium?";
-    "G3: classification high or medium?" -> "ABORT: Rollback + comment + exit" [label="no — abort"];
+    "G3: classification high or medium?" -> "ABORT: classify blocker" [label="no — abort"];
     "G3: classification high or medium?" -> "Phase 3a: Apply authoring writes" [label="yes — if authoring items"];
     "G3: classification high or medium?" -> "Phase 3b: Apply code edits" [label="yes — if code items"];
     "Phase 3a: Apply authoring writes" -> "Phase 5: Visual verify" [label="if no code items"];
     "Phase 3a: Apply authoring writes" -> "G4: per-file edit confidence ≥85%?" [label="if code items also queued"];
     "Phase 3b: Apply code edits" -> "G4: per-file edit confidence ≥85%?";
-    "G4: per-file edit confidence ≥85%?" -> "ABORT: Rollback + comment + exit" [label="no"];
+    "G4: per-file edit confidence ≥85%?" -> "ABORT: classify blocker" [label="no"];
     "G4: per-file edit confidence ≥85%?" -> "Scope-check ok?" [label="yes"];
-    "Scope-check ok?" -> "ABORT: Rollback + comment + exit" [label="no"];
+    "Scope-check ok?" -> "ABORT: classify blocker" [label="no"];
     "Scope-check ok?" -> "Phase 4: Compile (≤3 retries)" [label="yes"];
     "Phase 4: Compile (≤3 retries)" -> "Compile passed?";
     "Compile passed?" -> "Phase 5: Visual verify" [label="yes"];
-    "Compile passed?" -> "ABORT: Rollback + comment + exit" [label="no (after 3 retries)"];
+    "Compile passed?" -> "ABORT: classify blocker" [label="no (hard — after 3 retries)"];
     "Phase 5: Visual verify" -> "G5+G6: visual gates pass?";
     "G5+G6: visual gates pass?" -> "Phase 5.5: Diff review (dx-pr-reviewer)" [label="yes"];
     "G5+G6: visual gates pass?" -> "One re-edit retry left?" [label="no"];
     "One re-edit retry left?" -> "Re-edit with screenshot context" [label="yes"];
-    "One re-edit retry left?" -> "ABORT: Rollback + comment + exit" [label="no"];
+    "One re-edit retry left?" -> "ABORT: classify blocker" [label="no"];
     "Re-edit with screenshot context" -> "Phase 4: Compile (≤3 retries)";
     "Phase 5.5: Diff review (dx-pr-reviewer)" -> "G7: zero blockers ≥80% conf?";
-    "G7: zero blockers ≥80% conf?" -> "ABORT: Rollback + comment + exit" [label="no"];
+    "G7: zero blockers ≥80% conf?" -> "ABORT: classify blocker" [label="no"];
     "G7: zero blockers ≥80% conf?" -> "Phase 6: Activate + Commit + PR" [label="yes"];
     "Phase 6: Activate + Commit + PR" -> "Phase 7: Write report + ADO comment";
+
+    // A gate that fails on a RESUMED run feeds the re-ask loop instead of a flat abort.
+    "ABORT: classify blocker" -> "Resumed gate still fails?";
+    "Resumed gate still fails?" -> "answer-attempts < max?" [label="yes (this was a needs-input resume)"];
+    "Resumed gate still fails?" -> "Terminal (hard/final)?" [label="no (first failure / non-input)"];
+    "answer-attempts < max?" -> "Post sharper question (blocked-needs-input)" [label="yes"];
+    "answer-attempts < max?" -> "Downgrade to blocked-hard → DevAgent" [label="no (cap reached)"];
+    "Post sharper question (blocked-needs-input)" -> "Terminal (hard/final)?" [label="recoverable"];
+    "Downgrade to blocked-hard → DevAgent" -> "Terminal (hard/final)?" [label="terminal"];
+
+    "Terminal (hard/final)?" -> "Rollback authoring (terminal only)" [label="yes"];
+    "Terminal (hard/final)?" -> "Keep authoring (recoverable)" [label="no"];
+    "Rollback authoring (terminal only)" -> "Write report.md (Recovery section)";
+    "Keep authoring (recoverable)" -> "Write report.md (Recovery section)";
+    "Write report.md (Recovery section)" -> "save-state.sh: commit + push state";
+    "save-state.sh: commit + push state" -> "git checkout -- . (discard source edits)";
+    "git checkout -- . (discard source edits)" -> "Post classified ADO comment + exit";
 }
 ```
 
 ## Node Details
+
+### Phase 0: Resume (branch + dispatch)
+
+Runs immediately after pre-flight, **before Phase 1**. It establishes the
+per-ticket branch (created early — decision #5), reverse-maps it to the committed
+spec dir, reads `resume-state.json`, and decides how to proceed. The per-ticket
+branch is the durable state store, so a crashed/blocked prior run is recoverable.
+
+```bash
+# Capture the key=value lines, then read each value (values like "Phase 2" contain
+# spaces, so DON'T `eval` the block — read fields explicitly).
+RC=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/resume-check.sh "$ARGUMENTS")
+val() { sed -n "s/^$1=//p" <<<"$RC" | head -1; }
+DISPATCH=$(val DISPATCH); BRANCH=$(val BRANCH); SPEC_DIR=$(val SPEC_DIR)
+STATUS=$(val STATUS); RE_ENTER_PHASE=$(val RE_ENTER_PHASE)
+REPLAY_CODE_EDITS=$(val REPLAY_CODE_EDITS); ANSWER_ATTEMPTS=$(val ANSWER_ATTEMPTS)
+LAST_COMPLETED_PHASE=$(val LAST_COMPLETED_PHASE); BLOCKED_AT_PHASE=$(val BLOCKED_AT_PHASE)
+```
+
+`resume-check.sh` owns anchored discovery (`feature/<id>-*` / `bugfix/<id>-*` —
+never a bare `*<id>*` substring, so `123` can't match `1234`), the 0 / 1 / >1
+branch decision, and the reverse branch→spec-dir mapping. It delegates **only the
+create-fresh path** to `shared/ensure-feature-branch.sh` (M2 — the shared helper's
+contract is unchanged for its other consumers). It is **read-only** w.r.t.
+`resume-state.json` (never bumps `answer-attempts` — a crash must not burn the
+needs-input cap, M4).
+
+Dispatch on `DISPATCH`:
+
+| DISPATCH | meaning | action |
+|---|---|---|
+| `fresh` | no branch / no committed state | run fresh-run state init (above), proceed to **Phase 1**. |
+| `resume-forward` | prior run **crashed** (`in-progress`) | if `REPLAY_CODE_EDITS=true`, run **Replay code edits** first, then re-enter `RE_ENTER_PHASE`. Reuse committed discovery artifacts. Does NOT consume an answer-attempt. |
+| `resume-blocked-input` | recoverable block awaiting a human answer | run **Read resume comment + apply answer**, then (replay if past 3b) re-enter `RE_ENTER_PHASE`. |
+| `resume-blocked-hard` | unrecoverable, or `answer-attempts` cap reached | **Re-post hard note + exit** — re-post the "needs manual fix / re-tag DevAgent" note; exit non-zero. |
+| `done` | Phase 7 already succeeded | **No-op** — comment "already completed in PR; open a new ticket for further changes"; exit 0. |
+| `ambiguous-branch` | >1 `feature/<id>-*` match | post a `needs-user-input` comment asking **which branch** to resume (loop-safe format); set `blocked-needs-input`; exit. Do NOT pick one. |
+
+> **git-rules.md exception.** `git-rules.md` says "never reuse old feature/bugfix
+> branches for new work." `/dx-simple` resume is a deliberate, scoped exception —
+> it reuses the branch for the **same ticket, same work, continued**, only when the
+> anchored match is **unique** (ambiguous → blocker, not reuse).
+
+### Read resume comment + apply answer
+
+Only on `resume-blocked-input` (or `ambiguous-branch` resolution). Select the
+human's answer and apply it before re-entering the blocked phase.
+
+1. Fetch comments (`mcp__ado__wit_list_work_item_comments`). Select the comment
+   that is: (a) authored by a **non-bot** identity, (b) contains the trigger token
+   (`$TRIGGER_TOKEN`), (c) has the **highest ADO comment id** (ids are monotonic —
+   order by id, not timestamp), and (d) id > the stored `comment-cursor`. If none
+   qualifies → cheap exit (stray re-trigger; nothing to do).
+2. Strip the token; the remainder is `continue-input`. Apply it to
+   `blocked-at-phase` (e.g. set `simple-block.yaml` `component-locator` for a G1
+   ambiguity; add a file/line/anchor hint for G4; pick the branch for
+   `ambiguous-branch`).
+3. **Commit the updated `comment-cursor` atomically with / before re-entering the
+   phase** (L2) — via `jq` into `resume-state.json` then `save-state.sh` —
+   otherwise a crash after applying the answer reprocesses the same comment.
+4. Re-enter `RE_ENTER_PHASE` (replaying code edits first if past 3b). **If the gate
+   still fails:** `answer-attempts++`, post a *sharper* question. **When quoting the
+   prior answer, never echo the literal token** — render it as `@<keyword>` (H4).
+   Set `blocked-needs-input` again; update `comment-cursor`. After the
+   `$MAX_ATTEMPTS`-th failed cycle, downgrade to `blocked-hard` and recommend
+   DevAgent (M4 — prevents infinite human↔bot ping-pong). Crashes/transient
+   resumes never count against this cap.
+
+### Replay code edits from work-plan.json
+
+Code edits are **never committed** (decision #3), so on any resume the working tree
+has none of them. Before re-entering **any phase after Phase 3b** (C2), deterministically
+re-apply them from `work-plan.json` onto the clean committed base:
+
+For each item in `work-plan.code[]` (which carries filled `match-context` /
+`replacement` from run 1): `Edit(file=<path>, old_string=<match-context>,
+new_string=<replacement>)`. Same base + unique `match-context` → identical diff.
+
+**Authoring is the opposite** — JCR writes persist in AEM, so resume **skips**
+Phase 3a and reconciles via the committed `authoring-diff.json` (the Phase 3a
+before-check treats `actual == target-after` as already-applied → skip). The two
+halves of the resume contract are asymmetric: **code replays, authoring reconciles.**
+
+Re-entering Phase 3b itself does NOT need a separate replay — 3b re-fills and
+re-applies the work-plan as part of its normal flow.
 
 ### Phase 1: Fetch + extract change details
 
@@ -229,11 +391,14 @@ digraph dx_simple {
    - If >1 matches: post "Ambiguous locator: <N> matches. Add a `jcr-path=...` to the `simple` block, or describe the element more specifically." Exit non-zero.
    - If exactly 1: continue. Record `G1 = 1 match` in `confidence.json`.
 
-6. Update progress:
+6. Update progress + **checkpoint** (commit + push recovery state to the branch):
    ```bash
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
         "$SPEC_DIR" "Phase 1: Extract + locate" "done" "G1 passed"
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 1"
    ```
+   If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is
+   in flight (H2); do not force-push.
 
 ### Phase 2: Classify (parallel subagents)
 
@@ -299,10 +464,11 @@ remove them. Once `work-plan.json` reflects the model's final plan, set
   in the report
 - `low` — neither path has a workable target → abort with G3 fail
 
-Update progress:
+Update progress + **checkpoint**:
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
      "$SPEC_DIR" "Phase 2: Classify" "done" "G3=<level>, authoring=<n>, code=<n>"
+bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
 ```
 
 ### Phase 3a: Apply authoring writes
@@ -318,7 +484,11 @@ For each item in `work-plan.authoring[]`:
    ```
    mcp__plugin_dx-aem_AEM__getNodeContent with path=<jcr-path>
    ```
-   Confirm `item.before` matches the actual current value. If not, abort with `"value drifted: expected <before>, got <actual>"`.
+   Confirm `item.before` matches the actual current value. **Idempotent re-entry
+   (H1):** if `actual == item.after`, this write was **already applied** by a prior
+   run that crashed mid-Phase-3a → record it as applied and **skip** (do NOT abort
+   with `value drifted`). Only abort `"value drifted: expected <before>, got <actual>"`
+   when `actual` is neither `before` nor `after`.
 
 2. Apply the write:
    ```
@@ -336,9 +506,19 @@ For each item in `work-plan.authoring[]`:
    _audit_append '{"ts":"<ISO>","action":"updateComponent","path":"<jcr>","property":"<prop>","ticket":"<id>"}'
    ```
 
+5. **Checkpoint per JCR write (H1).** AEM writes are external side-effects not
+   transactional with the git commit. Commit `authoring-diff.json` **after each
+   write**, not once at end of phase — otherwise a crash after write 2 of 3 leaves
+   the writes live on AEM but the diff uncommitted, and resume's before-check
+   (now idempotent, step 1) would have no record of them:
+   ```bash
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3a"
+   ```
+
 If ANY write fails partway through:
 - Mark all subsequent items as `applied: false`
-- Trigger rollback (script below)
+- Classify the blocker and follow the **ABORT path** (authoring is kept on a
+  recoverable block, rolled back only on terminal failure — C3)
 - Post ADO comment, exit non-zero
 
 Update progress.
@@ -384,9 +564,13 @@ For each item in `work-plan.code[]`:
    ```bash
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/scope-check.sh "$SPEC_DIR/work-plan.json"
    ```
-   Exit 4 → rollback authoring + exit non-zero.
+   Exit 4 → ABORT (scope exceeded is `hard`).
 
-Update progress.
+Update progress + **checkpoint** (commits the filled `work-plan.json` so a later
+resume can replay the code edits — C2; the edits themselves stay uncommitted):
+```bash
+bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3b"
+```
 
 ### Phase 4: Compile (≤3 retries)
 
@@ -492,6 +676,20 @@ Write the review to `$SPEC_DIR/diff-review.md`.
    Log each activation to audit. Update `authoring-diff.json` to set `activated: true` per item.
 
 2. **Commit + PR** (only if Phase 3b ran):
+
+   **Idempotent (M5).** PR creation is irreversible, so:
+   - **Checkpoint `last-completed = Phase 6` BEFORE the create** so a crash during
+     create resumes back into Phase 6 (not past it):
+     ```bash
+     bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 6"
+     ```
+   - **Detect an existing open PR** for this branch first
+     (`mcp__ado__repo_list_pull_requests_by_repo_or_project` with
+     `sourceRefName: refs/heads/<branch>`, `status: Active`). If one exists, switch
+     `/dx-pr-commit` to **update-mode** (push new commits + update the description)
+     instead of creating a second PR — a crash between PR-create and the post-create
+     checkpoint must not duplicate the PR.
+
    Delegate to `/dx-pr-commit`:
    ```
    Skill(/dx-pr-commit)
@@ -517,7 +715,12 @@ does not post a duplicate failure note:
 mkdir -p .ai/run-context && touch .ai/run-context/ado-comment-posted.flag
 ```
 
-Update final progress row to `done`.
+Update final progress row to `done`, mark recovery state terminal, and checkpoint
+so a stray re-trigger short-circuits to the `done` no-op:
+```bash
+jq '.status = "done"' "$SPEC_DIR/resume-state.json" > "$SPEC_DIR/.rs.tmp" && mv "$SPEC_DIR/.rs.tmp" "$SPEC_DIR/resume-state.json"
+bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 7"
+```
 
 Clean up (leave `ado-comment-posted.flag` in place — the pipeline inspects it):
 ```bash
@@ -543,28 +746,107 @@ If running standalone (no `orchestrating.flag`), also print a human summary abov
 
 ## ABORT path (any gate failure)
 
-When any G1–G9 gate fails:
+**Order matters.** Classify first, then roll back authoring *only if terminal*
+(C3), then persist state **before** discarding the source edits (today's
+`git checkout -- .` wipes the uncommitted report + state — that is the bug this
+fixes).
 
-1. Rollback authoring (if any writes were applied):
+1. **Classify the blocker** → set `blocker.class` (`needs-user-input` | `transient`
+   | `hard`), `blocker.recoverable`, `blocker.reason`, `blocker.needs`,
+   `blocked-at-phase`, and `status` in `resume-state.json` (via `jq`). Use the
+   **Blocker taxonomy** below.
+
+   **Re-ask loop (if this is a resumed `needs-input` run whose gate failed again):**
+   if `answer-attempts < $MAX_ATTEMPTS`, bump `answer-attempts`, set
+   `status=blocked-needs-input`, and post a *sharper* question (loop-safe — see
+   comment format; never echo the literal token). Otherwise downgrade to
+   `status=blocked-hard` and recommend DevAgent (M4).
+
+2. **Conditional authoring rollback (C3).** Roll back JCR writes **only when the
+   blocker is terminal** (`hard`, or final fail):
    ```bash
+   # terminal only:
    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
    ```
+   On a **recoverable** block (`needs-input` / `transient`), **leave the authoring
+   writes in place** — they are recorded in the committed `authoring-diff.json`, and
+   the resume run skips Phase 3a. (Rolling back here would lose the authoring half of
+   a combined authoring+code change, since resume re-enters at Phase 3b, past 3a.)
 
-2. Discard code edits:
+3. **Write the failure `report.md`** (same template; `verified: false`, failing
+   gate row marked `fail`, **Recovery section populated** — never the literal token,
+   use `@<keyword>`).
+
+4. **Persist state — commit + push** (the report + resume-state + authoring-diff):
+   ```bash
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "<blocked-phase>"
+   ```
+   (Exit 3 = `BRANCH-ADVANCED` → a concurrent resume is in flight; stop.)
+
+5. **Then** discard the now-irrelevant *source* edits — spec files are committed, so
+   they survive; code edits are replayed from `work-plan.json` on resume (C2):
    ```bash
    git checkout -- .
    ```
 
-3. Write a failure report at `$SPEC_DIR/report.md` (using the same template, with `verified: false` and the failing gate's row marked `fail`).
-
-4. Post ADO comment with the failure summary + which gate failed + suggested human action. Then record it so the pipeline fallback does not double-post:
+6. **Post the classified ADO comment** (loop-safe format below) + record the flag so
+   the pipeline fallback does not double-post:
    ```bash
    mkdir -p .ai/run-context && touch .ai/run-context/ado-comment-posted.flag
    ```
 
-5. Clean up orchestrating flag (leave `ado-comment-posted.flag` for the pipeline).
+7. Clean up orchestrating flag (leave `ado-comment-posted.flag` for the pipeline).
 
-6. Exit non-zero.
+8. Exit non-zero.
+
+### Blocker taxonomy
+
+| class | examples | recovery |
+|-------|----------|----------|
+| `needs-user-input` | G1 ambiguous/no match, missing `page-url`, G3 low classification, authoring value drifted, `ambiguous-branch` (M1) | human replies `@<keyword> <answer>` → resume at blocked phase |
+| `transient` | MAX_TURNS / step timeout / MCP unreachable / network blip — **infra only** | re-trigger (any `@<keyword>` reply, or re-run) → resume forward from `last-completed-phase` (replaying code edits if past 3b) |
+| `hard` | scope-check exceeded (>5 files / >50 lines / >10 writes), G7 real review blocker, **any compile failure surviving Phase 4's in-run 3× retry (M3)**, `answer-attempts` cap reached | not recoverable here → recommend re-tag `KAI-DEV-AUTOMATION` (DevAgent) |
+
+> **Compile is `hard`, not `transient` (M3).** Phase 4 already retries compile 3×
+> against a *deterministic* edit; a cross-run re-trigger replays the identical edit,
+> so it won't compile any better. `transient` is reserved for infra (MCP/network)
+> and MAX_TURNS, which a genuinely fresh run can fix.
+
+### Resume jump table
+
+| blocked at | needs from human | re-enters at | reuses / notes |
+|------------|------------------|--------------|--------|
+| G1 (0 or >1 locator matches) | jcr-path / exact visible text | Phase 1 (re-locate) | — |
+| `ambiguous-branch` (M1) | which branch to resume | Phase 0 discovery | — |
+| G3 (classification low) | content vs code | Phase 2 | persisted `dialog-map.json`, `file-list.json` |
+| G4 (edit confidence <0.85) | file / line / anchor | Phase 3b (re-fill + re-apply) | `work-plan.json`. **If 3a authoring was applied: NOT rolled back (C3); reconcile via committed `authoring-diff.json`.** |
+| compile fails (survives 3× retry) | `hard` → DevAgent (M3) | — | — |
+| G7 (review blocker) | guidance, or `hard` | Phase 3b re-edit (**replay code edits first — C2**) | `work-plan.json` |
+| crashed after 3b (`in-progress`) | nothing (transient) | `last-completed-phase` + 1 | committed artifacts **+ replay code edits (C2)** |
+| crashed at/before 3b (`in-progress`) | nothing (transient) | `last-completed-phase` + 1 | committed artifacts (no code edits exist yet) |
+| crashed after Phase 6 PR-create (`in-progress`) | nothing (transient) | Phase 6 | **update-mode, not a second create (M5)** |
+
+### Blocker comment format (human + machine, loop-safe)
+
+The literal trigger token **never appears** in the bot's own text (loop safety) —
+the bot says the keyword **bare** and instructs the user to prefix it with `@`.
+This holds **even when quoting the human's prior answer** in a re-ask (H4).
+
+```
+⚠️ /dx-simple paused on #<id> — needs your input
+
+**What failed:** G1 locator — "Language Selector" matched 3 elements on the page.
+**Recoverable:** yes (answer-attempt 1 of <max-attempts>)
+**What I need:** reply on this ticket, beginning your comment with the kai-simple
+   keyword (prefixed with @ so it re-triggers me), followed by a precise target, e.g.
+   @<keyword> jcr-path=/content/site/.../languagenavigation
+
+<!-- dx-simple:blocked phase=G1 reason=ambiguous-locator attempt=1 comment-cursor=<id> -->
+```
+
+The HTML marker lets the next run parse `phase` / `attempt` / `comment-cursor`
+deterministically without re-reading its own prose. Render the keyword in examples
+as `@<keyword>` (placeholder) so the example line cannot self-trigger the hook.
 
 ## Examples
 

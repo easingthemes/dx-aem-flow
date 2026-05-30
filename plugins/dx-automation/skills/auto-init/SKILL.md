@@ -194,9 +194,20 @@ For faster compile cycles or a custom cost ceiling, add an optional block to
 dx-simple:
   cost-ceiling-usd: 2.0
   build-compile-fast: "mvn compile -pl ui.frontend,core -am"
+  recovery:                          # resumable error recovery (TODO #141)
+    trigger-token: "@kai-simple"     # MUST match the ADO Service Hook comment filter
+    max-attempts: 3                  # human-answer cycles before downgrading to hard
 ```
 
-Both keys are optional — defaults are applied when the block is absent.
+All keys are optional — defaults are applied when the block is absent.
+
+> **Prerequisite for resumable recovery.** SimpleAgent's recovery uses the
+> per-ticket git branch as the durable state store, so `.ai/specs/` **must be
+> tracked** in git. The `/dx-init` gitignore ignores `.ai/specs/` by default —
+> remove that line. Also configure the ADO **Service Hook** on the *"work item
+> commented on"* event with a subscription filter requiring the comment to contain
+> `trigger-token` (`@kai-simple`), wired to re-run `ado-cli-simple.yml`. Recovery is
+> **human-re-triggered** (a human replies with the keyword); it is not automatic.
 
 ## Phase 2: Scaffold
 
