@@ -1,3 +1,10 @@
+# [2.111.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.110.0...v2.111.0) (2026-05-30)
+
+
+### Features
+
+* **dx-simple:** multi-repo trigger routing (platform/brand/scope) — TODO [#142](https://github.com/easingthemes/dx-aem-flow/issues/142) ([#154](https://github.com/easingthemes/dx-aem-flow/issues/154)) ([2eaa667](https://github.com/easingthemes/dx-aem-flow/commit/2eaa6674a5325b4c211d326b84138f9230d1f520))
+
 # [2.110.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.109.0...v2.110.0) (2026-05-30)
 
 
