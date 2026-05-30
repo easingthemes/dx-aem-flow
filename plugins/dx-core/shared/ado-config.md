@@ -93,7 +93,7 @@ repos:
   - name: My-Backend-Repo
     path: ../My-Backend-Repo
     role: backend
-    platform: Legacy
+    platform: alpha
     ado-project: "My Backend Project"  # optional — defaults to scm.project
   - name: My-Frontend-Repo
     path: ../My-Frontend-Repo

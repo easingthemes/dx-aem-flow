@@ -20,7 +20,7 @@ Use resource data to plan your approach. If resources are unavailable, fall back
 ## What You Receive
 
 - **component_name** — the AEM component name (e.g., `starterkit`, `mycomp-banner`)
-- **platform** — platform ID from project.yaml (e.g., `Legacy`, `DXN`). If omitted, search all platforms.
+- **platform** — platform ID from project.yaml (e.g., `alpha`, `beta`). If omitted, search all platforms.
 - **fe_locations** — from component-index-project.md FE column (e.g., `B`, `C`, `B C`, `Yes`, `N/A`). Optional.
 
 ## Step 1: Read Configuration
@@ -36,7 +36,7 @@ Read these files in order. Each is optional — skip gracefully if missing.
 
 ## Step 2: Resolve Base Path (if `resolve-from: component-index-project`)
 
-Some platforms (typically DXN) set `resolve-from: component-index-project` in file-patterns.yaml. This means the component's base path must be extracted from the Source Link URL in component-index-project.md.
+Some platforms set `resolve-from: component-index-project` in file-patterns.yaml. This means the component's base path must be extracted from the Source Link URL in component-index-project.md.
 
 1. Grep `component-index-project.md` for the component name
 2. Find the `[source](URL)` link in the matching row

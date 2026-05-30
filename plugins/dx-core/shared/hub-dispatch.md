@@ -111,3 +111,5 @@ repos:
 | `backend` | `[be]` |
 | `frontend` | `[fe]` |
 | `fullstack` | `[fe, be]` |
+
+This table is the single source of truth for normalizing `role` (non-hub `repos[]`/`project.role`) and `capabilities` (hub) to fe/be/both — `repo-guard.sh` and `route-targets.sh` follow it.

@@ -113,7 +113,7 @@ Dispatch agents simultaneously:
 
 #### <component-name>
 
-**Platform:** <Legacy|DXN|both>
+**Platform:** <platform identifier, e.g. alpha|beta|both>
 
 **Source Files — <repo>**
 | File | Purpose | Link |
@@ -136,7 +136,7 @@ Dispatch agents simultaneously:
 ---
 
 ### Market Scope
-**Platform:** <Legacy|DXN|both>
+**Platform:** <platform identifier, e.g. alpha|beta|both>
 **Markets:** <market codes>
 **Brand:** <brand>
 

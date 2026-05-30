@@ -12,7 +12,7 @@ Each component has JS, config, and SCSS files co-located in its directory.
 
 ```javascript
 // Main class + registration
-import { register } from '@netcentric/component-loader';
+import { register } from '<your-component-loader>';
 import config from './component-name.config';
 
 class ComponentName {
@@ -62,10 +62,10 @@ export default {
 
 ## Build System
 
-- **Primary Build Tool**: `@netcentric/fe-build`
-- **Bundler**: Webpack
+- **Primary Build Tool**: `<your-fe-build-tool>`
+- **Bundler**: `<your-bundler>`
 - **Linting**: ESLint with Airbnb Base and Prettier
-- **Component Loader**: `@netcentric/component-loader`
+- **Component Loader**: `<your-component-loader>`
 
 ## Naming Conventions
 

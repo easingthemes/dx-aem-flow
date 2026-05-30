@@ -221,6 +221,8 @@ az_pipelines_variable create \
 > Example: `{"Other-Repo":"789","Another-Repo":"790"}`
 >
 > Leave as `{}` if single-repo setup. Can be updated later when pipelines are imported in other repos.
+>
+> **`simple-router` pipeline:** the multi-platform router (`ado-cli-simple-router.yml`) also consumes `CROSS_REPO_PIPELINE_MAP`, but here it maps **each target repo name → that repo's dx-simple (`simple`) pipeline id** — the children the router fans work out to, not the router's own id. Single-platform projects don't deploy the router and leave it unset.
 
 ```bash
 az_pipelines_variable create \
