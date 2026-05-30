@@ -117,7 +117,7 @@ yaml_block_val() {
     $0 ~ "^"blk":[[:space:]]*$" { inb=1; next }
     inb && /^[^[:space:]#]/ { inb=0 }
     inb && $0 ~ "^[[:space:]]+"k":" {
-      sub("^[[:space:]]+"k":[[:space:]]*", ""); gsub(/^"|"$/, ""); print; exit
+      sub("^[[:space:]]+"k":[[:space:]]*", ""); sub(/[[:space:]]+#.*$/, ""); gsub(/^"|"$/, ""); print; exit
     }
   ' "$CONFIG_FILE" | xargs
 }
@@ -134,11 +134,11 @@ repos_table() {
     }
     /^repos:[[:space:]]*$/ { inr=1; next }
     inr && /^[^[:space:]#-]/ { flush(); inr=0 }
-    inr && /^[[:space:]]*-[[:space:]]*name:/ { flush(); sub(/^[[:space:]]*-[[:space:]]*name:[[:space:]]*/, ""); gsub(/^"|"$/, ""); name=$0; next }
-    inr && /^[[:space:]]+role:/        { v=$0; sub(/^[[:space:]]+role:[[:space:]]*/, "", v); gsub(/^"|"$/, "", v); role=v; next }
-    inr && /^[[:space:]]+platform:/     { v=$0; sub(/^[[:space:]]+platform:[[:space:]]*/, "", v); gsub(/^"|"$/, "", v); platform=v; next }
-    inr && /^[[:space:]]+brand:/        { v=$0; sub(/^[[:space:]]+brand:[[:space:]]*/, "", v); gsub(/^"|"$/, "", v); brand=v; next }
-    inr && /^[[:space:]]+ado-project:/  { v=$0; sub(/^[[:space:]]+ado-project:[[:space:]]*/, "", v); gsub(/^"|"$/, "", v); adoproj=v; next }
+    inr && /^[[:space:]]*-[[:space:]]*name:/ { flush(); sub(/^[[:space:]]*-[[:space:]]*name:[[:space:]]*/, ""); sub(/[[:space:]]+#.*$/, ""); gsub(/^"|"$/, ""); name=$0; next }
+    inr && /^[[:space:]]+role:/        { v=$0; sub(/^[[:space:]]+role:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); role=v; next }
+    inr && /^[[:space:]]+platform:/     { v=$0; sub(/^[[:space:]]+platform:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); platform=v; next }
+    inr && /^[[:space:]]+brand:/        { v=$0; sub(/^[[:space:]]+brand:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); brand=v; next }
+    inr && /^[[:space:]]+ado-project:/  { v=$0; sub(/^[[:space:]]+ado-project:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); adoproj=v; next }
     END { if (inr) flush() }
   ' "$CONFIG_FILE"
 }

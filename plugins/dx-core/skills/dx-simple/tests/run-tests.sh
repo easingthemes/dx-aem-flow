@@ -477,6 +477,9 @@ run "repos_table: emits 5 rows" \
 run "repos_table: LegacyBrandX row has brand=brandx" \
   bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && repos_table | grep -q \"\$(printf 'LegacyBrandX\tfrontend\tlegacy\tbrandx')\""
 
+run "yaml_block_val: strips trailing inline comment" \
+  bash -c "printf 'project:\n  role: backend  # the be repo\n' > $TMP/c.yaml; export CONFIG_FILE=$TMP/c.yaml; source '$DXC'; [ \"\$(yaml_block_val project role)\" = 'backend' ]"
+
 # ===== repo-guard =====
 GUARD="$SCRIPTS/repo-guard.sh"
 mkblock() { printf '%s\n' "$@" > "$TMP/blk.yaml"; }
@@ -522,11 +525,16 @@ printf '%s\n' "page-url: http://x" "platform: legacy" "scope: be" > "$TMP/r3.yam
 run "route: legacy/be dispatches only BE" \
   bash -c "$ROUTE $TMP/r3.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"LegacyBackend\"'"
 
-# single-platform config, no platform field -> infers, dispatches the one repo
+# single-platform config has NO repos[] block -> a solo repo fans out to nothing.
 printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r4.yaml"
 SMAP='{"AemFullstack":"101"}'
-run "route: single-platform infers without platform field" \
-  bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length>=0'"
+run "route: single-platform (no repos[]) fans out to empty" \
+  bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length==0'"
+
+# platform inference: MAP reachable repos span only ONE platform -> platform field optional
+printf '%s\n' "page-url: http://x" "scope: be" > "$TMP/r8.yaml"
+run "route: infers platform when only one reachable" \
+  bash -c "$ROUTE $TMP/r8.yaml $FIXTURES/config-multi-platform.yaml '{\"LegacyBackend\":\"102\"}' | jq -e 'length==1 and .[0].repo==\"LegacyBackend\"'"
 
 # fullstack single-platform repo: platform=dxn scope=both -> dispatches AemFullstack
 printf '%s\n' "page-url: http://x" "platform: dxn" "scope: both" > "$TMP/r5.yaml"
@@ -537,6 +545,11 @@ run "route: dxn/both dispatches the fullstack repo" \
 printf '%s\n' "page-url: http://x" "platform: dxn" "scope: be" > "$TMP/r6.yaml"
 run "route: dxn/be dispatches the fullstack repo" \
   bash -c "$ROUTE $TMP/r6.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AemFullstack\"'"
+
+# branded ticket targeting a fullstack repo (no brand on repo) must still dispatch it
+printf '%s\n' "page-url: http://x" "platform: dxn" "brand: brandx" "scope: both" > "$TMP/r7.yaml"
+run "route: branded ticket still dispatches brandless fullstack repo" \
+  bash -c "$ROUTE $TMP/r7.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AemFullstack\"'"
 
 # Summary
 echo "---"

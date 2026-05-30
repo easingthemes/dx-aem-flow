@@ -26,7 +26,8 @@ t_scope=$(grep -E '^scope:' "$BLOCK" | head -1 | sed 's/^scope:[[:space:]]*//' |
 # Candidate rows = repos_table rows whose name is a key in MAP.
 # `repos_table || true` guards against an empty/repos-less config that returns
 # non-zero under set -e. ROWS may be empty (single-repo project with no repos[]).
-mapfile -t ROWS < <(repos_table | while IFS=$'\t' read -r name role platform brand adoproj; do
+ROWS=()
+while IFS= read -r line; do ROWS+=("$line"); done < <(repos_table | while IFS=$'\t' read -r name role platform brand adoproj; do
   if echo "$MAP" | jq -e --arg n "$name" 'has($n)' >/dev/null; then
     printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$role" "$platform" "$brand" "$adoproj"
   fi
@@ -53,7 +54,8 @@ fi
 
 # Filter candidates to the target platform (config-role repos excluded).
 if [ "${#ROWS[@]}" -gt 0 ]; then
-  mapfile -t INPLAT < <(printf '%s\n' "${ROWS[@]}" | awk -F'\t' -v p="$t_platform" 'NF && $3==p && $2!="config"')
+  INPLAT=()
+  while IFS= read -r line; do INPLAT+=("$line"); done < <(printf '%s\n' "${ROWS[@]}" | awk -F'\t' -v p="$t_platform" 'NF && $3==p && $2!="config"')
 else
   INPLAT=()
 fi
@@ -97,7 +99,7 @@ if [ "${#INPLAT[@]}" -gt 0 ]; then
     IFS=$'\t' read -r name role platform brand adoproj <<<"$row"
     # Brand filter applies to fe-serving repos (frontend + fullstack); a repo
     # with no declared brand passes when the ticket sets no brand.
-    brand_ok() { [ -z "$t_brand" ] || [ "$brand" = "$t_brand" ]; }
+    brand_ok() { [ -z "$t_brand" ] || [ -z "$brand" ] || [ "$brand" = "$t_brand" ]; }
     case "$t_scope" in
       fe)   serves_fe "$role" && brand_ok && add "$row" ;;
       be)   serves_be "$role" && add "$row" ;;
