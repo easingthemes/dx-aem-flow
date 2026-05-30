@@ -72,14 +72,21 @@ if { [ "$t_scope" = "fe" ] || [ "$t_scope" = "both" ]; } && [ -z "$t_brand" ] &&
   exit 3
 fi
 
+# Role capability helpers. A `fullstack` repo serves frontend, backend, AND
+# authoring — so it matches every scope. `frontend`/`backend` serve only their
+# own half. Brand filtering is applied separately (only to fe-serving repos).
+serves_fe() { [ "$1" = "frontend" ] || [ "$1" = "fullstack" ]; }
+serves_be() { [ "$1" = "backend" ]  || [ "$1" = "fullstack" ]; }
+
 # Select repos by scope.
 out='[]'
 add() { # row-tsv
   local name role platform brand adoproj pid auth
   IFS=$'\t' read -r name role platform brand adoproj <<<"$1"
   pid=$(echo "$MAP" | jq -r --arg n "$name" '.[$n]')
-  # authoring owner heuristic at route level: frontend repos in split platforms
-  # carry AEM authoring; backend repos do not. (Child re-confirms via aem.author-url.)
+  # authoring owner heuristic at route level: backend repos do not carry AEM
+  # authoring; frontend AND fullstack repos do. (Child re-confirms via
+  # aem.author-url.)
   if [ "$role" = "backend" ]; then auth=false; else auth=true; fi
   out=$(echo "$out" | jq -c --arg r "$name" --arg p "$pid" --arg s "$t_scope" --argjson a "$auth" \
     '. += [{repo:$r, pipelineId:$p, scope:$s, authoring:$a}]')
@@ -88,11 +95,14 @@ add() { # row-tsv
 if [ "${#INPLAT[@]}" -gt 0 ]; then
   for row in "${INPLAT[@]}"; do
     IFS=$'\t' read -r name role platform brand adoproj <<<"$row"
+    # Brand filter applies to fe-serving repos (frontend + fullstack); a repo
+    # with no declared brand passes when the ticket sets no brand.
+    brand_ok() { [ -z "$t_brand" ] || [ "$brand" = "$t_brand" ]; }
     case "$t_scope" in
-      fe)   [ "$role" = "frontend" ] && { [ -z "$t_brand" ] || [ "$brand" = "$t_brand" ]; } && add "$row" ;;
-      be)   [ "$role" = "backend" ] && add "$row" ;;
-      both) if [ "$role" = "backend" ]; then add "$row";
-            elif [ "$role" = "frontend" ] && { [ -z "$t_brand" ] || [ "$brand" = "$t_brand" ]; }; then add "$row"; fi ;;
+      fe)   serves_fe "$role" && brand_ok && add "$row" ;;
+      be)   serves_be "$role" && add "$row" ;;
+      both) if serves_be "$role" && ! serves_fe "$role"; then add "$row";
+            elif serves_fe "$role" && brand_ok; then add "$row"; fi ;;
     esac
   done
 fi

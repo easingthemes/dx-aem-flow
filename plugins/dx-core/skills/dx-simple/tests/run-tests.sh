@@ -528,6 +528,16 @@ SMAP='{"AemFullstack":"101"}'
 run "route: single-platform infers without platform field" \
   bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length>=0'"
 
+# fullstack single-platform repo: platform=dxn scope=both -> dispatches AemFullstack
+printf '%s\n' "page-url: http://x" "platform: dxn" "scope: both" > "$TMP/r5.yaml"
+run "route: dxn/both dispatches the fullstack repo" \
+  bash -c "$ROUTE $TMP/r5.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AemFullstack\" and .[0].authoring==true'"
+
+# fullstack also serves scope=be
+printf '%s\n' "page-url: http://x" "platform: dxn" "scope: be" > "$TMP/r6.yaml"
+run "route: dxn/be dispatches the fullstack repo" \
+  bash -c "$ROUTE $TMP/r6.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AemFullstack\"'"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
