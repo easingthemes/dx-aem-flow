@@ -203,6 +203,20 @@ roles:
 | `lint-css` | string | no | CSS lint command |
 | `lint-fix` | string | no | Auto-fix lint issues command |
 
+### `dx-simple`
+
+SimpleAgent (`/dx-simple`) settings. All optional.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `build-compile-fast` | string | no | Fast compile command used by Phase 4 (preferred over `build.compile-fast` / `build.compile`) |
+| `recovery.trigger-token` | string | no | Keyword that re-triggers a paused/blocked run via an ADO comment. Default `@kai-simple`. **MUST match the ADO Service Hook comment filter string** — single source of truth. The bot never emits the literal token (writes it bare, instructs the human to prefix `@`) so its own comments don't self-trigger. |
+| `recovery.max-attempts` | integer | no | Human-answer cycles allowed on a `needs-input` blocker before downgrading it to `hard` (recommend DevAgent). Default `3`. Crashes/transient resumes do not count against this cap. |
+
+> **Prerequisite for recovery:** `.ai/specs/` must be **tracked** in git — the
+> per-ticket branch is the durable state store. The `/dx-init` gitignore ignores
+> `.ai/specs/` by default; remove that line to enable SimpleAgent recovery.
+
 ### `toolchain`
 
 | Field | Type | Required | Description |

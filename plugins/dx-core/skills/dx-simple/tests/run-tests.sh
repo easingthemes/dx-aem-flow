@@ -431,6 +431,12 @@ EOF
 expect_exit "preflight: missing all three build keys is detected" 1 \
   bash -c "grep -qE '^\s*(compile(-fast)?|command):' $TMP/cfg-neither.yaml"
 
+# ===== resumable recovery (TODO #141) behavioral fixture =====
+# The recovery harness seeds throwaway git repos + bare remotes, so it manages
+# its own assertions and exit code. Run it here as one aggregate test.
+run "recovery: resume-check + save-state behavioral fixture" \
+  bash "$SCRIPT_DIR/../scripts/__tests__/resume-recovery.test.sh"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
