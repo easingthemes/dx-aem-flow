@@ -210,6 +210,57 @@ import CommandBlock from '../../components/CommandBlock.astro';
 </Section>
 
 <SectionHeading
+  badge="SimpleAgent"
+  badgeColor="secondary"
+  title="Resumable Recovery -- Branch as State Store"
+  subtitle="SimpleAgent (/dx-simple) runs autonomously in a fresh pipeline container where nothing survives between runs. Its recovery model makes the per-ticket git branch the durable state store, so a blocked or crashed run can be continued -- not restarted."
+  bg="alt"
+/>
+<Section>
+  <PipelineBlock
+    label="Phase 0 Dispatch"
+    description="Every run starts by discovering the ticket's branch (anchored id match) and dispatching on the committed resume-state.json."
+    steps={[
+      { title: 'fresh', subtitle: 'no branch\n→ Phase 1', color: '#059669' },
+      { title: 'in-progress', subtitle: 'crashed\n→ resume forward', color: '#d97706' },
+      { title: 'blocked-needs-input', subtitle: 'await @kai-simple\n→ re-enter phase', color: '#d97706' },
+      { title: 'blocked-hard', subtitle: 'DevAgent\n→ re-post + exit', color: '#dc2626' },
+      { title: 'done', subtitle: 'PR exists\n→ no-op', color: '#8b5cf6' },
+    ]}
+  />
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard icon="mdi:source-branch" iconColor="bg-emerald-600" title="Branch is the State">
+      Every phase and gate checkpoints <code>resume-state.json</code> (+ work-plan, dialog-map,
+      report) to the branch via <code>save-state.sh</code> -- rebasing before push and bailing on a
+      concurrent advance rather than force-pushing. A crash leaves <code>status: in-progress</code>;
+      the next run resumes forward from <code>last-completed-phase</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:comment-question" iconColor="bg-amber-500" title="Human-in-the-Loop">
+      A recoverable blocker posts a classified comment asking for a precise input. The human replies
+      beginning with the <code>@kai-simple</code> keyword -- an Azure-native <strong>filtered Service
+      Hook</strong> re-runs the pipeline (the Lambda is not in this path). The agent reads its own
+      comment, applies the answer, and re-enters the blocked phase. Capped at 3 answer cycles.
+    </ContentCard>
+
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-cyan" title="Code Replays, Authoring Reconciles">
+      Code edits are never committed -- on resume past Phase 3b they are replayed deterministically
+      from <code>work-plan.json</code>. JCR authoring writes persist in AEM, so resume skips Phase 3a
+      and reconciles via the committed <code>authoring-diff.json</code> (idempotent before-check).
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Human-Re-Triggered, Not Automatic">
+    A silent crash (MAX_TURNS / timeout) posts no <code>@kai-simple</code> comment, so nothing
+    re-fires the filtered hook on its own. The pipeline's fallback comment instructs the human to
+    reply with the keyword to resume. Recovery requires <code>.ai/specs/</code> to be tracked in git
+    (the branch is the state store), and reads its token + attempt cap from
+    <code>dx-simple.recovery.*</code> in config.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="Data"
   badgeColor="secondary"
   title="Healing Data Captured"

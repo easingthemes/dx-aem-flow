@@ -41,6 +41,19 @@ build:
   # lint-scss: ""                       # SCSS-specific lint
   # lint-fix: ""                        # auto-fix lint issues
 
+# Optional — SimpleAgent (/dx-simple) settings.
+# dx-simple:
+#   # build-compile-fast: "mvn -q -pl core compile"   # fast compile used by Phase 4
+#   recovery:                              # resumable error recovery (autonomous mode)
+#     trigger-token: "@kai-simple"         # keyword that re-triggers a paused run.
+#                                          # MUST match the ADO Service Hook comment
+#                                          # filter string (single source of truth).
+#     max-attempts: 3                      # human-answer cycles before downgrading
+#                                          # a needs-input blocker to hard (DevAgent).
+# NOTE: SimpleAgent recovery requires `.ai/specs/` to be TRACKED in git
+# (the per-ticket branch is the durable state store). The /dx-init gitignore
+# ignores `.ai/specs/` by default — remove that line to enable recovery.
+
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review
   auto-pr: {{AUTO_PR}}                  # true | false — create PR automatically after pipeline success

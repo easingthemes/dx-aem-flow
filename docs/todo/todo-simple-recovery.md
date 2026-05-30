@@ -1,6 +1,11 @@
 # TODO: `/dx-simple` Resumable Error Recovery
 
-> Design doc for TODO #141. Status: **design — not yet implemented.**
+> Design doc for TODO #141. Status: **implemented 2026-05-30** — `resume-check.sh`,
+> `save-state.sh`, `resume-state.json.tmpl`, Phase 0 + rewritten ABORT + jump table
+> in `SKILL.md`, Recovery section in `report.md.tmpl`, behavioral fixture under
+> `scripts/__tests__/` (wired into `tests/run-tests.sh`), config `dx-simple.recovery.*`,
+> pipeline `failed()` reword, `git-rules.md` exception, and docs. The design notes
+> below are retained as the rationale of record.
 > Settled with the requester on 2026-05-30 (see "Decisions locked" below).
 > **Revised 2026-05-30** after a design review (accepted in full). The review
 > corrected the trigger model (Azure-native filtered Service Hook, not the
