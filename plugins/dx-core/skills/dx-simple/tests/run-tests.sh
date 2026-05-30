@@ -437,6 +437,24 @@ expect_exit "preflight: missing all three build keys is detected" 1 \
 run "recovery: resume-check + save-state behavioral fixture" \
   bash "$SCRIPT_DIR/../scripts/__tests__/resume-recovery.test.sh"
 
+# ===== dx-common config readers =====
+DXC="$SCRIPT_DIR/../../../data/lib/dx-common.sh"
+CFG_MULTI="$FIXTURES/config-multi-platform.yaml"
+
+run "yaml_block_val: project.role = frontend" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(yaml_block_val project role)\" = 'frontend' ]"
+
+run "yaml_block_val: project.platform = legacy" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(yaml_block_val project platform)\" = 'legacy' ]"
+
+run "repos_table: emits 5 rows" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(repos_table | wc -l | xargs)\" = '5' ]"
+
+# grep -P (PCRE) is unavailable on BSD grep (macOS); use a printf-built literal
+# TAB pattern instead. Helper output format is unchanged.
+run "repos_table: LegacyBrandX row has brand=brandx" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && repos_table | grep -q \"\$(printf 'LegacyBrandX\tfrontend\tlegacy\tbrandx')\""
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
