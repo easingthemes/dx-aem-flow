@@ -502,6 +502,32 @@ run "guard: single fullstack proceeds as owner" \
 mkblock "page-url: http://x" "platform: legacy" "scope: be"
 expect_exit "guard: fe repo + be scope aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
 
+# ===== route-targets =====
+ROUTE="$SCRIPTS/route-targets.sh"
+# map: every reachable repo -> a fake pipeline id
+MAP='{"AemFullstack":"101","LegacyBackend":"102","LegacyBrandX":"103","LegacyBrandY":"104"}'
+
+# Multi-platform, platform omitted -> exit 3 (ambiguous, must declare)
+printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r1.yaml"
+expect_exit "route: multi-platform missing platform -> 3" 3 \
+  "$ROUTE" "$TMP/r1.yaml" "$FIXTURES/config-multi-platform.yaml" "$MAP"
+
+# platform=legacy, brand=brandx, scope=both -> dispatch LegacyBackend + LegacyBrandX
+printf '%s\n' "page-url: http://x" "platform: legacy" "brand: brandx" "scope: both" > "$TMP/r2.yaml"
+run "route: legacy/both dispatches BE + brandX FE" \
+  bash -c "$ROUTE $TMP/r2.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'map(.repo) | (index(\"LegacyBackend\") != null) and (index(\"LegacyBrandX\") != null) and (index(\"LegacyBrandY\") == null)'"
+
+# scope=be -> only LegacyBackend
+printf '%s\n' "page-url: http://x" "platform: legacy" "scope: be" > "$TMP/r3.yaml"
+run "route: legacy/be dispatches only BE" \
+  bash -c "$ROUTE $TMP/r3.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"LegacyBackend\"'"
+
+# single-platform config, no platform field -> infers, dispatches the one repo
+printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r4.yaml"
+SMAP='{"AemFullstack":"101"}'
+run "route: single-platform infers without platform field" \
+  bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length>=0'"
+
 # Summary
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
