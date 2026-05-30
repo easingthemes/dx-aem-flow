@@ -13,7 +13,7 @@ So that the call to action is clearer
 
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
-platform: legacy
+platform: beta
 brand: brandx
 scope: fe
 change-value: "Rename the CTA to Begin now"

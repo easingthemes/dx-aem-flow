@@ -1,27 +1,27 @@
 project:
   name: test-project
   role: frontend
-  platform: legacy
+  platform: beta
   brand: brandx
 aem:
   author-url: http://localhost:4502
   brands:
     - brandx
 repos:
-  - name: AemFullstack
+  - name: AlphaFullstack
     role: fullstack
-    platform: dxn
-  - name: LegacyBackend
+    platform: alpha
+  - name: BetaBackend
     role: backend
-    platform: legacy
-  - name: LegacyBrandX
+    platform: beta
+  - name: BetaBrandX
     role: frontend
-    platform: legacy
+    platform: beta
     brand: brandx
-  - name: LegacyBrandY
+  - name: BetaBrandY
     role: frontend
-    platform: legacy
+    platform: beta
     brand: brandy
-  - name: LegacyConfig
+  - name: BetaConfig
     role: config
-    platform: legacy
+    platform: beta

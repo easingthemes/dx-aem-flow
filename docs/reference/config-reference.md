@@ -16,8 +16,8 @@ project:
   prefix: "myproject"             # Short prefix used in naming conventions
   type: aem-fullstack             # required — project type detected by dx-adapt (aem-fullstack, aem-frontend, frontend, java, ...)
   role: fullstack                 # required — repo role: frontend | backend | fullstack | config
-  platform: legacy                # opaque platform id (self) — used by dx-simple routing guard
-  brand: brandx                   # optional — this repo's brand (split-platform frontends)
+  platform: alpha                 # opaque platform id (self) — used by dx-simple routing guard
+  brand: brand-a                  # optional — this repo's brand (split-platform frontends)
 
 scm:
   provider: ado                   # ado | github
@@ -67,7 +67,7 @@ repos:
   - name: My-Backend-Repo
     role: backend                      # required — frontend | backend | fullstack | config
     platform: Legacy                   # optional — opaque consumer-defined platform identifier
-    brand: brandx                      # optional — repo's brand identity (split-platform FE selection)
+    brand: brand-a                     # optional — repo's brand identity (split-platform FE selection)
     path: ../My-Backend-Repo          # optional — local filesystem path for cross-repo checks
     ado-project: "My Backend Project"  # optional — ADO project (if different from scm.project)
     base-branch: develop               # optional — default branch (defaults to scm.base-branch)
