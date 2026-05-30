@@ -336,6 +336,14 @@ The article validates these design choices. The main gaps are in **structured ha
 
 ---
 
+## MCP gateway / single-wrapper analysis
+
+**Added:** 2026-05-30
+**Problem:** Open question — should we wrap all six MCP servers (ADO, Atlassian, Figma, axe, AEM, Chrome DevTools) behind one custom MCP that routes only needed tools, combines calls via params, and injects secrets? The concrete pain driving it: **Chrome DevTools MCP cannot stay logged into AEM QA** — `plugins/dx-aem/.mcp.json` runs `chrome-devtools-mcp` with `--isolated`, which spawns a throwaway profile every run, so each session restarts at the AEM login form, and no `AEM_QA_*` credentials are plumbed anywhere.
+**Scope:** `plugins/dx-aem/.mcp.json` (Chrome args), config template (`AEM_CHROME_PROFILE`, optional `AEM_QA_USER`/`AEM_QA_PASS`), tip #30 (`website/.../mcp-secrets-two-different-approaches.md`), and — only if option D is taken — a new thin MCP server under `plugins/dx-aem/`.
+**Done-when:** Chrome DevTools MCP retains an AEM-QA session across runs without re-driving the login form each time — verify by running an `aem-*` skill twice and confirming the second run lands authenticated. (Full reasoning + decision matrix: [research doc](../research/2026-05-30-mcp-gateway-wrapper-analysis.md).)
+**Approach:** Do **not** build a stack-wide gateway — Claude Code Tool Search already defers MCP tool defs (the context argument is moot), and a monolith breaks independent-plugin installability, drops `list_changed` upstream tool updates, and forces renaming 200+ skill/agent tool refs (cf. #5). Tiered fix: **(A, do now)** drop `--isolated`, add `--user-data-dir=${AEM_CHROME_PROFILE}`; log in once, cookie persists — one-line config win solving ~80%. **(D, optional)** a small **AEM-scoped** custom MCP exposing composite task-level tools (`aem_qa_session`, `aem_capture_page`) that hold creds server-side so the model never sees them and Copilot/Gemini (no Tool Search / no `headersHelper`) get the same secret-safe login. Keep ADO/Atlassian/Figma/axe direct. Off-the-shelf aggregators (MetaMCP, mcp-proxy, Supergateway) solve enterprise audit/RBAC/SSO we don't have — revisit only for team-fleet governance, and adopt rather than hand-roll.
+
 ## Sources
 
 - [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, Anthropic Labs, Mar 24 2026
