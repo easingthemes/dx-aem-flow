@@ -501,6 +501,24 @@ is also non-empty, Phase 3b runs immediately after Phase 3a (sequential, not
 parallel — Phase 3a must record the JCR before-state in main context for
 rollback before Phase 3b touches anything).
 
+**Authoring-owner gate (multi-repo).** First read `authoring-owner` from
+`resume-state.json` (set by Phase 0.5; defaults to `true`). If it is `false`,
+**skip all authoring items** — another repo owns authoring for this ticket on this
+AEM instance. Record in `report.md`:
+`Authoring skipped — owned by the AEM-author-capable repo for this platform.` Then:
+- if `work-plan.code[]` is also non-empty → fall through to Phase 3b (the edge
+  `Phase 3a -> G4 [if code items also queued]`);
+- if there are no code items → this repo has nothing to apply → go to Phase 5 via the
+  existing `[if no code items]` edge. With nothing written, visual verify/report simply
+  confirms no change in this repo → write report, verdict: **success (no-op)**.
+
+**Read-before-write idempotency (always — even when this repo IS the owner).** Before
+each JCR write, `getNodeContent` the target property; if its current value already
+equals the target (`item.after`), **skip the write** and log `unchanged` in
+`authoring-diff.json`. This keeps recovery re-runs (#141) and any parallel
+same-instance run side-effect-free. (The per-item drift check below applies the same
+read; the gate here is the general rule it implements.)
+
 For each item in `work-plan.authoring[]`:
 
 1. Read current value:
@@ -508,10 +526,12 @@ For each item in `work-plan.authoring[]`:
    mcp__plugin_dx-aem_AEM__getNodeContent with path=<jcr-path>
    ```
    Confirm `item.before` matches the actual current value. **Idempotent re-entry
-   (H1):** if `actual == item.after`, this write was **already applied** by a prior
-   run that crashed mid-Phase-3a → record it as applied and **skip** (do NOT abort
-   with `value drifted`). Only abort `"value drifted: expected <before>, got <actual>"`
-   when `actual` is neither `before` nor `after`.
+   (H1) / read-before-write:** if `actual == item.after`, the target value is
+   already in place — either a prior run that crashed mid-Phase-3a applied it, or a
+   parallel same-instance run did → **skip the write**, log `unchanged` in
+   `authoring-diff.json`, and record it as applied. Only abort
+   `"value drifted: expected <before>, got <actual>"` when `actual` is neither
+   `before` nor `after`.
 
 2. Apply the write:
    ```
