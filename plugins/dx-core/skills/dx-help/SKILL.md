@@ -31,7 +31,7 @@ Determine which docs area is most likely to have the answer:
 | A feature (auth, forms, commerce, etc.) | `.ai/project/features.md` |
 | Repos, teams, structure | `.ai/project/project.yaml` |
 | Brands, markets, locales | `.ai/project/project.yaml` |
-| Platforms (Legacy vs DXN) | `.ai/project/project.yaml`, `.ai/project/architecture.md` |
+| Platforms (your project's platform identifiers) | `.ai/project/project.yaml`, `.ai/project/architecture.md` |
 | File paths, conventions | `.ai/project/file-patterns.yaml` |
 | Content paths, languages | `.ai/project/content-paths.yaml` |
 | Build, deploy, infrastructure | `.ai/project/architecture.md`, CLAUDE.md |

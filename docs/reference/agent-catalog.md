@@ -495,7 +495,7 @@ Captures dialog screenshots via Chrome DevTools and writes editor-friendly autho
 | **Claude equivalent** | aem-file-resolver + aem-page-finder |
 | **Invoke** | `@AEMComponent <component>` |
 
-Multi-platform component lookup — finds source files (via file-patterns.yaml), AEM pages, and dialog fields. Data-driven via project.yaml prefixes. Supports both Legacy and DXN platforms.
+Multi-platform component lookup — finds source files (via file-patterns.yaml), AEM pages, and dialog fields. Data-driven via project.yaml prefixes. Supports multiple project-defined platforms.
 
 **Sub-agents:** aem-file-resolver, aem-page-finder
 **Handoffs:** AEMTicket, AEMBefore, DxComponent

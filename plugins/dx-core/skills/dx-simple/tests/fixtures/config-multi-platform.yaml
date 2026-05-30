@@ -1,0 +1,27 @@
+project:
+  name: test-project
+  role: frontend
+  platform: beta
+  brand: brandx
+aem:
+  author-url: http://localhost:4502
+  brands:
+    - brandx
+repos:
+  - name: AlphaFullstack
+    role: fullstack
+    platform: alpha
+  - name: BetaBackend
+    role: backend
+    platform: beta
+  - name: BetaBrandX
+    role: frontend
+    platform: beta
+    brand: brandx
+  - name: BetaBrandY
+    role: frontend
+    platform: beta
+    brand: brandy
+  - name: BetaConfig
+    role: config
+    platform: beta

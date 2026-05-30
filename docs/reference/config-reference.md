@@ -16,6 +16,8 @@ project:
   prefix: "myproject"             # Short prefix used in naming conventions
   type: aem-fullstack             # required — project type detected by dx-adapt (aem-fullstack, aem-frontend, frontend, java, ...)
   role: fullstack                 # required — repo role: frontend | backend | fullstack | config
+  platform: alpha                 # opaque platform id (self) — used by dx-simple routing guard
+  brand: brand-a                  # optional — this repo's brand (split-platform frontends)
 
 scm:
   provider: ado                   # ado | github
@@ -64,7 +66,8 @@ markets:
 repos:
   - name: My-Backend-Repo
     role: backend                      # required — frontend | backend | fullstack | config
-    platform: Legacy                   # optional — opaque consumer-defined platform identifier
+    platform: alpha                    # optional — opaque consumer-defined platform identifier
+    brand: brand-a                     # optional — repo's brand identity (split-platform FE selection)
     path: ../My-Backend-Repo          # optional — local filesystem path for cross-repo checks
     ado-project: "My Backend Project"  # optional — ADO project (if different from scm.project)
     base-branch: develop               # optional — default branch (defaults to scm.base-branch)
@@ -118,7 +121,7 @@ aem:
   demo-parent-path: "/content/mysite/en/demo"  # Parent path for all AI-created demo pages (aem-verify, aem-doc-gen)
   selector: "model"               # Exporter selector (if project uses custom selector)
   current-repo: "My-Repo"         # Current repo name (for cross-repo awareness)
-  platform: "legacy"              # AEM platform: legacy (custom Web Components/Gulp) or dxn (@netcentric/Webpack)
+  platform: "alpha"               # opaque, project-defined platform identifier (e.g. alpha, beta) — declared in project.yaml
   active-brands: [brand-a]           # Active brands for this repo (scopes component/page searches)
   active-markets:                 # Active markets (scopes searches by brand + country)
     - brand: brand-a
@@ -154,6 +157,8 @@ roles:
 | `prefix` | string | yes | Short prefix for naming conventions |
 | `type` | string | yes | Project type detected by `/dx-adapt` (e.g., `aem-fullstack`, `aem-frontend`, `frontend`, `java`) |
 | `role` | string | yes | Repo role: `frontend` \| `backend` \| `fullstack` \| `config` |
+| `platform` | string | no | Opaque platform id for this repo (self). Read by `/dx-simple`'s Phase 0.5 routing guard and the router to match a ticket's `platform` against this repo. |
+| `brand` | string | no | This repo's brand identity — used to select the correct per-brand frontend repo on split platforms. |
 
 ### `scm`
 
@@ -247,7 +252,7 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `publish-url-qa` | string | no | Remote QA publisher URL — for user-facing verification on QA environment |
 | `selector` | string | no | Exporter selector for JSON endpoints |
 | `current-repo` | string | no | Current repo name (for cross-repo scope detection) |
-| `platform` | string | no | AEM platform: `legacy` (custom Web Components/Gulp) or `dxn` (@netcentric/Webpack) |
+| `platform` | string | no | Opaque, project-defined platform identifier (e.g. `alpha`, `beta`) — declared in project.yaml |
 | `active-brands` | list | no | Active brands for this repo (scopes component and page searches) |
 | `active-markets` | list | no | Active markets with brand + countries (scopes searches by market) |
 | `qa-basic-auth` | object | no | QA/Stage HTTP Basic Auth credentials (`username`, `password`). Used by `aem-editorial-guide-capture` and `aem-doc-gen` for authenticated QA environments. Also install `.claude/rules/qa-basic-auth.md` via `/aem-init` for the full auth handling pattern. |
@@ -259,7 +264,8 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 |-------|------|----------|-------------|
 | `name` | string | yes | Repo name |
 | `role` | string | yes | Repo role: `frontend` \| `backend` \| `fullstack` \| `config` |
-| `platform` | string | no | Opaque consumer-defined platform identifier (e.g., `Legacy`, `DXN`) |
+| `platform` | string | no | Opaque, project-defined platform identifier (e.g., `alpha`, `beta`) |
+| `brand` | string | no | Repo's brand identity — used by `/dx-simple` routing to select the correct per-brand frontend repo on split platforms |
 | `path` | string | no | Local filesystem path for cross-repo checks (relative or absolute) |
 | `ado-project` | string | no | ADO project name if different from `scm.project` |
 | `base-branch` | string | no | Default branch (falls back to `scm.base-branch`) |
@@ -334,7 +340,7 @@ These environment variables are set on ADO pipeline runs and read by skills at r
 | Variable | Description |
 |----------|-------------|
 | `SOURCE_REPO_NAME` | Set to `$(Build.Repository.Name)`. Skills compare this against cross-repo scope to decide delegation. |
-| `CROSS_REPO_PIPELINE_MAP` | JSON mapping repo names to pipeline IDs: `{"My-Backend-Repo":"789"}`. Used by the delegation YAML step. |
+| `CROSS_REPO_PIPELINE_MAP` | JSON mapping repo names to pipeline IDs: `{"My-Backend-Repo":"789"}`. Used by the delegation YAML step. **Also consumed by the `simple-router` pipeline**, where it maps each routing target repo name → that repo's dx-simple pipeline id (the second step of the router's two-step `(platform,brand,scope)→repo→pipeline-id` lookup). |
 
 ### delegate.json (cross-repo output)
 

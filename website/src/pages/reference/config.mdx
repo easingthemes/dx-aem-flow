@@ -304,7 +304,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>name</code></td><td class="p-3">string</td><td class="p-3">Repository name</td></tr>
         <tr><td class="p-3"><code>path</code></td><td class="p-3">string</td><td class="p-3">Relative path to local checkout</td></tr>
         <tr><td class="p-3"><code>role</code></td><td class="p-3">string</td><td class="p-3"><code>backend</code>, <code>frontend</code>, <code>fullstack</code>, or <code>config</code></td></tr>
-        <tr><td class="p-3"><code>platform</code></td><td class="p-3">string</td><td class="p-3"><code>Legacy</code> or <code>DXN</code> (AEM only, added by <code>/aem-init</code>)</td></tr>
+        <tr><td class="p-3"><code>platform</code></td><td class="p-3">string</td><td class="p-3">opaque, project-defined platform identifier, e.g. <code>alpha</code> or <code>beta</code> (AEM only, added by <code>/aem-init</code>)</td></tr>
         <tr><td class="p-3"><code>ado-project</code></td><td class="p-3">string</td><td class="p-3">ADO project (if different from <code>scm.project</code>)</td></tr>
         <tr><td class="p-3"><code>base-branch</code></td><td class="p-3">string</td><td class="p-3">Default branch (defaults to <code>scm.base-branch</code>)</td></tr>
         <tr><td class="p-3"><code>capabilities</code></td><td class="p-3">list</td><td class="p-3">Rule templates for sync (auto-detected if omitted)</td></tr>
@@ -415,7 +415,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>demo-parent-path</code></td><td class="p-3">string</td><td class="p-3">no</td><td class="p-3">Parent path for all AI-created demo pages</td></tr>
         <tr><td class="p-3"><code>selector</code></td><td class="p-3">string</td><td class="p-3">no</td><td class="p-3">Exporter selector for JSON endpoints</td></tr>
         <tr><td class="p-3"><code>current-repo</code></td><td class="p-3">string</td><td class="p-3">no</td><td class="p-3">Current repo name (for cross-repo scope detection)</td></tr>
-        <tr><td class="p-3"><code>platform</code></td><td class="p-3">string</td><td class="p-3">no</td><td class="p-3"><code>legacy</code> (custom Web Components/Gulp) or <code>dxn</code> (@netcentric/Webpack)</td></tr>
+        <tr><td class="p-3"><code>platform</code></td><td class="p-3">string</td><td class="p-3">no</td><td class="p-3">opaque, project-defined platform identifier (e.g. <code>alpha</code>, <code>beta</code>) -- declared in project.yaml</td></tr>
         <tr><td class="p-3"><code>active-brands</code></td><td class="p-3">list</td><td class="p-3">no</td><td class="p-3">Active brands (scopes component and page searches)</td></tr>
         <tr><td class="p-3"><code>active-markets</code></td><td class="p-3">list</td><td class="p-3">no</td><td class="p-3">Active markets with brand + countries (scopes searches)</td></tr>
         <tr><td class="p-3"><code>qa-basic-auth</code></td><td class="p-3">object</td><td class="p-3">no</td><td class="p-3">QA/Stage HTTP Basic Auth credentials (<code>username</code>, <code>password</code>). Used by <code>aem-editorial-guide-capture</code> and <code>aem-doc-gen</code>.</td></tr>
