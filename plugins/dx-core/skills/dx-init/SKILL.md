@@ -853,7 +853,7 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 
 Ask:
 
-> **Set up AI automation?** Deploys ten autonomous agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation) as ADO pipelines triggered by AWS Lambda webhooks. Requires the `automation` plugin installed plus AWS CLI and Azure CLI configured.
+> **Set up AI automation?** Deploys eleven autonomous agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) as ADO pipelines. Most are triggered by AWS Lambda webhooks; SimpleAgent is Azure-native (ADO Service Hook, no Lambda). Requires the `automation` plugin installed plus AWS CLI and Azure CLI configured.
 >
 > 1. **Yes** — scaffold now (run `/auto-init` inline)
 > 2. **Skip** — set up later with `/auto-init`

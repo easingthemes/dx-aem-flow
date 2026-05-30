@@ -2,7 +2,7 @@
 # validate-structure.sh — Verify plugin structure, versions, and cross-references
 #
 # Checks:
-# 1. Version sync across all 4 JSON files
+# 1. Version sync across all plugin + marketplace JSON files
 # 2. Plugin manifests don't have agents/skills fields (breaks Claude Code)
 # 3. MCP tool prefixes use correct plugin-prefixed names
 # 4. Skills referencing agents that exist
@@ -24,6 +24,7 @@ VERSIONS=$(grep '"version"' \
   "$REPO_ROOT/plugins/dx-core/.claude-plugin/plugin.json" \
   "$REPO_ROOT/plugins/dx-aem/.claude-plugin/plugin.json" \
   "$REPO_ROOT/plugins/dx-automation/.claude-plugin/plugin.json" \
+  "$REPO_ROOT/plugins/dx-hub/.claude-plugin/plugin.json" \
   "$REPO_ROOT/.claude-plugin/marketplace.json" \
   | sed 's/.*"version": *"\([^"]*\)".*/\1/' | sort -u)
 
@@ -34,6 +35,7 @@ if [ "$VERSION_COUNT" -ne 1 ]; then
     "$REPO_ROOT/plugins/dx-core/.claude-plugin/plugin.json" \
     "$REPO_ROOT/plugins/dx-aem/.claude-plugin/plugin.json" \
     "$REPO_ROOT/plugins/dx-automation/.claude-plugin/plugin.json" \
+    "$REPO_ROOT/plugins/dx-hub/.claude-plugin/plugin.json" \
     "$REPO_ROOT/.claude-plugin/marketplace.json"
   ERRORS=$((ERRORS + 1))
 else

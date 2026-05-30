@@ -16,7 +16,7 @@
 | `Token budget exhausted` | Monthly cap hit | Wait for month rollover or increase `MONTHLY_TOKEN_CAP`. |
 | `rate limit exceeded` | Daily cap hit | Resets at midnight UTC. Adjust in `rate-limiter.js`. |
 | `scanner: degraded mode` | Content Safety down | Fail-open — pipelines continue with local detection. |
-| Plugin install failure | Pipeline variables wrong | Check `ADO_ORG_URL` and `DX_MARKETPLACE_URL`. |
+| Plugin install failure | Cannot reach GitHub | Pipelines clone `github.com/easingthemes/dx-aem-flow` (public) — check agent network/proxy access to github.com. |
 | Delegation failed | Pipeline map wrong | Check `CROSS_REPO_PIPELINE_MAP` JSON. |
 | Webhooks stopped | Auto-disabled by ADO | Re-enable in Service Hooks settings. |
 
