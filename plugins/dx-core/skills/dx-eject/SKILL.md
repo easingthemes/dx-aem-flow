@@ -49,8 +49,8 @@ Present this warning and **wait for explicit confirmation**:
 ## ⚠ Eject Warning
 
 This will copy ALL assets from the following plugins into your repo:
-- dx-core (45 skills, 5 agents, 4 rules, shared files, data, templates)
-- dx-aem (10 skills, 5 agents, shared files, templates)
+- dx-core (50 skills, 7 agents, 5 rules, shared files, data, templates)
+- dx-aem (12 skills, 6 agents, shared files, templates)
 - dx-automation (11 skills, 1 rule, data files, templates)
 
 ### What happens:
@@ -260,11 +260,11 @@ Read each ejected plugin manifest from `.ai/ejected/manifests/` to get the versi
 
 ## Examples
 
-1. `/dx-eject all` — Ejects all 3 plugins. Copies 66 skills, 10 agents, templates, and data files. Creates `.ai/ejected/` archive. Reports 3 manifests saved for version tracking.
+1. `/dx-eject all` — Ejects all 3 plugins. Copies 73 skills, 13 agents, templates, and data files. Creates `.ai/ejected/` archive. Reports 3 manifests saved for version tracking.
 
-2. `/dx-eject dx` — Ejects only dx-core. Copies 45 skills and 5 agents. AEM and automation plugins remain as plugins.
+2. `/dx-eject dx` — Ejects only dx-core. Copies 50 skills and 7 agents. AEM and automation plugins remain as plugins.
 
-3. `/dx-eject aem` — Ejects only dx-aem. Copies 10 AEM skills and 5 AEM agents. dx-core stays as a plugin (AEM skills depend on dx skills, which still load from the plugin).
+3. `/dx-eject aem` — Ejects only dx-aem. Copies 12 AEM skills and 6 AEM agents. dx-core stays as a plugin (AEM skills depend on dx skills, which still load from the plugin).
 
 ## Troubleshooting
 

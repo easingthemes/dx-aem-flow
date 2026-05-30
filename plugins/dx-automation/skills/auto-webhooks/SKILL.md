@@ -144,10 +144,48 @@ Update `infra.json`:
 
 **Skip for consumer profile.** This is the only hook that does **not** route through a Lambda. SimpleAgent (`ado-cli-simple.yml`, `/dx-simple`) is triggered entirely inside ADO: a comment containing `@kai-simple` on a work item fires this Service Hook, which delivers to the SimpleAgent pipeline's **Incoming WebHook** service connection (declared under `resources.webhooks` in the pipeline). The same event drives both the first run and recovery — the pipeline's Phase 0 decides fresh-vs-resume.
 
-**Prerequisite — Incoming WebHook service connection** (Project Settings → Service connections → New → **Incoming WebHook**). The names must match `ado-cli-simple.yml`:
+**Prerequisite — Incoming WebHook service connection.** Names are fixed to match `ado-cli-simple.yml` (and `ado-cli-simple-router.yml`):
 - **Webhook Name:** `kai-simple` (matches the `webhook:` alias in the pipeline)
 - **Service connection name:** `kai-simple-trigger-sc` (matches `connection:` in the pipeline)
-- **Secret / HTTP header:** your choice; reused by the Service Hook below
+- **Secret:** optional HMAC secret reused by the Service Hook below (loop-safety / authenticity)
+
+Because SimpleAgent is fully Azure-native (no Lambda / no API Gateway), this connection is the one piece of trigger infra and can be created via the ADO REST API — no manual UI step. Ask once:
+
+> **Incoming WebHook secret?** (optional — HMAC secret shared between the Service Hook and the Incoming WebHook connection. Leave blank for none.) — secret, not stored
+
+First check whether the connection already exists (idempotent):
+
+```bash
+EXISTING_SC=$(az rest --method GET \
+  --uri "<adoOrg>/<adoProject>/_apis/serviceendpoint/endpoints?endpointNames=kai-simple-trigger-sc&api-version=7.1" \
+  --query "value[0].id" --output tsv 2>/dev/null)
+```
+
+- If non-empty: **skip creation**, reuse it. Report `⏭ kai-simple-trigger-sc already exists (ID: <id>) — skipping`.
+- If empty: create it via `az_resource` (audit-wrapped). Include `"secret"` in `data` only if a secret was provided:
+
+```bash
+az_resource "ado/service-connection/kai-simple-trigger-sc" \
+  az rest --method POST \
+    --uri "<adoOrg>/_apis/serviceendpoint/endpoints?api-version=7.1" \
+    --headers "Content-Type=application/json" \
+    --body "{
+      \"name\": \"kai-simple-trigger-sc\",
+      \"type\": \"incomingwebhook\",
+      \"url\": \"<adoOrg>\",
+      \"authorization\": { \"scheme\": \"None\", \"parameters\": {} },
+      \"data\": { \"webhookName\": \"kai-simple\"<SECRET_FIELD> },
+      \"serviceEndpointProjectReferences\": [{
+        \"projectReference\": { \"id\": \"<PROJECT_ID>\", \"name\": \"<adoProject>\" },
+        \"name\": \"kai-simple-trigger-sc\"
+      }]
+    }" \
+    --query 'id' --output tsv
+```
+
+Where `<SECRET_FIELD>` is `, \"secret\": \"<webhook-secret>\"` when a secret was provided, or empty otherwise. `<PROJECT_ID>` is the GUID from step 0.
+
+**Fallback (UI):** if the REST create is rejected (older ADO without the `incomingwebhook` endpoint type), create it manually: Project Settings → Service connections → New → **Incoming WebHook**, Webhook Name `kai-simple`, Service connection name `kai-simple-trigger-sc`.
 
 The trigger token is config-driven — read it so the hook filter matches the skill (`dx-simple.recovery.trigger-token`, default `@kai-simple`):
 
@@ -165,7 +203,8 @@ Create the Service Hook on the **"Work item commented on"** event, filtered so t
 
 Update `infra.json`:
 - `webhooks.simple.connection` → `kai-simple-trigger-sc`
-- `webhooks.simple.subscriptionId` → returned ID
+- `webhooks.simple.connectionId` → service connection ID (`$EXISTING_SC` or the created endpoint's `id`)
+- `webhooks.simple.subscriptionId` → returned Service Hook ID
 - `webhooks.simple.status` → `"configured"`
 
 ## 3. PR Answer Service Hook (PR Commented On) — ALL PROFILES

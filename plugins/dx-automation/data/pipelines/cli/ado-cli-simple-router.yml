@@ -23,7 +23,7 @@ steps:
 
   - bash: |
       set -euo pipefail
-      git clone --depth 1 --branch main "$DX_MARKETPLACE_URL" /tmp/dx
+      git clone --depth 1 --branch main https://github.com/easingthemes/dx-aem-flow.git /tmp/dx
       RAW="/tmp/story.md"
       WID="${{ parameters.workItemId }}"
       curl -s -u ":$ADO_PAT" \
@@ -38,7 +38,6 @@ steps:
     env:
       ADO_PAT: $(ADO_PAT)
       ADO_ORG_URL: $(ADO_ORG_URL)
-      DX_MARKETPLACE_URL: $(DX_MARKETPLACE_URL)
       CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
 
   - bash: |

@@ -9,9 +9,11 @@ for f in \
   plugins/dx-core/.claude-plugin/plugin.json \
   plugins/dx-aem/.claude-plugin/plugin.json \
   plugins/dx-automation/.claude-plugin/plugin.json \
+  plugins/dx-hub/.claude-plugin/plugin.json \
   plugins/dx-core/.cursor-plugin/plugin.json \
   plugins/dx-aem/.cursor-plugin/plugin.json \
   plugins/dx-automation/.cursor-plugin/plugin.json \
+  plugins/dx-hub/.cursor-plugin/plugin.json \
   gemini-extension.json \
   .claude-plugin/marketplace.json
 do
