@@ -1,3 +1,10 @@
+# [2.112.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.111.0...v2.112.0) (2026-05-30)
+
+
+### Features
+
+* **dx-automation:** sync simple pipeline import + automate service connection; drop DX_MARKETPLACE_URL ([#155](https://github.com/easingthemes/dx-aem-flow/issues/155)) ([a8bcec1](https://github.com/easingthemes/dx-aem-flow/commit/a8bcec155e85231544dc5a84b1a8c024ed907e5a))
+
 # [2.111.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.110.0...v2.111.0) (2026-05-30)
 
 
