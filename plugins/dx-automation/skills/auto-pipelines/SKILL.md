@@ -28,6 +28,10 @@ Expected pipelines per profile:
 - **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix, simple
 - **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, `@kai-simple` comment trigger, YAML `ado-cli-simple.yml`)
 
+**SimpleAgent pipelines (`simple` / `simple-router`) are imported here like any other pipeline.** SimpleAgent has *no Lambda* — its trigger is an Azure-native Service Hook + Incoming WebHook service connection (configured by `/auto-webhooks`, not here). But "no Lambda" only affects the *trigger*: the pipeline YAML still must be imported as an ADO definition and given variables, which is exactly this skill's job. So:
+- **`simple`** (`ado-cli-simple.yml`) — enabled by default; imported for both consumer and full-hub when not `disabled`. This is the pipeline the comment hook fires in a single-platform project.
+- **`simple-router`** (`ado-cli-simple-router.yml`) — **multi-platform only, `"disabled": true` by default** in `infra.template.json`. Import it only when the project fans `@kai-simple` out to child `simple` pipelines in other repos. Skip it (like any disabled entry) unless explicitly enabled.
+
 ## 1. Import Pipelines
 
 For each enabled pipeline (in order), import the YAML into ADO.
@@ -167,33 +171,18 @@ az_pipelines_variable create \
 
 Set: `AEM_AUTHOR_URL`, `AEM_PUBLISH_URL`, `AEM_USER`, `AEM_PASS` (secret).
 
-### Plugin marketplace variables (ALL CLI pipelines)
+### ADO org URL (ALL CLI pipelines)
 
-Set these on ALL CLI pipelines (DoR, PR Review, PR Answer, DoD, DoD-Fix, BugFix, QA, DevAgent, DOCAgent, Estimation). These enable the "Install dx plugins" step which installs skills and agents from the marketplace.
+Set this on ALL CLI pipelines (DoR, PR Review, PR Answer, DoD, DoD-Fix, BugFix, QA, DevAgent, DOCAgent, Estimation). The pipelines fetch the dx-aem-flow plugins by cloning the **public** GitHub repo (`https://github.com/easingthemes/dx-aem-flow.git`, hardcoded in each pipeline YAML) — no marketplace URL variable is needed. `ADO_ORG_URL` is used by the agents to reach the ADO REST API.
 
 > **ADO org URL?** (pre-fill from `infra.json` > `adoOrg`)
 >
-> Used by the plugin install step to authenticate Git access to the marketplace repo (cross-repo fallback).
+> Used by the agents to call the ADO REST API (fetch work item, post comments).
 
 ```bash
 az_pipelines_variable create \
   --name "ADO_ORG_URL" \
   --value "<adoOrg from infra.json>" \
-  --pipeline-name "<pipeline-name>" \
-  --project "<adoProject>" \
-  --organization "<adoOrg>"
-```
-
-> **dx plugin marketplace URL?** Git URL with ref for the plugin marketplace repo.
->
-> Format: `https://<org>.visualstudio.com/<project>/_git/<repo>.git#<branch>`
->
-> Only needed for cross-repo pipelines. If `dx-aem-flow/` exists in the checkout (same repo), local path is used automatically.
-
-```bash
-az_pipelines_variable create \
-  --name "DX_MARKETPLACE_URL" \
-  --value "<git-url>#<ref>" \
   --pipeline-name "<pipeline-name>" \
   --project "<adoProject>" \
   --organization "<adoOrg>"
@@ -297,6 +286,27 @@ az_pipelines_variable create \
 
 The MCP version variables (`CHROME_DEVTOOLS_MCP_VERSION`, `AEM_MCP_VERSION`) have inline defaults in the YAML — only set as pipeline variables to override.
 
+### Simple-Router pipeline additional variables (multi-platform only)
+
+Only applies if `simple-router` is enabled (`"disabled": true` by default — skip otherwise). The router queues each target repo's `simple` pipeline via the ADO REST API, so it needs a PAT and the cross-repo map. It runs no LLM itself, so it has **no `ANTHROPIC_API_KEY`**.
+
+| Variable | Value | Secret? |
+|----------|-------|---------|
+| `ADO_PAT` | PAT with Build (Read & Execute) scope — used to POST pipeline runs to child repos | Yes |
+| `ADO_ORG_URL` | ADO org URL (pre-fill from `infra.json` > `adoOrg`) | No |
+| `CROSS_REPO_PIPELINE_MAP` | JSON mapping each target repo name → that repo's **`simple`** pipeline ID (the children the router fans to — NOT the router's own id). Example: `{"Other-Repo":"789"}` | No |
+
+```bash
+az_pipelines_variable create \
+  --name "ADO_PAT" \
+  --value "<pat>" --secret true \
+  --pipeline-name "<simple-router-pipeline-name>" \
+  --project "<adoProject>" \
+  --organization "<adoOrg>"
+```
+
+> **Trigger note:** in a multi-platform project the `@kai-simple` Service Hook targets the **`simple-router`** Incoming WebHook, not the per-repo `simple` pipelines. `/auto-webhooks` §2b handles that. This skill only imports the YAML and sets the variables above.
+
 ## 3. Summary Report
 
 ```markdown
@@ -324,7 +334,7 @@ The MCP version variables (`CHROME_DEVTOOLS_MCP_VERSION`, `AEM_MCP_VERSION`) hav
 
 ## Examples
 
-1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 10 enabled agents. Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 10 imported successfully.
+1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 11 enabled agents (the 10 core agents + `simple`; `simple-router` is `disabled` by default). Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 11 imported successfully.
 
 2. `/auto-pipelines` (consumer project) — Reads consumer-profile `infra.json` with 2 pipelines (PR Review, PR Answer). Imports `KAI-BrandB-PR-Review-Agent` and `KAI-BrandB-PR-Answer-Agent` with repo-specific names. Sets pipeline variables including hub Lambda URLs. Reminds user to register pipeline IDs with the hub's Lambda env vars.
 
