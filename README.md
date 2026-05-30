@@ -65,7 +65,7 @@ Requires dx plugin.
 
 ### [dx-automation](plugins/dx-automation/) — Autonomous Agents
 
-Autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent) running 24/7 as ADO pipelines triggered by AWS Lambda webhooks.
+Eleven autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) running 24/7 as ADO pipelines. Most are triggered by AWS Lambda webhooks; SimpleAgent is fully Azure-native (ADO Service Hook, no Lambda).
 
 Requires dx plugin.
 

@@ -21,68 +21,77 @@
       "id": "{{DOR_PIPELINE_ID}}",
       "_id_comment": "ADO pipeline definition ID. Find it in ADO > Pipelines > pipeline > Edit > URL (?definitionId=XXXX)",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dor.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "DOR_WIKI_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DOR_WIKI_URL"]
     },
     "pr-review": {
       "name": "{{PIPELINE_NAME_PREFIX}}-PR-Review-Agent",
       "id": "{{PR_REVIEW_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-pr-review.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "REVIEWER_IDENTITIES"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "REVIEWER_IDENTITIES"]
     },
     "pr-answer": {
       "name": "{{PIPELINE_NAME_PREFIX}}-PR-Answer-Agent",
       "id": "{{PR_ANSWER_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-pr-answer.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL", "MY_IDENTITIES"],
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "MY_IDENTITIES"],
       "note": "Separate from pr-review — this one responds to comments on YOUR PRs"
     },
     "dod": {
       "name": "{{PIPELINE_NAME_PREFIX}}-DOD-Agent",
       "id": "{{DOD_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dod.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL"]
     },
     "dod-fix": {
       "name": "{{PIPELINE_NAME_PREFIX}}-DOD-Fix-Agent",
       "id": "{{DOD_FIX_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dod-fix.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
     },
     "bugfix": {
       "name": "{{PIPELINE_NAME_PREFIX}}-BugFix-Agent",
       "id": "{{BUGFIX_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-bug-fix.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
     },
     "qa": {
       "name": "{{PIPELINE_NAME_PREFIX}}-QA-Agent",
       "id": "{{QA_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-qa.yml",
-      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL"]
     },
     "devagent": {
       "name": "{{PIPELINE_NAME_PREFIX}}-DevAgent",
       "id": "{{DEV_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dev-agent.yml",
-      "variables": ["ANTHROPIC_API_KEY", "FIGMA_PERSONAL_ACCESS_TOKEN", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "FIGMA_PERSONAL_ACCESS_TOKEN", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
     },
     "docagent": {
       "name": "{{PIPELINE_NAME_PREFIX}}-DOCAgent",
       "id": "{{DOC_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-doc-agent.yml",
-      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "AEM_AUTHOR_URL", "AEM_PUBLISH_URL", "AEM_USER", "AEM_PASS", "ADO_ORG_URL"]
     },
     "estimation": {
       "name": "{{PIPELINE_NAME_PREFIX}}-Estimation-Agent",
       "id": "{{ESTIMATION_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-estimation.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL"]
+    },
+    "simple": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-Simple-Agent",
+      "_name_comment": "SimpleAgent (/dx-simple). Triggered by a @kai-simple comment via an Azure-native ADO Service Hook → Incoming WebHook service connection (kai-simple-trigger-sc) → this pipeline's resources.webhooks listener. NO Lambda, NO AWS. Still must be imported as an ADO pipeline definition and given variables — that is auto-pipelines' job and is independent of the trigger mechanism.",
+      "id": "{{SIMPLE_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-simple.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "AEM_QA_URL", "AEM_QA_USER", "AEM_QA_PASSWORD"]
     },
     "simple-router": {
       "name": "{{PIPELINE_NAME_PREFIX}}-Simple-Router",
+      "_name_comment": "MULTI-PLATFORM ONLY. Fans a @kai-simple comment out to each target repo's own 'simple' pipeline via the ADO REST API. Disabled by default — single-platform projects point the service hook directly at the 'simple' pipeline and never import this. Set disabled:false to enable.",
+      "disabled": true,
       "id": "{{SIMPLE_ROUTER_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-simple-router.yml",
-      "variables": ["ADO_ORG_URL", "ADO_PAT", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
+      "variables": ["ADO_ORG_URL", "ADO_PAT", "CROSS_REPO_PIPELINE_MAP"]
     }
   },
 
@@ -214,7 +223,16 @@
   },
 
   "webhooks": {
-    "_comment": "ADO Service Hooks. WI hooks (User Story + Bug) are project-scoped (hub only). PR Answer hook is per-repo (hub + each consumer) — filtered to repository + base branch to avoid firing on all repos.",
+    "_comment": "ADO Service Hooks. WI hooks (User Story + Bug) are project-scoped (hub only). PR Answer hook is per-repo (hub + each consumer) — filtered to repository + base branch to avoid firing on all repos. The 'simple' hook is Azure-native (no Lambda / no API Gateway) — it delivers to a pipeline's Incoming WebHook service connection.",
+    "simple": {
+      "event": "ms.vss-work.workitem-comment-event",
+      "_scope_comment": "Azure-native — NO Lambda, NO API Gateway. Comment-contains filter on the trigger token fires this hook, which delivers to the Incoming WebHook service connection (kai-simple-trigger-sc) wired to the pipeline's resources.webhooks listener. Same event covers first run AND recovery (Phase 0 decides). Single-platform → targets the 'simple' pipeline; multi-platform → targets the 'simple-router' pipeline.",
+      "filter": "comment contains <dx-simple.recovery.trigger-token> (default @kai-simple)",
+      "connection": "kai-simple-trigger-sc",
+      "target": "Incoming WebHook service connection → simple (or simple-router) pipeline",
+      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks (+ Service connections)",
+      "status": "not-configured"
+    },
     "wi-userstory": {
       "event": "workitem.updated",
       "filter": "workItemType: User Story, tag: KAI-TRIGGER",
