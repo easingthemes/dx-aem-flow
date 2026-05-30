@@ -159,6 +159,10 @@ Create the Service Hook on the **"Work item commented on"** event, filtered so t
 
 > The filter string MUST equal `dx-simple.recovery.trigger-token` — the skill, the pipeline header comment, and this hook all read from that one source of truth. The bot never emits the literal token in its own comments, so its own replies cannot self-trigger the hook (loop-safety).
 
+**Which pipeline does the hook target?**
+- **Single-platform projects (default):** point the hook at the **`simple`** pipeline's `kai-simple` Incoming WebHook, exactly as described above. The one dx-simple pipeline applies the change directly.
+- **Multi-platform projects:** point the hook at the **`simple-router`** pipeline's Incoming WebHook (`ado-cli-simple-router.yml`) instead of `simple` directly. The router reads the `simple` block's `platform` field and `CROSS_REPO_PIPELINE_MAP`, then queues each target repo's own `simple` pipeline. The per-repo `simple` pipelines keep their `resources.webhooks` listener for child runs, but the **comment hook fires the router**, not the individual `simple` pipelines.
+
 Update `infra.json`:
 - `webhooks.simple.connection` → `kai-simple-trigger-sc`
 - `webhooks.simple.subscriptionId` → returned ID
