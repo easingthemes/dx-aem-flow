@@ -201,7 +201,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Hooks"
   badgeColor="secondary"
   title="ADO Service Hooks"
-  subtitle="Only 3 hooks needed -- tag-based routing consolidates work item events."
+  subtitle="Three Lambda-routed hooks, plus one Azure-native hook for SimpleAgent (no Lambda)."
   bg="alt"
 />
 <Section>
@@ -233,12 +233,68 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <td class="p-3">--</td>
         <td class="p-3">PR Answer</td>
       </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">SimpleAgent</td>
+        <td class="p-3">workitem.commented</td>
+        <td class="p-3">comment contains <code>@kai-simple</code></td>
+        <td class="p-3">SimpleAgent (no Lambda)</td>
+      </tr>
     </tbody>
   </table>
 
   <HighlightBox severity="info" title="PR Review">
     PR Review uses a build validation policy, not a service hook. It triggers automatically
     when a PR is created, running as part of the PR build validation.
+  </HighlightBox>
+
+  <HighlightBox severity="success" title="SimpleAgent -- Azure-native trigger (no Lambda)">
+    SimpleAgent is the one agent with **no Lambda in its path.** A comment containing
+    <code>@kai-simple</code> on a work item fires an ADO Service Hook
+    (event: *work item commented on*, filter: *comment contains the token*) that delivers to
+    an **Incoming WebHook service connection**, which the pipeline declares under
+    <code>resources.webhooks</code>. The same event drives both the first run and recovery --
+    Phase 0 (<code>resume-check.sh</code>) decides fresh-vs-resume. The WI Router's
+    <code>AGENTS</code> array has no <code>simple</code> entry, so the Lambda never sees it.
+    The filter token is config-driven (<code>dx-simple.recovery.trigger-token</code>).
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Trigger Choice"
+  badgeColor="warning"
+  title="Azure-native vs Lambda router"
+  subtitle="When to skip the Lambda and trigger a pipeline directly from an ADO Service Hook."
+  bg="primary"
+/>
+<Section>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ContentCard icon="mdi:cloud-off-outline" iconColor="bg-emerald-600" title="Azure-native (SimpleAgent model)">
+      Service Hook &rarr; Incoming WebHook service connection &rarr; pipeline <code>resources.webhooks</code>.
+      No AWS infra, nothing to deploy. **Trade-off:** you lose the Lambda's dedupe, per-agent rate
+      limiting, monthly token-budget gating, and central tag-classification -- and any loop-prevention
+      must live in the pipeline. One hook + one service connection **per agent.** Best for
+      **human-initiated, low-volume** agents.
+    </ContentCard>
+
+    <ContentCard icon="mdi:router" iconColor="bg-brand-700" title="Lambda router (the other 10)">
+      One hook fans out to many pipelines via tag-classification, with dedupe (ADO retry storms),
+      rate limiting, and the monthly token budget applied centrally. Best for **high-volume
+      autonomous** agents. Adding an agent is just env vars -- no new hook.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="info" title="Which pipelines could adopt the Azure-native trigger?">
+    ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**,
+    **state/field change**, and **PR events** -- so any event-driven agent *can* be triggered this way.
+
+    - **In use:** SimpleAgent (`@kai-simple` comment).
+    - **Already Lambda-free:** PR Reviewer (build validation policy).
+    - **Natural next candidate:** PR Answerer via a `@kai-answer` comment keyword -- but it would lose the
+      Lambda's cheap identity / loop / dedupe gates, which would move into the pipeline.
+    - **Could migrate, with a trade-off:** the tag-driven WI agents (DoR, DoD, QA, DevAgent, DOCAgent,
+      Estimation, BugFix) -- each via a per-agent tag, `@kai-...` comment, or State-transition hook --
+      but they'd lose dedupe, rate-limiting, and the token budget. Keep these on the Lambda router.
+    - **Not event-triggered:** DoD-Fixer (chained after the DoD check).
   </HighlightBox>
 </Section>
 

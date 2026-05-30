@@ -39,6 +39,22 @@ Read the ADO project layout from `.ai/config.yaml` (`scm.project`) and `.ai/auto
 
 - Per-repo, per-branch — configured as a build validation policy on the base branch, not as a service hook
 
+### SimpleAgent Comment Hook (Azure-native — no Lambda)
+
+- **Scope**: Project-level, filtered on **comment text** (`comment contains @kai-simple`)
+- **Event**: *Work item commented on* (`workitem.commented`)
+- **Consumer**: the SimpleAgent pipeline's **Incoming WebHook** service connection (`resources.webhooks` in `ado-cli-simple.yml`) — **not** the WI Router Lambda. This is the one trigger that bypasses AWS entirely.
+- **Who creates**: Hub only (`/auto-webhooks` step 2b)
+- **Filter token**: read from `dx-simple.recovery.trigger-token` (default `@kai-simple`) — the skill, the pipeline header, and the hook filter share that single source of truth
+- **Why Azure-native**: SimpleAgent is human-initiated and low-volume; a person types `@kai-simple` to start a run or to resume a blocked one. The same event covers both — Phase 0 (`resume-check.sh`) decides fresh-vs-resume. The WI Router's `AGENTS` array has no `simple` entry, so the Lambda never sees it.
+
+## Azure-native vs Lambda — which path for a new agent?
+
+ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**, **state/field change**, and **PR events**. So any event-driven agent *can* be triggered the Azure-native way (Service Hook → Incoming WebHook service connection → pipeline `resources.webhooks`), one hook + connection per agent.
+
+- **Azure-native** (SimpleAgent model): no AWS infra, nothing to deploy. But you lose the Lambda's dedupe (ADO retry storms), per-agent rate limiting, monthly token-budget gating, and central tag-classification; any loop-prevention must live in the pipeline. Best for **human-initiated, low-volume** agents (e.g. a `@kai-...` comment keyword). PR Answer is the most natural candidate to migrate (a `@kai-answer` keyword) — but it would lose the Lambda's cheap identity/loop/dedupe gates, which would move into the pipeline.
+- **Lambda router** (default for the other 10): keep the high-volume autonomous WI agents (DoR, DoD, QA, DevAgent, DOCAgent, Estimation, BugFix) here so they retain dedupe, rate-limiting, the token budget, and one-hook-fans-out-to-many routing. PR Review stays a build validation policy (already Lambda-free). DoD-Fixer is chained, not event-triggered.
+
 ## Pipeline Naming
 
 - **Hub**: `KAI-*` (e.g., `KAI-PR-Review-Agent`)

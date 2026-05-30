@@ -41,8 +41,8 @@ import { stats } from '../../config/stats';
 
 <SectionHeading
   badge="Agents"
-  title="Ten Autonomous Agents"
-  subtitle="Two PR agents triggered automatically, eight work-item agents triggered by ADO tags (Jira label support planned)."
+  title="Eleven Autonomous Agents"
+  subtitle="Two PR agents triggered automatically, eight work-item agents triggered by ADO tags, and SimpleAgent triggered by a comment via an Azure-native Service Hook (Jira label support planned)."
   bg="primary"
 />
 <Section>
@@ -147,6 +147,27 @@ import { stats } from '../../config/stats';
       tags={[{ label: 'KAI-ESTIMATION-AUTOMATION', color: 'secondary' }, { label: 'estimation', color: 'secondary' }]}
     >
       Estimates story points with detailed reasoning based on codebase complexity analysis.
+    </ContentCard>
+  </div>
+
+  <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-600 mb-4 mt-8">Comment-triggered (Azure-native -- no Lambda)</h3>
+
+  <HighlightBox severity="success" title="How SimpleAgent Triggers">
+    A comment containing <code>@kai-simple</code> on a work item fires an ADO Service Hook
+    (event: <em>work item commented on</em>, filter: <em>comment contains the token</em>) that posts to an
+    Incoming WebHook service connection the pipeline listens on. No Lambda, no API Gateway. The same
+    event starts the first run and resumes a blocked one -- Phase 0 decides which.
+  </HighlightBox>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <ContentCard
+      icon="mdi:auto-fix"
+      iconColor="bg-emerald-600"
+      title="SimpleAgent"
+      tags={[{ label: '@kai-simple', color: 'success' }, { label: '/dx-simple', color: 'secondary' }]}
+    >
+      Applies a small AEM change (a11y label, color, spacing, copy) via an authoring (JCR write) or
+      code (file edits &rarr; PR) split. 9 confidence gates, strict scope limits, resumable recovery.
     </ContentCard>
   </div>
 </Section>

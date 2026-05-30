@@ -140,6 +140,30 @@ Update `infra.json`:
 - `webhooks.wi-bug.subscriptionId` → returned ID
 - `webhooks.wi-bug.status` → `"configured"`
 
+## 2b. SimpleAgent Comment Hook (Work Item Commented On) — HUB ONLY, Azure-native (no Lambda)
+
+**Skip for consumer profile.** This is the only hook that does **not** route through a Lambda. SimpleAgent (`ado-cli-simple.yml`, `/dx-simple`) is triggered entirely inside ADO: a comment containing `@kai-simple` on a work item fires this Service Hook, which delivers to the SimpleAgent pipeline's **Incoming WebHook** service connection (declared under `resources.webhooks` in the pipeline). The same event drives both the first run and recovery — the pipeline's Phase 0 decides fresh-vs-resume.
+
+**Prerequisite — Incoming WebHook service connection** (Project Settings → Service connections → New → **Incoming WebHook**). The names must match `ado-cli-simple.yml`:
+- **Webhook Name:** `kai-simple` (matches the `webhook:` alias in the pipeline)
+- **Service connection name:** `kai-simple-trigger-sc` (matches `connection:` in the pipeline)
+- **Secret / HTTP header:** your choice; reused by the Service Hook below
+
+The trigger token is config-driven — read it so the hook filter matches the skill (`dx-simple.recovery.trigger-token`, default `@kai-simple`):
+
+```bash
+TRIGGER_TOKEN=$(bash .ai/lib/dx-common.sh yaml-val 'dx-simple.recovery.trigger-token'); TRIGGER_TOKEN=${TRIGGER_TOKEN:-@kai-simple}
+```
+
+Create the Service Hook on the **"Work item commented on"** event, filtered so the **comment contains `$TRIGGER_TOKEN`**, delivering to the `kai-simple` Incoming WebHook (the pipeline's webhook resource) — **not** an API Gateway / Lambda URL. In the ADO UI: Project Settings → Service Hooks → **+** → select the trigger that posts to the pipeline's Incoming WebHook, set event = *Work item commented on*, and set filter **"Comment contains" = `<TRIGGER_TOKEN>`**.
+
+> The filter string MUST equal `dx-simple.recovery.trigger-token` — the skill, the pipeline header comment, and this hook all read from that one source of truth. The bot never emits the literal token in its own comments, so its own replies cannot self-trigger the hook (loop-safety).
+
+Update `infra.json`:
+- `webhooks.simple.connection` → `kai-simple-trigger-sc`
+- `webhooks.simple.subscriptionId` → returned ID
+- `webhooks.simple.status` → `"configured"`
+
 ## 3. PR Answer Service Hook (PR Commented On) — ALL PROFILES
 
 Routes to the PR Router Lambda. **This hook is repo-scoped** — each repo (hub and every consumer) creates its own hook filtered to that repo and base branch. Without repo filtering, a project-scoped hook fires on every PR comment across all repos in the ADO project.
@@ -233,6 +257,7 @@ Adapt the report to the profile:
 |------|-------|-------|-----|--------|
 | WI User Story | workitem.updated | Project (tag: KAI-TRIGGER) | <wi-url> | ✓ configured |
 | WI Bug | workitem.updated | Project (tag: KAI-TRIGGER) | <wi-url> | ✓ configured |
+| SimpleAgent | workitem.commented (comment contains @kai-simple) | Project → pipeline Incoming WebHook (no Lambda) | kai-simple-trigger-sc | ✓ configured |
 | PR Answer | git.pullrequest.comment-event | Repo: <repo>, branch: <branch> | <pr-answer-url> | ✓ configured |
 | PR Review policy | Build validation | Repo: <repo>, branch: <branch> | (pipeline trigger) | ✓ configured |
 
