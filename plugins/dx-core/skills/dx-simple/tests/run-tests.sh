@@ -86,9 +86,9 @@ EOF
 run "parse: only page-url is enough (everything else inferred)" \
   "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-page-only.md" "$TMP/page-only.yaml"
 
-# change-type is no longer a field the parser cares about — legacy stories
+# change-type is no longer a field the parser cares about — beta stories
 # that still set it must parse cleanly, and the value is ignored downstream.
-cat > "$TMP/raw-legacy-type.md" <<'EOF'
+cat > "$TMP/raw-beta-type.md" <<'EOF'
 ---
 ticket: 9999995
 ---
@@ -100,9 +100,9 @@ change-type: aria-label
 change-value: "trap focus inside modal until Escape"
 brand: site
 EOF
-echo '```' >> "$TMP/raw-legacy-type.md"
-run "parse: legacy change-type field tolerated and ignored" \
-  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-legacy-type.md" "$TMP/legacy-type.yaml"
+echo '```' >> "$TMP/raw-beta-type.md"
+run "parse: beta change-type field tolerated and ignored" \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/raw-beta-type.md" "$TMP/beta-type.yaml"
 
 # Hex-color fixture: parse must succeed AND output must retain literal `#FF0000`
 # (proves inline `#` inside a quoted value is preserved — C1 fix).
@@ -112,6 +112,28 @@ run "parse: hex color in change-value preserved" \
 # CRLF fixture: parser must succeed on Windows-style line endings.
 run "parse: CRLF line endings work" \
   "$SCRIPTS/parse-simple-block.sh" "$FIXTURES/raw-story-crlf.md" "$TMP/crlf.yaml"
+
+run "parse: platform+brand+scope block exits 0" \
+  "$SCRIPTS/parse-simple-block.sh" "$FIXTURES/raw-story-platform.md" "$TMP/plat.yaml"
+
+run "parse: yaml preserves platform" \
+  bash -c "grep -q '^platform: beta' $TMP/plat.yaml"
+
+run "parse: yaml preserves scope" \
+  bash -c "grep -q '^scope: fe' $TMP/plat.yaml"
+
+# Heredoc fixture (the inline-printf form is fragile: backticks in a `bash -c`
+# single-quoted string get command-substituted by the outer shell). Same
+# assertion — a duplicate platform field must exit 3.
+cat > "$TMP/dup.md" <<'EOF'
+```simple
+page-url: http://x
+platform: a
+platform: b
+```
+EOF
+expect_exit "parse: duplicate platform exits 3" 3 \
+  "$SCRIPTS/parse-simple-block.sh" "$TMP/dup.md" "$TMP/dup.yaml"
 
 # ===== scope-check tests =====
 run "scope: mixed plan passes (1 code, 1 auth)" \
@@ -436,6 +458,98 @@ expect_exit "preflight: missing all three build keys is detected" 1 \
 # its own assertions and exit code. Run it here as one aggregate test.
 run "recovery: resume-check + save-state behavioral fixture" \
   bash "$SCRIPT_DIR/../scripts/__tests__/resume-recovery.test.sh"
+
+# ===== dx-common config readers =====
+DXC="$SCRIPT_DIR/../../../data/lib/dx-common.sh"
+CFG_MULTI="$FIXTURES/config-multi-platform.yaml"
+
+run "yaml_block_val: project.role = frontend" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(yaml_block_val project role)\" = 'frontend' ]"
+
+run "yaml_block_val: project.platform = beta" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(yaml_block_val project platform)\" = 'beta' ]"
+
+run "repos_table: emits 5 rows" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && [ \"\$(repos_table | wc -l | xargs)\" = '5' ]"
+
+# grep -P (PCRE) is unavailable on BSD grep (macOS); use a printf-built literal
+# TAB pattern instead. Helper output format is unchanged.
+run "repos_table: BetaBrandX row has brand=brandx" \
+  bash -c "export CONFIG_FILE='$CFG_MULTI'; source '$DXC' && repos_table | grep -q \"\$(printf 'BetaBrandX\tfrontend\tbeta\tbrandx')\""
+
+run "yaml_block_val: strips trailing inline comment" \
+  bash -c "printf 'project:\n  role: backend  # the be repo\n' > $TMP/c.yaml; export CONFIG_FILE=$TMP/c.yaml; source '$DXC'; [ \"\$(yaml_block_val project role)\" = 'backend' ]"
+
+# ===== repo-guard =====
+GUARD="$SCRIPTS/repo-guard.sh"
+mkblock() { printf '%s\n' "$@" > "$TMP/blk.yaml"; }
+
+# Wrong platform -> abort (3)
+mkblock "page-url: http://x" "platform: alpha" "scope: fe"
+expect_exit "guard: wrong platform aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# Wrong brand on a frontend self -> abort (3)  [config-multi self is frontend/beta/brandx]
+mkblock "page-url: http://x" "platform: beta" "brand: brandy" "scope: fe"
+expect_exit "guard: wrong brand aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# scope=both in one half -> proceed (0)
+mkblock "page-url: http://x" "platform: beta" "brand: brandx" "scope: both"
+expect_exit "guard: both proceeds" 0 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# single fullstack repo, no fields -> proceed (0) + AUTHORING_OWNER=true
+mkblock "page-url: http://x"
+run "guard: single fullstack proceeds as owner" \
+  bash -c "$GUARD $TMP/blk.yaml $FIXTURES/config-single-platform.yaml | grep -q 'AUTHORING_OWNER=true'"
+
+# frontend self with be-only scope -> abort (3)
+mkblock "page-url: http://x" "platform: beta" "scope: be"
+expect_exit "guard: fe repo + be scope aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
+
+# ===== route-targets =====
+ROUTE="$SCRIPTS/route-targets.sh"
+# map: every reachable repo -> a fake pipeline id
+MAP='{"AlphaFullstack":"101","BetaBackend":"102","BetaBrandX":"103","BetaBrandY":"104"}'
+
+# Multi-platform, platform omitted -> exit 3 (ambiguous, must declare)
+printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r1.yaml"
+expect_exit "route: multi-platform missing platform -> 3" 3 \
+  "$ROUTE" "$TMP/r1.yaml" "$FIXTURES/config-multi-platform.yaml" "$MAP"
+
+# platform=beta, brand=brandx, scope=both -> dispatch BetaBackend + BetaBrandX
+printf '%s\n' "page-url: http://x" "platform: beta" "brand: brandx" "scope: both" > "$TMP/r2.yaml"
+run "route: beta/both dispatches BE + brandX FE" \
+  bash -c "$ROUTE $TMP/r2.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'map(.repo) | (index(\"BetaBackend\") != null) and (index(\"BetaBrandX\") != null) and (index(\"BetaBrandY\") == null)'"
+
+# scope=be -> only BetaBackend
+printf '%s\n' "page-url: http://x" "platform: beta" "scope: be" > "$TMP/r3.yaml"
+run "route: beta/be dispatches only BE" \
+  bash -c "$ROUTE $TMP/r3.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"BetaBackend\"'"
+
+# single-platform config has NO repos[] block -> a solo repo fans out to nothing.
+printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r4.yaml"
+SMAP='{"AlphaFullstack":"101"}'
+run "route: single-platform (no repos[]) fans out to empty" \
+  bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length==0'"
+
+# platform inference: MAP reachable repos span only ONE platform -> platform field optional
+printf '%s\n' "page-url: http://x" "scope: be" > "$TMP/r8.yaml"
+run "route: infers platform when only one reachable" \
+  bash -c "$ROUTE $TMP/r8.yaml $FIXTURES/config-multi-platform.yaml '{\"BetaBackend\":\"102\"}' | jq -e 'length==1 and .[0].repo==\"BetaBackend\"'"
+
+# fullstack single-platform repo: platform=alpha scope=both -> dispatches AlphaFullstack
+printf '%s\n' "page-url: http://x" "platform: alpha" "scope: both" > "$TMP/r5.yaml"
+run "route: alpha/both dispatches the fullstack repo" \
+  bash -c "$ROUTE $TMP/r5.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\" and .[0].authoring==true'"
+
+# fullstack also serves scope=be
+printf '%s\n' "page-url: http://x" "platform: alpha" "scope: be" > "$TMP/r6.yaml"
+run "route: alpha/be dispatches the fullstack repo" \
+  bash -c "$ROUTE $TMP/r6.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\"'"
+
+# branded ticket targeting a fullstack repo (no brand on repo) must still dispatch it
+printf '%s\n' "page-url: http://x" "platform: alpha" "brand: brandx" "scope: both" > "$TMP/r7.yaml"
+run "route: branded ticket still dispatches brandless fullstack repo" \
+  bash -c "$ROUTE $TMP/r7.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\"'"
 
 # Summary
 echo "---"

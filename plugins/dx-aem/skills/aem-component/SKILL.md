@@ -50,9 +50,9 @@ Run these Grep calls **in parallel** (all variations in one regex pattern):
 3. **Read** `.ai/config.yaml` for project structure details — repos, component paths, SCM URLs
 
 From `component-index-project.md` extract (if found):
-- **Platform** column — `Legacy`, `DXN`, or both (determines which file patterns to use)
+- **Platform** column — your project's platform identifiers (e.g. `alpha`, `beta`), or both (determines which file patterns to use)
 - **FE** column — `B`, `C`, `B C`, `Yes`, `N/A` (determines which FE repos/paths to search)
-- **Source Link** — ADO URL containing the exact component path (critical for DXN base path extraction)
+- **Source Link** — ADO URL containing the exact component path (critical for platforms that resolve the base path from the Source Link)
 - **Repo** column — which repo the component lives in
 - **Notes** — category info (BFF, Commerce, Form, etc.)
 
@@ -69,7 +69,7 @@ If `.ai/project/file-patterns.yaml` exists, spawn **ONE aem-file-resolver agent*
 
 The agent reads `file-patterns.yaml`, resolves all files per platform, and returns a structured file table with ADO URLs.
 
-**Multi-platform support:** If the component exists on multiple platforms (e.g., both Legacy and DXN), the agent resolves files for EACH platform separately and returns separate Backend sections.
+**Multi-platform support:** If the component exists on multiple platforms (e.g., two platforms `alpha` and `beta`), the agent resolves files for EACH platform separately and returns separate Backend sections.
 
 ### Without file-patterns.yaml (convention-based fallback)
 
@@ -160,7 +160,7 @@ If neither source is available, note "Dialog fields not available — no AEM MCP
 ## Component: <name>
 
 **Resource type:** `<resource-type>`
-**Platform:** <Legacy | DXN | both>
+**Platform:** <platform identifier, e.g. alpha | beta | both>
 **FE:** <B | C | B C | Yes | N/A>
 
 ---
@@ -232,7 +232,7 @@ Strips the prefix, searches for both `banner` and `myprefix-banner` variations. 
 ```
 /aem-component card
 ```
-If `card` exists on both Legacy and DXN platforms, shows separate Backend sections for each with platform-specific file paths and ADO links.
+If `card` exists on two platforms (e.g. `alpha` and `beta`), shows separate Backend sections for each with platform-specific file paths and ADO links.
 
 ## Troubleshooting
 

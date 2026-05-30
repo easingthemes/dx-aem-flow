@@ -77,6 +77,12 @@
       "id": "{{ESTIMATION_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-estimation.yml",
       "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "DX_MARKETPLACE_URL"]
+    },
+    "simple-router": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-Simple-Router",
+      "id": "{{SIMPLE_ROUTER_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-simple-router.yml",
+      "variables": ["ADO_ORG_URL", "ADO_PAT", "CROSS_REPO_PIPELINE_MAP", "DX_MARKETPLACE_URL"]
     }
   },
 

@@ -215,6 +215,7 @@ steps:
       AEM_QA_URL: $(AEM_QA_URL)
       AEM_QA_USER: $(AEM_QA_USER)
       AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+      SOURCE_REPO_NAME: $(Build.Repository.Name)
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"

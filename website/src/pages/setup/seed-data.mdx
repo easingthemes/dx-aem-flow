@@ -93,7 +93,7 @@ brands:
   - name: MySite
     markets:
       - code: US
-        platform: [DXN]
+        platform: [alpha]
         aem-paths: ["/content/mysite/us/en"]
         languages: [en]
         default-language: en
@@ -101,12 +101,12 @@ brands:
 
 repos:
   - name: MySite-AEM
-    platform: DXN
+    platform: alpha
     ado-project: My Project
     base-branch: develop
 
 platforms:
-  - id: DXN
+  - id: alpha
     resource-type-prefix: mysite/components
     css-prefix: mysite-
     component-prefixes: [mysite-]
@@ -132,7 +132,7 @@ defaults:
   bg="primary"
 />
 <Section>
-  <CommandBlock label="Example: DXN platform file patterns">{`DXN:
+  <CommandBlock label="Example: alpha platform file patterns">{`alpha:
   backend:
     repo: My-Platform-Repo
     resolve-from: component-index-project
@@ -213,7 +213,7 @@ language-defaults:
         <li><strong>Module Structure</strong> -- directory tree, Maven modules, FE build</li>
         <li><strong>Key Libraries</strong> -- shared libs, base classes, utilities</li>
         <li><strong>Key Patterns</strong> -- component anatomy, data flow, config patterns</li>
-        <li><strong>Platform Differences</strong> -- Legacy vs DXN, if applicable</li>
+        <li><strong>Platform Differences</strong> -- across your project's platforms, if applicable</li>
       </ul>
     </ContentCard>
     <ContentCard icon="mdi:puzzle" iconColor="bg-cyan" title="features.md">

@@ -131,6 +131,7 @@ digraph dx_simple {
     "Read resume comment + apply answer" [shape=box];
     "Replay code edits from work-plan.json" [shape=box];
     "Phase 1: Fetch + extract change details" [shape=box];
+    "Phase 0.5: Repo identity guard" [shape=box];
     "G1: locator match exactly 1?" [shape=diamond];
     "Phase 2: Classify (parallel subagents)" [shape=box];
     "G3: classification high or medium?" [shape=diamond];
@@ -184,7 +185,9 @@ digraph dx_simple {
     "Read resume comment + apply answer" -> "Phase 1: Fetch + extract change details" [label="re-enter ≤ 3b"];
     "Replay code edits from work-plan.json" -> "Phase 4: Compile (≤3 retries)" [label="re-enter target phase"];
 
-    "Phase 1: Fetch + extract change details" -> "G1: locator match exactly 1?";
+    "Phase 1: Fetch + extract change details" -> "Phase 0.5: Repo identity guard";
+    "Phase 0.5: Repo identity guard" -> "ABORT: classify blocker" [label="wrong target"];
+    "Phase 0.5: Repo identity guard" -> "G1: locator match exactly 1?" [label="proceed"];
     "G1: locator match exactly 1?" -> "ABORT: classify blocker" [label="no"];
     "G1: locator match exactly 1?" -> "Phase 2: Classify (parallel subagents)" [label="yes"];
     "Phase 2: Classify (parallel subagents)" -> "G3: classification high or medium?";
@@ -400,6 +403,26 @@ re-applies the work-plan as part of its normal flow.
    If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is
    in flight (H2); do not force-push.
 
+### Phase 0.5: Repo identity guard
+
+Runs once, right after `parse-simple-block.sh` writes `simple-block.yaml`, before G1.
+Confirms this repo is a legitimate target for the ticket and records authoring ownership.
+
+```bash
+GUARD_OUT=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/repo-guard.sh \
+  "$SPEC_DIR/simple-block.yaml" ".ai/config.yaml") || GUARD_RC=$?
+eval "$GUARD_OUT"   # sets DECISION, REASON?, AUTHORING_OWNER?
+```
+
+- If `DECISION=abort` (exit 3): set blocker class **`wrong-target`** and follow the
+  **ABORT path** — this is a **hard/terminal** blocker (no re-ask loop: the human must
+  re-trigger in the correct repo). Post `REASON` verbatim as the classified ADO comment.
+  No JCR writes, no code edits. Verdict: fail.
+- If `DECISION=proceed`: continue to G1. Persist `AUTHORING_OWNER` into
+  `resume-state.json` (`authoring-owner` key) — Phase 3a reads it.
+- Single-repo / unconfigured projects: `project.platform` is unset and the block has no
+  `platform`, so the guard proceeds with `AUTHORING_OWNER=true` (today's behavior).
+
 ### Phase 2: Classify (parallel subagents)
 
 Dispatch THREE subagents in a single message (parallel):
@@ -478,6 +501,24 @@ is also non-empty, Phase 3b runs immediately after Phase 3a (sequential, not
 parallel — Phase 3a must record the JCR before-state in main context for
 rollback before Phase 3b touches anything).
 
+**Authoring-owner gate (multi-repo).** First read `authoring-owner` from
+`resume-state.json` (set by Phase 0.5; defaults to `true`). If it is `false`,
+**skip all authoring items** — another repo owns authoring for this ticket on this
+AEM instance. Record in `report.md`:
+`Authoring skipped — owned by the AEM-author-capable repo for this platform.` Then:
+- if `work-plan.code[]` is also non-empty → fall through to Phase 3b (the edge
+  `Phase 3a -> G4 [if code items also queued]`);
+- if there are no code items → this repo has nothing to apply → go to Phase 5 via the
+  existing `[if no code items]` edge. With nothing written, visual verify/report simply
+  confirms no change in this repo → write report, verdict: **success (no-op)**.
+
+**Read-before-write idempotency (always — even when this repo IS the owner).** Before
+each JCR write, `getNodeContent` the target property; if its current value already
+equals the target (`item.after`), **skip the write** and log `unchanged` in
+`authoring-diff.json`. This keeps recovery re-runs (#141) and any parallel
+same-instance run side-effect-free. (The per-item drift check below applies the same
+read; the gate here is the general rule it implements.)
+
 For each item in `work-plan.authoring[]`:
 
 1. Read current value:
@@ -485,10 +526,12 @@ For each item in `work-plan.authoring[]`:
    mcp__plugin_dx-aem_AEM__getNodeContent with path=<jcr-path>
    ```
    Confirm `item.before` matches the actual current value. **Idempotent re-entry
-   (H1):** if `actual == item.after`, this write was **already applied** by a prior
-   run that crashed mid-Phase-3a → record it as applied and **skip** (do NOT abort
-   with `value drifted`). Only abort `"value drifted: expected <before>, got <actual>"`
-   when `actual` is neither `before` nor `after`.
+   (H1) / read-before-write:** if `actual == item.after`, the target value is
+   already in place — either a prior run that crashed mid-Phase-3a applied it, or a
+   parallel same-instance run did → **skip the write**, log `unchanged` in
+   `authoring-diff.json`, and record it as applied. Only abort
+   `"value drifted: expected <before>, got <actual>"` when `actual` is neither
+   `before` nor `after`.
 
 2. Apply the write:
    ```
@@ -806,6 +849,7 @@ fixes).
 | `needs-user-input` | G1 ambiguous/no match, missing `page-url`, G3 low classification, authoring value drifted, `ambiguous-branch` (M1) | human replies `@<keyword> <answer>` → resume at blocked phase |
 | `transient` | MAX_TURNS / step timeout / MCP unreachable / network blip — **infra only** | re-trigger (any `@<keyword>` reply, or re-run) → resume forward from `last-completed-phase` (replaying code edits if past 3b) |
 | `hard` | scope-check exceeded (>5 files / >50 lines / >10 writes), G7 real review blocker, **any compile failure surviving Phase 4's in-run 3× retry (M3)**, `answer-attempts` cap reached | not recoverable here → recommend re-tag `KAI-DEV-AUTOMATION` (DevAgent) |
+| `wrong-target` | Phase 0.5 repo identity guard aborted — ticket's platform/brand/scope does not match this repo's identity | terminal — not recoverable here → human must re-trigger in the correct repo |
 
 > **Compile is `hard`, not `transient` (M3).** Phase 4 already retries compile 3×
 > against a *deterministic* edit; a cross-run re-trigger replays the identical edit,

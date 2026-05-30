@@ -31,7 +31,7 @@ Machine-readable entry point for AI agents. All paths relative to repo root.
 | `.ai/project/aem-pages.md` | Find AEM pages using a component |
 | `.ai/project/features.md` | Understand a platform feature |
 | `.ai/project/markets.md` | Look up brand/market configuration |
-| `.ai/project/reference.md` | Understand platform architecture (Legacy vs DXN) |
+| `.ai/project/reference.md` | Understand platform architecture (your project's platform identifiers) |
 | `.ai/project/research-order.md` | Analyze a ticket step-by-step |
 
 ## Rules

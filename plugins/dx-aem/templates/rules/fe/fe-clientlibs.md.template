@@ -45,7 +45,7 @@ mvn clean install -PautoInstallPackage -pl <module>  # Single module
 - Each component gets its own bundle
 - Shared code goes in commons — bundler extracts what's used
 - Use `npm run build` to test changes before Maven deploy
-- Always use `@netcentric/component-loader` for registering JS components
+- Always use your project's component loader for registering JS components
 - Run linters immediately after creating or modifying files
 - Remove unused imports
 

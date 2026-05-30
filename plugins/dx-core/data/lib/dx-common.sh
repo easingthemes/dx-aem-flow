@@ -107,6 +107,42 @@ yaml_val() {
   fi
 }
 
+# Scalar value under a named top-level block (2-space indented child key).
+# Usage: yaml_block_val <block> <key>   e.g. yaml_block_val project platform
+# Stops at the next top-level (column-0) key so it never bleeds into siblings.
+yaml_block_val() {
+  local block="$1" key="$2"
+  [ -f "${CONFIG_FILE:-}" ] || return 0
+  awk -v blk="$block" -v k="$key" '
+    $0 ~ "^"blk":[[:space:]]*$" { inb=1; next }
+    inb && /^[^[:space:]#]/ { inb=0 }
+    inb && $0 ~ "^[[:space:]]+"k":" {
+      sub("^[[:space:]]+"k":[[:space:]]*", ""); sub(/[[:space:]]+#.*$/, ""); gsub(/^"|"$/, ""); print; exit
+    }
+  ' "$CONFIG_FILE" | xargs
+}
+
+# Emit the top-level repos: list as TSV rows: name<TAB>role<TAB>platform<TAB>brand<TAB>ado-project
+# Missing fields are emitted empty. List items are `  - name: X` with 4-space child keys.
+# Usage: repos_table
+repos_table() {
+  [ -f "${CONFIG_FILE:-}" ] || return 0
+  awk '
+    function flush() {
+      if (name != "") printf "%s\t%s\t%s\t%s\t%s\n", name, role, platform, brand, adoproj
+      name=""; role=""; platform=""; brand=""; adoproj=""
+    }
+    /^repos:[[:space:]]*$/ { inr=1; next }
+    inr && /^[^[:space:]#-]/ { flush(); inr=0 }
+    inr && /^[[:space:]]*-[[:space:]]*name:/ { flush(); sub(/^[[:space:]]*-[[:space:]]*name:[[:space:]]*/, ""); sub(/[[:space:]]+#.*$/, ""); gsub(/^"|"$/, ""); name=$0; next }
+    inr && /^[[:space:]]+role:/        { v=$0; sub(/^[[:space:]]+role:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); role=v; next }
+    inr && /^[[:space:]]+platform:/     { v=$0; sub(/^[[:space:]]+platform:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); platform=v; next }
+    inr && /^[[:space:]]+brand:/        { v=$0; sub(/^[[:space:]]+brand:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); brand=v; next }
+    inr && /^[[:space:]]+ado-project:/  { v=$0; sub(/^[[:space:]]+ado-project:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); gsub(/^"|"$/, "", v); adoproj=v; next }
+    END { if (inr) flush() }
+  ' "$CONFIG_FILE"
+}
+
 # Check that a required file exists
 # Usage: require_file <path> [label]
 # Exit codes: 0 = exists, 1 = missing (prints error)
@@ -145,6 +181,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       ;;
     yaml-val)
       yaml_val "$@"
+      ;;
+    yaml-block-val)
+      yaml_block_val "$@"
+      ;;
+    repos-table)
+      repos_table "$@"
       ;;
     require-file)
       require_file "$@"

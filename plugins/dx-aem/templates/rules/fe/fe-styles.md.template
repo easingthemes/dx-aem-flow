@@ -42,7 +42,7 @@ applyTo: "**/*.scss, **/*.css"
 
 ## Build System
 
-- **Primary Build Tool**: `@netcentric/fe-build`
+- **Primary Build Tool**: `<your-fe-build-tool>`
 - **CSS Processing**: PostCSS with SCSS support
 - **Linting**: Stylelint with SCSS plugin
 

@@ -161,7 +161,7 @@ If multiple components found, spawn search agents in parallel using Explore agen
 ### Project Context
 
 #### Market Scope
-**Platform:** <Legacy|DXN|both>
+**Platform:** <platform identifier, e.g. alpha|beta|both>
 **Markets:** <market codes>
 **Brand:** <brand>
 

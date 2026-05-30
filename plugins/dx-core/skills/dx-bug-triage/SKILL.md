@@ -299,7 +299,7 @@ grep -i "file-upload\|fileupload" .ai/project/component-index-project.md
 
 **If found**, extract from the matching row:
 - **Component name** (exact)
-- **Platform** (`Legacy` or `DXN`)
+- **Platform** (your project's platform identifier, e.g. `alpha` / `beta`)
 - **Repo** (from component-index — matches `repos:` config entries, or current repo)
 - **Source link** (ADO URL to source code)
 
@@ -381,7 +381,7 @@ Add a "Component Mapping" section to triage.md:
 | Signal | Value | Source |
 |--------|-------|--------|
 | Component name | `mycomp-file-upload` | component-index-project.md |
-| Platform | DXN | component-index-project.md |
+| Platform | alpha | component-index-project.md |
 | Repo | <from component-index> | component-index-project.md |
 | Resource type | `mycomp/base/components/form/mycomp-file-upload/v1/mycomp-file-upload` | AEM author scan |
 | Source link | [source](https://...) | component-index-project.md |
@@ -423,7 +423,7 @@ If the component's `.content.xml` is not accessible (cross-repo or AEM MCP unava
 
 **Severity:** <severity> | **Priority:** <priority>
 **Component:** <identified component name>
-**Platform:** <Legacy or DXN — from component-index or `repos:` config>
+**Platform:** <project platform identifier, e.g. alpha/beta — from component-index or `repos:` config>
 **Repo:** <repo from `repos:` config>
 **Layer:** Frontend / Backend / Dialog / Full-stack
 **Repro URL:** <url or "None provided">
