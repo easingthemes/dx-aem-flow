@@ -131,6 +131,7 @@ digraph dx_simple {
     "Read resume comment + apply answer" [shape=box];
     "Replay code edits from work-plan.json" [shape=box];
     "Phase 1: Fetch + extract change details" [shape=box];
+    "Phase 0.5: Repo identity guard" [shape=box];
     "G1: locator match exactly 1?" [shape=diamond];
     "Phase 2: Classify (parallel subagents)" [shape=box];
     "G3: classification high or medium?" [shape=diamond];
@@ -184,7 +185,9 @@ digraph dx_simple {
     "Read resume comment + apply answer" -> "Phase 1: Fetch + extract change details" [label="re-enter ≤ 3b"];
     "Replay code edits from work-plan.json" -> "Phase 4: Compile (≤3 retries)" [label="re-enter target phase"];
 
-    "Phase 1: Fetch + extract change details" -> "G1: locator match exactly 1?";
+    "Phase 1: Fetch + extract change details" -> "Phase 0.5: Repo identity guard";
+    "Phase 0.5: Repo identity guard" -> "ABORT: classify blocker" [label="wrong target"];
+    "Phase 0.5: Repo identity guard" -> "G1: locator match exactly 1?" [label="proceed"];
     "G1: locator match exactly 1?" -> "ABORT: classify blocker" [label="no"];
     "G1: locator match exactly 1?" -> "Phase 2: Classify (parallel subagents)" [label="yes"];
     "Phase 2: Classify (parallel subagents)" -> "G3: classification high or medium?";
@@ -399,6 +402,26 @@ re-applies the work-plan as part of its normal flow.
    ```
    If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is
    in flight (H2); do not force-push.
+
+### Phase 0.5: Repo identity guard
+
+Runs once, right after `parse-simple-block.sh` writes `simple-block.yaml`, before G1.
+Confirms this repo is a legitimate target for the ticket and records authoring ownership.
+
+```bash
+GUARD_OUT=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/repo-guard.sh \
+  "$SPEC_DIR/simple-block.yaml" ".ai/config.yaml") || GUARD_RC=$?
+eval "$GUARD_OUT"   # sets DECISION, REASON?, AUTHORING_OWNER?
+```
+
+- If `DECISION=abort` (exit 3): set blocker class **`wrong-target`** and follow the
+  **ABORT path** — this is a **hard/terminal** blocker (no re-ask loop: the human must
+  re-trigger in the correct repo). Post `REASON` verbatim as the classified ADO comment.
+  No JCR writes, no code edits. Verdict: fail.
+- If `DECISION=proceed`: continue to G1. Persist `AUTHORING_OWNER` into
+  `resume-state.json` (`authoring-owner` key) — Phase 3a reads it.
+- Single-repo / unconfigured projects: `project.platform` is unset and the block has no
+  `platform`, so the guard proceeds with `AUTHORING_OWNER=true` (today's behavior).
 
 ### Phase 2: Classify (parallel subagents)
 
@@ -806,6 +829,7 @@ fixes).
 | `needs-user-input` | G1 ambiguous/no match, missing `page-url`, G3 low classification, authoring value drifted, `ambiguous-branch` (M1) | human replies `@<keyword> <answer>` → resume at blocked phase |
 | `transient` | MAX_TURNS / step timeout / MCP unreachable / network blip — **infra only** | re-trigger (any `@<keyword>` reply, or re-run) → resume forward from `last-completed-phase` (replaying code edits if past 3b) |
 | `hard` | scope-check exceeded (>5 files / >50 lines / >10 writes), G7 real review blocker, **any compile failure surviving Phase 4's in-run 3× retry (M3)**, `answer-attempts` cap reached | not recoverable here → recommend re-tag `KAI-DEV-AUTOMATION` (DevAgent) |
+| `wrong-target` | Phase 0.5 repo identity guard aborted — ticket's platform/brand/scope does not match this repo's identity | terminal — not recoverable here → human must re-trigger in the correct repo |
 
 > **Compile is `hard`, not `transient` (M3).** Phase 4 already retries compile 3×
 > against a *deterministic* edit; a cross-run re-trigger replays the identical edit,
