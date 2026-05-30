@@ -259,7 +259,13 @@ steps:
       PROJECT="$(System.TeamProject)"
       WID="${{ parameters.workItemId }}"
       RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
-      TEXT="SimpleAgent did not finish cleanly — it likely hit the turn/time limit or errored before posting its report. No changes were committed or merged. Pipeline run: ${RUN_URL}"
+      # Recovery is HUMAN-re-triggered, not automatic (H3): a silent crash posts no
+      # @kai-simple comment, so nothing re-fires the filtered Service Hook on its
+      # own. This message MUST tell the human how to resume. The keyword is written
+      # bare (no leading @) so this fallback can't self-trigger the hook; the text
+      # instructs the human to add the @ prefix. Keep the keyword in sync with
+      # dx-simple.recovery.trigger-token and the Service Hook comment filter string.
+      TEXT="SimpleAgent paused before finishing — it likely hit the turn/time limit or errored before posting its report. Any recovery state is committed to the ticket branch. To resume from where it stopped, reply on this ticket beginning your comment with the kai-simple keyword prefixed with @ (e.g. '@kai-simple resume', or '@kai-simple <the input it asked for>'). Pipeline run: ${RUN_URL}"
       BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
       curl -fsS -X POST \
         -u ":$ADO_PAT" \

@@ -66,6 +66,15 @@ Use `mcp__ado__repo_get_repo_by_name_or_id` with the repo name and ADO project f
   ```
   Never reuse old feature/bugfix branches for new work — stale branches cause rebase conflicts.
 
+  > **Exception — `/dx-simple` resumable recovery (TODO #141).** SimpleAgent's
+  > Phase 0 deliberately *reuses* the ticket's existing `feature/<id>-*` /
+  > `bugfix/<id>-*` branch — but for the **same ticket, same work, continued**
+  > (not new work), and only when the **anchored** id match is **unique** (>1 match
+  > → `ambiguous-branch` blocker, never "pick any"). The per-ticket branch is the
+  > durable state store for resume; this is the one sanctioned reuse. Checkpoint
+  > commits (`chore(dx-simple): checkpoint …`) are accepted on this branch —
+  > recommend squash-on-merge for the PR so they don't land on the base branch.
+
 ## Rebase, Never Merge
 
 - Always `git rebase origin/$BASE_BRANCH` to sync with upstream
