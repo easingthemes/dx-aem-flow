@@ -255,7 +255,7 @@ Print: `Local verification: <result>`
 Read the result from `verification-local.md`:
 
 - **yes (Fix Verified)** → go to "Commit + create PR"
-- **blocked** → go to "Commit + create PR" (warn but proceed — local verification is best-effort, e.g., Chrome DevTools unavailable)
+- **blocked** → go to "Commit + create PR" (warn but proceed — local verification is best-effort, e.g., Playwright unavailable)
 - **no (partial/failed)** → go to "Attempt < 2?"
 
 ### Attempt < 2?
@@ -340,7 +340,7 @@ Print: `PR created: <PR URL>`
 | Build fails after all steps | Delegate to step-fix loop (max 6 attempts per build pattern). |
 | Local verification Fix Failed (attempt 1) | Revise fix plan, re-execute steps, retry once (attempt 2). |
 | Local verification Fix Failed (attempt 2) | STOP. Write `fix-loop-report.md`. Human intervention needed. |
-| Local verification Blocked | WARN and continue to commit. Chrome DevTools may be unavailable. |
+| Local verification Blocked | WARN and continue to commit. Playwright may be unavailable. |
 | commit fails | Report error. Suggest: "Run `/dx-pr-commit` manually." |
 
 ## Rules

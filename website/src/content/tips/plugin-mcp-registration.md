@@ -18,7 +18,7 @@ keyPoints:
   - |
     **Our plugin MCP servers**
     - AEM (stdio) — JCR content queries and component inspection
-    - Chrome DevTools (stdio) — browser automation and screenshots
+    - Playwright (stdio) — browser automation and screenshots
     - Figma (HTTP) — design extraction and token mapping
     - axe (Docker) — accessibility testing and compliance
 actionItems:

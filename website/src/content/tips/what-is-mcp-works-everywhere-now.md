@@ -30,11 +30,11 @@ actionItems:
     Our 6 MCP servers — each adds a distinct capability
     - ADO — work items, PRs, builds, wiki
     - AEM — JCR content, components, pages
-    - Chrome DevTools — screenshots, navigation, DOM
+    - Playwright — screenshots, navigation, DOM
     - Figma — designs, tokens, screenshots
     - axe — accessibility audits
     - GitHub MCP — built into Copilot
-  - "Add Chrome DevTools MCP to both `.mcp.json` AND `.vscode/mcp.json` — test in Claude Code, Copilot CLI, and VSCode Chat"
+  - "Add Playwright MCP to both `.mcp.json` AND `.vscode/mcp.json` — test in Claude Code, Copilot CLI, and VSCode Chat"
   - "Remember the root key difference — `mcpServers` for CLIs, `servers` for VSCode. Don't copy-paste between them without changing the key"
   - "For Copilot agents, try inline `mcp-servers:` in the .agent.md frontmatter — no separate config file needed"
 ---

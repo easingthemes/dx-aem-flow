@@ -2,12 +2,12 @@
 name: dx-figma-verify
 description: Visually verify a generated prototype against the Figma reference screenshot. Opens prototype in Chrome, takes a screenshot, compares with Figma reference using multimodal vision, fixes gaps, and produces a verification report. Use after /dx-figma-prototype. Trigger on "verify prototype", "compare prototype", "figma verify", "check prototype against figma". Do NOT use without a generated prototype or when no Figma reference screenshot exists.
 argument-hint: "<ADO Work Item ID (optional — uses most recent if omitted)>"
-compatibility: "Requires Chrome DevTools MCP (chrome-devtools-mcp) and a generated prototype from /dx-figma-prototype with figma-reference.png from /dx-figma-extract."
+compatibility: "Requires Playwright MCP (playwright) and a generated prototype from /dx-figma-prototype with figma-reference.png from /dx-figma-extract."
 metadata:
   version: 2.28.0
-  mcp-server: chrome-devtools-mcp
+  mcp-server: playwright
   category: design-to-code
-allowed-tools: ["read", "edit", "search", "write", "agent", "figma/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "figma/*", "playwright/*"]
 ---
 
 You visually verify a generated HTML/CSS prototype against the original Figma design screenshot. You open the prototype in Chrome, take a screenshot, compare both images side by side using multimodal vision, and fix any visual gaps — up to 2 iterations.
@@ -54,13 +54,13 @@ The prototype screenshot MUST match the Figma reference width exactly — otherw
    ```
    This outputs dimensions like `PNG image data, 390 x 844`. Parse the width.
 
-3. **Via evaluate_script** — load the image in a blank page (before navigating to prototype):
+3. **Via browser_evaluate** — load the image in a blank page (before navigating to prototype):
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+   mcp__plugin_dx-aem_playwright__browser_navigate
      url: "about:blank"
    ```
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+   mcp__plugin_dx-aem_playwright__browser_evaluate
      expression: |
        (() => {
          return new Promise((resolve) => {
@@ -76,14 +76,14 @@ If none of these methods return a width, fall back to **1440x900**.
 
 **Step 3b.** Resize Chrome to match the Figma reference width:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page
+mcp__plugin_dx-aem_playwright__browser_resize
   width: <figma-reference-width>
   height: <figma-reference-height or 900>
 ```
 
 **Step 3c.** Verify the resize took effect:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+mcp__plugin_dx-aem_playwright__browser_evaluate
   expression: "(() => ({ width: window.innerWidth, height: window.innerHeight }))()"
 ```
 
@@ -95,20 +95,20 @@ If `window.innerWidth` does not match the target width, retry the resize once. I
 
 Navigate to the prototype HTML file:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "file://<absolute-path-to-SPEC_DIR>/prototype/index.html"
 ```
 
 Wait for the page to load:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
+mcp__plugin_dx-aem_playwright__browser_wait_for
   text: "</html>"
   timeout: 10000
 ```
 
 If the prototype has a side-by-side comparison container (Figma reference panel), hide it so only the component renders:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+mcp__plugin_dx-aem_playwright__browser_evaluate
   expression: |
     (() => {
       // Hide any Figma reference comparison panel
@@ -123,14 +123,14 @@ mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
 ## 5. Take Prototype Screenshot
 
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
 Save the screenshot with viewport-aware naming:
 - **Single viewport:** `$SPEC_DIR/prototype/prototype-screenshot.png`
 - **Multi-viewport:** `$SPEC_DIR/prototype/prototype-screenshot-<viewport.name>.png` (e.g., `prototype-screenshot-desktop.png`, `prototype-screenshot-mobile.png`)
 
-If Chrome DevTools returns the screenshot as a displayed image rather than a file path, note the output for visual comparison in the next step.
+If Playwright returns the screenshot as a displayed image rather than a file path, note the output for visual comparison in the next step.
 
 ## 6. Visual Comparison
 
@@ -178,7 +178,7 @@ Make targeted, surgical edits — do not regenerate the entire file. Fix one gap
 
 Reload the page in Chrome:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "file://<absolute-path-to-SPEC_DIR>/prototype/index.html"
 ```
 
@@ -243,14 +243,14 @@ Read `.ai/templates/spec/figma-gaps.md.template` and follow that structure exact
 
 ## Error Handling
 
-- **Chrome DevTools MCP not available:** Print `⚠️ Chrome DevTools MCP not available — cannot verify prototype visually. Ensure Chrome is running with DevTools Protocol enabled.` and STOP.
+- **Playwright MCP not available:** Print `⚠️ Playwright MCP not available — cannot verify prototype visually. Ensure the playwright server is enabled and Chromium is installed (npx playwright install chromium).` and STOP.
 - **File URL blocked by Chrome:** Some Chrome configs block `file://` URLs. Print instructions: `Try: open -a "Google Chrome" --args --allow-file-access-from-files` and retry.
 - **Screenshot fails:** Continue with whatever was captured. If no screenshot at all, fall back to structural HTML comparison (read the HTML source and compare element structure against figma-extract.md).
 - **Resize fails:** Proceed with default viewport. Note the mismatch in the report.
 
 ## Rules
 
-- **Real screenshots only** — always use Chrome DevTools, never "mentally compare"
+- **Real screenshots only** — always use Playwright, never "mentally compare"
 - **Match viewport** — resize Chrome to Figma reference dimensions before screenshotting
 - **Surgical fixes** — edit specific CSS properties/HTML elements, don't regenerate files
 - **2 iterations max** — stop after 2 fix rounds regardless of remaining gaps

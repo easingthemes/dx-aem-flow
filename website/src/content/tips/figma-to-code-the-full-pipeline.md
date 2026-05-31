@@ -24,6 +24,6 @@ actionItems:
   - |
     **Getting started**
     - Run /dx-figma-extract <figma-url> with a real Figma design URL and inspect the output in .ai/specs/
-    - Ensure Chrome DevTools MCP is configured — the verify step needs it to screenshot and compare
+    - Ensure Playwright MCP is configured — the verify step needs it to screenshot and compare
     - Check your project's CSS variable conventions before running the prototype step — missing variable mappings fall back to raw values
 ---

@@ -36,9 +36,9 @@ Run `/dx-bug-triage <id>` to fetch the bug, identify the affected component, and
 Print: `Step 1/4 done — triage complete.`
 
 ### Step 2 — Verify (optional)
-If `triage.md` contains a repro URL, run `/dx-bug-verify <id>` to reproduce the bug in the browser using Chrome DevTools. Produces `verification.md` with screenshots.
+If `triage.md` contains a repro URL, run `/dx-bug-verify <id>` to reproduce the bug in the browser using Playwright. Produces `verification.md` with screenshots.
 
-If no repro URL is available or Chrome DevTools MCP is not configured, skip this step.
+If no repro URL is available or Playwright MCP is not configured, skip this step.
 
 Print: `Step 2/4 done — verification complete/skipped.`
 

@@ -69,7 +69,7 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 |---------|-------------|
 | `/dx-bug-all <ID>` | Full bug workflow: triage, verify, fix |
 | `/dx-bug-triage <ID>` | Fetch bug from ADO, find affected component |
-| `/dx-bug-verify` | Reproduce bug via Chrome DevTools |
+| `/dx-bug-verify` | Reproduce bug via Playwright |
 | `/dx-bug-fix` | Generate fix plan from triage, execute, create PR |
 
 ### Figma Design-to-Code
@@ -78,7 +78,7 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 |---------|-------------|--------|
 | `/dx-figma-extract` | Extract design context, tokens, screenshots from Figma URL | `figma-extract.md`, `prototype/figma-reference.png` |
 | `/dx-figma-prototype` | Generate HTML/CSS prototype from extraction data | `figma-conventions.md`, `prototype/index.html` |
-| `/dx-figma-verify` | Visually verify prototype against Figma screenshot (Chrome DevTools) | `figma-gaps.md`, `prototype/prototype-screenshot.png` |
+| `/dx-figma-verify` | Visually verify prototype against Figma screenshot (Playwright) | `figma-gaps.md`, `prototype/prototype-screenshot.png` |
 
 ### Recon & Setup
 

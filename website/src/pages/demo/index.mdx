@@ -206,7 +206,7 @@ import { stats } from '../../config/stats';
     </ContentCard>
 
     <ContentCard icon="mdi:camera" iconColor="bg-emerald-600" title="Phase 3: Verify — /dx-figma-verify" horizontal>
-      <strong>Closed-loop verification</strong> via Chrome DevTools MCP -- the agent opens a real browser,
+      <strong>Closed-loop verification</strong> via Playwright MCP -- the agent opens a real browser,
       renders the prototype, takes a clean screenshot, and compares it against the Figma reference.
       If visual gaps are detected, the self-healing loop patches CSS/HTML and re-verifies -- up to 2 iterations.
 
@@ -231,7 +231,7 @@ import { stats } from '../../config/stats';
   <ContentCard title="AEM Verification Screenshots">
     Captured by <code>/aem-fe-verify</code> -- the agent creates a test page and configures the component
     via AEM MCP (JCR writes), sourcing matching images and text content from the DAM automatically.
-    Screenshots are taken via Chrome DevTools MCP to verify the rendered output against the Figma reference.
+    Screenshots are taken via Playwright MCP to verify the rendered output against the Figma reference.
 
     <div class="grid md:grid-cols-2 gap-4 mt-4">
       <div>
@@ -404,7 +404,7 @@ import { stats } from '../../config/stats';
       dx-hub ({stats.dxHubSkills} skills), dx-aem ({stats.dxAemSkills} skills, {stats.dxAemAgents} agents), dx-automation ({stats.dxAutomationSkills} skills, {stats.autonomousAgents} pipeline agents).
     </ContentCard>
     <ContentCard icon="mdi:earth" iconColor="bg-cyan-dark" title="Live MCP Integrations" horizontal>
-      Connected to AEM, Chrome DevTools, Figma, ADO, Jira/Confluence, axe. Agents query live systems --
+      Connected to AEM, Playwright, Figma, ADO, Jira/Confluence, axe. Agents query live systems --
       they verify, they don't guess.
     </ContentCard>
     <ContentCard icon="mdi:timer" iconColor="bg-amber-500" title="Rate Limiting & Budgets" horizontal>

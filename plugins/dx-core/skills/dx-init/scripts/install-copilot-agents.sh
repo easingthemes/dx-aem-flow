@@ -7,7 +7,6 @@
 # Copies templates/agents/*.agent.md.template → .github/agents/*.agent.md
 # Post-copy transforms:
 #   - Fixes tool aliases (editFiles → edit)
-#   - Fixes MCP server prefixes (chrome-devtools/ → chrome-devtools-mcp/)
 #   - Injects allowed-tools into YAML frontmatter if not present
 #
 # Flags:
@@ -21,11 +20,7 @@ copilot_agent_transform() {
 
   # NOTE: editFiles is the VS Code Chat tool name, edit is the Copilot CLI name.
   # Templates now include BOTH for cross-platform compatibility. No transform needed.
-
-  # Fix MCP prefix: chrome-devtools/ → chrome-devtools-mcp/ (matches .mcp.json server name)
-  if grep -q "'chrome-devtools/" "$file" 2>/dev/null; then
-    sed -i '' "s|'chrome-devtools/|'chrome-devtools-mcp/|g" "$file"
-  fi
+  # Browser tools use the 'playwright/' server prefix directly in templates (no transform needed).
 
   # Inject allowed-tools into YAML frontmatter if not present
   # Inserts before the closing --- (second occurrence) using awk

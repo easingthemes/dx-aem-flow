@@ -161,6 +161,18 @@ For each `.md.template` file found:
   - Example: `fe/fe-tokens.md.template` → `.claude/rules/fe-tokens.md`
 - Read source, Write to destination (flattening the subdir — destination is always directly under `.claude/rules/`, not in a subdir)
 
+### 3d-ii. Playwright browser migration (v3.0.0+, if aem plugin configured)
+
+**Breaking change in dx-aem v3.0.0:** AEM browser automation moved from `chrome-devtools-mcp` to `@playwright/mcp` (server `playwright`). If upgrading **from a v2.x** dx-aem:
+
+1. **Install the Playwright browser** (the server is bundled with the plugin but its Chromium is not):
+   ```bash
+   npx playwright install chromium
+   ```
+   Without it, `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, and `/aem-editorial-guide` fail at first navigation.
+2. **Install the auth helper** if missing: copy `<aem-plugin>/data/lib/aem-playwright-auth.sh` → `.ai/lib/` (`chmod +x`) and ensure `.gitignore` has `.ai/playwright/`.
+3. **Report as manual-action:** `dx-perf` was removed in v3 (no replacement yet — see TODO #147). Any local `.claude/skills/dx-perf/` shadow or scripts referencing chrome-devtools tool names (`mcp__plugin_dx-aem_chrome-devtools-mcp__*`) must be updated to `mcp__plugin_dx-aem_playwright__browser_*`.
+
 ### 3e. Copilot Agents and Skills
 
 If `.github/agents/` exists (Copilot was enabled):

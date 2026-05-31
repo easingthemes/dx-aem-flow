@@ -57,7 +57,7 @@ npx @axe-core/cli <url> --tags wcag2a,wcag2aa
 npx pa11y <url> --standard WCAG2AA
 
 # Lighthouse accessibility audit
-# Available via Chrome DevTools MCP
+# Available via Playwright MCP
 ```
 
 ## Common AEM Accessibility Issues

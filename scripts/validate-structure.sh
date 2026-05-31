@@ -60,7 +60,7 @@ echo
 echo "Checking MCP tool prefixes..."
 # Wrong: mcp__figma__ (should be mcp__plugin_dx-core_figma__)
 # Wrong: mcp__AEM__ (should be mcp__plugin_dx-aem_AEM__)
-BAD_PREFIXES="mcp__figma__|mcp__axe-mcp-server__|mcp__AEM__|mcp__chrome-devtools-mcp__"
+BAD_PREFIXES="mcp__figma__|mcp__axe-mcp-server__|mcp__AEM__|mcp__playwright__"
 bad_files=$(grep -rl "$BAD_PREFIXES" "$REPO_ROOT/plugins/" 2>/dev/null || true)
 if [ -n "$bad_files" ]; then
   echo "ERROR: Found unprefixed MCP tool names (should use mcp__plugin_<name>_ prefix):"
