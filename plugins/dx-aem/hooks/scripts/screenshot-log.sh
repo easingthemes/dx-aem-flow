@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Chrome DevTools screenshot hook — logs screenshots taken during AEM sessions.
-# Triggered by PostToolUse on chrome-devtools-mcp take_screenshot/take_snapshot.
+# Playwright screenshot hook — logs screenshots taken during AEM sessions.
+# Triggered by PostToolUse on playwright browser_take_screenshot/browser_snapshot.
 
 set -euo pipefail
 

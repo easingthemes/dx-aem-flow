@@ -71,7 +71,7 @@ Tests should be Descriptive And Meaningful Phrases. Repetition in tests is fine 
 
 ## Browser Testing Integration
 
-When Chrome DevTools MCP is available, pair unit tests with runtime verification:
+When Playwright MCP is available, pair unit tests with runtime verification:
 - Console errors and warnings
 - Network response validation (status codes, payloads)
 - DOM structure matches expectations

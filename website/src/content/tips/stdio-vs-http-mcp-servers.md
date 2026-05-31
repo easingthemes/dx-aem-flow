@@ -16,7 +16,7 @@ keyPoints:
     **stdio (standard I/O)**
     - AI spawns a process and communicates via stdin/stdout
     - New process per session means clean state every time
-    - Best for heavy tools needing isolation (AEM, Chrome DevTools)
+    - Best for heavy tools needing isolation (AEM, Playwright)
     - No port conflicts, but has startup time on first use
   - |
     **HTTP (always running)**

@@ -90,14 +90,24 @@ Some sites have duplicated country/lang segments: `/content/brand/ca/en/ca/en/..
 
 ## AEM Login Handling
 
-When navigating Chrome to the demo page, check for login redirect. If URL contains `/libs/granite/core/content/login.html`:
+**Preferred — storageState (no password in context):** before navigating to the demo page, authenticate the author via the helper, then load the session:
+```bash
+bash .ai/lib/aem-playwright-auth.sh author <local|qa>   # writes .ai/playwright/aem-author-state.json
+```
+```
+mcp__plugin_dx-aem_playwright__browser_set_storage_state
+  path: ".ai/playwright/aem-author-state.json"
+```
+Then navigate — already logged in.
+
+**Fallback** — if no helper, or a navigation still lands on `/libs/granite/core/content/login.html`, fill credentials resolved from `AEM_INSTANCES` (`bash .ai/lib/dx-common.sh aem-instance <local|qa>` → `$AEM_USER`/`$AEM_PASS`; falls back to `admin`/`admin` for localhost only). Substitute the real values into the script:
 
 ```js
 (() => {
   const u = document.getElementById('username');
   const p = document.getElementById('password');
   if (!u || !p) return { onLoginPage: false };
-  u.value = 'admin'; p.value = 'admin';
+  u.value = '<AEM_USER>'; p.value = '<AEM_PASS>';
   u.dispatchEvent(new Event('input', { bubbles: true }));
   p.dispatchEvent(new Event('input', { bubbles: true }));
   return { filled: true };

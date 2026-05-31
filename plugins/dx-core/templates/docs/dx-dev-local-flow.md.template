@@ -330,7 +330,7 @@ flowchart TD
     subgraph QA_CHECK["QA (manual, requires running AEM)"]
         QA_SKILL["/aem-qa<br/>Automated QA: verify dialog,<br/>rendering, interactions"]
         BE["BE: dialog fields,<br/>JCR properties<br/>via AEM MCP"]
-        FE["FE: page rendering,<br/>layout, interactions<br/>via Chrome DevTools"]
+        FE["FE: page rendering,<br/>layout, interactions<br/>via Playwright"]
         QA_OUT["qa.json + Bug tickets<br/>if issues found"]
         QA_SKILL --> BE
         QA_SKILL --> FE
@@ -459,7 +459,7 @@ flowchart TD
     subgraph S2["Step 2: Verify"]
         VERIFY_BUG["/dx-bug-verify<br/>Reproduce bug in browser"]
         AEM_BUG["aem-bug-executor agent<br/>Navigate AEM, follow<br/>repro steps"]
-        CHROME["Chrome DevTools<br/>Screenshot evidence"]
+        CHROME["Playwright<br/>Screenshot evidence"]
         VERIFY_OUT["verification.md<br/>+ screenshots"]
         VERIFY_BUG --> AEM_BUG --> CHROME --> VERIFY_OUT
     end
@@ -575,7 +575,7 @@ flowchart LR
 | `aem-page-finder` | Haiku | /aem-component, /aem-page-search | Find pages using a component via AEM MCP |
 | `aem-editorial-guide-capture` | Sonnet | /aem-editorial-guide, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
 | `aem-file-resolver` | Haiku | /aem-component, /dx-ticket-analyze | Resolve component files using file-patterns.yaml |
-| `aem-bug-executor` | Sonnet | /dx-bug-verify | Reproduce bugs on AEM via Chrome DevTools |
+| `aem-bug-executor` | Sonnet | /dx-bug-verify | Reproduce bugs on AEM via Playwright |
 
 ---
 

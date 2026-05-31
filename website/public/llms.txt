@@ -19,7 +19,7 @@ KAI is an open-source AI development platform built as Claude Code plugins. It p
 - Three-layer override system: project rules > config overrides > plugin defaults
 - Model tier strategy: Opus for deep reasoning, Sonnet for execution, Haiku for lookups
 - Multi-platform: Claude Code CLI, GitHub Copilot CLI, VS Code Chat
-- MCP integrations: Azure DevOps, Atlassian, Figma, axe accessibility, AEM, Chrome DevTools
+- MCP integrations: Azure DevOps, Atlassian, Figma, axe accessibility, AEM, Playwright
 
 ## Links
 

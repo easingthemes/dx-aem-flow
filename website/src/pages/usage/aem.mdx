@@ -62,7 +62,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       title="/aem-qa"
       tags={[{ label: 'QA', color: 'error' }, { label: 'qa.json', color: 'error' }]}
     >
-      Full QA -- verify dialog fields (BE via AEM MCP) and page rendering (FE via Chrome DevTools).
+      Full QA -- verify dialog fields (BE via AEM MCP) and page rendering (FE via Playwright).
       Creates bug tickets (ADO or Jira) if issues are found.
     </ContentCard>
 
@@ -159,7 +159,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     </ContentCard>
 
     <ContentCard icon="mdi:web" iconColor="bg-brand-700" title="Frontend Track">
-      Page rendering, layout, and interactions verified via Chrome DevTools MCP.
+      Page rendering, layout, and interactions verified via Playwright MCP.
 
       - Navigate to component page
       - Check rendered output

@@ -4,12 +4,11 @@ description: "Capture 3 screenshots for a tip page — two card captures from th
 argument-hint: "<tip-page-url>"
 model: opus
 allowed-tools: Read, Write, Glob, Grep, Agent, ToolSearch, WebFetch,
-  mcp__chrome-devtools-mcp__navigate_page,
-  mcp__chrome-devtools-mcp__take_snapshot,
-  mcp__chrome-devtools-mcp__take_screenshot,
-  mcp__chrome-devtools-mcp__evaluate_script,
-  mcp__chrome-devtools-mcp__emulate,
-  mcp__chrome-devtools-mcp__wait_for,
+  mcp__playwright__browser_navigate,
+  mcp__playwright__browser_snapshot,
+  mcp__playwright__browser_take_screenshot,
+  mcp__playwright__browser_evaluate,
+  mcp__playwright__browser_wait_for,
   mcp__vscode-automator__vscode_focus,
   mcp__vscode-automator__vscode_screenshot,
   mcp__vscode-automator__vscode_type,
@@ -78,27 +77,23 @@ Create output directory: `tools/screenshots/<slug>/`
 ### Navigate to tip page
 
 ```
-mcp__chrome-devtools-mcp__navigate_page(type: "url", url: "<tip-url>")
+mcp__playwright__browser_navigate(url: "<tip-url>")
 ```
 
 ### Wait for page load
 
-Wait for the tip blocks to render:
+Wait for the tip blocks to render. Playwright's `browser_wait_for` waits on **`text`** / `textGone` / `time` (seconds) — not a CSS selector. Wait for visible tip-card text, or fall back to a short settle:
 
 ```
-mcp__chrome-devtools-mcp__wait_for(
-  selector: ".tip-block",
-  state: "visible",
-  timeout: 10000
-)
+mcp__playwright__browser_wait_for(text: "<a phrase visible in the tip card>")
 ```
 
 ### Extract block text
 
-Use `evaluate_script` to get the text content from both tip blocks. Both cards have the `tip-block` class — first is insights, second is actions.
+Use `browser_evaluate` to get the text content from both tip blocks. Both cards have the `tip-block` class — first is insights, second is actions.
 
 ```
-mcp__chrome-devtools-mcp__evaluate_script(
+mcp__playwright__browser_evaluate(
   function: "() => {
     const blocks = document.querySelectorAll('.tip-block');
     return {
@@ -114,10 +109,10 @@ Save the extracted text — it becomes the input for the planner.
 
 ### Screenshot block 1
 
-Inject ARIA attributes so `.tip-block` divs appear in the a11y tree with UIDs:
+Inject ARIA attributes so `.tip-block` divs appear in the a11y tree with refs:
 
 ```
-mcp__chrome-devtools-mcp__evaluate_script(
+mcp__playwright__browser_evaluate(
   function: "() => {
     const blocks = document.querySelectorAll('.tip-block');
     blocks[0]?.setAttribute('role', 'region');
@@ -129,28 +124,32 @@ mcp__chrome-devtools-mcp__evaluate_script(
 )
 ```
 
-Take a snapshot to get UIDs — look for `region "tip-insights"` and `region "tip-actions"`:
+Take a snapshot to get refs — look for `region "tip-insights"` and `region "tip-actions"`:
 
 ```
-mcp__chrome-devtools-mcp__take_snapshot()
+mcp__playwright__browser_snapshot()
 ```
 
-Screenshot each block by UID:
+Screenshot each block by **`ref`** (element screenshot needs `element` + `ref`). `browser_take_screenshot` saves a **`filename`** basename under the Playwright MCP output dir — copy it to the target path afterward:
 
 ```
-mcp__chrome-devtools-mcp__take_screenshot(
-  uid: "<tip-insights-uid>",
-  filePath: "tools/screenshots/<slug>/<slug>-insights.png"
+mcp__playwright__browser_take_screenshot(
+  element: "tip insights card",
+  ref: "<tip-insights-ref>",
+  filename: "<slug>-insights.png"
 )
+# then: cp <playwright-output-dir>/<slug>-insights.png tools/screenshots/<slug>/<slug>-insights.png
 ```
 
 ### Screenshot block 2
 
 ```
-mcp__chrome-devtools-mcp__take_screenshot(
-  uid: "<tip-actions-uid>",
-  filePath: "tools/screenshots/<slug>/<slug>-actions.png"
+mcp__playwright__browser_take_screenshot(
+  element: "tip actions card",
+  ref: "<tip-actions-ref>",
+  filename: "<slug>-actions.png"
 )
+# then: cp <playwright-output-dir>/<slug>-actions.png tools/screenshots/<slug>/<slug>-actions.png
 ```
 
 ### Spawn demo-planner

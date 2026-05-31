@@ -2,7 +2,7 @@
 name: dx-axe
 description: Run accessibility testing on a URL using the axe MCP Server — analyze violations, get remediation guidance, apply fixes, and verify. Use when asked to check accessibility, run a11y audit, or fix WCAG issues.
 argument-hint: "<URL to test> [--fix] [--standard wcag2aa|wcag21aa|best-practice]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "axe-mcp-server/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "axe-mcp-server/*", "playwright/*"]
 ---
 
 You perform accessibility testing and remediation using the Deque axe MCP Server. You follow a strict analyze → remediate → fix → verify workflow.
@@ -78,13 +78,13 @@ Pass through unchanged.
 
 Many AEM pages render content client-side (Handlebars templates, lazy-loaded components). If axe analyzes a page before JS rendering completes, it audits an empty shell — results will be meaningless (false 100% pass).
 
-**Before running axe analyze**, use Chrome DevTools MCP to check if the page has rendered:
+**Before running axe analyze**, use Playwright MCP to check if the page has rendered:
 
-1. Try calling Chrome DevTools tools directly first (e.g., `mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page`). If "tool not found", fall back to `ToolSearch query: "+chrome-devtools navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing
+1. Try calling Playwright MCP tools directly first (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing
 2. Navigate to the URL (use the original URL with `localhost`, not the Docker-rewritten one)
 3. Wait up to 15s for meaningful content:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+   mcp__plugin_dx-aem_playwright__browser_evaluate
      function: |
        () => {
          const text = document.body?.innerText?.trim();
@@ -94,7 +94,7 @@ Many AEM pages render content client-side (Handlebars templates, lazy-loaded com
 4. If `hasContent` is false after 15s, warn the user:
    > **Page appears to be stuck loading.** Axe results may be incomplete. Check for JS errors or missing dependencies.
 
-**If Chrome DevTools MCP is not available**, skip this check and proceed — axe may still get usable results if the page is server-rendered.
+**If Playwright MCP is not available**, skip this check and proceed — axe may still get usable results if the page is server-rendered.
 
 ## 5. Analysis Phase
 

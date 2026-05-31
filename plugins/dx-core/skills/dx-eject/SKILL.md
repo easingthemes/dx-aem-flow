@@ -141,7 +141,7 @@ Read the project's existing `.mcp.json`.
 
 For each ejected plugin that has MCP servers:
 - **dx-core:** Empty mcpServers (ADO MCP configured separately) — no merge needed
-- **dx-aem:** Has `AEM` (HTTP) and `chrome-devtools-mcp` (stdio) servers
+- **dx-aem:** Has `AEM` (HTTP) and `playwright` (stdio) servers
 - **dx-automation:** No .mcp.json
 
 Check if the AEM MCP entries already exist in `.mcp.json`. If not, merge them. If they already exist (because dx-init/aem-init already configured them), skip.

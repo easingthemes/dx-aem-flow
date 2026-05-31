@@ -161,7 +161,7 @@ Note: Published content may take a few seconds to appear on the publisher instan
 
 ## AEM Author URLs
 
-If the caller passes `--qa` or the task targets QA, use `aem.author-url-qa` from `.ai/config.yaml` for doc links and browser URLs. Otherwise use `aem.author-url` (defaults to `http://localhost:4502`). Note: MCP calls use JCR paths — the MCP server handles which AEM instance to connect to. The URL config only affects documentation links and Chrome DevTools navigation.
+If the caller passes `--qa` or the task targets QA, use `aem.author-url-qa` from `.ai/config.yaml` for doc links and browser URLs. Otherwise use `aem.author-url` (defaults to `http://localhost:4502`). Note: MCP calls use JCR paths — the MCP server handles which AEM instance to connect to. The URL config only affects documentation links and Playwright navigation.
 
 - Page editor: `<author-url>/editor.html<page-path>.html`
 - JSON endpoint: `<author-url><component-path>.<selector>.json` (if selector configured)

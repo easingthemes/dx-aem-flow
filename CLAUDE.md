@@ -116,7 +116,7 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 - **dx:** Figma MCP — design extraction, screenshots, tokens
 - **dx:** axe MCP — accessibility testing
 - **aem:** AEM MCP (HTTP) — JCR content, components, dialogs
-- **aem:** Chrome DevTools MCP — browser automation
+- **aem:** Playwright MCP (`@playwright/mcp`) — browser automation
 
 ### Plugin MCP Tool Naming — CRITICAL
 
@@ -129,7 +129,7 @@ MCP servers in a plugin's `.mcp.json` get a prefixed tool name: `mcp__plugin_<pl
 | Figma | dx-core | `mcp__plugin_dx-core_figma__` | `mcp__figma__` |
 | axe | dx-core | `mcp__plugin_dx-core_axe-mcp-server__` | `mcp__axe-mcp-server__` |
 | AEM | dx-aem | `mcp__plugin_dx-aem_AEM__` | `mcp__AEM__` |
-| Chrome DevTools | dx-aem | `mcp__plugin_dx-aem_chrome-devtools-mcp__` | `mcp__chrome-devtools-mcp__` |
+| Playwright | dx-aem | `mcp__plugin_dx-aem_playwright__` | `mcp__playwright__` |
 
 **Why:** Subagents resolve tools by exact name or ToolSearch. The shorthand doesn't match the actual registered tool names, causing "tool not found" failures.
 

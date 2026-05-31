@@ -4,15 +4,15 @@ description: Visually verify a component's frontend rendering on local AEM — s
 argument-hint: "[component-name] [ADO Work Item ID (optional)]"
 context: fork
 agent: aem-fe-verifier
-compatibility: "Requires AEM MCP (connected to localhost), Chrome DevTools MCP, and a deployed local AEM instance."
+compatibility: "Requires AEM MCP (connected to localhost), Playwright MCP, and a deployed local AEM instance."
 metadata:
   version: 2.35.0
-  mcp-server: AEM, chrome-devtools-mcp
+  mcp-server: AEM, playwright
   category: aem-verification
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-fe-verifier` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "Frontend verification requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-fe-verifier` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "Frontend verification requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 You visually verify a component's rendered output on a local AEM instance against the Figma design or requirements. You create/reuse a demo page, screenshot the component in `wcmmode=disabled`, compare using multimodal vision, and fix code gaps — up to 3 iterations.
 
@@ -39,7 +39,7 @@ digraph aem_fe_verify {
     "Ensure demo page exists" [shape=box];
     "Determine reference for comparison" [shape=box];
     "MCP fallback check" [shape=box];
-    "Chrome DevTools available?" [shape=diamond];
+    "Playwright available?" [shape=diamond];
     "AEM MCP available?" [shape=diamond];
     "Content-only verification (AEM MCP)" [shape=box];
     "Code-only verification (fallback)" [shape=box];
@@ -59,9 +59,9 @@ digraph aem_fe_verify {
     "Resolve component and spec directory" -> "Ensure demo page exists";
     "Ensure demo page exists" -> "Determine reference for comparison";
     "Determine reference for comparison" -> "MCP fallback check";
-    "MCP fallback check" -> "Chrome DevTools available?";
-    "Chrome DevTools available?" -> "Screenshot component on local AEM" [label="yes"];
-    "Chrome DevTools available?" -> "AEM MCP available?" [label="no"];
+    "MCP fallback check" -> "Playwright available?";
+    "Playwright available?" -> "Screenshot component on local AEM" [label="yes"];
+    "Playwright available?" -> "AEM MCP available?" [label="no"];
     "AEM MCP available?" -> "Content-only verification (AEM MCP)" [label="yes"];
     "AEM MCP available?" -> "Code-only verification (fallback)" [label="no"];
     "Content-only verification (AEM MCP)" -> "Write verification report";
@@ -88,7 +88,7 @@ digraph aem_fe_verify {
 
 1. Read `aem.author-url` from `.ai/config.yaml` — it MUST contain `localhost` or `127.0.0.1`
 2. Call `mcp__plugin_dx-aem_AEM__getNodeContent` with path `/content` and depth 1 to confirm AEM MCP responds
-3. Call `mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages` to confirm Chrome DevTools is available
+3. Call `mcp__plugin_dx-aem_playwright__browser_tabs` to confirm Playwright is available
 
 ### Gate passed?
 
@@ -99,7 +99,7 @@ All three checks must pass. If any fails, take the "no" path.
 Print the appropriate message:
 - Non-localhost author-url: `BLOCKED: aem.author-url is <url> (not localhost). FE verification requires local AEM.`
 - AEM MCP unavailable: `BLOCKED: AEM MCP not responding. Start the AEM MCP server connected to localhost.`
-- Chrome DevTools unavailable: `BLOCKED: Chrome DevTools MCP not available. Start Chrome with DevTools Protocol enabled.`
+- Playwright unavailable: `BLOCKED: Playwright MCP not available. Ensure the playwright server is enabled and Chromium is installed (npx playwright install chromium).`
 
 STOP.
 
@@ -141,13 +141,13 @@ Print: `[FE Verify] Reference: <figma (N viewports)|requirements>`
 
 Before attempting browser verification, determine what MCP tools are available.
 
-### Chrome DevTools available?
+### Playwright available?
 
-Try calling `mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page` to the target URL. If successful, take the "yes" path. If unavailable, take the "no" path.
+Try calling `mcp__plugin_dx-aem_playwright__browser_navigate` to the target URL. If successful, take the "yes" path. If unavailable, take the "no" path.
 
 ### AEM MCP available?
 
-If Chrome DevTools was unavailable, check whether AEM MCP is available by calling `mcp__plugin_dx-aem_AEM__getComponentContent`. If available, take the "yes" path. If also unavailable, take the "no" path.
+If Playwright was unavailable, check whether AEM MCP is available by calling `mcp__plugin_dx-aem_AEM__getComponentContent`. If available, take the "yes" path. If also unavailable, take the "no" path.
 
 ### Content-only verification (AEM MCP)
 
@@ -157,7 +157,7 @@ Use AEM MCP to verify component data is correct:
 
 Set verification status: `Fix Verified (content only — visual check recommended)`
 
-Report: "Visual verification skipped (Chrome DevTools MCP unavailable). Content verification passed via AEM MCP."
+Report: "Visual verification skipped (Playwright MCP unavailable). Content verification passed via AEM MCP."
 
 ### Code-only verification (fallback)
 
@@ -174,18 +174,18 @@ Report: "MCP verification unavailable. Code review verification only — manual 
 **For each viewport** (single if no multi-viewport Figma, otherwise iterate):
 
 **Resize Chrome (if multi-viewport):**
-Match Figma reference dimensions via `mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page`.
+Match Figma reference dimensions via `mcp__plugin_dx-aem_playwright__browser_resize`.
 
 **Navigate to demo page:**
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<author-url><page-path>.html?wcmmode=disabled"
 ```
 
-Handle AEM login redirect if needed (fill admin/admin credentials via `evaluate_script`).
+Handle AEM author login. **Preferred** (no password in context): `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` → `browser_set_storage_state` with `.ai/playwright/aem-author-state.json` → navigate (already logged in). **Fallback:** if a navigation still lands on the login form, fill `#username`/`#password` via `browser_evaluate` with creds resolved from `AEM_INSTANCES` (`eval "$(bash .ai/lib/dx-common.sh aem-instance <local|qa>)"` → `$AEM_USER`/`$AEM_PASS`; localhost `admin/admin` default).
 
 **Wait for component to render:**
-Use `evaluate_script` to find the component element in the DOM, scroll it into view. If not found, warn but continue — the full page screenshot is still useful evidence.
+Use `browser_evaluate` to find the component element in the DOM, scroll it into view. If not found, warn but continue — the full page screenshot is still useful evidence.
 
 **Take screenshot:**
 Save with viewport-aware naming:
@@ -200,10 +200,10 @@ Save with viewport-aware naming:
 | Tablet | 768 | 1024 | iPad portrait — breakpoint boundary |
 | Desktop | 1440 | 900 | Standard desktop — full layout |
 
-Use Chrome DevTools `resize_page` before each capture:
+Use Playwright `browser_resize` before each capture:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page width=375 height=667
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_resize width=375 height=667
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
 Name screenshots with viewport suffix: `component-mobile.png`, `component-tablet.png`, `component-desktop.png`.
@@ -355,7 +355,7 @@ Write `<spec-dir>/aem-fe-verify.md` with:
 ## Rules
 
 - **Localhost only** — never create or modify pages on QA/Stage
-- **Real screenshots only** — always use Chrome DevTools, never "mentally compare"
+- **Real screenshots only** — always use Playwright, never "mentally compare"
 - **Match viewport** — resize Chrome to Figma reference dimensions before screenshotting
 - **Content tolerance** — focus on structure and styling, not mockup vs real content
 - **Surgical fixes** — edit specific properties, don't refactor or add features

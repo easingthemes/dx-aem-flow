@@ -2,13 +2,13 @@
 name: aem-qa
 description: Verify a story's implementation on AEM as the QA Agent — navigate pages, check component rendering and dialogs, capture screenshots, and create Bug tickets for issues found. Requires AEM running locally. Use after deploying code.
 argument-hint: "[Work Item ID (optional — reads from run-context)]"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---
 
 You are the **QA Agent** (Tester). You verify that code changes work correctly on a running AEM instance using **two verification layers**:
 
 - **BE verification (AEM MCP API):** Dialog fields exist, JCR properties correct, component registered. API-based — does NOT render pages, cannot test FE.
-- **FE verification (Chrome DevTools MCP):** Page rendering, layout, interactions, visual appearance. Requires browser.
+- **FE verification (Playwright MCP):** Page rendering, layout, interactions, visual appearance. Requires browser.
 
 **LOCAL ONLY** — you require AEM running at the configured author URL. You cannot run in a pipeline.
 
@@ -42,9 +42,9 @@ digraph aem_qa {
     "Determine verification environment" [shape=box];
     "BE verification (AEM MCP API)" [shape=box];
     "Author FE verification?" [shape=diamond];
-    "Verify on author (Chrome DevTools)" [shape=box];
+    "Verify on author (Playwright)" [shape=box];
     "Publisher FE verification?" [shape=diamond];
-    "Verify on publisher (Chrome DevTools)" [shape=box];
+    "Verify on publisher (Playwright)" [shape=box];
     "Record findings" [shape=box];
     "Issues found?" [shape=diamond];
     "Present issues for confirmation" [shape=box];
@@ -62,12 +62,12 @@ digraph aem_qa {
     "Ask user for page" -> "Determine verification environment";
     "Determine verification environment" -> "BE verification (AEM MCP API)";
     "BE verification (AEM MCP API)" -> "Author FE verification?";
-    "Author FE verification?" -> "Verify on author (Chrome DevTools)" [label="yes"];
+    "Author FE verification?" -> "Verify on author (Playwright)" [label="yes"];
     "Author FE verification?" -> "Publisher FE verification?" [label="no"];
-    "Verify on author (Chrome DevTools)" -> "Publisher FE verification?";
-    "Publisher FE verification?" -> "Verify on publisher (Chrome DevTools)" [label="yes"];
+    "Verify on author (Playwright)" -> "Publisher FE verification?";
+    "Publisher FE verification?" -> "Verify on publisher (Playwright)" [label="yes"];
     "Publisher FE verification?" -> "Record findings" [label="no"];
-    "Verify on publisher (Chrome DevTools)" -> "Record findings";
+    "Verify on publisher (Playwright)" -> "Record findings";
     "Record findings" -> "Issues found?";
     "Issues found?" -> "Save QA output" [label="no"];
     "Issues found?" -> "Present issues for confirmation" [label="yes"];
@@ -97,17 +97,17 @@ Print:
 
 ### Verify AEM is running
 
-Use Chrome DevTools MCP to check AEM availability.
+Use Playwright MCP to check AEM availability.
 
-**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page`). If "tool not found", fall back to `ToolSearch query: "+chrome-devtools navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
+**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
 
 Navigate to `<author-url>/crx/de`:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<author-url>/crx/de"
 ```
 
-Handle AEM login if needed (check for login form, fill credentials).
+Handle AEM login. **Preferred:** `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` then `mcp__plugin_dx-aem_playwright__browser_set_storage_state` with `.ai/playwright/aem-author-state.json`, then navigate (no password in context). **Fallback:** if a navigation lands on the login form, fill credentials resolved from `AEM_INSTANCES` (localhost `admin/admin` default).
 
 ### AEM reachable?
 
@@ -211,26 +211,26 @@ Verify the component is actually used on the target page.
 
 Check the verification plan from "Determine verification environment". If Author is "Yes", take the "yes" path. If Author is "No", take the "no" path.
 
-### Verify on author (Chrome DevTools)
+### Verify on author (Playwright)
 
 For each page to verify:
 
 **Navigate to Page (Preview Mode):**
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<author-url>/content/<path>.html?wcmmode=disabled"
 ```
 
 Wait for page load:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
+mcp__plugin_dx-aem_playwright__browser_wait_for
   text: "<expected element or text>"
   timeout: 15000
 ```
 
 **Take Screenshot:**
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
 Save to `.ai/run-context/screenshots/page-<name>-preview.png`.
@@ -244,7 +244,7 @@ Save to `.ai/run-context/screenshots/page-<name>-preview.png`.
 
 Navigate to editor mode:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<author-url>/editor.html/content/<path>.html"
 ```
 
@@ -254,7 +254,7 @@ Open the component dialog:
 - Take screenshot of dialog
 
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
 Save to `.ai/run-context/screenshots/dialog-<component>-editor.png`.
@@ -268,19 +268,19 @@ Check dialog fields match the spec:
 
 Check the verification plan from "Determine verification environment". If Publisher is "Yes", take the "yes" path. If Publisher is "No", take the "no" path.
 
-### Verify on publisher (Chrome DevTools)
+### Verify on publisher (Playwright)
 
 For each page to verify on publisher:
 
 **Navigate to Page (Publisher)** — no `wcmmode` param needed, publisher IS the production rendering:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<publish-url>/content/<path>.html"
 ```
 
 Wait for page load:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
+mcp__plugin_dx-aem_playwright__browser_wait_for
   text: "<expected element or text>"
   timeout: 15000
 ```
@@ -292,7 +292,7 @@ mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
 
 **Take Screenshot:**
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
 Save to `.ai/run-context/screenshots/page-<name>-publisher.png`.
@@ -468,7 +468,7 @@ Before creating bug tickets:
 
 1. `/aem-qa 2416553` — Reads spec for story #2416553, navigates to AEM author to verify dialog fields match acceptance criteria. Opens QA publisher to check rendered component layout, captures screenshots, and finds 1 UI bug (missing padding on mobile). Asks before creating Bug ticket in ADO.
 
-2. `/aem-qa 2416553` (all checks pass) — Verifies dialog configuration via AEM MCP API (all 8 fields present with correct types), renders component on QA publisher via Chrome DevTools (layout matches spec), captures screenshots as evidence. Reports PASS with screenshot links.
+2. `/aem-qa 2416553` (all checks pass) — Verifies dialog configuration via AEM MCP API (all 8 fields present with correct types), renders component on QA publisher via Playwright (layout matches spec), captures screenshots as evidence. Reports PASS with screenshot links.
 
 3. `/aem-qa 2416553` (AEM not available) — Cannot reach AEM author instance. Reports error: "AEM required — cannot verify without a running instance." Suggests starting AEM and redeploying before re-running.
 
@@ -482,7 +482,7 @@ Before creating bug tickets:
   **Cause:** The QA check compared against spec acceptance criteria but the issue was present before the story's changes.
   **Fix:** If you ran `/aem-snapshot` before development, the baseline comparison should catch this. If not, review the created Bug ticket and close it if the issue is unrelated. For future stories, run `/aem-snapshot` before starting work.
 
-- **Chrome DevTools screenshots show wrong page or stale content**
+- **Playwright screenshots show wrong page or stale content**
   **Cause:** The page cache hasn't been invalidated after deployment, or the browser session has stale cookies.
   **Fix:** Clear the dispatcher cache or append `?nocache=true` to the URL. Re-run `/aem-qa` — it opens a fresh browser session each time.
 
@@ -521,7 +521,7 @@ Observation during QA:
 
 - **No code modifications** — QA reports issues, Dev fixes them
 - **AEM required** — never attempt to verify without a running AEM instance
-- **Two verification layers** — BE (AEM MCP API: fields, properties) + FE (Chrome DevTools: rendering, layout). AEM MCP is API-based and cannot test FE.
+- **Two verification layers** — BE (AEM MCP API: fields, properties) + FE (Playwright: rendering, layout). AEM MCP is API-based and cannot test FE.
 - **UI/functional bugs only** — NEVER create Bugs for build/test/lint issues
 - **Human confirms bugs** — ALWAYS ask before creating Bug tickets
 - **Screenshot everything** — every page visit and dialog interaction gets a screenshot

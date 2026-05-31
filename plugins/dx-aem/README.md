@@ -67,10 +67,10 @@ Install the `dx-core` plugin first:
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | `aem-inspector` | Sonnet | Dialog/component inspection, docs page creation, publishing via AEM MCP |
-| `aem-editorial-guide-capture` | Sonnet | Chrome DevTools screenshots, QA Basic Auth, dialog + publisher view capture |
+| `aem-editorial-guide-capture` | Sonnet | Playwright screenshots, QA Basic Auth, dialog + publisher view capture |
 | `aem-file-resolver` | Haiku | Resolve all source files for an AEM component across repos |
 | `aem-page-finder` | Haiku | Find AEM pages using a specific component |
-| `aem-bug-executor` | Sonnet | AEM-specific bug verification via Chrome DevTools and AEM MCP |
+| `aem-bug-executor` | Sonnet | AEM-specific bug verification via Playwright and AEM MCP |
 
 ## Configuration
 
@@ -99,7 +99,7 @@ The `aem.component-prefix` config is used by agents to construct CSS selectors w
 This plugin bundles two MCP servers (configured automatically via `.mcp.json`):
 
 - **[AEM MCP](https://www.npmjs.com/package/aem-mcp-server)** (`aem-mcp-server`) — JCR content, component dialogs, page management, node queries. Supports multi-instance configurations (local + QA). Included with the plugin — no separate install needed.
-- **Chrome DevTools MCP** — browser automation for screenshots, navigation, and dialog interaction
+- **Playwright MCP** — browser automation for screenshots, navigation, and dialog interaction
 
 ## Full Workflow
 

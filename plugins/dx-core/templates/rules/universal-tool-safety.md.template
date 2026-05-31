@@ -6,7 +6,7 @@ description: MCP tool constraints and edit discipline — prevents recurring fri
 
 ## MCP Constraints
 
-- **Chrome DevTools MCP is main-agent only.** It is NOT available in subagents (Task tool agents). Always use Chrome DevTools tools directly in the main conversation, never delegate browser automation to a subagent.
+- **Playwright MCP is main-agent only.** It is NOT available in subagents (Task tool agents). Always use Playwright tools directly in the main conversation, never delegate browser automation to a subagent.
 - **AEM MCP is environment-agnostic.** It connects to whichever AEM instance is configured (author URL from `.ai/config.yaml`). Pass JCR content paths to MCP tools, not repository URLs. The MCP server handles instance routing internally.
 
 ## Edit Discipline

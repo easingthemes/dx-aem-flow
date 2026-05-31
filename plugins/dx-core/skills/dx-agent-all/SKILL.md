@@ -143,7 +143,7 @@ All phases in order (max 15):
 | 5+ | AEM Baseline | only if /aem-snapshot exists + component found + not FE-only |
 | 6 | Full Code Review | skipped if build failed |
 | 6+ | AEM Verification | only if AEM Baseline ran + build passed |
-| 6++ | AEM FE Verification | only if build passed + AEM MCP on localhost + Chrome DevTools available |
+| 6++ | AEM FE Verification | only if build passed + AEM MCP on localhost + Playwright available |
 | 7 | Commit | skipped if build/review failed |
 | 7.5 | Editorial Guide | only if AEM Verification passed + AEM MCP available |
 | 8 | Pull Request | skipped if commit failed |
@@ -579,7 +579,7 @@ Print: `Phase 5+: AEM Verification — (<N>/<total>) <passed|FAILED>.`
 **Guard:** ALL of:
 1. Phase 4 (Build) passed
 2. AEM MCP is connected to localhost (`aem.author-url` contains `localhost`)
-3. Chrome DevTools MCP is available
+3. Playwright MCP is available
 4. A component was identified in research.md or implement.md
 
 **This phase does NOT require AEM Baseline (Phase 5).** It verifies frontend rendering, not dialog fields. It runs even for FE-only changes.
