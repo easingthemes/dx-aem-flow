@@ -4,10 +4,10 @@
 # missing or malformed.
 #
 # Required field: page-url only.
-# Optional fields: component-locator, change-value, brand, platform, scope, activate.
+# Optional fields: element, what, brand, platform, scope, activate.
 # Anything else is preserved verbatim — the skill's LLM phases use these
 # as hints. The kind of change (authoring vs code, what field to edit, etc.)
-# is inferred entirely from the natural-language change-value + story prose
+# is inferred entirely from the natural-language what + story prose
 # by classify-work.sh and the Phase 2 subagents.
 #
 # Usage: parse-simple-block.sh <raw-story.md> <output-yaml-path>
@@ -20,7 +20,7 @@
 #
 # Comment handling: only WHOLE-LINE comments are stripped (lines whose
 # first non-whitespace character is `#`). Inline `#` characters inside
-# values are preserved verbatim (e.g. `change-value: "use #FF0000 hex"`).
+# values are preserved verbatim (e.g. `what: "use #FF0000 hex"`).
 # If you need a comment, put it on its own line.
 #
 # Line endings: CRLF input is normalized to LF before parsing.
@@ -78,8 +78,8 @@ CLEAN=$(echo "$BLOCK" \
   | sed -E '/^[[:space:]]*$/d')
 
 # Only page-url is strictly required — everything else can be inferred from
-# story prose by the LLM phases (component-locator from a Chrome snapshot of
-# the page, the kind of change from the change-value text, etc.).
+# story prose by the LLM phases (element from a Chrome snapshot of
+# the page, the kind of change from the what text, etc.).
 if ! echo "$CLEAN" | grep -qE '^page-url:'; then
   echo "ERROR: required field 'page-url' missing from simple block" >&2
   exit 3
@@ -87,7 +87,7 @@ fi
 
 # Duplicate-field check: every known field must appear at most once.
 # Legacy `change-type` is silently tolerated (it's ignored downstream).
-for FIELD in page-url component-locator change-value brand platform scope activate change-type; do
+for FIELD in page-url element what why brand platform scope activate change-type; do
   COUNT=$(echo "$CLEAN" | grep -cE "^${FIELD}:" || true)
   if [[ "$COUNT" -gt 1 ]]; then
     echo "ERROR: duplicate field '${FIELD}' in simple block" >&2
