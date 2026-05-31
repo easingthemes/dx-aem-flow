@@ -65,6 +65,35 @@ Extract the repo name from the URL. Common ADO formats:
 - `vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>` → repo name is the last segment
 - `<org>.visualstudio.com/<project>/_git/<repo>` → repo name after `_git/`
 
+## Automation Mode (pipeline / orchestrated)
+
+Detect non-interactive execution **before** any step that would call `AskUserQuestion`:
+
+```bash
+AUTOMATION=0
+[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+fi
+# Disagree confidence bar: auto-send pushback only at/above it; below → ask a
+# question instead. Env var wins, then config, then 80.
+DISAGREE_MIN="${DX_DISAGREE_CONFIDENCE:-}"
+[ -z "$DISAGREE_MIN" ] && DISAGREE_MIN=$(bash .ai/lib/dx-common.sh yaml-val 'overrides.pr-answer.disagree-confidence-threshold' 2>/dev/null || true)
+[ -z "$DISAGREE_MIN" ] && DISAGREE_MIN=80
+echo "automation=$AUTOMATION disagree_min=$DISAGREE_MIN"
+```
+
+**When `AUTOMATION=1`** — fully autonomous. There is no human and `AskUserQuestion` isn't in the pipeline `ALLOWED_TOOLS`, so you MUST NOT call it (a call stalls the run to timeout). This overrides the gates in steps 6, 6a, 7a, and 9. In one pass:
+- Post replies to **every** answerable thread — agree-will-fix, question, **and disagree**. Do NOT skip disagree.
+- **Disagree gate:** auto-send pushback only when `Confidence ≥ DISAGREE_MIN` AND the draft cites concrete evidence (file / line / convention). Below the bar, **downgrade the category to `question`** — reply by asking, not asserting.
+- For `agree-will-fix` and accepted reviewer patches, apply the change through the **lint + compile gate** (see `references/apply-fixes.md`), then commit + push to update the PR and reply. If the gate fails, reply that the fix needs manual attention, leave the thread open, and do NOT push.
+- **Dry run** (`DX_DRY_RUN=true`): draft + save the session, post nothing, push nothing, emit `## Return` `verdict: pass`.
+- Keep session persistence + the bot greeting, and emit the `## Return` verdict block at the end.
+
+**When `AUTOMATION=0`** — the interactive flow below is unchanged.
+
 ## 2. Load MCP Tools & Resolve Repo
 
 Before any ADO calls, load the tools:
@@ -104,7 +133,11 @@ mcp__ado__repo_get_pull_request_by_id
   pullRequestId: <PR ID>
 ```
 
-Verify the PR is **mine** (compare `createdBy.uniqueName` with current user email). If not mine:
+Verify the PR is **mine**:
+- **Interactive** (`AUTOMATION=0`): compare `createdBy.uniqueName` with the current user email (`git config user.email`).
+- **Automation** (`AUTOMATION=1`): compare `createdBy.uniqueName` / `createdBy.displayName` against the comma-separated `MY_IDENTITIES` env (case-insensitive). The pipeline runs as a service account, so `git config user.email` is NOT the author — you MUST use `MY_IDENTITIES` here, or every PR is wrongly rejected.
+
+If not mine:
 
 ```
 This PR was created by <author> — not yours. Only your PRs can be answered. Use /dx-pr-review to review others' PRs instead.
@@ -415,7 +448,9 @@ This ensures the session file always reflects the latest state, even if the conv
 
 ## 6. Present Drafted Answers
 
-**Do NOT post anything yet.** Display all drafted answers for the PR:
+**In automation mode** (`AUTOMATION=1`): skip presentation and all `AskUserQuestion` gates. Apply the **Disagree gate** below (confidence + evidence, else downgrade to `question`), then go straight to step 7 (post every answerable reply) → 7a (apply accepted patches through the gate) → 9 (apply agree-will-fix fixes). Do not wait for approval.
+
+**Do NOT post anything yet** (interactive mode). Display all drafted answers for the PR:
 
 ```markdown
 ---
@@ -449,9 +484,15 @@ This ensures the session file always reflects the latest state, even if the conv
 ...
 ```
 
-### Disagree Confirmation Gate
+### Disagree Gate
 
-Before presenting the final summary, if ANY threads are categorized as `disagree`, use **AskUserQuestion** to confirm each one individually:
+**Automation** (`AUTOMATION=1`): for each `disagree` thread, auto-send the pushback only when **both** hold:
+1. `Confidence ≥ DISAGREE_MIN` (the threshold resolved in Automation Mode — default 80, `DX_DISAGREE_CONFIDENCE` or `overrides.pr-answer.disagree-confidence-threshold` override), and
+2. the draft cites concrete evidence — a file/line, a project convention, or a pattern reference (not just an assertion).
+
+If either fails, **downgrade the thread to `question`** and rewrite the reply to *ask* (e.g. "is there a case where X matters here? this follows <pattern> so I kept it — happy to change if I'm missing something") rather than assert. Never call `AskUserQuestion`. This keeps autonomy honest: confident, evidence-backed pushback goes out; weak pushback becomes a question instead of a wrong assertion.
+
+**Interactive** (`AUTOMATION=0`): if ANY threads are categorized as `disagree`, use **AskUserQuestion** to confirm each one individually:
 
 ```
 "Thread #<id> (<file> L<line>) — the reviewer says: '<their comment summary>'
@@ -459,11 +500,13 @@ I drafted this pushback: '<draft reply summary>'
 Do you want to: send this reply / rewrite it / skip this thread?"
 ```
 
-Never auto-send a disagreement. The user must explicitly confirm each one.
+Never auto-send a disagreement without confirmation in interactive mode.
 
 ### Approval Options
 
-Then ask:
+**Skip in automation mode** (`AUTOMATION=1`) — post all answerable replies without asking (disagree already gated above).
+
+Then ask (interactive only):
 
 - **Post all** — post all drafted replies as-is
 - **Edit** — modify specific answers before posting (specify by number)
@@ -474,7 +517,9 @@ Then ask:
 
 ### 6a. Present Detected Patches
 
-If step 5b-2 detected any `[PATCH]` threads, present them after the drafted answers:
+**In automation mode** (`AUTOMATION=1`): do not present or ask. Treat all detected `[PATCH]` threads as accepted and apply them through the lint + compile gate in step 7a. Skip the rest of this step.
+
+If step 5b-2 detected any `[PATCH]` threads, present them after the drafted answers (interactive only):
 
 ```markdown
 ---
@@ -523,24 +568,32 @@ If a reply fails to post (MCP error, network issue):
 
 ### 7a. Apply Proposed Patches
 
-**Only runs if the user chose to apply patches in step 6a.** If they skipped patches, jump to step 8.
+**Interactive:** only runs if the user chose to apply patches in step 6a. If they skipped patches, jump to step 8.
+**Automation** (`AUTOMATION=1`): runs whenever step 5b-2 detected `[PATCH]` threads. No `AskUserQuestion` anywhere in 7a — the **lint + compile gate (7a-3)** decides whether to push. If the gate fails, reply that the fix needs manual attention, leave the thread open, and do NOT push.
 
 #### 7a-1. Verify Branch
 
-Ensure you're on the correct branch:
+Ensure you're on the PR's `sourceBranch` (strip `refs/heads/`):
 
 ```bash
 git branch --show-current
 ```
 
-Compare with the PR's `sourceBranch` (strip `refs/heads/`). If different:
+**Automation:** the pipeline checks out the repo default branch, not the PR branch — so fetch and check out the source branch directly (no prompt):
+
+```bash
+git fetch origin <sourceBranch>
+git checkout -B <sourceBranch> origin/<sourceBranch>
+```
+
+**Interactive:** if the current branch differs, ask before switching:
 
 ```
 You're on <current> but this PR's source branch is <sourceBranch>.
 Switch to <sourceBranch> first?
 ```
 
-If on the correct branch, pull latest:
+If already on the correct branch, pull latest:
 
 ```bash
 git pull --rebase origin <sourceBranch>
@@ -579,7 +632,7 @@ git apply /tmp/pr-patch-<id>-<N>.patch
    ```
 4. Continue with remaining patches.
 
-#### 7a-3. Lint Check
+#### 7a-3. Lint + Compile Gate
 
 After patches are applied, lint modified files:
 
@@ -594,7 +647,19 @@ Dispatch by file type:
 
 If lint commands not in config, check `package.json` scripts for `lint`, `lint:js`, `lint:css`.
 
-If lint fails, try auto-fix once (e.g., `--fix` flag). If still failing, report and let the user decide.
+If lint fails, try auto-fix once (e.g., `--fix` flag). If still failing in interactive mode, report and let the user decide.
+
+**Compile gate** — if any code (non-doc) files changed, compile to prove the change builds. Read the compile command (never the deploy `build.command`, which targets localhost AEM):
+
+```bash
+COMPILE=$(bash .ai/lib/dx-common.sh yaml-val 'build.compile-fast' || \
+          bash .ai/lib/dx-common.sh yaml-val 'build.compile')
+$COMPILE > /tmp/pr-answer-compile.log 2>&1
+```
+
+**Automation gate decision** (`AUTOMATION=1`) — this is a HARD gate:
+- **lint + compile pass** → proceed to commit + push (7a-4).
+- **either fails** → do NOT push. Revert the failed fix (`git checkout -- <files>`), reply on the thread: *"Tried this but it doesn't lint/compile cleanly — I'll need to handle it manually."*, leave the thread **open**, mark the thread `Patch applied: failed` in the session, and record a `warn` for the run verdict. Never push broken code.
 
 #### 7a-4. Present Changes & Commit
 
@@ -616,11 +681,21 @@ git diff
 Approve? (commit + push + reply to patch threads)
 ```
 
-Wait for explicit approval, then delegate to `/dx-pr-commit`:
+**Interactive:** wait for explicit approval. **Automation** (`AUTOMATION=1`): skip the approval prompt — the lint + compile gate already passed.
+
+Before delegating, set the orchestration flag so `/dx-pr-commit` runs headless (commits + pushes to update the existing PR, no new-PR prompt — see its "Headless PR update" path):
+
+```bash
+mkdir -p .ai/run-context && touch .ai/run-context/orchestrating.flag
+```
+
+Then delegate to `/dx-pr-commit`:
 
 ```
 Skill(/dx-pr-commit, args: "apply reviewer-proposed patches")
 ```
+
+`/dx-pr-commit` stages your changed files, commits with the `#<id>` message, and (when an Active PR already exists for the branch) pushes to update it. Capture the commit hash for the thread replies.
 
 #### 7a-5. Reply to Patch Threads
 
@@ -670,7 +745,9 @@ If there are **disagree** threads, show a reminder:
 
 ## 9. Apply Fixes (if agree-will-fix threads exist)
 
-If any posted threads have category `agree-will-fix`, immediately ask:
+**In automation mode** (`AUTOMATION=1`): if any posted threads have category `agree-will-fix`, apply the fixes **without asking** — follow `references/apply-fixes.md`, which runs the lint + compile gate and commits/pushes headless. Per-fix gate failures defer that thread (reply "needs manual attention", leave open) and downgrade the run to `warn`; they do not block the other fixes.
+
+**Interactive:** if any posted threads have category `agree-will-fix`, immediately ask:
 
 ```
 <N> agree-will-fix thread(s) need code changes. Apply fixes now?
@@ -680,7 +757,7 @@ Use **AskUserQuestion** with options:
 - **Apply fixes now** — apply fixes inline using the procedure below
 - **Skip for now** — leave fixes for later
 
-If the user chooses to apply, follow `references/apply-fixes.md` for the full fix procedure:
+Then (or immediately, in automation) follow `references/apply-fixes.md` for the full fix procedure:
 
 1. Extract fixable threads from session (category `agree-will-fix`, status `pending` or `posted`)
 2. Present fix plan for user approval
@@ -692,7 +769,34 @@ If the user chooses to apply, follow `references/apply-fixes.md` for the full fi
 8. Reply "Fixed." to each resolved thread
 9. Update session file — mark threads as `code-fixed` with commit hash
 
+## Automation Return contract
+
+When `AUTOMATION=1`, after processing, emit this block as the final message (the pipeline runner reads `verdict:` and exits non-zero on `fail`):
+
+```markdown
+## Return
+verdict: pass | warn | fail
+summary: <one sentence — e.g. "Replied to 5 threads (1 disagree), applied + pushed 2 fixes, 1 deferred (compile fail)">
+artifacts:
+  - .ai/pr-answers/pr-<id>.md
+next_action: <human-readable next step or "none">
+```
+
+Verdict mapping:
+
+| Outcome | verdict |
+|---|---|
+| All answerable threads replied; all accepted fixes applied + pushed (or none needed) | `pass` |
+| Replies posted, but ≥1 fix deferred (lint/compile gate failed) or ≥1 reply failed to post | `warn` |
+| Nothing posted (not my PR, no answerable threads is still `pass`; ADO unreachable or fatal error) | `fail` |
+
 ## Examples
+
+### Pipeline automation (fully autonomous)
+```
+/dx-pr-answer https://dev.azure.com/myorg/My%20Project/_git/My-Repo/pullrequest/12345
+```
+Run headless with `DX_PIPELINE_MODE=true` and `MY_IDENTITIES` set. Detects `AUTOMATION=1`, verifies the PR author is in `MY_IDENTITIES`, replies to every answerable thread (disagree included when confidence ≥ threshold + evidence; else downgraded to a question), applies accepted patches + agree-will-fix fixes through the lint + compile gate, commits + pushes to update the PR, replies "Fixed.", and emits the `## Return` block. No `AskUserQuestion`.
 
 ### Answer all open threads
 ```
@@ -780,12 +884,15 @@ Before presenting drafted responses:
 - **Skip your own comments** — don't answer threads you created or already replied to
 - **Research before answering** — never guess. Read the file, check the diff, understand the decision
 - **Categorize every thread** — assign `agree-will-fix`, `question`, `disagree`, or `skip` to each
-- **Confirm disagreements** — use AskUserQuestion for every `disagree` thread before posting. Never auto-send pushback
+- **Confirm disagreements (interactive)** — in interactive mode, use AskUserQuestion for every `disagree` thread before posting; never auto-send pushback. In automation mode (`AUTOMATION=1`), auto-send pushback only when `Confidence ≥ DISAGREE_MIN` AND evidence is cited; below the bar, downgrade to a `question` (never `AskUserQuestion`)
 - **Propose fixes** — for `agree-will-fix` threads, describe the specific code change in the reply so the reviewer knows what to expect
 - **Back up disagreements** — point to files, patterns, or conventions when pushing back. Don't just say "it's fine"
 - **Human voice** — write replies like a colleague, not a corporate template
 - **Bot greeting** — always greet bot reviewers with a playful bot acknowledgment
-- **Ask before posting** — never post without explicit user approval
+- **Ask before posting (interactive)** — in interactive mode, never post without explicit user approval. In automation mode there is no human: post replies + apply gated fixes in one pass and NEVER call `AskUserQuestion`
+- **Automation = my PR via MY_IDENTITIES** — in CI the git identity is the service account, so verify PR ownership against `MY_IDENTITIES`, not `git config user.email`
+- **Lint + compile gate before push** — in automation, only commit/push a fix after `build.lint` + `build.compile` pass (never the deploy `build.command`); on failure, revert the fix, reply that it needs manual attention, leave the thread open, and downgrade the run to `warn`
+- **Never force-push** — only `--force-with-lease` after a rebase (delegated to `/dx-pr-commit`); auto-commit modifies a human's PR branch, so keep the diff minimal and never overwrite
 - **Acknowledge valid points** — if the reviewer is right, say so. Don't be defensive
 - **Concise replies** — 2-4 sentences max. No walls of text
 - **Never resolve threads** — the user resolves threads manually. Never call `update_pull_request_thread` to change status
