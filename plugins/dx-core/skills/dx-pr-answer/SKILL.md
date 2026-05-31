@@ -86,7 +86,7 @@ echo "automation=$AUTOMATION disagree_min=$DISAGREE_MIN"
 ```
 
 **When `AUTOMATION=1`** — fully autonomous. There is no human and `AskUserQuestion` isn't in the pipeline `ALLOWED_TOOLS`, so you MUST NOT call it (a call stalls the run to timeout). This overrides the gates in steps 6, 6a, 7a, and 9. In one pass:
-- **100% coverage — every answerable thread MUST get a posted reply.** Answerable = any reviewer thread that step 5c did not skip (not system, not your own, not already-answered by you). No thread is ever left silent. Categories: agree-will-fix, question, **and disagree** — do NOT skip disagree.
+- **100% coverage — every answerable thread MUST get a posted reply.** Answerable = any reviewer thread that step 5c did not skip (not system, not your own, not already-answered by you). No thread is ever left silent. Every category gets a reply: agree-will-fix, question, **disagree** (do NOT skip disagree), **and `skip`** — in automation a `skip` (praise / FYI / already-addressed) thread still gets a brief one-line acknowledgment (e.g. "thanks!", "noted 🙏", "already handled — cheers"), with the bot greeting if it's a `[BOT]` thread.
 - **Confidence gate (applies to ALL categories):** post a substantive reply only when you can answer confidently — for `disagree` that means `Confidence ≥ DISAGREE_MIN` AND the draft cites concrete evidence (file / line / convention); for `question`/clarification it means you actually know the answer from the code. **When you are NOT confident** (low-confidence disagree, an answer you're unsure of, ambiguous intent, or anything you can't resolve from the code) you MUST still reply — post an explicit **needs-human-input** reply (see the template in the Disagree / Low-Confidence Gate). Never fabricate a confident answer, never downgrade to a vague non-answer, and never leave a thread unanswered.
 - For `agree-will-fix` and accepted reviewer patches, apply the change through the **lint + compile gate** (see `references/apply-fixes.md`), then commit + push to update the PR and reply. If the gate fails, post the **needs-human-input** reply, leave the thread open, and do NOT push.
 - **Dry run** (`DX_DRY_RUN=true`): draft + save the session, post nothing, push nothing, emit `## Return` `verdict: pass`.
@@ -347,7 +347,7 @@ Task(
        - **agree-will-fix** — reviewer is right, code change needed. Reply acknowledges and describes what you'll fix.
        - **question** — reviewer is asking a question, no code change. Reply explains WHY the code is that way.
        - **disagree** — you think the code is correct as-is. Draft a respectful counter-argument with evidence.
-       - **skip** — not actionable (praise, FYI, already addressed)
+       - **skip** — not actionable (praise, FYI, already addressed). In automation mode this still gets a brief one-line acknowledgment reply (it is never left silent); in interactive mode it may be skipped. Draft a short ack for these too.
 
     5. **Draft a reply** that:
        - Explains WHY the code is that way (not just WHAT it does)
@@ -907,7 +907,7 @@ Before presenting drafted responses:
 - **Bot greeting** — always greet bot reviewers with a playful bot acknowledgment
 - **Ask before posting (interactive)** — in interactive mode, never post without explicit user approval. In automation mode there is no human: post replies + apply gated fixes in one pass and NEVER call `AskUserQuestion`
 - **Automation = my PR via MY_IDENTITIES** — in CI the git identity is the service account, so verify PR ownership against `MY_IDENTITIES`, not `git config user.email`
-- **Answer every thread (automation)** — 100% coverage: every answerable thread MUST get a posted reply. When you can't answer confidently, post a `needs-human-input` reply that @-mentions the PR author (`@<{createdBy.id}>`) and says what's unclear — never fabricate a confident answer, never downgrade to a vague non-answer, and never leave a thread silent
+- **Answer every thread (automation)** — 100% coverage: every answerable thread MUST get a posted reply, including `skip` (praise / FYI) threads, which get a brief one-line acknowledgment. When you can't answer confidently, post a `needs-human-input` reply that @-mentions the PR author (`@<{createdBy.id}>`) and says what's unclear — never fabricate a confident answer, never downgrade to a vague non-answer, and never leave a thread silent
 - **Lint + compile gate before push** — in automation, only commit/push a fix after `build.lint` + `build.compile` pass (never the deploy `build.command`); on failure, revert the fix, reply that it needs manual attention, leave the thread open, and downgrade the run to `warn`
 - **Never force-push** — only `--force-with-lease` after a rebase (delegated to `/dx-pr-commit`); auto-commit modifies a human's PR branch, so keep the diff minimal and never overwrite
 - **Acknowledge valid points** — if the reviewer is right, say so. Don't be defensive
