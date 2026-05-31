@@ -148,7 +148,7 @@ $COMPILE > /tmp/pr-answer-compile.log 2>&1
 
 **Automation gate decision** (`AUTOMATION=1`) — HARD gate:
 - **lint + compile pass** → proceed to commit + push.
-- **either fails** → revert the offending fix (`git checkout -- <files>`), reply on its thread *"Tried this but it doesn't lint/compile cleanly — I'll handle it manually."*, leave the thread **open**, mark it `code-fixed: failed` in the session, and record `warn` for the run. Continue with the remaining fixes. Never commit or push broken code.
+- **either fails** → revert the offending fix (`git checkout -- <files>`), post the **needs-human-input** reply on its thread (tag the PR author via the session's `Author ID` — `@<{Author ID}>` — noting the fix didn't lint/compile cleanly), leave the thread **open**, mark it `code-fixed: failed` in the session, and record `warn` for the run. Continue with the remaining fixes. Never commit or push broken code.
 
 ## 5. Present Changes
 
