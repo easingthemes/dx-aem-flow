@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.0.0...v3.0.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* **dx-simple:** unify simple-block field names on element/what/why ([#158](https://github.com/easingthemes/dx-aem-flow/issues/158)) ([bf44f3c](https://github.com/easingthemes/dx-aem-flow/commit/bf44f3c69a30bb506e2addff3f519c07601724a2)), closes [#148](https://github.com/easingthemes/dx-aem-flow/issues/148)
+
 # [3.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.112.0...v3.0.0) (2026-05-31)
 
 
