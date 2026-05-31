@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.0.1...v3.1.0) (2026-05-31)
+
+
+### Features
+
+* **dx-simple:** treat post-trigger comment as primary user input + reopen completed tickets ([#159](https://github.com/easingthemes/dx-aem-flow/issues/159)) ([3d128c5](https://github.com/easingthemes/dx-aem-flow/commit/3d128c594915868af5f16c486fa992cc73594db9))
+
 ## [3.0.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.0.0...v3.0.1) (2026-05-31)
 
 
