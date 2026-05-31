@@ -1,3 +1,21 @@
+# [3.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.112.0...v3.0.0) (2026-05-31)
+
+
+* feat(dx-aem)!: migrate browser automation to Playwright MCP (v3.0.0) ([#157](https://github.com/easingthemes/dx-aem-flow/issues/157)) ([c9e6544](https://github.com/easingthemes/dx-aem-flow/commit/c9e6544181a8133574ce17e52a37b5a5c04002de)), closes [#148](https://github.com/easingthemes/dx-aem-flow/issues/148) [#149](https://github.com/easingthemes/dx-aem-flow/issues/149) [#148](https://github.com/easingthemes/dx-aem-flow/issues/148) [#149](https://github.com/easingthemes/dx-aem-flow/issues/149) [#147](https://github.com/easingthemes/dx-aem-flow/issues/147)
+
+
+### BREAKING CHANGES
+
+* AEM browser automation now uses @playwright/mcp instead of chrome-devtools-mcp. After upgrading, consumers must enable the `playwright` MCP server and run `npx playwright install chromium`. Tool names changed to browser_* (e.g. navigate_page -> browser_navigate, take_snapshot -> browser_snapshot). The dx-perf skill is removed.
+
+* fix(dx-aem): address PR review — Playwright tool params, JSON-safe auth, doc/numbering
+
+Migrate tool PARAMETERS (not just names) to Playwright: browser_take_screenshot uses `filename` basename (+ `--output-dir=.ai/playwright/screenshots` and a cp into the spec dir) not `filePath`; element targeting via `ref` not `uid`; browser_navigate `url`-only (drop `type`); browser_click `doubleClick`; browser_wait_for `text`/`time` not selector. Fixes aem-editorial-guide(-capture), dx-simple, dx-bug-verify, demo-vscode.
+
+Harden aem-playwright-auth.sh: emit JSON via jq (token/password with " or \ no longer corrupt the file) + strip CR from the login-token; require jq.
+
+Collapse duplicate browser_tabs bullet; renumber aem-init (install 8g, report 8h); research doc §1 example matches shipped .mcp.json (no --config; adds --output-dir) and §3 gains a parameter-mapping column.
+
 # [2.112.0](https://github.com/easingthemes/dx-aem-flow/compare/v2.111.0...v2.112.0) (2026-05-30)
 
 
