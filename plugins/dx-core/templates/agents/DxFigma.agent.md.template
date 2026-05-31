@@ -32,7 +32,7 @@ You orchestrate the full Figma-to-prototype workflow: extract design data, gener
 
 - Figma desktop app running with Dev Mode MCP enabled (port 3845)
 - The Figma file must be open in the app
-- Chrome running with DevTools Protocol (for verification step)
+- Chromium installed for Playwright (for verification step)
 
 ## Process
 

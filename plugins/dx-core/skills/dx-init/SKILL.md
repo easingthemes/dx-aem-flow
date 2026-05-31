@@ -616,7 +616,7 @@ Run the Copilot agent install script — this batch-copies all dx agent template
 bash ${CLAUDE_SKILL_DIR}/scripts/install-copilot-agents.sh
 ```
 
-This copies all `*.agent.md.template` files from the dx plugin's `templates/agents/` to `.github/agents/` (stripping `.template` suffix), applies post-copy transforms (editFiles→edit, chrome-devtools→chrome-devtools-mcp, allowed-tools injection). Files that already exist are skipped. Review the script output to report what was installed vs skipped.
+This copies all `*.agent.md.template` files from the dx plugin's `templates/agents/` to `.github/agents/` (stripping `.template` suffix), applies post-copy transforms (editFiles→edit alias, allowed-tools injection). Files that already exist are skipped. Review the script output to report what was installed vs skipped.
 
 ### 9a-bis. Set COPILOT_CUSTOM_INSTRUCTIONS_DIRS
 

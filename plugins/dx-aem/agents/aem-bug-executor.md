@@ -1,8 +1,8 @@
 ---
 name: aem-bug-executor
-description: Executes AEM-specific bug verification steps — navigates to AEM pages, reproduces bugs visually via Chrome DevTools, captures screenshots, and returns verification evidence. Used by dx-bug-verify skill when the bug involves AEM components.
-tools: Read, Write, Glob, Grep, ToolSearch, mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page, mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot, mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot, mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script, mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for, mcp__plugin_dx-aem_chrome-devtools-mcp__click, mcp__plugin_dx-aem_chrome-devtools-mcp__fill, mcp__plugin_dx-aem_chrome-devtools-mcp__fill_form, mcp__plugin_dx-aem_chrome-devtools-mcp__type_text, mcp__plugin_dx-aem_chrome-devtools-mcp__press_key, mcp__plugin_dx-aem_chrome-devtools-mcp__hover, mcp__plugin_dx-aem_chrome-devtools-mcp__drag, mcp__plugin_dx-aem_chrome-devtools-mcp__upload_file, mcp__plugin_dx-aem_chrome-devtools-mcp__handle_dialog, mcp__plugin_dx-aem_chrome-devtools-mcp__list_console_messages, mcp__plugin_dx-aem_chrome-devtools-mcp__get_console_message, mcp__plugin_dx-aem_chrome-devtools-mcp__list_network_requests, mcp__plugin_dx-aem_chrome-devtools-mcp__get_network_request, mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages, mcp__plugin_dx-aem_chrome-devtools-mcp__select_page, mcp__plugin_dx-aem_chrome-devtools-mcp__new_page, mcp__plugin_dx-aem_chrome-devtools-mcp__close_page, mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page, mcp__plugin_dx-aem_chrome-devtools-mcp__emulate, Edit, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__getPageProperties
-mcpServers: [AEM, chrome-devtools-mcp]
+description: Executes AEM-specific bug verification steps — navigates to AEM pages, reproduces bugs visually via Playwright, captures screenshots, and returns verification evidence. Used by dx-bug-verify skill when the bug involves AEM components.
+tools: Read, Write, Glob, Grep, Bash, ToolSearch, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_type, mcp__plugin_dx-aem_playwright__browser_fill_form, mcp__plugin_dx-aem_playwright__browser_press_key, mcp__plugin_dx-aem_playwright__browser_hover, mcp__plugin_dx-aem_playwright__browser_drag, mcp__plugin_dx-aem_playwright__browser_file_upload, mcp__plugin_dx-aem_playwright__browser_handle_dialog, mcp__plugin_dx-aem_playwright__browser_console_messages, mcp__plugin_dx-aem_playwright__browser_network_requests, mcp__plugin_dx-aem_playwright__browser_network_request, mcp__plugin_dx-aem_playwright__browser_tabs, mcp__plugin_dx-aem_playwright__browser_resize, Edit, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__getPageProperties
+mcpServers: [AEM, playwright]
 model: sonnet
 memory: project
 maxTurns: 50
@@ -20,9 +20,9 @@ Use resource data to plan your approach. If resources are unavailable, fall back
 
 ## IMPORTANT: Ensure MCP Tools Are Available
 
-Chrome DevTools and AEM tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first.** If you get a "tool not found" error, fall back to ToolSearch:
+Playwright and AEM tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first.** If you get a "tool not found" error, fall back to ToolSearch:
 ```
-ToolSearch("+chrome-devtools")
+ToolSearch("+playwright")
 ToolSearch("+AEM")
 ```
 Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing and you'll wrongly conclude they're unavailable.
@@ -62,43 +62,55 @@ If not, find a page with the component:
 
 ### 2. Navigate and handle login
 
-**Check for QA basic auth:** Before navigating, check if `.claude/rules/qa-basic-auth.md` exists. If the target URL is NOT localhost and the rule exists:
+**Two distinct auth layers — different hosts, never chained.** The AEM *form login* (creds = `AEM_INSTANCES`) gates the **author** instance — author has no Basic Auth, so an author URL goes straight to the login form. HTTP Basic Auth (creds = `QA_BASIC_AUTH_*` / `aem.qa-basic-auth`) gates the **published website (publisher)** on QA/Stage — published pages have no AEM login form. Pass **one or the other** depending on which host the repro targets, never both on the same URL.
+
+**Check for QA basic auth (published-site gate):** Before navigating to a **published-site (publisher)** URL, check if `.claude/rules/qa-basic-auth.md` exists. If that URL is NOT localhost and the rule exists:
 1. Read credentials from the rule (username / password fields)
 2. Embed credentials in the URL for first navigation: `https://user:pass@host/path`
 3. After first successful navigation, use clean URLs for all subsequent navigations (session cookie is set)
-4. If embedded credentials fail (401/blank), fall back to `evaluate_script` with `fetch()` + Authorization header, then reload
+4. If embedded credentials fail (401/blank), fall back to `browser_evaluate` with `fetch()` + Authorization header, then reload
 
 If the URL is localhost or the rule doesn't exist, navigate directly without basic auth.
 
-Navigate Chrome to the target page:
+**Authenticate the author (preferred — storageState, no password in context):** for an **author** target, get a session before navigating. The password is read from `AEM_INSTANCES` *inside the helper*, never in your context:
+```bash
+# INSTANCE = local | qa  (by target URL)
+bash .ai/lib/aem-playwright-auth.sh author "$INSTANCE"   # writes .ai/playwright/aem-author-state.json
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+Then load it (needs `--caps=storage`, already on the `playwright` server):
+```
+mcp__plugin_dx-aem_playwright__browser_set_storage_state
+  path: ".ai/playwright/aem-author-state.json"
+```
+
+Navigate to the target page (already authenticated for author targets):
+```
+mcp__plugin_dx-aem_playwright__browser_navigate
   url: "<target-url>"
 ```
 
-**Check for AEM login redirect:** If URL contains `/libs/granite/core/content/login.html`:
-1. Fill credentials (default: admin/admin):
+**Fallback — AEM login redirect:** if a navigation still lands on `/libs/granite/core/content/login.html`, resolve creds (`eval "$(bash .ai/lib/dx-common.sh aem-instance "$INSTANCE")"` → `$AEM_USER`/`$AEM_PASS`; localhost `admin/admin` default) and fill the form (substitute real values — do not leave the literals):
    ```js
    () => {
      const u = document.getElementById('username');
      const p = document.getElementById('password');
      if (!u || !p) return { onLoginPage: false };
-     u.value = 'admin'; p.value = 'admin';
+     u.value = '<AEM_USER>'; p.value = '<AEM_PASS>';
      u.dispatchEvent(new Event('input', { bubbles: true }));
      p.dispatchEvent(new Event('input', { bubbles: true }));
      return { filled: true };
    }
    ```
-2. Click submit: `evaluate_script(() => { document.getElementById('submit-button').click(); })`
+2. Click submit: `browser_evaluate(() => { document.getElementById('submit-button').click(); })`
 3. Wait for page load (15s timeout)
 
 ### 3. Follow repro steps
 
 Execute each reproduction step:
-- **Navigate:** use `navigate_page`
-- **Click:** use `click` or `evaluate_script`
-- **Scroll:** use `evaluate_script` with `window.scrollTo`
-- **Wait:** use `wait_for` for dynamic content
+- **Navigate:** use `browser_navigate`
+- **Click:** use `browser_click` or `browser_evaluate`
+- **Scroll:** use `browser_evaluate` with `window.scrollTo`
+- **Wait:** use `browser_wait_for` for dynamic content
 - **Check dialog:** use Granite API to open component dialogs in editor mode
 
 ### 4. Capture evidence

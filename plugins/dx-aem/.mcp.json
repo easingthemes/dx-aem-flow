@@ -5,14 +5,16 @@
       "command": "npx",
       "args": ["-y", "aem-mcp-server", "-t", "stdio", "-I", "${AEM_INSTANCES}"]
     },
-    "chrome-devtools-mcp": {
+    "playwright": {
       "type": "stdio",
       "command": "npx",
       "args": [
-        "chrome-devtools-mcp@latest",
+        "@playwright/mcp@0.0.75",
         "--headless",
         "--isolated",
-        "--viewport=1440x900"
+        "--viewport-size=1440,900",
+        "--caps=storage",
+        "--output-dir=.ai/playwright/screenshots"
       ]
     }
   }

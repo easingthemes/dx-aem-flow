@@ -19,8 +19,8 @@ Skills that need credentials should resolve them in this order:
 
 | Variable | Purpose | Used By |
 |----------|---------|---------|
-| `QA_BASIC_AUTH_USER` | QA/Stage HTTP Basic Auth username | qa-basic-auth rule, Chrome DevTools skills |
-| `QA_BASIC_AUTH_PASS` | QA/Stage HTTP Basic Auth password | qa-basic-auth rule, Chrome DevTools skills |
+| `QA_BASIC_AUTH_USER` | QA/Stage **publisher** HTTP Basic Auth username — the published-website proxy gate, separate from the AEM author login (which uses `AEM_INSTANCES`; author has no Basic Auth) | qa-basic-auth rule, Playwright skills |
+| `QA_BASIC_AUTH_PASS` | QA/Stage **publisher** HTTP Basic Auth password — published-website proxy gate | qa-basic-auth rule, Playwright skills |
 | `QA_BASIC_AUTH_FALLBACK_USER` | Fallback QA username (optional) | qa-basic-auth rule |
 | `QA_BASIC_AUTH_FALLBACK_PASS` | Fallback QA password (optional) | qa-basic-auth rule |
 | `AXE_API_KEY` | Deque axe API key for accessibility testing | dx-axe, axe MCP server |
@@ -29,7 +29,7 @@ Skills that need credentials should resolve them in this order:
 
 | Variable | Purpose | Used By |
 |----------|---------|---------|
-| `AEM_INSTANCES` | AEM MCP multi-instance config. Format: `name:host:user:pass` comma-separated. Example: `local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:user:pass` | AEM MCP `.mcp.json` (stdio transport) |
+| `AEM_INSTANCES` | AEM MCP multi-instance config — also the single source for the **AEM author form login** in browser agents (resolve via `bash .ai/lib/dx-common.sh aem-instance <name>`). Format: `name:host:user:pass` comma-separated. Example: `local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:user:pass` | AEM MCP `.mcp.json` (stdio transport); Playwright agents (form login) |
 
 ### Automation (dx-automation) — Pipeline Only
 

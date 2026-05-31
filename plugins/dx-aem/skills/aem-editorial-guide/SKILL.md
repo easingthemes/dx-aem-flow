@@ -4,10 +4,10 @@ description: Capture editorial guide for a component dialog in AEM — open edit
 argument-hint: "[component-name] (e.g., hero, card, banner)"
 context: fork
 agent: aem-editorial-guide-capture
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 ## Task
 
@@ -39,13 +39,15 @@ Create `<spec-dir>/demo/` if it doesn't exist.
 
 Navigate Chrome to `<author-url>/editor.html<page-path>.html`.
 
-**Check for login redirect:** After navigation, check if the URL contains `/libs/granite/core/content/login.html`. If so, log in:
-1. Use `evaluate_script` to fill `#username` and `#password` with AEM credentials (default: `admin`/`admin`)
-2. Dispatch `input` events after setting values so Coral UI registers them
-3. Use `evaluate_script` to click `#submit-button`
-4. Wait for the editor page to load (use `wait_for` with the page title or "Edit", timeout 15 seconds)
+**Authenticate the author (preferred — no password in context):** `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` → `browser_set_storage_state` with `.ai/playwright/aem-author-state.json` → navigate (already logged in).
 
-Wait for the editor to be ready — use `evaluate_script` to check:
+**Fallback — login redirect:** if a navigation still lands on `/libs/granite/core/content/login.html`, log in:
+1. Use `browser_evaluate` to fill `#username` and `#password` with AEM credentials resolved from `AEM_INSTANCES` (`bash .ai/lib/dx-common.sh aem-instance <local|qa>`; falls back to `admin`/`admin` for localhost only)
+2. Dispatch `input` events after setting values so Coral UI registers them
+3. Use `browser_evaluate` to click `#submit-button`
+4. Wait for the editor page to load (use `browser_wait_for` with the page title or "Edit", timeout 15 seconds)
+
+Wait for the editor to be ready — use `browser_evaluate` to check:
 ```js
 () => {
   return document.querySelector('.editor-GlobalBar') !== null
@@ -58,7 +60,7 @@ Retry up to 15 seconds (poll every 1 second).
 
 Read the resource type pattern from `.ai/config.yaml` `aem.resource-type-pattern`.
 
-Use `evaluate_script` to find the component and trigger its EDIT action:
+Use `browser_evaluate` to find the component and trigger its EDIT action:
 ```js
 () => {
   const editables = Granite.author.editables;
@@ -103,9 +105,14 @@ If it's not possible to isolate the relevant part, take **one screenshot only**.
 - If no match: save as `dialog-$ARGUMENTS.png` or `page-$ARGUMENTS.png` (depending on what was captured)
 - If exists: increment (`dialog-$ARGUMENTS-2.png`, etc.)
 
-Use `take_screenshot` with:
-- `filePath`: `<spec-dir>/demo/<chosen-filename>.png`
+Use `browser_take_screenshot` with:
+- `filename`: `<chosen-filename>.png` (a **basename** — Playwright saves it under the MCP output dir `.ai/playwright/screenshots/`, not at an arbitrary path)
 - Format: PNG
+
+Then copy it into the spec demo folder so the authoring guide can reference it relatively:
+```bash
+cp .ai/playwright/screenshots/<chosen-filename>.png <spec-dir>/demo/<chosen-filename>.png
+```
 
 ### 7. Close dialog if open
 

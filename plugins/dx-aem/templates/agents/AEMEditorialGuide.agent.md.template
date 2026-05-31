@@ -11,14 +11,13 @@ tools:
   - 'AEM/getNodeContent'
   - 'AEM/listChildren'
   - 'AEM/scanPageComponents'
-  - 'chrome-devtools/list_pages'
-  - 'chrome-devtools/select_page'
-  - 'chrome-devtools/navigate_page'
-  - 'chrome-devtools/take_snapshot'
-  - 'chrome-devtools/take_screenshot'
-  - 'chrome-devtools/click'
-  - 'chrome-devtools/evaluate_script'
-  - 'chrome-devtools/wait_for'
+  - 'playwright/browser_tabs'
+  - 'playwright/browser_navigate'
+  - 'playwright/browser_snapshot'
+  - 'playwright/browser_take_screenshot'
+  - 'playwright/browser_click'
+  - 'playwright/browser_evaluate'
+  - 'playwright/browser_wait_for'
 ---
 
 # AEM Demo Capture Agent
@@ -49,8 +48,8 @@ Use AEM MCP to find a page where the component is used (or use the test page fro
 Open Chrome to `<author-url>/editor.html<page-path>.html`.
 
 **Check for login redirect.** If redirected to login page:
-1. Fill credentials (admin/admin)
-2. Submit
+1. Resolve AEM credentials from `AEM_INSTANCES` (`eval "$(bash .ai/lib/dx-common.sh aem-instance <local|qa>)"` → `$AEM_USER`/`$AEM_PASS`; falls back to `admin/admin` for localhost only). This is the AEM **form login** on the author instance — author has no Basic Auth (that gate is the QA/Stage publisher only).
+2. Fill `#username`/`#password` with the resolved values and submit
 3. Wait for page load
 
 ### 3. Open the component dialog

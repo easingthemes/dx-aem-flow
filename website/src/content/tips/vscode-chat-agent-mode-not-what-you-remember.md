@@ -16,7 +16,7 @@ keyPoints:
     What Agent mode can do
     - Edit files across your workspace autonomously
     - Run terminal commands (builds, tests, installs)
-    - Use MCP server tools (AEM, Chrome DevTools, Figma, ADO)
+    - Use MCP server tools (AEM, Playwright, Figma, ADO)
     - Self-heal — monitors errors and fixes them automatically
   - |
     Three built-in modes

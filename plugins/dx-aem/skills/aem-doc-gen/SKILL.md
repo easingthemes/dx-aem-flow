@@ -4,10 +4,10 @@ description: Generate AEM demo documentation — find or create docs page with c
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 context: fork
 agent: aem-editorial-guide-capture
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM doc generation requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "AEM doc generation requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 You generate AEM component demo documentation from completed spec files. You find or create a docs page, configure the component, capture dialog and website screenshots, and write an authoring guide with Authoring and Website sections.
 
@@ -68,9 +68,9 @@ Test AEM connectivity:
 curl -sf -o /dev/null -w "%{http_code}" "$AUTHOR_URL/libs/granite/core/content/login.html" || echo "unreachable"
 ```
 
-For QA URLs, also try with Basic Auth. Read credentials from `.claude/rules/qa-basic-auth.md` (or from `.ai/config.yaml` `aem.qa-basic-auth`):
+The **author** instance has no HTTP Basic Auth — the login page above is reachable directly (it returns the AEM login form, which is filled later with the `AEM_INSTANCES` creds). Basic Auth (`.claude/rules/qa-basic-auth.md` / `.ai/config.yaml` `aem.qa-basic-auth`) applies only to the QA/Stage **publisher** — use it if/when probing a published-site URL:
 ```bash
-curl -sf -o /dev/null -w "%{http_code}" -u "$QA_USER:$QA_PASS" "$AUTHOR_URL/libs/granite/core/content/login.html" || echo "unreachable"
+curl -sf -o /dev/null -w "%{http_code}" -u "$QA_USER:$QA_PASS" "$PUBLISH_URL/<published-page>.html" || echo "unreachable"
 ```
 
 If unreachable:

@@ -31,7 +31,7 @@ actionItems:
     - PreToolUse blocks `git commit` on protected branches (development, main) — uses `if` field for precision
     - PostToolUse saves Figma screenshots to disk automatically
     - PostToolUse validates plugin file edits — uses `if: "Edit(**/.claude-plugin/**)"` to skip non-plugin edits
-    - PostToolUse logs Chrome DevTools screenshots asynchronously (`async: true`)
+    - PostToolUse logs Playwright screenshots asynchronously (`async: true`)
   - "Look at your project's hooks: `.claude/hooks/` or plugin `hooks.json` — if none exist, start with a branch protection hook"
   - "Start with PreToolUse for safety — it's the most valuable hook type because it prevents mistakes structurally instead of relying on AI instructions"
   - "Key difference: PreToolUse can block (exit **2** for blocking error), PostToolUse can observe and enrich. Exit 1 is a non-blocking error (verbose mode only)"

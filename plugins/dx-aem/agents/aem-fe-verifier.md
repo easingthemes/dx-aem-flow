@@ -1,8 +1,8 @@
 ---
 name: aem-fe-verifier
-description: Verifies AEM component frontend rendering — creates/reuses demo pages, screenshots components in wcmmode=disabled via Chrome DevTools, compares against Figma reference or requirements using multimodal vision. Used by aem-fe-verify skill.
-tools: Read, Write, Glob, Grep, Edit, ToolSearch, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__listChildren, mcp__plugin_dx-aem_AEM__fetchSites, mcp__plugin_dx-aem_AEM__fetchLanguageMasters, mcp__plugin_dx-aem_AEM__getPageProperties, mcp__plugin_dx-aem_AEM__createPage, mcp__plugin_dx-aem_AEM__addComponent, mcp__plugin_dx-aem_AEM__updateComponent, mcp__plugin_dx-aem_AEM__getComponents, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__activatePage, mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page, mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot, mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot, mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script, mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for, mcp__plugin_dx-aem_chrome-devtools-mcp__click, mcp__plugin_dx-aem_chrome-devtools-mcp__resize_page, mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages, mcp__plugin_dx-aem_chrome-devtools-mcp__select_page, mcp__plugin_dx-aem_chrome-devtools-mcp__new_page, mcp__plugin_dx-aem_chrome-devtools-mcp__close_page, mcp__plugin_dx-aem_chrome-devtools-mcp__emulate
-mcpServers: [AEM, chrome-devtools-mcp]
+description: Verifies AEM component frontend rendering — creates/reuses demo pages, screenshots components in wcmmode=disabled via Playwright, compares against Figma reference or requirements using multimodal vision. Used by aem-fe-verify skill.
+tools: Read, Write, Glob, Grep, Edit, ToolSearch, Bash, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__listChildren, mcp__plugin_dx-aem_AEM__fetchSites, mcp__plugin_dx-aem_AEM__fetchLanguageMasters, mcp__plugin_dx-aem_AEM__getPageProperties, mcp__plugin_dx-aem_AEM__createPage, mcp__plugin_dx-aem_AEM__addComponent, mcp__plugin_dx-aem_AEM__updateComponent, mcp__plugin_dx-aem_AEM__getComponents, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__activatePage, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_resize, mcp__plugin_dx-aem_playwright__browser_tabs
+mcpServers: [AEM, playwright]
 model: sonnet
 memory: project
 maxTurns: 60
@@ -21,9 +21,9 @@ Use resource data to plan your approach. If resources are unavailable, fall back
 
 ## IMPORTANT: Ensure MCP Tools Are Available
 
-Chrome DevTools and AEM tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first.** If you get a "tool not found" error, fall back to ToolSearch:
+Playwright and AEM tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first.** If you get a "tool not found" error, fall back to ToolSearch:
 ```
-ToolSearch("+chrome-devtools")
+ToolSearch("+playwright")
 ToolSearch("+AEM")
 ```
 Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing and you'll wrongly conclude they're unavailable.
@@ -53,8 +53,8 @@ If `aem.author-url` does NOT contain `localhost`/`127.0.0.1`:
 If AEM MCP call fails:
 - **STOP** — return: `BLOCKED: AEM MCP is not available. Start the AEM MCP server connected to localhost.`
 
-If Chrome DevTools MCP call fails:
-- **STOP** — return: `BLOCKED: Chrome DevTools MCP is not available. Start Chrome with DevTools Protocol enabled.`
+If Playwright MCP call fails:
+- **STOP** — return: `BLOCKED: Playwright MCP is not available. Ensure the playwright server is enabled and Chromium is installed (npx playwright install chromium).`
 
 ## Component Paths
 
@@ -99,7 +99,7 @@ Follow the aem-inspector conventions:
      return { found: false };
    })()
    ```
-4. Take screenshot: `mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot`
+4. Take screenshot: `mcp__plugin_dx-aem_playwright__browser_take_screenshot`
 
 ## Visual Comparison (Multimodal Vision)
 

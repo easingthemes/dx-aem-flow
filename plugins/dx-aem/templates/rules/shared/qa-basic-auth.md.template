@@ -1,12 +1,14 @@
 ---
-description: QA/Stage sites are protected with HTTP Basic Auth — credentials and Chrome DevTools handling
+description: The QA/Stage publisher (published website) is protected with HTTP Basic Auth — credentials and Playwright handling (author uses the AEM login form, not this)
 paths: ["**/*"]
 applyTo: "**/*"
 ---
 
 # QA/Stage Basic Auth
 
-QA and Stage environments are protected with HTTP Basic Auth on first visit. After successful authentication, a session cookie is set — no re-auth is needed for the remainder of the browser session (including new tabs).
+The QA/Stage **publisher (published website)** is protected with HTTP Basic Auth on first visit. After successful authentication, a session cookie is set — no re-auth is needed for the remainder of the browser session (including new tabs).
+
+> **This gate protects the QA/Stage publisher (published website) — a separate layer from the AEM author login.** These credentials get you past the reverse proxy in front of the **publisher**; they do **not** log you into AEM, and the published site has no AEM login form. The **author** instance is the opposite: it has **no** Basic Auth, but its pages sit behind the AEM login form (`/libs/granite/core/content/login.html`), which is filled with the **AEM_INSTANCES** user/pass (`bash .ai/lib/dx-common.sh aem-instance <local|qa>`), not these. The two gates live on different hosts and are not interchangeable.
 
 ## Credentials
 
@@ -48,7 +50,7 @@ If neither source has credentials, report that QA credentials are not set.
 
 Or set in your shell profile (`~/.zshrc`) for all projects.
 
-## Chrome DevTools MCP Handling
+## Playwright MCP Handling
 
 ### First navigation to a QA/Stage URL
 

@@ -4,14 +4,14 @@ description: Post QA handoff comment to ADO with QA page URLs, prerequisites, an
 argument-hint: "<component-name> <work-item-id> (e.g., hero 2416553)"
 context: fork
 agent: aem-inspector
-compatibility: "Full mode requires AEM MCP (QA instance) and Chrome DevTools MCP. Lightweight mode needs only ADO MCP."
+compatibility: "Full mode requires AEM MCP (QA instance) and Playwright MCP. Lightweight mode needs only ADO MCP."
 metadata:
-  mcp-server: AEM, chrome-devtools-mcp
+  mcp-server: AEM, playwright
   category: aem-verification
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available for full mode.
+**Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available for full mode.
 
 You are the **QA Handoff Agent**. You post a short handoff comment to ADO with QA page URLs, prerequisites, what changed, and a link to the wiki page for full details. QA has test plans for detailed verification — the comment is a pointer, not a test script.
 

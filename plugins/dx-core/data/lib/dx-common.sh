@@ -165,6 +165,48 @@ require_dir() {
   fi
 }
 
+# Resolve one AEM instance's URL/user/pass from the AEM_INSTANCES env var.
+# AEM_INSTANCES is the single source of truth for AEM credentials — the same
+# value the AEM MCP server reads. Format (comma-separated entries):
+#   name:url:user:pass        e.g. local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:user:pass
+# The URL contains colons (scheme + port), so we anchor: name = before the
+# FIRST colon, pass = after the LAST colon, user = the field before pass, and
+# url = everything in between. (A literal ':' in a password is unsupported —
+# same limitation as the AEM MCP server's own parser.)
+#
+# Usage: aem_instance <name> [field]
+#   field omitted  -> prints three eval-able lines: AEM_URL=... / AEM_USER=... / AEM_PASS=...
+#   field=url|user|pass -> prints just that value
+# Exit codes: 0 = found, 1 = AEM_INSTANCES unset or instance not found
+aem_instance() {
+  local name="${1:-qa}" field="${2:-}"
+  local instances="${AEM_INSTANCES:-}"
+  if [ -z "$instances" ]; then
+    echo "ERROR: AEM_INSTANCES is not set" >&2
+    return 1
+  fi
+  local entry rest userpass url user pass
+  local IFS=','
+  for entry in $instances; do
+    [ "${entry%%:*}" = "$name" ] || continue
+    rest="${entry#*:}"        # url:user:pass
+    pass="${rest##*:}"        # after last colon
+    userpass="${rest%:*}"     # url:user
+    user="${userpass##*:}"    # after last colon of url:user
+    url="${userpass%:*}"      # url (may contain colons)
+    case "$field" in
+      url)  echo "$url" ;;
+      user) echo "$user" ;;
+      pass) echo "$pass" ;;
+      "")   printf 'AEM_URL=%s\nAEM_USER=%s\nAEM_PASS=%s\n' "$url" "$user" "$pass" ;;
+      *)    echo "ERROR: unknown field '$field' (use url|user|pass)" >&2; return 1 ;;
+    esac
+    return 0
+  done
+  echo "ERROR: instance '$name' not found in AEM_INSTANCES" >&2
+  return 1
+}
+
 # --- CLI dispatch (when run directly, not sourced) ---
 
 # Detect if script is being sourced or executed
@@ -194,6 +236,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     require-dir)
       require_dir "$@"
       ;;
+    aem-instance)
+      aem_instance "$@"
+      ;;
     *)
       echo "Usage: dx-common.sh <command> [args...]" >&2
       echo "" >&2
@@ -203,6 +248,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       echo "  yaml-val <key>                Read value from config.yaml" >&2
       echo "  require-file <path> [label]   Assert file exists" >&2
       echo "  require-dir <path> [label]    Assert directory exists" >&2
+      echo "  aem-instance <name> [field]   Resolve url/user/pass from AEM_INSTANCES" >&2
       exit 1
       ;;
   esac

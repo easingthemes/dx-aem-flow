@@ -252,7 +252,7 @@ Set these on the SimpleAgent pipeline (in addition to `ANTHROPIC_API_KEY` + plug
 | `AEM_QA_URL` | QA author URL (e.g. `https://qa-author.example.com`) | No |
 | `AEM_QA_USER` | Service-account username on QA | Yes |
 | `AEM_QA_PASSWORD` | Service-account password on QA | Yes |
-| `CHROME_DEVTOOLS_MCP_VERSION` | Chrome DevTools MCP version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
+| `PLAYWRIGHT_MCP_VERSION` | Playwright MCP (`@playwright/mcp`) version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
 | `AEM_MCP_VERSION` | AEM MCP version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
 
 > **AEM QA author URL?** For SimpleAgent visual verification + authoring writes (e.g. `https://qa-author.example.com`)
@@ -284,7 +284,7 @@ az_pipelines_variable create \
   --organization "<adoOrg>"
 ```
 
-The MCP version variables (`CHROME_DEVTOOLS_MCP_VERSION`, `AEM_MCP_VERSION`) have inline defaults in the YAML — only set as pipeline variables to override.
+The MCP version variables (`PLAYWRIGHT_MCP_VERSION`, `AEM_MCP_VERSION`) have inline defaults in the YAML — only set as pipeline variables to override.
 
 ### Simple-Router pipeline additional variables (multi-platform only)
 

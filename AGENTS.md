@@ -78,7 +78,7 @@ Agents live in `plugins/{plugin}/agents/<name>.md`.
 
 ### MCP Servers
 
-Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM, Chrome DevTools.
+Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM, Playwright.
 
 ## Contributing
 
