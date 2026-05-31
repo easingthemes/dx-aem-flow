@@ -94,6 +94,15 @@ R=$ROOT/r4; seed_repo "$R" 444 "$(state done 'Phase 7' '')"
 OUT=$(cd "$R" && bash "$RESUME" 444)
 assert_kv "done → done dispatch" "$OUT" "DISPATCH=done"
 
+# 4b. done carries comment-cursor so the SKILL (which alone can reach ADO) can
+#     decide done→reopen vs no-op. resume-check itself never reopens.
+R=$ROOT/r4b
+DONE_CURSOR=$(jq -n '{ticket:"x",status:"done","last-completed-phase":"Phase 7","blocked-at-phase":"","answer-attempts":0,blocker:{},"comment-cursor":"4242","run-history":[]}')
+seed_repo "$R" 445 "$DONE_CURSOR"
+OUT=$(cd "$R" && bash "$RESUME" 445)
+assert_kv "done still dispatches done (reopen decided by SKILL)" "$OUT" "DISPATCH=done"
+assert_kv "done surfaces COMMENT_CURSOR for the reopen decision" "$OUT" "COMMENT_CURSOR=4242"
+
 echo "=== anchored branch matching (M1) ==="
 
 # 5a. Two feature/<id>-* refs → ambiguous-branch.

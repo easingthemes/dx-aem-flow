@@ -22,7 +22,12 @@ All other work — codebase reading, visual verify, compile, diff review — run
 
 ## Argument
 
-The argument is the ADO work item ID (numeric, e.g., `9999999`). Accept a full URL and extract the numeric ID. If no argument, ask the user once; if still none in pipeline mode, exit non-zero.
+`$ARGUMENTS` is `<id-or-url> [free text]` — the ADO work item ID (numeric, e.g.
+`9999999`, or a full URL) **optionally followed by a free-text instruction**, just
+like `/dx-simple 9999999 make the heading blue` typed in a local session. Extract the
+numeric `TICKET_ID` (leading digits, or from the URL); anything after it is
+`INLINE_INPUT`. Always pass `TICKET_ID` (not the raw `$ARGUMENTS`) to the scripts and
+MCP calls below. If no id, ask once; if still none in pipeline mode, exit non-zero.
 
 ## Pre-flight (HARD GATE — runs before anything else)
 
@@ -56,6 +61,29 @@ MAX_ATTEMPTS=$(bash .ai/lib/dx-common.sh yaml-val 'dx-simple.recovery.max-attemp
 > hook fires only on comments containing the token; the bot's own comments never
 > contain the literal token, so they cannot self-trigger.
 
+## User input (the text after the trigger) — like local CLI args
+
+The free text a human writes after the trigger is the **primary instruction**,
+exactly as if they ran `/dx-simple <id> <instruction>` locally. The token only fires
+the pipeline; the words after it are the prompt. Resolve `USER_INPUT` once, here:
+
+1. **Local session** — if `INLINE_INPUT` (text after the id in `$ARGUMENTS`) is
+   non-empty → `USER_INPUT="$INLINE_INPUT"`, `TRIGGER_COMMENT_ID=""`.
+2. **Pipeline run** (fired by an ADO comment) — else fetch comments and select the
+   triggering one:
+   ```
+   mcp__ado__wit_list_work_item_comments with workItemId=$TICKET_ID
+   ```
+   Pick the comment that is (a) authored by a **non-bot** identity, (b) contains
+   `$TRIGGER_TOKEN`, (c) has the **highest** ADO comment id (ids are monotonic).
+   Strip the token → `USER_INPUT`; record its id as `TRIGGER_COMMENT_ID`.
+3. `USER_INPUT` may be **empty** (a bare `@<keyword>` with no words) — then only the
+   story body drives the change (today's behavior).
+
+`USER_INPUT` is **authoritative**: where it conflicts with the story body, it wins.
+Phase 1 folds it into the change request on a fresh run (step 2d); Phase 0 uses it
+(with `TRIGGER_COMMENT_ID` vs `COMMENT_CURSOR`) to reopen a completed ticket.
+
 ## Spec directory + branch (established by Phase 0)
 
 `SPEC_DIR` and the per-ticket `BRANCH` are NOT computed here — **Phase 0**
@@ -68,7 +96,7 @@ state. Phase 0 emits `SPEC_DIR=…` / `BRANCH=…`; capture those values.
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh "$SPEC_DIR" "Preflight" "done"
 echo '{"gates":{}}' > "$SPEC_DIR/confidence.json"
 # resume-state.json — the durable status the next run dispatches on.
-sed "s/{TICKET}/$ARGUMENTS/" \
+sed "s/{TICKET}/$TICKET_ID/" \
     "$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/resume-state.json.tmpl" \
     > "$SPEC_DIR/resume-state.json"
 # authoring-diff.json is created lazily by Phase 3a when the first write happens
@@ -101,6 +129,7 @@ touch .ai/run-context/orchestrating.flag
 | `visual-diff.json` | Phase 5 (visual-diff.sh) | Overall + region pixel scores |
 | `diff-review.md` | Phase 5.5 (from dx-pr-reviewer) | Reviewer findings |
 | `simple-progress.md` | initialized in pre-flight; updated per phase | Phase status table |
+| `followup.md` | Reopen path (done + fresh comment) | Verbatim post-trigger `USER_INPUT` that reopened a completed ticket; checkpointed for audit/report |
 | `report.md` | Phase 7 (rendered from template) | Final human-readable report |
 
 ## Confidence model (gates G1, G3–G9)
@@ -170,6 +199,10 @@ digraph dx_simple {
     "Re-post hard note + exit" [shape=doublecircle];
     "No-op: already done (PR exists)" [shape=doublecircle];
 
+    // --- reopen completed work on a fresh follow-up comment ---
+    "Fresh follow-up trigger comment?" [shape=diamond];
+    "Reopen: apply follow-up delta (reuse artifacts)" [shape=box];
+
     "Preflight" -> "Phase 0: Resume (branch + dispatch)";
 
     // Phase 0 dispatch out-edges
@@ -178,8 +211,15 @@ digraph dx_simple {
     "Phase 0: Resume (branch + dispatch)" -> "Phase 1: Fetch + extract change details" [label="in-progress (at/before 3b) → last+1"];
     "Phase 0: Resume (branch + dispatch)" -> "Read resume comment + apply answer" [label="blocked-needs-input"];
     "Phase 0: Resume (branch + dispatch)" -> "Re-post hard note + exit" [label="blocked-hard"];
-    "Phase 0: Resume (branch + dispatch)" -> "No-op: already done (PR exists)" [label="done"];
+    "Phase 0: Resume (branch + dispatch)" -> "Fresh follow-up trigger comment?" [label="done"];
     "Phase 0: Resume (branch + dispatch)" -> "Read resume comment + apply answer" [label="ambiguous-branch (asks which branch)"];
+
+    // done is a no-op UNLESS a new follow-up comment (id > comment-cursor) reopens it
+    "Fresh follow-up trigger comment?" -> "Reopen: apply follow-up delta (reuse artifacts)" [label="yes (non-bot, id > cursor)"];
+    "Fresh follow-up trigger comment?" -> "No-op: already done (PR exists)" [label="no"];
+    // reuse committed story/plan/work-plan; re-enter the edit phase (resume-forward, last=Phase 2)
+    "Reopen: apply follow-up delta (reuse artifacts)" -> "Phase 3a: Apply authoring writes" [label="reuse artifacts, edit-phase delta"];
+    "Reopen: apply follow-up delta (reuse artifacts)" -> "Phase 1: Fetch + extract change details" [label="escape: different element/page"];
 
     "Read resume comment + apply answer" -> "Replay code edits from work-plan.json" [label="re-enter past 3b"];
     "Read resume comment + apply answer" -> "Phase 1: Fetch + extract change details" [label="re-enter ≤ 3b"];
@@ -246,7 +286,7 @@ branch is the durable state store, so a crashed/blocked prior run is recoverable
 ```bash
 # Capture the key=value lines, then read each value (values like "Phase 2" contain
 # spaces, so DON'T `eval` the block — read fields explicitly).
-RC=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/resume-check.sh "$ARGUMENTS")
+RC=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/resume-check.sh "$TICKET_ID")
 val() { sed -n "s/^$1=//p" <<<"$RC" | head -1; }
 DISPATCH=$(val DISPATCH); BRANCH=$(val BRANCH); SPEC_DIR=$(val SPEC_DIR)
 STATUS=$(val STATUS); RE_ENTER_PHASE=$(val RE_ENTER_PHASE)
@@ -270,13 +310,63 @@ Dispatch on `DISPATCH`:
 | `resume-forward` | prior run **crashed** (`in-progress`) | if `REPLAY_CODE_EDITS=true`, run **Replay code edits** first, then re-enter `RE_ENTER_PHASE`. Reuse committed discovery artifacts. Does NOT consume an answer-attempt. |
 | `resume-blocked-input` | recoverable block awaiting a human answer | run **Read resume comment + apply answer**, then (replay if past 3b) re-enter `RE_ENTER_PHASE`. |
 | `resume-blocked-hard` | unrecoverable, or `answer-attempts` cap reached | **Re-post hard note + exit** — re-post the "needs manual fix / re-tag DevAgent" note; exit non-zero. |
-| `done` | Phase 7 already succeeded | **No-op** — comment "already completed in PR; open a new ticket for further changes"; exit 0. |
+| `done` | Phase 7 already succeeded | Run **Reopen completed work**: if a fresh follow-up trigger comment exists (non-bot, contains the token, id > `COMMENT_CURSOR`) treat it as a continuation on the same branch. **Otherwise no-op** — comment "already completed in PR; reply `@<keyword> <change>` to request a follow-up, or open a new ticket"; exit 0. |
 | `ambiguous-branch` | >1 `feature/<id>-*` match | post a `needs-user-input` comment asking **which branch** to resume (loop-safe format); set `blocked-needs-input`; exit. Do NOT pick one. |
 
 > **git-rules.md exception.** `git-rules.md` says "never reuse old feature/bugfix
 > branches for new work." `/dx-simple` resume is a deliberate, scoped exception —
 > it reuses the branch for the **same ticket, same work, continued**, only when the
 > anchored match is **unique** (ambiguous → blocker, not reuse).
+
+### Reopen completed work (follow-up comment)
+
+Only on `DISPATCH=done`. A completed run is normally a no-op, but a reviewer often
+wants a small refinement ("reuse the existing query-param util", "tighten the
+spacing") rather than a whole new ticket. Treat the **fresh** trigger comment as a
+new prompt **in a new session that already has all the prior artifacts** — reuse
+them and do only the delta (decision: skip the steps that are already done — story
+fetch, locate, classify — exactly as a developer reopening the spec dir locally
+would). Refuse to reopen on a stale or already-consumed comment.
+
+1. **Is there a fresh follow-up?** Reopen only if `USER_INPUT` is non-empty **and**
+   `TRIGGER_COMMENT_ID > COMMENT_CURSOR` (numeric; treat an empty cursor as `0`).
+   - Otherwise → genuine **no-op** (stray re-trigger / service-hook replay / bare
+     token / already-consumed comment). Post once: "Already completed in PR. Reply
+     `@<keyword> <change>` to request a follow-up, or open a new ticket." Exit 0.
+2. **Reuse the committed artifacts** on the branch — `raw-story.md`,
+   `simple-block.yaml`, `dialog-map.json`, `file-list.json`, `work-plan.json`,
+   `confidence.json`. Do **not** re-fetch the story, re-run G1 locate, or re-classify
+   (Phase 2): they are already committed. This is the "new local session on an
+   existing spec dir" behavior the user expects.
+3. **Apply the follow-up as a delta.** Read `work-plan.json` + `USER_INPUT` and update
+   the work-plan to satisfy the follow-up (e.g. change a `replacement` to call the
+   existing util; add or adjust a `code[]` item). Append `USER_INPUT` to
+   `simple-block.yaml`'s `what` (report context) and record it verbatim in
+   `$SPEC_DIR/followup.md`.
+   - **Escape hatch:** if the follow-up targets a *different element or page* than the
+     committed locator, the reused discovery no longer holds — re-enter **Phase 1**
+     instead (full re-run with `USER_INPUT` as the primary request).
+4. **Seed resume-forward + advance the cursor atomically**, then checkpoint.
+   Advancing the cursor **before** re-entry is the loop guard (L2): once this run
+   completes to `done`, the same comment is at/below the cursor and cannot reopen
+   again — a further follow-up needs a brand-new comment.
+   ```bash
+   jq --arg c "$TRIGGER_COMMENT_ID" \
+      '.status="in-progress" | .["comment-cursor"]=$c
+       | .["last-completed-phase"]="Phase 2"
+       | .["run-history"] += [{"event":"reopen","comment":$c}]' \
+      "$SPEC_DIR/resume-state.json" > "$SPEC_DIR/.rs.tmp" \
+      && mv "$SPEC_DIR/.rs.tmp" "$SPEC_DIR/resume-state.json"
+   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
+   ```
+   (Exit 3 = `BRANCH-ADVANCED` → a concurrent resume is in flight; stop.)
+5. **Re-enter the edit phase** exactly as a `resume-forward` would: with
+   `last-completed-phase = Phase 2`, the next actionable phase is **Phase 3a**
+   (authoring) / **Phase 3b** (code). Apply the updated work-plan, then flow forward —
+   compile → visual verify → diff review → **Phase 6 (update-mode amends the existing
+   PR, M5)** → Phase 7. Discovery and classification are skipped; only the delta is
+   implemented and verified. This path does **not** touch `answer-attempts` (it is a
+   new request, not a re-ask of a blocked gate).
 
 ### Read resume comment + apply answer
 
@@ -325,9 +415,12 @@ re-applies the work-plan as part of its normal flow.
 
 1. Fetch the work item:
    ```
-   mcp__ado__wit_get_work_item with id=$ARGUMENTS
+   mcp__ado__wit_get_work_item with id=$TICKET_ID
    ```
-   Write the description + comments to `$SPEC_DIR/raw-story.md` with provenance frontmatter.
+   Write the description + comments to `$SPEC_DIR/raw-story.md` with provenance
+   frontmatter. Record the resolved `USER_INPUT` (the post-trigger instruction, see
+   *User input* above) at the top of `raw-story.md` under a `## User input` heading so
+   the change request and the report both preserve exactly what the human asked for.
 
 2. Parse the `simple` block (recommended but not required):
    ```bash
@@ -366,6 +459,13 @@ re-applies the work-plan as part of its normal flow.
     Write the inferred values to `$SPEC_DIR/simple-block.yaml` with a
     `# inferred: true` comment at the top so downstream phases can flag
     lower confidence in the report.
+
+2d. **Fold in `USER_INPUT`** (the text the human typed after the trigger — see
+    *User input* above). If non-empty, it is the **primary** change request: merge it
+    into `what` in `simple-block.yaml`, overriding the story body on conflict (a human
+    typing `@<keyword> make it blue` means *make it blue*). The classifier (Phase 2)
+    and edit phases then act on `USER_INPUT` plus the story context. If `USER_INPUT`
+    is empty (bare trigger), only the story body drives the change (today's behavior).
 
 3. Semantic validation (Safeguard #1):
    - Read `simple-block.yaml`; extract `page-url`, `element`, `what`.

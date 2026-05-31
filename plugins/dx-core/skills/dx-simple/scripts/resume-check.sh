@@ -30,6 +30,8 @@
 #   REPLAY_CODE_EDITS=true|false          (true => replay code edits from work-plan
 #                                          before re-entering — past Phase 3b, C2)
 #   ANSWER_ATTEMPTS=<n>
+#   COMMENT_CURSOR=<id>                   (last follow-up comment consumed; the
+#                                          SKILL uses this to decide done→reopen)
 #   MAX_ATTEMPTS=<n>
 #   MATCHES=<branch1,branch2,...>         (only for ambiguous-branch)
 #
@@ -187,6 +189,10 @@ LAST=$(_jq '.["last-completed-phase"] // "Phase 0"')
 BLOCKED_AT=$(_jq '.["blocked-at-phase"] // ""')
 ATTEMPTS=$(_jq '.["answer-attempts"] // 0')
 [[ "$ATTEMPTS" =~ ^[0-9]+$ ]] || ATTEMPTS=0
+# comment-cursor (last follow-up comment consumed). Emitted so the SKILL — which
+# DOES have ADO access — can decide `done` → reopen vs no-op (this script can't
+# reach ADO). Empty string means "nothing consumed yet"; the SKILL treats it as 0.
+CURSOR=$(_jq '.["comment-cursor"] // ""')
 
 emit_common() {
   echo "BRANCH=${BRANCH}"
@@ -195,6 +201,7 @@ emit_common() {
   echo "LAST_COMPLETED_PHASE=${LAST}"
   echo "BLOCKED_AT_PHASE=${BLOCKED_AT}"
   echo "ANSWER_ATTEMPTS=${ATTEMPTS}"
+  echo "COMMENT_CURSOR=${CURSOR}"
   echo "MAX_ATTEMPTS=${MAX_ATTEMPTS}"
 }
 
