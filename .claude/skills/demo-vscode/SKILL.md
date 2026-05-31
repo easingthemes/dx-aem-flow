@@ -77,19 +77,15 @@ Create output directory: `tools/screenshots/<slug>/`
 ### Navigate to tip page
 
 ```
-mcp__playwright__browser_navigate(type: "url", url: "<tip-url>")
+mcp__playwright__browser_navigate(url: "<tip-url>")
 ```
 
 ### Wait for page load
 
-Wait for the tip blocks to render:
+Wait for the tip blocks to render. Playwright's `browser_wait_for` waits on **`text`** / `textGone` / `time` (seconds) — not a CSS selector. Wait for visible tip-card text, or fall back to a short settle:
 
 ```
-mcp__playwright__browser_wait_for(
-  selector: ".tip-block",
-  state: "visible",
-  timeout: 10000
-)
+mcp__playwright__browser_wait_for(text: "<a phrase visible in the tip card>")
 ```
 
 ### Extract block text
@@ -113,7 +109,7 @@ Save the extracted text — it becomes the input for the planner.
 
 ### Screenshot block 1
 
-Inject ARIA attributes so `.tip-block` divs appear in the a11y tree with UIDs:
+Inject ARIA attributes so `.tip-block` divs appear in the a11y tree with refs:
 
 ```
 mcp__playwright__browser_evaluate(
@@ -128,28 +124,32 @@ mcp__playwright__browser_evaluate(
 )
 ```
 
-Take a snapshot to get UIDs — look for `region "tip-insights"` and `region "tip-actions"`:
+Take a snapshot to get refs — look for `region "tip-insights"` and `region "tip-actions"`:
 
 ```
 mcp__playwright__browser_snapshot()
 ```
 
-Screenshot each block by UID:
+Screenshot each block by **`ref`** (element screenshot needs `element` + `ref`). `browser_take_screenshot` saves a **`filename`** basename under the Playwright MCP output dir — copy it to the target path afterward:
 
 ```
 mcp__playwright__browser_take_screenshot(
-  uid: "<tip-insights-uid>",
-  filePath: "tools/screenshots/<slug>/<slug>-insights.png"
+  element: "tip insights card",
+  ref: "<tip-insights-ref>",
+  filename: "<slug>-insights.png"
 )
+# then: cp <playwright-output-dir>/<slug>-insights.png tools/screenshots/<slug>/<slug>-insights.png
 ```
 
 ### Screenshot block 2
 
 ```
 mcp__playwright__browser_take_screenshot(
-  uid: "<tip-actions-uid>",
-  filePath: "tools/screenshots/<slug>/<slug>-actions.png"
+  element: "tip actions card",
+  ref: "<tip-actions-ref>",
+  filename: "<slug>-actions.png"
 )
+# then: cp <playwright-output-dir>/<slug>-actions.png tools/screenshots/<slug>/<slug>-actions.png
 ```
 
 ### Spawn demo-planner

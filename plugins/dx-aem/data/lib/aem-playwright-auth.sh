@@ -34,6 +34,9 @@ OUT_DIR=".ai/playwright"
 STATE_FILE="$OUT_DIR/aem-author-state.json"
 CONFIG_FILE="$OUT_DIR/config.json"
 
+# jq is used to emit valid JSON regardless of special chars in tokens/passwords.
+command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required (brew install jq / apt-get install jq)" >&2; exit 1; }
+
 # Locate dx-common.sh (consumer .ai/lib, or alongside this script in the plugin).
 _common() {
   local c
@@ -65,7 +68,10 @@ aem_author_login() {
       --data-urlencode "j_username=$AEM_USER" \
       --data-urlencode "j_password=$AEM_PASS" \
       "$AEM_URL/libs/granite/core/content/login.html/j_security_check" 2>/dev/null || true)"
-  token="$(printf '%s' "$headers" | grep -i '^set-cookie:[[:space:]]*login-token=' | head -1 | sed -E 's/^[^=]*=//; s/;.*$//' || true)"
+  # Extract the login-token value; strip the trailing CR (CRLF headers) and any
+  # "; Path=..." suffix. tr handles the bare "login-token=x\r" case too.
+  token="$(printf '%s' "$headers" | grep -i '^set-cookie:[[:space:]]*login-token=' | head -1 \
+            | sed -E 's/^[^=]*=//; s/;.*$//' | tr -d '\r\n' || true)"
 
   if [ -z "$token" ]; then
     echo "ERROR: AEM author login failed (no login-token returned) for $AEM_URL" >&2
@@ -75,23 +81,10 @@ aem_author_login() {
 
   mkdir -p "$OUT_DIR"
   # Playwright storageState. expires:-1 = session cookie; httpOnly so only CDP/Playwright can set it.
-  cat > "$STATE_FILE" <<JSON
-{
-  "cookies": [
-    {
-      "name": "login-token",
-      "value": "$token",
-      "domain": "$host",
-      "path": "/",
-      "expires": -1,
-      "httpOnly": true,
-      "secure": $secure,
-      "sameSite": "Lax"
-    }
-  ],
-  "origins": []
-}
-JSON
+  # jq encodes the token/host safely (a stray " or \ would otherwise corrupt the JSON).
+  jq -n --arg tok "$token" --arg host "$host" --argjson secure "$secure" \
+    '{cookies:[{name:"login-token",value:$tok,domain:$host,path:"/",expires:-1,httpOnly:true,secure:$secure,sameSite:"Lax"}],origins:[]}' \
+    > "$STATE_FILE"
   echo "wrote $STATE_FILE  (author=$instance host=$host)"
 }
 
@@ -99,17 +92,10 @@ publisher_config() {
   : "${QA_BASIC_AUTH_USER:?set QA_BASIC_AUTH_USER (publisher Basic Auth)}"
   : "${QA_BASIC_AUTH_PASS:?set QA_BASIC_AUTH_PASS (publisher Basic Auth)}"
   mkdir -p "$OUT_DIR"
-  cat > "$CONFIG_FILE" <<JSON
-{
-  "browser": {
-    "contextOptions": {
-      "httpCredentials": { "username": "$QA_BASIC_AUTH_USER", "password": "$QA_BASIC_AUTH_PASS" },
-      "viewport": { "width": 1440, "height": 900 },
-      "ignoreHTTPSErrors": true
-    }
-  }
-}
-JSON
+  # jq encodes the credentials safely — passwords often contain " \ or other JSON-breaking chars.
+  jq -n --arg u "$QA_BASIC_AUTH_USER" --arg p "$QA_BASIC_AUTH_PASS" \
+    '{browser:{contextOptions:{httpCredentials:{username:$u,password:$p},viewport:{width:1440,height:900},ignoreHTTPSErrors:true}}}' \
+    > "$CONFIG_FILE"
   echo "wrote $CONFIG_FILE  (publisher Basic Auth — opt in via \"--config\" in .mcp.json)"
 }
 

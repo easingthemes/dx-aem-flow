@@ -383,10 +383,12 @@ re-applies the work-plan as part of its normal flow.
      - `dialog-title="..."` → ambiguous on its own; require AEM MCP `scanPageComponents` to resolve to a unique component instance
      - free-form description (from LLM extraction) → use the Chrome snapshot + scanPageComponents to find the single best match; if more than one element matches, ABORT G1 with the ambiguous-locator message
 
-4. **Take BEFORE screenshot** (Safeguard #6): capture and save as `$SPEC_DIR/before.png`:
+4. **Take BEFORE screenshot** (Safeguard #6): capture, then move into the spec dir as `before.png`:
    ```
-   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filePath=$SPEC_DIR/before.png
+   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filename=before.png
+   cp .ai/playwright/screenshots/before.png $SPEC_DIR/before.png
    ```
+   (`browser_take_screenshot` takes a `filename` basename and saves under the MCP `--output-dir`, `.ai/playwright/screenshots/` — it does not honor an arbitrary path.)
    Also record the locator's bounding box (from snapshot) to `$SPEC_DIR/locator-bbox.json` for the visual-diff step.
 
 5. **G1 — Locator match (HARD GATE):**
@@ -671,7 +673,8 @@ If running:
 
 2. Take AFTER screenshot:
    ```
-   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filePath=$SPEC_DIR/after.png
+   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filename=after.png
+   cp .ai/playwright/screenshots/after.png $SPEC_DIR/after.png
    ```
 
 3. Run visual-diff:

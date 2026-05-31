@@ -259,10 +259,11 @@ Set `SS_PREFIX` based on mode:
 - `after` → `post-fix-step-`
 - `qa` → `qa-step-`
 
-After page loads:
+After page loads (Playwright's `browser_take_screenshot` takes a `filename` basename and saves under the MCP `--output-dir`, `.ai/playwright/screenshots/` — copy it into the spec dir):
 ```
 mcp__plugin_dx-aem_playwright__browser_take_screenshot
-  filePath: "<SPEC_DIR>/screenshots/<SS_PREFIX>0-initial.png"
+  filename: "<SS_PREFIX>0-initial.png"
+cp .ai/playwright/screenshots/<SS_PREFIX>0-initial.png <SPEC_DIR>/screenshots/<SS_PREFIX>0-initial.png
 ```
 
 ### Execute repro steps
@@ -311,7 +312,8 @@ mcp__plugin_dx-aem_playwright__browser_click
 1. **Screenshot:**
    ```
    mcp__plugin_dx-aem_playwright__browser_take_screenshot
-     filePath: "<SPEC_DIR>/screenshots/<SS_PREFIX><N>-<action>.png"
+     filename: "<SS_PREFIX><N>-<action>.png"
+   cp .ai/playwright/screenshots/<SS_PREFIX><N>-<action>.png <SPEC_DIR>/screenshots/<SS_PREFIX><N>-<action>.png
    ```
 
 2. **Console errors (check periodically, not after every step):**

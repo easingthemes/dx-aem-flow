@@ -23,7 +23,8 @@
         "--headless",
         "--isolated",
         "--viewport-size=1440,900",
-        "--caps=storage"
+        "--caps=storage",
+        "--output-dir=.ai/playwright/screenshots"
       ]
     }
   }

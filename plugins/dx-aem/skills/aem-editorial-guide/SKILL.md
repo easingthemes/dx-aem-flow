@@ -106,8 +106,13 @@ If it's not possible to isolate the relevant part, take **one screenshot only**.
 - If exists: increment (`dialog-$ARGUMENTS-2.png`, etc.)
 
 Use `browser_take_screenshot` with:
-- `filePath`: `<spec-dir>/demo/<chosen-filename>.png`
+- `filename`: `<chosen-filename>.png` (a **basename** — Playwright saves it under the MCP output dir `.ai/playwright/screenshots/`, not at an arbitrary path)
 - Format: PNG
+
+Then copy it into the spec demo folder so the authoring guide can reference it relatively:
+```bash
+cp .ai/playwright/screenshots/<chosen-filename>.png <spec-dir>/demo/<chosen-filename>.png
+```
 
 ### 7. Close dialog if open
 

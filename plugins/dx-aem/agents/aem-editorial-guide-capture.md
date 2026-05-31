@@ -25,12 +25,11 @@ When the caller specifies QA mode (or the target URL is non-localhost), prefer Q
 
 ## Playwright MCP Tools
 
-- `mcp__plugin_dx-aem_playwright__browser_tabs` — list open browser tabs
-- `mcp__plugin_dx-aem_playwright__browser_tabs` — select a tab as context
-- `mcp__plugin_dx-aem_playwright__browser_navigate` — navigate to URL
-- `mcp__plugin_dx-aem_playwright__browser_snapshot` — get page accessibility tree with element UIDs
-- `mcp__plugin_dx-aem_playwright__browser_take_screenshot` — capture screenshot (save to file with filePath)
-- `mcp__plugin_dx-aem_playwright__browser_click` — click/double-click element by UID
+- `mcp__plugin_dx-aem_playwright__browser_tabs` — list / select / open / close browser tabs (action via param)
+- `mcp__plugin_dx-aem_playwright__browser_navigate` — navigate to URL (`url` only — no `type`)
+- `mcp__plugin_dx-aem_playwright__browser_snapshot` — get page accessibility tree with element **refs**
+- `mcp__plugin_dx-aem_playwright__browser_take_screenshot` — capture screenshot (`filename` basename; saved under the MCP `--output-dir`, `.ai/playwright/screenshots/`)
+- `mcp__plugin_dx-aem_playwright__browser_click` — click element by **ref**
 - `mcp__plugin_dx-aem_playwright__browser_evaluate` — run JavaScript in page context
 - `mcp__plugin_dx-aem_playwright__browser_wait_for` — wait for text to appear
 
@@ -147,14 +146,14 @@ To open a dialog:
 If the Granite API approach fails (API not available, component name mismatch):
 1. Take a snapshot to get the page element tree
 2. Find the component's overlay element by looking for elements related to the component name
-3. Double-click using `browser_click` with `dblClick: true` on the overlay UID
+3. Double-click using `browser_click` with `doubleClick: true` on the overlay `ref` (from `browser_snapshot`)
 4. Poll for dialog as above
 
 ## Screenshot Capture
 
-- Use `browser_take_screenshot` with `filePath` to save directly to disk
+- Use `browser_take_screenshot` with **`filename`** (a basename, e.g. `dialog-hero.png`) — Playwright saves it under the MCP output dir (`.ai/playwright/screenshots/`), NOT at an arbitrary path.
 - Format: PNG for dialog screenshots
-- Save to the spec's `demo/` subfolder
+- Then copy it into the spec's `demo/` subfolder so the authoring guide can reference it: `cp .ai/playwright/screenshots/<filename> <spec-dir>/demo/<filename>`
 
 ## Editor Documentation
 
@@ -237,5 +236,5 @@ Pipeline automation runs the `playwright` server with `--headless`. Playwright M
 ## Output Rules
 
 - **Never return raw JSON** — summarize results
-- **Save files directly** — use Write tool for .md, browser_take_screenshot filePath for images
+- **Save files directly** — use Write tool for .md; `browser_take_screenshot` uses `filename` (basename → MCP output dir), then `cp` into the spec dir
 - **Return a compact summary** with file paths and any issues encountered
