@@ -65,6 +65,7 @@ fi
 RECOVERY_FILES=(
   resume-state.json
   simple-block.yaml
+  followup.md
   work-plan.json
   dialog-map.json
   file-list.json
