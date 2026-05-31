@@ -54,6 +54,29 @@ ToolSearch("+ado pull request thread")
 
 If the PR is from a **different repo** than the current working directory, note this — you'll handle it in step 4.
 
+## Automation Mode (pipeline / orchestrated)
+
+Detect non-interactive execution **before** any step that would call `AskUserQuestion`:
+
+```bash
+AUTOMATION=0
+[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+fi
+# Review own PRs? Default off locally, on in CI (the pipeline sets
+# DX_REVIEW_OWN_PRS=true). Lets the autonomous queue surface your own PRs.
+REVIEW_OWN_PRS=0
+[ "$DX_REVIEW_OWN_PRS" = "true" ] && REVIEW_OWN_PRS=1
+echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS"
+```
+
+**When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
+
+**When `AUTOMATION=0`** — the interactive flow below is unchanged.
+
 ## Hub Mode Check
 
 Read `shared/hub-dispatch.md` for hub detection logic.
@@ -100,13 +123,15 @@ Extract:
 
 ### Skip own PRs
 
-Compare the PR's `createdBy.uniqueName` / `createdBy.displayName` against the current user (`git config user.email`). If they match:
+**Unless `REVIEW_OWN_PRS=1`** (the `DX_REVIEW_OWN_PRS=true` override — default on in CI, off locally), compare the PR's `createdBy.uniqueName` / `createdBy.displayName` against the current user (`git config user.email`). If they match:
 
 ```
 Skipping PR #<id> — you are the author. You can't review your own PR.
 ```
 
 And stop. If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
+
+If `REVIEW_OWN_PRS=1`, do **not** skip — continue reviewing even when the author matches. The autonomous reviewer-queue pipeline runs as a service account reviewing on behalf of a human who may also be the author, so it sets this override to surface those PRs too.
 
 ## 3. Fetch Existing Review Threads
 
@@ -346,7 +371,13 @@ If `GENERATE_PATCHES` is not set or there are no fixable issues, skip this step.
 
 ### 4f. Analyze-Only Mode
 
-If the user's prompt contains **"analyze only"**, **"save only"**, or **"save results"**: **stop here**. Do NOT present findings interactively, do NOT call `AskUserQuestion`, do NOT post to ADO. The saved findings file is the output — standalone posting (step 4g) handles posting later.
+**If `AUTOMATION=1`:**
+- **Dry run** (`DX_DRY_RUN=true`): **stop here** — the saved findings/patches are the output. Print the summary below, emit `## Return` with `verdict: pass`, and post nothing.
+- **Not dry run:** **skip this step** and fall through to step 4g, which posts the findings and auto-votes.
+
+Either way, do NOT call `AskUserQuestion`.
+
+Otherwise (interactive), if the user's prompt contains **"analyze only"**, **"save only"**, or **"save results"**: **stop here**. Do NOT present findings interactively, do NOT call `AskUserQuestion`, do NOT post to ADO. The saved findings file is the output — standalone posting (step 4g) handles posting later.
 
 Print:
 
@@ -359,16 +390,18 @@ And return.
 
 ### 4g. Standalone Posting (from saved findings)
 
-If the user's prompt contains **"post findings"**, **"post review"**, or **"post comments"** — this is a standalone posting request for previously saved findings. Follow `references/post-findings.md` for the full procedure:
+Run this step if **`AUTOMATION=1`** (the pipeline path — post in the same pass), OR if the user's prompt contains **"post findings"**, **"post review"**, or **"post comments"** (a standalone posting request for previously saved findings). Follow `references/post-findings.md` for the full procedure:
 
 1. Load findings from `.ai/pr-reviews/pr-<id>-findings.md`
 2. Load patches from `.ai/pr-reviews/pr-<id>.patch` (if exists)
 3. Post each issue as an ADO thread (with patches if available)
 4. Post summary thread
-5. Set vote (with user confirmation in interactive mode, automatic in pipeline)
+5. Set vote (with user confirmation in interactive mode, automatic when `AUTOMATION=1`)
 6. Update session file
 
 This replaces the former `/dx-pr-post` skill — all posting logic is now part of this skill.
+
+**When `AUTOMATION=1`:** after posting, emit the `## Return` verdict block (see [Automation Return contract](#automation-return-contract)) and **stop** — do not continue to the interactive steps 5–9.
 
 ---
 
@@ -413,6 +446,8 @@ If none of the conditions are true, skip this step entirely.
 ---
 
 ### 5. Present Findings
+
+**Skip this step in automation mode** (`AUTOMATION=1`) — posting and voting are already handled in step 4g. Steps 5–9 are the interactive path only.
 
 **Do NOT post anything to Azure DevOps yet.** Display the agent's findings:
 
@@ -641,6 +676,8 @@ If a comment fails to post: log the error, continue posting remaining, list fail
 
 ### 9. Set Vote
 
+**Skip this step in automation mode** (`AUTOMATION=1`) — the vote is cast automatically from the verdict in step 4g (`references/post-findings.md` step 6).
+
 Use `AskUserQuestion` to let the user choose the vote:
 
 ```
@@ -802,6 +839,8 @@ Task(
 
 ### 5-F. Present Follow-Up View
 
+**In automation mode** (`AUTOMATION=1`): do not present interactively and do not call `AskUserQuestion`. Verify silent fixes (4F-5), post threads for any genuinely new issues via `references/post-findings.md`, re-vote from the updated verdict, and **leave ARGUED/IGNORED threads as-is** (replying to reviewer pushback is `/dx-pr-answer`'s job, not the reviewer's). Then emit the `## Return` verdict block and stop.
+
 ```markdown
 ## Follow-Up Review: PR #<id> — <title>
 **New commits since your review:** <N> (<short hashes>)
@@ -910,7 +949,37 @@ rm -rf /tmp/dx-review-<repo>
 rm -f /tmp/dx-propose-pr-<id>.patch
 ```
 
+## Automation Return contract
+
+When `AUTOMATION=1`, after posting, emit this block as the final message (the pipeline runner reads `verdict:` and exits non-zero on `fail`):
+
+```markdown
+## Return
+verdict: pass | warn | fail
+summary: <one sentence — e.g. "Posted 3 threads + 2 patches to PR #123, voted ApprovedWithSuggestions">
+artifacts:
+  - .ai/pr-reviews/pr-<id>-findings.md
+  - .ai/pr-reviews/pr-<id>.md
+next_action: <human-readable next step or "none">
+```
+
+Verdict mapping:
+
+| Outcome | verdict |
+|---|---|
+| All threads + summary posted and vote cast | `pass` |
+| Posted, but ≥1 thread failed to post (logged, continued) | `warn` |
+| Nothing posted (no findings file, ADO unreachable, or fatal error) | `fail` |
+
+The verdict reflects the **posting outcome**, not the review verdict (approved/changes-requested) — a clean "Approved" review that posts successfully is still `verdict: pass`.
+
 ## Examples
+
+### Pipeline automation (autonomous reviewer queue)
+```
+/dx-pr-review https://dev.azure.com/myorg/My%20Project/_git/My-Repo/pullrequest/12345
+```
+Run headless with `DX_PIPELINE_MODE=true` (and `GENERATE_PATCHES=true`). Detects `AUTOMATION=1`, runs the review, saves findings + patches, posts threads + inline patches, auto-votes from the verdict, and emits the `## Return` block. No `AskUserQuestion`. With `DX_REVIEW_OWN_PRS=true` it reviews even PRs authored by a `REVIEWER_IDENTITIES` identity.
 
 ### Review by PR URL
 ```
@@ -1041,7 +1110,9 @@ Common excuses for weak reviews — and why they're wrong:
 - **Collapsible patches** — use `<details>` with mandatory blank line after `</summary>`, never HTML-encode diff content
 - **Include apply instructions** — every patch comment includes `git apply` instructions
 - **Combined + individual** — per-file patches on relevant lines AND a combined patch in the summary
-- **Ask before acting** — never approve, decline, or post without user confirmation
+- **Ask before acting** — never approve, decline, or post without user confirmation **in interactive mode**. In automation mode (`AUTOMATION=1`) there is no human: post and vote in one pass and NEVER call `AskUserQuestion`
+- **Automation auto-votes** — when `AUTOMATION=1`, cast the vote from the findings verdict (`post-findings.md` step 6); emit the `## Return` verdict block at the end
+- **Own-PR override** — honor `DX_REVIEW_OWN_PRS=true` (default on in CI, off locally): when set, do not skip PRs authored by the current identity
 - **Scope your review** — review what's in the PR, don't suggest unrelated refactors
 - **Follow-up verification** — for silently fixed threads, verify the fix before marking as addressed
 - **Continue on failure** — if one comment fails to post, log and continue

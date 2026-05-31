@@ -163,9 +163,21 @@ mcp__ado__repo_vote_pull_request
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
 
-**In interactive mode** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
+Detect automation the same way the main skill does (do NOT rely on prompt keywords):
 
-**In automation** (pipeline context — detected by prompt containing "analyze only" or "save results", or by being chained after `/dx-pr-review`): cast the vote automatically based on the verdict. Do NOT call `AskUserQuestion`.
+```bash
+AUTOMATION=0
+[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+fi
+```
+
+**When `AUTOMATION=1`** (pipeline / orchestrated): cast the vote automatically from the verdict. You MUST NOT call `AskUserQuestion`.
+
+**When `AUTOMATION=0`** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
 
 ## 7. Update Session
 

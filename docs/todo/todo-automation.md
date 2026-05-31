@@ -153,6 +153,13 @@ There are **two layers** to this: (1) a **router** that dispatches the right rep
 ## PR-Review autonomous reviewer-queue mode (review PRs where I'm an assigned reviewer)
 
 **Added:** 2026-05-31
+**Status:** **Implemented** (2026-06-01, branch `feat/pr-review-autonomous-queue`). Shipped:
+  - `plugins/dx-core/skills/dx-pr-review/SKILL.md` — `## Automation Mode` block sets `AUTOMATION=1` from `DX_PIPELINE_MODE=true` or a fresh `orchestrating.flag`; first-review automation path (analyze → save → patches → post via `post-findings.md` → auto-vote → `## Return` verdict), no `AskUserQuestion`; steps 4f/4g/5/9 + follow-up 5-F guarded; `DX_REVIEW_OWN_PRS` override on the own-PR skip; dry-run via `DX_DRY_RUN`; `## Automation Return contract` section + pipeline example + rules.
+  - `plugins/dx-core/skills/dx-pr-review/references/post-findings.md` — step 6 auto-vote now keys off the canonical `AUTOMATION` flag, not prompt keywords.
+  - `plugins/dx-core/skills/dx-pr-review/scripts/discover-review-queue.sh` (new) — REST/jq queue discovery: Active PRs where a `REVIEWER_IDENTITIES` identity is an assigned reviewer with `vote == 0`, own-PR exclusion (unless `DX_REVIEW_OWN_PRS=true`), emits PR URLs.
+  - `plugins/dx-automation/data/pipelines/cli/ado-cli-pr-review.yml` — `Write,Edit` + `DX_PIPELINE_MODE`/`DX_REVIEW_OWN_PRS`/`DX_DRY_RUN` env; `schedules:` cron sweep + preserved single-PR build-validation path; simplified `/dx-pr-review <url>` prompt; `reviewOwnPrs` param (default true).
+  - **Consumer copy** under `.ai/automation/pipelines/cli/` lags the template — reaches consumers via marketplace plugin update + the pipeline's `git clone --branch main` of the plugins on each run (the YAML itself is the consumer copy and must be re-imported/updated by `/auto-pipelines`). Verify: `bash plugins/dx-core/skills/dx-pr-review/scripts/discover-review-queue.sh` (jq filter unit-tested); `grep -n 'Write' …/ado-cli-pr-review.yml`; `grep -n 'DX_PIPELINE_MODE' …/dx-pr-review/SKILL.md`.
+
 **Goal (fully autonomous):** Review every Active PR where a configured identity is an **assigned reviewer** and hasn't voted yet — no human in the loop. Discover the queue, review each PR, post comments + fix patches, and **cast the vote automatically** from the verdict.
 
 **Problem:** Three gaps, all confirmed by reading the skills + pipeline. The local interactive flow works; the autonomous path does not exist.
