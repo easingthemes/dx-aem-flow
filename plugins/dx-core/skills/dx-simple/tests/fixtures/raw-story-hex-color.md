@@ -13,9 +13,9 @@ So that the page matches the refreshed style guide
 
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
-component-locator: heading-text="Get started today"
+element: heading-text="Get started today"
 change-type: color-token
-change-value: "use #FF0000 hex token"
+what: "use #FF0000 hex token"
 brand: site
 activate: true
 ```

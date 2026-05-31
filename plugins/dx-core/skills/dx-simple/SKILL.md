@@ -109,7 +109,7 @@ This skill enforces 8 confidence gates. **Any gate failure → ABORT path: class
 
 | Gate | Phase | Threshold |
 |---|---|---|
-| G1 Locator match | 1 | exactly 1 DOM match for component-locator |
+| G1 Locator match | 1 | exactly 1 DOM match for element |
 | G3 Classification | 2 | high or medium |
 | G4 Per-file edit confidence | 3b | ≥ 0.85 |
 | G5 Visual non-target identical | 5 | ≥ 99% |
@@ -289,7 +289,7 @@ human's answer and apply it before re-entering the blocked phase.
    order by id, not timestamp), and (d) id > the stored `comment-cursor`. If none
    qualifies → cheap exit (stray re-trigger; nothing to do).
 2. Strip the token; the remainder is `continue-input`. Apply it to
-   `blocked-at-phase` (e.g. set `simple-block.yaml` `component-locator` for a G1
+   `blocked-at-phase` (e.g. set `simple-block.yaml` `element` for a G1
    ambiguity; add a file/line/anchor hint for G4; pick the branch for
    `ambiguous-branch`).
 3. **Commit the updated `comment-cursor` atomically with / before re-entering the
@@ -341,11 +341,11 @@ re-applies the work-plan as part of its normal flow.
 2a. **Fill in missing fields** (block was present but partial):
     Read `simple-block.yaml`. For each missing optional field, infer it
     from the surrounding story text and overwrite `simple-block.yaml`:
-    - `component-locator` missing → infer from the story's element references.
+    - `element` missing → infer from the story's element references.
       Examples: "Language Selector button" → `dialog-title="Language Selector"`;
       "Get started heading" → `heading-text="Get started"`. If the story
       gives a JCR path, use `jcr-path=...`.
-    - `change-value` missing → use the story's natural-language description
+    - `what` missing → use the story's natural-language description
       of the change in plain English (this is the input the model uses to
       decide whether the change is content, code, or both).
     The classifier (Phase 2) uses these as hints; nothing here gates execution.
@@ -358,9 +358,9 @@ re-applies the work-plan as part of its normal flow.
       ambiguous, post the template at
       `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/simple-block.md.tmpl`
       as an ADO comment and STOP.
-    - `component-locator`: derive from the story's element references
+    - `element`: derive from the story's element references
       (visible text, dialog title, JCR path).
-    - `change-value`: take the most specific change description in the story.
+    - `what`: take the most specific change description in the story.
       Keep it as natural language — the model decides downstream whether each
       part is a content edit or a code edit.
     Write the inferred values to `$SPEC_DIR/simple-block.yaml` with a
@@ -368,7 +368,7 @@ re-applies the work-plan as part of its normal flow.
     lower confidence in the report.
 
 3. Semantic validation (Safeguard #1):
-   - Read `simple-block.yaml`; extract `page-url`, `component-locator`, `change-value`.
+   - Read `simple-block.yaml`; extract `page-url`, `element`, `what`.
    - Navigate Chrome to `page-url`:
      ```
      mcp__plugin_dx-aem_playwright__browser_navigate with url=<page-url>
@@ -462,9 +462,9 @@ bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/classify-work.sh \
 ```
 
 `classify-work.sh` only suggests obvious matches based on keywords in
-`change-value` against dialog field names. **You — the orchestrator — are
+`what` against dialog field names. **You — the orchestrator — are
 responsible for the final classification.** Read `work-plan.json`, read
-`change-value` and `raw-story.md`, and decide what to do:
+`what` and `raw-story.md`, and decide what to do:
 
 - The change is a content edit that matches a dialog field → keep / add
   an item in `.authoring[]`.
@@ -475,7 +475,7 @@ responsible for the final classification.** Read `work-plan.json`, read
   focus in the modal") → populate **both** arrays. Phase 3a and Phase 3b
   will both run.
 - The locator pointed at a component whose dialog has no matching field,
-  but the change-value clearly describes a content change → that string
+  but the what clearly describes a content change → that string
   is hardcoded; route to `.code[]` and let the file-resolver candidates
   in there carry it.
 
@@ -574,7 +574,7 @@ Update progress.
 Phase 3a ran. The code path now covers any change that touches source
 files: hardcoded strings, HTL templates, CSS classes, focus traps and
 other JS behavior, click/keyboard handlers, etc. The model chose this
-path in Phase 2 based on the change-value text and dialog map.
+path in Phase 2 based on the what text and dialog map.
 
 `classify-work.sh` populates `.code[]` with placeholder items (confidence=0, empty contexts) for each candidate file. The agent MUST fill them in (or remove them) and rewrite `work-plan.json` to disk BEFORE the G4 gate runs. For changes that add new code (focus traps, new event listeners) rather than replace an existing line, set `match-context` to the anchor line you're inserting **after**, and `replacement` to the anchor line followed by the new code.
 
@@ -698,7 +698,7 @@ Either gate fail:
 If Phase 3b ran (code edits applied), invoke `dx-pr-reviewer` for a single-pass review on the working tree:
 
 ```
-Agent(subagent_type: dx-pr-reviewer, prompt: "Review the staged diff (git diff HEAD) for the following changes. Context: this is a small ≤50-line tweak via /dx-simple on component <resource-type> — change described as <change-value>. Focus on:
+Agent(subagent_type: dx-pr-reviewer, prompt: "Review the staged diff (git diff HEAD) for the following changes. Context: this is a small ≤50-line tweak via /dx-simple on component <resource-type> — change described as <what>. Focus on:
 - Does the change actually accomplish what the requirement says?
 - Any obvious bug (wrong variable, missing semicolon, off-by-one)?
 - Any accessibility regression (e.g., removing existing aria text)?
@@ -740,7 +740,7 @@ Write the review to `$SPEC_DIR/diff-review.md`.
    ```
    Skill(/dx-pr-commit)
    ```
-   The conventional commit message: `feat(<scope>): <change-value summary>`. Include in the PR body:
+   The conventional commit message: `feat(<scope>): <what summary>`. Include in the PR body:
    - Link to `report.md`
    - Reviewer notes from Phase 5.5 (if any)
    - Authoring changes summary (if any, with "activated: yes" flag)
@@ -903,7 +903,7 @@ as `@<keyword>` (placeholder) so the example line cannot self-trigger the hook.
 
 ## Troubleshooting
 
-- **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA author?), `component-locator` (matches visible element?), QA content sync (component exists on QA?).
+- **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA author?), `element` (matches visible element?), QA content sync (component exists on QA?).
 
 - **"Ambiguous locator"** — Multiple DOM matches. Use `jcr-path=...` form for unambiguous targeting, or describe the element more specifically (e.g. add the surrounding section name).
 

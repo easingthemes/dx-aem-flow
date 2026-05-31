@@ -65,8 +65,8 @@ ticket: 9999996
 ---
 
 ```simple
-component-locator: heading-text="Get started today"
-change-value: "anything"
+element: heading-text="Get started today"
+what: "anything"
 brand: site
 ```
 EOF
@@ -95,9 +95,9 @@ ticket: 9999995
 
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
-component-locator: heading-text="Get started today"
+element: heading-text="Get started today"
 change-type: aria-label
-change-value: "trap focus inside modal until Escape"
+what: "trap focus inside modal until Escape"
 brand: site
 EOF
 echo '```' >> "$TMP/raw-beta-type.md"
@@ -106,7 +106,7 @@ run "parse: beta change-type field tolerated and ignored" \
 
 # Hex-color fixture: parse must succeed AND output must retain literal `#FF0000`
 # (proves inline `#` inside a quoted value is preserved — C1 fix).
-run "parse: hex color in change-value preserved" \
+run "parse: hex color in what preserved" \
   bash -c "$SCRIPTS/parse-simple-block.sh $FIXTURES/raw-story-hex-color.md $TMP/hex.yaml && grep -q '#FF0000' $TMP/hex.yaml"
 
 # CRLF fixture: parser must succeed on Windows-style line endings.

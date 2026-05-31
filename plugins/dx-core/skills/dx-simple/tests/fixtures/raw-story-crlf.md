@@ -13,9 +13,9 @@ So that I can understand what clicking will do
 
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
-component-locator: heading-text="Get started today"
+element: heading-text="Get started today"
 change-type: aria-label
-change-value: "Get started with our product today"
+what: "Get started with our product today"
 brand: site
 activate: true
 ```

@@ -5,16 +5,16 @@
 # split and confidence per item.
 #
 # How the classifier decides authoring-vs-code:
-#   1. Read the natural-language `change-value` from the simple block.
+#   1. Read the natural-language `what` from the simple block.
 #   2. Scan it for keyword clusters that map to dialog-field name patterns.
 #   3. If exactly one dialog field matches the strongest cluster, propose
 #      an authoring write (high confidence).
 #   4. If multiple match, propose the best by name heuristic (medium).
-#   5. If none match — or the change-value reads as a behavioral change
+#   5. If none match — or the what reads as a behavioral change
 #      (focus trap, keyboard handler, click listener, CSS class toggle,
 #      etc.) — fall through to the code path.
 #
-# Keyword clusters (case-insensitive substring on change-value):
+# Keyword clusters (case-insensitive substring on what):
 #   aria-label : aria, accessibility, screen reader
 #   color      : color, background, fill, bg, hue, palette, theme
 #   spacing    : spacing, margin, padding, gap
@@ -43,24 +43,24 @@ OUT="${4:?output work-plan.json path required}"
 [[ -f "$FILES" ]]  || { echo "ERROR: $FILES missing" >&2; exit 8; }
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required" >&2; exit 8; }
 
-CHANGE_VALUE=$(grep -E '^change-value:' "$BLOCK" | head -1 | sed -E 's/^change-value:[[:space:]]*//; s/[[:space:]]+$//' | sed -E 's/^"//;s/"$//' || true)
+WHAT=$(grep -E '^what:' "$BLOCK" | head -1 | sed -E 's/^what:[[:space:]]*//; s/[[:space:]]+$//' | sed -E 's/^"//;s/"$//' || true)
 JCR_PATH=$(jq -r '.["jcr-path"] // empty' "$DIALOG")
 RESOURCE_TYPE=$(jq -r '.["resource-type"] // empty' "$DIALOG")
 
-# Lowercase change-value for keyword matching.
-CV_LC=$(echo "$CHANGE_VALUE" | tr '[:upper:]' '[:lower:]')
+# Lowercase what for keyword matching.
+WHAT_LC=$(echo "$WHAT" | tr '[:upper:]' '[:lower:]')
 
 # Detect behavioral / css-class signals first — they short-circuit to code.
 BEHAVIOR_HIT=0
-if echo "$CV_LC" | grep -qE 'focus|trap|keyboard|tab[[:space:]]*key|escape[[:space:]]*key|click[[:space:]]+handler|event[[:space:]]+listener|onclick|onkey|modal[[:space:]]+open|dialog[[:space:]]+open'; then
+if echo "$WHAT_LC" | grep -qE 'focus|trap|keyboard|tab[[:space:]]*key|escape[[:space:]]*key|click[[:space:]]+handler|event[[:space:]]+listener|onclick|onkey|modal[[:space:]]+open|dialog[[:space:]]+open'; then
   BEHAVIOR_HIT=1
 fi
 CSS_CLASS_HIT=0
-if echo "$CV_LC" | grep -qE 'css[[:space:]]+class|class[[:space:]]+name|add[[:space:]]+class|remove[[:space:]]+class|toggle[[:space:]]+class|hidden[[:space:]]+class|modifier[[:space:]]+class'; then
+if echo "$WHAT_LC" | grep -qE 'css[[:space:]]+class|class[[:space:]]+name|add[[:space:]]+class|remove[[:space:]]+class|toggle[[:space:]]+class|hidden[[:space:]]+class|modifier[[:space:]]+class'; then
   CSS_CLASS_HIT=1
 fi
 
-# Field-name regex per cluster (matched against dialog field NAMES, not change-value).
+# Field-name regex per cluster (matched against dialog field NAMES, not what).
 declare -A PATTERNS=(
   ["aria-label"]='aria.*label|accessibility.*label|screen.?reader'
   ["color-token"]='color|bg|background|fill'
@@ -69,18 +69,18 @@ declare -A PATTERNS=(
   ["icon"]='icon|(logo|image).?(ref|path)'
 )
 
-# Decide which cluster best fits the change-value text.
+# Decide which cluster best fits the what text.
 # (Order matters when the description uses overlapping words — aria > copy.)
 CLUSTER=""
-if echo "$CV_LC" | grep -qE 'aria|accessibility|screen[[:space:]]*reader'; then
+if echo "$WHAT_LC" | grep -qE 'aria|accessibility|screen[[:space:]]*reader'; then
   CLUSTER="aria-label"
-elif echo "$CV_LC" | grep -qE 'color|background|bg[[:space:]]|hue|palette|theme|fill'; then
+elif echo "$WHAT_LC" | grep -qE 'color|background|bg[[:space:]]|hue|palette|theme|fill'; then
   CLUSTER="color-token"
-elif echo "$CV_LC" | grep -qE 'spacing|margin|padding|gap'; then
+elif echo "$WHAT_LC" | grep -qE 'spacing|margin|padding|gap'; then
   CLUSTER="spacing"
-elif echo "$CV_LC" | grep -qE 'icon|logo|image[[:space:]]+(src|path|ref)'; then
+elif echo "$WHAT_LC" | grep -qE 'icon|logo|image[[:space:]]+(src|path|ref)'; then
   CLUSTER="icon"
-elif echo "$CV_LC" | grep -qE 'rename|label|heading|title|copy|text|wording|message|caption'; then
+elif echo "$WHAT_LC" | grep -qE 'rename|label|heading|title|copy|text|wording|message|caption'; then
   CLUSTER="copy"
 fi
 
@@ -116,7 +116,7 @@ if [[ "$AUTH_CONF" -ge 75 ]]; then
     --arg path "$JCR_PATH" \
     --arg prop "$AUTH_FIELD" \
     --arg before "$BEFORE" \
-    --arg after "$CHANGE_VALUE" \
+    --arg after "$WHAT" \
     --arg ftype "${AUTH_TYPE:-textfield}" \
     --argjson conf "$(jq -n --argjson n "$AUTH_CONF" '$n / 100')" \
     '[{
@@ -129,7 +129,7 @@ if [[ "$AUTH_CONF" -ge 75 ]]; then
     }]')
 fi
 
-# Build code item(s) when authoring confidence < 75 OR the change-value
+# Build code item(s) when authoring confidence < 75 OR the what
 # describes a behavioral / css-class change.
 CODE="[]"
 if [[ "$AUTH_CONF" -lt 75 || "$BEHAVIOR_HIT" -eq 1 || "$CSS_CLASS_HIT" -eq 1 ]]; then

@@ -13,8 +13,8 @@ So that I can understand what clicking will do
 
 ```simple
 page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
-component-locator: heading-text="Get started today"
-change-value: Update the aria label to "Get started with our product today" so screen readers announce the purpose.
+element: heading-text="Get started today"
+what: Update the aria label to "Get started with our product today" so screen readers announce the purpose.
 brand: site
 activate: true
 ```

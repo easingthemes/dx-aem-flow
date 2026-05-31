@@ -16,5 +16,5 @@ page-url: https://qa-author.example.com/editor.html/content/site/en/home.html
 platform: beta
 brand: brandx
 scope: fe
-change-value: "Rename the CTA to Begin now"
+what: "Rename the CTA to Begin now"
 ```
