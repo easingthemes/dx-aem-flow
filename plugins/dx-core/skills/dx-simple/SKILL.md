@@ -371,11 +371,11 @@ re-applies the work-plan as part of its normal flow.
    - Read `simple-block.yaml`; extract `page-url`, `component-locator`, `change-value`.
    - Navigate Chrome to `page-url`:
      ```
-     mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page with url=<page-url>
+     mcp__plugin_dx-aem_playwright__browser_navigate with url=<page-url>
      ```
    - Take a snapshot:
      ```
-     mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot
+     mcp__plugin_dx-aem_playwright__browser_snapshot
      ```
    - Match the locator. The locator is one of:
      - `heading-text="..."` / `button-text="..."` / `link-text="..."` → look for elements with that exact visible text
@@ -385,7 +385,7 @@ re-applies the work-plan as part of its normal flow.
 
 4. **Take BEFORE screenshot** (Safeguard #6): capture and save as `$SPEC_DIR/before.png`:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot with filePath=$SPEC_DIR/before.png
+   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filePath=$SPEC_DIR/before.png
    ```
    Also record the locator's bounding box (from snapshot) to `$SPEC_DIR/locator-bbox.json` for the visual-diff step.
 
@@ -666,12 +666,12 @@ If running:
 
 1. Navigate Chrome to the page (note: same QA author URL, NOT publish, so authoring writes are visible):
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page with url=<page-url>
+   mcp__plugin_dx-aem_playwright__browser_navigate with url=<page-url>
    ```
 
 2. Take AFTER screenshot:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot with filePath=$SPEC_DIR/after.png
+   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filePath=$SPEC_DIR/after.png
    ```
 
 3. Run visual-diff:

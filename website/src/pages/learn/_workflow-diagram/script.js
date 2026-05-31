@@ -284,7 +284,7 @@
     const typeItems = [
       'Read · Write · Edit · Grep · Glob',
       'Bash (sandboxed)',
-      'MCP tools (Slack, GitHub, Asana, chrome-devtools…)',
+      'MCP tools (Slack, GitHub, Asana, playwright…)',
       'Subagents — isolated context, run in parallel'
     ];
     const typesH = 28 + typeItems.length * 16 + 8;
@@ -548,19 +548,19 @@
           type: 'mixed',
           rows: [
             { label: 'Built-in', value: 'Read · Write · Edit · Grep · Glob · Bash · WebFetch · WebSearch · TodoWrite' },
-            { label: 'MCP',      value: 'chrome-devtools · aem-mcp · slack · github · linear · figma · …' },
+            { label: 'MCP',      value: 'playwright · aem-mcp · slack · github · linear · figma · …' },
             { label: 'Task',     value: 'built-in tool that spawns a subagent (subagent_type enum lists each one)' }
           ],
-          codeTitle: 'example MCP server — chrome-devtools (26 tools, 6 categories)',
+          codeTitle: 'example MCP server — playwright (browser automation)',
           code: [
-            '// registered as mcp__chrome-devtools__<tool_name>',
-            'navigate_page              — Open a URL in the controlled tab',
-            'take_snapshot              — Accessibility-tree snapshot of the page',
-            'list_network_requests      — Requests since last navigation',
-            'list_console_messages      — Console logs since last navigation',
-            'performance_start_trace    — Begin recording a performance trace',
-            'performance_analyze_insight — Extract LCP, blocking time, …',
-            '… plus 20 more (input · evaluate · DOM · emulation)'
+            '// registered as mcp__plugin_dx-aem_playwright__<tool_name>',
+            'browser_navigate           — Open a URL in the controlled tab',
+            'browser_snapshot           — Accessibility-tree snapshot of the page',
+            'browser_take_screenshot    — Capture a screenshot (to file)',
+            'browser_network_requests   — Requests since last navigation',
+            'browser_console_messages   — Console logs since last navigation',
+            'browser_evaluate           — Run JavaScript in page context',
+            '… plus more (click · type · fill_form · tabs · wait_for · set_storage_state)'
           ]
         }
       },

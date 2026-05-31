@@ -23,7 +23,7 @@ Fail: STOP with "Required tool '<name>' not found. Install: <instructions>"
 
 **Deferred tools** (skill runs inline, no agent `tools:` list):
 - Use ToolSearch to discover tools before calling them.
-- Pattern: `ToolSearch("+AEM")` or `ToolSearch("+chrome-devtools")`
+- Pattern: `ToolSearch("+AEM")` or `ToolSearch("+playwright")`
 
 **Decision rule:** Check your agent frontmatter. If `tools:` lists MCP tools → pre-loaded. If not → deferred.
 

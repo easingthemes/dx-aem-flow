@@ -76,7 +76,7 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 |-------|-------------|
 | `/dx-bug-all` | Full bug workflow: triage → verify → fix |
 | `/dx-bug-triage` | Fetch bug, find affected component, save triage |
-| `/dx-bug-verify` | Reproduce bug via Chrome DevTools |
+| `/dx-bug-verify` | Reproduce bug via Playwright |
 | `/dx-bug-fix` | Generate and execute fix plan |
 
 ### Recon

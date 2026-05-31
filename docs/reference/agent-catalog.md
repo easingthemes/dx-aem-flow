@@ -150,9 +150,9 @@ AEM component inspector. Queries the AEM author instance via MCP tools for dialo
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-fe-verifier.md` |
 | **Used by** | `/aem-fe-verify` |
-| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools |
+| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-aem_playwright__*` tools |
 
-Frontend visual verification agent. Creates/reuses demo pages on local AEM, screenshots components in `wcmmode=disabled` via Chrome DevTools, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines AEM MCP (page creation, component config) with Chrome DevTools MCP (navigation, screenshots).
+Frontend visual verification agent. Creates/reuses demo pages on local AEM, screenshots components in `wcmmode=disabled` via Playwright, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines AEM MCP (page creation, component config) with Playwright MCP (navigation, screenshots).
 
 **Key capabilities:**
 - Localhost hard gate (verifies AEM MCP connected to localhost)
@@ -172,7 +172,7 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-editorial-guide-capture.md` |
 | **Used by** | `/aem-editorial-guide`, `/aem-doc-gen` |
-| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools |
+| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-aem_playwright__*` tools |
 
 Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
 
@@ -206,7 +206,7 @@ Finds all AEM pages using a given component. Searches configured content paths a
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-bug-executor.md` |
 | **Used by** | `/dx-bug-verify` (for AEM bugs) |
-| **Tools** | Read, Write, Glob, Grep, Edit, ToolSearch, all `mcp__plugin_dx-aem_chrome-devtools-mcp__*` tools, `mcp__plugin_dx-aem_AEM__getNodeContent`, `mcp__plugin_dx-aem_AEM__scanPageComponents`, `mcp__plugin_dx-aem_AEM__searchContent`, `mcp__plugin_dx-aem_AEM__getPageProperties` |
+| **Tools** | Read, Write, Glob, Grep, Edit, ToolSearch, all `mcp__plugin_dx-aem_playwright__*` tools, `mcp__plugin_dx-aem_AEM__getNodeContent`, `mcp__plugin_dx-aem_AEM__scanPageComponents`, `mcp__plugin_dx-aem_AEM__searchContent`, `mcp__plugin_dx-aem_AEM__getPageProperties` |
 
 AEM bug verification agent. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, and optionally checks JCR state. Returns structured verification result with evidence table.
 
@@ -423,7 +423,7 @@ End-to-end delivery coordinator. Full pipeline: Requirements → Planning → Ex
 | **Claude equivalent** | (skills: /dx-figma-extract, /dx-figma-prototype, /dx-figma-verify) |
 | **Invoke** | `@DxFigma <work-item-id or Figma URL>` |
 
-Figma design-to-code coordinator. Chains `/dx-figma-extract` → `/dx-figma-prototype` → `/dx-figma-verify` to produce a verified HTML/CSS prototype from a Figma design. Requires Figma desktop app with Dev Mode MCP and Chrome DevTools for verification.
+Figma design-to-code coordinator. Chains `/dx-figma-extract` → `/dx-figma-prototype` → `/dx-figma-verify` to produce a verified HTML/CSS prototype from a Figma design. Requires Figma desktop app with Dev Mode MCP and Playwright for verification.
 
 **Handoffs:** DxPlanExecutor, DxReqAll
 
@@ -483,7 +483,7 @@ General-purpose component inspection without before/after context. Dialog fields
 | **Claude equivalent** | aem-editorial-guide-capture |
 | **Invoke** | `@AEMEditorialGuide <component>` |
 
-Captures dialog screenshots via Chrome DevTools and writes editor-friendly authoring guide.
+Captures dialog screenshots via Playwright and writes editor-friendly authoring guide.
 
 ---
 

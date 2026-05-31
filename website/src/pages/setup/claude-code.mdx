@@ -38,8 +38,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <ContentCard icon="mdi:check-circle" iconColor="bg-emerald-600" title="ADO MCP — Auto-Configured">
       Browser-based OAuth. On first use, opens a browser to authenticate. No PAT or env var needed.
     </ContentCard>
-    <ContentCard icon="mdi:information" iconColor="bg-cyan" title="AEM + Chrome DevTools MCP">
-      AEM MCP reads <code>AEM_INSTANCES</code> from your shell. Chrome DevTools auto-launches — just ensure Chrome is installed.
+    <ContentCard icon="mdi:information" iconColor="bg-cyan" title="AEM + Playwright MCP">
+      AEM MCP reads <code>AEM_INSTANCES</code> from your shell. Playwright auto-launches — just ensure Chrome is installed.
     </ContentCard>
   </div>
 
@@ -49,7 +49,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": ["ado"]
 }`}</CommandBlock>
-  <p class="text-sm text-gray-500 mt-2">Add <code>"AEM"</code> and <code>"chrome-devtools-mcp"</code> for AEM projects.</p>
+  <p class="text-sm text-gray-500 mt-2">Add <code>"AEM"</code> and <code>"playwright"</code> for AEM projects.</p>
 
   <HighlightBox severity="info" title="Env Vars — Two Options in Claude Code">
     Claude Code can read env vars from your <strong>shell profile</strong> (recommended — works for both Claude Code and Copilot CLI)

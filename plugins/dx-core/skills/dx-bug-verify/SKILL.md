@@ -1,8 +1,8 @@
 ---
 name: dx-bug-verify
-description: Reproduce a bug using Chrome DevTools — navigate to the repro URL, follow repro steps, take screenshots, and confirm whether the bug is reproducible. Supports `before` (default), `after`, and `qa` modes. Works with Azure DevOps/Jira. Use after /dx-bug-triage, after /dx-bug-fix (with `after`), or after PR merge (with `qa`) to verify on QA environment.
+description: Reproduce a bug using Playwright — navigate to the repro URL, follow repro steps, take screenshots, and confirm whether the bug is reproducible. Supports `before` (default), `after`, and `qa` modes. Works with Azure DevOps/Jira. Use after /dx-bug-triage, after /dx-bug-fix (with `after`), or after PR merge (with `qa`) to verify on QA environment.
 argument-hint: "<work-item-id or issue-key> [before|after|qa]  (default: before)"
-allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "playwright/*"]
 ---
 
 ## Defaults
@@ -20,7 +20,7 @@ Read `.ai/config.yaml`:
 - **Jira URL:** `jira.url`
 - **Project Key:** `jira.project-key`
 
-You reproduce a bug using Chrome DevTools MCP — navigate to the repro URL, execute the repro steps, take screenshots at each step, and confirm whether the bug is reproducible.
+You reproduce a bug using Playwright MCP — navigate to the repro URL, execute the repro steps, take screenshots at each step, and confirm whether the bug is reproducible.
 
 ## Flow
 
@@ -33,7 +33,7 @@ digraph bug_verify {
     "Repro URL found?" [shape=diamond];
     "Check existing output" [shape=box];
     "Output current?" [shape=diamond];
-    "Ensure Chrome DevTools MCP" [shape=box];
+    "Ensure Playwright MCP" [shape=box];
     "Tools available?" [shape=diamond];
     "Navigate + authenticate" [shape=box];
     "Page loaded?" [shape=diamond];
@@ -60,8 +60,8 @@ digraph bug_verify {
     "Repro URL found?" -> "Report Blocked (no URL)" [label="no"];
     "Check existing output" -> "Output current?";
     "Output current?" -> "Skip (up to date)" [label="yes"];
-    "Output current?" -> "Ensure Chrome DevTools MCP" [label="no"];
-    "Ensure Chrome DevTools MCP" -> "Tools available?";
+    "Output current?" -> "Ensure Playwright MCP" [label="no"];
+    "Ensure Playwright MCP" -> "Tools available?";
     "Tools available?" -> "Navigate + authenticate" [label="yes"];
     "Tools available?" -> "Report Blocked (no tools)" [label="no"];
     "Navigate + authenticate" -> "Page loaded?";
@@ -159,24 +159,24 @@ If `$OUTPUT_FILE` exists, check if title/ID match and if screenshots exist in `s
 ### Output current?
 
 - **yes** — file exists, title/ID match, screenshots present → go to "Skip (up to date)"
-- **no** — file missing or stale → proceed to "Ensure Chrome DevTools MCP"
+- **no** — file missing or stale → proceed to "Ensure Playwright MCP"
 
 ### Skip (up to date)
 
 Print: `$OUTPUT_FILE already up to date — skipping` and STOP.
 
-### Ensure Chrome DevTools MCP
+### Ensure Playwright MCP
 
-Chrome DevTools tools have the full name `mcp__plugin_dx-aem_chrome-devtools-mcp__<tool>`.
+Playwright MCP tools have the full name `mcp__plugin_dx-aem_playwright__<tool>`.
 
-**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_chrome-devtools-mcp__list_pages`). If it works, tools are pre-loaded — continue using them directly.
+**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_playwright__browser_tabs`). If it works, tools are pre-loaded — continue using them directly.
 
 If you get a "tool not found" error, **fall back to ToolSearch**:
 ```
-ToolSearch query: "+chrome-devtools navigate"
+ToolSearch query: "+playwright browser_navigate"
 ```
 
-**IMPORTANT:** Do NOT start with ToolSearch. If tools are pre-loaded (e.g., when running as a subagent), ToolSearch returns nothing because it only finds deferred tools — and you'll wrongly conclude Chrome DevTools is unavailable.
+**IMPORTANT:** Do NOT start with ToolSearch. If tools are pre-loaded (e.g., when running as a subagent), ToolSearch returns nothing because it only finds deferred tools — and you'll wrongly conclude Playwright is unavailable.
 
 ### Tools available?
 
@@ -185,7 +185,7 @@ ToolSearch query: "+chrome-devtools navigate"
 
 ### Report Blocked (no tools)
 
-Save verification.md with `**Result:** Blocked — Chrome DevTools MCP unavailable` and STOP.
+Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` and STOP.
 
 ### Navigate + authenticate
 
@@ -194,14 +194,14 @@ Save verification.md with `**Result:** Blocked — Chrome DevTools MCP unavailab
 1. **Check for basic auth rule:** Read `.claude/rules/qa-basic-auth.md` — if it exists, QA sites require HTTP Basic Auth.
 2. **First navigation:** Embed credentials in the URL for browser-native Basic Auth:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__navigate_page
+   mcp__plugin_dx-aem_playwright__browser_navigate
      url: "https://<user>:<pass>@<host>/<path>"
    ```
    Use the primary credentials from the rule. This sets a session cookie for subsequent requests.
 3. **Verify page loaded:** Take a snapshot and check for actual page content (not a 401 or blank page).
-4. **If page didn't load (401/empty):** Fall back to `evaluate_script` with `fetch()` + Authorization header:
+4. **If page didn't load (401/empty):** Fall back to `browser_evaluate` with `fetch()` + Authorization header:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+   mcp__plugin_dx-aem_playwright__browser_evaluate
      function: |
        async () => {
          const creds = btoa('<user>:<pass>');
@@ -216,18 +216,18 @@ Save verification.md with `**Result:** Blocked — Chrome DevTools MCP unavailab
    If primary credentials fail, try fallback credentials from the rule.
 5. **Subsequent navigations:** Use clean URLs without credentials — the cookie persists for the session.
 6. If no basic auth rule exists, navigate directly without credentials.
-- Wait for page load via `mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for`
+- Wait for page load via `mcp__plugin_dx-aem_playwright__browser_wait_for`
 
 **Local dev server** (e.g., `http://localhost:...`):
 - Navigate to URL
 - Check for login/auth page:
   ```
-  mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+  mcp__plugin_dx-aem_playwright__browser_evaluate
     expression: "document.querySelector('input[type=password]') !== null"
   ```
-- If login page detected, fill credentials using `evaluate_script`:
+- If login page detected, fill credentials using `browser_evaluate`:
   ```
-  mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+  mcp__plugin_dx-aem_playwright__browser_evaluate
     expression: |
       // Find and fill login form fields — adapt selectors to the app
       const userInput = document.querySelector('input[name=username], input[type=email], #username');
@@ -238,7 +238,7 @@ Save verification.md with `**Result:** Blocked — Chrome DevTools MCP unavailab
   ```
 - Wait for app to load:
   ```
-  mcp__plugin_dx-aem_chrome-devtools-mcp__wait_for
+  mcp__plugin_dx-aem_playwright__browser_wait_for
     text: "<expected text after login>"
     timeout: 15000
   ```
@@ -261,7 +261,7 @@ Set `SS_PREFIX` based on mode:
 
 After page loads:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+mcp__plugin_dx-aem_playwright__browser_take_screenshot
   filePath: "<SPEC_DIR>/screenshots/<SS_PREFIX>0-initial.png"
 ```
 
@@ -269,30 +269,30 @@ mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
 
 For each step in the repro instructions:
 
-**Map natural language to Chrome DevTools action:**
+**Map natural language to Playwright action:**
 
-| Repro Step Pattern | Chrome DevTools Action |
+| Repro Step Pattern | Playwright Action |
 |-------------------|----------------------|
-| "Navigate to X" / "Go to X" | `navigate_page` with URL |
-| "Click X" / "Press X button" | `take_snapshot` → find element UID → `click` with UID |
-| "Upload a file" / "Choose file" | `take_snapshot` → find file input UID → `upload_file` with test file |
-| "Type X into Y" / "Enter X" | `take_snapshot` → find input UID → `fill` with value |
-| "Press Enter/Escape/Tab" | `press_key` with key name |
-| "Wait for X" / "X appears" | `wait_for` with text, timeout 10s |
-| "Scroll to X" | `evaluate_script` with `element.scrollIntoView()` |
+| "Navigate to X" / "Go to X" | `browser_navigate` with URL |
+| "Click X" / "Press X button" | `browser_snapshot` → find element UID → `browser_click` with UID |
+| "Upload a file" / "Choose file" | `browser_snapshot` → find file input UID → `browser_file_upload` with test file |
+| "Type X into Y" / "Enter X" | `browser_snapshot` → find input UID → `browser_type` with value |
+| "Press Enter/Escape/Tab" | `browser_press_key` with key name |
+| "Wait for X" / "X appears" | `browser_wait_for` with text, timeout 10s |
+| "Scroll to X" | `browser_evaluate` with `element.scrollIntoView()` |
 | "Cancel" (file dialog) | See file dialog cancel note below |
-| "Refresh/Reload page" | `navigate_page` with same URL |
-| "Fill out form" | `fill_form` with field values |
+| "Refresh/Reload page" | `browser_navigate` with same URL |
+| "Fill out form" | `browser_fill_form` with field values |
 
-**File dialog cancel note:** OS-native file dialogs cannot be directly controlled via Chrome DevTools. To simulate "cancel file upload":
+**File dialog cancel note:** OS-native file dialogs cannot be directly controlled via Playwright. To simulate "cancel file upload":
 1. If the component has a cancel/remove button in the UI, click that
-2. Alternatively, use `evaluate_script` to clear the file input: `document.querySelector('input[type=file]').value = ''` and dispatch a change event
+2. Alternatively, use `browser_evaluate` to clear the file input: `document.querySelector('input[type=file]').value = ''` and dispatch a change event
 3. Note the limitation in verification.md
 
 **Element discovery pattern:** Before clicking/filling, find the target element:
 
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__take_snapshot
+mcp__plugin_dx-aem_playwright__browser_snapshot
 ```
 
 This returns an accessibility tree with UIDs. Search the tree for the target element by:
@@ -302,7 +302,7 @@ This returns an accessibility tree with UIDs. Search the tree for the target ele
 
 Then use the UID in the action:
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__click
+mcp__plugin_dx-aem_playwright__browser_click
   uid: "<found-uid>"
 ```
 
@@ -310,13 +310,13 @@ mcp__plugin_dx-aem_chrome-devtools-mcp__click
 
 1. **Screenshot:**
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__take_screenshot
+   mcp__plugin_dx-aem_playwright__browser_take_screenshot
      filePath: "<SPEC_DIR>/screenshots/<SS_PREFIX><N>-<action>.png"
    ```
 
 2. **Console errors (check periodically, not after every step):**
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__list_console_messages
+   mcp__plugin_dx-aem_playwright__browser_console_messages
      type: "error"
    ```
 
@@ -327,9 +327,9 @@ mcp__plugin_dx-aem_chrome-devtools-mcp__click
 After completing all repro steps:
 
 1. **Visual check:** Take a final screenshot of the current state
-2. **DOM state check:** Use `evaluate_script` to programmatically verify:
+2. **DOM state check:** Use `browser_evaluate` to programmatically verify:
    ```
-   mcp__plugin_dx-aem_chrome-devtools-mcp__evaluate_script
+   mcp__plugin_dx-aem_playwright__browser_evaluate
      expression: |
        // Adapt to the specific bug — check relevant DOM state
        const targetEl = document.querySelector('<relevant-selector>');
@@ -376,12 +376,12 @@ After completing all repro steps:
 ### Collect diagnostics
 
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__list_console_messages
+mcp__plugin_dx-aem_playwright__browser_console_messages
   type: "error"
 ```
 
 ```
-mcp__plugin_dx-aem_chrome-devtools-mcp__list_network_requests
+mcp__plugin_dx-aem_playwright__browser_network_requests
   resourceType: "xhr,fetch"
 ```
 
@@ -418,19 +418,19 @@ Save to `$OUTPUT_FILE` (`verification.md` for `before`, `verification-local.md` 
 ```markdown
 **URL:** <url tested>
 **Date:** <YYYY-MM-DD>
-**Environment:** Chrome DevTools MCP, <domain>
+**Environment:** Playwright MCP, <domain>
 
 ---
 
 ## Repro Steps Executed
 
 ### Step 1: <step description from raw-bug.md>
-**Action:** `<Chrome DevTools tool>` — <what was done>
+**Action:** `<Playwright tool>` — <what was done>
 **Screenshot:** `screenshots/<SS_PREFIX>1-<action>.png`
 **Observations:** <what happened on the page>
 
 ### Step 2: <step description>
-**Action:** `<Chrome DevTools tool>` — <what was done>
+**Action:** `<Playwright tool>` — <what was done>
 **Screenshot:** `screenshots/<SS_PREFIX>2-<action>.png`
 **Observations:** <what happened>
 
@@ -463,7 +463,7 @@ Save to `$OUTPUT_FILE` (`verification.md` for `before`, `verification-local.md` 
 
 ## DOM State at End
 
-<Key DOM observations from evaluate_script, if performed>
+<Key DOM observations from browser_evaluate, if performed>
 - Element visible: <yes/no>
 - Input value: <value or empty>
 - <other relevant state>
@@ -510,7 +510,7 @@ Automated browser testing confirmed this bug.
 **Console errors:** <N or "None">
 
 ---
-_[BugVerify] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerify] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Could Not Reproduce:
@@ -526,7 +526,7 @@ Automated browser testing did not reproduce this bug.
 **Possible reasons:** Environment-specific, intermittent, or already fixed.
 
 ---
-_[BugVerify] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerify] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Blocked:
@@ -556,7 +556,7 @@ Post-fix browser testing confirms the bug is resolved.
 **Console errors:** <N or "None">
 
 ---
-_[BugVerifyLocal] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerifyLocal] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Fix Failed:
@@ -586,7 +586,7 @@ Post-fix browser testing shows the bug is **partially fixed**.
 **Remaining:** <what still fails>
 
 ---
-_[BugVerifyLocal] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerifyLocal] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Blocked:
@@ -616,7 +616,7 @@ Post-merge browser testing confirms the fix is deployed and working.
 **Console errors:** <N or "None">
 
 ---
-_[BugVerifyQA] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerifyQA] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Fix Failed on QA:
@@ -647,7 +647,7 @@ Post-merge browser testing shows the bug is **partially fixed**.
 **Remaining:** <what still fails>
 
 ---
-_[BugVerifyQA] | <ISO timestamp> · Verified via Chrome DevTools MCP_
+_[BugVerifyQA] | <ISO timestamp> · Verified via Playwright MCP_
 ```
 
 If Blocked:
@@ -718,11 +718,11 @@ _[BugVerifyQA] | <ISO timestamp> · Manual QA testing recommended_
 
 | Scenario | Action |
 |----------|--------|
-| Chrome DevTools MCP not found (ToolSearch fails) | Save verification.md with `Blocked`. Continue workflow. |
-| No browser pages listed | Try `new_page` to open one. If fails → `Blocked`. |
+| Playwright MCP not found (ToolSearch fails) | Save verification.md with `Blocked`. Continue workflow. |
+| No browser pages listed | Try `browser_tabs` to open one. If fails → `Blocked`. |
 | Navigation timeout | Screenshot current state. Note in verification.md. |
 | Element not found for click/fill | Take snapshot, look for alternatives. If still not found, skip step with note. |
-| File upload step (OS dialog) | Use `evaluate_script` to set input value programmatically. Note limitation. |
+| File upload step (OS dialog) | Use `browser_evaluate` to set input value programmatically. Note limitation. |
 | Auth/login redirect | Follow login pattern in "Navigate + authenticate". If fails → `Blocked`. |
 | Page crashes or goes blank | Screenshot, check console. Note in verification.md. |
 
@@ -730,8 +730,8 @@ _[BugVerifyQA] | <ISO timestamp> · Manual QA testing recommended_
 
 - **Always produce verification.md** — even with partial results or blocked steps
 - **Screenshot every step** — visual evidence is the primary output
-- **Don't guess elements** — always use `take_snapshot` to find UIDs before interacting
-- **Timeout gracefully** — use `wait_for` with 10-15s timeout, don't hang
+- **Don't guess elements** — always use `browser_snapshot` to find UIDs before interacting
+- **Timeout gracefully** — use `browser_wait_for` with 10-15s timeout, don't hang
 - **Report honestly** — if reproduction is ambiguous, say "Partially Reproduced" not "Reproduced"
 - **No code changes** — this skill is read-only; it only observes and reports
 - **Handle file dialogs realistically** — OS-native dialogs can't be automated; use programmatic alternatives and note limitations

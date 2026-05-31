@@ -4,10 +4,10 @@ description: Verify a component on AEM after deployment — walk dialog fields, 
 argument-hint: "[component-name] [--qa] (e.g., hero, card --qa, banner)"
 context: fork
 agent: aem-inspector
-allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "chrome-devtools-mcp/*"]
+allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
-**Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `chrome-devtools-mcp/*`) must be available. If they are not, inform the user: "AEM verification requires AEM and Chrome DevTools MCP servers. Please use Claude Code or Copilot CLI."
+**Platform note:** This skill uses `context: fork` + `agent: aem-inspector` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "AEM verification requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 ## Applicability Check (Cross-Repo Dependencies)
 
@@ -108,7 +108,7 @@ Ask user: "Previous verification found. Overwrite or compare with new results?"
 
 **Task:** Verify the AEM component **$ARGUMENTS** after deployment, create a demo page, and save verification docs. Compare against baseline if available.
 
-**Environment flag:** If `--qa` is present in arguments, use `aem.author-url-qa` for all doc links and Chrome DevTools URLs instead of `aem.author-url`. Without `--qa`, defaults to local (`aem.author-url`). Note: MCP calls always go to whichever AEM instance the MCP server is connected to — the `--qa` flag only affects documentation links and browser navigation URLs.
+**Environment flag:** If `--qa` is present in arguments, use `aem.author-url-qa` for all doc links and Playwright URLs instead of `aem.author-url`. Without `--qa`, defaults to local (`aem.author-url`). Note: MCP calls always go to whichever AEM instance the MCP server is connected to — the `--qa` flag only affects documentation links and browser navigation URLs.
 
 If no component name was provided, check `.ai/specs/*-*/aem-before.md`, `.ai/specs/*-*/implement.md`, or `.ai/specs/*-*/aem-after.md` to infer it. If unclear, state what you need and stop.
 
