@@ -387,6 +387,11 @@ Copy the reusable auth helper so browser agents can authenticate to AEM without 
 
 1. Copy `${CLAUDE_PLUGIN_ROOT}/data/lib/aem-playwright-auth.sh` → `.ai/lib/aem-playwright-auth.sh` (create `.ai/lib/` if missing; `chmod +x`). On re-run, overwrite silently if the plugin version changed.
 2. Ensure the consumer `.gitignore` contains `.ai/playwright/` (the helper writes the session cookie + Basic Auth creds there — must never be committed). Append it under the runtime-output block if absent.
+3. **Install the Playwright browser** (one-time): the dx-aem `playwright` MCP server drives a real Chromium that is NOT bundled — without it, every browser skill (`/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run:
+   ```bash
+   npx playwright install chromium
+   ```
+   It's idempotent (no-op if already present). If it fails (offline/restricted), tell the user to run it manually before any browser verification.
 
 **What it provides** (two independent auth layers — see the `qa-basic-auth` rule):
 - **AEM author login** → `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` writes `.ai/playwright/aem-author-state.json` (a Playwright `storageState` with the `login-token` cookie). Browser agents load it via `browser_set_storage_state` before navigating to the author — no form-fill, no password in context.
