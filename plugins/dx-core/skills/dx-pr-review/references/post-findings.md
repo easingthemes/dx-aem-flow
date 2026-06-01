@@ -43,7 +43,23 @@ mcp__ado__repo_get_repo_by_name_or_id
 
 ## 4. Post Issue Threads
 
-For each issue in the findings:
+### Idempotency — skip threads you already posted
+
+**Before posting anything**, fetch the PR's existing threads so a re-run never double-posts. A re-run happens whenever the queue's `vote == 0` filter re-selects this PR: a prior run that posted threads but **crashed before casting the vote**, a manually cleared vote, or a verdict that mapped to `NoVote`.
+
+```
+mcp__ado__repo_list_pull_request_threads
+  repositoryId: "<repo ID>"
+  pullRequestId: <PR ID>
+```
+
+Build a set of `(filePath, startLine)` from existing threads anchored to a file (`threadContext.filePath` + `threadContext.rightFileStart.line`). Also note whether any existing thread's first comment already contains the `**[AI Review]` marker (the summary thread).
+
+- **Skip** any finding whose `(filePath, startLine)` already has a thread — it was posted on a prior run. Log `already posted: <file> L<line>` and continue.
+- **Skip** the summary thread (step 5) if an `**[AI Review]` summary already exists.
+- If **every** finding and the summary are already posted, post nothing and go straight to the vote (step 6). This is the crash-before-vote recovery path — it makes the whole procedure safe to re-run.
+
+For each issue in the findings (that survived the idempotency skip above):
 
 ### Without patch (no patch file, or issue not fixable)
 
@@ -146,13 +162,13 @@ git apply pr-fixes.patch
 
 Determine vote from the verdict in the findings:
 
-| Verdict | `vote` enum | ADO integer |
-|---------|-------------|-------------|
-| `approved` | `Approved` | 10 |
-| `approved-with-suggestions` | `ApprovedWithSuggestions` | 5 |
-| `changes-requested` | `WaitingForAuthor` | -5 |
-| `rejected` *(explicit block)* | `Rejected` | -10 |
-| *(clear existing vote)* | `NoVote` | 0 |
+| Verdict | Interactive `vote` | ADO int | Automation `vote` (clamped — never blocking) |
+|---------|-------------|---------|---------|
+| `approved` | `Approved` | 10 | `Approved` |
+| `approved-with-suggestions` | `ApprovedWithSuggestions` | 5 | `ApprovedWithSuggestions` |
+| `changes-requested` | `WaitingForAuthor` | -5 | **`ApprovedWithSuggestions`** |
+| `rejected` *(explicit block)* | `Rejected` | -10 | **`ApprovedWithSuggestions`** |
+| *(clear existing vote)* | `NoVote` | 0 | `NoVote` |
 
 Cast the vote via MCP (the tool auto-adds the caller as a reviewer if not already one):
 
@@ -163,9 +179,23 @@ mcp__ado__repo_vote_pull_request
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
 
-**In interactive mode** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
+Detect automation the same way the main skill does (do NOT rely on prompt keywords):
 
-**In automation** (pipeline context — detected by prompt containing "analyze only" or "save results", or by being chained after `/dx-pr-review`): cast the vote automatically based on the verdict. Do NOT call `AskUserQuestion`.
+```bash
+AUTOMATION=0
+[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+FLAG=".ai/run-context/orchestrating.flag"
+if [ -f "$FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+fi
+```
+
+**When `AUTOMATION=1`** (pipeline / orchestrated): cast the vote automatically from the verdict, **but never cast a blocking vote**. An autonomous agent must not block a human's PR — clamp the severity to a ceiling of `ApprovedWithSuggestions` (the right-hand column above): `changes-requested` and `rejected` both vote `ApprovedWithSuggestions`, not `WaitingForAuthor`/`Rejected`. The findings carry the signal; a human casts any blocking vote.
+
+When you clamp a `changes-requested`/`rejected` verdict, the **summary thread (step 5) MUST state plainly that there are blocking-level (MUST-FIX) concerns for a human reviewer to adjudicate and cast the blocking vote** — keep the `MUST-FIX` severity labels on the individual issue comments intact, so the signal isn't softened. You MUST NOT call `AskUserQuestion`.
+
+**When `AUTOMATION=0`** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
 
 ## 7. Update Session
 
