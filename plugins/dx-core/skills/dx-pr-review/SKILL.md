@@ -73,7 +73,7 @@ REVIEW_OWN_PRS=0
 echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS"
 ```
 
-**When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
+**When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict (clamped — never a blocking vote; see `references/post-findings.md` step 6)** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
 
 **When `AUTOMATION=0`** — the interactive flow below is unchanged.
 
@@ -1111,7 +1111,7 @@ Common excuses for weak reviews — and why they're wrong:
 - **Include apply instructions** — every patch comment includes `git apply` instructions
 - **Combined + individual** — per-file patches on relevant lines AND a combined patch in the summary
 - **Ask before acting** — never approve, decline, or post without user confirmation **in interactive mode**. In automation mode (`AUTOMATION=1`) there is no human: post and vote in one pass and NEVER call `AskUserQuestion`
-- **Automation auto-votes** — when `AUTOMATION=1`, cast the vote from the findings verdict (`post-findings.md` step 6); emit the `## Return` verdict block at the end
+- **Automation auto-votes, never blocks** — when `AUTOMATION=1`, cast the vote from the findings verdict (`post-findings.md` step 6), clamped to a ceiling of `ApprovedWithSuggestions` (never `WaitingForAuthor`/`Rejected` — the bot doesn't block a human's PR; the summary flags MUST-FIX concerns for a human to block). Emit the `## Return` verdict block at the end
 - **Own-PR override** — honor `DX_REVIEW_OWN_PRS=true` (default on in CI, off locally): when set, do not skip PRs authored by the current identity
 - **Scope your review** — review what's in the PR, don't suggest unrelated refactors
 - **Follow-up verification** — for silently fixed threads, verify the fix before marking as addressed

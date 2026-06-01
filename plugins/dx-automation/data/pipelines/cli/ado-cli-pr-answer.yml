@@ -6,15 +6,18 @@ pr: none
 # Triggered by the pr-router Lambda on PR comment events, filtered to PRs whose
 # author is in MY_IDENTITIES. Runs headless with DX_PIPELINE_MODE=true so
 # /dx-pr-answer takes its non-interactive branch: it replies to EVERY open
-# reviewer thread (agree-will-fix, question, AND disagree — evidence-backed,
-# confidence-gated), and for accepted patches / agree-will-fix it applies the
-# change, runs a lint + compile gate, then commits + pushes to update the PR.
-# No human in the loop, no AskUserQuestion.
+# reviewer thread (agree-will-fix, question, AND disagree — evidence-backed),
+# and for accepted patches / agree-will-fix it applies the change, runs a
+# lint + compile gate, then commits + pushes to update the PR. No human in the
+# loop, no AskUserQuestion.
+#
+# Disagree is gated AND bounded: the bot sends a pushback only when confidence
+# >= DX_DISAGREE_CONFIDENCE (default 80, config override) and evidence is cited,
+# and at most DX_MAX_DISAGREE_REPLIES (default 1) per thread — then it escalates
+# to the author (@-mention) instead of arguing again.
 #
 # In CI the git identity is the service account, so /dx-pr-answer verifies PR
-# ownership against MY_IDENTITIES (not git config user.email). The disagree
-# confidence bar defaults to 80; override per-pipeline with DX_DISAGREE_CONFIDENCE
-# (env) or overrides.pr-answer.disagree-confidence-threshold (config).
+# ownership against MY_IDENTITIES (not git config user.email).
 
 parameters:
   - name: prUrl
