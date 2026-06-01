@@ -108,6 +108,28 @@ If the user provided a message in the argument, use it (prepend the `#<ID>` if m
 
 Commit and verify with `git log -1 --oneline`.
 
+## 6b. Orchestrated PR update (headless)
+
+When `$ORCHESTRATED == 1` (e.g. `/dx-pr-answer` applying fixes to a reviewer's open PR), the branch usually already has an Active PR and the intent is **update it**, not create a new one. After committing, check:
+
+```
+mcp__ado__repo_list_pull_requests_by_repo_or_project
+  repositoryId: "<repo ID>"
+  sourceRefName: "refs/heads/<current-branch>"
+  status: "Active"
+```
+
+If an **Active PR exists**, push the new commit to update it — no new PR, no prompt:
+
+```bash
+git push origin "$(git branch --show-current)" \
+  || { git pull --rebase origin "$(git branch --show-current)" && git push origin "$(git branch --show-current)"; }
+```
+
+Pushing the source branch updates the existing PR automatically. Do **not** create a new PR and do **not** bare-`--force` (only `--force-with-lease`, and only after an explicit rebase). Capture the PR URL/ID for the caller's `## Return` block, then skip step 7.
+
+If **no Active PR exists**, fall through: create one only if a PR was requested (the `pr` keyword), otherwise this was a commit-only run and you're done.
+
 ## 7. Create PR (if requested)
 
 Only if the user asked for a PR.

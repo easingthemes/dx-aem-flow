@@ -1,8 +1,23 @@
 trigger: none
 pr: none
 
-# Claude Agent SDK pipeline — PR Answer via /dx-pr-answer skill.
-# Triggered by Lambda webhook on PR comment events.
+# Claude Agent SDK pipeline — fully autonomous PR Answer via /dx-pr-answer (TODO #149).
+#
+# Triggered by the pr-router Lambda on PR comment events, filtered to PRs whose
+# author is in MY_IDENTITIES. Runs headless with DX_PIPELINE_MODE=true so
+# /dx-pr-answer takes its non-interactive branch: it replies to EVERY open
+# reviewer thread (agree-will-fix, question, AND disagree — evidence-backed),
+# and for accepted patches / agree-will-fix it applies the change, runs a
+# lint + compile gate, then commits + pushes to update the PR. No human in the
+# loop, no AskUserQuestion.
+#
+# Disagree is gated AND bounded: the bot sends a pushback only when confidence
+# >= DX_DISAGREE_CONFIDENCE (default 80, config override) and evidence is cited,
+# and at most DX_MAX_DISAGREE_REPLIES (default 1) per thread — then it escalates
+# to the author (@-mention) instead of arguing again.
+#
+# In CI the git identity is the service account, so /dx-pr-answer verifies PR
+# ownership against MY_IDENTITIES (not git config user.email).
 
 parameters:
   - name: prUrl
@@ -38,20 +53,29 @@ steps:
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
   - bash: |
-      PROMPT="/dx-pr-answer ${{ parameters.prUrl }}"
-      if [ "${{ parameters.dryRun }}" = "True" ]; then
-        PROMPT="$PROMPT (dry run — draft answers but do NOT post replies or push code)"
-      fi
-
+      # ADO renders boolean params as "True"/"False"; the skill wants "true".
+      export DX_DRY_RUN=$(printf '%s' "$DX_DRY_RUN" | tr '[:upper:]' '[:lower:]')
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
-      echo "prompt: $PROMPT"
+      PROMPT="/dx-pr-answer ${{ parameters.prUrl }}"
+      echo "prompt: $PROMPT (dry_run=$DX_DRY_RUN)"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
     displayName: "AI PR Answer"
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      MY_IDENTITIES: $(MY_IDENTITIES)
+      SOURCE_REPO_NAME: $(Build.Repository.Name)
+      DX_PIPELINE_MODE: "true"
+      DX_DRY_RUN: "${{ parameters.dryRun }}"
+      DX_HOOK_PROFILE: "minimal"
+      CI: "true"
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
-      MAX_TURNS: "30"
-      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
-    timeoutInMinutes: 15
+      # Apply + lint + compile + commit/push is heavier than draft-only; give it
+      # room. The wrapper's TIMEOUT_MINUTES is the outer backstop.
+      MAX_TURNS: "80"
+      # mvn/npm enable the lint + compile gate before any commit; git for
+      # commit/push (persistCredentials above). ADO posting/vote tools are
+      # auto-allowed by the runner via the mcp__ado__* wildcard (ADO_MCP_AUTH_TOKEN set).
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Bash(mvn *),Bash(npm *),Agent"
+    timeoutInMinutes: 45

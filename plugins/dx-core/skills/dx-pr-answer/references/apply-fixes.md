@@ -2,6 +2,8 @@
 
 This reference describes the full procedure for applying code fixes from `agree-will-fix` PR review threads. Called from `/dx-pr-answer` step 9 when the user chooses to apply fixes.
 
+**Automation mode** (`AUTOMATION=1`, set in `/dx-pr-answer`): skip every `AskUserQuestion`/approval gate below. Verify the branch by fetch+checkout (no prompt), apply fixes, run the **lint + compile gate** (section 4), and only commit/push (headless, via `/dx-pr-commit` under `orchestrating.flag`) when it passes. A fix that fails the gate is reverted and its thread deferred (reply "needs manual attention", leave open) — it downgrades the run to `warn` but does not block the other fixes. Never call `AskUserQuestion`.
+
 ## 1. Extract Fixable Threads
 
 Read the session file `.ai/pr-answers/pr-<id>.md`. Extract all threads where:
@@ -25,7 +27,7 @@ If no `agree-will-fix` threads: "No agree-will-fix threads in PR #<id>. Nothing 
 **<N> fixes to apply.** Proceed?
 ```
 
-Wait for user confirmation before applying any changes.
+Wait for user confirmation before applying any changes. **Skip this confirmation in automation mode** (`AUTOMATION=1`).
 
 ## 2. Verify Branch
 
@@ -35,7 +37,14 @@ Ensure you're on the correct branch:
 git branch --show-current
 ```
 
-Compare with session file's `sourceBranch`. If different:
+**Automation** (`AUTOMATION=1`): the pipeline checks out the repo default branch, so fetch and check out the PR source branch directly — no prompt:
+
+```bash
+git fetch origin <sourceBranch>
+git checkout -B <sourceBranch> origin/<sourceBranch>
+```
+
+**Interactive:** compare with session file's `sourceBranch`. If different:
 
 ```
 You're on <current> but this PR's source branch is <sourceBranch>.
@@ -117,7 +126,7 @@ Task(
 )
 ```
 
-## 4. Lint Check
+## 4. Lint + Compile Gate
 
 After fixes are applied, run lint on modified files:
 
@@ -127,7 +136,19 @@ After fixes are applied, run lint on modified files:
 4. Check which file(s) failed before attempting auto-fix
 5. If lint fails on a file that was just modified — try auto-fix once (e.g., `--fix` flag)
 6. Re-run lint to verify
-7. If still failing after one fix attempt — report the lint error and let the user decide
+7. If still failing after one fix attempt — report the lint error and (interactive) let the user decide
+
+Then **compile** if any code (non-doc) files changed — prove the change builds before committing. Use the compile command, never the deploy `build.command` (which targets localhost AEM):
+
+```bash
+COMPILE=$(bash .ai/lib/dx-common.sh yaml-val 'build.compile-fast' || \
+          bash .ai/lib/dx-common.sh yaml-val 'build.compile')
+$COMPILE > /tmp/pr-answer-compile.log 2>&1
+```
+
+**Automation gate decision** (`AUTOMATION=1`) — HARD gate:
+- **lint + compile pass** → proceed to commit + push.
+- **either fails** → revert the offending fix (`git checkout -- <files>`), post the **needs-human-input** reply on its thread (tag the PR author via the session's `Author ID` — `@<{Author ID}>` — noting the fix didn't lint/compile cleanly), leave the thread **open**, mark it `code-fixed: failed` in the session, and record `warn` for the run. Continue with the remaining fixes. Never commit or push broken code.
 
 ## 5. Present Changes
 
@@ -151,12 +172,18 @@ Show `git diff` for each modified file so the user can inspect the actual change
 **Files modified:** <N>
 ```
 
-Wait for explicit approval. Options:
+Wait for explicit approval (**interactive only** — skip in automation mode). Options:
 - **Approve all** -> proceed to commit
 - **Revert some** -> `git checkout -- <filePath>` for specific files
 - **Cancel** -> revert all changes
 
 ## 6. Commit & Push
+
+In automation mode, set the orchestration flag first so `/dx-pr-commit` runs headless and pushes to update the existing PR (no new-PR prompt):
+
+```bash
+mkdir -p .ai/run-context && touch .ai/run-context/orchestrating.flag
+```
 
 Delegate to `/dx-pr-commit` for all git operations:
 
@@ -219,10 +246,10 @@ Update the top-level `**Status:**` to reflect progress:
 - **Session first** — always check `.ai/pr-answers/pr-<id>.md` first. Use stored repo ID, project, and branch
 - **Only agree-will-fix** — only apply fixes for threads categorized as `agree-will-fix`
 - **Minimal changes** — fix ONLY what was promised in the reply
-- **Lint before commit** — always lint after applying fixes
+- **Lint + compile before commit** — always lint AND compile after applying fixes; in automation this is a hard gate (fail → revert + defer + `warn`, never push broken code)
 - **Delegate git to /dx-pr-commit** — never handle staging, committing, rebasing, or pushing directly
-- **Correct branch** — verify you're on the PR's source branch before applying any changes
-- **Confirm before committing** — show the diff and get user approval before invoking `/dx-pr-commit`
+- **Correct branch** — verify you're on the PR's source branch before applying any changes (automation: fetch+checkout, no prompt)
+- **Confirm before committing (interactive)** — show the diff and get user approval before invoking `/dx-pr-commit`. In automation, the lint + compile gate replaces the human approval
 - **Reply after push** — only reply to threads AFTER `/dx-pr-commit` completes
 - **Never resolve threads** — post the "fixed" reply but leave thread resolution to the user/reviewer
 - **Subagent for fixes** — use a `general-purpose` subagent to apply code changes
