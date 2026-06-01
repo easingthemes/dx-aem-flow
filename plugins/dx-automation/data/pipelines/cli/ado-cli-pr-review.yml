@@ -1,16 +1,47 @@
-trigger: none
 pr: none
 
-# Claude Agent SDK pipeline — PR Review via /dx-pr-review skill.
-# Triggered via Branch Policy > Build Validation on the target branch.
+# Claude Agent SDK pipeline — autonomous PR Review via /dx-pr-review (TODO #148).
+#
+# Two ways to run:
+#   1. Reviewer-queue sweep (scheduled / manual, no prUrl) — discovers every
+#      Active PR where a REVIEWER_IDENTITIES identity is an assigned reviewer
+#      with NO vote yet, and reviews each headless: post comments + inline fix
+#      patches, then auto-vote from the verdict. No human in the loop.
+#   2. Single PR (Branch Policy > Build Validation, or manual with prUrl) —
+#      reviews exactly that PR. Lower latency; covers the build-validation path.
+#
+# Both paths run with DX_PIPELINE_MODE=true so /dx-pr-review takes its
+# non-interactive branch (no AskUserQuestion). DX_REVIEW_OWN_PRS defaults on in
+# CI so the queue surfaces PRs you authored too (the agent runs as a service
+# account, so ADO's own-PR restriction does not apply).
+#
+# Lower-latency alternative to the cron sweep: an ADO Service Hook on
+# "Pull request created" / "reviewer added" filtered to a REVIEWER_IDENTITIES
+# member, wired to an Incoming WebHook service connection + resources.webhooks
+# (cf. ado-cli-simple.yml). The cron sweep is the simplest catch-all and is
+# what ships here.
+
+trigger: none
+
+schedules:
+  - cron: "0 */4 * * 1-5"        # every 4 hours, Mon–Fri (UTC) — tune cadence to taste
+    displayName: "Reviewer queue sweep"
+    branches:
+      include:
+        - main                  # CONSUMER: set to your default branch (scm.base-branch) — this is where the pipeline YAML is versioned, not what's reviewed (discovery queries all Active PRs via REST)
+    always: true                # run even when there are no new commits
 
 parameters:
   - name: prUrl
-    displayName: "PR URL (full ADO PR URL)"
+    displayName: "PR URL (full ADO PR URL) — leave empty for a reviewer-queue sweep"
     type: string
     default: ""
+  - name: reviewOwnPrs
+    displayName: "Review PRs I authored too (queue mode)"
+    type: boolean
+    default: true
   - name: dryRun
-    displayName: "Dry run (log results, don't post threads)"
+    displayName: "Dry run (analyze + save, do NOT post threads or vote)"
     type: boolean
     default: false
   - name: eventId
@@ -38,29 +69,90 @@ steps:
       npm install --no-save @anthropic-ai/claude-agent-sdk @azure-devops/mcp
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
+
   - bash: |
+      set -euo pipefail
+      # ADO renders boolean params as "True"/"False"; the script wants "true".
+      DX_REVIEW_OWN_PRS=$(printf '%s' "${{ parameters.reviewOwnPrs }}" | tr '[:upper:]' '[:lower:]')
+      export DX_REVIEW_OWN_PRS
+
+      QUEUE="$(Pipeline.Workspace)/review-queue.txt"
+      : > "$QUEUE"
+
       PR_URL="${{ parameters.prUrl }}"
-      if [ -z "$PR_URL" ]; then
+      # Build-validation runs inject the PR id even when prUrl is left empty.
+      if [ -z "$PR_URL" ] && [ -n "$(System.PullRequest.PullRequestId)" ]; then
         PR_URL="$(System.CollectionUri)$(System.TeamProject)/_git/$(Build.Repository.Name)/pullrequest/$(System.PullRequest.PullRequestId)"
       fi
 
-      PROMPT="/dx-pr-review $PR_URL (analyze only, save results)"
-      if [ "${{ parameters.dryRun }}" = "True" ]; then
-        PROMPT="$PROMPT (dry run — analyze but do NOT post comments or vote)"
+      if [ -n "$PR_URL" ]; then
+        echo "Single-PR mode: $PR_URL"
+        echo "$PR_URL" >> "$QUEUE"
       else
-        PROMPT="$PROMPT. Then post the review comments to ADO (posting is included in /dx-pr-review)."
+        echo "Queue mode: discovering Active PRs assigned to REVIEWER_IDENTITIES with no vote..."
+        DISCOVER="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-core/skills/dx-pr-review/scripts/discover-review-queue.sh"
+        bash "$DISCOVER" \
+          "$(System.CollectionUri)" "$(System.TeamProject)" "$(Build.Repository.Name)" \
+          >> "$QUEUE"
       fi
 
-      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
+      COUNT=$(grep -c . "$QUEUE" || true)
+      echo "##[section]$COUNT PR(s) queued for review"
+      cat "$QUEUE" || true
+    displayName: "Build review queue"
+    env:
+      ADO_PAT: $(ADO_PAT)
+      REVIEWER_IDENTITIES: $(REVIEWER_IDENTITIES)
+      DX_REVIEW_OWN_PRS: "${{ parameters.reviewOwnPrs }}"
 
-      echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+  - bash: |
+      set -uo pipefail
+      QUEUE="$(Pipeline.Workspace)/review-queue.txt"
+      if [ ! -s "$QUEUE" ]; then
+        echo "No PRs to review — nothing in the queue. Exiting clean."
+        exit 0
+      fi
+
+      # ADO renders boolean params as "True"/"False"; the skill wants "true".
+      export DX_REVIEW_OWN_PRS=$(printf '%s' "$DX_REVIEW_OWN_PRS" | tr '[:upper:]' '[:lower:]')
+      export DX_DRY_RUN=$(printf '%s' "$DX_DRY_RUN" | tr '[:upper:]' '[:lower:]')
+      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
+      FAILED=0
+      while read -r PR_URL; do
+        [ -n "$PR_URL" ] || continue
+        echo "##[group]Reviewing $PR_URL"
+        PROMPT="/dx-pr-review $PR_URL"
+        if node .ai/automation/scripts/pipeline-agent.js "$PROMPT"; then
+          echo "ok: $PR_URL"
+        else
+          echo "##[warning]review failed for $PR_URL (exit $?)"
+          FAILED=$((FAILED + 1))
+        fi
+        echo "##[endgroup]"
+      done < "$QUEUE"
+
+      if [ "$FAILED" -gt 0 ]; then
+        echo "##[error]$FAILED PR review(s) failed — see logs above."
+        exit 1
+      fi
     displayName: "AI PR Review"
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      SOURCE_REPO_NAME: $(Build.Repository.Name)
+      DX_PIPELINE_MODE: "true"
+      DX_REVIEW_OWN_PRS: "${{ parameters.reviewOwnPrs }}"
+      DX_DRY_RUN: "${{ parameters.dryRun }}"
+      DX_HOOK_PROFILE: "minimal"
+      CI: "true"
       MAX_TURNS: "30"
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       GENERATE_PATCHES: "true"
-      ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Bash(git diff*),Bash(git log*),Bash(git fetch*),Bash(git show*),Bash(git worktree*),Bash(git checkout*),Bash(git -C*),Agent"
-    timeoutInMinutes: 30
+      # Write/Edit enable the findings file (4d) + patch file (4e) saves; the
+      # ADO posting/vote tools are auto-allowed by the runner via the
+      # mcp__ado__* wildcard because ADO_MCP_AUTH_TOKEN is set.
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git diff*),Bash(git log*),Bash(git fetch*),Bash(git show*),Bash(git worktree*),Bash(git checkout*),Bash(git -C*),Agent"
+    # One review is quick; the queue sweep can review several PRs sequentially.
+    # Give the step enough wall-clock for a realistic queue (each agent call has
+    # its own TIMEOUT_MINUTES backstop).
+    timeoutInMinutes: 120
