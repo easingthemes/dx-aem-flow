@@ -136,6 +136,16 @@ Severity: MUST-FIX (bugs, security) | QUESTION (unclear intent) — that's it. A
 **Files reviewed:** <list>
 ```
 
+**Verdict is mechanical, not a judgment call — derive it from the findings:**
+
+| Findings | Verdict |
+|----------|---------|
+| ≥ 1 MUST-FIX | **Changes requested** — always. MUST-FIX = bug / security / data-loss; it is blocking by definition. |
+| 0 MUST-FIX, ≥ 1 QUESTION | Approved with suggestions |
+| 0 MUST-FIX, 0 QUESTION | Approved |
+
+Never downgrade a MUST-FIX to "Approved with suggestions". Attaching a fix patch does **not** make the issue non-blocking — the patch helps the author fix it; the verdict still says "Changes requested".
+
 If no issues >= 80 confidence: report a clean review with what was verified.
 
 **Existing comment references:** If you agree with, build on, or were informed by existing reviewer comments, note them in the Overall section (e.g., "+1 on <reviewer>'s catch about X in file.js" or "expanding on <reviewer>'s concern — same pattern in 2 more files"). Keep it brief.
@@ -150,6 +160,7 @@ If no issues >= 80 confidence: report a clean review with what was verified.
 - **Context matters** — use PR title and description to understand intent
 - **Existing threads** — skip files/lines already covered; use existing reviewer comments as hints for your analysis and fix suggestions
 - **No false positives** — only flag issues with confidence >= 80
+- **MUST-FIX ⇒ Changes requested** — any MUST-FIX finding forces the verdict to "Changes requested", patch attached or not. Never soften it to "Approved with suggestions"
 - **No pre-existing issues** — if it was there before this PR, it's not your problem
 - **No positive comments** — don't add comments that just say "nice work"
 - **Minimal suggestions** — either it's a real problem or it's not worth mentioning

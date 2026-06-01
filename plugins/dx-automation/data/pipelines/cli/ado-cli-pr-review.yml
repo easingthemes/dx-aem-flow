@@ -138,6 +138,13 @@ steps:
     displayName: "AI PR Review"
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      # IDENTITY: the bot votes AS whoever owns this PAT. Use a DEDICATED
+      # service-account PAT — never a developer's personal PAT — otherwise the
+      # bot's vote is attributed to that human and (with DX_REVIEW_OWN_PRS=true)
+      # can count toward a required reviewer/group and auto-complete a PR the bot
+      # itself flagged MUST-FIX. The skill already clamps changes-requested to
+      # NoVote (0) so the bot never approves a buggy PR, but a shared identity
+      # still muddies who actually reviewed. Keep the reviewer bot on its own PAT.
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
       SOURCE_REPO_NAME: $(Build.Repository.Name)
       DX_PIPELINE_MODE: "true"
