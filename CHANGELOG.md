@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.1.0...v3.2.0) (2026-06-01)
+
+
+### Features
+
+* autonomous PR-review queue ([#148](https://github.com/easingthemes/dx-aem-flow/issues/148)) + PR-answer ([#149](https://github.com/easingthemes/dx-aem-flow/issues/149)) modes ([#161](https://github.com/easingthemes/dx-aem-flow/issues/161)) ([f8cba6f](https://github.com/easingthemes/dx-aem-flow/commit/f8cba6f6233a971cb6e8fc3bb6e710bc45f7ff14))
+
 # [3.1.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.0.1...v3.1.0) (2026-05-31)
 
 
