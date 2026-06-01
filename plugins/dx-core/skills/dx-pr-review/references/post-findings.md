@@ -162,13 +162,13 @@ git apply pr-fixes.patch
 
 Determine vote from the verdict in the findings:
 
-| Verdict | Interactive `vote` | ADO int | Automation `vote` (clamped — never blocking) |
+| Verdict | Interactive `vote` | ADO int | Automation `vote` (clamped — never positive on a blocking issue, never hard-blocking) |
 |---------|-------------|---------|---------|
-| `approved` | `Approved` | 10 | `Approved` |
-| `approved-with-suggestions` | `ApprovedWithSuggestions` | 5 | `ApprovedWithSuggestions` |
-| `changes-requested` | `WaitingForAuthor` | -5 | **`ApprovedWithSuggestions`** |
-| `rejected` *(explicit block)* | `Rejected` | -10 | **`ApprovedWithSuggestions`** |
-| *(clear existing vote)* | `NoVote` | 0 | `NoVote` |
+| `approved` | `Approved` | 10 | `Approved` (+10) |
+| `approved-with-suggestions` | `ApprovedWithSuggestions` | 5 | `ApprovedWithSuggestions` (+5) |
+| `changes-requested` | `WaitingForAuthor` | -5 | **`NoVote` (0)** |
+| `rejected` *(explicit block)* | `Rejected` | -10 | **`NoVote` (0)** |
+| *(clear existing vote)* | `NoVote` | 0 | `NoVote` (0) |
 
 Cast the vote via MCP (the tool auto-adds the caller as a reviewer if not already one):
 
@@ -191,9 +191,14 @@ if [ -f "$FLAG" ]; then
 fi
 ```
 
-**When `AUTOMATION=1`** (pipeline / orchestrated): cast the vote automatically from the verdict, **but never cast a blocking vote**. An autonomous agent must not block a human's PR — clamp the severity to a ceiling of `ApprovedWithSuggestions` (the right-hand column above): `changes-requested` and `rejected` both vote `ApprovedWithSuggestions`, not `WaitingForAuthor`/`Rejected`. The findings carry the signal; a human casts any blocking vote.
+**When `AUTOMATION=1`** (pipeline / orchestrated): cast the vote automatically from the verdict, **clamped at both ends**. An autonomous agent must neither hard-block a human's PR nor *approve* one it found a blocking bug in:
 
-When you clamp a `changes-requested`/`rejected` verdict, the **summary thread (step 5) MUST state plainly that there are blocking-level (MUST-FIX) concerns for a human reviewer to adjudicate and cast the blocking vote** — keep the `MUST-FIX` severity labels on the individual issue comments intact, so the signal isn't softened. You MUST NOT call `AskUserQuestion`.
+- `approved` → `Approved` (+10), `approved-with-suggestions` → `ApprovedWithSuggestions` (+5) — positive votes are fine **only when there is no MUST-FIX**.
+- `changes-requested` / `rejected` → **`NoVote` (0)**. Never `WaitingForAuthor`/`Rejected` (don't hard-block), but also never a positive `ApprovedWithSuggestions`/`Approved` — a positive vote counts toward branch-policy minimum-approvals and auto-complete, so approving a PR with a known MUST-FIX would actively help merge the bug. `NoVote` leaves the decision entirely to a human: the bot has stated its concern and explicitly declined to approve.
+
+The findings carry the signal; a human casts any approving **or** blocking vote.
+
+When you clamp a `changes-requested`/`rejected` verdict to `NoVote`, the **summary thread (step 5) MUST state plainly that the bot is NOT approving because of a blocking-level (MUST-FIX) concern, and a human must review before merge** — keep the `MUST-FIX` severity labels on the individual issue comments intact. Do NOT write "neither blocks merge" or any phrasing that softens the MUST-FIX; sharpen it ("not approving — blocking concern flagged for a human"). You MUST NOT call `AskUserQuestion`.
 
 **When `AUTOMATION=0`** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
 
