@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.2.0...v3.2.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* autonomous PR reviewer must not approve a PR it flagged MUST-FIX ([#162](https://github.com/easingthemes/dx-aem-flow/issues/162)) ([7e7a4dc](https://github.com/easingthemes/dx-aem-flow/commit/7e7a4dc0c0d70e26b6aa32abb1661bfbd85c9562))
+
 # [3.2.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.1.0...v3.2.0) (2026-06-01)
 
 
