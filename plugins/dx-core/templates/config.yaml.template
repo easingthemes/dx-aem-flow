@@ -11,11 +11,17 @@ project:
   role: "{{PROJECT_ROLE}}"              # frontend | backend | fullstack | config
 
 scm:
-  provider: ado                           # ado | github
-  org: "{{SCM_ORG}}"                      # e.g., https://myorg.visualstudio.com/
-  project: "{{SCM_PROJECT}}"              # ADO project name
-  repo-id: "{{SCM_REPO_ID}}"             # Auto-discovered, or set manually
+  provider: ado                           # ado | github | bitbucket-cloud | bitbucket-dc
+  org: "{{SCM_ORG}}"                      # ADO/GitHub org URL or Bitbucket workspace/project key
+  project: "{{SCM_PROJECT}}"              # ADO project name (not used for Bitbucket)
+  repo-id: "{{SCM_REPO_ID}}"             # Auto-discovered, or set manually (ADO/GitHub only)
   base-branch: "{{BASE_BRANCH}}"         # e.g., develop, development, main
+
+# Bitbucket Cloud / DC (when scm.provider is bitbucket-cloud or bitbucket-dc)
+# bitbucket-dc only: host URL of your Bitbucket Data Center instance
+# bitbucket-host: "https://bitbucket.example.com"
+# Token: prefer the BITBUCKET_TOKEN env var over storing here
+# bitbucket-token: ""
 
 # Work item tracker (defaults to scm.provider if not set)
 # tracker:
@@ -80,6 +86,8 @@ preferences:
 #     role: backend                    # backend | frontend | fullstack | config
 #     platform: alpha                  # opaque, project-defined platform identifier, e.g. alpha | beta (AEM only, added by /aem-init)
 #     ado-project: "My Project"        # ADO project (if different from scm.project)
+#     bitbucket-workspace: "myteam"    # Bitbucket Cloud: workspace slug (if different from scm.org)
+#     bitbucket-project: "MYPROJ"      # Bitbucket DC: project key (if different from scm.org)
 #     base-branch: develop             # Default branch (defaults to scm.base-branch)
 
 # Optional — override plugin default prompts
