@@ -286,7 +286,6 @@ steps:
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
-      CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
       # Coordinator + 3 parallel research subagents + up to 10 JCR writes +
       # visual verify + diff review + PR creation. 30 and then 60 were both
       # too tight — a real run hit the cap mid-Phase-4 (compile), stranding the
