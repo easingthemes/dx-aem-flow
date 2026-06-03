@@ -72,7 +72,7 @@ For each hook to create, check if a subscription already exists with the same `e
 
 **Skip for consumer profile.**
 
-Routes all User Story `workitem.updated` events to the WI Router Lambda at `/wi`. The Lambda uses tag-based routing to determine which agent to invoke (DoR, DoD, QA, DevAgent, DOCAgent).
+Routes all User Story `workitem.updated` events to the WI Router Lambda at `/wi`. The Lambda uses tag-based routing to determine which agent to invoke (DoD, QA, DevAgent, DOCAgent, Estimation). **DoR is no longer here** — it has its own Azure-native `@kai-dor` comment hook (§2d).
 
 ```bash
 az_resource "ado/hooks/wi-userstory" \
@@ -208,7 +208,7 @@ Update `infra.json`:
 
 **Skip for consumer profile.** Same mechanism as **2b**/**2c** — the DoR agent (`ado-cli-dor.yml`, `/dx-dor`) gets a comment trigger: a comment containing `@kai-dor` **on a User Story** fires a Service Hook delivering to the DoR pipeline's Incoming WebHook (`resources.webhooks.dorHook`). The work item id comes from the payload (`${{ parameters.dorHook.resource.id }}`); manual runs pass `workItemId` and the pipeline falls back to the payload id.
 
-**Migration note — DoR differs from SimpleAgent/BugFix:** DoR is **still listed in the WI-Router Lambda's `AGENTS` array** (`tag: TAG_GATE_DOR`). Adding this comment hook does **not** remove the legacy Lambda path — the **§1 "WI User Story" `workitem.updated` hook still routes tagged stories to DoR**. The two coexist safely (the pipeline accepts both `workItemId` and `eventId`). **To go comment-only:** unset `TAG_GATE_DOR` on the WI-Router Lambda (`wi-router.mjs` treats an unset gate as "agent disabled") — leave the §1 hook in place for the other tag-routed agents (dod, qa, devagent, docagent, estimation).
+**DoR is fully comment-triggered now (no Lambda).** Like SimpleAgent and BugFix, `dor` has been **removed from the WI-Router Lambda's `AGENTS` array** — the §1 "WI User Story" `workitem.updated` hook no longer routes to DoR (it still serves the remaining tag-routed agents: dod, qa, devagent, docagent, estimation). Configure only this comment hook for DoR; there is no tag/Lambda path to disable.
 
 **Prerequisite — Incoming WebHook service connection** (names match `ado-cli-dor.yml`):
 - **Webhook Name:** `dorHook` (matches the `webhook:` alias)

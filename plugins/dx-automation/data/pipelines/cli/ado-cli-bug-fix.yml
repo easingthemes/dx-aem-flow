@@ -259,8 +259,25 @@ steps:
     displayName: "Pre-warm: nvm + Node + node_modules + Maven deps"
 
   - bash: |
-      PROMPT="/dx-bug-all $(WI_ID)"
-      if [ "${{ parameters.dryRun }}" = "True" ]; then
+      set -e
+      # Determine dry-run mode: explicit parameter wins; otherwise look for
+      # "dry-run" (case-insensitive) in the comment text on webhook runs.
+      DRY_RUN_PARAM="${{ parameters.dryRun }}"
+      DRY_RUN="False"
+      if [ "$DRY_RUN_PARAM" = "True" ]; then
+        DRY_RUN="True"
+      elif [ "$TRIGGER" = "webhook" ]; then
+        # contains() in ADO expressions is case-insensitive; evaluated at compile
+        # time so bash only ever sees the literal string "True" or "False".
+        COMMENT_HAS_DRYRUN=${{ contains(parameters.bugfixHook.resource.fields['System.History'], 'dry-run') }}
+        if [ "$COMMENT_HAS_DRYRUN" = "True" ]; then
+          DRY_RUN="True"
+        fi
+      fi
+      echo "dryRun resolved to: $DRY_RUN"
+
+      PROMPT="/dx-bug-all $WI_ID"
+      if [ "$DRY_RUN" = "True" ]; then
         PROMPT="$PROMPT (dry run — triage and analyze only, do NOT apply fixes, create branches, or open PRs)"
       fi
 
@@ -279,7 +296,6 @@ steps:
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
-      CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
       SOURCE_REPO_NAME: $(Build.Repository.Name)
       CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
       # /dx-bug-all runs THREE skills back-to-back (triage → verify → fix), each
@@ -373,9 +389,16 @@ steps:
         echo "Skill already posted an ADO comment — skipping fallback."
         exit 0
       fi
+      # WI_ID is exported by the "Resolve bug ID" step. If the failure happened
+      # before that step ran, it's empty — skip rather than POST to a bogus
+      # workItems//comments URL.
+      if [ -z "$WI_ID" ]; then
+        echo "WI_ID not resolved — skipping fallback (failure occurred before work item resolution)."
+        exit 0
+      fi
       ORG_URL="$(System.CollectionUri)"
       PROJECT="$(System.TeamProject)"
-      WID="$(WI_ID)"
+      WID="$WI_ID"
       RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
       TEXT="BugFix agent paused before finishing — it likely hit the turn/time limit or errored before posting its report. Any recovery state is committed to the ticket branch. To resume from where it stopped, reply on this Bug beginning your comment with the kai-bugfix keyword prefixed with @ (e.g. '@kai-bugfix resume', or '@kai-bugfix <the input it asked for>'). Pipeline run: ${RUN_URL}"
       BODY=$(jq -n --arg t "$TEXT" '{text:$t}')

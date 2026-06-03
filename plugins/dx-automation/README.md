@@ -98,7 +98,8 @@ Two paths start pipelines:
 | **SimpleAgent** | `@kai-simple` comment | ✅ in use (reference impl) | comment-contains filter |
 | **PR Reviewer** | build validation policy | already Lambda-free | keep policy, or use a "PR created" hook |
 | **PR Answerer** | PR comment → Lambda | ✅ "PR commented on" + `@kai-…` filter | but loses the Lambda's cheap identity/loop/dedupe gates — they'd move into the pipeline |
-| **DoR / DoD / QA / DevAgent / DOCAgent / Estimation** | tag `KAI-*` + `KAI-TRIGGER` → Lambda | ✅ per-agent hook filtered on the agent tag (or a `@kai-…` comment, or a State transition) | loses dedupe + rate-limit + token-budget governance; one hook + connection per agent |
+| **DoR** | `@kai-dor` comment on a User Story | ✅ in use (Azure-native, no Lambda) | comment-contains + Story-type filter; stateless check (no recovery) |
+| **DoD / QA / DevAgent / DOCAgent / Estimation** | tag `KAI-*` + `KAI-TRIGGER` → Lambda | ✅ per-agent hook filtered on the agent tag (or a `@kai-…` comment, or a State transition) | loses dedupe + rate-limit + token-budget governance; one hook + connection per agent |
 | **BugFix** | `@kai-bugfix` comment on a Bug | ✅ in use (Azure-native, no Lambda) | comment-contains + Bug-type filter; resumable recovery (triage→verify→fix) |
 | **DoD Fixer** | chained after DoD check | n/a | not event-triggered — stays an internal chain |
 

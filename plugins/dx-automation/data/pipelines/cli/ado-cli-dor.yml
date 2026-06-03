@@ -32,13 +32,6 @@ parameters:
     displayName: "Dry run (analyze only, don't post ADO comments)"
     type: boolean
     default: false
-  - name: eventId
-    displayName: "Webhook event ID (for tracing)"
-    type: string
-    default: ""
-    # Kept so the legacy Lambda router path still works during the migration —
-    # wi-router.mjs sends both workItemId and eventId as templateParameters.
-    # Once DoR is comment-only (TAG_GATE_DOR unset on the Lambda), this is unused.
 
 resources:
   webhooks:
@@ -128,7 +121,40 @@ steps:
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      # Comment-triggered headless run — keeps /dx-dor on its autonomous path
+      # (no interactive prompts), consistent with every other agent pipeline.
+      DX_PIPELINE_MODE: "true"
       MAX_TURNS: "20"
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Agent"
     timeoutInMinutes: 60
+
+  # Fallback ADO comment. /dx-dor posts its own [DoRAgent] scorecard on success.
+  # If the agent was killed before it could post (MAX_TURNS, timeout, crash) or a
+  # step failed, this posts a short note so the story never goes silent. DoR has no
+  # recovery state (a stateless check) — recovery is just a fresh re-run: reply
+  # @kai-dor again. The keyword is written bare (no leading @) so this fallback
+  # can't self-trigger the hook; the text instructs the human to add the @ prefix.
+  - bash: |
+      set -e
+      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      if [ -f "$FLAG" ]; then
+        echo "Skill already posted an ADO comment — skipping fallback."
+        exit 0
+      fi
+      ORG_URL="$(System.CollectionUri)"
+      PROJECT="$(System.TeamProject)"
+      WID="$(WI_ID)"
+      RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
+      TEXT="DoR check didn't finish — it likely hit the turn/time limit or errored before posting its scorecard. To re-run, reply on this story beginning your comment with the kai-dor keyword prefixed with @ (e.g. '@kai-dor'). Pipeline run: ${RUN_URL}"
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST \
+        -u ":$ADO_PAT" \
+        -H "Content-Type: application/json" \
+        -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted fallback failure comment to work item ${WID}."
+    displayName: "Post fallback ADO comment (on failure)"
+    condition: failed()
+    env:
+      ADO_PAT: $(ADO_PAT)

@@ -66,6 +66,13 @@ build:
 #                                          # needs-input blocker to hard (re-tag DevAgent).
 # Same git requirement as SimpleAgent: `.ai/specs/` must be TRACKED for recovery.
 
+# Optional — DoR agent (/dx-dor) settings. The autonomous DoR check is triggered by
+# an Azure-native Service Hook on a User Story comment (no Lambda). DoR is stateless
+# (no recovery), so the token lives directly under dx-dor (not dx-dor.recovery).
+# dx-dor:
+#   trigger-token: "@kai-dor"              # keyword that fires the DoR check. MUST match
+#                                          # the ADO Service Hook comment filter string.
+
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review
   auto-pr: {{AUTO_PR}}                  # true | false — create PR automatically after pipeline success

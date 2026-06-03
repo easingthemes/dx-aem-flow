@@ -17,12 +17,12 @@ import { checkRateLimit } from "./rate-limiter.js";
  *   - paramKey: template parameter key for the work item ID
  */
 const AGENTS = [
-  { name: "dor",      pipeline: "ADO_DOR_PIPELINE_ID",    tag: "TAG_GATE_DOR",    type: "User Story", paramKey: "workItemId" },
+  // NOTE: dor and bugfix are intentionally NOT routed here. Like SimpleAgent, they
+  // are triggered by Azure-native Service Hooks on a work-item *comment* containing
+  // their token (@kai-dor on a User Story, @kai-bugfix on a Bug) → the pipeline's
+  // resources.webhooks listener. The comment event covers first run AND recovery —
+  // no Lambda. See ado-cli-dor.yml / ado-cli-bug-fix.yml + /auto-webhooks §2c/§2d.
   { name: "dod",      pipeline: "ADO_DOD_PIPELINE_ID",    tag: "TAG_GATE_DOD",    type: "User Story", paramKey: "workItemId" },
-  // NOTE: bugfix is intentionally NOT routed here. Like SimpleAgent, the BugFix
-  // agent is triggered by an Azure-native Service Hook on a Bug comment containing
-  // @kai-bugfix (see ado-cli-bug-fix.yml resources.webhooks + /auto-webhooks). The
-  // comment event covers both the first run and every recovery re-trigger — no Lambda.
   { name: "qa",       pipeline: "ADO_QA_PIPELINE_ID",     tag: "TAG_GATE_QA",     type: "User Story", paramKey: "workItemId" },
   { name: "devagent", pipeline: "ADO_DEV_PIPELINE_ID",    tag: "TAG_GATE_DEV",    type: "User Story", paramKey: "workItemId" },
   { name: "docagent",    pipeline: "ADO_DOC_PIPELINE_ID",        tag: "TAG_GATE_DOC",        type: "User Story", paramKey: "workItemId" },

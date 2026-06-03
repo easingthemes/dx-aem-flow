@@ -20,7 +20,6 @@ Pre-fill these from infra.json (don't ask for values already known):
 - `DYNAMODB_DEDUPE_TABLE` ← `storage.dynamodb.dedupe.tableName`
 - `DYNAMODB_RATE_LIMIT_TABLE` ← `storage.dynamodb.rateLimits.tableName`
 - `SQS_DLQ_URL` ← `storage.sqs.dlq.queueUrl`
-- `ADO_DOR_PIPELINE_ID` ← `pipelines.dor.id` (WI Router)
 - `ADO_DOD_PIPELINE_ID` ← `pipelines.dod.id` (WI Router)
 - `ADO_QA_PIPELINE_ID` ← `pipelines.qa.id` (WI Router)
 - `ADO_DEV_PIPELINE_ID` ← `pipelines.devagent.id` (WI Router)
@@ -42,7 +41,8 @@ Ask these **one at a time** — these cannot be pre-filled from infra.json:
 
 > **Webhook secret?** (secret — Lambda env var `WEBHOOK_SECRET`) Suggest generating: `openssl rand -base64 32`
 
-> **DoR trigger tag?** (Lambda env var `TAG_GATE_DOR` — WI Router) Tag name that triggers the DoR agent. Example: `AI-TRIGGER`. Default: `<UPPERCASE-PREFIX>-AI-TRIGGER`
+<!-- DoR has NO WI-Router tag — it is triggered by an Azure-native @kai-dor
+     comment hook (dx-dor.trigger-token), configured via /auto-webhooks 2d. -->
 
 > **DoD trigger tag?** (Lambda env var `TAG_GATE_DOD` — WI Router) Default: `KAI-DOD-AUTOMATION`
 
@@ -61,7 +61,7 @@ Ask these **one at a time** — these cannot be pre-filled from infra.json:
 
 ## 2. Apply to WI Router Lambda
 
-The WI Router (`<PREFIX>-WI-Router`) handles all work-item webhook events and routes to the appropriate pipeline (DoR, DoD, BugFix, QA, DevAgent, DOCAgent, Estimation) based on tag gates.
+The WI Router (`<PREFIX>-WI-Router`) handles tagged work-item webhook events and routes to the appropriate pipeline (DoD, QA, DevAgent, DOCAgent, Estimation) based on tag gates. **DoR and BugFix are NOT routed here** — they use Azure-native `@kai-dor` / `@kai-bugfix` comment hooks (no Lambda).
 
 ```bash
 WI_ROUTER_FUNC=$(python3 -c "import json; print(json.load(open('.ai/automation/infra.json'))['lambdas']['wi-router']['functionName'])")
@@ -73,13 +73,11 @@ aws_lambda_config "$WI_ROUTER_FUNC" \
     BASIC_USER=<user>,
     BASIC_PASS=<secret>,
     WEBHOOK_SECRET=<secret>,
-    ADO_DOR_PIPELINE_ID=<pipeline-id>,
     ADO_DOD_PIPELINE_ID=<pipeline-id>,
     ADO_QA_PIPELINE_ID=<pipeline-id>,
     ADO_DEV_PIPELINE_ID=<pipeline-id>,
     ADO_DOC_PIPELINE_ID=<pipeline-id>,
     ADO_ESTIMATION_PIPELINE_ID=<pipeline-id>,
-    TAG_GATE_DOR=<tag>,
     TAG_GATE_DOD=<tag>,
     TAG_GATE_QA=<tag>,
     TAG_GATE_DEV=<tag>,
@@ -98,7 +96,6 @@ The WI Router routes tagged work-item events to pipelines via a tag-to-pipeline-
 
 ```json
 {
-  "KAI-DOR-AUTOMATION":        "<dor-pipeline-id>",
   "KAI-DOD-AUTOMATION":        "<dod-pipeline-id>",
   "KAI-QA-AUTOMATION":         "<qa-pipeline-id>",
   "KAI-DEV-AUTOMATION":        "<devagent-pipeline-id>",
@@ -164,7 +161,6 @@ done
 | BASIC_USER | ✓ | ✓ |
 | BASIC_PASS | ✓ | ✓ |
 | WEBHOOK_SECRET | ✓ | ✓ |
-| ADO_DOR_PIPELINE_ID | ✓ | — |
 | ADO_DOD_PIPELINE_ID | ✓ | — |
 | ADO_QA_PIPELINE_ID | ✓ | — |
 | ADO_DEV_PIPELINE_ID | ✓ | — |
@@ -173,7 +169,6 @@ done
 | ADO_PR_ANSWER_PIPELINE_MAP | — | ✓ |
 | ADO_ORG_URL | — | ✓ |
 | MY_IDENTITIES | — | ✓ |
-| TAG_GATE_DOR | ✓ | — |
 | TAG_GATE_DOD | ✓ | — |
 | TAG_GATE_QA | ✓ | — |
 | TAG_GATE_DEV | ✓ | — |

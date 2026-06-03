@@ -167,7 +167,8 @@ digraph bug_all_pipeline {
 
     "Preflight (hard gate)" -> "Phase 0: resume-check dispatch";
     "Phase 0: resume-check dispatch" -> "Step: triage" [label="fresh"];
-    "Phase 0: resume-check dispatch" -> "Step: triage" [label="resume-forward (RE_ENTER_STEP)"];
+    "Phase 0: resume-check dispatch" -> "Step: triage" [label="resume-forward (RE_ENTER_STEP=triage|verify|fix)"];
+    "Phase 0: resume-check dispatch" -> "Finalize: report + ADO comment + flag + done" [label="resume-forward (RE_ENTER_STEP=finalize)"];
     "Phase 0: resume-check dispatch" -> "Read resume comment + apply answer" [label="resume-blocked-input"];
     "Phase 0: resume-check dispatch" -> "Re-post hard note + exit" [label="resume-blocked-hard"];
     "Phase 0: resume-check dispatch" -> "Reopen completed (follow-up)?" [label="done"];
@@ -219,7 +220,7 @@ MAX_ATTEMPTS=$(val MAX_ATTEMPTS)
 | DISPATCH | meaning | action |
 |---|---|---|
 | `fresh` | no branch / no committed state | run **Step: triage** (it creates `bugfix/<id>-<slug>` + spec dir). After triage, init state (below). |
-| `resume-forward` | prior run crashed (`in-progress`) | re-enter `RE_ENTER_STEP` (triage idempotently skips, verify/fix re-run). Reuse committed artifacts. Does NOT consume an answer-attempt. |
+| `resume-forward` | prior run crashed (`in-progress`) | re-enter `RE_ENTER_STEP` (triage idempotently skips, verify/fix re-run). `RE_ENTER_STEP` may be **`finalize`** — a crash *after* the fix checkpoint (`last-completed-step=fix`) resumes straight at **Finalize** (reuse the committed `report.md`/PR; no re-triage/verify/fix). Reuse committed artifacts. Does NOT consume an answer-attempt. |
 | `resume-blocked-input` | recoverable block awaiting a human answer | run **Read resume comment + apply answer**, then re-enter `RE_ENTER_STEP`. |
 | `resume-blocked-hard` | unrecoverable, or `answer-attempts` cap reached | **Re-post hard note + exit** — re-post the "needs manual fix / re-tag `KAI-DEV-AUTOMATION`" note; exit non-zero. |
 | `done` | finalize already succeeded | **Reopen completed work** (below) on a fresh follow-up comment, else no-op. |

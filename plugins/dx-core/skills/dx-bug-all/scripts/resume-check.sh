@@ -51,10 +51,21 @@ if ! [[ "$TICKET_ID" =~ ^[0-9]+$ ]]; then
 fi
 
 # --- max-attempts from config, default 3 ---------------------------------------
+# Scope the read to the `dx-bug-all:` block so a bare `max-attempts:` in another
+# section (e.g. dx-simple.recovery) can't leak in. Handles the nested form
+# (dx-bug-all: → recovery: → max-attempts:) and the flattened dotted key.
 MAX_ATTEMPTS=3
 if [[ -f .ai/config.yaml ]]; then
-  _ma=$(grep -E '^\s*(dx-bug-all\.recovery\.max-attempts|max-attempts):' .ai/config.yaml 2>/dev/null \
-        | head -1 | sed 's/^[^:]*:\s*//' | tr -dc '0-9')
+  _ma=$(awk '
+    /^dx-bug-all:[[:space:]]*$/ { inb=1; next }
+    inb && /^[^[:space:]#]/ { inb=0 }
+    inb && /^[[:space:]]+max-attempts:/ {
+      sub(/^[[:space:]]+max-attempts:[[:space:]]*/, ""); sub(/[[:space:]]*#.*$/, ""); print; exit
+    }
+    /^[[:space:]]*dx-bug-all\.recovery\.max-attempts:/ {
+      sub(/^[^:]*:[[:space:]]*/, ""); sub(/[[:space:]]*#.*$/, ""); print; exit
+    }
+  ' .ai/config.yaml 2>/dev/null | head -1 | tr -dc '0-9')
   [[ -n "${_ma:-}" ]] && MAX_ATTEMPTS="$_ma"
 fi
 
