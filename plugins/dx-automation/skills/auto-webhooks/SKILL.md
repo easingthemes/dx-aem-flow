@@ -204,6 +204,33 @@ Update `infra.json`:
 - `webhooks.bugfix.subscriptionId` → returned Service Hook ID
 - `webhooks.bugfix.status` → `"configured"`
 
+## 2d. DoR Comment Hook (Work Item Commented On) — HUB ONLY, Azure-native (no Lambda)
+
+**Skip for consumer profile.** Same mechanism as **2b**/**2c** — the DoR agent (`ado-cli-dor.yml`, `/dx-dor`) gets a comment trigger: a comment containing `@kai-dor` **on a User Story** fires a Service Hook delivering to the DoR pipeline's Incoming WebHook (`resources.webhooks.dorHook`). The work item id comes from the payload (`${{ parameters.dorHook.resource.id }}`); manual runs pass `workItemId` and the pipeline falls back to the payload id.
+
+**Migration note — DoR differs from SimpleAgent/BugFix:** DoR is **still listed in the WI-Router Lambda's `AGENTS` array** (`tag: TAG_GATE_DOR`). Adding this comment hook does **not** remove the legacy Lambda path — the **§1 "WI User Story" `workitem.updated` hook still routes tagged stories to DoR**. The two coexist safely (the pipeline accepts both `workItemId` and `eventId`). **To go comment-only:** unset `TAG_GATE_DOR` on the WI-Router Lambda (`wi-router.mjs` treats an unset gate as "agent disabled") — leave the §1 hook in place for the other tag-routed agents (dod, qa, devagent, docagent, estimation).
+
+**Prerequisite — Incoming WebHook service connection** (names match `ado-cli-dor.yml`):
+- **Webhook Name:** `dorHook` (matches the `webhook:` alias)
+- **Service connection name:** `kai-dor-trigger-sc` (matches `connection:`)
+
+Create it exactly as in 2b (idempotent `az rest` GET → POST `incomingwebhook` endpoint), substituting `kai-dor-trigger-sc` / `dorHook` for the simple names. UI fallback is the same.
+
+The trigger token is config-driven:
+```bash
+TRIGGER_TOKEN=$(bash .ai/lib/dx-common.sh yaml-val 'dx-dor.trigger-token'); TRIGGER_TOKEN=${TRIGGER_TOKEN:-@kai-dor}
+```
+
+Create the Service Hook on **"Work item commented on"** with **two** filters — comment contains `$TRIGGER_TOKEN` **AND** Work Item Type = `User Story` (the pipeline's `resources.webhooks.filters` already enforces the type, but filtering at the hook avoids firing the pipeline for non-Story comments). Deliver to the `dorHook` Incoming WebHook — never a Lambda URL.
+
+> The filter string MUST equal `dx-dor.trigger-token` — skill, pipeline header, and hook share that one source of truth. `/dx-dor`'s own comment is prefixed `[DoRAgent]` and never contains the token, so its replies can't self-trigger (loop-safety).
+
+Update `infra.json`:
+- `webhooks.dor.connection` → `kai-dor-trigger-sc`
+- `webhooks.dor.connectionId` → service connection ID
+- `webhooks.dor.subscriptionId` → returned Service Hook ID
+- `webhooks.dor.status` → `"configured"`
+
 ## 3. PR Answer Service Hook (PR Commented On) — ALL PROFILES
 
 Routes to the PR Router Lambda. **This hook is repo-scoped** — each repo (hub and every consumer) creates its own hook filtered to that repo and base branch. Without repo filtering, a project-scoped hook fires on every PR comment across all repos in the ADO project.
@@ -299,6 +326,7 @@ Adapt the report to the profile:
 | WI Bug | workitem.updated | Project (tag: KAI-TRIGGER) | <wi-url> | ✓ configured |
 | SimpleAgent | workitem.commented (comment contains @kai-simple) | Project → pipeline Incoming WebHook (no Lambda) | kai-simple-trigger-sc | ✓ configured |
 | BugFix | workitem.commented (comment contains @kai-bugfix, type Bug) | Project → pipeline Incoming WebHook (no Lambda) | kai-bugfix-trigger-sc | ✓ configured |
+| DoR | workitem.commented (comment contains @kai-dor, type User Story) | Project → pipeline Incoming WebHook (no Lambda) | kai-dor-trigger-sc | ✓ configured |
 | PR Answer | git.pullrequest.comment-event | Repo: <repo>, branch: <branch> | <pr-answer-url> | ✓ configured |
 | PR Review policy | Build validation | Repo: <repo>, branch: <branch> | (pipeline trigger) | ✓ configured |
 
