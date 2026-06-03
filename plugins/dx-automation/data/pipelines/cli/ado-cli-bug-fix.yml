@@ -2,24 +2,62 @@ trigger: none
 pr: none
 
 # Claude Agent SDK pipeline — BugFix Agent via /dx-bug-all skill.
-# Triggered by Lambda webhook on work item tag KAI-BUGFIX-AUTOMATION.
+#
+# Trigger (fully Azure-native — NO Lambda, same model as SimpleAgent): a comment
+# containing the configured token (default @kai-bugfix; dx-bug-all.recovery.trigger-token)
+# on a Bug work item fires an ADO Service Hook (event: "work item commented on",
+# filter: comment contains the token AND WorkItemType = Bug) → an Incoming WebHook
+# service connection → the `bugfixHook` webhook resource below. The SAME event covers
+# the first run AND every recovery re-trigger; Phase 0 (resume-check.sh) decides
+# fresh-vs-resume. The agent reads the work item id + triggering comment from the
+# webhook payload / work item itself.
+#
+# NOTE: `connection:` must match the Incoming WebHook service connection name
+# configured in ADO (Project Settings → Service connections). The consumer copy in
+# .ai/automation/pipelines/ replaces the placeholder below with the real name.
+#
+# /dx-bug-all chains three skills: /dx-bug-triage → /dx-bug-verify → /dx-bug-fix,
+# with full resumable recovery (the per-ticket bugfix/<id>-* branch is the durable
+# state store). triage + fix need ADO MCP (auto-allowed by pipeline-agent.js when
+# ADO_MCP_AUTH_TOKEN is set); verify + the post-fix local check drive a headless
+# browser (Playwright MCP) and read AEM QA — hence the same env prep as SimpleAgent.
+#
+# Deliberate deviations from ado-cli-simple.yml (parity, not a copy):
+#  - AEM QA reachability is a WARNING, not a hard fail — /dx-bug-all treats verify
+#    FAIL as "warn + continue" (triage + fix proceed on triage alone).
+#  - No JCR-write tools / activatePage — BugFix never authors content; it edits
+#    source files and opens a PR.
+#  - Keeps cross-repo delegation (pipeline→pipeline REST queue — not Lambda).
+
+resources:
+  webhooks:
+    - webhook: bugfixHook                  # alias referenced as parameters.bugfixHook.*
+      connection: kai-bugfix-trigger-sc    # ADO "Incoming WebHook" service connection
+      filters:
+        - path: eventType
+          value: workitem.commented
+        - path: resource.fields['System.WorkItemType']
+          value: Bug
 
 parameters:
   - name: bugId
-    displayName: "ADO Bug Work Item ID"
-    type: string
-  - name: dryRun
-    displayName: "Dry run (analyze only, don't apply fixes or create PRs)"
-    type: boolean
-    default: false
-  - name: eventId
-    displayName: "Webhook event ID (for tracing)"
+    displayName: "ADO Bug Work Item ID (leave empty when triggered by webhook)"
     type: string
     default: ""
+  - name: dryRun
+    displayName: "Dry run (triage + analyze only, don't apply fixes or create PRs)"
+    type: boolean
+    default: false
   - name: sourceRepoName
     displayName: "Source repo name (for cross-repo delegation)"
     type: string
     default: ""
+
+variables:
+  - name: PLAYWRIGHT_MCP_VERSION
+    value: "0.0.75"
+  - name: AEM_MCP_VERSION
+    value: "1.6.2"
 
 pool:
   vmImage: ubuntu-latest
@@ -37,12 +75,191 @@ steps:
     displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
+      set -e
+      # Resolve bug work item id — manual parameter wins, webhook payload is fallback.
+      MANUAL_ID="${{ parameters.bugId }}"
+      WEBHOOK_ID="${{ parameters.bugfixHook.resource.id }}"
+      if [ -n "$MANUAL_ID" ]; then
+        WI_ID="$MANUAL_ID"
+        TRIGGER="manual"
+      elif [ -n "$WEBHOOK_ID" ]; then
+        WI_ID="$WEBHOOK_ID"
+        TRIGGER="webhook"
+      else
+        echo "ERROR: No work item ID. Manual runs need parameters.bugId; webhook runs need resource.id in payload." >&2
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
+      echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
+      echo "Bug work item: $WI_ID (trigger: $TRIGGER)"
+
+      # Log webhook context if present (smoke-test for payload references).
+      if [ "$TRIGGER" = "webhook" ]; then
+        echo "Webhook event ID:    ${{ parameters.bugfixHook.id }}"
+        echo "Subscription:        ${{ parameters.bugfixHook.subscriptionId }}"
+        echo "Commenter:           ${{ parameters.bugfixHook.resource.fields['System.ChangedBy'].displayName }}"
+        echo "Work item type:      ${{ parameters.bugfixHook.resource.fields['System.WorkItemType'] }}"
+        echo "Work item state:     ${{ parameters.bugfixHook.resource.fields['System.State'] }}"
+        echo "Comment (System.History below — raw, may be HTML):"
+        echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"
+      fi
+    displayName: "Resolve bug ID + log webhook payload"
+
+  - task: Cache@2
+    inputs:
+      key: 'playwright-mcp | "$(Agent.OS)" | "$(PLAYWRIGHT_MCP_VERSION)"'
+      path: '$(HOME)/.cache/ms-playwright'
+    displayName: "Cache Playwright browsers"
+
+  - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
+
   - bash: |
-      PROMPT="/dx-bug-all ${{ parameters.bugId }}"
+      set -e
+      SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json"
+      DST="$(Build.SourcesDirectory)/.mcp.json"
+      if [ ! -f "$SRC" ]; then
+        echo "ERROR: simple-mcp.json not found in cloned plugins — check it is merged to main on GitHub" >&2
+        exit 1
+      fi
+      if [ -f "$DST" ]; then
+        # Merge: pipeline servers (AEM, playwright) WIN, but any other servers
+        # already declared in the consumer repo (e.g., ADO, Atlassian) are
+        # preserved. Backup first for forensics.
+        cp "$DST" "$DST.pre-bugfix-bak"
+        jq -s '.[0] * .[1]' "$DST" "$SRC" > "$DST.merged"
+        mv "$DST.merged" "$DST"
+        echo "Merged $SRC into existing $DST (backup at $DST.pre-bugfix-bak)"
+      else
+        cp "$SRC" "$DST"
+        echo "Installed fresh $DST from $SRC"
+      fi
+    displayName: "Install pipeline MCP overrides (merge)"
+
+  - bash: |
+      # Pre-flight: probe AEM QA. Unlike SimpleAgent (which MUST write to AEM and so
+      # hard-fails here), BugFix only READS AEM during /dx-bug-verify, and verify is
+      # non-blocking in /dx-bug-all. So an unreachable QA is a WARNING — triage + fix
+      # still run. We surface it loudly so a degraded verify is explained in the log.
+      echo "Probing AEM QA at $AEM_QA_URL ..."
+      HTTP=$(curl -fsS -o /dev/null -w '%{http_code}' \
+                  -u "$AEM_QA_USER:$AEM_QA_PASSWORD" \
+                  --max-time 15 \
+                  "$AEM_QA_URL/system/console/bundles.json" || echo "000")
+      if [ "$HTTP" != "200" ]; then
+        echo "##[warning]AEM QA not reachable (HTTP $HTTP from ubuntu-latest agent)."
+        echo "##[warning]  url: $AEM_QA_URL"
+        echo "##[warning]  /dx-bug-verify will degrade to blocked/warn; triage + fix continue."
+        echo "##[warning]  If verify must run, use a self-hosted ADO agent in the corp network."
+      else
+        echo "OK: AEM QA reachable"
+      fi
+    displayName: "Pre-flight: AEM QA reachability (non-fatal)"
+    env:
+      AEM_QA_URL: $(AEM_QA_URL)
+      AEM_QA_USER: $(AEM_QA_USER)
+      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+
+  - bash: |
+      set -e
+      # Pre-flight: confirm the MCP npx packages resolve + install Chromium so the
+      # agent doesn't waste its first turns on a broken MCP launch / missing browser.
+      echo "Smoke-testing aem-mcp-server@${AEM_MCP_VERSION} ..."
+      timeout 30s npx -y "aem-mcp-server@${AEM_MCP_VERSION}" --help >/dev/null 2>&1 || {
+        echo "ERROR: aem-mcp-server@${AEM_MCP_VERSION} --help failed — check version pin or npm registry" >&2
+        exit 1
+      }
+      echo "Smoke-testing @playwright/mcp@${PLAYWRIGHT_MCP_VERSION} ..."
+      timeout 30s npx -y "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" --help >/dev/null 2>&1 || {
+        echo "ERROR: @playwright/mcp@${PLAYWRIGHT_MCP_VERSION} --help failed" >&2
+        exit 1
+      }
+      # Playwright MCP drives a real Chromium — install it (cached above at ~/.cache/ms-playwright).
+      echo "Installing Chromium for Playwright ..."
+      npx -y playwright install --with-deps chromium || {
+        echo "ERROR: 'playwright install chromium' failed" >&2
+        exit 1
+      }
+      echo "OK: MCP packages resolvable + Chromium installed"
+    displayName: "Pre-flight: MCP health check"
+
+  - bash: |
+      set -e
+      # Pre-warm the build environment so the fix step (/dx-bug-fix runs the build)
+      # doesn't burn turns (and the step timeout) on first-run downloads. Everything
+      # installed here lives on disk and persists into the agent step (same job, same
+      # agent). The agent sources nvm itself per CLAUDE.md.
+      #
+      # Generic by design — adapts to whatever the consumer repo contains:
+      #   - nvm + latest Node (default) + the project's pinned Node if a .nvmrc exists
+      #   - frontend node_modules (npm ci) for the detected FE module
+      #   - Maven local repo (~/.m2) via dependency:go-offline if a root pom exists
+      export NVM_DIR="$HOME/.nvm"
+      if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        echo "Installing nvm ..."
+        curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+      fi
+      \. "$NVM_DIR/nvm.sh"
+
+      # Latest Node as the default alias (general tooling, claude-code).
+      nvm install node >/dev/null
+      nvm alias default node >/dev/null
+      echo "Latest Node: $(nvm version node) (default)"
+
+      SRC="$(Build.SourcesDirectory)"
+
+      # Detect the frontend module: prefer the AEM archetype's ui.frontend, else
+      # the first package.json (depth<=2) that isn't under node_modules.
+      FE_DIR=""
+      if [ -f "$SRC/ui.frontend/package.json" ]; then
+        FE_DIR="$SRC/ui.frontend"
+      else
+        FE_DIR=$(find "$SRC" -maxdepth 2 -name package.json -not -path '*/node_modules/*' -printf '%h\n' 2>/dev/null | head -1)
+      fi
+
+      if [ -n "$FE_DIR" ]; then
+        echo "Frontend module: $FE_DIR"
+        # Use the module's pinned Node if it declares one.
+        if [ -f "$FE_DIR/.nvmrc" ]; then
+          NVMRC_VERSION="$(tr -d '[:space:]' < "$FE_DIR/.nvmrc")"
+          nvm install "$NVMRC_VERSION" >/dev/null
+          nvm use "$NVMRC_VERSION" >/dev/null
+          echo "Project Node: $(nvm version "$NVMRC_VERSION") (from .nvmrc: $NVMRC_VERSION)"
+        fi
+        if [ -f "$FE_DIR/package-lock.json" ]; then
+          ( cd "$FE_DIR" && npm ci )
+          # node-sass pins to a Node ABI — rebuild it after a Node switch if present.
+          if [ -d "$FE_DIR/node_modules/node-sass" ]; then
+            ( cd "$FE_DIR" && npm rebuild node-sass )
+          fi
+          echo "OK: $FE_DIR/node_modules installed"
+        else
+          echo "No package-lock.json in $FE_DIR — skipping npm ci."
+        fi
+      else
+        echo "No frontend package.json found — skipping Node module pre-warm."
+      fi
+
+      # Pre-warm the Maven local repo so the agent's build is mostly offline.
+      # Non-fatal: go-offline is flaky on some plugin graphs, and the agent can
+      # still resolve any remaining artifacts live at build time.
+      nvm use default >/dev/null
+      if [ -f "$SRC/pom.xml" ]; then
+        if ( cd "$SRC" && mvn -B dependency:go-offline ); then
+          echo "OK: Maven dependencies cached in ~/.m2"
+        else
+          echo "WARN: mvn dependency:go-offline did not finish cleanly — agent resolves the rest at build time."
+        fi
+      else
+        echo "No root pom.xml — skipping Maven pre-warm."
+      fi
+    displayName: "Pre-warm: nvm + Node + node_modules + Maven deps"
+
+  - bash: |
+      PROMPT="/dx-bug-all $(WI_ID)"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
         PROMPT="$PROMPT (dry run — triage and analyze only, do NOT apply fixes, create branches, or open PRs)"
       fi
@@ -55,13 +272,56 @@ steps:
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      AEM_QA_URL: $(AEM_QA_URL)
+      AEM_QA_USER: $(AEM_QA_USER)
+      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       DX_PIPELINE_MODE: "true"
+      DX_HOOK_PROFILE: "minimal"
+      CI: "true"
+      CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: "1"
       SOURCE_REPO_NAME: $(Build.Repository.Name)
       CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
-      MAX_TURNS: "60"
-      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
-    timeoutInMinutes: 45
+      # /dx-bug-all runs THREE skills back-to-back (triage → verify → fix), each
+      # substantial, plus a one-shot retry on triage/fix failure and resumable
+      # recovery. 60 was far too tight. The wall-clock cap (timeoutInMinutes below
+      # + the wrapper's TIMEOUT_MINUTES) is the real backstop.
+      MAX_TURNS: "250"
+      ALLOWED_TOOLS: >-
+        Skill,Read,Write,Edit,Glob,Grep,Agent,
+        Bash(git *),Bash(mvn *),Bash(npm *),
+        mcp__ado__wit_get_work_item,
+        mcp__ado__wit_add_work_item_comment,
+        mcp__ado__wit_list_work_item_comments,
+        mcp__ado__git_get_pull_request,
+        mcp__ado__repo_create_pull_request,
+        mcp__ado__wit_link_work_item_to_pull_request,
+        mcp__plugin_dx-aem_AEM__getNodeContent,
+        mcp__plugin_dx-aem_AEM__scanPageComponents,
+        mcp__plugin_dx-aem_AEM__getPageProperties,
+        mcp__plugin_dx-aem_AEM__listChildren,
+        mcp__plugin_dx-aem_playwright__browser_navigate,
+        mcp__plugin_dx-aem_playwright__browser_take_screenshot,
+        mcp__plugin_dx-aem_playwright__browser_snapshot,
+        mcp__plugin_dx-aem_playwright__browser_click,
+        mcp__plugin_dx-aem_playwright__browser_evaluate,
+        mcp__plugin_dx-aem_playwright__browser_wait_for,
+        mcp__plugin_dx-aem_playwright__browser_console_messages,
+        mcp__plugin_dx-aem_playwright__browser_network_requests,
+        mcp__plugin_dx-aem_playwright__browser_tabs
+    # /dx-bug-all is a 3-skill chain; give the Azure step generous wall-clock so it
+    # can actually reach MAX_TURNS rather than being killed at the step boundary. Keep
+    # this ABOVE the wrapper's TIMEOUT_MINUTES (default 60) so the wrapper's own
+    # timeout — which exits cleanly and lets the fallback comment fire — wins first.
+    timeoutInMinutes: 90
+
+  - bash: |
+      if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then
+        echo "Uploading spec artifacts..."
+        find "$(Build.SourcesDirectory)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
+      fi
+    displayName: "List spec artifacts (for retention)"
+    condition: always()
 
   - bash: |
       DELEGATION_FILE="$(Build.SourcesDirectory)/.ai/run-context/delegate.json"
@@ -95,3 +355,37 @@ steps:
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
       ADO_ORG_URL: $(ADO_ORG_URL)
+
+  # Fallback ADO comment. /dx-bug-all posts its own comment at the finalize step
+  # (success) and on the ABORT path (blocker), touching the flag below when it does.
+  # If the agent was killed before it could post (MAX_TURNS, timeout, crash) or a
+  # pre-flight step failed, the flag is absent and this step posts a short note so the
+  # Bug never goes silent. Recovery is HUMAN-re-triggered (like SimpleAgent): a silent
+  # crash posts no @kai-bugfix comment, so nothing re-fires the filtered Service Hook
+  # on its own — this message MUST tell the human how to resume. The keyword is written
+  # bare (no leading @) so this fallback can't self-trigger the hook; the text instructs
+  # the human to add the @ prefix. Keep the keyword in sync with
+  # dx-bug-all.recovery.trigger-token and the Service Hook comment filter string.
+  - bash: |
+      set -e
+      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      if [ -f "$FLAG" ]; then
+        echo "Skill already posted an ADO comment — skipping fallback."
+        exit 0
+      fi
+      ORG_URL="$(System.CollectionUri)"
+      PROJECT="$(System.TeamProject)"
+      WID="$(WI_ID)"
+      RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
+      TEXT="BugFix agent paused before finishing — it likely hit the turn/time limit or errored before posting its report. Any recovery state is committed to the ticket branch. To resume from where it stopped, reply on this Bug beginning your comment with the kai-bugfix keyword prefixed with @ (e.g. '@kai-bugfix resume', or '@kai-bugfix <the input it asked for>'). Pipeline run: ${RUN_URL}"
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST \
+        -u ":$ADO_PAT" \
+        -H "Content-Type: application/json" \
+        -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted fallback failure comment to work item ${WID}."
+    displayName: "Post fallback ADO comment (on failure)"
+    condition: failed()
+    env:
+      ADO_PAT: $(ADO_PAT)

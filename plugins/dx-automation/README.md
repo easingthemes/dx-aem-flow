@@ -1,6 +1,6 @@
 # dx-automation — Autonomous Agent Infrastructure Plugin for Claude Code
 
-Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines. Most are triggered by AWS Lambda webhooks; **SimpleAgent is triggered by an Azure-native Service Hook (no Lambda)** — see [Trigger mechanisms](#trigger-mechanisms). Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines. Most are triggered by AWS Lambda webhooks; **SimpleAgent and BugFix are triggered by Azure-native Service Hooks (no Lambda)** — see [Trigger mechanisms](#trigger-mechanisms). Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
 
 ## Prerequisites
 
@@ -73,7 +73,7 @@ Eleven autonomous agents:
 | **PR answerer** | PR comment event (ADO webhook → Lambda) | Reads open PR comments, posts context-aware replies |
 | **DoD checker** | Work item tag `KAI-DOD-AUTOMATION` (ADO webhook → Lambda) | Checks Definition of Done criteria, posts pass/fail report |
 | **DoD fixer** | Chained after DoD check failures | Auto-fixes what's possible, creates ADO tasks for the rest |
-| **BugFix agent** | Work item tag `KAI-BUGFIX-AUTOMATION` (ADO webhook → Lambda) | Triages Bug, applies fix, creates PR |
+| **BugFix agent** | Bug comment contains `@kai-bugfix` (Azure-native Service Hook → pipeline Incoming WebHook, **no Lambda**) | Triages Bug, applies fix, creates PR — resumable (triage→verify→fix) |
 | **QA agent** | Work item tag `KAI-QA-AUTOMATION` (ADO webhook → Lambda) | Browser-based QA, screenshots, creates Bug tickets |
 | **DevAgent** | Work item tag `KAI-DEV-AUTOMATION` (ADO webhook → Lambda) | Full autonomous development: requirements → plan → implement → test → review → commit → PR. Supports Figma design-to-code. |
 | **DOCAgent** | Work item tag `KAI-DOC-AUTOMATION` (ADO webhook → Lambda) | Generate wiki documentation + AEM authoring guides with screenshots |
@@ -99,7 +99,7 @@ Two paths start pipelines:
 | **PR Reviewer** | build validation policy | already Lambda-free | keep policy, or use a "PR created" hook |
 | **PR Answerer** | PR comment → Lambda | ✅ "PR commented on" + `@kai-…` filter | but loses the Lambda's cheap identity/loop/dedupe gates — they'd move into the pipeline |
 | **DoR / DoD / QA / DevAgent / DOCAgent / Estimation** | tag `KAI-*` + `KAI-TRIGGER` → Lambda | ✅ per-agent hook filtered on the agent tag (or a `@kai-…` comment, or a State transition) | loses dedupe + rate-limit + token-budget governance; one hook + connection per agent |
-| **BugFix** | tag `KAI-BUGFIX-AUTOMATION` → Lambda | ✅ same as above (Bug work-item type) | same tradeoff |
+| **BugFix** | `@kai-bugfix` comment on a Bug | ✅ in use (Azure-native, no Lambda) | comment-contains + Bug-type filter; resumable recovery (triage→verify→fix) |
 | **DoD Fixer** | chained after DoD check | n/a | not event-triggered — stays an internal chain |
 
 Recommended migration candidates: **human-initiated, low-volume** agents (like PR Answerer via a `@kai-answer` keyword). Keep the **high-volume autonomous** WI agents on the Lambda router so they retain dedupe, rate-limiting, and the token budget. Full write-up: [Automation Infrastructure → Azure-native Service Hook trigger](../../website/src/pages/architecture/automation-infra.mdx).

@@ -54,6 +54,18 @@ build:
 # (the per-ticket branch is the durable state store). The /dx-init gitignore
 # ignores `.ai/specs/` by default — remove that line to enable recovery.
 
+# Optional — BugFix agent (/dx-bug-all) settings. Like SimpleAgent, the autonomous
+# BugFix agent is triggered by an Azure-native Service Hook on a Bug comment (no
+# Lambda) and supports resumable recovery over its three steps (triage/verify/fix).
+# dx-bug-all:
+#   recovery:
+#     trigger-token: "@kai-bugfix"         # keyword that fires the run AND re-triggers
+#                                          # a paused one. MUST match the ADO Service
+#                                          # Hook comment filter string (single source).
+#     max-attempts: 3                      # human-answer cycles before downgrading a
+#                                          # needs-input blocker to hard (re-tag DevAgent).
+# Same git requirement as SimpleAgent: `.ai/specs/` must be TRACKED for recovery.
+
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review
   auto-pr: {{AUTO_PR}}                  # true | false — create PR automatically after pipeline success

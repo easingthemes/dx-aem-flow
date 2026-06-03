@@ -183,7 +183,8 @@ Create 2 placeholder Lambda functions (real code deployed by `auto-deploy`):
 echo 'exports.handler = async () => ({ statusCode: 200 })' > /tmp/placeholder.js
 zip -j /tmp/placeholder.zip /tmp/placeholder.js
 
-# WI Router — handles all work-item routes (dor, dod, bugfix, qa, devagent, docagent)
+# WI Router — handles work-item routes (dor, dod, qa, devagent, docagent, estimation).
+# NOT bugfix — BugFix is Azure-native (@kai-bugfix comment hook), like SimpleAgent.
 aws_resource "lambda/<PREFIX>-WI-Router" \
   aws lambda create-function \
     --function-name "<PREFIX>-WI-Router" \

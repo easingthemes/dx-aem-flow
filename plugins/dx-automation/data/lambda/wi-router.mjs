@@ -19,7 +19,10 @@ import { checkRateLimit } from "./rate-limiter.js";
 const AGENTS = [
   { name: "dor",      pipeline: "ADO_DOR_PIPELINE_ID",    tag: "TAG_GATE_DOR",    type: "User Story", paramKey: "workItemId" },
   { name: "dod",      pipeline: "ADO_DOD_PIPELINE_ID",    tag: "TAG_GATE_DOD",    type: "User Story", paramKey: "workItemId" },
-  { name: "bugfix",   pipeline: "ADO_BUGFIX_PIPELINE_ID", tag: "TAG_GATE_BUGFIX", type: "Bug",        paramKey: "bugId" },
+  // NOTE: bugfix is intentionally NOT routed here. Like SimpleAgent, the BugFix
+  // agent is triggered by an Azure-native Service Hook on a Bug comment containing
+  // @kai-bugfix (see ado-cli-bug-fix.yml resources.webhooks + /auto-webhooks). The
+  // comment event covers both the first run and every recovery re-trigger — no Lambda.
   { name: "qa",       pipeline: "ADO_QA_PIPELINE_ID",     tag: "TAG_GATE_QA",     type: "User Story", paramKey: "workItemId" },
   { name: "devagent", pipeline: "ADO_DEV_PIPELINE_ID",    tag: "TAG_GATE_DEV",    type: "User Story", paramKey: "workItemId" },
   { name: "docagent",    pipeline: "ADO_DOC_PIPELINE_ID",        tag: "TAG_GATE_DOC",        type: "User Story", paramKey: "workItemId" },

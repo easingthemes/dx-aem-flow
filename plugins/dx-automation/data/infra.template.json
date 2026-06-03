@@ -223,7 +223,7 @@
   },
 
   "webhooks": {
-    "_comment": "ADO Service Hooks. WI hooks (User Story + Bug) are project-scoped (hub only). PR Answer hook is per-repo (hub + each consumer) — filtered to repository + base branch to avoid firing on all repos. The 'simple' hook is Azure-native (no Lambda / no API Gateway) — it delivers to a pipeline's Incoming WebHook service connection.",
+    "_comment": "ADO Service Hooks. The 'wi-userstory' hook is project-scoped (hub only) → WI-Router Lambda. PR Answer hook is per-repo (hub + each consumer), filtered to repository + base branch. The 'simple' and 'bugfix' hooks are Azure-native (no Lambda / no API Gateway) — comment-contains filters that deliver to a pipeline's Incoming WebHook service connection.",
     "simple": {
       "event": "ms.vss-work.workitem-comment-event",
       "_scope_comment": "Azure-native — NO Lambda, NO API Gateway. Comment-contains filter on the trigger token fires this hook, which delivers to the Incoming WebHook service connection (kai-simple-trigger-sc) wired to the pipeline's resources.webhooks listener. Same event covers first run AND recovery (Phase 0 decides). Single-platform → targets the 'simple' pipeline; multi-platform → targets the 'simple-router' pipeline.",
@@ -243,14 +243,13 @@
       "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks",
       "status": "not-configured"
     },
-    "wi-bug": {
-      "event": "workitem.updated",
-      "filter": "workItemType: Bug, tag: KAI-TRIGGER",
-      "route": "POST /wi",
-      "url": "https://{{API_GATEWAY_ID}}.execute-api.{{AWS_REGION}}.amazonaws.com/prod/wi",
-      "target": "API Gateway → {{PIPELINE_NAME_PREFIX}}-WI-Router",
-      "agents": ["bugfix"],
-      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks",
+    "bugfix": {
+      "event": "ms.vss-work.workitem-comment-event",
+      "_scope_comment": "Azure-native — NO Lambda, NO API Gateway (migrated off the WI-Router; mirrors 'simple'). A comment containing the trigger token on a Bug fires this hook, which delivers to the Incoming WebHook service connection (kai-bugfix-trigger-sc) wired to the bug-fix pipeline's resources.webhooks listener. Same event covers first run AND every recovery re-trigger (Phase 0 / resume-check.sh decides).",
+      "filter": "comment contains <dx-bug-all.recovery.trigger-token> (default @kai-bugfix) AND workItemType: Bug",
+      "connection": "kai-bugfix-trigger-sc",
+      "target": "Incoming WebHook service connection → bugfix pipeline",
+      "configuredIn": "ADO > {{ADO_PROJECT}} > Service Hooks (+ Service connections)",
       "status": "not-configured"
     },
     "pr-answer": {

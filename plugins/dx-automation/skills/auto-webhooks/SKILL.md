@@ -24,7 +24,7 @@ Extract:
 - `adoProject` — ADO project name
 - `pipelines.pr-review.id` — PR Review pipeline ID (for build validation policy)
 - `pipelines.pr-answer.id` — PR Answer pipeline ID (for registering with hub)
-- For **full-hub only**: `webhooks.wi-userstory.url`, `webhooks.wi-bug.url`
+- For **full-hub only**: `webhooks.wi-userstory.url` (BugFix uses the Azure-native `webhooks.bugfix` comment hook — see 2c — not a WI-Router URL)
 - Check if `webhooks.*.status` is already `configured` — skip if so
 
 **For consumers:** The PR Answer hook URL points to the **hub's** PR Router Lambda. Ask:
@@ -104,41 +104,13 @@ Update `infra.json`:
 - `webhooks.wi-userstory.subscriptionId` → returned ID
 - `webhooks.wi-userstory.status` → `"configured"`
 
-## 2. Bug WI Hook (Work Item Updated — Bug) — HUB ONLY
+## 2. BugFix trigger — moved to a comment hook (see 2c), no longer Lambda-routed
 
-**Skip for consumer profile.**
-
-Routes all Bug `workitem.updated` events to the same WI Router Lambda at `/wi`. The Lambda uses tag-based routing to determine the agent (BugFix).
-
-```bash
-az_resource "ado/hooks/wi-bug" \
-  az rest --method POST \
-    --uri "<adoOrg>/_apis/hooks/subscriptions?api-version=7.1" \
-    --headers "Content-Type=application/json" \
-    --body "{
-      \"publisherId\": \"tfs\",
-      \"eventType\": \"workitem.updated\",
-      \"resourceVersion\": \"1.0\",
-      \"consumerId\": \"webHooks\",
-      \"consumerActionId\": \"httpRequest\",
-      \"publisherInputs\": {
-        \"projectId\": \"<PROJECT_ID>\",
-        \"workItemType\": \"Bug\",
-        \"tag\": \"KAI-TRIGGER\"
-      },
-      \"consumerInputs\": {
-        \"url\": \"<wi-bug-url>\",
-        \"basicAuthUsername\": \"<BASIC_USER>\",
-        \"basicAuthPassword\": \"<BASIC_PASS>\",
-        \"httpHeaders\": \"x-webhook-secret:<WEBHOOK_SECRET>\"
-      }
-    }" \
-    --query 'id' --output tsv
-```
-
-Update `infra.json`:
-- `webhooks.wi-bug.subscriptionId` → returned ID
-- `webhooks.wi-bug.status` → `"configured"`
+**There is no Bug `workitem.updated` → WI-Router hook anymore.** The BugFix agent was
+migrated to the same Azure-native model as SimpleAgent: it is triggered by a Bug
+**comment** containing `@kai-bugfix` (section **2c**), delivering to the BugFix
+pipeline's Incoming WebHook — no Lambda, no tag hook. `bugfix` is intentionally
+absent from `wi-router.mjs`'s `AGENTS` array. Configure the hook in **2c** instead.
 
 ## 2b. SimpleAgent Comment Hook (Work Item Commented On) — HUB ONLY, Azure-native (no Lambda)
 
@@ -206,6 +178,31 @@ Update `infra.json`:
 - `webhooks.simple.connectionId` → service connection ID (`$EXISTING_SC` or the created endpoint's `id`)
 - `webhooks.simple.subscriptionId` → returned Service Hook ID
 - `webhooks.simple.status` → `"configured"`
+
+## 2c. BugFix Comment Hook (Work Item Commented On) — HUB ONLY, Azure-native (no Lambda)
+
+**Skip for consumer profile.** Identical mechanism to **2b** (SimpleAgent) — the BugFix agent (`ado-cli-bug-fix.yml`, `/dx-bug-all`) is also fully Azure-native: a comment containing `@kai-bugfix` **on a Bug** fires a Service Hook delivering to the BugFix pipeline's Incoming WebHook (`resources.webhooks`). The same event drives the first run and every recovery re-trigger; Phase 0 (`resume-check.sh`) decides fresh-vs-resume. **BugFix is NOT in the WI-Router Lambda's `AGENTS` array** — do not configure a `workitem.updated`/tag hook for it.
+
+**Prerequisite — Incoming WebHook service connection** (names match `ado-cli-bug-fix.yml`):
+- **Webhook Name:** `bugfixHook` (matches the `webhook:` alias)
+- **Service connection name:** `kai-bugfix-trigger-sc` (matches `connection:`)
+
+Create it exactly as in 2b (idempotent `az rest` GET → POST `incomingwebhook` endpoint), substituting `kai-bugfix-trigger-sc` / `bugfixHook` for the simple names. UI fallback is the same.
+
+The trigger token is config-driven:
+```bash
+TRIGGER_TOKEN=$(bash .ai/lib/dx-common.sh yaml-val 'dx-bug-all.recovery.trigger-token'); TRIGGER_TOKEN=${TRIGGER_TOKEN:-@kai-bugfix}
+```
+
+Create the Service Hook on **"Work item commented on"** with **two** filters — comment contains `$TRIGGER_TOKEN` **AND** Work Item Type = `Bug` (the pipeline's `resources.webhooks.filters` already enforces the Bug type, but filtering at the hook avoids firing the pipeline for non-Bug comments). Deliver to the `bugfixHook` Incoming WebHook — never a Lambda URL.
+
+> The filter string MUST equal `dx-bug-all.recovery.trigger-token` — skill, pipeline header, and hook share that one source of truth. The bot never emits the literal token, so its replies can't self-trigger (loop-safety).
+
+Update `infra.json`:
+- `webhooks.bugfix.connection` → `kai-bugfix-trigger-sc`
+- `webhooks.bugfix.connectionId` → service connection ID
+- `webhooks.bugfix.subscriptionId` → returned Service Hook ID
+- `webhooks.bugfix.status` → `"configured"`
 
 ## 3. PR Answer Service Hook (PR Commented On) — ALL PROFILES
 
@@ -301,6 +298,7 @@ Adapt the report to the profile:
 | WI User Story | workitem.updated | Project (tag: KAI-TRIGGER) | <wi-url> | ✓ configured |
 | WI Bug | workitem.updated | Project (tag: KAI-TRIGGER) | <wi-url> | ✓ configured |
 | SimpleAgent | workitem.commented (comment contains @kai-simple) | Project → pipeline Incoming WebHook (no Lambda) | kai-simple-trigger-sc | ✓ configured |
+| BugFix | workitem.commented (comment contains @kai-bugfix, type Bug) | Project → pipeline Incoming WebHook (no Lambda) | kai-bugfix-trigger-sc | ✓ configured |
 | PR Answer | git.pullrequest.comment-event | Repo: <repo>, branch: <branch> | <pr-answer-url> | ✓ configured |
 | PR Review policy | Build validation | Repo: <repo>, branch: <branch> | (pipeline trigger) | ✓ configured |
 

@@ -22,7 +22,6 @@ Pre-fill these from infra.json (don't ask for values already known):
 - `SQS_DLQ_URL` ← `storage.sqs.dlq.queueUrl`
 - `ADO_DOR_PIPELINE_ID` ← `pipelines.dor.id` (WI Router)
 - `ADO_DOD_PIPELINE_ID` ← `pipelines.dod.id` (WI Router)
-- `ADO_BUGFIX_PIPELINE_ID` ← `pipelines.bugfix.id` (WI Router)
 - `ADO_QA_PIPELINE_ID` ← `pipelines.qa.id` (WI Router)
 - `ADO_DEV_PIPELINE_ID` ← `pipelines.devagent.id` (WI Router)
 - `ADO_DOC_PIPELINE_ID` ← `pipelines.docagent.id` (WI Router)
@@ -47,7 +46,8 @@ Ask these **one at a time** — these cannot be pre-filled from infra.json:
 
 > **DoD trigger tag?** (Lambda env var `TAG_GATE_DOD` — WI Router) Default: `KAI-DOD-AUTOMATION`
 
-> **BugFix trigger tag?** (Lambda env var `TAG_GATE_BUGFIX` — WI Router) Default: `KAI-BUGFIX-AUTOMATION`
+<!-- BugFix has NO WI-Router tag — it is triggered by an Azure-native @kai-bugfix
+     comment hook (dx-bug-all.recovery.trigger-token), configured via /auto-webhooks 2c. -->
 
 > **QA trigger tag?** (Lambda env var `TAG_GATE_QA` — WI Router) Default: `KAI-QA-AUTOMATION`
 
@@ -75,14 +75,12 @@ aws_lambda_config "$WI_ROUTER_FUNC" \
     WEBHOOK_SECRET=<secret>,
     ADO_DOR_PIPELINE_ID=<pipeline-id>,
     ADO_DOD_PIPELINE_ID=<pipeline-id>,
-    ADO_BUGFIX_PIPELINE_ID=<pipeline-id>,
     ADO_QA_PIPELINE_ID=<pipeline-id>,
     ADO_DEV_PIPELINE_ID=<pipeline-id>,
     ADO_DOC_PIPELINE_ID=<pipeline-id>,
     ADO_ESTIMATION_PIPELINE_ID=<pipeline-id>,
     TAG_GATE_DOR=<tag>,
     TAG_GATE_DOD=<tag>,
-    TAG_GATE_BUGFIX=<tag>,
     TAG_GATE_QA=<tag>,
     TAG_GATE_DEV=<tag>,
     TAG_GATE_DOC=<tag>,
@@ -102,7 +100,6 @@ The WI Router routes tagged work-item events to pipelines via a tag-to-pipeline-
 {
   "KAI-DOR-AUTOMATION":        "<dor-pipeline-id>",
   "KAI-DOD-AUTOMATION":        "<dod-pipeline-id>",
-  "KAI-BUGFIX-AUTOMATION":     "<bugfix-pipeline-id>",
   "KAI-QA-AUTOMATION":         "<qa-pipeline-id>",
   "KAI-DEV-AUTOMATION":        "<devagent-pipeline-id>",
   "KAI-DOC-AUTOMATION":        "<docagent-pipeline-id>",
@@ -169,7 +166,6 @@ done
 | WEBHOOK_SECRET | ✓ | ✓ |
 | ADO_DOR_PIPELINE_ID | ✓ | — |
 | ADO_DOD_PIPELINE_ID | ✓ | — |
-| ADO_BUGFIX_PIPELINE_ID | ✓ | — |
 | ADO_QA_PIPELINE_ID | ✓ | — |
 | ADO_DEV_PIPELINE_ID | ✓ | — |
 | ADO_DOC_PIPELINE_ID | ✓ | — |
@@ -179,7 +175,6 @@ done
 | MY_IDENTITIES | — | ✓ |
 | TAG_GATE_DOR | ✓ | — |
 | TAG_GATE_DOD | ✓ | — |
-| TAG_GATE_BUGFIX | ✓ | — |
 | TAG_GATE_QA | ✓ | — |
 | TAG_GATE_DEV | ✓ | — |
 | TAG_GATE_DOC | ✓ | — |
