@@ -293,7 +293,7 @@ steps:
         mcp__ado__wit_get_work_item,
         mcp__ado__wit_add_work_item_comment,
         mcp__ado__wit_list_work_item_comments,
-        mcp__ado__git_get_pull_request,
+        mcp__ado__repo_list_pull_requests_by_repo_or_project,
         mcp__ado__repo_create_pull_request,
         mcp__ado__wit_link_work_item_to_pull_request,
         mcp__plugin_dx-aem_AEM__getNodeContent,

@@ -286,8 +286,8 @@ Update `infra.json`:
 - `apiGateway.id` → `$API_ID`
 - `apiGateway.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod`
 - `webhooks.wi-userstory.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/wi`
-- `webhooks.wi-bug.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/wi`
 - `webhooks.pr-answer.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/pr-answer`
+<!-- BugFix has no API Gateway URL — it is Azure-native (@kai-bugfix comment hook → pipeline Incoming WebHook). See webhooks.bugfix / auto-webhooks 2c. -->
 
 ## 8. Summary Report
 
