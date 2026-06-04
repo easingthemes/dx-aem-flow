@@ -2,20 +2,46 @@ trigger: none
 pr: none
 
 # Claude Agent SDK pipeline — DoR Check via /dx-dor skill.
-# Triggered by Lambda webhook on work item state change.
+#
+# Trigger (fully Azure-native — no Lambda): a comment containing the configured
+# token (default @kai-dor) on a User Story fires an ADO Service Hook (event:
+# "work item commented on", filter: comment contains the token) → an Incoming
+# WebHook service connection → the `dorHook` webhook resource below. The agent
+# validates the story against the project's Definition of Ready and posts an
+# interactive [DoRAgent] scorecard comment. Mirrors the SimpleAgent trigger
+# (ado-cli-simple.yml) — see docs/superpowers/specs/2026-05-28-dx-simple-trigger-design.md.
+#
+# Manual runs are also supported: pass workItemId as a parameter; the pipeline
+# falls back to the webhook payload's resource.id at runtime.
+#
+# NOTE: `connection:` must match the "Incoming WebHook" service connection name
+# configured in ADO (Project Settings → Service connections). Create the
+# connection + the workitem.commented Service Hook (filter "Comment contains
+# @kai-dor") with /auto-webhooks or manually. Rename `kai-dor-trigger-sc` below
+# to the connection name you create.
+#
+# Bot-loop safety: /dx-dor's own comment is prefixed "[DoRAgent] …" and never
+# contains the trigger token, so the pipeline's own output can't re-fire it.
 
 parameters:
   - name: workItemId
-    displayName: "ADO Work Item ID"
+    displayName: "ADO Work Item ID (leave empty when triggered by webhook)"
     type: string
+    default: ""
   - name: dryRun
     displayName: "Dry run (analyze only, don't post ADO comments)"
     type: boolean
     default: false
-  - name: eventId
-    displayName: "Webhook event ID (for tracing)"
-    type: string
-    default: ""
+
+resources:
+  webhooks:
+    - webhook: dorHook                 # alias referenced via ${{ parameters.dorHook.* }}
+      connection: kai-dor-trigger-sc   # ADO "Incoming WebHook" service connection — rename to match yours
+      filters:
+        - path: eventType
+          value: workitem.commented
+        - path: resource.fields['System.WorkItemType']
+          value: User Story
 
 pool:
   vmImage: ubuntu-latest
@@ -32,26 +58,103 @@ steps:
     displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
+      set -e
+      # Resolve workItemId — manual parameter wins, webhook payload is fallback.
+      MANUAL_ID="${{ parameters.workItemId }}"
+      WEBHOOK_ID="${{ parameters.dorHook.resource.id }}"
+      if [ -n "$MANUAL_ID" ]; then
+        WI_ID="$MANUAL_ID"
+        TRIGGER="manual"
+      elif [ -n "$WEBHOOK_ID" ]; then
+        WI_ID="$WEBHOOK_ID"
+        TRIGGER="webhook"
+      else
+        echo "ERROR: No work item ID provided. Manual runs need parameters.workItemId; webhook runs need resource.id in payload." >&2
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
+      echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
+      echo "Work item: $WI_ID (trigger: $TRIGGER)"
+
+      # Log webhook context if present (smoke-test for payload references).
+      if [ "$TRIGGER" = "webhook" ]; then
+        echo "Webhook event ID:    ${{ parameters.dorHook.id }}"
+        echo "Subscription:        ${{ parameters.dorHook.subscriptionId }}"
+        echo "Commenter:           ${{ parameters.dorHook.resource.fields['System.ChangedBy'].displayName }}"
+        echo "Project:             ${{ parameters.dorHook.resource.fields['System.TeamProject'] }}"
+        echo "Work item state:     ${{ parameters.dorHook.resource.fields['System.State'] }}"
+      fi
+    displayName: "Resolve work item ID + log webhook payload"
+
+  - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk @azure-devops/mcp
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
 
   - bash: |
-      PROMPT="/dx-dor ${{ parameters.workItemId }}"
-      if [ "${{ parameters.dryRun }}" = "True" ]; then
+      set -e
+      # Determine dry-run mode: explicit parameter wins; otherwise look for
+      # "dry-run" (case-insensitive) in the comment text on webhook runs.
+      DRY_RUN_PARAM="${{ parameters.dryRun }}"
+      DRY_RUN="False"
+      if [ "$DRY_RUN_PARAM" = "True" ]; then
+        DRY_RUN="True"
+      elif [ "$TRIGGER" = "webhook" ]; then
+        # contains() in ADO expressions is case-insensitive; evaluated at compile
+        # time so bash only ever sees the literal string "True" or "False".
+        COMMENT_HAS_DRYRUN=${{ contains(parameters.dorHook.resource.fields['System.History'], 'dry-run') }}
+        if [ "$COMMENT_HAS_DRYRUN" = "True" ]; then
+          DRY_RUN="True"
+        fi
+      fi
+      echo "dryRun resolved to: $DRY_RUN"
+
+      PROMPT="/dx-dor $WI_ID"
+      if [ "$DRY_RUN" = "True" ]; then
         PROMPT="$PROMPT (dry run — analyze only, do NOT post comments to ADO)"
       fi
-
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
-
       echo "prompt: $PROMPT"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
     displayName: "AI DoR Check"
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      # Comment-triggered headless run — keeps /dx-dor on its autonomous path
+      # (no interactive prompts), consistent with every other agent pipeline.
+      DX_PIPELINE_MODE: "true"
       MAX_TURNS: "20"
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       ALLOWED_TOOLS: "Skill,Read,Glob,Grep,Agent"
     timeoutInMinutes: 60
+
+  # Fallback ADO comment. /dx-dor posts its own [DoRAgent] scorecard on success.
+  # If the agent was killed before it could post (MAX_TURNS, timeout, crash) or a
+  # step failed, this posts a short note so the story never goes silent. DoR has no
+  # recovery state (a stateless check) — recovery is just a fresh re-run: reply
+  # @kai-dor again. The keyword is written bare (no leading @) so this fallback
+  # can't self-trigger the hook; the text instructs the human to add the @ prefix.
+  - bash: |
+      set -e
+      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      if [ -f "$FLAG" ]; then
+        echo "Skill already posted an ADO comment — skipping fallback."
+        exit 0
+      fi
+      ORG_URL="$(System.CollectionUri)"
+      PROJECT="$(System.TeamProject)"
+      WID="$(WI_ID)"
+      RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
+      TEXT="DoR check didn't finish — it likely hit the turn/time limit or errored before posting its scorecard. To re-run, reply on this story beginning your comment with the kai-dor keyword prefixed with @ (e.g. '@kai-dor'). Pipeline run: ${RUN_URL}"
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST \
+        -u ":$ADO_PAT" \
+        -H "Content-Type: application/json" \
+        -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted fallback failure comment to work item ${WID}."
+    displayName: "Post fallback ADO comment (on failure)"
+    condition: failed()
+    env:
+      ADO_PAT: $(ADO_PAT)

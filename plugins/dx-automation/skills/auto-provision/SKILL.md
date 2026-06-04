@@ -183,7 +183,9 @@ Create 2 placeholder Lambda functions (real code deployed by `auto-deploy`):
 echo 'exports.handler = async () => ({ statusCode: 200 })' > /tmp/placeholder.js
 zip -j /tmp/placeholder.zip /tmp/placeholder.js
 
-# WI Router — handles all work-item routes (dor, dod, bugfix, qa, devagent, docagent)
+# WI Router — handles work-item routes (dod, qa, devagent, docagent, estimation).
+# NOT dor or bugfix — both are Azure-native (@kai-dor / @kai-bugfix comment hooks),
+# like SimpleAgent.
 aws_resource "lambda/<PREFIX>-WI-Router" \
   aws lambda create-function \
     --function-name "<PREFIX>-WI-Router" \
@@ -285,8 +287,8 @@ Update `infra.json`:
 - `apiGateway.id` → `$API_ID`
 - `apiGateway.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod`
 - `webhooks.wi-userstory.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/wi`
-- `webhooks.wi-bug.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/wi`
 - `webhooks.pr-answer.url` → `https://$API_ID.execute-api.$REGION.amazonaws.com/prod/pr-answer`
+<!-- BugFix has no API Gateway URL — it is Azure-native (@kai-bugfix comment hook → pipeline Incoming WebHook). See webhooks.bugfix / auto-webhooks 2c. -->
 
 ## 8. Summary Report
 
