@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.2.1...v3.3.0) (2026-06-04)
+
+
+### Features
+
+* **dx-automation:** Azure-native comment triggers for DoR + BugFix (+ resumable BugFix recovery) ([#164](https://github.com/easingthemes/dx-aem-flow/issues/164)) ([e44c2dd](https://github.com/easingthemes/dx-aem-flow/commit/e44c2dd55c8b6d334984c1f7f2a2359c8add1f16)), closes [#150](https://github.com/easingthemes/dx-aem-flow/issues/150) [#147](https://github.com/easingthemes/dx-aem-flow/issues/147) [#157](https://github.com/easingthemes/dx-aem-flow/issues/157)
+
 ## [3.2.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.2.0...v3.2.1) (2026-06-01)
 
 
