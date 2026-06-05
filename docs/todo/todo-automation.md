@@ -199,3 +199,26 @@ There are **two layers** to this: (1) a **router** that dispatches the right rep
   - **Patches / fixes:** dry-run `git apply --check` (then `--3way`) for reviewer patches; for `agree-will-fix`, generate the minimal fix via subagent. Then **lint + compile** (`build.compile`/`build.lint` from config, the dx-simple `block-mvn-deploy` rule) as a hard gate — only commit + push if it passes; on failure, reply that the fix needs manual attention and leave the thread open (don't push broken code). Delegate commit/push to `/dx-pr-commit` headless (set `orchestrating.flag` first, as dx-simple does). Reply per resolved thread; update the session file.
   - Keep session persistence + bot-greeting. Reuse dx-simple's verdict/exit contract so a failed run goes red.
   **Risks (accepted, documented):** auto-pushback can be wrong (mitigated by the confidence gate); auto-commit modifies a human's PR branch (mitigated by the lint+compile gate, minimal-diff constraint, and never force-pushing). Cross-ref #129 (interactive prompts), #143 (PR-feedback learning loop reuses the answerer), #141 (dx-simple commit/push-headless precedent).
+
+## Sync-clobber gap: dx-upgrade + auto-init silently overwrite locally-customized automation files
+
+**Added:** 2026-06-05
+**Status:** Implemented 2026-06-05
+**Problem:** `.ai/automation/**` (pipeline YAMLs, lambda handlers, scripts) is plugin-owned, but the main test-bed consumer also prototypes improvements there *first* — e.g. the PR-answer no-AI cron gate, a `refName: refs/heads/<base>` branch-pin in the WI-Router queue payload, a local connection-name convention, extra pipeline steps. The sync tools treated all such files as freely overwritable: `/dx-upgrade` auto-fixed plugin-owned files without asking (only *comment-only* project-specific diffs were protected — SKILL.md line 111), and `/auto-init` re-run updated the data bundle **"silently."** Either would erase the consumer's local functional work. Surfaced live when a consumer session reverted a blind plugin→consumer file copy, and again when auto-init left the bundle stale rather than reconciling it.
+**Scope:** `plugins/dx-core/skills/dx-upgrade/SKILL.md` (classification table + auto-fix section); `plugins/dx-automation/skills/auto-init/SKILL.md` (re-run behavior table, Data bundle row).
+**Done-when:**
+- `grep -n 'Functional local divergence' plugins/dx-core/skills/dx-upgrade/SKILL.md` → present.
+- `grep -n 'functional local divergence' plugins/dx-automation/skills/auto-init/SKILL.md` → present.
+**Approach (implemented):** dx-upgrade now reclassifies any stale `.ai/automation/**` file whose diff vs the plugin is **functional** (not comment/name-only) from *Auto-fix* to *Needs confirmation* — show the diff and ask, default keep. auto-init's Data-bundle row updates silently only for comment/name-only diffs; functional divergence triggers a diff + ASK. Cross-ref #132 (pipelines clone `--branch main`), #150.
+
+## Upstream PR-Answer no-AI gate
+
+**Added:** 2026-06-05
+**Status:** Implemented 2026-06-05
+**Problem:** The autonomous PR-Answer pipeline (#149) booted the LLM agent on every scheduled tick just to discover "nothing changed," burning tokens on idle PRs. The main consumer solved this locally with a plain curl+jq pre-flight gate but it never made it back into the plugin, so other consumers don't benefit and the consumer copy is "ahead" of the plugin (a sync hazard — see #151).
+**Scope:** `plugins/dx-automation/data/scripts/pr-answer-gate.sh` (new); `plugins/dx-automation/data/pipelines/cli/ado-cli-pr-answer.yml` (cron sweep + gate step + `gate.hasWork` conditions).
+**Done-when:**
+- `test -x plugins/dx-automation/data/scripts/pr-answer-gate.sh` → executable.
+- `grep -n 'pr-answer-gate.sh' plugins/dx-automation/data/pipelines/cli/ado-cli-pr-answer.yml` → referenced in the gate step.
+- `bash scripts/validate-structure.sh` → PASS.
+**Approach (implemented):** Gate reads the watermark from the prev *succeeded scheduled* run's `startTime` (ADO Builds API — stateless), lists Active PRs authored by `MY_IDENTITIES`, and trips only on a reviewer comment newer than the watermark authored by someone outside {bot PAT identity ∪ MY_IDENTITIES} (self-trigger guard). Emits `NEW=1`/`NEW=0`; the pipeline gates clone/install/agent on `gate.hasWork`. A manual `prUrl` run bypasses the gate. Genericized (one customer-name comment removed). **Follow-up:** the Lambda PR-Router pr-answer route + `webhooks.pr-answer` are now redundant for cron-sweep consumers — retire in a later pass. Cross-ref #149.

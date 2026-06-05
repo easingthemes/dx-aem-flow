@@ -30,7 +30,7 @@ This is tracked as a backlog item — see [`docs/todo/todo-automation.md` § CI/
 | File Category | Re-run Behavior |
 |---|---|
 | **Config** (infra.json) | Ask: keep / re-scaffold |
-| **Data bundle** (.ai/automation/) | Compare against plugin data → update silently if plugin files changed (preserving user-filled values in infra.json, repos.json, .env) |
+| **Data bundle** (.ai/automation/) | Compare against plugin data. Update **silently** only when the consumer copy is unmodified or differs in comments / project-specific names only. If a file has **functional local divergence** (added pipeline steps, gate scripts like `pr-answer-gate.sh`, branch-pins, lambda `AGENTS` edits, connection-name conventions) → show a diff and **ASK** before overwriting; default to keep. Never silently clobber local functional changes (the sync-clobber gap, TODO #151). Always preserve user-filled values in infra.json, repos.json, .env. |
 | **Policy file** (.ai/automation/policy/pipeline-policy.yaml) | Compare against plugin data → if user customized: ask. If only template changed: update |
 | **Generated files** (infra.json, repos.json, .env.template) | Validate structure and required fields exist — report missing fields from newer templates |
 

@@ -3,13 +3,24 @@ pr: none
 
 # Claude Agent SDK pipeline — fully autonomous PR Answer via /dx-pr-answer (TODO #149).
 #
-# Triggered by the pr-router Lambda on PR comment events, filtered to PRs whose
-# author is in MY_IDENTITIES. Runs headless with DX_PIPELINE_MODE=true so
-# /dx-pr-answer takes its non-interactive branch: it replies to EVERY open
-# reviewer thread (agree-will-fix, question, AND disagree — evidence-backed),
-# and for accepted patches / agree-will-fix it applies the change, runs a
-# lint + compile gate, then commits + pushes to update the PR. No human in the
-# loop, no AskUserQuestion.
+# Trigger: a scheduled "answer sweep" (see schedules below) — NO Lambda, NO
+# webhook. With no prUrl, /dx-pr-answer runs its sweep mode: it lists every
+# Active PR authored by a MY_IDENTITIES identity, skips those with 0 open
+# threads, and answers the rest. Pass prUrl to answer a single PR (manual run).
+#
+# Token gate (TODO #149): the cron fires hourly, but a no-AI triage step
+# (pr-answer-gate.sh, plain curl+jq) runs FIRST and ends the pipeline before
+# any plugin clone / npm install / LLM boot unless a reviewer has added a NEW
+# comment since this pipeline's previous run. "Last run" is read statelessly
+# from the ADO Builds API (prev succeeded scheduled run's startTime); the bot's
+# own replies are excluded (PAT identity + MY_IDENTITIES) so it never answers
+# itself. Empty ticks cost a few REST calls and zero tokens.
+#
+# Runs headless with DX_PIPELINE_MODE=true so /dx-pr-answer takes its
+# non-interactive branch: it replies to EVERY open reviewer thread
+# (agree-will-fix, question, AND disagree — evidence-backed), and for accepted
+# patches / agree-will-fix it applies the change, runs a lint + compile gate,
+# then commits + pushes to update the PR. No human in the loop, no AskUserQuestion.
 #
 # Disagree is gated AND bounded: the bot sends a pushback only when confidence
 # >= DX_DISAGREE_CONFIDENCE (default 80, config override) and evidence is cited,
@@ -19,10 +30,21 @@ pr: none
 # In CI the git identity is the service account, so /dx-pr-answer verifies PR
 # ownership against MY_IDENTITIES (not git config user.email).
 
+schedules:
+  - cron: "0 * * * 1-5"           # hourly, Mon–Fri (UTC) — tune cadence to taste. ADO can't
+                                   # read a pipeline var here (cron is compile-time); the gate
+                                   # keeps empty ticks token-free regardless of cadence.
+    displayName: "PR answer sweep"
+    branches:
+      include:
+        - main                    # CONSUMER: set to your default branch (scm.base-branch) — this is where the pipeline YAML is versioned, not what's answered (sweep queries all my Active PRs via REST)
+    always: true                  # run even when there are no new commits (state lives in PR threads, not git)
+
 parameters:
   - name: prUrl
-    displayName: "PR URL (full ADO PR URL)"
+    displayName: "PR URL (full ADO PR URL) — leave empty for a scheduled answer sweep"
     type: string
+    default: ""
   - name: dryRun
     displayName: "Dry run (draft answers, don't post replies)"
     type: boolean
@@ -41,26 +63,65 @@ steps:
     persistCredentials: true
     path: s
 
+  # No-AI gate (TODO #149): end the pipeline (skip plugin clone, npm install, and
+  # the LLM agent) unless a reviewer added a new comment since the previous run.
+  # A manual run with prUrl always proceeds. Sets gate.hasWork for downstream
+  # `condition:`s. Plain curl+jq → zero tokens on empty ticks.
+  - bash: |
+      set -euo pipefail
+      PR_URL="${{ parameters.prUrl }}"
+      if [ -n "$PR_URL" ]; then
+        echo "Manual run (prUrl set) → proceed unconditionally"
+        echo "##vso[task.setvariable variable=hasWork;isOutput=true]true"
+        exit 0
+      fi
+      RESULT=$(bash .ai/automation/scripts/pr-answer-gate.sh \
+        "$(System.CollectionUri)" "$(System.TeamProjectId)" \
+        "$(Build.Repository.Name)" "$(System.DefinitionId)")
+      echo "gate result: $RESULT"
+      if [ "$RESULT" = "NEW=1" ]; then
+        echo "##vso[task.setvariable variable=hasWork;isOutput=true]true"
+        echo "##[section]New reviewer comments found — running PR Answer agent"
+      else
+        echo "##vso[task.setvariable variable=hasWork;isOutput=true]false"
+        echo "##[section]No new reviewer comments since last run — ending pipeline (0 tokens)"
+      fi
+    name: gate
+    displayName: "Triage: new reviewer comments? (no AI)"
+    env:
+      ADO_PAT: $(ADO_PAT)
+      MY_IDENTITIES: $(MY_IDENTITIES)
+
   - bash: |
       git clone --depth 1 --branch main \
         https://github.com/easingthemes/dx-aem-flow.git \
         "$(Pipeline.Workspace)/dx-aem-flow"
     displayName: "Fetch dx-aem-flow plugins from GitHub"
+    condition: and(succeeded(), eq(variables['gate.hasWork'], 'true'))
 
   - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
+    condition: and(succeeded(), eq(variables['gate.hasWork'], 'true'))
   - bash: |
       # ADO renders boolean params as "True"/"False"; the skill wants "true".
       export DX_DRY_RUN=$(printf '%s' "$DX_DRY_RUN" | tr '[:upper:]' '[:lower:]')
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
-      PROMPT="/dx-pr-answer ${{ parameters.prUrl }}"
+      # No prUrl (scheduled sweep) → answer open threads across ALL my Active PRs
+      # (scoped to MY_IDENTITIES). With a prUrl (manual) → just that PR.
+      PR_URL="${{ parameters.prUrl }}"
+      if [ -n "$PR_URL" ]; then
+        PROMPT="/dx-pr-answer $PR_URL"
+      else
+        PROMPT="/dx-pr-answer"
+      fi
       echo "prompt: $PROMPT (dry_run=$DX_DRY_RUN)"
       node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
     displayName: "AI PR Answer"
+    condition: and(succeeded(), eq(variables['gate.hasWork'], 'true'))
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
