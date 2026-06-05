@@ -22,7 +22,10 @@ Checks depend on the profile.
 
 ### Config files (all profiles):
 - `infra.json` — no remaining `{{PLACEHOLDER}}` values (check for `{{`)
-- `repos.json` — exists and is valid JSON
+- `repos.json` — **optional; validate only if present.** No pipeline, Lambda, or skill reads `repos.json` at runtime — it is documentation-only intent (future cross-repo discovery), so its absence is expected and harmless, especially for CLI-pipeline-only consumers (it was deliberately removed from some).
+  - present + valid JSON → `✓`
+  - present + invalid JSON → `✗ invalid JSON` (the only failing case — a hand-edited file that won't parse)
+  - **absent → `— optional (unused — not read by any pipeline or agent)` — NOT an issue; do NOT report `✗`, and do NOT let it affect the Overall verdict.**
 
 Check `infra.json` for unfilled placeholders:
 ```bash
@@ -173,7 +176,7 @@ Adapt the report format to the profile:
 | Lambda handlers | ✓ / ✗ |
 | Pipeline YAMLs | ✓ / ✗ |
 | infra.json (no placeholders) | ✓ / ✗ |
-| repos.json | ✓ / ✗ |
+| repos.json (optional) | ✓ / — absent (ok) / ✗ invalid JSON |
 
 ### ADO Pipelines
 | Pipeline | ID | Status | YAML Path |
@@ -200,7 +203,7 @@ Adapt the report format to the profile:
 |-------|--------|
 | Pipeline YAMLs | ✓ / ✗ |
 | infra.json (no placeholders) | ✓ / ✗ |
-| repos.json | ✓ / ✗ |
+| repos.json (optional) | ✓ / — absent (ok) / ✗ invalid JSON |
 
 ### ADO Pipelines
 | Pipeline | ID | Status | YAML Path |
@@ -256,6 +259,7 @@ Adapt the report format to the profile:
 ## Rules
 
 - **Profile-aware** — read `automationProfile` from infra.json FIRST and adapt all checks. Treat legacy `pr-only` and `pr-delegation` values as `consumer`. Never check Lambda, agent steps, or AWS resources for consumer profile. Never report missing Lambda/agent files as errors for consumer profile.
+- **`repos.json` is optional** — never report its absence as `✗` or count it toward the Overall verdict. It has no runtime consumer (no pipeline, Lambda, or skill reads it). Only a *present-but-malformed* `repos.json` is a failure.
 - **Read-only** — no AWS/ADO mutations in this skill (read commands only)
 - **Cross-check infra.json vs reality** — pipeline IDs and Lambda names must match
 - **Report missing env var keys** — never values (security)
