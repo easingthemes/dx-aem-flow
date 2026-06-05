@@ -1,3 +1,10 @@
+## [3.4.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.0...v3.4.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **dx-automation:** restore Lambda shared libs deleted by [#7](https://github.com/easingthemes/dx-aem-flow/issues/7) cleanup ([#153](https://github.com/easingthemes/dx-aem-flow/issues/153)) ([#166](https://github.com/easingthemes/dx-aem-flow/issues/166)) ([10257ed](https://github.com/easingthemes/dx-aem-flow/commit/10257ed653fed28aef6688862b4346edffa0e301))
+
 # [3.4.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.3.0...v3.4.0) (2026-06-05)
 
 
