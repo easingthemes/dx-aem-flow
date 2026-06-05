@@ -23,7 +23,7 @@ Run the full `/dx-doctor` flow inline with the same scope argument the user pass
 | Category | Description | Examples |
 |----------|-------------|---------|
 | **Auto-fix** | Plugin-owned files that can be updated without asking | Stale utility scripts, stale seed data, stale universal rules, missing template-generated files |
-| **Needs confirmation** | Files the user may have intentionally customized | Stale shared rules (`.ai/rules/*`), stale AEM convention rules |
+| **Needs confirmation** | Files the user may have intentionally customized | Stale shared rules (`.ai/rules/*`), stale AEM convention rules, **automation bundle files with functional local divergence** (`.ai/automation/**` pipeline YAMLs, lambda handlers, scripts — consumers often prototype steps/gates/branch-pins ahead of the plugin) |
 | **Manual action** | Issues that cannot be auto-fixed | Missing gitignore entries, missing config sections, broken branch references |
 
 If dx-doctor reports zero issues:
@@ -109,6 +109,8 @@ These are plugin-owned files — update without asking.
 For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` — Node entry points are invoked via `node` and don't need the executable bit).
 
 **Comment-only differences:** If dx-doctor reported the script as `✓ up to date (project-specific examples)` — meaning the only differences are in comment lines where the project uses real infrastructure names (e.g., `kai-dedupe`) instead of the plugin's generic placeholders (e.g., `myai-dedupe`) — do NOT overwrite. The project-specific names are intentional and correct. Only update scripts that have functional code changes.
+
+**Functional local divergence (automation bundle) — NEVER silently clobber:** `.ai/automation/**` files (pipeline YAMLs, lambda handlers, scripts) are plugin-owned, but they are also where consumers prototype improvements *first* — e.g. a no-AI cron gate (`pr-answer-gate.sh`), a `refName` branch-pin in the WI-Router queue payload, extra pipeline steps, or a connection-name convention. Before overwriting any stale automation file, check whether its diff vs the plugin is **functional** (code/logic/steps/structure) or merely comment / project-specific-name. If functional → do NOT auto-fix; reclassify as **Needs confirmation**, show the diff, and ask (default: keep local). Silently overwriting here erases the consumer's local work — this is the sync-clobber gap (TODO #151). Only auto-overwrite automation files whose diff is comment/name-only, or which the user explicitly confirms.
 
 ### 3ab. Output Templates
 
