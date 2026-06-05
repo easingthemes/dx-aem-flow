@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.3.0...v3.4.0) (2026-06-05)
+
+
+### Features
+
+* **dx-automation:** PR-answer no-AI cron gate + sync-clobber guards + repos.json optional ([#165](https://github.com/easingthemes/dx-aem-flow/issues/165)) ([3d44f73](https://github.com/easingthemes/dx-aem-flow/commit/3d44f738d2572f8fbb3db06bbf47aeaa0328332c)), closes [#151](https://github.com/easingthemes/dx-aem-flow/issues/151) [#152](https://github.com/easingthemes/dx-aem-flow/issues/152) [#151](https://github.com/easingthemes/dx-aem-flow/issues/151) [#152](https://github.com/easingthemes/dx-aem-flow/issues/152)
+
 # [3.3.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.2.1...v3.3.0) (2026-06-04)
 
 
