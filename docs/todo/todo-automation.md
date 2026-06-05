@@ -222,3 +222,15 @@ There are **two layers** to this: (1) a **router** that dispatches the right rep
 - `grep -n 'pr-answer-gate.sh' plugins/dx-automation/data/pipelines/cli/ado-cli-pr-answer.yml` → referenced in the gate step.
 - `bash scripts/validate-structure.sh` → PASS.
 **Approach (implemented):** Gate reads the watermark from the prev *succeeded scheduled* run's `startTime` (ADO Builds API — stateless), lists Active PRs authored by `MY_IDENTITIES`, and trips only on a reviewer comment newer than the watermark authored by someone outside {bot PAT identity ∪ MY_IDENTITIES} (self-trigger guard). Emits `NEW=1`/`NEW=0`; the pipeline gates clone/install/agent on `gate.hasWork`. A manual `prUrl` run bypasses the gate. Genericized (one customer-name comment removed). **Follow-up:** the Lambda PR-Router pr-answer route + `webhooks.pr-answer` are now redundant for cron-sweep consumers — retire in a later pass. Cross-ref #149.
+
+## Lambda shared libs regression
+
+**Added:** 2026-06-05
+**Status:** Implemented 2026-06-05
+**Problem:** Commit `1800b25` ("refactor: remove old custom agent approach", TODO #7) deleted the entire `plugins/dx-automation/data/agents/` tree (22 files of old custom-JS-agent code). Five of those files were NOT old-agent code — they are live Lambda infrastructure still `import`ed by `wi-router.mjs` / `pr-router.mjs` and listed in `infra.json` `lambdas.*.sharedLibs`: `dedupe.js`, `dlq.js`, `rate-limiter.js`, `aws-sig.js`, `retry.js`. `deploy.sh` also still copied them from `../agents/lib/`. Result: `/auto-deploy` fails at the `cp` step, and **no one has been able to redeploy the WI-Router / PR-Router Lambdas from source since the deletion** — the running functions predate it. Surfaced when a consumer ran `/auto-deploy` to push a wi-router change.
+**Scope:** `plugins/dx-automation/data/lambda/lib/*.js` (restored); `plugins/dx-automation/data/lambda/deploy.sh` (copy path). Follow-up: `plugins/dx-automation/skills/auto-doctor/SKILL.md` full-hub shared-lib check (still references the deleted `agents/lib/{adoClient,config}.js`).
+**Done-when:**
+- `ls plugins/dx-automation/data/lambda/lib/` → dedupe.js, dlq.js, rate-limiter.js, aws-sig.js, retry.js.
+- `grep -n 'SCRIPT_DIR/lib/' plugins/dx-automation/data/lambda/deploy.sh` → copy source is `lib/` (not `../agents/lib/`).
+- `node --check` passes for every lib + handler; a flat-zip import of `wi-router.mjs` and `pr-router.mjs` resolves (handler is a function).
+**Approach (implemented):** Recovered the 5 libs from `1800b25^` via `git show`. Confirmed the dependency closure is self-contained (`dedupe`/`dlq`/`rate-limiter` → `aws-sig` → `retry` → Node `crypto`; no dependency on any other deleted file), so none of the old-agent code comes back. Placed them in `data/lambda/lib/` (with the Lambda code) rather than resurrecting `data/agents/lib/`, and pointed `deploy.sh` at `lib/`. The handlers' `./dedupe.js` imports are unchanged — `deploy.sh` still flattens the libs next to the handlers in the zip. Cross-ref #7 (the cleanup), #150.

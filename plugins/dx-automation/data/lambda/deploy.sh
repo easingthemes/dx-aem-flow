@@ -55,11 +55,11 @@ deploy_agent() {
   files=$(lambda_files "$agent")
   shared_libs=$(lambda_shared_libs "$agent")
 
-  # Copy shared lib files from agents/lib/ into lambda/ for flat zip
+  # Copy shared lib files from lambda/lib/ into lambda/ for flat zip
   local copied_libs=()
   if [[ -n "$shared_libs" ]]; then
     for lib in $shared_libs; do
-      cp "$SCRIPT_DIR/../agents/lib/$lib" "$SCRIPT_DIR/$lib"
+      cp "$SCRIPT_DIR/lib/$lib" "$SCRIPT_DIR/$lib"
       copied_libs+=("$lib")
     done
     # shellcheck disable=SC2086
