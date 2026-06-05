@@ -54,8 +54,8 @@ For each enabled pipeline entry in `infra.json`, check that the YAML file refere
 
 **Skip for consumer profile** — these profiles do not manage Lambda. Do NOT report Lambda files as missing.
 
-### Shared libs (full-hub only):
-- `agents/lib/adoClient.js`, `agents/lib/dedupe.js`, `agents/lib/config.js` (spot check 3 files)
+### Lambda shared libs (full-hub only):
+- `lambda/lib/dedupe.js`, `lambda/lib/dlq.js`, `lambda/lib/rate-limiter.js`, `lambda/lib/aws-sig.js`, `lambda/lib/retry.js` — the libs the WI-Router/PR-Router handlers import and `deploy.sh` flattens into the zip (`infra.json` `lambdas.*.sharedLibs`). Missing any of these → `✗` (deploy will fail at the copy step). (These live under `lambda/lib/`, not the removed `agents/lib/` — see TODO #153.)
 
 **Skip for consumer profile.**
 
