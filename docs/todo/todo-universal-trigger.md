@@ -3,39 +3,87 @@
 ## Universal ADO skill trigger (`@kai /dx-skill`)
 
 **Added:** 2026-06-05
-**Problem:** Every pipeline-based agent (SimpleAgent, BugFix, PR-Reviewer, PR-Answerer) requires its own dedicated ADO pipeline and Service Hook. Adding a new skill to the automation catalogue means authoring a full pipeline YAML, creating a new Service Hook, and wiring a new Incoming WebHook service connection. There is no way to invoke an arbitrary `dx-*` skill from an ADO work-item comment without this per-skill ceremony. This bottleneck makes the automation footprint O(skills) instead of O(1).
+**Problem:** Every pipeline-based agent (SimpleAgent, BugFix, PR-Reviewer, PR-Answerer) requires its own dedicated ADO pipeline and Service Hook. Adding a new skill to the automation catalogue means authoring a full pipeline YAML, creating a new Service Hook, and wiring a new Incoming WebHook service connection. There is no way to invoke an arbitrary automation skill from an ADO work-item comment without this per-skill ceremony. This bottleneck makes the automation footprint O(skills) instead of O(1).
+
 **Scope:**
 - `plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml` (new)
-- `plugins/dx-automation/skills/auto-webhooks/SKILL.md` — new §3 "Universal trigger setup" (one Service Hook, one service connection)
-- `plugins/dx-core/skills/dx-simple/scripts/pipeline-agent.js` — already generic; only prompt construction changes
+- `plugins/dx-automation/skills/auto-webhooks/SKILL.md` — new §3 "Universal trigger setup" (one Service Hook `@kai /`, one Incoming WebHook service connection `kai-trigger-sc`)
+- `plugins/dx-automation/data/scripts/pipeline-agent.js` — already generic; only prompt construction changes
 - `docs/reference/agent-catalog.md` — add universal-trigger row
+
 **Done-when:**
 - `test -f plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml`
 - `grep -n 'universalHook' plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml` → webhook resource declared
 - `grep -n 'ALLOWLIST' plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml` → skill allowlist enforced
-- Manual smoke test: comment `@kai /dx-plan 12345` on an ADO story → pipeline queues → `implement.md` written to spec dir → ADO comment posted with result
+- Manual smoke test: comment `@kai /dx-doc-retro 12345` on a completed ADO story → pipeline queues → wiki page created in ADO Wiki
 
-**Approach:**
+---
 
 ### Trigger syntax
 
 ```
-@kai /<skill-name> [args] [extra prompt text]
+@kai /<skill-name> [work-item-id] [extra prompt]
 ```
+
+The pipeline auto-injects the work item ID from the webhook payload, so the ID in the comment is optional (pipeline falls back to the webhook's `resource.id`).
 
 Examples:
 ```
-@kai /dx-plan 12345
-@kai /dx-step 12345 focus only on the CSS change in step 3
-@kai /dx-pr 12345
-@kai /dx-req 12345 skip the interview loop if DoR passes
+@kai /dx-agent-all
+@kai /dx-doc-retro
+@kai /dx-doc-retro focus on the dialog authoring section
+@kai /aem-qa-handoff include screenshots from the last QA session
 ```
 
-The pipeline auto-injects the work item ID as the first argument, so `@kai /dx-plan` (no ID) also works — the pipeline reads `WI_ID` from the webhook payload and prepends it.
+---
 
-### Service Hook change
+### What this is NOT
 
-One new Service Hook, event `workitem.commented`, comment filter: contains `@kai /`. Maps to Incoming WebHook service connection `kai-trigger-sc` (or reuse existing `kai-simple-trigger-sc` with an OR filter if ADO supports it — check `/auto-webhooks` implementation).
+The universal trigger is **not** a wrapper for the local dev flow. Skills that produce intermediate markdown files consumed by a human developer (`/dx-req`, `/dx-plan`, `/dx-step`, `/dx-pr`) are **not candidates** — triggering them from an ADO comment produces files no one reads. They remain local-only tools.
+
+The trigger is only for skills that produce a **real-world artifact**: an ADO Wiki page, an ADO comment, or a PR.
+
+---
+
+### Skill candidate analysis
+
+Skills already deployed with dedicated comment hooks (not candidates — they have their own Azure-native triggers):
+
+| Existing trigger | Skill | Already has |
+|-----------------|-------|-------------|
+| `@kai-dor` | dx-dor | Azure-native Service Hook |
+| `@kai-simple` | dx-simple | Azure-native Service Hook |
+| `@kai-bugfix` | dx-bug-all | Azure-native Service Hook |
+
+Skills currently triggered by adding the `KAI-TRIGGER` **tag** to a work item (Lambda WI-Router), not by a comment. The universal trigger gives these a comment-based alternative:
+
+| `@kai /skill` | Skill | Real-world output | Pipeline-safe |
+|---------------|-------|-------------------|---------------|
+| `/dx-agent-all` | DevAgent | PR + ADO comment (full story implementation) | Configurable — needs `DX_PIPELINE_MODE` audit |
+| `/dx-doc-retro` | Retroactive wiki doc gen | ADO Wiki page (or Confluence) | Yes — uses `mcp__ado__wiki_create_or_update_page`; discovers context from WI + linked PRs + codebase, no spec files needed |
+| `/aem-qa-handoff` | QA handoff | ADO comment with QA notes + test plan | Yes — uses ADO MCP |
+
+Skills that produce files only and are **not pipeline-useful** without additional commit+PR wiring:
+- `/dx-doc-gen` — requires pre-existing spec files (explain.md, implement.md from local dev flow); outputs to `.ai/specs/` only; not standalone automation
+- `/aem-doc-gen`, `/aem-editorial-guide` — produce authoring guides + screenshots; files only; require AEM + Playwright
+
+---
+
+### Workflow the trigger enables
+
+```
+Ticket created / refined
+  → @kai /dx-dor             (already deployed, own hook)
+  → @kai /dx-agent-all       (universal trigger: comment-based DevAgent)
+
+Implementation merged, QA picking up
+  → @kai /aem-qa-handoff     (universal trigger: post QA notes + test plan to ADO)
+
+Story completed
+  → @kai /dx-doc-retro       (universal trigger: write ADO Wiki page)
+```
+
+---
 
 ### Pipeline skeleton (`ado-cli-universal.yml`)
 
@@ -48,6 +96,17 @@ resources:
         - path: eventType
           value: workitem.commented
 
+parameters:
+  - name: workItemId
+    type: string
+    default: ""
+  - name: skill
+    type: string
+    default: ""
+  - name: extraPrompt
+    type: string
+    default: ""
+
 steps:
   - bash: |
       COMMENT="${{ parameters.universalHook.resource.fields['System.History'] }}"
@@ -55,7 +114,6 @@ steps:
       MANUAL_WI="${{ parameters.workItemId }}"
       MANUAL_SKILL="${{ parameters.skill }}"
 
-      # Webhook path: parse "@kai /dx-plan extra text"
       if [ -n "$MANUAL_SKILL" ]; then
         SKILL="/$MANUAL_SKILL"
         EXTRA="${{ parameters.extraPrompt }}"
@@ -66,18 +124,17 @@ steps:
       fi
 
       # Guard: skill must be in allowlist
-      ALLOWLIST="dx-plan dx-step dx-req dx-pr dx-step-verify"
+      ALLOWLIST="dx-agent-all dx-doc-retro aem-qa-handoff"
       SKILL_NAME="${SKILL#/}"
       if ! echo "$ALLOWLIST" | grep -qw "$SKILL_NAME"; then
         echo "##[error]Skill '$SKILL_NAME' not in allowlist: $ALLOWLIST"
         exit 1
       fi
 
-      # Inject WI_ID + extra prompt
       PROMPT="$SKILL $WI_ID${EXTRA:+ $EXTRA}"
       echo "##vso[task.setvariable variable=PROMPT]$PROMPT"
       echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
-    displayName: Parse skill + args
+    displayName: Parse skill + args from comment
 
   - bash: |
       node .ai/automation/scripts/pipeline-agent.js "$(PROMPT)"
@@ -93,130 +150,54 @@ steps:
 
 ### MCP server selection
 
-Start with **Option A: start all MCP servers always**. Each skill uses only what it needs; idle servers cost nothing beyond cold-start time (~10–15 s). Revisit with Option B (skill-to-MCP config map) only if cold-start degrades pipeline SLA below acceptable.
+Start with Option A: start all MCP servers (ADO, AEM, Playwright). Idle servers cost only cold-start time (~10–15 s). Revisit with a skill-to-MCP config map if cold-start becomes a problem.
 
 ### Authorization
 
-Pre-flight step checks the commenter's ADO identity against a configured group (default: project contributors). Configurable in `.ai/config.yaml`:
+Pre-flight step checks commenter identity against a configured ADO group (default: project contributors). Configurable in `.ai/config.yaml`:
 
 ```yaml
 dx-universal:
-  allowed-groups: ["Contributors"]   # ADO group names allowed to trigger
-  skill-allowlist: [dx-plan, dx-step, dx-req, dx-pr, dx-step-verify]
+  allowed-groups: ["Contributors"]
+  skill-allowlist: [dx-agent-all, dx-doc-retro, aem-qa-handoff]
 ```
 
 ---
 
-## Pipeline compatibility matrix and best candidates
+## Pipeline-safe interactive skill mode (`dx-agent-all` audit)
 
 **Added:** 2026-06-05
-**Problem:** The universal trigger runs any skill as a pipeline agent. Skills assume a human is at the terminal and may call `AskUserQuestion`, print interactive menus, or block on "confirm?" prompts. None of these work in a headless pipeline. This section documents which skills are pipeline-safe today, which need small changes, and which need the async re-ask pattern before they qualify.
+**Problem:** `/dx-agent-all` is the full story orchestrator (Phase 1–9: requirements → planning → execution → build → review → commit → PR). It is "configurable" for pipeline safety but not verified. The existing `DX_PIPELINE_MODE=true` env var suppresses interactive prompts in PR-Review, PR-Answer, BugFix, and SimpleAgent, but it is unknown whether `dx-agent-all` and its subskills (particularly `/dx-req` which has an `AskUserQuestion` interview loop in Phase 2) respect it end-to-end.
 
-**Scope:** All dx-core coordinator skills: `dx-plan`, `dx-req`, `dx-step`, `dx-pr`, `dx-step-verify`, `dx-simple` (reference).
+Before adding `/dx-agent-all` to the universal trigger allowlist, every phase must be verified to either:
+- Skip interactive prompts when `DX_PIPELINE_MODE=true`, or
+- Use the async ADO re-ask pattern (post comment → commit resume-state → exit → re-trigger on human reply)
 
-**Done-when:** Each skill row below marked Pipeline-ready has a passing smoke test via the universal trigger.
-
-### Compatibility matrix
-
-| Skill | Model | Interactive? | AskUserQuestion? | DX_PIPELINE_MODE guarded? | Pipeline-ready | Tier |
-|-------|-------|-------------|-----------------|--------------------------|---------------|------|
-| `/dx-plan` | opus/high | No | No | N/A — no prompts | ✅ Ready now | 1 |
-| `/dx-pr` | (default) | No | No | N/A — no prompts | ✅ Ready now | 1 |
-| `/dx-step` | sonnet | No | No (no AskUserQuestion found) | Partial — compile auto-retry already headless | ✅ Ready with `DX_PIPELINE_MODE=true` | 2 |
-| `/dx-step-verify` | opus/xhigh | Unknown | Audit needed | Unknown | ⚠️ Audit first | 2 |
-| `/dx-req` | sonnet | YES — interview loop | YES — `AskUserQuestion` in Phase 2 DoR gate | No | ❌ Requires #155 | 3 |
-| `/dx-simple` | sonnet | Async only | No (posts ADO comments) | Yes — template for all others | ✅ Already deployed | — |
-| `/dx-bug-all` | sonnet | Async only | No (posts ADO comments) | Yes | ✅ Already deployed | — |
-
-### Tier 1 — Ready immediately (no skill changes)
-
-**`/dx-plan`** is the best first candidate:
-- Pure generative skill. Reads `research.md` + `explain.md` from existing spec dir; outputs `implement.md`.
-- No user interaction of any kind. Optional brainstorming superpower is auto-skipped if not installed.
-- The `@kai /dx-plan 12345` comment triggers planning for a ticket that already has `/dx-req` output.
-- Typical pipeline run: 3–6 min, ~$0.15 (opus/high).
-
-**`/dx-pr`** is the best second candidate:
-- Pure ADO write. Reads `implement.md`, verifies all steps are `done`, pushes branch, creates PR.
-- No interaction. Hard gates (`all steps done`, `verified=true`) fail fast with a clear message — the pipeline can post this as an ADO comment and exit non-zero.
-- The `@kai /dx-pr 12345` comment closes the loop after a dev runs `/dx-step` locally or via the universal trigger.
-- Typical pipeline run: 1–2 min, ~$0.02.
-
-### Tier 2 — Ready with minor verification
-
-**`/dx-step`** needs a one-pass audit to confirm no hidden interactive prompts:
-- No `AskUserQuestion` or interactive patterns found in SKILL.md.
-- Compile-fail auto-retry (1 attempt) is already headless.
-- With `DX_PIPELINE_MODE=true`, any "are you sure?" patterns must auto-proceed or abort.
-- Change needed: add `DX_PIPELINE_MODE` guard to any "proceed?" prompt, if found during audit.
-- Risk: if the compilation auto-fix fails twice, the skill posts a blocked status to `implement.md` and exits — this is the right headless behavior.
-
-**`/dx-step-verify`** — audit required before adding to allowlist:
-- Not reviewed yet. Uses opus/xhigh (expensive); verify it doesn't call `AskUserQuestion`.
-- If clean, add to allowlist after audit pass.
-
-### Tier 3 — Requires async interview bypass first (#155)
-
-**`/dx-req`** is the most valuable but needs the most work:
-- Phase 2 DoR gate calls `AskUserQuestion` in a round-trip interview loop.
-- In pipeline mode this blocks forever.
-- Fix: when `DX_PIPELINE_MODE=true`, replace `AskUserQuestion` with the dx-simple async re-ask pattern (post ADO comment → commit `resume-state.json` → exit; re-trigger fires the pipeline again with the answer). See #155 below.
-- Once #155 is done, `@kai /dx-req 12345` fully automates the requirements phase end-to-end, including human Q&A via ADO comments.
-
-### Recommended rollout sequence
-
-1. **Now:** Add `/dx-plan` and `/dx-pr` to the universal trigger allowlist. Ship `ado-cli-universal.yml` with only these two enabled.
-2. **After audit:** Add `/dx-step` and `/dx-step-verify` to allowlist.
-3. **After #155:** Add `/dx-req` to allowlist. This unlocks the full "comment → requirements → plan → steps → PR" chain, all driven by ADO comments.
-
----
-
-## Pipeline-safe interactive skill mode (bypass `AskUserQuestion` in autonomous runs)
-
-**Added:** 2026-06-05
-**Problem:** `/dx-req` contains a synchronous interview loop in Phase 2 (DoR gate). When the DoR verdict is "Needs more detail", it calls `AskUserQuestion` in themed rounds (max 3 questions per round, up to 3 rounds). In a pipeline there is no human at the terminal — `AskUserQuestion` blocks forever or errors. The existing `DX_PIPELINE_MODE=true` env var suppresses interactive prompts in PR-Review, PR-Answer, and BugFix, but `/dx-req` does not respect it. The fix must preserve the interview loop for local interactive use while substituting the dx-simple async re-ask pattern for pipeline runs.
 **Scope:**
-- `plugins/dx-core/skills/dx-req/SKILL.md` — Phase 2 interview loop; add `DX_PIPELINE_MODE` branch
-- `plugins/dx-core/skills/dx-req/scripts/resume-check.sh` (create) — same pattern as dx-simple; discovers per-ticket `req/` branch
-- `plugins/dx-core/skills/dx-req/scripts/save-state.sh` (create or symlink) — checkpoint resume-state.json
-- `.ai/specs/<id>-<slug>/resume-state.json` — add `phase: req-interview`, `blocked-at: G-dor`, `comment-cursor` fields
+- `plugins/dx-core/skills/dx-agent-all/SKILL.md` — verify DX_PIPELINE_MODE propagation across all phases
+- `plugins/dx-core/skills/dx-req/SKILL.md` — Phase 2 interview loop (calls `AskUserQuestion`); needs async ADO path
+- `plugins/dx-core/skills/dx-step/SKILL.md` — verify no hidden interactive prompts
+- `plugins/dx-core/skills/dx-step-verify/SKILL.md` — audit for AskUserQuestion
+
 **Done-when:**
-- `grep -n 'DX_PIPELINE_MODE' plugins/dx-core/skills/dx-req/SKILL.md` → interview loop is gated
-- `grep -n 'AskUserQuestion' plugins/dx-core/skills/dx-req/SKILL.md` → only under `## Interactive mode` block
-- `test -f plugins/dx-core/skills/dx-req/scripts/resume-check.sh`
-- Triggering `@kai /dx-req 12345` on a ticket where DoR fails → pipeline posts DoR blocking questions to ADO comments → human replies with answers → `@kai /dx-req 12345` re-triggers → pipeline reads the answer from comments → resumes from Phase 2
+- `grep -rn 'AskUserQuestion' plugins/dx-core/skills/` → only appears under `## Interactive mode` blocks gated on `! DX_PIPELINE_MODE`
+- `grep -n 'DX_PIPELINE_MODE' plugins/dx-core/skills/dx-agent-all/SKILL.md` → env var propagated to all subskill invocations
+- Triggering `@kai /dx-agent-all` on a story with a failing DoR check posts blocking questions to ADO comments (async, like dx-simple) instead of hanging
 
 **Approach:**
 
-```
-DX_PIPELINE_MODE=true branch of /dx-req Phase 2:
+`/dx-req` Phase 2 interview loop: when `DX_PIPELINE_MODE=true`, replace `AskUserQuestion` with the dx-simple async re-ask pattern:
 
-1. Run /dx-dor as normal → get verdict
-2. If verdict = "Ready" or "Minor gaps":
-   → continue to Phase 3 (no change from interactive mode)
-3. If verdict = "Needs more detail":
-   a. Format blocking questions as ADO comment (loop-safe, no literal trigger token):
-      "🔍 /dx-req paused on #<id> — answers needed for DoR
-       
-       **Blocking questions:**
-       1. <question from dor-report.md>
-       2. ...
-       
-       Reply on this ticket beginning your comment with the trigger keyword
-       (prefix with @) followed by your answers.
-       
-       <!-- dx-req:blocked phase=G-dor comment-cursor=<id> -->"
-   b. Commit resume-state.json: { status: blocked-needs-input, blocked-at: G-dor, comment-cursor: <id> }
-   c. Post ADO comment via mcp__ado__wit_add_work_item_comment
-   d. Exit non-zero
+1. Format DoR blocking questions as ADO comment (loop-safe format, no literal trigger token)
+2. Commit `resume-state.json` (`status: blocked-needs-input`, `blocked-at: G-dor`, `comment-cursor: <id>`)
+3. Exit non-zero
+4. Human replies with `@kai /dx-agent-all` → pipeline re-fires → `resume-check.sh` reads branch + state → extracts answer from new comment → resumes Phase 2
 
-4. On re-trigger:
-   a. resume-check.sh finds branch → reads state → DISPATCH=resume-blocked-input
-   b. Fetch comments, find highest-id comment authored by non-bot after comment-cursor containing trigger token
-   c. Extract answers → update interview.md
-   d. Re-run DoR gate with answers as context
-   e. If passes → continue to Phase 3
-   f. If still failing → loop (up to dx-req.recovery.max-attempts, default 3) or escalate to hard-blocked
-```
+This mirrors exactly how dx-simple handles G1/G3/G4 ambiguity — the async ADO comment loop is the canonical pipeline-safe interaction pattern.
 
-Cross-ref: #154 (universal trigger — dx-req is the Tier 3 candidate), #141 (dx-simple recovery — template for this pattern).
+Requires:
+- `plugins/dx-core/skills/dx-req/scripts/resume-check.sh` (new — adapts dx-simple's resume-check.sh)
+- `plugins/dx-core/skills/dx-req/scripts/save-state.sh` (new or symlink to dx-simple's)
+- `.ai/specs/<id>-<slug>/resume-state.json` gains `phase: req-interview`, `blocked-at: G-dor`, `comment-cursor` fields
+
+Cross-ref: #154 (universal trigger — dx-agent-all is the top candidate once this passes), #141 (dx-simple recovery — template for this pattern), #150 (dx-bug-all recovery — same model).
