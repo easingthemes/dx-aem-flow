@@ -228,6 +228,30 @@ Reply tone:
 
 **Never resolve threads** — the user and reviewer handle resolution.
 
+### Bitbucket Cloud
+
+If `Platform: bitbucket-cloud` in session: skip MCP above. Resolve `TOKEN=${BITBUCKET_TOKEN:-$(read scm.bitbucket-token from config)}`. Read `WORKSPACE` and `REPO_SLUG` from session file.
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  "https://api.bitbucket.org/2.0/repositories/$WORKSPACE/$REPO_SLUG/pullrequests/<PR_ID>/comments" \
+  -d "$(jq -n --argjson parent <threadId> '{"content":{"raw":"Fixed."},"parent":{"id":$parent}}')"
+```
+
+### Bitbucket DC
+
+If `Platform: bitbucket-dc` in session: skip MCP above. Resolve `TOKEN=${BITBUCKET_TOKEN:-$(read scm.bitbucket-token from config)}`. Read `BB_HOST`, `BB_PROJECT`, and `REPO_SLUG` from session file.
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  "$BB_HOST/rest/api/1.0/projects/$BB_PROJECT/repos/$REPO_SLUG/pull-requests/<PR_ID>/comments" \
+  -d "$(jq -n --argjson parent <threadId> '{"text":"Fixed.","parent":{"id":$parent}}')"
+```
+
 ## 8. Update Session File
 
 Update `.ai/pr-answers/pr-<id>.md`:

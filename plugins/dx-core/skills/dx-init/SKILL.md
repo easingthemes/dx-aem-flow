@@ -85,14 +85,22 @@ Output is JSON:
   "base_branch": "develop",
   "ado_org": "myorg",
   "ado_project": "myproject",
+  "bb_workspace": "",
+  "bb_project": "",
+  "bb_host": "",
+  "bb_repo": "",
   "sibling_repos": ["sibling-a", "sibling-b"]
 }
 ```
 
-- `scm_provider`: `"ado"` → Azure DevOps, `"github"` → GitHub, `"unknown"` → ask the user
-- If the remote URL points to a Bitbucket or Atlassian instance, or if the user selects `jira` when asked: set provider to `jira`
+- `scm_provider`: `"ado"` → Azure DevOps, `"github"` → GitHub, `"bitbucket-cloud"` → Bitbucket Cloud, `"bitbucket-dc"` → Bitbucket Data Center, `"unknown"` → ask the user which platform they use
+- **`scm.provider` is the code hosting platform — it is independent of `tracker.provider`.** A team can use Bitbucket for code and Jira for work items simultaneously. Do NOT set `scm.provider` to `jira` — that is not a valid SCM provider. If the remote is Bitbucket, set `scm.provider: bitbucket-cloud` or `bitbucket-dc`. Ask separately (step 3 confirmation) whether the team uses Jira for work items.
 - `base_branch`: `"unknown"` → ask the user
 - `ado_org` / `ado_project`: empty if not ADO or extraction failed → ask the user
+- `bb_workspace`: Bitbucket Cloud workspace slug (populated when `scm_provider == "bitbucket-cloud"`)
+- `bb_project`: Bitbucket DC project key (populated when `scm_provider == "bitbucket-dc"`)
+- `bb_host`: Bitbucket DC base URL, e.g. `https://bitbucket.example.com` (populated when `scm_provider == "bitbucket-dc"`)
+- `bb_repo`: repo slug for either Bitbucket platform
 - `sibling_repos`: if non-empty, ask: "Found these sibling repos: <list>. Are any of these related to this project? (comma-separated numbers, or 'none')"
   - For each selected sibling, store `name`, `path` (default: `../<sibling-name>`), and `role`:
     ```yaml
@@ -121,14 +129,22 @@ Present detected values and ask to confirm or correct:
 | Build | `<command>` |
 | Test | `<command>` |
 | Lint | `<command or "none detected">` |
-| SCM | <ADO / GitHub / Bitbucket> |
-| Tracker | <ADO / Jira> |
-| Organization | <org> |
-| Project | <project> |
+| SCM (code hosting) | <ADO / GitHub / Bitbucket Cloud / Bitbucket DC> |
+| Workspace / Org | <workspace, org, or project key> |
 | Base Branch | <branch> |
+| Work-item tracker | <ADO / Jira / unknown — ask separately> |
 
 **Correct?** Type "yes" or tell me what to change.
 ```
+
+After the user confirms, ask one additional question if the SCM is Bitbucket or the tracker could not be determined:
+
+> **Where do you track work items?**
+> 1. Azure DevOps (Boards)
+> 2. Jira
+> 3. Neither / skip
+
+Set `tracker.provider` from the answer (`ado` | `jira` | omit the section). This question is skipped when `scm_provider == "ado"` (ADO handles both by default) or when the tracker is already known from a previous run.
 
 ## 4. Preferences
 
@@ -224,6 +240,41 @@ confluence:
 ```
 
 Print: "Add `JIRA_PERSONAL_TOKEN` and `CONFLUENCE_PERSONAL_TOKEN` to your `.claude/settings.local.json` env block or shell profile."
+
+#### If scm.provider = bitbucket-cloud
+
+Set `scm.org` to `bb_workspace` (detected). Set `scm.provider` to `bitbucket-cloud`. No additional questions needed — the workspace was extracted from the remote URL.
+
+Uncomment and populate the Bitbucket fields in `.ai/config.yaml` (they are commented out in the template by default):
+
+```yaml
+scm:
+  provider: bitbucket-cloud
+  org: "<bb_workspace>"        # workspace slug
+  base-branch: "<base_branch>"
+  bitbucket-token: ""          # set via BITBUCKET_TOKEN env var (preferred)
+```
+
+#### If scm.provider = bitbucket-dc
+
+Set `scm.org` to `bb_project` (detected project key). Set `scm.provider` to `bitbucket-dc`.
+
+If `bb_host` was successfully extracted from the remote URL, use it. Otherwise ask:
+
+> **Bitbucket DC host URL?** (e.g., `https://bitbucket.example.com`)
+
+Uncomment and populate the Bitbucket fields in `.ai/config.yaml`:
+
+```yaml
+scm:
+  provider: bitbucket-dc
+  org: "<bb_project>"          # project key, e.g. MYPROJ
+  base-branch: "<base_branch>"
+  bitbucket-host: "<bb_host>"  # DC instance URL, no trailing slash
+  bitbucket-token: ""          # set via BITBUCKET_TOKEN env var (preferred)
+```
+
+Print: "Add `BITBUCKET_TOKEN` to your `.claude/settings.local.json` env block or shell profile."
 
 ### 5c. (Removed — .ai/README.md and agent-index.md no longer generated)
 
@@ -321,7 +372,7 @@ The ADO MCP server entry (use the confirmed `scm.org` value — just the org nam
 
 Where `<ado_org>` is the organization name extracted from `scm.org` (e.g., if `scm.org` is `https://myorg.visualstudio.com/`, use `myorg`; if `scm.org` is already just `myorg`, use it as-is).
 
-**If SCM is not ADO** (GitHub or other): Skip this step entirely.
+**If SCM is not ADO** (GitHub, Bitbucket Cloud, Bitbucket DC, or other): Skip this step entirely. There is no MCP server to configure for Bitbucket — it uses REST API calls with a bearer token.
 
 ### 5g-bis. Configure Atlassian MCP Server
 
@@ -464,6 +515,16 @@ If `tracker.provider` is `jira`, also include Jira/Confluence tokens in the plac
   "env": {
     "JIRA_PERSONAL_TOKEN": "",
     "CONFLUENCE_PERSONAL_TOKEN": ""
+  }
+}
+```
+
+If `scm.provider` is `bitbucket-cloud` or `bitbucket-dc`, also include:
+
+```json
+{
+  "env": {
+    "BITBUCKET_TOKEN": ""
   }
 }
 ```
@@ -777,6 +838,9 @@ After writing, display:
 **Attribution:** `.claude/settings.json` — commit/PR attribution disabled
 **Secrets:** `.claude/settings.local.json` — local env vars for QA auth, API keys (gitignored)
 <If ADO:> **MCP:** `.mcp.json` — ADO MCP server configured (org: `<ado_org>`)
+<If Bitbucket Cloud:> **SCM:** Bitbucket Cloud (workspace: `<bb_workspace>`) — REST API, no MCP
+<If Bitbucket DC:> **SCM:** Bitbucket Data Center (project: `<bb_project>`, host: `<bb_host>`) — REST API, no MCP
+<If Bitbucket:> **Auth:** Set `BITBUCKET_TOKEN` in shell profile or `.claude/settings.local.json` before running `dx-pr-review`
 <If Jira:> **Tracker:** Jira (project: `<project-key>`, deployment: `<server|cloud>`)
 <If Jira:> **Wiki:** Confluence (space: `<space-key>`)
 <If Jira:> **MCP:** `.mcp.json` — Atlassian MCP server configured
@@ -840,6 +904,7 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 <If Jira:> - Start working: `/dx-req <Jira issue key, e.g. PROJ-123>`
 - Full pipeline: `/dx-agent-all <ID>`
 - Re-detect project profile: `/dx-adapt` (re-run anytime if structure changes)
+<If Bitbucket:> - Review a PR: `/dx-pr-review <PR URL or ID>` (set `BITBUCKET_TOKEN` first)
 <If AEM:>
 - AEM component lookup: `/aem-component <name>`
 - AEM baseline snapshot: `/aem-snapshot <name>`

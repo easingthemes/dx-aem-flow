@@ -20,12 +20,16 @@ project:
   brand: brand-a                  # optional — this repo's brand (split-platform frontends)
 
 scm:
-  provider: ado                   # ado | github
-  org: "https://myorg.visualstudio.com/"  # Organization URL
-  project: "My ADO Project"      # ADO project name (or GitHub org)
+  provider: ado                   # ado | github | bitbucket-cloud | bitbucket-dc
+  org: "https://myorg.visualstudio.com/"  # ADO/GitHub org URL; Bitbucket workspace or project key
+  project: "My ADO Project"      # ADO project name (not used for Bitbucket)
+  # Bitbucket Cloud / DC only:
+  # bitbucket-host: "https://bitbucket.example.com"  # DC instance URL, no trailing slash
+  # bitbucket-token: ""           # prefer BITBUCKET_TOKEN env var
+  # bitbucket-username: ""        # Cloud only — your workspace username (for own-PR detection)
 
 tracker:
-  provider: ado                   # ado | jira (preferred over scm.provider for work items)
+  provider: ado                   # ado | jira — work item tracking, independent of scm.provider
   repo-id: "uuid-here"           # Repository ID (auto-discovered or manual)
   base-branch: develop            # Default PR target branch
   wiki-id: "uuid-here"           # ADO wiki UUID (for dx-doc-gen wiki posting)
@@ -92,6 +96,9 @@ overrides:
     persona: "senior developer, brief responses"
 
 # ─── Jira / Confluence (when tracker.provider: jira) ──────
+# Note: tracker.provider is independent of scm.provider.
+# A project can use Bitbucket for code (scm.provider: bitbucket-cloud)
+# and Jira for work items (tracker.provider: jira) simultaneously.
 
 # jira:
 #   url: "https://myorg.atlassian.net"    # Jira Cloud instance URL
@@ -164,11 +171,14 @@ roles:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | string | yes | `ado` or `github` |
-| `org` | string | yes | Organization URL |
-| `project` | string | yes | Project name within the org |
-| `repo-id` | string | no | Repository UUID (auto-discovered if not set) |
+| `provider` | string | yes | `ado` \| `github` \| `bitbucket-cloud` \| `bitbucket-dc` — the code-hosting platform. Independent of `tracker.provider`. |
+| `org` | string | yes | ADO/GitHub: organization URL. Bitbucket Cloud: workspace slug. Bitbucket DC: project key (e.g., `MYPROJ`). |
+| `project` | string | conditional | ADO project name within the org. Not used for Bitbucket. |
+| `repo-id` | string | no | ADO/GitHub: repository UUID (auto-discovered if not set). Not used for Bitbucket. |
 | `base-branch` | string | yes | Default PR target (e.g., `develop`, `main`) |
+| `bitbucket-host` | string | conditional | **Bitbucket DC only.** Base URL of the DC instance, no trailing slash (e.g., `https://bitbucket.example.com`). Required when `provider: bitbucket-dc`. |
+| `bitbucket-token` | string | no | Bitbucket bearer token. Prefer the `BITBUCKET_TOKEN` environment variable — this field is a fallback for local development. |
+| `bitbucket-username` | string | no | **Bitbucket Cloud only.** Your workspace username / nickname. Used by `dx-pr-answer` to detect own PRs when `BITBUCKET_USERNAME` env var is not set. |
 | `wiki-id` | string | no | ADO wiki identifier UUID (for `/dx-doc-gen`, `/dx-pr-review-report` wiki posting) |
 | `wiki-project` | string | no | ADO project that owns the wiki (if different from `scm.project`) |
 | `wiki-doc-root` | string | no | Root wiki path for technical documentation (sprint subfolders created beneath) |
@@ -180,7 +190,7 @@ roles:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | string | no | `ado` or `jira`. Preferred over `scm.provider` for work item tracking. Falls back to `scm.provider` if not set. |
+| `provider` | string | no | `ado` \| `jira`. Work-item tracking platform. **Independent of `scm.provider`** — a project can use Bitbucket for code and Jira for tickets simultaneously. Falls back to `scm.provider` if not set, defaulting to `ado`. |
 
 ### `jira`
 
@@ -267,7 +277,9 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `platform` | string | no | Opaque, project-defined platform identifier (e.g., `alpha`, `beta`) |
 | `brand` | string | no | Repo's brand identity — used by `/dx-simple` routing to select the correct per-brand frontend repo on split platforms |
 | `path` | string | no | Local filesystem path for cross-repo checks (relative or absolute) |
-| `ado-project` | string | no | ADO project name if different from `scm.project` |
+| `ado-project` | string | no | ADO project name if different from `scm.project` (ADO only) |
+| `bitbucket-workspace` | string | no | Bitbucket Cloud workspace slug if different from `scm.org` |
+| `bitbucket-project` | string | no | Bitbucket DC project key if different from `scm.org` |
 | `base-branch` | string | no | Default branch (falls back to `scm.base-branch`) |
 
 ### `overrides`

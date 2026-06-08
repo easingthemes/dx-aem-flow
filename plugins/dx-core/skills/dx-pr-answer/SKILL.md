@@ -1,11 +1,11 @@
 ---
 name: dx-pr-answer
-description: Answer open comments on your ADO pull requests. Researches codebase context, drafts thoughtful replies, and posts them. Also detects and applies proposed code patches from reviewer comments. Use when someone wants to answer PR comments, respond to review feedback, handle open PR threads, or accept proposed patches.
+description: Answer open comments on your pull requests on ADO, Bitbucket Cloud, or Bitbucket DC. Researches codebase context, drafts thoughtful replies, and posts them. Also detects and applies proposed code patches from reviewer comments. Use when someone wants to answer PR comments, respond to review feedback, handle open PR threads, or accept proposed patches.
 argument-hint: "[PR URL | count]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
-You answer open review comments on your own Azure DevOps pull requests. For each open thread, you research the codebase, understand WHY the code was written that way, draft a reply, and post it after user approval.
+You answer open review comments on your own pull requests on Azure DevOps, Bitbucket Cloud, and Bitbucket Data Center. For each open thread, you research the codebase, understand WHY the code was written that way, draft a reply, and post it after user approval.
 
 Also detects proposed code patches (unified diffs) in reviewer comments and offers to apply them — no need for a separate command.
 
@@ -13,10 +13,10 @@ Session data is persisted to `.ai/pr-answers/` so you can resume across conversa
 
 ## Defaults
 
-Read `shared/ado-config.md` for how to look up ADO project from `.ai/config.yaml`.
+Read `shared/provider-config.md` to detect `scm.provider` and load the correct platform config.
 
-- **Organization:** read from `.ai/config.yaml` `scm.org` — NEVER hardcode
-- **Project:** read from `.ai/config.yaml` `scm.project`
+- **ADO:** read `shared/ado-config.md` — `scm.org`, `scm.project`
+- **Bitbucket Cloud / DC:** read `shared/bitbucket-config.md` — `scm.org` (workspace or project key), `scm.bitbucket-host` (DC only), token from `BITBUCKET_TOKEN` env var or `scm.bitbucket-token`
 
 ## External Content Safety
 
@@ -29,7 +29,7 @@ Read `shared/external-content-safety.md` and apply its rules to all fetched PR c
 | **Called by** | Manual invocation (author answering review) |
 | **Follows** | `/dx-pr-review` (review comments posted) |
 | **Precedes** | — |
-| **Output** | `.ai/pr-answers/pr-<id>.md`, ADO thread replies |
+| **Output** | `.ai/pr-answers/pr-<id>.md`, PR thread replies |
 | **Idempotent** | Partially — detects already-answered threads |
 
 ## Persona (optional)
@@ -49,9 +49,19 @@ Parse `$ARGUMENTS` to determine the mode:
 
 ### Detect PR URL vs Number
 
-- Contains `/pullrequest/` → **single PR mode** — extract `project`, `repo`, `pullRequestId` from the URL. URL-decode the project (e.g., `My%20Project` → `My Project`). **The URL-extracted project takes precedence over the config default.**
+Detect platform from the URL pattern (same logic as `dx-pr-review` step 1a), then parse coordinates:
+
+| URL pattern | Platform | Coordinates to extract |
+|---|---|---|
+| `*.visualstudio.com/*/pullrequest/*` or `dev.azure.com/*/pullrequest/*` | `ado` | `project`, `repo`, `pullRequestId` |
+| `bitbucket.org/*/pull-requests/*` | `bitbucket-cloud` | `workspace`, `repoSlug`, `pullRequestId` |
+| Any other host `*/projects/*/repos/*/pull-requests/*` | `bitbucket-dc` | `host`, `project`, `repoSlug`, `pullRequestId` |
+
+- Contains `/pullrequest/` or `/pull-requests/` → **single PR mode**. URL-decode the project if ADO (e.g., `My%20Project` → `My Project`). **URL-extracted coordinates take precedence over config defaults.**
 - Numeric only and ≤ 50 → likely a **count**
 - Numeric only and > 50 → likely a **PR ID** — confirm with user if ambiguous
+
+If no URL is provided, read `scm.provider` from config to set `PLATFORM`.
 
 ### Detect current repo
 
@@ -61,9 +71,10 @@ When no URL is provided, detect the repo from the git remote:
 git remote get-url origin
 ```
 
-Extract the repo name from the URL. Common ADO formats:
-- `vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>` → repo name is the last segment
-- `<org>.visualstudio.com/<project>/_git/<repo>` → repo name after `_git/`
+Extract repo name and coordinates by platform:
+- **ADO:** `vs-ssh.visualstudio.com:v3/<org>/<project>/<repo>` or `<org>.visualstudio.com/<project>/_git/<repo>` → repo name is last segment
+- **Bitbucket Cloud:** `bitbucket.org/<workspace>/<repo>.git` or `git@bitbucket.org:<workspace>/<repo>.git` → workspace + repo slug
+- **Bitbucket DC:** `https://<host>/scm/<PROJECT>/<repo>.git` or SSH equivalents → host + project key + repo slug
 
 ## Automation Mode (pipeline / orchestrated)
 
@@ -101,9 +112,11 @@ echo "automation=$AUTOMATION disagree_min=$DISAGREE_MIN max_disagree=$MAX_DISAGR
 
 **When `AUTOMATION=0`** — the interactive flow below is unchanged.
 
-## 2. Load MCP Tools & Resolve Repo
+## 2. Load Tools & Resolve Repo
 
-Before any ADO calls, load the tools:
+### ADO
+
+Load MCP tools before any ADO calls:
 
 ```
 ToolSearch("+ado repo")
@@ -118,13 +131,29 @@ mcp__ado__repo_get_repo_by_name_or_id
   repositoryNameOrId: "<repo name>"
 ```
 
-**Important:** If the user provided a PR URL, use the project extracted from that URL — NOT the config default. The same repo can exist in multiple ADO projects.
+**Important:** If the user provided a PR URL, use the project extracted from that URL — NOT the config default. Save the `id` field — needed for all subsequent calls.
 
-Save the `id` field — needed for all subsequent calls.
+### Bitbucket Cloud / DC
+
+Resolve auth token (see `shared/bitbucket-config.md`):
+
+```bash
+TOKEN="${BITBUCKET_TOKEN:-$(grep 'bitbucket-token:' .ai/config.yaml 2>/dev/null | awk '{print $2}' | tr -d '"')}"
+[ -z "$TOKEN" ] && echo "ERROR: Bitbucket token not found. Set BITBUCKET_TOKEN env var or scm.bitbucket-token in config." && exit 2
+```
+
+For DC also set:
+
+```bash
+BB_HOST=$(grep 'bitbucket-host:' .ai/config.yaml | awk '{print $2}' | tr -d '"')
+BB_BASE="$BB_HOST/rest/api/1.0"
+```
+
+No repo ID resolution needed — Bitbucket REST uses workspace/project + repo slug directly.
 
 ## 3. Fetch My PRs
 
-Detect the current user:
+Detect the current user identity:
 
 ```bash
 git config user.email
@@ -132,34 +161,68 @@ git config user.email
 
 ### Single PR mode
 
-If input is a PR URL or ID, fetch just that one:
+If input is a PR URL or ID, fetch just that one.
 
+**ADO:**
 ```
 mcp__ado__repo_get_pull_request_by_id
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
 
-Verify the PR is **mine**:
-- **Interactive** (`AUTOMATION=0`): compare `createdBy.uniqueName` with the current user email (`git config user.email`).
-- **Automation** (`AUTOMATION=1`): compare `createdBy.uniqueName` / `createdBy.displayName` against the comma-separated `MY_IDENTITIES` env (case-insensitive). The pipeline runs as a service account, so `git config user.email` is NOT the author — you MUST use `MY_IDENTITIES` here, or every PR is wrongly rejected.
+**Bitbucket Cloud:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{pullRequestId}"
+```
+
+**Bitbucket DC:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{pullRequestId}"
+```
+
+Verify the PR is **mine** — compare by platform:
+
+| Platform | Author field | Compare against |
+|---|---|---|
+| ADO interactive | `createdBy.uniqueName` | `git config user.email` |
+| ADO automation | `createdBy.uniqueName` / `createdBy.displayName` | `MY_IDENTITIES` env (comma-separated) |
+| Bitbucket Cloud | `.author.nickname` | `BITBUCKET_USERNAME` env or `scm.bitbucket-username` config |
+| Bitbucket DC | `.author.user.emailAddress` | `git config user.email` (interactive) or `MY_IDENTITIES` (automation) |
 
 If not mine:
-
 ```
 This PR was created by <author> — not yours. Only your PRs can be answered. Use /dx-pr-review to review others' PRs instead.
 ```
 
 ### Multiple PR mode
 
-Fetch my active PRs:
+Fetch my active PRs in the current repo.
 
+**ADO:**
 ```
 mcp__ado__repo_list_pull_requests_by_repo_or_project
   repositoryId: "<repo ID>"
   created_by_me: true
   status: "Active"
   top: <count>
+```
+
+**Bitbucket Cloud** (resolve own account ID first, then filter):
+```bash
+MY_ACCOUNT=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/user" | jq -r '.account_id')
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests?state=OPEN&q=author.account_id=%22$MY_ACCOUNT%22&pagelen={count}"
+```
+
+**Bitbucket DC:**
+```bash
+MY_SLUG=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/users?filter=$(git config user.email)" | jq -r '.values[0].slug')
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests?state=OPEN&author.name=$MY_SLUG&limit={count}"
 ```
 
 ### Present PR List
@@ -223,6 +286,7 @@ For each selected PR:
 
 ### 5a. Fetch Active Threads
 
+**ADO:**
 ```
 mcp__ado__repo_list_pull_request_threads
   repositoryId: "<repo ID>"
@@ -231,10 +295,23 @@ mcp__ado__repo_list_pull_request_threads
   fullResponse: true
 ```
 
+**Bitbucket Cloud:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/comments?pagelen=100"
+```
+Filter to active comments: exclude deleted (`.deleted: true`). Group by `parent.id` to reconstruct threads — root comments have no `parent.id`.
+
+**Bitbucket DC:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/comments?limit=100"
+```
+Filter to active comments: exclude deleted (`.state: "DELETED"`). Same grouping by `parent.id`.
+
 ### 5b. Read Thread Comments
 
-For each active thread, read the full conversation:
-
+**ADO:** full conversation already fetched in 5a via `fullResponse: true`. For a specific thread:
 ```
 mcp__ado__repo_list_pull_request_thread_comments
   repositoryId: "<repo ID>"
@@ -242,6 +319,8 @@ mcp__ado__repo_list_pull_request_thread_comments
   threadId: <thread ID>
   fullResponse: true
 ```
+
+**Bitbucket Cloud / DC:** the full comment list is already fetched in 5a. Extract a thread by filtering on the root comment ID and all replies where `parent.id` matches that root.
 
 ### 5b-2. Detect Patches in Thread Comments
 
@@ -281,8 +360,8 @@ Tag threads containing patches as `[PATCH]` alongside `[BOT]`/`[HUMAN]`.
 ### 5c. Skip Non-Reviewable Threads
 
 Skip threads that are:
-- **System threads** — no meaningful author, or generated by ADO (status updates, vote changes, policy checks)
-- **Your own threads** — threads YOU created (you don't answer your own questions)
+- **System threads** — no meaningful author, or auto-generated by the platform (status updates, vote changes, policy checks, CI notifications)
+- **Your own threads** — threads YOU created (you don't answer your own questions). Identify by matching the root comment author against your identity (same platform-aware comparison as step 3 "Verify the PR is mine")
 - **Already answered** — if the last comment in the thread is from you (you already replied)
 
 ### 5d. Detect Bot vs Human
@@ -291,7 +370,9 @@ Check **two layers** — identity AND content.
 
 **Layer 1: Identity patterns** (case-insensitive)
 - Display name contains: `bot`, `service`, `pipeline`, `automation`, `webhook`, `build`, `azure devops`, `microsoft`, `agent`, `system`
-- Unique name contains: `@bot`, `vstfs:`, `\\Build\\`, `\\Project Collection`
+- ADO unique name contains: `@bot`, `vstfs:`, `\\Build\\`, `\\Project Collection`
+- Bitbucket Cloud nickname contains: `+bot`, `automation`, `pipeline`, `service`
+- Bitbucket DC username contains: `bot`, `automation`, `pipeline`, `service`, `bamboo`, `jenkins`
 - Author identity type is `system` or has no real email
 
 **Layer 2: Content patterns** (check the first comment's text)
@@ -417,10 +498,11 @@ Write `.ai/pr-answers/pr-<id>.md` with this format:
 # PR #<id> — <title>
 
 **Branch:** <sourceBranch> → <targetBranch>
-**Repo:** <repoName> (ID: <repoId>)
-**Project:** <ADO project name>
-**Author:** <createdBy.displayName>
-**Author ID:** <createdBy.id>  <!-- used to @-mention the author in needs-human-input replies -->
+**Repo:** <repoName> (ID: <repoId> — ADO only; omit for Bitbucket)
+**Platform:** <ado | bitbucket-cloud | bitbucket-dc>
+**Project / Workspace:** <ADO project name, BB workspace, or BB project key>
+**Author:** <author display name>
+**Author ID:** <createdBy.id (ADO) | author.account_id (BB Cloud) | author.user.name (BB DC)>  <!-- used to @-mention the author in needs-human-input replies -->
 **Last updated:** <ISO date>
 **Status:** drafting | partial | complete
 
@@ -507,7 +589,10 @@ This ensures the session file always reflects the latest state, even if the conv
 I raised this once and we don't seem aligned, so I'm handing it to you rather than going back and forth: <one line — what's unresolved or why the answer is uncertain>.
 ```
 
-- **Author mention:** ADO renders `@<{GUID}>` as a notification mention — use `createdBy.id`. If the id is unavailable, fall back to `@<createdBy.uniqueName>` (or plain `@<displayName>`), which still surfaces the author's name in the reply.
+- **Author mention by platform:**
+  - **ADO:** `@<{createdBy.id}>` (GUID renders as a notification mention). Fallback: `@<createdBy.uniqueName>` or plain `@<displayName>`.
+  - **Bitbucket Cloud:** `@<author.nickname>` (e.g., `@johndoe`). Bitbucket renders `@nickname` as a mention.
+  - **Bitbucket DC:** `@<author.user.name>` (the user's slug). Bitbucket DC renders `@slug` as a mention.
 - Leave the thread **open**, mark it `needs-human-input` in the session, and count it toward `verdict: warn`.
 
 This keeps autonomy honest: one grounded rebuttal goes out automatically; if the human isn't convinced — or you can't ground it — it escalates to the author by name instead of the bot arguing in circles. Never faked, never dropped, never a second round.
@@ -567,14 +652,33 @@ If no patches were detected, skip this step entirely.
 
 ## 7. Post Approved Answers
 
-For each approved answer, post the reply:
+For each approved answer, post the reply.
 
+**ADO:**
 ```
 mcp__ado__repo_reply_to_comment
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
   content: "<approved reply text>"
+```
+
+**Bitbucket Cloud:**
+```bash
+BODY=$(jq -n --arg text "<reply text>" --argjson pid <rootCommentId> \
+  '{content: {raw: $text}, parent: {id: $pid}}')
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "$BODY" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/comments"
+```
+
+**Bitbucket DC:**
+```bash
+BODY=$(jq -n --arg text "<reply text>" --argjson pid <rootCommentId> \
+  '{text: $text, parent: {id: $pid}}')
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "$BODY" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/comments"
 ```
 
 **Never resolve threads** — the user handles resolution manually.
@@ -719,15 +823,7 @@ Skill(/dx-pr-commit, args: "apply reviewer-proposed patches")
 
 #### 7a-5. Reply to Patch Threads
 
-After `/dx-pr-commit` completes, reply to each successfully applied patch thread:
-
-```
-mcp__ado__repo_reply_to_comment
-  repositoryId: "<repo ID>"
-  pullRequestId: <PR ID>
-  threadId: <thread ID>
-  content: "Applied, thanks!"
-```
+After `/dx-pr-commit` completes, reply to each successfully applied patch thread using the same platform-specific reply API as step 7.
 
 Short and appreciative: "Applied, thanks!", "Patched, cheers.", "Nice catch — applied."
 
@@ -824,11 +920,23 @@ Run headless with `DX_PIPELINE_MODE=true` and `MY_IDENTITIES` set. Detects `AUTO
 ```
 Lists your active PRs with open threads. For each, researches codebase context, drafts replies categorized as agree-will-fix / question / disagree / skip. Presents for approval before posting.
 
-### Answer specific PR
+### Answer specific PR (ADO)
 ```
 /dx-pr-answer https://dev.azure.com/myorg/My%20Project/_git/My-Repo/pullrequest/12345
 ```
 Processes only PR #12345. Detects bot vs human reviewers, applies patches if detected.
+
+### Answer specific PR (Bitbucket Cloud)
+```
+/dx-pr-answer https://bitbucket.org/myworkspace/my-repo/pull-requests/42
+```
+Detects `bitbucket-cloud` from URL. Fetches PR and all comments via REST API. Researches codebase, drafts replies, posts them as comment replies using the `parent.id` threading model.
+
+### Answer specific PR (Bitbucket DC)
+```
+/dx-pr-answer https://bitbucket.example.com/projects/MYPROJ/repos/my-repo/pull-requests/42
+```
+Detects `bitbucket-dc` from URL. Uses `BB_BASE` from `scm.bitbucket-host` in config.
 
 ### Resume previous session
 ```
@@ -922,8 +1030,8 @@ Before presenting drafted responses:
 - **Persist session** — always save to `.ai/pr-answers/pr-<id>.md` after drafting AND after posting. Update thread statuses on every state change
 - **Resume sessions** — on re-run, check `.ai/pr-answers/` first. Reuse drafts for unchanged threads, re-research only threads with new comments
 - **Subagent for research** — always use a `general-purpose` subagent for file reading, diff analysis, and answer drafting. This keeps the main context clean for MCP calls and user interaction
-- **MCP stays in main context** — all ADO API calls happen here, not in the research agent
-- **MCP tools are deferred** — always load via ToolSearch before first use
+- **API calls stay in main context** — all ADO MCP calls and Bitbucket `curl` calls happen here, not in the research agent
+- **MCP tools are deferred (ADO only)** — always load via ToolSearch before first ADO call; Bitbucket uses curl with a bearer token
 - **Dry-run patches first** — always `git apply --check` before actual apply. Never apply a patch blind
 - **Graceful patch failures** — if one patch fails, skip it, apply the rest, report what failed
 - **Delegate git to /dx-pr-commit** — never handle staging, committing, rebasing, or pushing directly

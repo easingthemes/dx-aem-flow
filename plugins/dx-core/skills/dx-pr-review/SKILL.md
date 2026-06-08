@@ -1,13 +1,13 @@
 ---
 name: dx-pr-review
-description: Review a PR — analyze code, present findings, optionally post comments and patches to ADO. Also supports standalone posting of saved findings (for automation pipelines). Use when you want to review a pull request.
+description: Review a PR — analyze code, present findings, optionally post comments and patches to ADO, Bitbucket Cloud, or Bitbucket DC. Also supports standalone posting of saved findings (for automation pipelines). Use when you want to review a pull request.
 model: opus
 effort: high
 argument-hint: "[PR URL or ID]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
-You are an AI code reviewer for Azure DevOps pull requests. You review code, post comments, optionally generate fix patches, and track follow-up conversations with PR authors.
+You are an AI code reviewer for pull requests on Azure DevOps, Bitbucket Cloud, and Bitbucket Data Center. You review code, post comments, optionally generate fix patches, and track follow-up conversations with PR authors.
 
 **Auto-detects mode:**
 - **First review** — no previous comments from you on this PR
@@ -19,10 +19,10 @@ If `.ai/me.md` exists, read it. Use it to shape the voice of review comments —
 
 ## Defaults
 
-Read `shared/ado-config.md` for how to look up ADO project from `.ai/config.yaml`.
+Read `shared/provider-config.md` to detect `scm.provider` and load the correct platform config.
 
-- **Organization:** read from `.ai/config.yaml` `scm.org` — NEVER hardcode
-- **Project:** read from `.ai/config.yaml` `scm.project`
+- **ADO:** read `shared/ado-config.md` — `scm.org`, `scm.project`
+- **Bitbucket Cloud / DC:** read `shared/bitbucket-config.md` — `scm.org` (workspace or project key), `scm.bitbucket-host` (DC only), token from `BITBUCKET_TOKEN` env var or `scm.bitbucket-token`
 
 ## External Content Safety
 
@@ -40,16 +40,63 @@ Read `shared/external-content-safety.md` and apply its rules to all fetched PR c
 
 ## 1. Parse Input & Detect Repo
 
-The argument is either:
+### 1a. Detect Platform
 
-- **Full URL**: `https://{org}.visualstudio.com/{project}/_git/{repo}/pullrequest/{id}` or `https://dev.azure.com/{org}/{project}/_git/{repo}/pullrequest/{id}` — extract `project`, `repo`, and `pullRequestId`. URL-decode the project (e.g., `My%20Project` → `My Project`). **The URL-extracted project takes precedence over the config default.**
-- **PR ID only** (number): Detect repo from `git remote get-url origin`, read `.ai/config.yaml` for repo → ADO project mapping
+If a full URL was provided, detect platform from the URL pattern:
 
-Load MCP tools before any ADO calls:
+| URL pattern | Platform |
+|---|---|
+| `*.visualstudio.com/*/pullrequest/*` or `dev.azure.com/*/pullrequest/*` | `ado` |
+| `bitbucket.org/*/pull-requests/*` | `bitbucket-cloud` |
+| Any other host `*/projects/*/repos/*/pull-requests/*` | `bitbucket-dc` |
+
+If no URL was provided (PR ID only), read `scm.provider` from `.ai/config.yaml`:
+
+```bash
+PLATFORM=$(grep 'provider:' .ai/config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+PLATFORM="${PLATFORM:-ado}"
+```
+
+Set `PLATFORM` to one of `ado | bitbucket-cloud | bitbucket-dc` — carry it through every subsequent step.
+
+### 1b. Parse Coordinates
+
+**ADO URL:**
+- `https://{org}.visualstudio.com/{project}/_git/{repo}/pullrequest/{id}`
+- `https://dev.azure.com/{org}/{project}/_git/{repo}/pullrequest/{id}`
+- Extract: `project`, `repoName`, `pullRequestId`. URL-decode the project (e.g., `My%20Project` → `My Project`). **URL-extracted project takes precedence over config default.**
+
+**Bitbucket Cloud URL:**
+- `https://bitbucket.org/{workspace}/{repo-slug}/pull-requests/{id}`
+- Extract: `workspace` (maps to `scm.org`), `repoSlug`, `pullRequestId`
+
+**Bitbucket DC URL:**
+- `https://{host}/projects/{project}/repos/{repo}/pull-requests/{id}`
+- Extract: `host` (maps to `scm.bitbucket-host`), `project` (maps to `scm.org`), `repoSlug`, `pullRequestId`
+
+**PR ID only:** Detect repo from `git remote get-url origin`, read `.ai/config.yaml` for project/workspace mapping.
+
+### 1c. Load Tools
+
+**ADO:**
 
 ```
 ToolSearch("+ado repo")
 ToolSearch("+ado pull request thread")
+```
+
+**Bitbucket Cloud / DC:** resolve auth token using `shared/bitbucket-config.md` token resolution:
+
+```bash
+TOKEN="${BITBUCKET_TOKEN:-$(grep 'bitbucket-token:' .ai/config.yaml 2>/dev/null | awk '{print $2}' | tr -d '"')}"
+[ -z "$TOKEN" ] && echo "ERROR: Bitbucket token not found. Set BITBUCKET_TOKEN env var or scm.bitbucket-token in config." && exit 2
+```
+
+For Bitbucket DC, also read the host:
+
+```bash
+BB_HOST=$(grep 'bitbucket-host:' .ai/config.yaml | awk '{print $2}' | tr -d '"')
+BB_BASE="$BB_HOST/rest/api/1.0"
 ```
 
 If the PR is from a **different repo** than the current working directory, note this — you'll handle it in step 4.
@@ -95,6 +142,8 @@ If hub mode is not active: continue with normal flow below.
 
 ## 2. Fetch PR Details
 
+### ADO
+
 Resolve the repo ID first:
 
 ```
@@ -113,21 +162,41 @@ mcp__ado__repo_get_pull_request_by_id
   pullRequestId: <PR ID>
 ```
 
-Extract:
-- **Title and description** — understand the intent
-- **Source branch** (`sourceRefName`) and **target branch** (`targetRefName`)
-- **Status** — only review active PRs
-- **Reviewers** — existing votes
-- **Created by** — for context
-- **SSH URL** — from `repository.sshUrl` (needed for cross-repo)
+Extract: title, description, `sourceRefName`/`targetRefName` (strip `refs/heads/`), status (only review `active`), `createdBy.uniqueName` + `createdBy.displayName`, `repository.sshUrl`.
+
+### Bitbucket Cloud
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{pullRequestId}"
+```
+
+Extract: `.title`, `.description`, `.source.branch.name` / `.destination.branch.name`, `.state` (only review `OPEN`), `.author.display_name` + `.author.nickname` (slug) + `.author.account_id`, SSH clone URL from `.source.repository.links.clone[] | select(.name=="ssh") | .href`.
+
+### Bitbucket DC
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{pullRequestId}"
+```
+
+Extract: `.title`, `.description`, `.fromRef.displayId` / `.toRef.displayId`, `.state` (only review `OPEN`), `.author.user.displayName` + `.author.user.name` (slug) + `.author.user.emailAddress`, SSH clone URL from `.fromRef.repository.links.clone[] | select(.name=="ssh") | .href`.
 
 ### Skip own PRs
 
-**Unless `REVIEW_OWN_PRS=1`** (the `DX_REVIEW_OWN_PRS=true` override — default on in CI, off locally), compare the PR's `createdBy.uniqueName` / `createdBy.displayName` against the current user (`git config user.email`). If they match:
+**Unless `REVIEW_OWN_PRS=1`** (the `DX_REVIEW_OWN_PRS=true` override — default on in CI, off locally), compare the PR author against the current user. If they match:
 
 ```
 Skipping PR #<id> — you are the author. You can't review your own PR.
 ```
+
+**Identity comparison by platform:**
+
+| Platform | Author field | Compare against |
+|---|---|---|
+| ADO | `createdBy.uniqueName` | `git config user.email` |
+| Bitbucket Cloud | `.author.nickname` | `scm.bitbucket-username` from config, or `BITBUCKET_USERNAME` env var |
+| Bitbucket DC | `.author.user.emailAddress` | `git config user.email` |
 
 And stop. If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
 
@@ -135,7 +204,9 @@ If `REVIEW_OWN_PRS=1`, do **not** skip — continue reviewing even when the auth
 
 ## 3. Fetch Existing Review Threads
 
-Check for existing threads — these provide valuable context for the review:
+Check for existing comments/threads — these provide valuable context for the review.
+
+### ADO
 
 ```
 mcp__ado__repo_list_pull_request_threads
@@ -152,6 +223,24 @@ mcp__ado__repo_list_pull_request_thread_comments
   threadId: <thread ID>
   fullResponse: true
 ```
+
+### Bitbucket Cloud
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{pullRequestId}/comments?pagelen=100"
+```
+
+The response is a flat list (`.values[]`). Group into logical threads using `parent.id` — top-level comments (no `parent.id`) are thread roots; comments with `parent.id` are replies. Skip deleted comments (`.deleted: true`).
+
+### Bitbucket DC
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{pullRequestId}/comments?limit=100"
+```
+
+Same flat-list structure as Cloud. Group by `parent.id` into thread roots and replies. Skip deleted comments (`.state: "DELETED"`).
 
 Build a structured summary of existing review comments:
 
@@ -181,7 +270,10 @@ After fetching threads, determine whether this is a first review or follow-up:
    git config user.email
    ```
 
-2. Scan all fetched threads — check each thread's comments for ones authored by the current user (match `uniqueName` against your email).
+2. Scan all fetched threads — check each thread's comments for ones authored by the current user. Match by platform:
+   - **ADO:** match comment `uniqueName` against `git config user.email`
+   - **Bitbucket Cloud:** match comment `.author.nickname` against `BITBUCKET_USERNAME` or `scm.bitbucket-username`
+   - **Bitbucket DC:** match comment `.author.emailAddress` against `git config user.email`
 
 3. Check for a session file:
    ```bash
@@ -593,11 +685,13 @@ AskUserQuestion(
 
 **Wait for explicit approval.**
 
-### 8. Post Comments to ADO
+### 8. Post Comments
 
-#### Without patches (default)
+Post inline comments and a summary thread. Follow `references/post-findings.md` for the full posting procedure including idempotency guards, comment formats, and vote casting — it covers all three platforms (ADO, Bitbucket Cloud, Bitbucket DC).
 
-Post each comment as a thread:
+**Quick reference — inline comment API per platform:**
+
+#### ADO (without patches)
 
 ```
 mcp__ado__repo_create_pull_request_thread
@@ -612,7 +706,7 @@ mcp__ado__repo_create_pull_request_thread
   status: "active"
 ```
 
-Then post the summary (no filePath = general PR comment):
+Summary (no filePath = general PR comment):
 
 ```
 mcp__ado__repo_create_pull_request_thread
@@ -622,11 +716,37 @@ mcp__ado__repo_create_pull_request_thread
   status: "active"
 ```
 
-#### With patches
+#### Bitbucket Cloud (without patches)
 
-For each fix, post a comment with the issue AND the specific patch:
+```bash
+# Inline comment
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"content\": {\"raw\": \"<comment>\"}, \"inline\": {\"path\": \"<file>\", \"to\": <line>}}" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/comments"
 
-**Comment format for fixable issues:**
+# Summary comment (no inline block)
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"content\": {\"raw\": \"**Verdict**: <verdict>\\n\\nReviewed N files — N comments.\"}}" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/comments"
+```
+
+#### Bitbucket DC (without patches)
+
+```bash
+# Inline comment
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"text\": \"<comment>\", \"anchor\": {\"line\": <line>, \"lineType\": \"ADDED\", \"fileType\": \"TO\", \"path\": \"<file>\"}}" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/comments"
+
+# Summary comment (no anchor block)
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"text\": \"**Verdict**: <verdict>\\n\\nReviewed N files — N comments.\"}" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/comments"
+```
+
+#### With patches (all platforms)
+
+For each fixable issue, embed the patch in a collapsible block:
 
 ```markdown
 <issue description — written like a colleague, not a linting tool>
@@ -643,13 +763,13 @@ To apply: \`git apply fix.patch\`
 ```
 
 > **CRITICAL — diff rendering in `<details>` blocks:**
-> 1. **Blank line after `</summary>` is mandatory** — without it, ADO won't process the code fence as markdown
-> 2. **NEVER HTML-encode diff content** — write raw `<p>`, `<span>`, `<div>`, NOT `&lt;p&gt;`, `&lt;span&gt;`, `&lt;div&gt;`. The code fence handles escaping for display. HTML-encoding creates double-encoding that shows literal `&lt;` text to the reader.
-> 3. **Always include the triple-backtick code fence** with `diff` language tag — without it, HTML tags in the diff get parsed as actual HTML
+> 1. **Blank line after `</summary>` is mandatory** — without it, the platform won't process the code fence as markdown
+> 2. **NEVER HTML-encode diff content** — write raw `<p>`, `<span>`, `<div>`, NOT `&lt;p&gt;`, `&lt;span&gt;`, `&lt;div&gt;`
+> 3. **Always include the triple-backtick code fence** with `diff` language tag
 
 **For non-fixable issues (QUESTION):** regular comment without a patch.
 
-**Summary thread** (no filePath):
+**Summary thread:**
 
 ```markdown
 **Review with proposed fixes**
@@ -687,16 +807,16 @@ AskUserQuestion(
 )
 ```
 
-Map the user's choice to the `vote` enum and cast it via MCP:
+Map the user's choice and cast the vote via the platform API:
 
-| Option | `vote` enum | ADO integer |
-|---|---|---|
-| Approve — no critical issues | `Approved` | 10 |
-| Approve with suggestions — minor improvements | `ApprovedWithSuggestions` | 5 |
-| Request changes — critical issues | `WaitingForAuthor` | -5 |
-| (reject variant, if needed) | `Rejected` | -10 |
-| (clear vote) | `NoVote` | 0 |
-| Skip voting — comments only | *(no-op — do not call the tool)* | — |
+| Option | ADO | Bitbucket Cloud | Bitbucket DC |
+|---|---|---|---|
+| Approve | `vote: Approved` (+10) | POST `/approve` | POST `/approve` |
+| Approve with suggestions | `vote: ApprovedWithSuggestions` (+5) | POST `/approve` | POST `/approve` |
+| Request changes | `vote: WaitingForAuthor` (-5) | POST `/request-changes` | PUT `/participants/{slug}` `status: NEEDS_WORK` |
+| Skip voting | *(no-op)* | *(no-op)* | *(no-op)* |
+
+**ADO:**
 
 ```
 mcp__ado__repo_vote_pull_request
@@ -705,9 +825,35 @@ mcp__ado__repo_vote_pull_request
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
 
-The tool auto-adds the caller as a reviewer if not already one. If the user picks **Skip voting — comments only**, do not call the tool.
+The tool auto-adds the caller as a reviewer if not already one.
 
-Never auto-approve or auto-decline without explicit user confirmation.
+**Bitbucket Cloud:**
+
+```bash
+# Approve
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/approve"
+# Request changes
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/request-changes"
+```
+
+**Bitbucket DC:**
+
+```bash
+# Approve
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/approve"
+# Request changes (Needs Work) — resolve user slug first
+USER_SLUG=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BB_BASE/users?filter=$(git config user.email)" | jq -r '.values[0].slug')
+curl -s -X PUT \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"user\": {\"name\": \"$USER_SLUG\"}, \"approved\": false, \"status\": \"NEEDS_WORK\"}" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/participants/$USER_SLUG"
+```
+
+If the user picks **Skip voting — comments only**, do not call any vote API. Never auto-approve or auto-decline without explicit user confirmation.
 
 ---
 
@@ -734,7 +880,9 @@ If no new commits since review commit: "No new commits since your last review. N
 
 #### 4F-3. Fetch Current Threads
 
-Refetch all threads from ADO (already done in step 3). For each of **my** threads, read the full conversation:
+Refetch all threads (already done in step 3). For each of **my** threads, read the full conversation.
+
+**ADO:**
 
 ```
 mcp__ado__repo_list_pull_request_thread_comments
@@ -743,6 +891,8 @@ mcp__ado__repo_list_pull_request_thread_comments
   threadId: <thread ID>
   fullResponse: true
 ```
+
+**Bitbucket Cloud / DC:** The full comment list was already fetched in step 3. Extract the thread by filtering on the root comment ID and all comments with `parent.id` matching that root.
 
 #### 4F-4. Classify Each Thread
 
@@ -884,9 +1034,30 @@ Task(
 
 Same as first-review steps 6-8 — generate patches if requested, post comments.
 
-For ARGUED thread reactions: reply via `mcp__ado__repo_reply_to_comment` (existing threads, not new ones).
+For ARGUED thread reactions and IGNORED thread pings: reply to the existing thread root comment.
 
-For IGNORED thread pings: reply to existing thread with a polite nudge.
+**ADO:**
+```
+mcp__ado__repo_reply_to_comment
+  repositoryId: "<repo ID>"
+  pullRequestId: <PR ID>
+  threadId: <thread ID>
+  content: "<reply text>"
+```
+
+**Bitbucket Cloud:**
+```bash
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"content\": {\"raw\": \"<reply text>\"}, \"parent\": {\"id\": <rootCommentId>}}" \
+  "https://api.bitbucket.org/2.0/repositories/{workspace}/{repoSlug}/pullrequests/{id}/comments"
+```
+
+**Bitbucket DC:**
+```bash
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"text\": \"<reply text>\", \"parent\": {\"id\": <rootCommentId>}}" \
+  "$BB_BASE/projects/{project}/repos/{repoSlug}/pull-requests/{id}/comments"
+```
 
 ---
 
@@ -907,12 +1078,13 @@ Write `.ai/pr-reviews/pr-<id>.md`:
 
 **Author:** <name>
 **Branch:** <sourceBranch> → <targetBranch>
-**Repo:** <repoName> (ID: <repoId>)
-**Project:** <ADO project name>
+**Repo:** <repoName> (ID: <repoId> — ADO only; omit for Bitbucket)
+**Platform:** <ado | bitbucket-cloud | bitbucket-dc>
+**Project / Workspace:** <ADO project name, BB workspace, or BB project key>
 **Last reviewed:** <ISO date>
 **Review commit:** <SHA>
 **Status:** reviewed | follow-up-needed | complete
-**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped> — set via `mcp__ado__repo_vote_pull_request`
+**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped>
 
 ## My Threads
 
@@ -1005,6 +1177,24 @@ Detects previous review threads from you on this PR. Shows what changed since yo
 ```
 Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` without presenting interactively or posting to ADO. Used by `/dx-pr-review-all` and CI pipelines.
 
+### Bitbucket Cloud — review by PR URL
+```
+/dx-pr-review https://bitbucket.org/myworkspace/my-repo/pull-requests/42
+```
+Detects `bitbucket-cloud` platform from URL. Reads token from `BITBUCKET_TOKEN`. Fetches PR via REST API, spawns review agent on the local git diff, presents findings table, posts inline comments and summary via Bitbucket Cloud REST.
+
+### Bitbucket DC — review by PR URL
+```
+/dx-pr-review https://bitbucket.example.com/projects/MYPROJ/repos/my-repo/pull-requests/42
+```
+Detects `bitbucket-dc` platform from URL. Reads `BB_BASE` from `scm.bitbucket-host` in config + token from `BITBUCKET_TOKEN`. Full review and posting via Bitbucket Server/DC REST API 1.0.
+
+### Bitbucket — review by ID (current repo)
+```
+/dx-pr-review 42
+```
+With `scm.provider: bitbucket-cloud` (or `bitbucket-dc`) in config, detects platform from config, resolves workspace/project from `scm.org`, repo slug from `git remote`. Same full review flow.
+
 ## Troubleshooting
 
 ### "You are the author — can't review your own PR"
@@ -1015,9 +1205,19 @@ Runs full review but saves findings to `.ai/pr-reviews/pr-12345-findings.md` wit
 **Cause:** PR is from a different repo than your working directory.
 **Fix:** Check `.ai/config.yaml` `repos:` for a `path` entry. If missing, the skill will shallow-clone to `/tmp/` automatically.
 
-### Comments fail to post with 403
+### Comments fail to post with 403 (ADO)
 **Cause:** ADO PAT lacks "Code (Read & Write)" scope, or you don't have PR comment permissions.
 **Fix:** Regenerate PAT with correct scopes. The skill continues posting remaining comments if one fails.
+
+### Bitbucket token not found
+**Cause:** `BITBUCKET_TOKEN` env var is not set and `scm.bitbucket-token` is missing from config.
+**Fix:** Export `BITBUCKET_TOKEN=<your-token>` in your shell (preferred), or add `bitbucket-token: "<token>"` under `scm:` in `.ai/config.yaml`. For Bitbucket Cloud use an App Password with "Pull requests: Read & Write" scope. For DC use a Personal Access Token with "Repositories: Write" and "Pull requests: Write" permissions.
+
+### Bitbucket inline comment returns 400
+**Cause (Cloud):** `inline.path` is incorrect or `inline.to` is out of range for the diff.
+**Fix:** Verify the file path matches exactly what appears in the PR diff (no leading slash for Cloud). Check that the line number is within the changed hunk.
+**Cause (DC):** `anchor.lineType` is `CONTEXT` for a line that is `ADDED` in the diff.
+**Fix:** Use `lineType: ADDED` for new lines. Use `CONTEXT` only for unchanged context lines within the diff.
 
 ### No issues found on a clearly problematic PR
 **Cause:** Confidence threshold filters out low-confidence findings (only ≥80 reported).
@@ -1092,7 +1292,7 @@ Common excuses for weak reviews — and why they're wrong:
 ## Rules
 
 - **Agent handles analysis** — diff, context loading, and code review run inside the `dx-pr-reviewer` agent, keeping the main context lean
-- **MCP stays in main context** — all ADO API calls happen here, not in the agent
+- **API calls stay in main context** — all ADO MCP calls and Bitbucket `curl` calls happen here, not in the agent
 - **Auto-detect mode** — check for previous review threads to determine first review vs follow-up. No flags needed
 - **Session persistence** — always save to `.ai/pr-reviews/pr-<id>.md` after posting. Update on follow-up
 - **Never push to their branch** — generate patches, never commit or push to the author's branch
@@ -1116,5 +1316,5 @@ Common excuses for weak reviews — and why they're wrong:
 - **Scope your review** — review what's in the PR, don't suggest unrelated refactors
 - **Follow-up verification** — for silently fixed threads, verify the fix before marking as addressed
 - **Continue on failure** — if one comment fails to post, log and continue
-- **MCP tools are deferred** — always load via ToolSearch before first use
+- **MCP tools are deferred** — always load via ToolSearch before first use (ADO only; Bitbucket uses curl)
 - **URL project precedence** — if a PR URL was provided, use the project from the URL, not from config

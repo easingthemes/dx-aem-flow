@@ -11,7 +11,23 @@ All skills that call work-item or wiki MCP tools must detect the provider and us
 
 If neither field is set, default to `ado`.
 
-**Why `tracker.provider`?** Work-item tracking (ADO/Jira) is separate from source-code management (ADO repos/GitHub/Bitbucket). A project can use Jira for tickets but ADO for code repos. `scm.provider` is kept for backward compatibility but `tracker.provider` is the canonical field.
+For **source-code management (PRs, repos)**, check `scm.provider`:
+   - `ado` → Azure DevOps repos (default)
+   - `github` → GitHub repos (MCP tools available)
+   - `bitbucket-cloud` → Bitbucket Cloud repos (REST API via curl)
+   - `bitbucket-dc` → Bitbucket Data Center repos (REST API via curl)
+
+**Why `tracker.provider`?** Work-item tracking (ADO/Jira) is separate from source-code management (ADO repos/GitHub/Bitbucket). A project can use Jira for tickets but ADO or Bitbucket for code repos. `scm.provider` is kept for backward compatibility but `tracker.provider` is the canonical field for work items.
+
+## Bitbucket Configuration
+
+When `scm.provider = bitbucket-cloud` or `scm.provider = bitbucket-dc`:
+
+- **Workspace / Project key:** `scm.org`
+- **DC Host:** `scm.bitbucket-host` (Bitbucket DC only)
+- **Token:** `BITBUCKET_TOKEN` env var (preferred) or `scm.bitbucket-token`
+
+No MCP server — all Bitbucket API calls are made via `curl`. See `shared/bitbucket-config.md` for full REST API reference, URL patterns, comment bodies, and vote mappings.
 
 ## ADO Configuration
 

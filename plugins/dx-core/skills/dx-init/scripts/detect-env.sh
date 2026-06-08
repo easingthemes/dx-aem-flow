@@ -6,10 +6,14 @@
 #
 # Fields:
 #   remote_url      — git remote origin URL (or "")
-#   scm_provider    — "ado" | "github" | "unknown"
+#   scm_provider    — "ado" | "github" | "bitbucket-cloud" | "bitbucket-dc" | "unknown"
 #   base_branch     — detected default branch (or "unknown")
 #   ado_org         — ADO organization name (or "")
 #   ado_project     — ADO project name (or "")
+#   bb_workspace    — Bitbucket Cloud workspace slug (or "")
+#   bb_project      — Bitbucket DC project key (or "")
+#   bb_host         — Bitbucket DC base URL, no trailing slash (or "")
+#   bb_repo         — Bitbucket repo slug (or "")
 #   sibling_repos   — array of sibling repo names with git dirs
 
 set -euo pipefail
@@ -23,6 +27,11 @@ if [[ "$remote_url" == *"visualstudio.com"* || "$remote_url" == *"dev.azure.com"
   scm_provider="ado"
 elif [[ "$remote_url" == *"github.com"* ]]; then
   scm_provider="github"
+elif [[ "$remote_url" == *"bitbucket.org"* ]]; then
+  scm_provider="bitbucket-cloud"
+elif [[ "$remote_url" == */scm/* || "$remote_url" == */projects/*/repos/* ]]; then
+  # Bitbucket DC uses /scm/{PROJECT}/{repo}.git (HTTPS) or /projects/{PROJECT}/repos/{repo} paths
+  scm_provider="bitbucket-dc"
 fi
 
 # --- Base branch ---
@@ -48,6 +57,44 @@ if [[ "$scm_provider" == "ado" ]]; then
   if [[ "$remote_url" == *"dev.azure.com"* ]]; then
     ado_org=$(echo "$remote_url" | sed -n 's|https://dev\.azure\.com/\([^/]*\)/.*|\1|p')
     ado_project=$(echo "$remote_url" | sed -n 's|https://dev\.azure\.com/[^/]*/\([^/]*\)/_git/.*|\1|p')
+  fi
+fi
+
+# --- Bitbucket field extraction ---
+bb_workspace=""
+bb_project=""
+bb_host=""
+bb_repo=""
+if [[ "$scm_provider" == "bitbucket-cloud" ]]; then
+  # HTTPS: https://bitbucket.org/{workspace}/{repo}.git
+  # SSH:   git@bitbucket.org:{workspace}/{repo}.git
+  if [[ "$remote_url" == https://bitbucket.org/* ]]; then
+    bb_workspace=$(echo "$remote_url" | sed -n 's|https://bitbucket\.org/\([^/]*\)/.*|\1|p')
+    bb_repo=$(echo "$remote_url" | sed -n 's|https://bitbucket\.org/[^/]*/\([^/.]*\).*|\1|p')
+  elif [[ "$remote_url" == git@bitbucket.org:* ]]; then
+    bb_workspace=$(echo "$remote_url" | sed -n 's|git@bitbucket\.org:\([^/]*\)/.*|\1|p')
+    bb_repo=$(echo "$remote_url" | sed -n 's|git@bitbucket\.org:[^/]*/\([^/.]*\).*|\1|p')
+  fi
+elif [[ "$scm_provider" == "bitbucket-dc" ]]; then
+  # HTTPS /scm/ format:      https://{host}/scm/{PROJECT}/{repo}.git
+  # HTTPS /projects/ format: https://{host}/projects/{PROJECT}/repos/{repo}
+  # SSH format:              ssh://git@{host}/{PROJECT}/{repo}.git
+  if [[ "$remote_url" == https://* ]]; then
+    bb_host=$(echo "$remote_url" | sed -n 's|https://\([^/]*\)/.*|\1|p')
+    bb_host="https://$bb_host"
+    if [[ "$remote_url" == */scm/* ]]; then
+      bb_project=$(echo "$remote_url" | sed -n 's|.*/scm/\([^/]*\)/.*|\1|p' | tr '[:lower:]' '[:upper:]')
+      bb_repo=$(echo "$remote_url" | sed -n 's|.*/scm/[^/]*/\([^/.]*\).*|\1|p')
+    elif [[ "$remote_url" == */projects/*/repos/* ]]; then
+      bb_project=$(echo "$remote_url" | sed -n 's|.*/projects/\([^/]*\)/repos/.*|\1|p')
+      bb_repo=$(echo "$remote_url" | sed -n 's|.*/repos/\([^/]*\).*|\1|p')
+    fi
+  elif [[ "$remote_url" == ssh://* ]]; then
+    # ssh://git@{host}/{PROJECT}/{repo}.git
+    bb_host=$(echo "$remote_url" | sed -n 's|ssh://git@\([^/]*\)/.*|\1|p')
+    bb_host="https://$bb_host"
+    bb_project=$(echo "$remote_url" | sed -n 's|ssh://git@[^/]*/\([^/]*\)/.*|\1|p' | tr '[:lower:]' '[:upper:]')
+    bb_repo=$(echo "$remote_url" | sed -n 's|ssh://git@[^/]*/[^/]*/\([^/.]*\).*|\1|p')
   fi
 fi
 
@@ -84,6 +131,10 @@ cat <<EOF
   "base_branch": "$base_branch",
   "ado_org": "$ado_org",
   "ado_project": "$ado_project",
+  "bb_workspace": "$bb_workspace",
+  "bb_project": "$bb_project",
+  "bb_host": "$bb_host",
+  "bb_repo": "$bb_repo",
   "sibling_repos": $sibling_json
 }
 EOF
