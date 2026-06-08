@@ -48,7 +48,7 @@
 **Problem:** dx-req currently requires an ADO or Jira ticket ID as input. But ADO/Jira are just the *fetch* step — once requirements are in `explain.md`, the entire downstream flow (dx-plan → dx-step → dx-pr) is already source-agnostic. A markdown file with requirements should be a first-class alternative input, enabling the full dev workflow for any project regardless of tracker.
 **Scope:**
 - `plugins/dx-core/skills/dx-req/SKILL.md` — currently reads from ADO/Jira MCP tools
-- `plugins/dx-core/skills/dx-req-all/SKILL.md` — coordinator that chains dx-req → dx-plan
+- `plugins/dx-core/skills/dx-agent-all/SKILL.md` — coordinator that chains dx-req → dx-plan
 - `plugins/dx-core/data/lib/dx-common.sh` — `find_spec_dir` uses ticket ID for directory naming
 - `plugins/dx-core/data/templates/spec/` — templates reference `<id>` from ticket
 **Done-when:** Running `/dx-req path/to/requirements.md` reads the markdown file, creates a spec directory (`.ai/specs/<slug>/`), and produces `explain.md`. Then `/dx-plan`, `/dx-step 1`, `/dx-pr` all work without modification. Full flow, no tracker needed.
