@@ -12,7 +12,7 @@ Enterprise AI development platform for teams shipping on Azure DevOps and Atlass
 
 Enterprise teams run complex sprints across multiple repos, multiple IDEs, and multiple team members. They need a system that handles the full lifecycle — requirements analysis, implementation planning, code generation, testing, verification, documentation, and PR creation — with governance at every step. Without re-explaining the project every session.
 
-KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines across every major AI platform. A single command like `/dx-req-all` pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
+KAI is a structured development workflow built as a plugin system for enterprise teams. It encodes your entire sprint lifecycle — requirements, planning, execution, review, PR — into **skills** that orchestrate multi-agent pipelines across every major AI platform. A single command like `/dx-req` pulls the ticket from Azure DevOps or Jira, validates readiness against your DoR, distills developer requirements, researches the codebase with parallel subagents, and generates a team summary. Each skill chains specialized agents (Opus for deep review, Sonnet for execution, Haiku for lookups), gathers context from multiple sources (tickets, config, codebase, Figma designs, live AEM content), and writes structured output that the next skill picks up automatically.
 
 **What makes it different:**
 - **Every AI platform** — same 75+ skills work identically in Claude Code, GitHub Copilot CLI, and VS Code Chat. Same plugins, same config, same results — regardless of which IDE your team uses.
@@ -88,7 +88,7 @@ Three ways to initialize — all produce the same project structure:
 /dx-init
 
 # 3. Work on a story
-/dx-req-all 2416553        # Fetch story, distill requirements, research codebase
+/dx-req 2416553             # Fetch story, distill requirements, research codebase
 /dx-plan                    # Generate implementation plan
 /dx-step-all                # Execute all steps autonomously
 /dx-step-build              # Build & deploy

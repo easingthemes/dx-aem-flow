@@ -212,7 +212,7 @@ Project memory already exists across `.ai/config.yaml`, `.ai/rules/*.md`, `.ai/p
 
 **What Hermes does**: Turn-based nudge counter + post-task skill creation prompt.
 
-**What to add**: Prompt additions to coordinator skills (`dx-step-all`, `dx-bug-all`, `dx-req-all`):
+**What to add**: Prompt additions to coordinator skills (`dx-step-all`, `dx-bug-all`, `dx-agent-all`):
 
 ```markdown
 ## Post-Completion Reflection

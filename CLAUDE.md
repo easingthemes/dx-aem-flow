@@ -217,7 +217,7 @@ paths: ["**/*.ts"]     # optional — limit auto-activation to file patterns
 
 - Skills go in `plugins/{dx-core,dx-hub,dx-aem,dx-automation}/skills/<name>/SKILL.md`
 - Helper scripts go in `skills/<name>/scripts/*.sh`
-- Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-req-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
+- Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-agent-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
 
 ### Flow Control (branching skills only)
 
