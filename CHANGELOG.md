@@ -1,3 +1,10 @@
+## [3.4.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.1...v3.4.2) (2026-06-09)
+
+
+### Bug Fixes
+
+* **dx-pr-review:** URL-encode project/repo in queue discovery REST call ([#169](https://github.com/easingthemes/dx-aem-flow/issues/169)) ([2d82a75](https://github.com/easingthemes/dx-aem-flow/commit/2d82a754551cd9b3cdfa88e299f0065065e0bf43))
+
 ## [3.4.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.0...v3.4.1) (2026-06-05)
 
 

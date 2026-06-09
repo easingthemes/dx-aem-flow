@@ -1,6 +1,6 @@
 {
   "name": "dx-aem-flow",
   "description": "AI-assisted Azure DevOps development workflows — requirements, planning, execution, review, and PR management",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "contextFileName": "GEMINI.md"
 }
