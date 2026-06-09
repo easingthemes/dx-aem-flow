@@ -24,6 +24,11 @@ PROJECT="${2:?project required}"
 REPO="${3:?repo required}"
 ORG_URL="${ORG_URL%/}"
 
+# URL-encode the project + repo path segments (project names often contain
+# spaces, e.g. "My Team Project") so the REST URL is well-formed.
+PROJECT_ENC=$(printf '%s' "$PROJECT" | jq -sRr @uri)
+REPO_ENC=$(printf '%s' "$REPO" | jq -sRr @uri)
+
 : "${ADO_PAT:?ADO_PAT env required}"
 : "${REVIEWER_IDENTITIES:?REVIEWER_IDENTITIES env required}"
 REVIEW_OWN="0"
@@ -36,7 +41,7 @@ echo "Reviewer identities: $IDS_JSON (review_own=$REVIEW_OWN)" >&2
 
 # List Active PRs in the repo. $top=200 is well beyond any real reviewer queue;
 # if a repo ever exceeds it, paginate with $skip (documented limitation).
-API="${ORG_URL}/${PROJECT}/_apis/git/repositories/${REPO}/pullrequests?searchCriteria.status=active&\$top=200&api-version=7.1"
+API="${ORG_URL}/${PROJECT_ENC}/_apis/git/repositories/${REPO_ENC}/pullrequests?searchCriteria.status=active&\$top=200&api-version=7.1"
 RESP=$(curl -fsS -u ":${ADO_PAT}" -H "Accept: application/json" "$API") || {
   echo "ERROR: failed to list PRs for ${PROJECT}/${REPO}" >&2
   exit 1
@@ -57,8 +62,7 @@ jq -r --argjson ids "$IDS_JSON" --arg own "$REVIEW_OWN" '
   | .pullRequestId
 ' <<<"$RESP" | while read -r PRID; do
   [ -n "$PRID" ] || continue
-  # URL-encode the project path segment (it may contain spaces); /dx-pr-review
-  # URL-decodes it back when it parses the PR URL.
-  PROJECT_ENC=$(printf '%s' "$PROJECT" | jq -sRr @uri)
+  # Emit the web PR URL with the encoded project segment (it may contain
+  # spaces); /dx-pr-review URL-decodes it back when it parses the PR URL.
   echo "${ORG_URL}/${PROJECT_ENC}/_git/${REPO}/pullrequest/${PRID}"
 done
