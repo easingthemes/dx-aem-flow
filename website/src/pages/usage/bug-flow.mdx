@@ -145,20 +145,21 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
   bg="alt"
 />
 <Section>
-  <HighlightBox severity="warning" title="Automatic Delegation">
-    If triage discovers the fix belongs in another repository (e.g., a frontend bug caused by a backend
-    issue in Brand-Backend), it writes a <code>delegate.json</code> file. The automation pipeline reads
-    this and routes the bug fix to the correct repo's pipeline.
+  <HighlightBox severity="warning" title="KAI-HUB Routing">
+    In automation, the KAI-HUB router resolves which repos the bug touches via <code>/dx-discover-repos</code>
+    (reading the triage <code>## Cross-Repo Scope</code> table among other tiers) and queues the BugFix worker
+    once per resolved repo. Each worker clones its target repo dynamically and runs the fix there.
   </HighlightBox>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
     <ContentCard icon="mdi:monitor" iconColor="bg-brand-700" title="Same Repo">
-      Bug and fix are in the same repo. Proceed directly to verify and fix phases.
+      Bug and fix are in the same repo. The worker fires directly via its own webhook and proceeds to
+      verify and fix.
     </ContentCard>
 
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="Other Repo">
-      Bug reported in frontend but fix needed in backend. Agent writes <code>delegate.json</code>
-      and the pipeline routes to the correct repo.
+      Bug reported in frontend but fix needed in backend. <code>/dx-discover-repos</code> resolves the
+      backend repo and the hub fans the BugFix worker out to clone and fix it.
     </ContentCard>
   </div>
 </Section>
