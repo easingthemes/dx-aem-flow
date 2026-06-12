@@ -35,13 +35,20 @@ if [ ! -f "$MD" ]; then echo "[]"; exit 0; fi
 # Slice the "## Cross-Repo Scope" section (until the next "## " heading) and pull
 # the first column of each table row. Skip the header row (cell == "Repo") and
 # the separator row (cell is all -, :, space).
+# Heading is matched as a PREFIX (not byte-exact): the upstream contract only
+# guarantees the "## Cross-Repo Scope" section exists, so a decorated suffix like
+# "## Cross-Repo Scope (auto-detected)" must still enter the section.
+# First-column cells are stripped of surrounding markdown (backticks/asterisks/
+# underscores) — LLM-authored tables routinely write `| `platform-core` | …`.
 NAMES=$(awk '
-  /^##[[:space:]]+Cross-Repo Scope[[:space:]]*$/ { insec=1; next }
+  /^##[[:space:]]+Cross-Repo Scope/ { insec=1; next }
   insec && /^##[[:space:]]/ { insec=0 }
   insec && /^[[:space:]]*\|/ {
     # field 2 is the first table cell (field 1 is empty, before the leading |)
     cell=$2
     gsub(/^[ \t]+|[ \t]+$/, "", cell)
+    gsub(/^[`*_]+|[`*_]+$/, "", cell)   # strip surrounding markdown
+    gsub(/^[ \t]+|[ \t]+$/, "", cell)   # re-trim in case markdown wrapped spaces
     if (cell == "" ) next
     if (tolower(cell) == "repo") next
     if (cell ~ /^[-:[:space:]]+$/) next
@@ -66,4 +73,6 @@ while IFS= read -r name; do
   OUT=$(printf '%s' "$OUT" | jq -c --argjson e "$ENTRY" '. += [$e]')
 done <<<"$NAMES"
 
-echo "$OUT"
+# De-dupe by alias — a repo listed twice in the table (or matching two name
+# spellings) would otherwise queue two worker runs racing on the same repo.
+echo "$OUT" | jq -c 'unique_by(.alias)'

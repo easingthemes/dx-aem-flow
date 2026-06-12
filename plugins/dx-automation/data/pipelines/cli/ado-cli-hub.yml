@@ -82,10 +82,13 @@ steps:
       # comment body on a workitem.commented event; may be HTML).
       COMMENT='${{ parameters.hubHook.resource.fields[''System.History''] }}'
       PLAIN=$(printf '%s' "$COMMENT" | sed -E 's/<[^>]+>/ /g; s/&nbsp;/ /g')
-      TAG=$(printf '%s' "$PLAIN" | grep -oiE '@kai-[a-z-]+' | head -1 | sed -E 's/^@[Kk][Aa][Ii]-//' || true)
+      # Capture the raw token after @kai- (lowercased). The regex is permissive on
+      # purpose — we resolve the ACTUAL agent below by matching against agents.json
+      # keys, so a trailing word ('@kai-qa-now') or typo doesn't silently misroute.
+      RAWTAG=$(printf '%s' "$PLAIN" | grep -oiE '@kai-[a-z][a-z-]*' | head -1 | sed -E 's/^@[Kk][Aa][Ii]-//' | tr '[:upper:]' '[:lower:]' || true)
 
       AGENTS_REG="$(Build.SourcesDirectory)/.ai/automation/registries/agents.json"
-      if [ -z "$TAG" ]; then
+      if [ -z "$RAWTAG" ]; then
         echo "##vso[task.setvariable variable=ROUTE_STATUS]no-tag"
         echo "No @kai-<agent> tag found in the comment — nothing to route."
         exit 0
@@ -93,10 +96,24 @@ steps:
       if [ ! -f "$AGENTS_REG" ]; then
         echo "ERROR: agents registry missing: $AGENTS_REG" >&2; exit 1
       fi
+      # Resolve RAWTAG to a known agent: the LONGEST agents.json key that equals
+      # RAWTAG or is a hyphen-delimited prefix of it. So '@kai-qa-now' -> 'qa',
+      # '@kai-dod-fix' -> 'dod-fix', '@kai-simple-please' -> 'simple'. A token that
+      # matches no key ('@kai-qaxyz') stays unknown rather than being mis-greedily
+      # captured.
+      TAG=$(jq -r 'keys[]' "$AGENTS_REG" 2>/dev/null \
+            | awk -v r="$RAWTAG" '($0==r) || (index(r, $0"-")==1) { print length($0)"\t"$0 }' \
+            | sort -rn | head -1 | cut -f2)
+      if [ -z "$TAG" ]; then
+        echo "##vso[task.setvariable variable=ROUTE_STATUS]unknown-agent"
+        echo "##vso[task.setvariable variable=UNKNOWN_TAG]$RAWTAG"
+        echo "Unknown agent '@kai-$RAWTAG' — no matching key in agents.json."
+        exit 0
+      fi
       AJSON=$(jq -e --arg t "$TAG" '.[$t]' "$AGENTS_REG" 2>/dev/null) || {
         echo "##vso[task.setvariable variable=ROUTE_STATUS]unknown-agent"
-        echo "##vso[task.setvariable variable=UNKNOWN_TAG]$TAG"
-        echo "Unknown agent '@kai-$TAG' — not in agents.json."
+        echo "##vso[task.setvariable variable=UNKNOWN_TAG]$RAWTAG"
+        echo "Unknown agent '@kai-$RAWTAG' — not in agents.json."
         exit 0
       }
       WORKER=$(printf '%s' "$AJSON" | jq -r '.workerPipelineId')
@@ -209,10 +226,19 @@ steps:
       COUNT=$(jq 'length' "$OUT")
       if [ "$COUNT" -eq 0 ]; then echo "No repos resolved — nothing to queue."; exit 0; fi
 
+      FAILMARK="$(Pipeline.Workspace)/queue-failed"
+      rm -f "$FAILMARK"
       echo "Queuing worker $WORKER_PIPELINE_ID for $COUNT repo(s) ..."
       jq -c '.[]' "$OUT" | while read -r row; do
-        ALIAS=$(printf '%s' "$row" | jq -r '.alias')
-        ADO_PROJECT=$(printf '%s' "$row" | jq -r '.adoProject')
+        ALIAS=$(printf '%s' "$row" | jq -r '.alias // ""')
+        ADO_PROJECT=$(printf '%s' "$row" | jq -r '.adoProject // ""')
+        # A row with no adoProject would build a URL to a project literally named
+        # "null" (404). Treat it as a hard error for that repo — never silently
+        # drop it — and mark the run failed so the fallback comment fires.
+        if [ -z "$ALIAS" ] || [ -z "$ADO_PROJECT" ] || [ "$ADO_PROJECT" = "null" ]; then
+          echo "##[error]Cannot queue repo '$ALIAS' — discovery row is missing adoProject; skipping it."
+          touch "$FAILMARK"; continue
+        fi
         # Cross-project queue: use the REPO's adoProject in the URL (NOT the hub's),
         # so a worker in a different ADO project can be queued. PAT auth is Basic
         # (-u ":$PAT") — a PAT is NOT a Bearer token.
@@ -228,8 +254,15 @@ steps:
           echo "queued run $(jq -r '.id // "?"' /tmp/resp.json)"
         else
           echo "##[warning]queue failed for '$ALIAS': HTTP $HTTP"; cat /tmp/resp.json 2>/dev/null || true
+          touch "$FAILMARK"
         fi
       done
+      # Surface a failure if ANY resolved repo could not be queued, so the run
+      # goes red and the fallback comment (condition: failed()) tells the ticket.
+      if [ -f "$FAILMARK" ]; then
+        echo "##[error]One or more resolved repos could not be queued — see warnings above."
+        exit 1
+      fi
     displayName: "Queue workers (fan-out, one run per repo)"
     condition: eq(variables['ROUTE_STATUS'], 'ok')
     env:
@@ -244,7 +277,7 @@ steps:
       fi
       ORG_URL="$(System.CollectionUri)"; PROJECT="$(System.TeamProject)"
       RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
-      TEXT="KAI-HUB failed before any worker was queued (tag parse, discovery, or fan-out errored). No agent ran. Pipeline run: ${RUN_URL}"
+      TEXT="KAI-HUB hit an error while routing this comment (tag parse, discovery, or fan-out). One or more workers may not have been queued — check the run and re-comment to retry. Pipeline run: ${RUN_URL}"
       BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
       curl -fsS -X POST -u ":$ADO_PAT" -H "Content-Type: application/json" -d "$BODY" \
         "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WI_ID}/comments?api-version=7.1-preview.3" >/dev/null

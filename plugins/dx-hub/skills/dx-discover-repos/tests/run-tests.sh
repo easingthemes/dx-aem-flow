@@ -63,6 +63,22 @@ run "tier0: explicit branch comes from registry defaultBranch" \
 run "tier0: no repos directive -> empty array" \
   bash -c "$EXPLICIT $FIXTURES/comment-no-repos.txt $REG | jq -e 'length==0'"
 
+# Anchored match: a word ending in 'repos' must NOT trigger the directive.
+run "tier0: 'microrepos:' does not false-trigger -> empty" \
+  bash -c "printf 'our microrepos: brand-one is affected' | $EXPLICIT - $REG | jq -e 'length==0'"
+
+# A legitimate ' repos:' (preceded by a space) still triggers.
+run "tier0: space-prefixed 'repos:' still triggers" \
+  bash -c "printf '@kai-simple please repos: brand-one' | $EXPLICIT - $REG | jq -e 'map(.alias)==[\"brand-one\"]'"
+
+# De-dup: a repeated alias must collapse to one entry (no racing worker runs).
+run "tier0: repeated alias de-duped" \
+  bash -c "printf '@kai-simple repos: brand-one, brand-one' | $EXPLICIT - $REG | jq -e 'length==1'"
+
+# Malformed registry (top-level array) must fall through to [] , not crash.
+run "tier0: malformed registry falls through to []" \
+  bash -c "printf '[1,2,3]' > $TMP/bad.json; printf '@kai-simple repos: brand-one' | $EXPLICIT - $TMP/bad.json | jq -e 'length==0'"
+
 # ===== tier-2: parse-crossrepo-table =====
 TABLE="$SCRIPTS/parse-crossrepo-table.sh"
 
@@ -71,6 +87,14 @@ run "tier2: cross-repo table -> only known aliases (unknown skipped)" \
 
 run "tier2: missing markdown file -> empty array" \
   bash -c "$TABLE /nonexistent/research.md $REG | jq -e 'length==0'"
+
+# Backtick-wrapped alias + decorated heading suffix must still resolve.
+run "tier2: backticked alias + decorated heading resolves" \
+  bash -c "printf '## Cross-Repo Scope (auto-detected)\n\n| Repo | What | Files |\n|------|------|------|\n| \`platform-core\` | x | a |\n' > $TMP/ct.md; $TABLE $TMP/ct.md $REG | jq -e 'map(.alias)==[\"platform-core\"]'"
+
+# De-dup: a repo listed twice in the table collapses to one entry.
+run "tier2: repeated table row de-duped" \
+  bash -c "printf '## Cross-Repo Scope\n\n| Repo | What | Files |\n|------|------|------|\n| platform-core | x | a |\n| platform-core | y | b |\n' > $TMP/ct2.md; $TABLE $TMP/ct2.md $REG | jq -e 'length==1'"
 
 # ===== tier-1: route-targets (moved from dx-simple) =====
 ROUTE="$SCRIPTS/route-targets.sh"

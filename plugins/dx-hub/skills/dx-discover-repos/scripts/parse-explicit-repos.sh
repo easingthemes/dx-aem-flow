@@ -32,17 +32,22 @@ fi
 # Pull the first `repos:` directive (case-insensitive) and take the rest of that
 # line. Comment may be HTML (ADO System.History) — strip tags first so
 # "repos:&nbsp;a,&nbsp;b" and "<div>repos: a</div>" both parse.
+#
+# Anchor `repos:` on a word boundary (start-of-string or a non-letter before it)
+# so "microrepos:" / "subrepos:" inside casual prose don't false-trigger the
+# explicit-override tier and short-circuit the cascade.
 PLAIN=$(printf '%s' "$COMMENT" | sed -E 's/<[^>]+>/ /g; s/&nbsp;/ /g')
-LINE=$(printf '%s\n' "$PLAIN" | grep -ioE 'repos:[^<]*' | head -1 || true)
+LINE=$(printf '%s\n' "$PLAIN" | grep -ioE '(^|[^[:alpha:]])repos:[^<]*' | head -1 || true)
 
 if [ -z "$LINE" ]; then
   echo "[]"
   exit 0
 fi
 
-# Everything after "repos:". Split on commas; for each piece take the first
+# Everything after "repos:" (greedy strip handles any leading boundary char the
+# anchored match captured). Split on commas; for each piece take the first
 # whitespace-delimited token (so "b please" -> "b"). Aliases are single kebab tokens.
-RAW=$(printf '%s' "$LINE" | sed -E 's/^[Rr][Ee][Pp][Oo][Ss]:[[:space:]]*//')
+RAW=$(printf '%s' "$LINE" | sed -E 's/.*[Rr][Ee][Pp][Oo][Ss]:[[:space:]]*//')
 ALIASES=()
 IFS=',' read -ra PARTS <<<"$RAW"
 for p in "${PARTS[@]}"; do
@@ -52,11 +57,14 @@ done
 
 OUT='[]'
 for a in "${ALIASES[@]}"; do
+  # `2>/dev/null || true` mirrors the sibling parse-crossrepo-table.sh: a
+  # malformed/non-object registry must fall through to [] (the cascade's
+  # "empty tier" contract), not abort the script under `set -e`.
   ENTRY=$(jq -c --arg a "$a" --arg reason "explicit 'repos:' directive in trigger comment" '
     .[$a] as $r
     | if $r == null then empty
       else {alias:$a, repoId:$r.repoId, adoProject:$r.adoProject, cloneUrl:$r.cloneUrl, branch:$r.defaultBranch, reason:$reason}
-      end' "$REG")
+      end' "$REG" 2>/dev/null || true)
   if [ -z "$ENTRY" ]; then
     echo "WARN: alias '$a' not in repos registry — skipping (never invent repos)." >&2
     continue
@@ -64,4 +72,6 @@ for a in "${ALIASES[@]}"; do
   OUT=$(printf '%s' "$OUT" | jq -c --argjson e "$ENTRY" '. += [$e]')
 done
 
-echo "$OUT"
+# De-dupe by alias — a repeated alias would otherwise queue two worker runs
+# racing on the same repo (two competing branches/PRs).
+echo "$OUT" | jq -c 'unique_by(.alias)'
