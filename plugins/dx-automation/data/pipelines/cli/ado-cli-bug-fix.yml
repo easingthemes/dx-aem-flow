@@ -27,7 +27,9 @@ pr: none
 #    FAIL as "warn + continue" (triage + fix proceed on triage alone).
 #  - No JCR-write tools / activatePage — BugFix never authors content; it edits
 #    source files and opens a PR.
-#  - Keeps cross-repo delegation (pipeline→pipeline REST queue — not Lambda).
+#  - Cross-repo work is no longer peer-to-peer delegated — the central KAI-HUB
+#    router fans BugFix out per repo (see ado-cli-hub.yml). This worker just fixes
+#    the one repo it is pointed at.
 
 resources:
   webhooks:
@@ -48,8 +50,16 @@ parameters:
     displayName: "Dry run (triage + analyze only, don't apply fixes or create PRs)"
     type: boolean
     default: false
-  - name: sourceRepoName
-    displayName: "Source repo name (for cross-repo delegation)"
+  - name: targetRepo
+    displayName: "Target repo alias (set by KAI-HUB; empty = direct single-repo mode)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment ID (for dedup/tracing; set by KAI-HUB)"
+    type: string
+    default: ""
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
     type: string
     default: ""
 
@@ -93,6 +103,27 @@ steps:
       echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
       echo "Bug work item: $WI_ID (trigger: $TRIGGER)"
 
+      # Resolve execution mode + TARGET_DIR (dual-mode).
+      #  - targetRepo set   -> HUB MODE: clone the named repo from the registry.
+      #  - targetRepo empty -> DIRECT MODE: operate on checkout: self (today's behavior).
+      TARGET_REPO="${{ parameters.targetRepo }}"
+      if [ -n "$TARGET_REPO" ]; then
+        REG="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+        if [ ! -f "$REG" ]; then
+          echo "ERROR: hub mode (targetRepo=$TARGET_REPO) but registry missing: $REG" >&2; exit 1
+        fi
+        RJSON=$(jq -e --arg a "$TARGET_REPO" '.[$a]' "$REG") || {
+          echo "ERROR: targetRepo '$TARGET_REPO' not found in $REG" >&2; exit 1; }
+        AUTH_URL=$(echo "$RJSON" | jq -r '.cloneUrl' | sed "s#https://#https://pat:${ADO_PAT}@#")
+        BRANCH=$(echo "$RJSON" | jq -r '.defaultBranch')
+        git clone --branch "$BRANCH" "$AUTH_URL" "$(Pipeline.Workspace)/target"
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Pipeline.Workspace)/target"
+        echo "Hub mode: cloned target repo '$TARGET_REPO' (branch $BRANCH)"
+      else
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Build.SourcesDirectory)"
+        echo "Direct mode: operating on checkout: self (single-repo)"
+      fi
+
       # Log webhook context if present (smoke-test for payload references).
       if [ "$TRIGGER" = "webhook" ]; then
         echo "Webhook event ID:    ${{ parameters.bugfixHook.id }}"
@@ -103,7 +134,9 @@ steps:
         echo "Comment (System.History below — raw, may be HTML):"
         echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"
       fi
-    displayName: "Resolve bug ID + log webhook payload"
+    displayName: "Resolve bug ID + execution mode (clone target in hub mode)"
+    env:
+      ADO_PAT: $(ADO_PAT)
 
   - task: Cache@2
     inputs:
@@ -120,7 +153,7 @@ steps:
   - bash: |
       set -e
       SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json"
-      DST="$(Build.SourcesDirectory)/.mcp.json"
+      DST="$(TARGET_DIR)/.mcp.json"
       if [ ! -f "$SRC" ]; then
         echo "ERROR: simple-mcp.json not found in cloned plugins — check it is merged to main on GitHub" >&2
         exit 1
@@ -209,7 +242,7 @@ steps:
       nvm alias default node >/dev/null
       echo "Latest Node: $(nvm version node) (default)"
 
-      SRC="$(Build.SourcesDirectory)"
+      SRC="$(TARGET_DIR)"
 
       # Detect the frontend module: prefer the AEM archetype's ui.frontend, else
       # the first package.json (depth<=2) that isn't under node_modules.
@@ -284,8 +317,12 @@ steps:
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      # pipeline-agent.js lives in the AI/automation repo (checkout: self). Run it
+      # with cwd = TARGET_DIR so the agent operates on the target project. In
+      # direct mode TARGET_DIR == Build.SourcesDirectory (identical to before).
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
     displayName: "AI BugFix Agent"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
@@ -296,8 +333,6 @@ steps:
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
-      SOURCE_REPO_NAME: $(Build.Repository.Name)
-      CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
       # /dx-bug-all runs THREE skills back-to-back (triage → verify → fix), each
       # substantial, plus a one-shot retry on triage/fix failure and resumable
       # recovery. 60 was far too tight. The wall-clock cap (timeoutInMinutes below
@@ -332,45 +367,12 @@ steps:
     timeoutInMinutes: 90
 
   - bash: |
-      if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then
+      if [ -d "$(TARGET_DIR)/.ai/specs" ]; then
         echo "Uploading spec artifacts..."
-        find "$(Build.SourcesDirectory)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
+        find "$(TARGET_DIR)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
       fi
     displayName: "List spec artifacts (for retention)"
     condition: always()
-
-  - bash: |
-      DELEGATION_FILE="$(Build.SourcesDirectory)/.ai/run-context/delegate.json"
-      if [ ! -f "$DELEGATION_FILE" ]; then
-        echo "No delegation needed — work stays in this repo."
-        exit 0
-      fi
-      echo "Cross-repo delegation file found:"
-      cat "$DELEGATION_FILE"
-      PIPELINE_ID=$(jq -r '.pipelineId' "$DELEGATION_FILE")
-      TARGET_REPO=$(jq -r '.targetRepo' "$DELEGATION_FILE")
-      PARAMS=$(jq -c '.templateParameters' "$DELEGATION_FILE")
-      PROJECT="$(System.TeamProject)"
-      API_URL="${ADO_ORG_URL}/$(printf '%s' "$PROJECT" | jq -sRr @uri)/_apis/pipelines/${PIPELINE_ID}/runs?api-version=7.1-preview.1"
-      BODY=$(jq -n --argjson params "$PARAMS" '{templateParameters: $params}')
-      echo "##[section]Delegating BugFix to $TARGET_REPO (pipeline $PIPELINE_ID)"
-      HTTP_CODE=$(curl -s -o /tmp/queue-response.json -w '%{http_code}' \
-        -X POST "$API_URL" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" \
-        -d "$BODY")
-      if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-        RUN_ID=$(jq -r '.id // "unknown"' /tmp/queue-response.json)
-        echo "Pipeline queued successfully. Run ID: $RUN_ID"
-      else
-        echo "##[warning]Pipeline delegation failed with HTTP $HTTP_CODE"
-        cat /tmp/queue-response.json 2>/dev/null || true
-      fi
-    displayName: "Cross-repo delegation (if needed)"
-    condition: not(canceled())
-    env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      ADO_ORG_URL: $(ADO_ORG_URL)
 
   # Fallback ADO comment. /dx-bug-all posts its own comment at the finalize step
   # (success) and on the ABORT path (blocker), touching the flag below when it does.
@@ -384,7 +386,7 @@ steps:
   # dx-bug-all.recovery.trigger-token and the Service Hook comment filter string.
   - bash: |
       set -e
-      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      FLAG="$(TARGET_DIR)/.ai/run-context/ado-comment-posted.flag"
       if [ -f "$FLAG" ]; then
         echo "Skill already posted an ADO comment — skipping fallback."
         exit 0

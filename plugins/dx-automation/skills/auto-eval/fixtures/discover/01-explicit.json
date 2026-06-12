@@ -1,0 +1,12 @@
+{
+  "name": "explicit-two-repos",
+  "agent": "discover",
+  "tier": 0,
+  "description": "Tier 0 — human typed an explicit 'repos:' directive after the @kai tag. Deterministic (parse-explicit-repos.sh).",
+  "registry_aliases": ["brand-one", "brand-two", "platform-core", "aem-platform-core"],
+  "input": {
+    "kind": "comment",
+    "text": "@kai-simple repos: brand-one, platform-core please bump the CTA padding"
+  },
+  "expected_aliases": ["brand-one", "platform-core"]
+}
