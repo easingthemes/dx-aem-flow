@@ -506,50 +506,11 @@ mkblock "page-url: http://x" "platform: beta" "scope: be"
 expect_exit "guard: fe repo + be scope aborts" 3 "$GUARD" "$TMP/blk.yaml" "$FIXTURES/config-multi-platform.yaml"
 
 # ===== route-targets =====
-ROUTE="$SCRIPTS/route-targets.sh"
-# map: every reachable repo -> a fake pipeline id
-MAP='{"AlphaFullstack":"101","BetaBackend":"102","BetaBrandX":"103","BetaBrandY":"104"}'
-
-# Multi-platform, platform omitted -> exit 3 (ambiguous, must declare)
-printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r1.yaml"
-expect_exit "route: multi-platform missing platform -> 3" 3 \
-  "$ROUTE" "$TMP/r1.yaml" "$FIXTURES/config-multi-platform.yaml" "$MAP"
-
-# platform=beta, brand=brandx, scope=both -> dispatch BetaBackend + BetaBrandX
-printf '%s\n' "page-url: http://x" "platform: beta" "brand: brandx" "scope: both" > "$TMP/r2.yaml"
-run "route: beta/both dispatches BE + brandX FE" \
-  bash -c "$ROUTE $TMP/r2.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'map(.repo) | (index(\"BetaBackend\") != null) and (index(\"BetaBrandX\") != null) and (index(\"BetaBrandY\") == null)'"
-
-# scope=be -> only BetaBackend
-printf '%s\n' "page-url: http://x" "platform: beta" "scope: be" > "$TMP/r3.yaml"
-run "route: beta/be dispatches only BE" \
-  bash -c "$ROUTE $TMP/r3.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"BetaBackend\"'"
-
-# single-platform config has NO repos[] block -> a solo repo fans out to nothing.
-printf '%s\n' "page-url: http://x" "scope: fe" > "$TMP/r4.yaml"
-SMAP='{"AlphaFullstack":"101"}'
-run "route: single-platform (no repos[]) fans out to empty" \
-  bash -c "$ROUTE $TMP/r4.yaml $FIXTURES/config-single-platform.yaml '$SMAP' | jq -e 'length==0'"
-
-# platform inference: MAP reachable repos span only ONE platform -> platform field optional
-printf '%s\n' "page-url: http://x" "scope: be" > "$TMP/r8.yaml"
-run "route: infers platform when only one reachable" \
-  bash -c "$ROUTE $TMP/r8.yaml $FIXTURES/config-multi-platform.yaml '{\"BetaBackend\":\"102\"}' | jq -e 'length==1 and .[0].repo==\"BetaBackend\"'"
-
-# fullstack single-platform repo: platform=alpha scope=both -> dispatches AlphaFullstack
-printf '%s\n' "page-url: http://x" "platform: alpha" "scope: both" > "$TMP/r5.yaml"
-run "route: alpha/both dispatches the fullstack repo" \
-  bash -c "$ROUTE $TMP/r5.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\" and .[0].authoring==true'"
-
-# fullstack also serves scope=be
-printf '%s\n' "page-url: http://x" "platform: alpha" "scope: be" > "$TMP/r6.yaml"
-run "route: alpha/be dispatches the fullstack repo" \
-  bash -c "$ROUTE $TMP/r6.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\"'"
-
-# branded ticket targeting a fullstack repo (no brand on repo) must still dispatch it
-printf '%s\n' "page-url: http://x" "platform: alpha" "brand: brandx" "scope: both" > "$TMP/r7.yaml"
-run "route: branded ticket still dispatches brandless fullstack repo" \
-  bash -c "$ROUTE $TMP/r7.yaml $FIXTURES/config-multi-platform.yaml '$MAP' | jq -e 'length==1 and .[0].repo==\"AlphaFullstack\"'"
+# The route-targets routing brain moved to dx-hub (KAI-HUB refactor).
+# Its tests now live in:
+#   plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh
+# parse-simple-block.sh stays here (the worker still reads the block to make
+# the change); only the multi-repo routing resolver moved out.
 
 # Summary
 echo "---"

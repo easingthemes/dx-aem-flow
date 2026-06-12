@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# Router resolver for /dx-simple multi-repo routing (TODO #142).
-# Resolves a ticket's declared (platform,brand,scope) to the set of child
-# pipelines to queue. Candidate repos = those present in CROSS_REPO_PIPELINE_MAP.
+# Routing brain for multi-repo discovery (KAI-HUB refactor; was TODO #142).
+# Resolves a ticket's declared (platform,brand,scope) to the set of candidate
+# repos. Candidate repos = those present in the repo->pipeline map argument.
 #
-# Usage: route-targets.sh <simple-block.yaml> <config.yaml> <cross-repo-map-json>
+# Moved out of dx-simple into dx-hub: this is tier-1 of the dx-discover-repos
+# cascade (run after parse-simple-block.sh on a ```simple``` block). The third
+# argument is a repo-name -> pipeline-id JSON map; in the hub model it is
+# derived from the repo registry (one worker pipeline id per agent), so the
+# emitted `pipelineId` is informational — the hub queues the agent's single
+# worker pipeline per resolved repo alias. The real value here is the
+# platform/brand/scope FILTERING that picks which repos a ticket touches.
+#
+# Usage: route-targets.sh <simple-block.yaml> <config.yaml> <repo-pipeline-map-json>
 # Stdout: JSON array of {repo, pipelineId, scope, authoring}
 # Exit codes:
 #   0 — resolved (array may be emitted)
@@ -13,8 +21,12 @@ set -euo pipefail
 
 BLOCK="${1:?simple-block.yaml required}"
 export CONFIG_FILE="${2:?config.yaml required}"
-MAP="${3:?CROSS_REPO_PIPELINE_MAP json required}"
-LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../data/lib" && pwd)/dx-common.sh"
+MAP="${3:?repo->pipeline map json required}"
+# dx-common.sh lives in dx-core/data/lib. From this script's home
+# (dx-hub/skills/dx-discover-repos/scripts) that is four levels up to plugins/,
+# then dx-core/data/lib. (NB: the plan called this "the dx-automation data lib";
+# the file it actually sources has always lived in dx-core.)
+LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../../dx-core/data/lib" && pwd)/dx-common.sh"
 # shellcheck source=/dev/null
 source "$LIB"
 
