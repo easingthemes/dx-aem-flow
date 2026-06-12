@@ -361,12 +361,12 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><strong>DoD Fix</strong></td>
-        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3"><code>targetRepo</code> (param)</td>
         <td class="p-3">4</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><strong>BugFix</strong></td>
-        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3"><code>targetRepo</code> (param)</td>
         <td class="p-3">4</td>
       </tr>
       <tr class="border-t border-gray-200">
@@ -376,7 +376,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><strong>DevAgent</strong></td>
-        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code>, <code>FIGMA_PERSONAL_ACCESS_TOKEN</code></td>
+        <td class="p-3"><code>targetRepo</code> (param), <code>FIGMA_PERSONAL_ACCESS_TOKEN</code></td>
         <td class="p-3">5</td>
       </tr>
       <tr class="border-t border-gray-200">
@@ -400,42 +400,45 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <h3 class="text-lg font-bold mt-8 mb-4">Implicit Variables (set automatically)</h3>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <ContentCard icon="mdi:cog" iconColor="bg-emerald-600" title="DX_PIPELINE_MODE">
-      Hardcoded <code>'true'</code>. Gates automation-only behavior like cross-repo delegation.
+      Hardcoded <code>'true'</code>. Marks a pipeline run and gates automation-only behavior.
       All CLI pipelines set this.
     </ContentCard>
 
-    <ContentCard icon="mdi:source-repository" iconColor="bg-cyan" title="SOURCE_REPO_NAME">
-      Set from <code>$(Build.Repository.Name)</code>. Tells Claude which repo it is running in,
-      enabling cross-repo comparison during triage.
+    <ContentCard icon="mdi:source-repository" iconColor="bg-cyan" title="targetRepo (param)">
+      Set by the KAI-HUB router for multi-repo fan-out. Empty &rarr; direct mode (<code>checkout: self</code>);
+      set &rarr; clone <code>repos.json[targetRepo]</code> and point <code>TARGET_DIR</code> at it.
     </ContentCard>
 
     <ContentCard icon="mdi:key" iconColor="bg-amber-500" title="SYSTEM_ACCESSTOKEN">
-      Set from <code>$(System.AccessToken)</code>. Used for plugin install and cross-repo delegation.
+      Set from <code>$(System.AccessToken)</code>. Used for plugin install and queuing worker runs.
       Auto-rotates, no secrets to manage.
     </ContentCard>
   </div>
 </Section>
 
 <SectionHeading
-  badge="CROSS_REPO"
+  badge="KAI-HUB"
   badgeColor="warning"
-  title="CROSS_REPO_PIPELINE_MAP"
-  subtitle="JSON object mapping repo names to pipeline IDs of the same agent type in that repo."
+  title="Hub Pipeline + Registries"
+  subtitle="The hub pipeline (ado-cli-hub.yml) reads two registries to fan an agent's one worker pipeline out per resolved repo."
   bg="alt"
 />
 <Section>
-  <HighlightBox severity="info" title="Format">
-    <CommandBlock label="Pipeline Variable Value">
-{`{"My-Backend-Repo": "789", "My-Config-Repo": "790"}`}
+  <HighlightBox severity="info" title="Registries (AI/automation repo)">
+    <CommandBlock label="Registry files">
+{`.ai/automation/registries/repos.json    # alias -> {repoId, adoProject, cloneUrl, defaultBranch, platform, brand, role}
+.ai/automation/registries/agents.json   # tag   -> {workerPipelineId, event, writes}`}
     </CommandBlock>
-    Each code-writing pipeline has its own map. The BugFix pipeline's map points to BugFix pipelines
-    in other repos. The DevAgent pipeline's map points to DevAgent pipelines in other repos.
+    The hub parses the <code>@kai-&lt;agent&gt;</code> tag, runs <code>/dx-discover-repos</code> to resolve the
+    touched repos, and queues the agent's one worker per repo (cross-project via each repo's
+    <code>adoProject</code>, Basic PAT auth). Single-repo projects don't use the hub — their dual-mode worker
+    fires directly via its own <code>resources.webhooks</code>.
   </HighlightBox>
 
-  <HighlightBox severity="warning" title="Setting Variables">
-    Recommended: use <code>/auto-pipelines</code> skill which reads <code>infra.json</code> and sets all
-    variables via <code>az pipelines variable create</code>. Manual option: Azure CLI or ADO UI
-    (Pipelines &gt; select pipeline &gt; Edit &gt; Variables &gt; New variable).
+  <HighlightBox severity="warning" title="Adding a Repo">
+    Add the repo as an alias in <code>repos.json</code> — no per-pipeline map edits. There is no
+    <code>CROSS_REPO_PIPELINE_MAP</code> or <code>SOURCE_REPO_NAME</code> anymore; peer-to-peer delegation
+    was replaced by the central router. See <code>dx-hub/shared/registry-format.md</code>.
   </HighlightBox>
 </Section>
 

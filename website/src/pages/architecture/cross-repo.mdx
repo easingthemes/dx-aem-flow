@@ -2,7 +2,7 @@
 layout: ../../layouts/SidebarLayout.astro
 title: Cross-Repo Architecture
 sidebar: architecture
-description: "Cross-repository architecture in KAI — how skills and agents work across multiple repos with shared configuration."
+description: "Cross-repository architecture in KAI — the central KAI-HUB router fans automation across repos via dual-mode workers and two registries, and local skills detect cross-repo scope."
 ---
 
 import PageHero from '../../components/PageHero.astro';
@@ -15,7 +15,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
 <PageHero
   title="Cross-Repo Architecture"
-  subtitle="Multi-repo intelligence for local development and pipeline delegation -- how skills detect cross-repo scope, tag plan steps by repo, check sibling impact, and hand off work to the correct repository."
+  subtitle="Multi-repo intelligence for local development and pipeline automation -- a central KAI-HUB router resolves which repos a work item touches and fans one dual-mode worker pipeline out per repo, while local skills detect cross-repo scope, tag plan steps by repo, and check sibling impact."
 />
 
 <SectionHeading
@@ -27,7 +27,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="Bug Reports">
-      A bug report's root cause may be in the backend repo, but the pipeline runs in the frontend repo.
+      A bug report's root cause may be in the backend repo, but the comment that triggers the agent
+      lives on a work item that could touch any repo.
     </ContentCard>
 
     <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="User Stories">
@@ -43,104 +44,93 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <HighlightBox severity="info" title="Each Repo Has Its Own">
     <code>CLAUDE.md</code>, <code>.claude/rules/</code>, <code>.ai/config.yaml</code> (project conventions),
-    pipeline instances (different YAML, bound to the correct repo), and installed plugins (same dx plugins
-    but configured per-project).
+    and installed plugins (same dx plugins but configured per-project). The worker pipeline clones the
+    target repo dynamically so it picks up that repo's conventions at runtime.
   </HighlightBox>
 </Section>
 
 <SectionHeading
   badge="Solution"
   badgeColor="success"
-  title="The Solution"
-  subtitle="Each agent type exists as a separate pipeline in each repo. When a pipeline discovers work belongs elsewhere, it delegates."
+  title="The KAI-HUB Model"
+  subtitle="One central router parses the @kai-<agent> tag, resolves the touched repos, and fans a single dual-mode worker pipeline out — one run per repo. No peer-to-peer pipeline delegation."
   bg="primary"
 />
 <Section>
-  <HighlightBox severity="info" title="Pipeline Layout Per Repo">
-    <CommandBlock>
-{`Repo A (e.g. Frontend)          Repo B (e.g. Backend)
-  BugFix-Agent                    BugFix-Agent
-  DevAgent                        DevAgent
-  DOD-Fix-Agent                   DOD-Fix-Agent
-  DOD-Agent                       DOD-Agent
-  QA-Agent                        QA-Agent
-  DOCAgent                        DOCAgent
-  DOR-Agent                       (no DOR -- single repo)
-  PR-Review                       PR-Review
-  PR-Answer                       PR-Answer`}
-    </CommandBlock>
-  </HighlightBox>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <ContentCard icon="mdi:router-network" iconColor="bg-brand-700" title="Central Router">
+      The KAI-HUB router pipeline (<code>ado-cli-hub.yml</code>) is the single webhook entry point.
+      It parses the <code>@kai-&lt;agent&gt;</code> tag, dedups the event, runs
+      <code>/dx-discover-repos</code>, then queues the agent's worker once per resolved repo
+      (cross-project via each repo's ADO project; Basic PAT auth).
+    </ContentCard>
 
-  <h3 class="text-lg font-bold mt-8 mb-4">Which Agents Support Cross-Repo?</h3>
-  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
-    <thead>
-      <tr class="bg-brand-100">
-        <th class="text-left p-3 font-semibold">Agent</th>
-        <th class="text-left p-3 font-semibold">Cross-Repo?</th>
-        <th class="text-left p-3 font-semibold">Reason</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">BugFix</td>
-        <td class="p-3">Yes (delegation)</td>
-        <td class="p-3">Bug may be in any repo</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">DevAgent</td>
-        <td class="p-3">Yes (delegation)</td>
-        <td class="p-3">Story implementation may target any repo</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">DoD Fix</td>
-        <td class="p-3">Yes (delegation)</td>
-        <td class="p-3">DoD failures may require fixes in another repo</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">PR Answer</td>
-        <td class="p-3">Multi-repo routing</td>
-        <td class="p-3">Lambda routes to correct repo based on PR repo name</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">DoD / QA / DOCAgent / DoR / PR Review</td>
-        <td class="p-3">No</td>
-        <td class="p-3">Read-only, repo-independent, or same-repo only</td>
-      </tr>
-    </tbody>
-  </table>
+    <ContentCard icon="mdi:swap-horizontal-bold" iconColor="bg-cyan" title="Dual-Mode Workers">
+      Each agent has <strong>one</strong> worker pipeline. It keeps its own
+      <code>resources.webhooks</code> for single-repo direct triggers (operates on <code>checkout: self</code>)
+      and ALSO accepts a <code>targetRepo</code> param. When set, it clones that repo dynamically from the
+      registry into <code>$(Pipeline.Workspace)/target</code>.
+    </ContentCard>
+
+    <ContentCard icon="mdi:database" iconColor="bg-emerald-600" title="Two Registries">
+      <code>repos.json</code> (alias → repoId / adoProject / cloneUrl / defaultBranch / platform / brand / role)
+      and <code>agents.json</code> (tag → workerPipelineId / event / writes) live in the AI/automation repo
+      and are the single source of truth for which repos exist and which agents have a worker.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="success" title="One Worker Pipeline Per Agent — Not One Per Repo">
+    Under the old model each agent existed as a separate pipeline in every repo, and a code-writing
+    pipeline that discovered work elsewhere would write a <code>delegate.json</code> and queue the
+    matching pipeline in the target repo (peer-to-peer). That is gone. Now there is a single worker
+    per agent; the hub fans it out per resolved repo, and the worker clones whichever repo it was
+    handed. <code>delegate.json</code>, <code>CROSS_REPO_PIPELINE_MAP</code>, <code>SOURCE_REPO_NAME</code>,
+    and the standalone <code>simple-router</code> pipeline no longer exist.
+  </HighlightBox>
 </Section>
 
 <SectionHeading
   badge="Pattern 1"
   badgeColor="warning"
-  title="Cross-Repo Delegation"
-  subtitle="Pipeline starts, Claude discovers work targets another repo, writes delegate.json, YAML step queues the target pipeline."
+  title="KAI-HUB Router Fan-Out"
+  subtitle="A human comments @kai-<agent> on a work item. The hub parses the tag, resolves the touched repos, and queues the agent's one worker once per repo."
   bg="alt"
 />
 <Section>
   <PipelineBlock
-    label="Delegation Flow"
-    description="From triage to delegate.json to target pipeline -- the full cross-repo handoff."
+    label="KAI-HUB Flow"
+    description="From an @kai-<agent> comment to one worker run per resolved repo -- the central fan-out."
     steps={[
-      { title: 'Pipeline A', subtitle: 'Claude runs\ntriage/research', color: '#0891b2' },
-      { title: 'Detection', subtitle: 'Cross-Repo\nScope found', color: '#d97706' },
-      { title: 'delegate.json', subtitle: 'Claude writes\nhandoff file', color: '#8b5cf6' },
-      { title: 'YAML Step', subtitle: 'Reads JSON,\nqueues pipeline', color: '#dc2626' },
-      { title: 'Pipeline B', subtitle: 'Target repo\nfull context', color: '#059669' },
+      { title: 'ADO Comment', subtitle: '@kai-bugfix\non work item', color: '#0891b2' },
+      { title: 'KAI-HUB Router', subtitle: 'parse tag\n+ dedup', color: '#d97706' },
+      { title: '/dx-discover-repos', subtitle: 'resolve\ntouched repos', color: '#8b5cf6' },
+      { title: 'Fan-Out', subtitle: 'queue worker\nper repo', color: '#dc2626' },
+      { title: 'Worker (clone)', subtitle: 'dynamic checkout\nof target repo', color: '#059669' },
     ]}
   />
 
-  <h3 class="text-lg font-bold mt-8 mb-4">delegate.json Format</h3>
-  <HighlightBox severity="info" title="Written by Claude to .ai/run-context/delegate.json">
-    <CommandBlock label="delegate.json">
+  <h3 class="text-lg font-bold mt-8 mb-4">The Registries</h3>
+  <HighlightBox severity="info" title="repos.json — keyed by repo alias">
+    <CommandBlock label="repos.json">
 {`{
-  "targetRepo": "My-Backend-Repo",
-  "pipelineId": "789",
-  "reason": "Bug root cause is in backend Sling models",
-  "templateParameters": {
-    "bugId": "12345",
-    "eventId": "evt-001"
+  "brand-one": {
+    "repoId": "<ado-repo-guid>",
+    "adoProject": "Example Project",
+    "cloneUrl": "https://dev.azure.com/example-org/Example%20Project/_git/brand-one-frontend",
+    "defaultBranch": "development",
+    "platform": "global",
+    "brand": "brand-one",
+    "role": "frontend"
   }
+}`}
+    </CommandBlock>
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="agents.json — keyed by agent tag">
+    <CommandBlock label="agents.json">
+{`{
+  "simple": { "workerPipelineId": "<id>", "event": "workitem.commented", "writes": true },
+  "dor":    { "workerPipelineId": "<id>", "event": "workitem.commented", "writes": false }
 }`}
     </CommandBlock>
   </HighlightBox>
@@ -149,61 +139,81 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <thead>
       <tr class="bg-brand-100">
         <th class="text-left p-3 font-semibold">Field</th>
-        <th class="text-left p-3 font-semibold">Type</th>
+        <th class="text-left p-3 font-semibold">Registry</th>
         <th class="text-left p-3 font-semibold">Description</th>
       </tr>
     </thead>
     <tbody>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>targetRepo</code></td>
-        <td class="p-3">string</td>
-        <td class="p-3">Name of the target repository</td>
+        <td class="p-3"><code>cloneUrl</code> / <code>defaultBranch</code></td>
+        <td class="p-3"><code>repos.json</code></td>
+        <td class="p-3">Worker clone step — the URL to clone and the branch to base work on (PAT injected at clone time)</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>pipelineId</code></td>
-        <td class="p-3">string</td>
-        <td class="p-3">Pipeline definition ID from <code>CROSS_REPO_PIPELINE_MAP</code></td>
+        <td class="p-3"><code>adoProject</code></td>
+        <td class="p-3"><code>repos.json</code></td>
+        <td class="p-3">Put in the per-repo queue URL so cross-project fan-out works</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>reason</code></td>
-        <td class="p-3">string</td>
-        <td class="p-3">Human-readable explanation of why delegation is needed</td>
+        <td class="p-3"><code>platform</code> / <code>brand</code> / <code>role</code></td>
+        <td class="p-3"><code>repos.json</code></td>
+        <td class="p-3">Routing metadata — mirror the <code>repos:</code> block <code>route-targets.sh</code> reads</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>templateParameters</code></td>
-        <td class="p-3">object</td>
-        <td class="p-3">Parameters passed to the target pipeline run</td>
+        <td class="p-3"><code>workerPipelineId</code></td>
+        <td class="p-3"><code>agents.json</code></td>
+        <td class="p-3">ADO pipeline id of this agent's dynamic-checkout worker — <strong>one per agent</strong></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>writes</code></td>
+        <td class="p-3"><code>agents.json</code></td>
+        <td class="p-3"><code>true</code> = pushes code / authors content (needs a writable clone); <code>false</code> = read-only</td>
       </tr>
     </tbody>
   </table>
 
-  <h3 class="text-lg font-bold mt-8 mb-4">Where Detection Happens</h3>
-  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+  <h3 class="text-lg font-bold mt-8 mb-4">Repo Discovery — dx-discover-repos</h3>
+  <HighlightBox severity="info" title="3-tier cascade (first non-empty tier wins)">
+    The <code>dx-discover-repos</code> skill is the multi-repo brain of the hub. It resolves the set of
+    repos a work item touches and emits a JSON array constrained to known registry aliases — it never
+    invents repos. Single-repo projects never call it.
+  </HighlightBox>
+  <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden mt-4">
     <thead>
       <tr class="bg-brand-100">
-        <th class="text-left p-3 font-semibold">Coordinator</th>
-        <th class="text-left p-3 font-semibold">When</th>
-        <th class="text-left p-3 font-semibold">What It Reads</th>
+        <th class="text-left p-3 font-semibold">Tier</th>
+        <th class="text-left p-3 font-semibold">Source</th>
+        <th class="text-left p-3 font-semibold">How</th>
       </tr>
     </thead>
     <tbody>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>dx-bug-all</code></td>
-        <td class="p-3">After Step 1 (triage)</td>
-        <td class="p-3"><code>triage.md</code> &rarr; Cross-Repo Scope section</td>
+        <td class="p-3">0 — Explicit directive</td>
+        <td class="p-3"><code>repos: a, b</code> in the trigger comment</td>
+        <td class="p-3">Deterministic — maps each alias to its registry entry</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>dx-agent-all</code></td>
-        <td class="p-3">After Phase 1 (requirements)</td>
-        <td class="p-3"><code>research.md</code> &rarr; Cross-Repo Scope section</td>
+        <td class="p-3">1 — Simple-block routing</td>
+        <td class="p-3"><code>```simple</code> block in the story</td>
+        <td class="p-3">Routes by declared platform / brand / scope via <code>route-targets.sh</code></td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>dx-req-dod</code></td>
-        <td class="p-3">After Step 1 (DoD read)</td>
-        <td class="p-3"><code>research.md</code> &rarr; Cross-Repo Scope (if exists)</td>
+        <td class="p-3">2 — Cross-Repo Scope table</td>
+        <td class="p-3"><code>## Cross-Repo Scope</code> in triage/research</td>
+        <td class="p-3">Extracts repo aliases from the markdown table</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">3 — LLM fallback</td>
+        <td class="p-3">Work item title + description</td>
+        <td class="p-3">Picks the touched subset, constrained to registry aliases</td>
       </tr>
     </tbody>
   </table>
+  <HighlightBox severity="warning" title="On ambiguity, the hub asks">
+    If tier 1 can't resolve a platform/brand (exit 3) or no candidate matches (exit 8), the skill emits a
+    structured error instead of an array. The hub turns that into a clarification comment on the work item
+    and queues nothing — no guessing.
+  </HighlightBox>
 </Section>
 
 <SectionHeading
@@ -216,7 +226,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <PipelineBlock
     label="PR Answer Routing"
-    description="The Lambda picks the right pipeline based on which repo the PR belongs to. No Claude involvement for routing."
+    description="The PR-Router Lambda picks the right pipeline based on which repo the PR belongs to. No Claude involvement for routing."
     steps={[
       { title: 'ADO PR Comment', subtitle: 'Repo-scoped\nhook fires', color: '#0891b2' },
       { title: 'PR Router', subtitle: 'Extract repo\nfrom payload', color: '#d97706' },
@@ -225,10 +235,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
     ]}
   />
 
-  <HighlightBox severity="warning" title="Key Difference from Delegation">
-    No Claude involvement needed for routing. The Lambda itself picks the right pipeline using
+  <HighlightBox severity="warning" title="Key Difference from Hub Fan-Out">
+    For PR Answer the target repo is in the webhook payload, so the Lambda routes directly using
     <code>ADO_PR_ANSWER_PIPELINE_MAP</code> -- a JSON object mapping repo names to PR Answer pipeline IDs.
-    Each repo creates its own repo-scoped ADO service hook filtered to that repository + base branch.
+    The hub router exists precisely because work-item agents do NOT know their target repo up front —
+    it has to be discovered after reading the ticket.
   </HighlightBox>
 </Section>
 
@@ -236,33 +247,35 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Design"
   badgeColor="secondary"
   title="Design Decisions"
-  subtitle="Why delegate.json, why System.AccessToken, and why not route at the Lambda level."
+  subtitle="Why a central router, why two registries, and why workers clone the target dynamically."
   bg="alt"
 />
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <ContentCard icon="mdi:file-document" iconColor="bg-brand-700" title="Why delegate.json?">
-      Claude writes a JSON file; a YAML step makes the API call. This avoids giving Claude
-      <code>curl</code> permissions, keeps auth details out of the AI context, and produces
-      a simple, auditable shell script that only runs if the file exists.
+    <ContentCard icon="mdi:router-network" iconColor="bg-brand-700" title="Why a Central Router?">
+      Peer-to-peer delegation needed every code-writing pipeline to carry a map of every other repo's
+      pipeline IDs and re-queue itself across repos. One router with one registry replaces that web of
+      cross-references — adding a repo is a registry edit, not a map update on every pipeline.
     </ContentCard>
 
-    <ContentCard icon="mdi:key" iconColor="bg-emerald-600" title="Why System.AccessToken?">
-      Automatically available in every ADO pipeline. Has read access to all repos in the same
-      project/collection. Has "Queue builds" permission. No secrets to manage -- rotates automatically.
+    <ContentCard icon="mdi:database" iconColor="bg-emerald-600" title="Why Two Registries?">
+      <code>repos.json</code> and <code>agents.json</code> are the single source of truth. The router
+      reads them to know which repos exist and which pipeline to queue, so the routing logic lives in
+      one place instead of being scattered across pipeline variables.
     </ContentCard>
 
-    <ContentCard icon="mdi:help-circle" iconColor="bg-cyan" title="Why Not Lambda Routing?">
-      For BugFix/DevAgent/DoD-Fix, the target repo is not known until AFTER Claude runs triage/research.
-      The Lambda only knows the work item ID -- it does not know which repo the fix should go to.
-      Delegation happens mid-pipeline, not at invocation time.
+    <ContentCard icon="mdi:content-duplicate" iconColor="bg-cyan" title="Why Clone Dynamically?">
+      A worker handed <code>targetRepo</code> clones that repo from <code>repos.json</code> at runtime, so
+      it always has the correct codebase, conventions, and branch. With no <code>targetRepo</code>,
+      <code>TARGET_DIR</code> defaults to <code>$(Build.SourcesDirectory)</code> — single-repo behavior is
+      unchanged.
     </ContentCard>
   </div>
 
-  <HighlightBox severity="info" title="Why Exit After Writing delegate.json?">
-    The pipeline in Repo A does not have the target repo's codebase, conventions, or plugins.
-    Running the fix there would produce wrong results. Better to delegate to Repo B's pipeline
-    which has everything set up correctly.
+  <HighlightBox severity="info" title="Single-Repo Projects Don't Touch the Hub">
+    The registries are only read in hub mode. A single-repo project keeps firing its worker directly via
+    the worker's own <code>resources.webhooks</code> (the worker is dual-mode), so it never needs
+    <code>repos.json</code> or <code>agents.json</code>.
   </HighlightBox>
 </Section>
 
@@ -285,7 +298,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       During research (Phase 5c), detects when a story spans sibling repos by checking for cross-repo
       signals: dialog field dependencies, data model changes, template references, exporter modifications.
       Appends a <code>## Cross-Repo Scope</code> section to <code>research.md</code> listing affected repos,
-      field dependencies, and deployment order.
+      field dependencies, and deployment order. The hub's <code>dx-discover-repos</code> reads this same
+      table as its tier-2 source.
     </ContentCard>
 
     <ContentCard icon="mdi:tag-multiple" iconColor="bg-cyan" title="/dx-plan — Step Tagging">
@@ -317,8 +331,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <SectionHeading
   badge="Local"
   badgeColor="success"
-  title="Local Developer Flow (Pipelines)"
-  subtitle="Cross-repo detection still runs locally, but delegation is manual."
+  title="Local Developer Flow"
+  subtitle="Cross-repo detection still runs locally; handoff to another repo is manual."
   bg="alt"
 />
 <Section>
@@ -329,13 +343,13 @@ import CommandBlock from '../../components/CommandBlock.astro';
       - <code>DX_PIPELINE_MODE</code> is not set
       - Cross-repo detection still runs (triage/research)
       - Cross-repo scope appears in the summary
-      - No automatic delegation -- developer decides
+      - No automatic fan-out -- the developer decides
     </ContentCard>
 
     <ContentCard icon="mdi:arrow-right" iconColor="bg-amber-500" title="Manual Handoff">
       The summary tells the developer: "Also affects My-Backend-Repo -- run
       <code>/dx-bug-all 12345</code> there." The developer manually switches to the other repo
-      and runs the command. No <code>delegate.json</code> is created.
+      and runs the command. The hub router only fans work out in automation (pipeline) mode.
     </ContentCard>
   </div>
 </Section>
@@ -344,34 +358,39 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Config"
   badgeColor="warning"
   title="Configuration Required"
-  subtitle="Environment variables needed for cross-repo delegation and PR routing."
+  subtitle="Registries for hub fan-out, the targetRepo worker param, and the PR Router map."
   bg="alt"
 />
 <Section>
-  <h3 class="text-lg font-bold mb-4">Per Code-Writing Pipeline (BugFix, DevAgent, DoD Fix)</h3>
+  <h3 class="text-lg font-bold mb-4">Hub + Registries (AI/automation repo)</h3>
   <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
     <thead>
       <tr class="bg-brand-100">
-        <th class="text-left p-3 font-semibold">Variable</th>
-        <th class="text-left p-3 font-semibold">Value</th>
+        <th class="text-left p-3 font-semibold">File / Param</th>
+        <th class="text-left p-3 font-semibold">Where</th>
         <th class="text-left p-3 font-semibold">Purpose</th>
       </tr>
     </thead>
     <tbody>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td>
-        <td class="p-3"><code>{'{"My-Backend-Repo":"789"}'}</code></td>
-        <td class="p-3">Maps repo names to pipeline IDs of the same agent type</td>
+        <td class="p-3"><code>.ai/automation/registries/repos.json</code></td>
+        <td class="p-3">AI/automation repo</td>
+        <td class="p-3">Alias → repoId / adoProject / cloneUrl / defaultBranch / platform / brand / role</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>SOURCE_REPO_NAME</code></td>
-        <td class="p-3"><code>$(Build.Repository.Name)</code></td>
-        <td class="p-3">Set automatically -- tells Claude which repo it is in</td>
+        <td class="p-3"><code>.ai/automation/registries/agents.json</code></td>
+        <td class="p-3">AI/automation repo</td>
+        <td class="p-3">Tag → workerPipelineId / event / writes</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>targetRepo</code> param</td>
+        <td class="p-3">Each dual-mode worker</td>
+        <td class="p-3">Empty → direct mode (<code>checkout: self</code>); set → clone <code>repos.json[targetRepo]</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>DX_PIPELINE_MODE</code></td>
         <td class="p-3"><code>true</code></td>
-        <td class="p-3">Enables delegation behavior</td>
+        <td class="p-3">Marks a pipeline run (enables pipeline-only behaviors)</td>
       </tr>
     </tbody>
   </table>
@@ -404,7 +423,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="New Repo"
   badgeColor="info"
   title="Adding a New Repo"
-  subtitle="Six steps to bring a new repository into the multi-repo automation."
+  subtitle="Bring a new repository into the multi-repo automation with a registry edit."
   bg="primary"
 />
 <Section>
@@ -414,25 +433,24 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <code>.ai/config.yaml</code>, rules, and project knowledge.
     </ContentCard>
 
-    <ContentCard icon="mdi:pipe" iconColor="bg-cyan" title="2. Import Pipelines">
-      Import pipeline YAMLs into ADO, bound to the new repo. Set pipeline variables
-      (same as existing repos).
+    <ContentCard icon="mdi:pipe" iconColor="bg-cyan" title="2. Import the Worker">
+      Import the dual-mode worker pipelines into ADO. Set pipeline variables (same as existing repos).
+      The worker keeps its own <code>resources.webhooks</code> for single-repo direct triggers.
     </ContentCard>
 
-    <ContentCard icon="mdi:sync" iconColor="bg-emerald-600" title="3. Update Maps">
-      Update <code>CROSS_REPO_PIPELINE_MAP</code> on all existing code-writing pipelines --
-      add the new repo's pipeline IDs. Update <code>ADO_PR_ANSWER_PIPELINE_MAP</code> on the
-      PR Router Lambda.
+    <ContentCard icon="mdi:database-plus" iconColor="bg-emerald-600" title="3. Register">
+      Add the new repo as an alias in <code>repos.json</code> (repoId, adoProject, cloneUrl,
+      defaultBranch, platform, brand, role). No per-pipeline map edits — the hub reads the registry.
     </ContentCard>
   </div>
 
   <HighlightBox severity="info" title="Error Handling">
     <ul class="text-sm space-y-1 mt-2">
-      <li><code>CROSS_REPO_PIPELINE_MAP</code> not set: no delegation -- continue locally with warning</li>
-      <li>Target repo not in the map: log warning, continue locally</li>
-      <li>ADO API call fails: pipeline step fails -- visible in ADO logs</li>
+      <li>Registry alias missing: <code>dx-discover-repos</code> emits a <code>no-match</code> error → hub posts a clarification comment</li>
+      <li>Ambiguous platform/brand: <code>dx-discover-repos</code> emits an <code>ambiguous</code> error → hub asks the human to add a <code>platform:</code> hint</li>
+      <li>ADO queue call fails: hub step fails -- visible in ADO logs</li>
       <li>Target pipeline paused/disabled: ADO queues the run but it will not execute</li>
-      <li><code>DX_PIPELINE_MODE</code> not set: skip delegation entirely (local mode)</li>
+      <li><code>DX_PIPELINE_MODE</code> not set: local mode -- detection runs, fan-out does not</li>
     </ul>
   </HighlightBox>
 </Section>

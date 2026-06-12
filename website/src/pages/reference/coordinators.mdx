@@ -84,10 +84,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <strong>3-cycle review loop</strong>: code review, auto-fix, rebuild, re-review (max 3 cycles).
       <strong>2 healing cycles max</strong>: if healing fails twice, stop for human intervention.
     </ContentCard>
-    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Cross-Repo Delegation">
-      When <code>DX_PIPELINE_MODE</code> is set, code-writing coordinators check if the work targets
-      another repo. If so, they write <code>delegate.json</code> and STOP -- the YAML step reads it
-      and queues the equivalent pipeline in the target repo.
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="KAI-HUB Multi-Repo Routing">
+      In automation, the KAI-HUB router resolves the touched repos via <code>/dx-discover-repos</code> and
+      fans the agent's one dual-mode worker out per repo. Each worker clones its target repo dynamically
+      and runs the coordinator there -- no peer-to-peer pipeline handoff.
     </ContentCard>
   </div>
 </Section>
@@ -238,9 +238,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <strong>Fail condition:</strong> ADO fetch fails = ABORT.
     </ContentCard>
 
-    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Phase 1.5a: Cross-Repo Check (pipeline mode only)">
-      Only runs when <code>DX_PIPELINE_MODE</code> is set. Reads <code>research.md</code> for cross-repo scope.
-      If current repo is not the target: writes <code>delegate.json</code> and STOPS. Skipped in local mode.
+    <ContentCard icon="mdi:source-branch" iconColor="bg-cyan" title="Phase 1.5a: Cross-Repo Scope (pipeline mode only)">
+      Reads <code>research.md</code> for the <code>## Cross-Repo Scope</code> table — the same source the
+      hub's <code>/dx-discover-repos</code> uses (tier 2) to resolve which repos the worker fans out to.
+      Skipped in local mode.
     </ContentCard>
 
     <ContentCard icon="mdi:palette" iconColor="bg-amber-500" title="Phase 1.5 + 2: Figma (optional)">
