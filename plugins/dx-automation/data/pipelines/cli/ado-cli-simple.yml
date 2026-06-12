@@ -3,25 +3,27 @@ pr: none
 
 # Claude Agent SDK pipeline — SimpleAgent via /dx-simple skill.
 #
-# Trigger (fully Azure-native — no Lambda): a comment containing the configured
-# token (default @kai-simple; dx-simple.recovery.trigger-token) on a User Story
-# fires an ADO Service Hook (event: "work item commented on", filter: comment
-# contains the token) → an Incoming WebHook service connection → the `simpleHook`
-# webhook resource below. The SAME event covers the first run AND every recovery
-# re-trigger; Phase 0 (resume-check.sh) decides fresh-vs-resume. The work item id
-# comes from the webhook payload (${{ parameters.simpleHook.resource.id }}); the
-# agent reads the comment from the work item itself.
+# DUAL-MODE worker (KAI-HUB refactor):
 #
-# Manual runs are also supported: pass workItemId as a parameter; the pipeline
-# falls back to the webhook payload's resource.id at runtime. The multi-repo
-# router (ado-cli-simple-router.yml) also queues this pipeline with workItemId +
-# eventId as templateParameters, so both params are retained.
+#  - DIRECT MODE (single-repo, the common case): a comment containing the token
+#    (default @kai-simple) on a User Story fires the `simpleHook` Service Hook
+#    directly. `checkout: self` IS the project repo; TARGET_DIR defaults to
+#    $(Build.SourcesDirectory); workItemId comes from the webhook payload. This
+#    is byte-for-byte the pre-hub behavior — no registry is read.
+#
+#  - HUB MODE (multi-repo): the central KAI-HUB router (ado-cli-hub.yml) queues
+#    this pipeline with templateParameters {targetRepo, workItemId, commentId,
+#    eventId}. When `targetRepo` is set, `checkout: self` is the AI/automation
+#    repo (registries + pipeline-agent.js) and the named project repo is cloned
+#    dynamically from repos.json into $(Pipeline.Workspace)/target; TARGET_DIR
+#    points there. The agent runs with workingDirectory: $(TARGET_DIR).
+#
+# The switch is the `targetRepo` parameter: empty -> direct, set -> hub. Because
+# TARGET_DIR defaults to $(Build.SourcesDirectory), the whole proven body below
+# is unchanged for single-repo users.
 #
 # NOTE: `connection:` must match the "Incoming WebHook" service connection name
-# configured in ADO (Project Settings → Service connections). Create the
-# connection + the Service Hook with /auto-webhooks, and rename
-# `kai-simple-trigger-sc` below to match. Authoring + code split with 9
-# confidence gates. ~45 min step budget.
+# configured in ADO. Authoring + code split with 9 confidence gates. ~45 min budget.
 
 parameters:
   - name: workItemId
@@ -34,6 +36,14 @@ parameters:
     default: false
   - name: eventId
     displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+  - name: targetRepo
+    displayName: "Target repo alias (set by KAI-HUB; empty = direct single-repo mode)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment ID (for dedup/tracing; set by KAI-HUB)"
     type: string
     default: ""
 
@@ -70,22 +80,45 @@ steps:
 
   - bash: |
       set -e
-      # Resolve workItemId — manual parameter wins, webhook payload is fallback.
+      # Resolve workItemId — manual/hub parameter wins, webhook payload is fallback.
       MANUAL_ID="${{ parameters.workItemId }}"
       WEBHOOK_ID="${{ parameters.simpleHook.resource.id }}"
       if [ -n "$MANUAL_ID" ]; then
         WI_ID="$MANUAL_ID"
-        TRIGGER="manual"
+        TRIGGER="param"
       elif [ -n "$WEBHOOK_ID" ]; then
         WI_ID="$WEBHOOK_ID"
         TRIGGER="webhook"
       else
-        echo "ERROR: No work item ID provided. Manual runs need parameters.workItemId; webhook runs need resource.id in payload." >&2
+        echo "ERROR: No work item ID provided. Manual/hub runs need parameters.workItemId; webhook runs need resource.id in payload." >&2
         exit 1
       fi
       echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
       echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
       echo "Work item: $WI_ID (trigger: $TRIGGER)"
+
+      # Resolve execution mode + TARGET_DIR.
+      #  - targetRepo set  -> HUB MODE: clone the named repo from the registry.
+      #  - targetRepo empty -> DIRECT MODE: operate on checkout: self (today's behavior).
+      TARGET_REPO="${{ parameters.targetRepo }}"
+      if [ -n "$TARGET_REPO" ]; then
+        REG="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+        if [ ! -f "$REG" ]; then
+          echo "ERROR: hub mode (targetRepo=$TARGET_REPO) but registry missing: $REG" >&2
+          exit 1
+        fi
+        RJSON=$(jq -e --arg a "$TARGET_REPO" '.[$a]' "$REG") || {
+          echo "ERROR: targetRepo '$TARGET_REPO' not found in $REG" >&2; exit 1; }
+        CLONE_URL=$(echo "$RJSON" | jq -r '.cloneUrl')
+        BRANCH=$(echo "$RJSON" | jq -r '.defaultBranch')
+        AUTH_URL=$(echo "$CLONE_URL" | sed "s#https://#https://pat:${ADO_PAT}@#")
+        git clone --branch "$BRANCH" "$AUTH_URL" "$(Pipeline.Workspace)/target"
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Pipeline.Workspace)/target"
+        echo "Hub mode: cloned target repo '$TARGET_REPO' (branch $BRANCH)"
+      else
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Build.SourcesDirectory)"
+        echo "Direct mode: operating on checkout: self (single-repo)"
+      fi
 
       # Log webhook context if present (smoke-test for payload references).
       if [ "$TRIGGER" = "webhook" ]; then
@@ -95,7 +128,9 @@ steps:
         echo "Project:             ${{ parameters.simpleHook.resource.fields['System.TeamProject'] }}"
         echo "Work item state:     ${{ parameters.simpleHook.resource.fields['System.State'] }}"
       fi
-    displayName: "Resolve work item ID + log webhook payload"
+    displayName: "Resolve work item ID + execution mode (clone target in hub mode)"
+    env:
+      ADO_PAT: $(ADO_PAT)
 
   - task: Cache@2
     inputs:
@@ -112,10 +147,10 @@ steps:
   - bash: |
       set -e
       SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json"
-      DST="$(Build.SourcesDirectory)/.mcp.json"
+      DST="$(TARGET_DIR)/.mcp.json"
       if [ -f "$DST" ]; then
         # Merge: pipeline servers (AEM, playwright) WIN, but any
-        # other servers already declared in the consumer repo (e.g., ADO,
+        # other servers already declared in the target repo (e.g., ADO,
         # Atlassian) are preserved. Backup first for forensics.
         cp "$DST" "$DST.pre-simple-bak"
         jq -s '.[0] * .[1]' "$DST" "$SRC" > "$DST.merged"
@@ -183,12 +218,10 @@ steps:
       # sources nvm itself per CLAUDE.md (`source ~/.nvm/nvm.sh && nvm use`), so
       # it doesn't need to be on PATH here.
       #
-      # Generic by design — adapts to whatever the consumer repo contains:
+      # Generic by design — adapts to whatever the target repo contains:
       #   - nvm + latest Node (default) + the project's pinned Node if a .nvmrc exists
       #   - frontend node_modules (npm ci) for the detected FE module
       #   - Maven local repo (~/.m2) via dependency:go-offline if a root pom exists
-      # Projects with a non-standard layout should tailor the detection below
-      # (the consumer copy in .ai/automation/pipelines/ is the place to do that).
       export NVM_DIR="$HOME/.nvm"
       if [ ! -s "$NVM_DIR/nvm.sh" ]; then
         echo "Installing nvm ..."
@@ -201,7 +234,7 @@ steps:
       nvm alias default node >/dev/null
       echo "Latest Node: $(nvm version node) (default)"
 
-      SRC="$(Build.SourcesDirectory)"
+      SRC="$(TARGET_DIR)"
 
       # Detect the frontend module: prefer the AEM archetype's ui.frontend, else
       # the first package.json (depth<=2) that isn't under node_modules.
@@ -274,24 +307,26 @@ steps:
       fi
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
       echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      # pipeline-agent.js lives in the AI/automation repo (checkout: self). Invoke
+      # it by absolute path and run it with cwd = TARGET_DIR so /dx-simple operates
+      # on the target project. In direct mode TARGET_DIR == Build.SourcesDirectory,
+      # so this is identical to the pre-hub invocation.
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
     displayName: "AI SimpleAgent"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
       AEM_QA_URL: $(AEM_QA_URL)
       AEM_QA_USER: $(AEM_QA_USER)
       AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
-      SOURCE_REPO_NAME: $(Build.Repository.Name)
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
       # Coordinator + 3 parallel research subagents + up to 10 JCR writes +
-      # visual verify + diff review + PR creation. 30 and then 60 were both
-      # too tight — a real run hit the cap mid-Phase-4 (compile), stranding the
-      # edits before the report/ADO comment could be posted. 200 gives headroom
-      # for the full pipeline incl. retries; the wall-clock cap (timeoutInMinutes
-      # below + the wrapper's TIMEOUT_MINUTES) is the real backstop.
+      # visual verify + diff review + PR creation. 200 gives headroom for the full
+      # pipeline incl. retries; the wall-clock cap (timeoutInMinutes below + the
+      # wrapper's TIMEOUT_MINUTES) is the real backstop.
       MAX_TURNS: "200"
       ALLOWED_TOOLS: >-
         Skill,Read,Write,Edit,Glob,Grep,Agent,
@@ -317,9 +352,9 @@ steps:
     timeoutInMinutes: 45
 
   - bash: |
-      if [ -d "$(Build.SourcesDirectory)/.ai/specs" ]; then
+      if [ -d "$(TARGET_DIR)/.ai/specs" ]; then
         echo "Uploading spec artifacts..."
-        find "$(Build.SourcesDirectory)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
+        find "$(TARGET_DIR)/.ai/specs" -name "*.png" -o -name "*.md" -o -name "*.json" | head -50
       fi
     displayName: "List spec artifacts (for retention)"
     condition: always()
@@ -331,7 +366,7 @@ steps:
   # this step posts a short failure note so the ticket never goes silent.
   - bash: |
       set -e
-      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      FLAG="$(TARGET_DIR)/.ai/run-context/ado-comment-posted.flag"
       if [ -f "$FLAG" ]; then
         echo "Skill already posted an ADO comment — skipping fallback."
         exit 0
