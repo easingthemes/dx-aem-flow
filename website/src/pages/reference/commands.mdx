@@ -480,10 +480,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </ol>
     </ContentCard>
     <ContentCard icon="mdi:robot" iconColor="bg-cyan-dark" title="Pipeline Mode (Automated)">
-      When <code>DX_PIPELINE_MODE</code> is set, code-writing coordinators (<code>dx-bug-all</code>,
-      <code>dx-agent-all</code>, <code>dx-req-dod</code>) check if the work targets another repo.
-      If so, they write <code>.ai/run-context/delegate.json</code> and STOP. A post-Claude YAML step
-      reads it and queues the equivalent pipeline in the target repo.
+      In automation, the KAI-HUB router resolves which repos a work item touches via
+      <code>/dx-discover-repos</code> and queues the agent's one dual-mode worker once per repo. Each
+      worker clones its target repo dynamically and runs the same coordinator there — no peer-to-peer
+      handoff between pipelines.
     </ContentCard>
   </div>
 

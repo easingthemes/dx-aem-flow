@@ -13,6 +13,8 @@ import HighlightBox from '../../components/HighlightBox.astro';
 import PipelineBlock from '../../components/PipelineBlock.astro';
 import { stats } from '../../config/stats';
 
+export const base = import.meta.env.BASE_URL;
+
 <PageHero
   title="Automation -- 24/7 Autonomous Agents"
   subtitle={`${stats.autonomousAgents} AI agents running as ADO pipelines, triggered by AWS Lambda webhooks. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned.`}
@@ -201,34 +203,39 @@ import { stats } from '../../config/stats';
 <SectionHeading
   badge="Cross-Repo"
   badgeColor="secondary"
-  title="Cross-Repo Delegation"
-  subtitle="Agents automatically hand off work to the correct repository when the fix lives elsewhere."
+  title="KAI-HUB Multi-Repo Routing"
+  subtitle="A central router resolves which repos a work item touches and fans one dual-mode worker pipeline out per repo. No peer-to-peer pipeline delegation."
   bg="primary"
 />
 <Section>
   <HighlightBox severity="info" title="How It Works">
-    BugFix starts in repo A &rarr; triage discovers the fix belongs in repo B &rarr; writes
-    <code>delegate.json</code> &rarr; pipeline reads it &rarr; queues the matching pipeline in repo B.
-    The receiving agent picks up the work with full context from the original ticket.
+    A human comments <code>@kai-&lt;agent&gt;</code> on a work item &rarr; the KAI-HUB router
+    (<code>ado-cli-hub.yml</code>) parses the tag, dedups, runs <code>/dx-discover-repos</code> to resolve the
+    touched repos &rarr; queues the agent's <strong>one</strong> worker pipeline once per repo. Each worker
+    clones the target repo dynamically from <code>repos.json</code>, so it picks up that repo's full context.
   </HighlightBox>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-    <ContentCard icon="mdi:bug" iconColor="bg-red-500" title="BugFix">
-      Frontend bug traced to a missing Sling Model field? Delegates to Brand-Backend automatically.
+    <ContentCard icon="mdi:router-network" iconColor="bg-brand-700" title="Central Router">
+      One webhook entry point. Parses <code>@kai-&lt;agent&gt;</code>, looks up the worker in
+      <code>agents.json</code>, and fans it out per resolved repo (cross-project, Basic PAT auth).
     </ContentCard>
 
-    <ContentCard icon="mdi:code-braces" iconColor="bg-brand-700" title="DevAgent">
-      Story requires backend + frontend changes? DevAgent delegates the backend portion to the correct repo.
+    <ContentCard icon="mdi:swap-horizontal-bold" iconColor="bg-cyan" title="Dual-Mode Workers">
+      Each worker keeps its own <code>resources.webhooks</code> for single-repo direct triggers and also
+      accepts a <code>targetRepo</code> param for hub mode — clone-and-work on any registered repo.
     </ContentCard>
 
-    <ContentCard icon="mdi:wrench" iconColor="bg-emerald-600" title="DoD-Fix">
-      DoD gap requires a change in another repo? DoD-Fix delegates to the repo that owns the affected code.
+    <ContentCard icon="mdi:database" iconColor="bg-emerald-600" title="Two Registries">
+      <code>repos.json</code> (alias → clone metadata) and <code>agents.json</code> (tag → workerPipelineId)
+      are the single source of truth. Adding a repo is a registry edit, not a per-pipeline map update.
     </ContentCard>
   </div>
 
   <HighlightBox severity="warning" title="Key Environment Variables">
-    <code>DX_PIPELINE_MODE</code> -- tells the agent it is running in pipeline context (enables delegation).
-    <code>CROSS_REPO_PIPELINE_MAP</code> -- maps repo names to pipeline IDs for cross-repo queuing.
+    <code>DX_PIPELINE_MODE</code> -- marks a pipeline run (enables pipeline-only behaviors).
+    <code>targetRepo</code> param -- empty for single-repo direct mode, set by the hub for fan-out.
+    See the <a href={`${base}/architecture/cross-repo/`}>Cross-Repo</a> page for the full model.
   </HighlightBox>
 </Section>
 

@@ -169,7 +169,7 @@ export const base = import.meta.env.BASE_URL;
     <tbody>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>DX_PIPELINE_MODE=true</code></td>
-        <td class="p-3">Pipeline delegation (write <code>delegate.json</code>) — see <a href={`${base}/architecture/cross-repo/`}>Cross-Repo</a></td>
+        <td class="p-3">KAI-HUB router fans the worker out per repo via <code>/dx-discover-repos</code> — see <a href={`${base}/architecture/cross-repo/`}>Cross-Repo</a></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>hub.enabled: true</code> + repos registered</td>
@@ -358,12 +358,12 @@ repos:
       <tr class="border-t border-gray-200">
         <td class="p-3">Repo discovery</td>
         <td class="p-3">Sibling directories on disk + capabilities</td>
-        <td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code> env var</td>
+        <td class="p-3"><code>/dx-discover-repos</code> against <code>repos.json</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Dispatch mechanism</td>
         <td class="p-3">VS Code terminals via vscode-automator MCP</td>
-        <td class="p-3"><code>delegate.json</code> → ADO REST API</td>
+        <td class="p-3">KAI-HUB router queues one worker per repo → ADO REST API</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Each repo gets</td>
