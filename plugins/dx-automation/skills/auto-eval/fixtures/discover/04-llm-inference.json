@@ -1,0 +1,13 @@
+{
+  "name": "llm-inference-from-story",
+  "agent": "discover",
+  "tier": 3,
+  "description": "Tier 3 — no explicit directive, no simple block, no Cross-Repo Scope table. The LLM must infer touched repos from title+description, CONSTRAINED to registry aliases. Documents the expected set; result is model-dependent (prompt-tuning signal, not a hard gate).",
+  "registry_aliases": ["brand-one", "brand-two", "platform-core", "aem-platform-core"],
+  "input": {
+    "kind": "story",
+    "title": "Update the shared Hero component model to expose a new CTA style field",
+    "description": "The Hero Sling model lives in the shared AEM core module and is consumed by both brand frontends. Add a ctaStyle property; no brand-specific markup changes required."
+  },
+  "expected_aliases": ["aem-platform-core"]
+}

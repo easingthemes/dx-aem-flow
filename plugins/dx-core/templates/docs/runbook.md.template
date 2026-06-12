@@ -17,7 +17,7 @@
 | `rate limit exceeded` | Daily cap hit | Resets at midnight UTC. Adjust in `rate-limiter.js`. |
 | `scanner: degraded mode` | Content Safety down | Fail-open — pipelines continue with local detection. |
 | Plugin install failure | Cannot reach GitHub | Pipelines clone `github.com/easingthemes/dx-aem-flow` (public) — check agent network/proxy access to github.com. |
-| Delegation failed | Pipeline map wrong | Check `CROSS_REPO_PIPELINE_MAP` JSON. |
+| Worker not queued for a repo | Repo missing from registry | Check the repo alias exists in the hub's `repos.json` and the agent in `agents.json`. |
 | Webhooks stopped | Auto-disabled by ADO | Re-enable in Service Hooks settings. |
 
 ## Investigating a Failed Run

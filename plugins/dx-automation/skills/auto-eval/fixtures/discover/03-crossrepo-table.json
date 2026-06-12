@@ -1,0 +1,12 @@
+{
+  "name": "crossrepo-scope-table",
+  "agent": "discover",
+  "tier": 2,
+  "description": "Tier 2 — research.md/triage.md emitted a ## Cross-Repo Scope table; extract aliases (parse-crossrepo-table.sh). Unknown rows are skipped.",
+  "registry_aliases": ["brand-one", "brand-two", "platform-core", "aem-platform-core"],
+  "input": {
+    "kind": "crossrepo-table",
+    "markdown": "## Cross-Repo Scope\n\n**Current repo:** brand-one (this fix covers only this repo)\n\n| Repo | What's needed | Key files |\n|------|--------------|-----------|\n| platform-core | Backend exporter update | src/main/java/Foo.java |\n| aem-platform-core | Shared component model | core/src/.../Hero.java |\n"
+  },
+  "expected_aliases": ["platform-core", "aem-platform-core"]
+}

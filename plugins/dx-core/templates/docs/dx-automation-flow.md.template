@@ -165,7 +165,7 @@ flowchart TD
     INIT["/auto-init<br/>consumer profile"]
     PIPES["/auto-pipelines<br/>6 pipelines only"]
     HOOKS["/auto-webhooks<br/>PR hooks only"]
-    REG["Register repo in hub's<br/>ADO_PR_ANSWER_PIPELINE_MAP<br/>+ CROSS_REPO_PIPELINE_MAP"]
+    REG["Register repo in hub's<br/>ADO_PR_ANSWER_PIPELINE_MAP<br/>+ repos.json registry"]
 
     INIT --> PIPES --> HOOKS --> REG
 
@@ -295,8 +295,8 @@ flowchart TD
         PR_ANS["PR Answerer<br/>(comment webhook)<br/>Context-aware replies"]
     end
 
-    subgraph CROSS_REPO["Cross-Repo Delegation"]
-        XREPO["CROSS_REPO_PIPELINE_MAP<br/>Hub queues consumer pipelines<br/>for: DevAgent, BugFix, DoD-Fix"]
+    subgraph CROSS_REPO["Multi-Repo Fan-Out (KAI-HUB)"]
+        XREPO["KAI-HUB router + repos.json/agents.json<br/>Fans each agent's worker out per repo<br/>for: DevAgent, BugFix, DoD-Fix, Simple"]
     end
 
     DEV --> XREPO

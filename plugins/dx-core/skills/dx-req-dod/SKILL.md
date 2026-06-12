@@ -220,16 +220,17 @@ Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that struct
 
 If all criteria passed, skip to step 9.
 
-### 8a. Cross-Repo Check (pipeline mode only)
+### 8a. Cross-Repo Scope (pipeline mode only)
+
+In pipeline mode there is no peer-to-peer delegation — the central KAI-HUB router
+fans this worker out per repo. This step only **documents** scope for the hub.
 
 If `DX_PIPELINE_MODE` is set:
-1. Check if `$SPEC_DIR/research.md` has a `## Cross-Repo Scope` section
-2. If found, apply delegation logic (see `shared/repo-discovery.md`):
-   - If current repo is NOT the target → write `delegate.json` and **STOP**
-   - If current repo IS the target → continue, delegate to other repos after fixes
-   - If map missing → warn and continue locally
+1. Ensure `$SPEC_DIR/research.md` has a `## Cross-Repo Scope` section listing the
+   repo aliases the work touches (the hub's `dx-discover-repos` tier 2 reads it).
+2. Do NOT write `delegate.json` or queue a pipeline — continue with local fixes.
 
-If `DX_PIPELINE_MODE` is not set: skip (local mode).
+If `DX_PIPELINE_MODE` is not set: skip (local mode). See `shared/repo-discovery.md`.
 
 ### 8b. Categorize Failures
 

@@ -1,0 +1,10 @@
+{
+  "simple": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": true },
+  "bugfix": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": true },
+  "dev": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": true },
+  "dod-fix": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": true },
+  "dor": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": false },
+  "qa": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": false },
+  "doc": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": false },
+  "estimation": { "workerPipelineId": "TBD-set-in-Part-B", "event": "workitem.commented", "writes": false }
+}

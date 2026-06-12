@@ -1,0 +1,40 @@
+{
+  "brand-one": {
+    "repoId": "TBD-set-in-Part-B",
+    "adoProject": "Example Project",
+    "cloneUrl": "https://dev.azure.com/example-org/Example%20Project/_git/brand-one-frontend",
+    "defaultBranch": "development",
+    "stack": "node",
+    "platform": "global",
+    "brand": "brand-one",
+    "role": "frontend"
+  },
+  "brand-two": {
+    "repoId": "TBD-set-in-Part-B",
+    "adoProject": "Example Project",
+    "cloneUrl": "https://dev.azure.com/example-org/Example%20Project/_git/brand-two-frontend",
+    "defaultBranch": "development",
+    "stack": "node",
+    "platform": "global",
+    "brand": "brand-two",
+    "role": "frontend"
+  },
+  "platform-core": {
+    "repoId": "TBD-set-in-Part-B",
+    "adoProject": "Example Project",
+    "cloneUrl": "https://dev.azure.com/example-org/Example%20Project/_git/platform-core",
+    "defaultBranch": "development",
+    "stack": "java",
+    "platform": "global",
+    "role": "backend"
+  },
+  "aem-platform-core": {
+    "repoId": "TBD-set-in-Part-B",
+    "adoProject": "Example Project",
+    "cloneUrl": "https://dev.azure.com/example-org/Example%20Project/_git/aem-platform-core",
+    "defaultBranch": "development",
+    "stack": "java",
+    "platform": "global",
+    "role": "fullstack"
+  }
+}

@@ -171,7 +171,7 @@ Create the Service Hook on the **"Work item commented on"** event, filtered so t
 
 **Which pipeline does the hook target?**
 - **Single-platform projects (default):** point the hook at the **`simple`** pipeline's `kai-simple` Incoming WebHook, exactly as described above. The one dx-simple pipeline applies the change directly.
-- **Multi-platform projects:** point the hook at the **`simple-router`** pipeline's Incoming WebHook (`ado-cli-simple-router.yml`) instead of `simple` directly. The router reads the `simple` block's `platform` field and `CROSS_REPO_PIPELINE_MAP`, then queues each target repo's own `simple` pipeline. The per-repo `simple` pipelines keep their `resources.webhooks` listener for child runs, but the **comment hook fires the router**, not the individual `simple` pipelines.
+- **Multi-repo projects:** point the hook at the **`hub`** (KAI-HUB router) Incoming WebHook (`ado-cli-hub.yml`) instead of `simple` directly. The hub parses the `@kai-<agent>` tag, runs `dx-discover-repos`, and queues each agent's worker once per resolved repo (reading the `repos.json`/`agents.json` registries). The per-repo workers keep their `resources.webhooks` listener (they are dual-mode), but the **comment hook fires the hub**, not the individual workers. A single hub hook (filter: comment contains `@kai`) covers all agents.
 
 Update `infra.json`:
 - `webhooks.simple.connection` → `kai-simple-trigger-sc`

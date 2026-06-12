@@ -1,7 +1,7 @@
 ---
 name: auto-eval
 description: Run the AI automation evaluation framework against test fixtures. Verifies agent quality without hitting ADO or LLM APIs. Use after changing prompts, rules, or agent steps. Accepts --all, --agent, --tier2 flags.
-argument-hint: "[--all | --agent dor|pr-review|pr-answer | --tier2 | --fixture [name]]"
+argument-hint: "[--all | --agent dor|pr-review|pr-answer|discover | --tier2 | --fixture [name]]"
 ---
 
 You run the evaluation framework for the AI automation agents. Eval runs against pre-captured fixtures (no live ADO or LLM calls for tier-1 gates).
@@ -25,9 +25,28 @@ Default: `--all` if no argument given.
 
 Supported flags (pass through to `eval/run.js`):
 - `--all` — run all fixtures
-- `--agent <name>` — run only fixtures for a specific agent (`dor`, `pr-review`, `pr-answer`)
+- `--agent <name>` — run only fixtures for a specific agent (`dor`, `pr-review`, `pr-answer`, `discover`)
 - `--tier2` — run tier-2 gates (makes real LLM calls; slower and costs tokens)
 - `--fixture <name>` — run a single fixture by name
+
+### `--agent discover` — KAI-HUB repo discovery
+
+Scores the `dx-discover-repos` cascade by **alias-set match**: a fixture passes
+when the discovery output's set of `alias` values equals the fixture's
+`expected_aliases` (order-independent). Fixtures live in
+`.ai/automation/eval/fixtures/discover/` (seed copies ship at
+`dx-automation/skills/auto-eval/fixtures/discover/`), one per tier:
+
+| Fixture | Tier | Deterministic? |
+|---------|------|----------------|
+| `01-explicit` | 0 — `repos:` directive | yes (offline) |
+| `02-simple-block` | 1 — ` ```simple ` block routing | yes (offline) |
+| `03-crossrepo-table` | 2 — `## Cross-Repo Scope` table | yes (offline) |
+| `04-llm-inference` | 3 — LLM infers from title/description | no — needs `--tier2`; documents expected set, model-dependent |
+
+Tiers 0–2 run offline in tier-1 (no ADO/LLM) and must pass exactly — they share
+logic with `dx-hub/skills/dx-discover-repos/tests/run-tests.sh`. Tier 3 only runs
+under `--tier2`; treat a miss as a prompt-tuning signal, not a hard gate.
 
 ## 2. Run Eval
 
