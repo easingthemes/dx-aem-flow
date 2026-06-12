@@ -237,7 +237,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 >
 > Sets up eleven autonomous agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) running as ADO pipelines triggered by AWS Lambda webhooks. All agents use Claude Code CLI (reuses dx skills directly in pipelines).
 >
-> **Cross-repo delegation:** Code-writing pipelines (BugFix, DevAgent, DoD-Fix) detect when a work item targets another repo and automatically queue the equivalent pipeline there via `delegate.json` + ADO REST API. See `docs/architecture/automation-design.md`.
+> **Multi-repo fan-out (KAI-HUB):** workers are dual-mode dynamic-checkout. Single-repo projects fire a worker directly via its webhook (operates on `checkout: self`). Multi-repo projects route `@kai-<agent>` comments through the central KAI-HUB router (`ado-cli-hub.yml`), which runs `/dx-discover-repos` and queues the agent's worker once per resolved repo (cloning each from the `repos.json` registry). No peer-to-peer `delegate.json` delegation. See `dx-hub/shared/registry-format.md`.
 >
 > **Plugin installation:** All CLI pipelines auto-install dx plugins from a local marketplace path (same repo) or Git URL (cross-repo) before running Claude.
 
