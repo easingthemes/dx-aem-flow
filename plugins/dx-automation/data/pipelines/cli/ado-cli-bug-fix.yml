@@ -27,7 +27,9 @@ pr: none
 #    FAIL as "warn + continue" (triage + fix proceed on triage alone).
 #  - No JCR-write tools / activatePage — BugFix never authors content; it edits
 #    source files and opens a PR.
-#  - Keeps cross-repo delegation (pipeline→pipeline REST queue — not Lambda).
+#  - Cross-repo work is no longer peer-to-peer delegated — the central KAI-HUB
+#    router fans BugFix out per repo (see ado-cli-hub.yml). This worker just fixes
+#    the one repo it is pointed at.
 
 resources:
   webhooks:
@@ -48,10 +50,6 @@ parameters:
     displayName: "Dry run (triage + analyze only, don't apply fixes or create PRs)"
     type: boolean
     default: false
-  - name: sourceRepoName
-    displayName: "Source repo name (for cross-repo delegation)"
-    type: string
-    default: ""
 
 variables:
   - name: PLAYWRIGHT_MCP_VERSION
@@ -296,8 +294,6 @@ steps:
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
       CI: "true"
-      SOURCE_REPO_NAME: $(Build.Repository.Name)
-      CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
       # /dx-bug-all runs THREE skills back-to-back (triage → verify → fix), each
       # substantial, plus a one-shot retry on triage/fix failure and resumable
       # recovery. 60 was far too tight. The wall-clock cap (timeoutInMinutes below
@@ -338,39 +334,6 @@ steps:
       fi
     displayName: "List spec artifacts (for retention)"
     condition: always()
-
-  - bash: |
-      DELEGATION_FILE="$(Build.SourcesDirectory)/.ai/run-context/delegate.json"
-      if [ ! -f "$DELEGATION_FILE" ]; then
-        echo "No delegation needed — work stays in this repo."
-        exit 0
-      fi
-      echo "Cross-repo delegation file found:"
-      cat "$DELEGATION_FILE"
-      PIPELINE_ID=$(jq -r '.pipelineId' "$DELEGATION_FILE")
-      TARGET_REPO=$(jq -r '.targetRepo' "$DELEGATION_FILE")
-      PARAMS=$(jq -c '.templateParameters' "$DELEGATION_FILE")
-      PROJECT="$(System.TeamProject)"
-      API_URL="${ADO_ORG_URL}/$(printf '%s' "$PROJECT" | jq -sRr @uri)/_apis/pipelines/${PIPELINE_ID}/runs?api-version=7.1-preview.1"
-      BODY=$(jq -n --argjson params "$PARAMS" '{templateParameters: $params}')
-      echo "##[section]Delegating BugFix to $TARGET_REPO (pipeline $PIPELINE_ID)"
-      HTTP_CODE=$(curl -s -o /tmp/queue-response.json -w '%{http_code}' \
-        -X POST "$API_URL" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" \
-        -d "$BODY")
-      if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-        RUN_ID=$(jq -r '.id // "unknown"' /tmp/queue-response.json)
-        echo "Pipeline queued successfully. Run ID: $RUN_ID"
-      else
-        echo "##[warning]Pipeline delegation failed with HTTP $HTTP_CODE"
-        cat /tmp/queue-response.json 2>/dev/null || true
-      fi
-    displayName: "Cross-repo delegation (if needed)"
-    condition: not(canceled())
-    env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      ADO_ORG_URL: $(ADO_ORG_URL)
 
   # Fallback ADO comment. /dx-bug-all posts its own comment at the finalize step
   # (success) and on the ABORT path (blocker), touching the flag below when it does.

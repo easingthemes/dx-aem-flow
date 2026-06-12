@@ -129,7 +129,7 @@ After the profile is chosen, the remaining questions depend on the profile:
 > 10. **DOCAgent** — wiki docs + AEM demo pages
 > 11. **Estimation** — auto-estimates story points
 
-**No delegation follow-up for consumers.** Consumer repos always get all 6 pipeline YAMLs (pr-review, pr-answer, eval, devagent, bugfix, dod-fix). The hub controls which pipelines it actually delegates to via its `CROSS_REPO_PIPELINE_MAP` and `ADO_PR_ANSWER_PIPELINE_MAP` env vars. Having unused pipeline YAMLs in the consumer costs nothing but not having them blocks delegation later.
+**No follow-up wiring for consumers.** Consumer repos always get all 6 pipeline YAMLs (pr-review, pr-answer, eval, devagent, bugfix, dod-fix). Multi-repo fan-out for code agents is handled centrally by the KAI-HUB router, which reads the `repos.json`/`agents.json` registries (`.ai/automation/registries/`) — there is no per-pipeline cross-repo map. PR-answer routing still uses the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var. Having unused pipeline YAMLs in the consumer costs nothing but not having them blocks routing later.
 
 Resolve the chosen profile into a list of enabled agents:
 - **Hub + all**: all agents → profile `full-hub`
@@ -435,9 +435,9 @@ Run these skills in order to complete the setup:
 ### Setup Sequence
 
 1. `/auto-pipelines` — Import ADO pipelines + set variables
-2. **Register with hub** — After importing pipelines, update the hub's Lambda env vars:
-   - Add this repo's PR Answer pipeline ID to the hub's `ADO_PR_ANSWER_PIPELINE_MAP`
-   - Add this repo's DevAgent/BugFix/DoD-Fix pipeline IDs to the hub's `CROSS_REPO_PIPELINE_MAP`
+2. **Register with hub** — After importing pipelines:
+   - Add this repo's PR Answer pipeline ID to the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var
+   - Add this repo as an alias in the hub's `repos.json` registry (`.ai/automation/registries/repos.json`) so the KAI-HUB router can clone + route to it
 3. `/auto-webhooks` — Create repo-scoped PR Answer hook + PR Review build policy
 4. `/auto-test --dryRun` — Verify pipelines run
 
