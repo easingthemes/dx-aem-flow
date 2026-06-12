@@ -50,6 +50,28 @@ expect_exit() {
   fi
 }
 
+# ===== tier-0: parse-explicit-repos =====
+EXPLICIT="$SCRIPTS/parse-explicit-repos.sh"
+REG="$FIXTURES/repos-registry.json"
+
+run "tier0: explicit 'repos: a, b' -> 2 known entries" \
+  bash -c "$EXPLICIT $FIXTURES/comment-explicit.txt $REG | jq -e 'map(.alias) == [\"brand-one\",\"platform-core\"]'"
+
+run "tier0: explicit branch comes from registry defaultBranch" \
+  bash -c "$EXPLICIT $FIXTURES/comment-explicit.txt $REG | jq -e '.[1].branch==\"main\" and .[0].branch==\"development\"'"
+
+run "tier0: no repos directive -> empty array" \
+  bash -c "$EXPLICIT $FIXTURES/comment-no-repos.txt $REG | jq -e 'length==0'"
+
+# ===== tier-2: parse-crossrepo-table =====
+TABLE="$SCRIPTS/parse-crossrepo-table.sh"
+
+run "tier2: cross-repo table -> only known aliases (unknown skipped)" \
+  bash -c "$TABLE $FIXTURES/research-crossrepo.md $REG | jq -e 'map(.alias)==[\"platform-core\"]'"
+
+run "tier2: missing markdown file -> empty array" \
+  bash -c "$TABLE /nonexistent/research.md $REG | jq -e 'length==0'"
+
 # ===== tier-1: route-targets (moved from dx-simple) =====
 ROUTE="$SCRIPTS/route-targets.sh"
 CFG_MULTI="$FIXTURES/config-multi-platform.yaml"

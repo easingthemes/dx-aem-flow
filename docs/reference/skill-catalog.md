@@ -155,6 +155,7 @@ Multi-repo orchestration plugin. Dispatches tickets to independent Claude Code s
 | dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
 | dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| terminal-delay]` | View and edit hub configuration | Config update |
 | dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
+| dx-discover-repos | `/dx-discover-repos` | `<work-item-id>` | Resolve which repos a work item touches via a 3-tier cascade (explicit → simple-block → cross-repo table → LLM) | JSON array of repo entries (used by the KAI-HUB router) |
 
 ---
 

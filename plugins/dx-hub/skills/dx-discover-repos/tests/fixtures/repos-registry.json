@@ -1,0 +1,4 @@
+{
+  "brand-one": { "repoId": "id-1", "adoProject": "Example Project", "cloneUrl": "https://example/_git/brand-one", "defaultBranch": "development", "platform": "global", "brand": "brand-one", "role": "frontend" },
+  "platform-core": { "repoId": "id-2", "adoProject": "Example Project", "cloneUrl": "https://example/_git/platform-core", "defaultBranch": "main", "platform": "global", "role": "backend" }
+}
