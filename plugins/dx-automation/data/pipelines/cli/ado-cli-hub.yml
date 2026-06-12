@@ -1,0 +1,255 @@
+trigger: none
+pr: none
+
+# KAI-HUB router pipeline (KAI-HUB refactor).
+#
+# The single entry point for multi-repo automation. One ADO Service Hook (event:
+# "work item commented on", filter: comment contains "@kai") fires this pipeline
+# via its Incoming WebHook connection. The hub then:
+#   1. parses the @kai-<agent> tag from the comment and looks the agent up in
+#      agents.json (worker pipeline id + writes flag);
+#   2. dedups against recent worker runs (ADO-native — same workItemId+commentId);
+#   3. runs /dx-discover-repos to resolve which repos the work item touches;
+#   4. fans the agent's ONE worker pipeline out — one run per resolved repo,
+#      passing targetRepo so the worker clones that repo dynamically.
+#
+# Cheap by design: it installs claude-code only for the discovery step and does
+# no build / browser work. The heavy lifting happens in the workers.
+#
+# This pipeline is only used by multi-repo projects. Single-repo projects keep
+# firing their dual-mode worker directly (the worker's own resources.webhooks).
+#
+# NOTE: `connection:` must match the "Incoming WebHook" service connection name
+# configured in ADO (Project Settings -> Service connections). Create it + the
+# Service Hook with /auto-webhooks, and rename `kai-hub-trigger-sc` to match.
+
+parameters:
+  - name: workItemId
+    displayName: "ADO Work Item ID (leave empty when triggered by webhook)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment / revision id (for dedup; leave empty for webhook)"
+    type: string
+    default: ""
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
+
+resources:
+  webhooks:
+    - webhook: hubHook                  # alias referenced via ${{ parameters.hubHook.* }}
+      connection: kai-hub-trigger-sc    # ADO "Incoming WebHook" service connection — rename to match yours
+      filters:
+        - path: eventType
+          value: workitem.commented
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true
+    path: s
+
+  - bash: |
+      git clone --depth 1 --branch main \
+        https://github.com/easingthemes/dx-aem-flow.git \
+        "$(Pipeline.Workspace)/dx-aem-flow"
+    displayName: "Fetch dx-aem-flow plugins from GitHub"
+
+  - bash: |
+      set -e
+      # Resolve work item id — manual parameter wins, webhook payload is fallback.
+      MANUAL_ID="${{ parameters.workItemId }}"
+      WEBHOOK_ID="${{ parameters.hubHook.resource.id }}"
+      if [ -n "$MANUAL_ID" ]; then WI_ID="$MANUAL_ID"; TRIGGER="param";
+      elif [ -n "$WEBHOOK_ID" ]; then WI_ID="$WEBHOOK_ID"; TRIGGER="webhook";
+      else echo "ERROR: no work item id (need parameters.workItemId or webhook resource.id)" >&2; exit 1; fi
+
+      # commentId: manual param wins; webhook fallback uses the work-item revision
+      # as a per-comment dedup key (resource.rev increments on each comment).
+      CID="${{ parameters.commentId }}"
+      if [ -z "$CID" ]; then CID="${{ parameters.hubHook.resource.rev }}"; fi
+
+      echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
+      echo "##vso[task.setvariable variable=COMMENT_ID]$CID"
+      echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
+
+      # Parse the @kai-<agent> tag from the comment text (System.History is the
+      # comment body on a workitem.commented event; may be HTML).
+      COMMENT='${{ parameters.hubHook.resource.fields[''System.History''] }}'
+      PLAIN=$(printf '%s' "$COMMENT" | sed -E 's/<[^>]+>/ /g; s/&nbsp;/ /g')
+      TAG=$(printf '%s' "$PLAIN" | grep -oiE '@kai-[a-z-]+' | head -1 | sed -E 's/^@[Kk][Aa][Ii]-//' || true)
+
+      AGENTS_REG="$(Build.SourcesDirectory)/.ai/automation/registries/agents.json"
+      if [ -z "$TAG" ]; then
+        echo "##vso[task.setvariable variable=ROUTE_STATUS]no-tag"
+        echo "No @kai-<agent> tag found in the comment — nothing to route."
+        exit 0
+      fi
+      if [ ! -f "$AGENTS_REG" ]; then
+        echo "ERROR: agents registry missing: $AGENTS_REG" >&2; exit 1
+      fi
+      AJSON=$(jq -e --arg t "$TAG" '.[$t]' "$AGENTS_REG" 2>/dev/null) || {
+        echo "##vso[task.setvariable variable=ROUTE_STATUS]unknown-agent"
+        echo "##vso[task.setvariable variable=UNKNOWN_TAG]$TAG"
+        echo "Unknown agent '@kai-$TAG' — not in agents.json."
+        exit 0
+      }
+      WORKER=$(printf '%s' "$AJSON" | jq -r '.workerPipelineId')
+      WRITES=$(printf '%s' "$AJSON" | jq -r '.writes')
+      echo "##vso[task.setvariable variable=AGENT_TAG]$TAG"
+      echo "##vso[task.setvariable variable=WORKER_PIPELINE_ID]$WORKER"
+      echo "##vso[task.setvariable variable=AGENT_WRITES]$WRITES"
+      echo "##vso[task.setvariable variable=ROUTE_STATUS]ok"
+      echo "Routing @kai-$TAG -> worker pipeline $WORKER (writes=$WRITES), work item $WI_ID, comment $CID"
+    displayName: "Parse @kai tag + resolve agent"
+
+  # If no tag / unknown agent, post a short note and stop (success — nothing to do).
+  - bash: |
+      set -e
+      [ "$ROUTE_STATUS" = "ok" ] && { echo "tag resolved — continuing."; exit 0; }
+      ORG_URL="$(System.CollectionUri)"; PROJECT="$(System.TeamProject)"
+      if [ "$ROUTE_STATUS" = "unknown-agent" ]; then
+        TEXT="KAI-HUB: '@kai-$UNKNOWN_TAG' is not a known agent. Known agents are defined in agents.json. No work was queued."
+      else
+        echo "No tag — skipping comment."; exit 0
+      fi
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST -u ":$ADO_PAT" -H "Content-Type: application/json" -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WI_ID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted unknown-agent note to work item ${WI_ID}."
+    displayName: "Post note if no/unknown tag (then stop)"
+    condition: ne(variables['ROUTE_STATUS'], 'ok')
+    env:
+      ADO_PAT: $(ADO_PAT)
+
+  - bash: |
+      set -e
+      [ "$ROUTE_STATUS" = "ok" ] || { echo "no agent — skip dedup."; exit 0; }
+      # ADO-native dedup: has this exact comment already been handled by a run of
+      # this agent's worker pipeline? Check recent runs' templateParameters for a
+      # matching workItemId + commentId.
+      #
+      # The runs LIST endpoint may omit templateParameters, so we take the most
+      # recent N run ids and GET each /runs/{id} (which includes them). Best-effort:
+      # any API hiccup just means we don't dedup (the worker is itself idempotent
+      # per #141 recovery on the ticket branch).
+      ORG_URL="$(System.CollectionUri)"; PROJECT="$(System.TeamProject)"
+      LIST="${ORG_URL}${PROJECT}/_apis/pipelines/${WORKER_PIPELINE_ID}/runs?api-version=7.1-preview.1"
+      RUN_IDS=$(curl -fsS -u ":$ADO_PAT" "$LIST" 2>/dev/null | jq -r '.value[].id' 2>/dev/null | head -20 || true)
+      DUP="false"
+      for rid in $RUN_IDS; do
+        TP=$(curl -fsS -u ":$ADO_PAT" "${ORG_URL}${PROJECT}/_apis/pipelines/${WORKER_PIPELINE_ID}/runs/${rid}?api-version=7.1-preview.1" 2>/dev/null \
+              | jq -r '.templateParameters // {} | "\(.workItemId)|\(.commentId)"' 2>/dev/null || true)
+        if [ "$TP" = "${WI_ID}|${COMMENT_ID}" ]; then DUP="true"; break; fi
+      done
+      if [ "$DUP" = "true" ]; then
+        echo "##vso[task.setvariable variable=ROUTE_STATUS]duplicate"
+        echo "Duplicate: comment ${COMMENT_ID} on WI ${WI_ID} already queued on worker ${WORKER_PIPELINE_ID}; skipping."
+      else
+        echo "No duplicate run found — proceeding to discovery."
+      fi
+    displayName: "Dedup (ADO-native)"
+    condition: eq(variables['ROUTE_STATUS'], 'ok')
+    env:
+      ADO_PAT: $(ADO_PAT)
+
+  - bash: |
+      npm install -g @anthropic-ai/claude-code
+    displayName: "Install Claude Code (for discovery)"
+    condition: eq(variables['ROUTE_STATUS'], 'ok')
+
+  - bash: |
+      set -e
+      export DX_REPOS_REGISTRY="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+      export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
+      echo "Discovering target repos for WI $WI_ID (agent @kai-$AGENT_TAG) ..."
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "/dx-discover-repos $WI_ID"
+      # The skill writes its structured result to the run-context output file.
+      OUT="$(Build.SourcesDirectory)/.ai/run-context/discover-repos.json"
+      if [ ! -f "$OUT" ]; then
+        echo "ERROR: discovery produced no output file at $OUT" >&2; exit 1
+      fi
+      echo "Discovery output:"; cat "$OUT"
+      cp "$OUT" "$(Pipeline.Workspace)/discover-repos.json"
+    displayName: "Discover target repos (/dx-discover-repos)"
+    condition: eq(variables['ROUTE_STATUS'], 'ok')
+    env:
+      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      DX_PIPELINE_MODE: "true"
+      DX_HOOK_PROFILE: "minimal"
+      CI: "true"
+      MAX_TURNS: "40"
+      ALLOWED_TOOLS: >-
+        Skill,Read,Write,Glob,Grep,Bash(*),
+        mcp__ado__wit_get_work_item
+
+  - bash: |
+      set -e
+      OUT="$(Pipeline.Workspace)/discover-repos.json"
+      ORG_URL="$(System.CollectionUri)"
+
+      # Discovery may emit a structured error object instead of an array (ambiguous
+      # routing / no match). Surface it as a clarification comment and stop.
+      if jq -e 'type == "object" and has("error")' "$OUT" >/dev/null 2>&1; then
+        MSG=$(jq -r '.message // "Could not resolve target repos."' "$OUT")
+        PROJECT="$(System.TeamProject)"
+        BODY=$(jq -n --arg t "KAI-HUB: $MSG" '{text:$t}')
+        curl -fsS -X POST -u ":$ADO_PAT" -H "Content-Type: application/json" -d "$BODY" \
+          "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WI_ID}/comments?api-version=7.1-preview.3" >/dev/null
+        echo "Discovery error -> posted clarification comment; nothing queued."
+        exit 0
+      fi
+
+      COUNT=$(jq 'length' "$OUT")
+      if [ "$COUNT" -eq 0 ]; then echo "No repos resolved — nothing to queue."; exit 0; fi
+
+      echo "Queuing worker $WORKER_PIPELINE_ID for $COUNT repo(s) ..."
+      jq -c '.[]' "$OUT" | while read -r row; do
+        ALIAS=$(printf '%s' "$row" | jq -r '.alias')
+        ADO_PROJECT=$(printf '%s' "$row" | jq -r '.adoProject')
+        # Cross-project queue: use the REPO's adoProject in the URL (NOT the hub's),
+        # so a worker in a different ADO project can be queued. PAT auth is Basic
+        # (-u ":$PAT") — a PAT is NOT a Bearer token.
+        API_URL="${ORG_URL}$(printf '%s' "$ADO_PROJECT" | jq -sRr @uri)/_apis/pipelines/${WORKER_PIPELINE_ID}/runs?api-version=7.1-preview.1"
+        BODY=$(jq -n \
+          --arg wid "$WI_ID" --arg repo "$ALIAS" --arg cid "$COMMENT_ID" \
+          --arg eid "${{ parameters.eventId }}" --arg agent "$AGENT_TAG" \
+          '{templateParameters: {workItemId:$wid, targetRepo:$repo, commentId:$cid, eventId:$eid, agent:$agent}}')
+        echo "##[section]Queuing @kai-$AGENT_TAG in repo '$ALIAS' (project '$ADO_PROJECT', pipeline $WORKER_PIPELINE_ID)"
+        HTTP=$(curl -s -o /tmp/resp.json -w '%{http_code}' -X POST "$API_URL" \
+          -u ":$ADO_PAT" -H "Content-Type: application/json" -d "$BODY")
+        if [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ]; then
+          echo "queued run $(jq -r '.id // "?"' /tmp/resp.json)"
+        else
+          echo "##[warning]queue failed for '$ALIAS': HTTP $HTTP"; cat /tmp/resp.json 2>/dev/null || true
+        fi
+      done
+    displayName: "Queue workers (fan-out, one run per repo)"
+    condition: eq(variables['ROUTE_STATUS'], 'ok')
+    env:
+      ADO_PAT: $(ADO_PAT)
+
+  # Failure comment — the hub failed before any worker started. Mirrors the
+  # workers' fallback step so the ticket never goes silent.
+  - bash: |
+      set -e
+      if [ -z "$WI_ID" ]; then
+        echo "WI_ID not resolved — skipping fallback."; exit 0
+      fi
+      ORG_URL="$(System.CollectionUri)"; PROJECT="$(System.TeamProject)"
+      RUN_URL="${ORG_URL}${PROJECT}/_build/results?buildId=$(Build.BuildId)"
+      TEXT="KAI-HUB failed before any worker was queued (tag parse, discovery, or fan-out errored). No agent ran. Pipeline run: ${RUN_URL}"
+      BODY=$(jq -n --arg t "$TEXT" '{text:$t}')
+      curl -fsS -X POST -u ":$ADO_PAT" -H "Content-Type: application/json" -d "$BODY" \
+        "${ORG_URL}${PROJECT}/_apis/wit/workItems/${WI_ID}/comments?api-version=7.1-preview.3" >/dev/null
+      echo "Posted hub-failure comment to work item ${WI_ID}."
+    displayName: "Post fallback ADO comment (on failure)"
+    condition: failed()
+    env:
+      ADO_PAT: $(ADO_PAT)
