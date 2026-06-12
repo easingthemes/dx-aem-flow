@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dx-aem-flow/dx-hub/repos.schema.json",
+  "title": "KAI-Hub repo registry",
+  "description": "Maps a short repo alias to the metadata the hub needs to clone the repo and to route work to it. Single source of truth for multi-repo discovery — route-targets.sh consumes platform/brand/role; the worker clone step consumes cloneUrl/defaultBranch; the hub queue step consumes adoProject.",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["repoId", "adoProject", "cloneUrl", "defaultBranch", "role"],
+    "properties": {
+      "repoId": {
+        "type": "string",
+        "description": "ADO repository GUID. Placeholder 'TBD-set-in-Part-B' until provisioned."
+      },
+      "adoProject": {
+        "type": "string",
+        "description": "ADO project the repo + its worker pipelines live in. Used in the cross-project queue URL so the hub can fan out across projects."
+      },
+      "cloneUrl": {
+        "type": "string",
+        "description": "HTTPS git clone URL. The worker injects a PAT at clone time (https://pat:TOKEN@...)."
+      },
+      "defaultBranch": {
+        "type": "string",
+        "description": "Branch the worker clones and bases its work on (e.g. development, main)."
+      },
+      "stack": {
+        "type": "string",
+        "description": "Primary tech stack hint (node, java, mixed). Optional; pre-warm logic auto-detects."
+      },
+      "platform": {
+        "type": "string",
+        "description": "Routing dimension consumed by route-targets.sh. Omit on single-platform projects."
+      },
+      "brand": {
+        "type": "string",
+        "description": "Routing dimension for brand frontends. Omit on backend/config repos and single-brand projects."
+      },
+      "role": {
+        "type": "string",
+        "enum": ["frontend", "backend", "fullstack", "config"],
+        "description": "Capability role. route-targets.sh: frontend/fullstack serve fe scope; backend/fullstack serve be scope; config repos are excluded from routing."
+      }
+    }
+  }
+}
