@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.2...v3.5.0) (2026-06-12)
+
+
+### Features
+
+* KAI-HUB — central router + dual-mode dynamic-checkout workers ([#170](https://github.com/easingthemes/dx-aem-flow/issues/170)) ([8038d72](https://github.com/easingthemes/dx-aem-flow/commit/8038d7282afe57f8b0d3685d179103f7d94a2782))
+
 ## [3.4.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.1...v3.4.2) (2026-06-09)
 
 
