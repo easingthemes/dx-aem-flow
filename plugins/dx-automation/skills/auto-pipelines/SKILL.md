@@ -28,9 +28,9 @@ Expected pipelines per profile:
 - **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix, simple
 - **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, `@kai-simple` comment trigger, YAML `ado-cli-simple.yml`)
 
-**SimpleAgent pipelines (`simple` / `simple-router`) are imported here like any other pipeline.** SimpleAgent has *no Lambda* — its trigger is an Azure-native Service Hook + Incoming WebHook service connection (configured by `/auto-webhooks`, not here). But "no Lambda" only affects the *trigger*: the pipeline YAML still must be imported as an ADO definition and given variables, which is exactly this skill's job. So:
-- **`simple`** (`ado-cli-simple.yml`) — enabled by default; imported for both consumer and full-hub when not `disabled`. This is the pipeline the comment hook fires in a single-platform project.
-- **`simple-router`** (`ado-cli-simple-router.yml`) — **multi-platform only, `"disabled": true` by default** in `infra.template.json`. Import it only when the project fans `@kai-simple` out to child `simple` pipelines in other repos. Skip it (like any disabled entry) unless explicitly enabled.
+**SimpleAgent + the KAI-HUB router are imported here like any other pipeline.** SimpleAgent has *no Lambda* — its trigger is an Azure-native Service Hook + Incoming WebHook service connection (configured by `/auto-webhooks`, not here). But "no Lambda" only affects the *trigger*: the pipeline YAML still must be imported as an ADO definition and given variables, which is exactly this skill's job. So:
+- **`simple`** (`ado-cli-simple.yml`) — enabled by default; imported for both consumer and full-hub when not `disabled`. This dual-mode worker is what the comment hook fires directly in a single-repo project.
+- **`hub`** (`ado-cli-hub.yml`) — **multi-repo only, `"disabled": true` by default** in `infra.template.json`. Import it only when the project routes `@kai-<agent>` comments centrally and fans agents out across repos. Skip it (like any disabled entry) unless explicitly enabled.
 
 ## 1. Import Pipelines
 
@@ -205,26 +205,19 @@ az_pipelines_variable create \
   --organization "<adoOrg>"
 ```
 
-> **Cross-repo pipeline map?** JSON mapping repo names to pipeline IDs of the same agent type in other repos.
+> **Multi-repo fan-out?** There is no per-pipeline cross-repo map anymore. The
+> central **KAI-HUB** router (`ado-cli-hub.yml`) handles multi-repo fan-out: it
+> reads the `repos.json` + `agents.json` registries
+> (`.ai/automation/registries/`) and queues each agent's worker once per resolved
+> repo. Single-repo projects don't import the hub at all — their dual-mode worker
+> fires directly via its own webhook. See `dx-hub/shared/registry-format.md`.
 >
-> Example: `{"Other-Repo":"789","Another-Repo":"790"}`
->
-> Leave as `{}` if single-repo setup. Can be updated later when pipelines are imported in other repos.
->
-> **`simple-router` pipeline:** the multi-platform router (`ado-cli-simple-router.yml`) also consumes `CROSS_REPO_PIPELINE_MAP`, but here it maps **each target repo name → that repo's dx-simple (`simple`) pipeline id** — the children the router fans work out to, not the router's own id. Single-platform projects don't deploy the router and leave it unset.
-
-```bash
-az_pipelines_variable create \
-  --name "CROSS_REPO_PIPELINE_MAP" \
-  --value "<JSON map or {}>" \
-  --pipeline-name "<pipeline-name>" \
-  --project "<adoProject>" \
-  --organization "<adoOrg>"
-```
+> So workers no longer need a `CROSS_REPO_PIPELINE_MAP` variable. The only extra
+> variable the hub itself needs is `ADO_PAT` (to queue cross-project worker runs).
 
 ### DevAgent pipeline additional variables
 
-Set these on the DevAgent pipeline (in addition to `ANTHROPIC_API_KEY` + cross-repo variables above):
+Set these on the DevAgent pipeline (in addition to `ANTHROPIC_API_KEY` + `ADO_ORG_URL` above):
 
 | Variable | Value | Secret? |
 |----------|-------|---------|
@@ -286,26 +279,26 @@ az_pipelines_variable create \
 
 The MCP version variables (`PLAYWRIGHT_MCP_VERSION`, `AEM_MCP_VERSION`) have inline defaults in the YAML — only set as pipeline variables to override.
 
-### Simple-Router pipeline additional variables (multi-platform only)
+### KAI-HUB pipeline additional variables (multi-repo only)
 
-Only applies if `simple-router` is enabled (`"disabled": true` by default — skip otherwise). The router queues each target repo's `simple` pipeline via the ADO REST API, so it needs a PAT and the cross-repo map. It runs no LLM itself, so it has **no `ANTHROPIC_API_KEY`**.
+Only applies if `hub` is enabled (`"disabled": true` by default — skip otherwise). The hub queues each agent's worker (one run per resolved repo, possibly cross-project) via the ADO REST API, so it needs a PAT. It runs claude-code only for the `dx-discover-repos` step, so it **does** need `ANTHROPIC_API_KEY`. It reads the `repos.json` + `agents.json` registries from `.ai/automation/registries/` (files in the repo — not pipeline variables).
 
 | Variable | Value | Secret? |
 |----------|-------|---------|
-| `ADO_PAT` | PAT with Build (Read & Execute) scope — used to POST pipeline runs to child repos | Yes |
+| `ADO_PAT` | PAT with Build (Read & Execute) scope — used to POST worker runs (Basic auth; cross-project) | Yes |
 | `ADO_ORG_URL` | ADO org URL (pre-fill from `infra.json` > `adoOrg`) | No |
-| `CROSS_REPO_PIPELINE_MAP` | JSON mapping each target repo name → that repo's **`simple`** pipeline ID (the children the router fans to — NOT the router's own id). Example: `{"Other-Repo":"789"}` | No |
+| `ANTHROPIC_API_KEY` | LLM key for the discovery step | Yes |
 
 ```bash
 az_pipelines_variable create \
   --name "ADO_PAT" \
   --value "<pat>" --secret true \
-  --pipeline-name "<simple-router-pipeline-name>" \
+  --pipeline-name "<kai-hub-pipeline-name>" \
   --project "<adoProject>" \
   --organization "<adoOrg>"
 ```
 
-> **Trigger note:** in a multi-platform project the `@kai-simple` Service Hook targets the **`simple-router`** Incoming WebHook, not the per-repo `simple` pipelines. `/auto-webhooks` §2b handles that. This skill only imports the YAML and sets the variables above.
+> **Trigger note:** in a multi-repo project the `@kai-<agent>` Service Hook targets the **`hub`** Incoming WebHook, not the per-repo workers. `/auto-webhooks` §2b handles that. This skill only imports the YAML and sets the variables above.
 
 ## 3. Summary Report
 
@@ -334,7 +327,7 @@ az_pipelines_variable create \
 
 ## Examples
 
-1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 11 enabled agents (the 10 core agents + `simple`; `simple-router` is `disabled` by default). Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 11 imported successfully.
+1. `/auto-pipelines` (hub, first run) — Reads `infra.json` for 11 enabled agents (the 10 core agents + `simple`; the `hub` router is `disabled` by default). Imports each pipeline one at a time into ADO (e.g., `KAI-DoR-Checker`, `KAI-PR-Review-Agent`), sets required variables (ADO PAT, LLM API key, resource prefix), and records each pipeline ID back to `infra.json`. All 11 imported successfully.
 
 2. `/auto-pipelines` (consumer project) — Reads consumer-profile `infra.json` with 2 pipelines (PR Review, PR Answer). Imports `KAI-BrandB-PR-Review-Agent` and `KAI-BrandB-PR-Answer-Agent` with repo-specific names. Sets pipeline variables including hub Lambda URLs. Reminds user to register pipeline IDs with the hub's Lambda env vars.
 

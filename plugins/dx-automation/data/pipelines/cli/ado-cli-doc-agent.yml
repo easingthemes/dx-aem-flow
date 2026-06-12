@@ -11,6 +11,14 @@ parameters:
   - name: eventId
     type: string
     default: ""
+  - name: targetRepo
+    displayName: "Target repo alias (set by KAI-HUB; empty = direct single-repo mode)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment ID (for dedup/tracing; set by KAI-HUB)"
+    type: string
+    default: ""
 
 pool:
   vmImage: ubuntu-latest
@@ -28,6 +36,30 @@ steps:
     displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
+      set -e
+      # Resolve execution mode + TARGET_DIR (dual-mode). DOCAgent generates docs +
+      # posts to wiki (no code PR). targetRepo set -> hub mode (clone target);
+      # empty -> direct mode on checkout: self (today's behavior).
+      TARGET_REPO="${{ parameters.targetRepo }}"
+      if [ -n "$TARGET_REPO" ]; then
+        REG="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+        [ -f "$REG" ] || { echo "ERROR: hub mode (targetRepo=$TARGET_REPO) but registry missing: $REG" >&2; exit 1; }
+        RJSON=$(jq -e --arg a "$TARGET_REPO" '.[$a]' "$REG") || {
+          echo "ERROR: targetRepo '$TARGET_REPO' not found in $REG" >&2; exit 1; }
+        AUTH_URL=$(echo "$RJSON" | jq -r '.cloneUrl' | sed "s#https://#https://pat:${ADO_PAT}@#")
+        BRANCH=$(echo "$RJSON" | jq -r '.defaultBranch')
+        git clone --branch "$BRANCH" "$AUTH_URL" "$(Pipeline.Workspace)/target"
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Pipeline.Workspace)/target"
+        echo "Hub mode: cloned target repo '$TARGET_REPO' (branch $BRANCH)"
+      else
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Build.SourcesDirectory)"
+        echo "Direct mode: operating on checkout: self (single-repo)"
+      fi
+    displayName: "Resolve execution mode (clone target in hub mode)"
+    env:
+      ADO_PAT: $(ADO_PAT)
+
+  - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk
     displayName: "Install Claude Code + Agent SDK"
@@ -41,8 +73,9 @@ steps:
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
     displayName: "Run dx-doc-gen"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
@@ -62,11 +95,12 @@ steps:
         export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
         echo "prompt: $PROMPT"
-        node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+        node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
       else
         echo "aem-doc-gen skill not found — skipping AEM documentation"
       fi
     displayName: "Run aem-doc-gen (if AEM project)"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)

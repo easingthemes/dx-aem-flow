@@ -158,7 +158,7 @@ For consumer repos, check that the hub knows about this repo's pipelines:
 
 1. Read `hubProject` from infra.json — report `✓ hub: <name>` or `⚠ hubProject not set in infra.json`
 2. Remind user: "Verify that this repo's PR Answer pipeline ID is registered in the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var."
-3. Remind about `CROSS_REPO_PIPELINE_MAP` for DevAgent/BugFix/DoD-Fix (consumer pipelines use `KAI-<RepoShortName>-*` naming).
+3. Remind user: "For multi-repo code agents (DevAgent/BugFix/DoD-Fix/Simple), verify this repo is registered as an alias in the hub's `repos.json` registry — the KAI-HUB router fans those agents out per repo (no per-pipeline cross-repo map)."
 
 ## 5. Summary Report
 

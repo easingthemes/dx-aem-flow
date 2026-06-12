@@ -1,0 +1,12 @@
+{
+  "name": "simple-block-platform-brand",
+  "agent": "discover",
+  "tier": 1,
+  "description": "Tier 1 — story carries a ```simple``` block; route by platform/brand/scope (route-targets.sh). platform=global brand=brand-one scope=both -> the brand-one frontend + the backend/fullstack repos for that platform.",
+  "registry_aliases": ["brand-one", "brand-two", "platform-core", "aem-platform-core"],
+  "input": {
+    "kind": "simple-block",
+    "block": "page-url: https://qa/editor.html/content/site/en/home.html\nplatform: global\nbrand: brand-one\nscope: both"
+  },
+  "expected_aliases": ["brand-one", "platform-core", "aem-platform-core"]
+}

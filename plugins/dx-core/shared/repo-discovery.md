@@ -1,22 +1,28 @@
-# Cross-Repo Discovery & Pipeline Delegation
+# Cross-Repo Discovery
 
-Reference document for coordinator skills that need to detect and handle cross-repo work items.
+Reference document for coordinator skills that need to detect and document
+cross-repo work items.
 
 ## When This Applies
 
-Code-writing agents (BugFix, DevAgent, DoD-Fix) run in ADO pipelines with `checkout: self` — they only have the repo where the pipeline YAML lives. If a work item requires changes in a different repo, the agent must delegate to that repo's pipeline.
+Code-writing agents (BugFix, DevAgent, DoD-Fix) and `/dx-simple` may touch more
+than one repo. They do **not** delegate to each other peer-to-peer anymore — the
+central KAI-HUB router decides which repos a work item touches and fans the agent
+out, one run per repo (see "Hub pipeline mode" below).
 
-Non-code agents (DoR, PR Review, PR Answer, DoD, QA, DOCAgent) don't need this — they read code but don't write it, or they're already scoped to the correct repo.
+The job of triage/research is therefore just to **detect and document** the
+cross-repo scope. The hub's `dx-discover-repos` skill consumes that documentation.
 
 ## How Cross-Repo Scope Is Detected
 
-The triage/research skills already detect cross-repo scope and document it:
+The triage/research skills detect cross-repo scope and document it in a markdown
+table that `dx-discover-repos` (tier 2) reads:
 
 - **BugFix:** `triage.md` → `## Cross-Repo Scope` section
 - **DevAgent:** `research.md` → `## Cross-Repo Scope` section
 - **DoD-Fix:** `research.md` → `## Cross-Repo Scope` section (if present in spec dir)
 
-The section contains a table:
+The section contains a table — the first column holds repo aliases:
 
 ```markdown
 ## Cross-Repo Scope
@@ -28,57 +34,33 @@ The section contains a table:
 | <other-repo> | Backend exporter update | src/main/java/... |
 ```
 
-## Pipeline Mode: Automatic Delegation
+Keep emitting this table — it is the contract between the skills and the hub.
+Repo names in the first column should be **registry aliases** (keys in
+`repos.json`); `dx-discover-repos` skips rows it cannot match to the registry.
 
-**When `DX_PIPELINE_MODE=true` is set** (only in ADO pipeline environments):
+## Hub pipeline mode (replaces peer-to-peer delegation)
 
-1. After triage/research completes, read the cross-repo output file
-2. Check for `## Cross-Repo Scope` section
-3. If present, parse the repo names from the table
-4. For each target repo that is NOT the current repo (`SOURCE_REPO_NAME` env var):
-   a. Look up pipeline ID from `CROSS_REPO_PIPELINE_MAP` env var
-   b. Write `.ai/run-context/delegate.json` with delegation details
-   c. Print delegation summary
-   d. **STOP** — do not continue with local implementation
+**When `DX_PIPELINE_MODE=true`** (ADO pipeline environments):
 
-### delegate.json Format
+Cross-repo fan-out is handled centrally by the KAI-HUB router pipeline
+(`dx-automation/data/pipelines/cli/ado-cli-hub.yml`), not by each worker queuing
+the next. The flow is:
 
-```json
-{
-  "targetRepo": "<other-repo>",
-  "pipelineId": "456",
-  "reason": "Backend exporter update needed",
-  "templateParameters": {
-    "bugId": "12345",
-    "eventId": "evt-001"
-  }
-}
-```
+1. A `@kai-<agent>` comment fires the **hub** (one Service Hook → one Incoming
+   WebHook connection).
+2. The hub runs `dx-discover-repos` (in `dx-hub`) to resolve the touched repos
+   from the registries + the `## Cross-Repo Scope` table.
+3. The hub queues the agent's single worker pipeline once per resolved repo,
+   passing `targetRepo`. Each worker clones that repo dynamically and fixes only it.
 
-The pipeline YAML has a post-Claude step that reads this file and queues the target pipeline via ADO REST API using `System.AccessToken`.
+Workers are **dual-mode**: a single-repo project skips the hub entirely and fires
+its worker directly via the worker's own `resources.webhooks`. See
+`dx-hub/shared/registry-format.md` for the registry shapes and
+`dx-hub/skills/dx-discover-repos/SKILL.md` for the discovery cascade.
 
-### CROSS_REPO_PIPELINE_MAP
-
-JSON pipeline variable mapping repo names to pipeline IDs of the same agent type:
-
-```json
-{"Other-Repo": "789", "Another-Repo": "790"}
-```
-
-Each code-writing pipeline has its own map — BugFix maps to BugFix pipelines in other repos, DevAgent maps to DevAgent pipelines, etc.
-
-### What if the current repo also needs changes?
-
-If `## Cross-Repo Scope` lists the current repo AND other repos, **do both**:
-1. Continue with local implementation (current repo is a target)
-2. After completing local work, write `delegate.json` for the other repos
-
-### What if `CROSS_REPO_PIPELINE_MAP` is empty or missing the repo?
-
-Print a warning and continue with local implementation:
-```
-⚠ Cross-repo scope detected (<other-repo>) but no pipeline mapped. Set CROSS_REPO_PIPELINE_MAP pipeline variable.
-```
+There is no `delegate.json`, no `CROSS_REPO_PIPELINE_MAP`, and no
+`SOURCE_REPO_NAME` comparison anymore — those were the peer-to-peer mechanism the
+hub replaces.
 
 ## Local Mode: Manual Handoff (unchanged)
 
@@ -88,40 +70,29 @@ Print a warning and continue with local implementation:
 2. The agent prints: `Run /dx-bug-all <id> in <other-repo>`
 3. The developer manually switches to the other repo and runs the command
 
-No delegation file is written. No pipeline is queued. The developer controls the workflow.
+No pipeline is queued. The developer controls the workflow.
 
-## Hub Mode: Multi-Repo Dispatch
+## Hub Mode: Multi-Repo Dispatch (local, interactive)
 
-**When `hub.enabled: true` AND cwd is a `.hub/` directory** (hub orchestration context):
+**When `hub.enabled: true` AND cwd is a `.hub/` directory** (local hub
+orchestration — distinct from the automation KAI-HUB pipeline):
 
-Hub mode replaces the manual handoff with a dedicated dispatch skill. Instead of printing "switch to repo X", the skill directs the user to `/dx-hub-dispatch`, which opens independent Claude sessions in VS Code terminals — one per repo.
-
-Read `shared/hub-dispatch.md` for the hub dispatch protocol:
-- Hub detection logic
-- Repo resolution from config
-- Terminal-based dispatch via vscode-automator
-- Pre-seeded raw ticket files
-- V1 status tracking (running/done/blocked/failed)
+Hub mode replaces the manual handoff with a dedicated dispatch skill that opens
+independent Claude sessions in VS Code terminals — one per repo. Read
+`dx-hub/shared/hub-dispatch.md` for that protocol.
 
 ### Priority Order
 
 ```
-1. Pipeline mode (DX_PIPELINE_MODE=true) — always takes precedence
-2. Hub mode (hub.enabled + .hub/ cwd) — redirect to /dx-hub-dispatch
+1. Pipeline mode (DX_PIPELINE_MODE=true) — central KAI-HUB router fans out
+2. Local hub mode (hub.enabled + .hub/ cwd) — /dx-hub-dispatch terminal sessions
 3. Local mode (default) — manual handoff message
 ```
-
-### When Hub Mode Is Active
-
-Skills detect hub mode and STOP with a message directing the user to `/dx-hub-dispatch`. Individual skills do not dispatch directly — the hub's dedicated skill handles terminal opening, pre-seeding, and delegation.
 
 ## Environment Variables
 
 | Variable | Set by | Purpose |
 |----------|--------|---------|
-| `DX_PIPELINE_MODE` | Pipeline YAML | Enables automatic delegation |
-| `SOURCE_REPO_NAME` | Pipeline YAML | Current repo name (from `Build.Repository.Name`) |
-| `CROSS_REPO_PIPELINE_MAP` | Pipeline variable | JSON: repo name → pipeline ID |
-| `SYSTEM_ACCESSTOKEN` | Pipeline YAML | ADO build token for REST API calls |
-| `HUB_ENABLED` | `.ai/config.yaml` | Hub mode flag (derived from `hub.enabled`) |
-| `HUB_STATE_DIR` | `.ai/config.yaml` | State directory path (derived from `hub.state-dir`) |
+| `DX_PIPELINE_MODE` | Pipeline YAML | Marks an ADO pipeline run (workers run in pipeline mode) |
+| `HUB_ENABLED` | `.ai/config.yaml` | Local hub mode flag (derived from `hub.enabled`) |
+| `HUB_STATE_DIR` | `.ai/config.yaml` | Local hub state directory (derived from `hub.state-dir`) |

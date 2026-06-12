@@ -46,13 +46,13 @@
       "name": "{{PIPELINE_NAME_PREFIX}}-DOD-Fix-Agent",
       "id": "{{DOD_FIX_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dod-fix.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL"]
     },
     "bugfix": {
       "name": "{{PIPELINE_NAME_PREFIX}}-BugFix-Agent",
       "id": "{{BUGFIX_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-bug-fix.yml",
-      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL"]
     },
     "qa": {
       "name": "{{PIPELINE_NAME_PREFIX}}-QA-Agent",
@@ -64,7 +64,7 @@
       "name": "{{PIPELINE_NAME_PREFIX}}-DevAgent",
       "id": "{{DEV_PIPELINE_ID}}",
       "yaml": ".ai/automation/pipelines/cli/ado-cli-dev-agent.yml",
-      "variables": ["ANTHROPIC_API_KEY", "FIGMA_PERSONAL_ACCESS_TOKEN", "ADO_ORG_URL", "CROSS_REPO_PIPELINE_MAP"]
+      "variables": ["ANTHROPIC_API_KEY", "FIGMA_PERSONAL_ACCESS_TOKEN", "ADO_ORG_URL"]
     },
     "docagent": {
       "name": "{{PIPELINE_NAME_PREFIX}}-DOCAgent",
@@ -85,13 +85,13 @@
       "yaml": ".ai/automation/pipelines/cli/ado-cli-simple.yml",
       "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "AEM_QA_URL", "AEM_QA_USER", "AEM_QA_PASSWORD"]
     },
-    "simple-router": {
-      "name": "{{PIPELINE_NAME_PREFIX}}-Simple-Router",
-      "_name_comment": "MULTI-PLATFORM ONLY. Fans a @kai-simple comment out to each target repo's own 'simple' pipeline via the ADO REST API. Disabled by default — single-platform projects point the service hook directly at the 'simple' pipeline and never import this. Set disabled:false to enable.",
+    "hub": {
+      "name": "{{PIPELINE_NAME_PREFIX}}-KAI-HUB",
+      "_name_comment": "MULTI-REPO ONLY. Central KAI-HUB router (ado-cli-hub.yml). One @kai-<agent> comment fires this; it parses the tag (agents.json), dedups, runs /dx-discover-repos, then fans the agent's worker out per resolved repo (repos.json). Disabled by default — single-repo projects point the service hook directly at the agent's own dual-mode worker and never import this. Set disabled:false to enable. Reads registries from .ai/automation/registries/{repos,agents}.json.",
       "disabled": true,
-      "id": "{{SIMPLE_ROUTER_PIPELINE_ID}}",
-      "yaml": ".ai/automation/pipelines/cli/ado-cli-simple-router.yml",
-      "variables": ["ADO_ORG_URL", "ADO_PAT", "CROSS_REPO_PIPELINE_MAP"]
+      "id": "{{HUB_PIPELINE_ID}}",
+      "yaml": ".ai/automation/pipelines/cli/ado-cli-hub.yml",
+      "variables": ["ANTHROPIC_API_KEY", "ADO_ORG_URL", "ADO_PAT"]
     }
   },
 

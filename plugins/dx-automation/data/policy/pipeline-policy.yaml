@@ -122,7 +122,6 @@ pipelines:
       - postComment
       - updateWorkItem
       - createWorkItem
-      - delegatePipeline  # Write delegate.json for cross-repo handoff (YAML step executes)
     forbidden_actions:
       - castVote
       - mergePR

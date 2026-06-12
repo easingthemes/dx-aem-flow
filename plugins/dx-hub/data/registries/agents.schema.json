@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dx-aem-flow/dx-hub/agents.schema.json",
+  "title": "KAI-Hub agent registry",
+  "description": "Maps an agent tag (the @kai-<tag> trigger token) to its single central worker pipeline. The hub fans this one pipeline out per resolved repo alias, so there is exactly one worker pipeline id per agent (not one per repo).",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["workerPipelineId", "event", "writes"],
+    "properties": {
+      "workerPipelineId": {
+        "type": "string",
+        "description": "ADO pipeline (definition) id of this agent's dynamic-checkout worker. Placeholder 'TBD-set-in-Part-B' until imported."
+      },
+      "event": {
+        "type": "string",
+        "description": "ADO service-hook event that the hub router listens for on behalf of this agent.",
+        "enum": ["workitem.commented"]
+      },
+      "writes": {
+        "type": "boolean",
+        "description": "true = agent pushes code / authors content (needs a target clone with write creds); false = read-only (analyzes + comments only, never pushes or opens PRs)."
+      }
+    }
+  }
+}

@@ -327,37 +327,39 @@ These environment variables are set on ADO pipeline runs and read by skills at r
 
 | Variable | Description |
 |----------|-------------|
-| `DX_PIPELINE_MODE` | Set to `"true"` in all CLI pipelines. Enables automatic cross-repo delegation and other pipeline-only behaviors. |
+| `DX_PIPELINE_MODE` | Set to `"true"` in all CLI pipelines. Marks a pipeline run (enables pipeline-only behaviors). |
 | `ANTHROPIC_API_KEY` | Claude API key for Claude Code CLI authentication. |
-| `ADO_ORG_URL` | ADO org URL (e.g. `https://yourorg.visualstudio.com`). Used for plugin marketplace auth and cross-repo delegation. |
+| `ADO_ORG_URL` | ADO org URL (e.g. `https://yourorg.visualstudio.com`). Used for plugin marketplace auth and (in the KAI-HUB router) cross-project worker queuing. |
 | `ADO_ORG_NAME` | Short ADO org name (e.g. `myorg`). Read by `pipeline-agent.js` for org identification. Falls back to `"myorg"` if not set. |
 | `DX_RESEARCH_PROFILE` | `minimal` \| `frontend` \| `backend` \| `full`. Forces the Phase 4 research profile (`/dx-req`). Overrides `research.profile` in `config.yaml`. Set to `minimal` on 200k-context models. |
 | `DX_HOOK_PROFILE` | `minimal` \| `standard` \| `strict`. Hook strictness — see "Hook Profiles" in CLAUDE.md. |
 
-### Code-Writing Pipelines (BugFix, DevAgent, DoD-Fix)
+### Dynamic-Checkout Workers (BugFix, DevAgent, DoD-Fix, Simple, …)
 
-| Variable | Description |
-|----------|-------------|
-| `SOURCE_REPO_NAME` | Set to `$(Build.Repository.Name)`. Skills compare this against cross-repo scope to decide delegation. |
-| `CROSS_REPO_PIPELINE_MAP` | JSON mapping repo names to pipeline IDs: `{"My-Backend-Repo":"789"}`. Used by the delegation YAML step. **Also consumed by the `simple-router` pipeline**, where it maps each routing target repo name → that repo's dx-simple pipeline id (the second step of the router's two-step `(platform,brand,scope)→repo→pipeline-id` lookup). |
+Workers are **dual-mode**. They take a `targetRepo` parameter:
 
-### delegate.json (cross-repo output)
+| Parameter | Description |
+|-----------|-------------|
+| `targetRepo` | Repo alias set by the KAI-HUB router. **Empty → direct mode** (operate on `checkout: self` — single-repo, unchanged). **Set → hub mode** (clone `repos.json[targetRepo]` into `$(Pipeline.Workspace)/target`; `TARGET_DIR` points there). |
+| `workItemId` / `commentId` / `eventId` | Passed by the hub for the run + dedup/tracing. |
 
-Written by Claude to `.ai/run-context/delegate.json` when delegation is needed:
+There is no `SOURCE_REPO_NAME`, `CROSS_REPO_PIPELINE_MAP`, or `delegate.json`
+anymore — peer-to-peer delegation was replaced by the central KAI-HUB router.
 
-```json
-{
-  "targetRepo": "My-Backend-Repo",
-  "pipelineId": "789",
-  "reason": "Bug affects backend components",
-  "templateParameters": {
-    "bugId": "12345",
-    "eventId": "evt-001"
-  }
-}
+### Multi-repo fan-out (KAI-HUB)
+
+Multi-repo routing lives in the `hub` pipeline (`ado-cli-hub.yml`) + two registries
+in the AI/automation repo:
+
+```
+.ai/automation/registries/repos.json    # alias -> {repoId, adoProject, cloneUrl, defaultBranch, platform, brand, role}
+.ai/automation/registries/agents.json   # tag   -> {workerPipelineId, event, writes}
 ```
 
-The post-Claude YAML step reads this file and queues the target pipeline via ADO REST API.
+The hub parses the `@kai-<agent>` tag, runs `/dx-discover-repos` to resolve the
+touched repos, and queues the agent's one worker per repo (cross-project via each
+repo's `adoProject`, Basic PAT auth). See `dx-hub/shared/registry-format.md`.
+Single-repo projects don't use the hub — their dual-mode worker fires directly.
 
 ## Precedence Rules
 

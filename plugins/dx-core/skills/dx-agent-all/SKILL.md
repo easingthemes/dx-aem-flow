@@ -323,32 +323,25 @@ Print: `Phase 1.5-enrich: Project Enrichment — (<N>/<total>) <done|skipped|WAR
 
 **If `.ai/project/project.yaml` does not exist:** Skip silently. Print: `Phase 1.5-enrich: Project Enrichment — skipped (no project.yaml).`
 
-### Phase 1.5a: Cross-Repo Check (pipeline mode)
+### Phase 1.5a: Cross-Repo Scope (pipeline mode)
 
-If the environment variable `DX_PIPELINE_MODE` is set (check via Bash: `echo "$DX_PIPELINE_MODE"`):
+In pipeline mode there is **no peer-to-peer delegation** — the central KAI-HUB
+router decides which repos a work item touches and queues this worker once per
+repo (passing `targetRepo`). So this worker only ever implements the one repo it
+was pointed at.
+
+This phase's only job is to **document** cross-repo scope so the hub's
+`dx-discover-repos` skill can read it. If `DX_PIPELINE_MODE` is set:
 
 1. Find the spec directory: `.ai/specs/<id>-*/`
-2. Read `research.md` and look for `## Cross-Repo Scope` section
-3. If found, check if the current repo (`SOURCE_REPO_NAME` env var) is listed in the "What's needed" column:
-   - If current repo is NOT a target (work belongs entirely to another repo):
-     a. Parse the target repo name from the table
-     b. Read `CROSS_REPO_PIPELINE_MAP` env var (JSON: `{"RepoName":"pipelineId"}`)
-     c. If map has the target repo, write `.ai/run-context/delegate.json`:
-        ```json
-        {"targetRepo":"<repo>","pipelineId":"<id>","reason":"<from table>","templateParameters":{"workItemId":"<id>","eventId":"<from env or empty>"}}
-        ```
-        ```bash
-        mkdir -p .ai/run-context
-        ```
-        Print: `⚡ Delegating to <repo> pipeline (ID: <id>) — this repo is not the target.`
-        **STOP** — do not proceed to Phase 1.5 or beyond.
-     d. If map is empty or missing the repo, print: `⚠ Cross-repo detected (<repo>) but no pipeline mapped. Continuing locally.`
-   - If current repo IS a target (but other repos are also listed):
-     Continue normally. After Phase 6 (PR) or final summary, write `delegate.json` for the OTHER repos.
+2. Ensure `research.md` carries a `## Cross-Repo Scope` section listing every
+   repo the work touches (repo **aliases** in the first column). The discovery
+   cascade (tier 2) consumes this table.
 
-If `DX_PIPELINE_MODE` is not set: skip this phase entirely (local mode).
+Do NOT write `delegate.json` or queue any pipeline — continue normally with the
+local implementation. If `DX_PIPELINE_MODE` is not set: skip this phase.
 
-Read `shared/repo-discovery.md` for full protocol details.
+Read `shared/repo-discovery.md` for the detection contract and the hub flow.
 
 ### Phase 1.5b: Hub Dispatch
 

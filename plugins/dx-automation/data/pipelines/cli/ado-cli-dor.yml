@@ -32,6 +32,18 @@ parameters:
     displayName: "Dry run (analyze only, don't post ADO comments)"
     type: boolean
     default: false
+  - name: targetRepo
+    displayName: "Target repo alias (set by KAI-HUB; empty = direct single-repo mode)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment ID (for dedup/tracing; set by KAI-HUB)"
+    type: string
+    default: ""
+  - name: eventId
+    displayName: "Webhook event ID (for tracing)"
+    type: string
+    default: ""
 
 resources:
   webhooks:
@@ -76,6 +88,25 @@ steps:
       echo "##vso[task.setvariable variable=TRIGGER]$TRIGGER"
       echo "Work item: $WI_ID (trigger: $TRIGGER)"
 
+      # Resolve execution mode + TARGET_DIR (dual-mode). DoR is read-only — in hub
+      # mode it clones the target only to analyze it (no push). targetRepo set ->
+      # hub mode; empty -> direct mode on checkout: self (today's behavior).
+      TARGET_REPO="${{ parameters.targetRepo }}"
+      if [ -n "$TARGET_REPO" ]; then
+        REG="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+        [ -f "$REG" ] || { echo "ERROR: hub mode (targetRepo=$TARGET_REPO) but registry missing: $REG" >&2; exit 1; }
+        RJSON=$(jq -e --arg a "$TARGET_REPO" '.[$a]' "$REG") || {
+          echo "ERROR: targetRepo '$TARGET_REPO' not found in $REG" >&2; exit 1; }
+        AUTH_URL=$(echo "$RJSON" | jq -r '.cloneUrl' | sed "s#https://#https://pat:${ADO_PAT}@#")
+        BRANCH=$(echo "$RJSON" | jq -r '.defaultBranch')
+        git clone --branch "$BRANCH" "$AUTH_URL" "$(Pipeline.Workspace)/target"
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Pipeline.Workspace)/target"
+        echo "Hub mode: cloned target repo '$TARGET_REPO' (branch $BRANCH)"
+      else
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Build.SourcesDirectory)"
+        echo "Direct mode: operating on checkout: self (single-repo)"
+      fi
+
       # Log webhook context if present (smoke-test for payload references).
       if [ "$TRIGGER" = "webhook" ]; then
         echo "Webhook event ID:    ${{ parameters.dorHook.id }}"
@@ -84,7 +115,9 @@ steps:
         echo "Project:             ${{ parameters.dorHook.resource.fields['System.TeamProject'] }}"
         echo "Work item state:     ${{ parameters.dorHook.resource.fields['System.State'] }}"
       fi
-    displayName: "Resolve work item ID + log webhook payload"
+    displayName: "Resolve work item ID + execution mode (clone target in hub mode)"
+    env:
+      ADO_PAT: $(ADO_PAT)
 
   - bash: |
       npm install -g @anthropic-ai/claude-code
@@ -116,8 +149,11 @@ steps:
       fi
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
       echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      # pipeline-agent.js lives in the AI/automation repo (checkout: self); run it
+      # with cwd = TARGET_DIR. Direct mode TARGET_DIR == Build.SourcesDirectory.
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
     displayName: "AI DoR Check"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
@@ -137,7 +173,7 @@ steps:
   # can't self-trigger the hook; the text instructs the human to add the @ prefix.
   - bash: |
       set -e
-      FLAG="$(Build.SourcesDirectory)/.ai/run-context/ado-comment-posted.flag"
+      FLAG="$(TARGET_DIR)/.ai/run-context/ado-comment-posted.flag"
       if [ -f "$FLAG" ]; then
         echo "Skill already posted an ADO comment — skipping fallback."
         exit 0

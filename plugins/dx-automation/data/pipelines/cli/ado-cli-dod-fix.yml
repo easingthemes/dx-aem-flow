@@ -16,8 +16,12 @@ parameters:
     displayName: "Webhook event ID (for tracing)"
     type: string
     default: ""
-  - name: sourceRepoName
-    displayName: "Source repo name (for cross-repo delegation)"
+  - name: targetRepo
+    displayName: "Target repo alias (set by KAI-HUB; empty = direct single-repo mode)"
+    type: string
+    default: ""
+  - name: commentId
+    displayName: "Triggering comment ID (for dedup/tracing; set by KAI-HUB)"
     type: string
     default: ""
 
@@ -37,6 +41,30 @@ steps:
     displayName: "Fetch dx-aem-flow plugins from GitHub"
 
   - bash: |
+      set -e
+      # Resolve execution mode + TARGET_DIR (dual-mode).
+      #  - targetRepo set   -> HUB MODE: clone the named repo from the registry.
+      #  - targetRepo empty -> DIRECT MODE: operate on checkout: self (today's behavior).
+      TARGET_REPO="${{ parameters.targetRepo }}"
+      if [ -n "$TARGET_REPO" ]; then
+        REG="$(Build.SourcesDirectory)/.ai/automation/registries/repos.json"
+        [ -f "$REG" ] || { echo "ERROR: hub mode (targetRepo=$TARGET_REPO) but registry missing: $REG" >&2; exit 1; }
+        RJSON=$(jq -e --arg a "$TARGET_REPO" '.[$a]' "$REG") || {
+          echo "ERROR: targetRepo '$TARGET_REPO' not found in $REG" >&2; exit 1; }
+        AUTH_URL=$(echo "$RJSON" | jq -r '.cloneUrl' | sed "s#https://#https://pat:${ADO_PAT}@#")
+        BRANCH=$(echo "$RJSON" | jq -r '.defaultBranch')
+        git clone --branch "$BRANCH" "$AUTH_URL" "$(Pipeline.Workspace)/target"
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Pipeline.Workspace)/target"
+        echo "Hub mode: cloned target repo '$TARGET_REPO' (branch $BRANCH)"
+      else
+        echo "##vso[task.setvariable variable=TARGET_DIR]$(Build.SourcesDirectory)"
+        echo "Direct mode: operating on checkout: self (single-repo)"
+      fi
+    displayName: "Resolve execution mode (clone target in hub mode)"
+    env:
+      ADO_PAT: $(ADO_PAT)
+
+  - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk
     displayName: "Install Claude Code + Agent SDK"
@@ -50,48 +78,16 @@ steps:
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
-      node .ai/automation/scripts/pipeline-agent.js "$PROMPT"
+      # pipeline-agent.js lives in the AI/automation repo (checkout: self); run it
+      # with cwd = TARGET_DIR. Direct mode TARGET_DIR == Build.SourcesDirectory.
+      node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
     displayName: "AI DoD Fix"
+    workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       DX_PIPELINE_MODE: "true"
-      SOURCE_REPO_NAME: $(Build.Repository.Name)
-      CROSS_REPO_PIPELINE_MAP: $(CROSS_REPO_PIPELINE_MAP)
       MAX_TURNS: "40"
       ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
     timeoutInMinutes: 20
-
-  - bash: |
-      DELEGATION_FILE="$(Build.SourcesDirectory)/.ai/run-context/delegate.json"
-      if [ ! -f "$DELEGATION_FILE" ]; then
-        echo "No delegation needed — work stays in this repo."
-        exit 0
-      fi
-      echo "Cross-repo delegation file found:"
-      cat "$DELEGATION_FILE"
-      PIPELINE_ID=$(jq -r '.pipelineId' "$DELEGATION_FILE")
-      TARGET_REPO=$(jq -r '.targetRepo' "$DELEGATION_FILE")
-      PARAMS=$(jq -c '.templateParameters' "$DELEGATION_FILE")
-      PROJECT="$(System.TeamProject)"
-      API_URL="${ADO_ORG_URL}/$(printf '%s' "$PROJECT" | jq -sRr @uri)/_apis/pipelines/${PIPELINE_ID}/runs?api-version=7.1-preview.1"
-      BODY=$(jq -n --argjson params "$PARAMS" '{templateParameters: $params}')
-      echo "##[section]Delegating DoD-Fix to $TARGET_REPO (pipeline $PIPELINE_ID)"
-      HTTP_CODE=$(curl -s -o /tmp/queue-response.json -w '%{http_code}' \
-        -X POST "$API_URL" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" \
-        -d "$BODY")
-      if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-        RUN_ID=$(jq -r '.id // "unknown"' /tmp/queue-response.json)
-        echo "Pipeline queued successfully. Run ID: $RUN_ID"
-      else
-        echo "##[warning]Pipeline delegation failed with HTTP $HTTP_CODE"
-        cat /tmp/queue-response.json 2>/dev/null || true
-      fi
-    displayName: "Cross-repo delegation (if needed)"
-    condition: not(canceled())
-    env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      ADO_ORG_URL: $(ADO_ORG_URL)
