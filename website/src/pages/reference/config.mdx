@@ -497,16 +497,16 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </table>
   </div>
 
-  <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-8">Code-Writing Pipelines (BugFix, DevAgent, DoD-Fix)</h3>
+  <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-8">Dynamic-Checkout Workers (BugFix, DevAgent, DoD-Fix, Simple, …)</h3>
   <div class="overflow-x-auto">
     <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
       <thead><tr class="bg-brand-100">
-        <th class="text-left p-3 font-semibold text-brand-900">Variable</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Parameter</th>
         <th class="text-left p-3 font-semibold text-brand-900">Description</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>SOURCE_REPO_NAME</code></td><td class="p-3">Set to <code>$(Build.Repository.Name)</code>. Skills compare against cross-repo scope to decide delegation.</td></tr>
-        <tr><td class="p-3"><code>CROSS_REPO_PIPELINE_MAP</code></td><td class="p-3">JSON mapping repo names to pipeline IDs. Used by the delegation YAML step.</td></tr>
+        <tr><td class="p-3"><code>targetRepo</code></td><td class="p-3">Repo alias set by the KAI-HUB router. <strong>Empty</strong> → direct mode (operate on <code>checkout: self</code>). <strong>Set</strong> → clone <code>repos.json[targetRepo]</code> into <code>$(Pipeline.Workspace)/target</code>; <code>TARGET_DIR</code> points there.</td></tr>
+        <tr><td class="p-3"><code>workItemId</code> / <code>commentId</code> / <code>eventId</code></td><td class="p-3">Passed by the hub for the run + dedup/tracing. There is no <code>SOURCE_REPO_NAME</code> or <code>CROSS_REPO_PIPELINE_MAP</code> anymore — peer-to-peer delegation was replaced by the central KAI-HUB router.</td></tr>
       </tbody>
     </table>
   </div>
