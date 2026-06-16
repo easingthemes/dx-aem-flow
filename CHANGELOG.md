@@ -1,3 +1,10 @@
+## [3.5.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.0...v3.5.1) (2026-06-16)
+
+
+### Bug Fixes
+
+* **todos:** close top-5 open todos ([#34](https://github.com/easingthemes/dx-aem-flow/issues/34), [#97](https://github.com/easingthemes/dx-aem-flow/issues/97), [#98](https://github.com/easingthemes/dx-aem-flow/issues/98), [#104](https://github.com/easingthemes/dx-aem-flow/issues/104), [#105](https://github.com/easingthemes/dx-aem-flow/issues/105), [#133](https://github.com/easingthemes/dx-aem-flow/issues/133)) ([#173](https://github.com/easingthemes/dx-aem-flow/issues/173)) ([06be91a](https://github.com/easingthemes/dx-aem-flow/commit/06be91ad0f5975c55e56de14aecee58f9d92eac9))
+
 # [3.5.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.4.2...v3.5.0) (2026-06-12)
 
 
