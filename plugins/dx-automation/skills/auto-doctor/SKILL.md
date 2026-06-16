@@ -215,11 +215,11 @@ Check that WI hooks exist (project-scoped, User Story + Bug). Required when work
 
 - **Lambda checks fail with "access denied"**
   **Cause:** AWS credentials are not configured or lack Lambda read permissions.
-  **Fix:** Configure AWS credentials (`aws configure`) and ensure the IAM user has `lambda:GetFunction` and `lambda:GetFunctionConfiguration` permissions. For consumer profiles, Lambda checks are skipped entirely.
+  **Fix:** Configure AWS credentials (`aws configure`) and ensure the IAM user has `lambda:GetFunction` and `lambda:GetFunctionConfiguration` permissions. Lambda checks are skipped when no Lambda-based agents are enabled.
 
 ## Rules
 
-- **Profile-aware** — read `automationProfile` from infra.json FIRST and adapt all checks. Treat legacy `pr-only` and `pr-delegation` values as `consumer`. Never check Lambda, agent steps, or AWS resources for consumer profile. Never report missing Lambda/agent files as errors for consumer profile.
+- **Enabled-agents-aware** — read `automationProfile` from infra.json FIRST. If value is `consumer`, `pr-only`, or `pr-delegation` (legacy), warn to re-run `/auto-init` and treat as `per-project`. Skip Lambda file checks and Lambda function state checks when no Lambda-based agents are enabled (i.e., only PR Review, PR Answer, and Eval are in the enabled list).
 - **`repos.json` is optional** — never report its absence as `✗` or count it toward the Overall verdict. It has no runtime consumer (no pipeline, Lambda, or skill reads it). Only a *present-but-malformed* `repos.json` is a failure.
 - **Read-only** — no AWS/ADO mutations in this skill (read commands only)
 - **Cross-check infra.json vs reality** — pipeline IDs and Lambda names must match
