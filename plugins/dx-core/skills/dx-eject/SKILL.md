@@ -1,6 +1,7 @@
 ---
 name: dx-eject
 description: Eject all plugin assets into the consumer repo — copies skills, agents, rules, templates, shared files, hooks, and MCP config so the project works without plugins installed. Use when a team wants to own all dx files locally instead of depending on plugins.
+when_to_use: "Use when a team wants to own all dx files locally without depending on plugins. Trigger on 'eject', 'copy plugin files locally', 'make dx self-contained', or 'I want to own the dx files'."
 argument-hint: "[dx|aem|auto|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

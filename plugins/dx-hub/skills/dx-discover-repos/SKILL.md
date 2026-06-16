@@ -1,6 +1,7 @@
 ---
 name: dx-discover-repos
 description: Resolve which repos a work item touches, as a 3-tier cascade (explicit directive → simple-block routing → cross-repo table → LLM). Used by the KAI-HUB router pipeline to fan an agent out across repos. Trigger on "discover repos", "which repos", "resolve target repos".
+when_to_use: "Use when resolving which repos a work item touches. Trigger on 'discover repos', 'which repos', 'resolve target repos', or when the KAI-HUB router needs to fan a ticket out across repos."
 argument-hint: "<work-item-id>"
 model: sonnet
 ---

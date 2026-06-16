@@ -1,6 +1,7 @@
 ---
 name: dx-sync
 description: Sync plugin updates to consumer repos — runs sync-consumers.sh with selected repos and options. Use when you say "sync plugins", "update consumers", "push to all repos".
+when_to_use: "Use when syncing plugin updates to consumer repos. Trigger on 'sync plugins', 'update consumers', 'push to all repos', 'dx-sync', or when a plugin update needs to propagate to downstream projects."
 argument-hint: "[--dry-run] [--parallel] [repo1 repo2 ...] — repo names from .ai/config.yaml repos:"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

@@ -1,6 +1,7 @@
 ---
 name: dx-hub-config
 description: View and edit hub configuration — add repos, adjust terminal delay. Use to manage hub settings. Trigger on "hub config", "add repo to hub", "terminal delay".
+when_to_use: "Use to view and edit hub configuration — add repos, adjust terminal delay. Trigger on 'hub config', 'add repo to hub', 'terminal delay', 'configure hub', or 'edit hub settings'."
 argument-hint: "[show | add-repo <path> | terminal-delay <seconds>]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash"]
 ---

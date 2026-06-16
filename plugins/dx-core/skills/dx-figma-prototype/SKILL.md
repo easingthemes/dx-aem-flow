@@ -1,6 +1,7 @@
 ---
 name: dx-figma-prototype
 description: Research project conventions and generate a high-fidelity standalone HTML/CSS prototype from Figma extraction data. Produces figma-conventions.md and prototype files. Use after /dx-figma-extract. Trigger on "figma prototype", "generate prototype", "create prototype from figma". Do NOT use without figma-extract.md or for non-design tasks.
+when_to_use: "Use after /dx-figma-extract to generate a prototype. Trigger on 'figma prototype', 'generate prototype', 'create prototype from figma', 'build the design', or 'turn figma-extract.md into code'."
 argument-hint: "<ADO Work Item ID (optional — uses most recent if omitted)>"
 compatibility: "Requires figma-extract.md from /dx-figma-extract. No external dependencies — generates standalone HTML/CSS."
 metadata:

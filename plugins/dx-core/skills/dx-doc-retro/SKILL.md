@@ -1,6 +1,7 @@
 ---
 name: dx-doc-retro
 description: Generate technical documentation retroactively for completed stories — fetches ADO story, finds linked PRs, searches codebase, and produces wiki-ready docs without needing spec files. Posts to ADO Wiki or Confluence depending on provider config. Use when documentation was never generated during development.
+when_to_use: "Use when documentation was never generated during development. Trigger on 'generate docs retroactively', 'document completed story', 'write wiki for old PR', or when the user gives a completed ADO story that needs docs."
 argument-hint: "[ADO Work Item ID or URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---

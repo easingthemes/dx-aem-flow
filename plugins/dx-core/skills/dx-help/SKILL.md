@@ -1,6 +1,7 @@
 ---
 name: dx-help
 description: Answer developer questions about project architecture, components, patterns, and workflows. Use when a developer asks "how does X work?", "what is Y?", "where do I find Z?", or any general question about the project. This is the go-to skill for questions that aren't about a specific ticket or component lookup.
+when_to_use: "Use when a developer asks a general question about project architecture, components, patterns, or dx workflow. Trigger on 'how does X work', 'what is Y', 'where do I find Z', 'explain the workflow', or any question about the project."
 argument-hint: "[question about the project]"
 model: haiku
 effort: low

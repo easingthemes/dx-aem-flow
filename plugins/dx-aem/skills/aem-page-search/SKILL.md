@@ -1,6 +1,7 @@
 ---
 name: aem-page-search
 description: Find AEM pages that use a specific component. Returns page paths with clickable author URLs. Use when you need to find where a component is used on the AEM instance.
+when_to_use: "Use when the user asks 'where is this component used?', 'find pages with component X', 'which pages use the hero?', or any question about finding AEM pages that use a specific component."
 argument-hint: "[component-name] (e.g., hero, banner, accordion)"
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---

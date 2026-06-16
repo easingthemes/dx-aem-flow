@@ -1,6 +1,7 @@
 ---
 name: auto-eval
 description: Run the AI automation evaluation framework against test fixtures. Verifies agent quality without hitting ADO or LLM APIs. Use after changing prompts, rules, or agent steps. Accepts --all, --agent, --tier2 flags.
+when_to_use: "Use when running the automation evaluation framework against test fixtures, after changing agent prompts or rules, when the user says 'run evals', 'test agent quality', 'verify agent output', or '--all --agent --tier2'."
 argument-hint: "[--all | --agent dor|pr-review|pr-answer|discover | --tier2 | --fixture [name]]"
 ---
 

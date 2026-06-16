@@ -84,7 +84,7 @@
           {
             "type": "command",
             "if": "Edit(**/.claude-plugin/**)",
-            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"Edit\" ] && [ -n \"${CLAUDE_TOOL_ARG_file_path:-}\" ] && bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\" || true",
+            "command": "if [ \"${CLAUDE_TOOL_NAME:-}\" = \"Edit\" ] && [ -n \"${CLAUDE_TOOL_ARG_file_path:-}\" ]; then bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"; fi",
             "statusMessage": "Validating plugin edit..."
           }
         ]

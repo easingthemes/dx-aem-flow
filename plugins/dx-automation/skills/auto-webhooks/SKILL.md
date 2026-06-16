@@ -1,6 +1,7 @@
 ---
 name: auto-webhooks
 description: Configure ADO service hooks and PR Review build validation policy for AI automation agents. Uses ADO REST API via az rest (no native CLI command for service hooks). Reads all config from .ai/automation/infra.json.
+when_to_use: "Use when configuring ADO service hooks and build validation policies for AI automation, when the user says 'set up webhooks', 'configure service hooks', 'connect ADO to Lambda', or 'wire up the automation triggers'."
 argument-hint: ""
 ---
 

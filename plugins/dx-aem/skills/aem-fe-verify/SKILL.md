@@ -1,6 +1,7 @@
 ---
 name: aem-fe-verify
 description: Visually verify a component's frontend rendering on local AEM — screenshots the component in wcmmode=disabled, compares against Figma reference or requirements using multimodal vision, and fixes gaps in a loop. Use after build deploys to local AEM. Trigger on "verify frontend", "visual verify", "fe verify", "check component rendering", "compare AEM with figma".
+when_to_use: "Use when the user says 'verify frontend', 'visual verify', 'fe verify', 'check component rendering', 'compare AEM with figma', or after build deploys to local AEM to validate the UI matches the design."
 argument-hint: "[component-name] [ADO Work Item ID (optional)]"
 context: fork
 agent: aem-fe-verifier

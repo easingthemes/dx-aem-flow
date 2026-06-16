@@ -1,6 +1,7 @@
 ---
 name: aem-snapshot
 description: Snapshot a component's AEM state before development — dialog fields, properties, and pages where it's used. Saves baseline to specs for later comparison. Use before starting implementation on a component.
+when_to_use: "Use before starting AEM component development to capture baseline state, when the user says 'snapshot the component', 'baseline before dev', 'capture current AEM state', or at the start of a component story."
 argument-hint: "[component-name] (e.g., hero, card, banner)"
 context: fork
 agent: aem-inspector

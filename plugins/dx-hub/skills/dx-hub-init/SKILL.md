@@ -1,6 +1,7 @@
 ---
 name: dx-hub-init
 description: Initialize a hub directory for multi-repo orchestration. Discovers sibling repos, merges configs, validates CLI compatibility. Use when setting up hub mode for the first time. Trigger on "init hub", "set up hub", "multi-repo setup".
+when_to_use: "Use when setting up a hub directory for multi-repo orchestration for the first time. Trigger on 'init hub', 'set up hub', 'multi-repo setup', 'initialize hub', or 'configure multi-repo orchestration'."
 argument-hint: "[path to hub directory (default: ../.hub)]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash"]
 ---

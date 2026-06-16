@@ -1,6 +1,7 @@
 ---
 name: aem-refresh
 description: Refresh .ai/project/ seed data files from a local path or remote ADO docs repo. Use when project knowledge files need updating.
+when_to_use: "Use when project knowledge files are outdated, when the user says 'refresh project data', 'update seed data', 'reload project knowledge', or 'sync docs from the remote repo'."
 argument-hint: "[local-path-to-docs | blank for remote]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---
