@@ -204,7 +204,8 @@
 
 Last platform state research: [2026-05-29-platform-state-update.md](../research/2026-05-29-platform-state-update.md) (delta to [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md))
 
-Last external-practice research: [2026-06-15-dev-agency-harness-review.md](../research/2026-06-15-dev-agency-harness-review.md) (dev agency harness review + codebase audit → TODOs #157–#161)
+Last external-practice research: [2026-06-16-harness-self-improvement.md](../research/2026-06-16-harness-self-improvement.md) (9→10 design: evals, learning loop, pattern promotion — connects TODOs #1 #52 #65 #67 #100 #143 #144)
+Prior external-practice research: [2026-06-15-dev-agency-harness-review.md](../research/2026-06-15-dev-agency-harness-review.md) (dev agency harness review + codebase audit → TODOs #157–#161)
 
 Last external-practice research (prev): [2026-05-30-salesforce-agentic-engineering.md](../research/2026-05-30-salesforce-agentic-engineering.md) (Salesforce agentic-engineering report → TODOs #143–#146)
 
