@@ -1,6 +1,7 @@
 ---
 name: dx-adapt
 description: Auto-detect project type, structure, build commands, and AEM values. Updates .ai/config.yaml with project profile and substitutes real values into installed .claude/rules/. Run after /dx-init and /aem-init. Re-run anytime to refresh detected values.
+when_to_use: "Use when auto-detecting project structure and build commands, when refreshing detected values after restructuring, when the user says 'detect project type', 'update config from project', or 'adapt to this codebase'."
 argument-hint: "[aem-fullstack|aem-frontend|frontend] (optional — auto-detects if omitted)"
 disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent"]

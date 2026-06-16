@@ -1,6 +1,7 @@
 ---
 name: dx-step
 description: Execute the next pending step — implement code, run tests, review against plan, and commit. Reads implement.md, finds the first pending step, implements it, tests, reviews, commits, and updates status. Use to execute steps one at a time.
+when_to_use: "Use to execute the next pending plan step one at a time. Trigger on 'next step', 'do step', 'dx-step', 'implement step', 'execute next', or when working through implement.md one step at a time."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: sonnet
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*"]

@@ -1,10 +1,11 @@
 ---
 name: auto-init
-description: Scaffold AI automation for a project. Asks whether this is the hub (all agents + AWS infra) or a consumer (PR pipelines only). Sets up .ai/automation/, generates infra.json. Run once after dx-init.
+description: Scaffold AI automation for a project. Each project is self-contained — owns its own AWS infra and pipelines. Sets up .ai/automation/, generates infra.json. Run once after dx-init.
+when_to_use: "Use when setting up AI automation for a project for the first time, when the user says 'set up automation', 'initialize AI agents', 'configure automation pipeline', or 'scaffold automation'. Run once after /dx-init."
 argument-hint: ""
 ---
 
-You scaffold and configure AI automation for the current project. First asks whether this is the **hub** (full setup: all agents + Lambda + webhooks + AWS resources) or a **consumer** (PR + delegation-ready pipelines, using the hub's shared infrastructure). Consumer repos never deploy or modify AWS resources.
+You scaffold and configure AI automation for the current project. Every project is **self-contained** — it owns its own AWS infrastructure (Lambda, DynamoDB, SQS, S3, API Gateway) and its own ADO pipelines. There is no hub/consumer split. Projects share no Lambda infrastructure with each other.
 
 ## Platform Compatibility
 
@@ -15,7 +16,7 @@ This skill scaffolds **Azure DevOps + AWS Lambda** automation. It is intentional
 | **Skill invocation** (running `/auto-init` in your terminal) | Claude Code, Copilot CLI, VS Code Chat, Codex CLI, Gemini CLI — same as any other plugin skill |
 | **Generated pipelines** (`.ai/automation/pipelines/`) | **Azure DevOps only** — pipeline YAMLs target ADO. No GitHub Actions, GitLab CI, Jenkins, or CircleCI templates exist |
 | **Generated agent runtime** (`.ai/automation/agents/`) | **AWS Lambda only** — handlers assume Lambda invocation context, Anthropic API, and AWS Secrets Manager. No Cloud Functions, Azure Functions, or self-hosted variants |
-| **Webhooks → triggers** | **ADO service hooks → API Gateway → Lambda** (hub profile). Consumer profile uses ADO build validation policy (not a service hook) |
+| **Webhooks → triggers** | **ADO service hooks → API Gateway → Lambda** for work-item agents. PR Review/Answer use ADO build validation policy. SimpleAgent/BugFix use ADO Incoming Webhooks (Azure-native, no Lambda) |
 | **AI provider** | Anthropic Claude API direct (Lambda agents); not Bedrock, Vertex, or other providers |
 | **Tracker integration** | ADO work items + PR APIs. Jira-only projects can install dx-core but not dx-automation |
 
@@ -40,10 +41,8 @@ Check all prerequisites before proceeding:
 
 1. **dx-init required** — read `.ai/config.yaml`. If missing: "Run `/dx-init` first." STOP.
 2. **audit.sh required** — check `.ai/lib/audit.sh` exists. If missing: "Run `/dx-init` first — it installs the audit library." STOP.
-3. **Ask the hub question (Question 5)** BEFORE checking CLI tools — the answer determines which tools are required.
-4. **CLI tools** — verify based on profile:
-   - **Full hub:** Node.js, AWS CLI, and Azure CLI are all required. STOP if any are missing.
-   - **Consumer:** Only Node.js is required (for pipeline agent scripts). AWS CLI and Azure CLI are NOT needed — this repo does not manage AWS resources.
+3. **Ask the agent question (Question 5)** BEFORE checking CLI tools — the answer determines which tools are required.
+4. **CLI tools** — verify: Node.js, AWS CLI, and Azure CLI are required. STOP if any are missing. (If user only enables PR-pipeline agents and no Lambda agents, AWS CLI is optional — prompt accordingly.)
 
 5. **Existing scaffold** — if `.ai/automation/` already exists and has `infra.json`:
 
@@ -57,11 +56,9 @@ If **A**: Say "Config kept. Validating automation files..." — then **CONTINUE 
 
 Ask these questions one at a time. Wait for each answer before asking the next.
 
-**Question 1 — Hub or consumer?** (ask this FIRST — it determines which subsequent questions to ask):
+**Question 1 — Agent selection** (ask this FIRST — it determines which subsequent questions to ask):
 
 This is the same question from Phase 0 step 3. If already answered there, use the saved answer. Otherwise ask now using the Question 5 format below.
-
-After the profile is chosen, the remaining questions depend on the profile:
 
 **Question 2 — Pipeline folder (optional):**
 > **ADO pipeline folder?** Pipelines will be created inside this folder for organization.
@@ -79,39 +76,20 @@ After the profile is chosen, the remaining questions depend on the profile:
 >
 > Default: `<git-email>, <git-name>` (from git config)
 
-**Question 4 — Resource prefix (full-hub only):**
-> Only ask this for `full-hub` profile. For `consumer` profile, skip — they use the hub's existing AWS infrastructure and do NOT deploy their own Lambda, DynamoDB, SQS, S3, or API Gateway.
->
+**Question 4 — Resource prefix:**
 > **Resource prefix?** Used for all AWS resource names (DynamoDB tables, Lambda functions, S3 bucket, SQS queue, CloudWatch alarms).
 >
 > Example: `myproject` → `myproject-dedupe`, `myproject-DOR-Agent`
 >
 > Default: derive from `dx.project-name` in config.yaml, lowercase with hyphens only (e.g. `my-project`).
 
-**Question 4b — AWS region (full-hub only):**
-> Only ask this for `full-hub` profile.
->
+**Question 4b — AWS region:**
 > **AWS region?** (default: `us-east-1`)
 
-**Question 4c — Hub reference (consumer only):**
-> For consumer profile, ask which project is the hub so we can reference its shared Lambda:
+**Question 5 — Enable all agents, or customize?**
+> **Which agents to enable?** Each project is self-contained — it owns its own AWS infrastructure and pipeline agents. You can enable all agents or pick the ones you need.
 >
-> **Which project is the automation hub?** This is the project that owns the Lambda functions and webhooks. Pipeline IDs from this repo will be registered in the hub's Lambda env vars.
->
-> Default: auto-detect from `repos:` in config.yaml if available, or from sibling repos detected by dx-init.
-
-**Question 5 — Hub or consumer?**
-> **Is this the main project for AI automation?** The main project owns all AWS infrastructure (Lambda, DynamoDB, webhooks) and runs all work-item-triggered agents. Other projects are consumers — they get PR pipelines and delegation-ready pipelines, but the hub controls which to actually use.
->
-> 1. **Yes — this is the hub** — Set up all agents + Lambda + webhooks + AWS resources
-> 2. **No — consumer** — PR Review + PR Answer + Eval + delegation-ready pipelines (DevAgent, BugFix, DoD Fix). Uses the hub's shared infrastructure. No AWS setup needed.
->
-> Default: 2 (Consumer)
-
-**If user chose 1 (hub), ask follow-up:**
-> **Enable all agents, or customize?**
->
-> 1. **All agents** (default) — DoR, DoD, DoD Fix, PR Review, PR Answer, BugFix, QA, DevAgent, DOCAgent, Estimation, Eval
+> 1. **All agents** (default) — DoR, DoD, DoD Fix, PR Review, PR Answer, BugFix, QA, DevAgent, DOCAgent, Estimation, Eval, SimpleAgent
 > 2. **Customize** — pick individual agents
 
 **If user chose customize, show the agent list:**
@@ -129,14 +107,7 @@ After the profile is chosen, the remaining questions depend on the profile:
 > 10. **DOCAgent** — wiki docs + AEM demo pages
 > 11. **Estimation** — auto-estimates story points
 
-**No follow-up wiring for consumers.** Consumer repos always get all 6 pipeline YAMLs (pr-review, pr-answer, eval, devagent, bugfix, dod-fix). Multi-repo fan-out for code agents is handled centrally by the KAI-HUB router, which reads the `repos.json`/`agents.json` registries (`.ai/automation/registries/`) — there is no per-pipeline cross-repo map. PR-answer routing still uses the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var. Having unused pipeline YAMLs in the consumer costs nothing but not having them blocks routing later.
-
-Resolve the chosen profile into a list of enabled agents:
-- **Hub + all**: all agents → profile `full-hub`
-- **Hub + customize**: user's selection → profile `full-hub`
-- **Consumer**: pr-review, pr-answer, eval, devagent, bugfix, dod-fix → profile `consumer`
-
-Save the profile name in `automationProfile` in infra.json alongside the enabled agents list.
+Resolve the chosen selection into a list of enabled agents. Save `automationProfile: "per-project"` in infra.json alongside the enabled agents list.
 
 **If DoR enabled (full-hub or custom with DoR) — Question 5a:**
 > **DoR wiki URL?** ADO wiki page containing your Definition of Ready criteria.
@@ -219,9 +190,9 @@ Scaffolding is profile-aware. Consumer profile gets a minimal subset — only pi
 mkdir -p .ai/automation
 ```
 
-### 2.2. Copy data bundle (profile-aware)
+### 2.2. Copy data bundle
 
-**Full hub:** Copy the entire data bundle (pipelines, Lambda handlers, agents, prompts, eval, docs):
+Copy the entire data bundle (pipelines, Lambda handlers, prompts, eval, docs):
 
 ```bash
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
@@ -234,22 +205,6 @@ else
 fi
 chmod +x .ai/automation/lambda/deploy.sh \
   .ai/automation/lambda/cloudwatch/setup-alarms.sh
-```
-
-**Consumer:** Copy ONLY the relevant subset — no Lambda, no webhook config, no AWS resource scripts:
-
-```bash
-PLUGIN_DIR="$(dirname "$(dirname "$0")")"
-mkdir -p .ai/automation/pipelines/cli
-
-# Copy CLI pipeline YAMLs for consumer agents (PR + delegation-ready)
-for yml in ado-cli-pr-review.yml ado-cli-pr-answer.yml ado-cli-dev-agent.yml ado-cli-bug-fix.yml ado-cli-dod-fix.yml; do
-  if [ -f "$PLUGIN_DIR/data/pipelines/cli/$yml" ]; then
-    cp "$PLUGIN_DIR/data/pipelines/cli/$yml" .ai/automation/pipelines/cli/
-  fi
-done
-
-echo "Installed .ai/automation/ (consumer profile — pipelines only, no Lambda/AWS)"
 ```
 
 ### 2.3. Copy policy file (validate on re-run)
@@ -278,18 +233,9 @@ For `REVIEW` items: read both files, show the user what changed, and ask: **(A) 
 - `{{AWS_REGION}}` → from Question 5b
 - `{{AWS_ACCOUNT_ID}}` → run `aws sts get-caller-identity --query Account --output text` (leave as `{{AWS_ACCOUNT_ID}}` if fails — note for user)
 - `{{RESOURCE_PREFIX}}` → from Question 5 (lowercase)
-- `{{PIPELINE_NAME_PREFIX}}` → for the **hub repo**, use the `pipelineFolder` name (strip backslash, e.g. `\KAI` → `KAI`). If no folder, default to `KAI`. For **consumer repos**, append a short repo identifier: `KAI-<RepoShortName>` (e.g., `KAI-MyApp` for Experience-MyApp). Derive `RepoShortName` from `project.name` in config.yaml — strip common prefixes like `Experience-`. **Never ask the user about pipeline naming** — ADO lists all pipelines in the project dropdown (e.g., build policies), so names must be distinguishable across repos.
+- `{{PIPELINE_NAME_PREFIX}}` → use the `pipelineFolder` name (strip backslash, e.g. `\KAI` → `KAI`). If no folder, derive from `project.name` in config.yaml with a `KAI-<RepoShortName>` format (e.g., `KAI-MyApp` for Experience-MyApp). Strip common prefixes like `Experience-`. **Never ask the user about pipeline naming** — ADO lists all pipelines in the project dropdown, so names must be distinguishable across repos.
 - `{{PIPELINE_FOLDER}}` → from Question 2 (e.g. `\\KAI`). If user left blank, remove the field or set to empty string.
 - Leave `{{DOR_PIPELINE_ID}}`, `{{DOD_PIPELINE_ID}}`, etc. as-is (filled by later skills)
-
-**Consumer:** Generate a minimal `infra.json` with only:
-- `automationProfile`: `consumer`
-- `adoOrg`, `adoProject`: from config.yaml
-- `pipelineFolder`: from Question 2
-- `hubProject`: from Question 5c (the project owning Lambda/webhooks)
-- `pipelines`: entries for all consumer agents (pr-review, pr-answer, eval, devagent, bugfix, dod-fix). **Pipeline names must be repo-unique** because ADO's build policy dropdown lists all pipelines in the project. Use `KAI-<RepoShortName>-*` (e.g., `KAI-MyApp-PR-Review-Agent`, `KAI-MyApp-DevAgent`). Derive `RepoShortName` from `project.name` in config.yaml — strip common prefixes like `Experience-`. **Never ask the user about pipeline naming.**
-- `webhooks.pr-answer`: entry for the repo-scoped PR Answer hook (URL left as placeholder — filled by `/auto-webhooks` using the hub's Lambda URL)
-- **No** `lambdas`, `storage`, `monitoring`, or `apiGateway` sections
 
 Write to `.ai/automation/infra.json`.
 
@@ -321,20 +267,6 @@ ADO_PAT=                             # Same as AZURE_DEVOPS_PAT
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=
-EOF
-```
-
-**Consumer:** Generate a shorter `.env.template` with only the variables needed for pipeline agents (no Lambda/AWS vars):
-```bash
-cat > .ai/automation/.env.template << 'EOF'
-# AI Automation — pipeline variables
-# Copy to .env and fill in values. NEVER commit .env to git.
-
-# ADO credentials
-AZURE_DEVOPS_PAT=                    # ADO Personal Access Token
-
-# LLM credentials
-ANTHROPIC_API_KEY=                   # Claude API key (used by all pipelines)
 EOF
 ```
 
@@ -373,15 +305,11 @@ Only include agents that were enabled in Question 6. If `agent.index.md` doesn't
 
 ## Phase 3: Report + Next Steps
 
-Adapt the report to the chosen profile:
-
-### For full-hub profile:
-
 ```markdown
-## Automation Scaffolded (Full Hub)
+## Automation Scaffolded
 
-**Profile:** Full Hub
-**Pipeline prefix:** KAI (hub) / KAI-<RepoShortName> (consumers)
+**Profile:** Per-project (self-contained)
+**Pipeline prefix:** KAI-<RepoShortName>
 **Region:** <region>
 **Agents:** DoR <✓/✗> | DoD <✓/✗> | DoD Fix <✓/✗> | PR Review <✓/✗> | PR Answer <✓/✗> | BugFix <✓/✗> | QA <✓/✗> | DevAgent <✓/✗> | DOCAgent <✓/✗> | Estimation <✓/✗>
 **ADO identity:** <email, Name>
@@ -414,44 +342,14 @@ Run these skills in order to complete the setup:
 - `/auto-status` — DLQ depth, token budget, rate limits
 ```
 
-### For consumer profile:
-
-```markdown
-## Automation Scaffolded (Consumer)
-
-**Profile:** Consumer
-**Hub project:** <hub project name> (owns Lambda + webhooks)
-**Agents:** PR Review ✓ | PR Answer ✓ | Eval ✓ | DevAgent ✓ | BugFix ✓ | DoD Fix ✓
-**ADO identity:** <email, Name>
-
-**Files created:**
-- `.ai/automation/pipelines/` — ADO pipeline YAMLs (PR + delegation-ready)
-- `.ai/automation/policy/pipeline-policy.yaml` — agent capability gates
-- `.ai/automation/infra.json` — pipeline IDs (fill after import)
-- `.ai/automation/.env.template` — credential reference
-
-**⚠️ No AWS resources are managed by this repo.** Lambda, DynamoDB, SQS, S3, API Gateway are owned by the hub project (<hub>). Do NOT run `/auto-provision`, `/auto-deploy`, `/auto-lambda-env`, or `/auto-alarms` from this repo.
-
-### Setup Sequence
-
-1. `/auto-pipelines` — Import ADO pipelines + set variables
-2. **Register with hub** — After importing pipelines:
-   - Add this repo's PR Answer pipeline ID to the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var
-   - Add this repo as an alias in the hub's `repos.json` registry (`.ai/automation/registries/repos.json`) so the KAI-HUB router can clone + route to it
-3. `/auto-webhooks` — Create repo-scoped PR Answer hook + PR Review build policy
-4. `/auto-test --dryRun` — Verify pipelines run
-
-### Verify anytime
-- `/auto-doctor` — Health check (pipeline YAMLs, config)
-```
 
 ## Examples
 
-1. `/auto-init` (hub project) — User answers "yes" to "Is this the main project?" Scaffolds full `.ai/automation/` directory with `infra.json` containing AWS resource prefix, region, agent definitions (DoR, DoD, PR Review, PR Answer, DevAgent, BugFix, QA, DOCAgent, Estimation, DoD-Fix), Lambda handler templates, and deployment scripts. Prints next step: `/auto-provision`.
+1. `/auto-init` — First-time setup. Asks which agents to enable, scaffolds full `.ai/automation/` directory with `infra.json` containing AWS resource prefix, region, and agent definitions. Prints next step: `/auto-provision`.
 
-2. `/auto-init` (consumer project) — User answers "no" to hub question, provides hub project name. Scaffolds consumer-profile `infra.json` with only PR-related pipelines (PR Review, PR Answer), pipeline YAML files, and references to the hub's Lambda URLs. No AWS resources, no Lambda handlers. Prints next step: `/auto-pipelines`.
+2. `/auto-init` (customize agents) — User picks specific agents (e.g., PR Review + PR Answer only — no Lambda agents needed). Scaffolds pipelines but skips Lambda-only setup. Prints next step: `/auto-pipelines`.
 
-3. `/auto-init` (re-run on existing setup) — Detects `infra.json` already exists with `automationProfile: full-hub`. Validates each section against current plugin data, finds 2 new agent definitions added in the latest plugin version, and asks whether to add them. Updates `infra.json` with the new agents while preserving existing pipeline IDs and configuration.
+3. `/auto-init` (re-run on existing setup) — Detects `infra.json` already exists with `automationProfile: per-project`. Validates each section against current plugin data, finds 2 new agent definitions added in the latest plugin version, and asks whether to add them. Updates `infra.json` with the new agents while preserving existing pipeline IDs and configuration.
 
 ## Troubleshooting
 
@@ -461,16 +359,12 @@ Run these skills in order to complete the setup:
 
 - **"infra.json already exists — overwrite?"**
   **Cause:** Automation was already initialized for this project.
-  **Fix:** Choose "validate and update" to preserve existing pipeline IDs and AWS resource references. Only choose "overwrite" if the config is corrupted or you're switching between hub and consumer profiles.
-
-- **Consumer profile asks about AWS resources**
-  **Cause:** This should not happen — consumer profiles skip all AWS configuration.
-  **Fix:** Check that `infra.json` has `"automationProfile": "consumer"`. If it says `full-hub`, the profile was set incorrectly during init. Re-run `/auto-init` and answer "no" to the hub question.
+  **Fix:** Choose "validate and update" to preserve existing pipeline IDs and AWS resource references. Only choose "overwrite" if the config is corrupted.
 
 ## Rules
 
 - **Interactive — use AskUserQuestion** — Every question, confirmation, or choice in this skill MUST use the `AskUserQuestion` tool to pause and wait for the user's response. Never proceed past a question without receiving the user's answer first. Present numbered options in the question text, then STOP and wait. Do not batch multiple questions into one message — ask one, wait for the answer, then continue.
-- **Hub question first** — ask "Is this the main project?" before anything else (after dx-init check). This determines the entire flow.
+- **Agent question first** — ask which agents to enable before anything else (after dx-init check). This determines which tools are required.
 - **Non-hub repos MUST NOT touch AWS** — for `consumer` profile: never scaffold Lambda handlers, AWS resource definitions, deploy scripts, or CloudWatch alarms. Never ask for AWS region, resource prefix, or AWS account. Never suggest running `/auto-provision`, `/auto-deploy`, `/auto-lambda-env`, or `/auto-alarms`. Consumers DO run `/auto-webhooks` (for repo-scoped PR Answer hook + PR Review build policy).
 - **Prerequisites first** — check dx-init and audit.sh before anything else
 - **Never overwrite infra.json** — if it already exists, ask before replacing

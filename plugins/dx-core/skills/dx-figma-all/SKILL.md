@@ -1,6 +1,7 @@
 ---
 name: dx-figma-all
 description: Run the full Figma design-to-code workflow — extract, prototype, verify — all in one command. Use when a story has a Figma URL and you want to turn a design into a verified prototype. Trigger on "figma all", "full figma", "extract and prototype".
+when_to_use: "Use when a story has a Figma URL and you want to extract, prototype, and verify in one command. Trigger on 'figma all', 'full figma', 'extract and prototype', 'turn this figma into code'."
 argument-hint: "[ADO Work Item ID] [Figma URL] — both optional, any order"
 compatibility: "Requires Figma desktop app with Dev Mode MCP enabled (port 3845). Chrome for verification step."
 metadata:

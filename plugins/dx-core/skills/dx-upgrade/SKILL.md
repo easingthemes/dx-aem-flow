@@ -1,6 +1,7 @@
 ---
 name: dx-upgrade
 description: Upgrade consumer project to latest plugin versions — runs dx-doctor, then fixes stale files, installs missing files, and reports what needs manual action. Use after upgrading plugins.
+when_to_use: "Use after upgrading plugins to sync stale files and fix missing config. Trigger on 'upgrade dx', 'update plugin files', 'dx-upgrade', 'sync after plugin update', or 'what changed in the new version'."
 argument-hint: "[dx|aem|auto|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
@@ -246,10 +247,10 @@ If `.ai/automation/policy/pipeline-policy.yaml` is flagged:
 
 ### 4d. Automation Profile Awareness
 
-When upgrading automation files, read `automationProfile` from `.ai/automation/infra.json` (if it exists). Adapt checks:
+When upgrading automation files, read `automationProfile` from `.ai/automation/infra.json` (if it exists).
 
-- **consumer** (or legacy `pr-only` / `pr-delegation`): Do NOT flag missing Lambda handlers, agent step directories, or AWS resource scripts as issues. These are hub-only files and are intentionally absent. DO check that consumer has a `webhooks.pr-answer` entry in infra.json (added in v2.10) — if missing, add it as a manual action: "Run `/auto-webhooks` to create repo-scoped PR Answer hook."
-- **full-hub (or missing profile field):** Check all automation files as before.
+- **Legacy profiles** (`consumer`, `pr-only`, `pr-delegation`): Add manual action: "Run `/auto-init` to migrate to per-project model." Do NOT flag missing Lambda handlers as errors — they may be intentionally absent in legacy consumer installs. DO check that `webhooks.pr-answer` entry exists in infra.json — if missing, add manual action: "Run `/auto-webhooks` to create repo-scoped PR Answer hook."
+- **`per-project` or missing profile field:** Check all automation files against enabled agents in infra.json. Lambda handlers are expected if any Lambda-based agents are enabled.
 
 ### 4e. Webhook Migration (v2.10+)
 

@@ -11,8 +11,8 @@ case "$FILE" in
   *plugin.json|*marketplace.json)
     # Check JSON is valid
     if ! python3 -c "import json; json.load(open('$FILE'))" 2>/dev/null; then
-      echo "ERROR: $FILE is not valid JSON after edit"
-      exit 1
+      echo "ERROR: $FILE is not valid JSON after edit" >&2
+      exit 2
     fi
     # For plugin.json: verify required fields still present
     if [[ "$FILE" == *plugin.json ]]; then

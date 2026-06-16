@@ -1,6 +1,7 @@
 ---
 name: dx-scan
 description: Deep project scan — discover conventions from actual code, customize rule files with real values, and generate seed data. Interactive. Run after /dx-init + /dx-adapt + /aem-init. Use when setting up a new project or when project structure changes significantly.
+when_to_use: "Use when setting up a new project or after significant structural changes. Trigger on 'scan project', 'discover conventions', 'dx-scan', 'update seed data', or 'learn the project structure'."
 argument-hint: "[phase1|phase2|phase3|all]"
 ---
 

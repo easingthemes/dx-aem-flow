@@ -1,26 +1,23 @@
 ---
 name: auto-doctor
-description: Run a health check on the AI automation setup — verifies local file integrity, ADO pipeline configuration, and (for hub only) Lambda function state. Profile-aware — adapts checks based on automationProfile in infra.json.
+description: Run a health check on the AI automation setup — verifies local file integrity, ADO pipeline configuration, and Lambda function state. Each project is self-contained.
+when_to_use: "Use when the AI automation setup seems broken, to verify Lambda functions are deployed, pipelines are configured, and infra.json is correct. Trigger on 'check automation', 'diagnose automation', 'automation health check'."
 argument-hint: ""
 ---
 
-You run a health check on the AI automation setup. Adapts checks based on the `automationProfile` in `infra.json` (`full-hub` or `consumer`). Legacy profiles `pr-only` and `pr-delegation` are treated as `consumer`.
+You run a health check on the AI automation setup. Each project is self-contained — it owns its own Lambda and pipelines. Legacy profiles `consumer`, `pr-only`, and `pr-delegation` are treated as `per-project` (warn to re-run `/auto-init` if found).
 
 ## 0. Read Config
 
 Read `.ai/automation/infra.json`. If missing: "Run `/auto-init` first." STOP.
 
-Extract `automationProfile` (default to `full-hub` if field is absent — legacy installs predate profiles).
+Extract `automationProfile`. If value is `consumer`, `pr-only`, or `pr-delegation`: warn `⚠ Legacy profile '${profile}' — re-run /auto-init to migrate to per-project model.` and treat as per-project for the remainder of this check.
 
-Also extract: pipeline entries (only those without `"disabled": true`), and for full-hub: region, prefix, Lambda function names.
-
-Print: `Profile: <profile>`
+Also extract: pipeline entries (only those without `"disabled": true`), region, prefix, Lambda function names.
 
 ## 1. Local File Integrity
 
-Checks depend on the profile.
-
-### Config files (all profiles):
+### Config files:
 - `infra.json` — no remaining `{{PLACEHOLDER}}` values (check for `{{`)
 - `repos.json` — **optional; validate only if present.** No pipeline, Lambda, or skill reads `repos.json` at runtime — it is documentation-only intent (future cross-repo discovery), so its absence is expected and harmless, especially for CLI-pipeline-only consumers (it was deliberately removed from some).
   - present + valid JSON → `✓`
@@ -46,18 +43,16 @@ For each enabled pipeline entry in `infra.json`, check that the YAML file refere
 - Exists → `✓`
 - Missing → `✗ MISSING`
 
-### Lambda handlers (full-hub only):
+### Lambda handlers (when Lambda agents are enabled):
+Skip Lambda file checks if no Lambda-based agents are enabled (i.e., only PR Review, PR Answer, and Eval are in the enabled list — those run as ADO pipelines without Lambda).
+
 - `lambda/wi-router.mjs`
 - `lambda/pr-router.mjs`
 - `lambda/queuePrAnswerPipeline.mjs`
 - `lambda/package.json`
 
-**Skip for consumer profile** — these profiles do not manage Lambda. Do NOT report Lambda files as missing.
-
-### Lambda shared libs (full-hub only):
-- `lambda/lib/dedupe.js`, `lambda/lib/dlq.js`, `lambda/lib/rate-limiter.js`, `lambda/lib/aws-sig.js`, `lambda/lib/retry.js` — the libs the WI-Router/PR-Router handlers import and `deploy.sh` flattens into the zip (`infra.json` `lambdas.*.sharedLibs`). Missing any of these → `✗` (deploy will fail at the copy step). (These live under `lambda/lib/`, not the removed `agents/lib/` — see TODO #153.)
-
-**Skip for consumer profile.**
+### Lambda shared libs (when Lambda agents are enabled):
+- `lambda/lib/dedupe.js`, `lambda/lib/dlq.js`, `lambda/lib/rate-limiter.js`, `lambda/lib/aws-sig.js`, `lambda/lib/retry.js` — the libs the WI-Router/PR-Router handlers import and `deploy.sh` flattens into the zip. Missing any → `✗` (deploy will fail at the copy step).
 
 Report: ✓ / ✗ for each category checked.
 
@@ -81,11 +76,11 @@ Check:
 
 Report: ✓ / ✗ for each pipeline with name and ID.
 
-## 3. Lambda Function State (full-hub only)
+## 3. Lambda Function State
 
-**Skip entirely for consumer profile.** Print: `— Lambda checks skipped (profile: consumer — Lambda is managed by the hub project)`
+Skip if no Lambda-based agents are enabled (PR Review, PR Answer, Eval only — pipeline-only setup).
 
-For full-hub, check each Lambda function (WI Router, PR Router):
+Check each Lambda function (WI Router, PR Router):
 
 ```bash
 REGION=$(python3 -c "import json; print(json.load(open('.ai/automation/infra.json'))['region'])")
@@ -144,36 +139,19 @@ az repos policy list \
 
 Report: `✓ PR Review build policy on <branch>` or `⚠ No PR Review build policy — run /auto-webhooks`
 
-### WI Hooks (full-hub only)
+### WI Hooks
 
-**Skip for consumer profile.**
-
-Check that WI hooks exist (project-scoped, User Story + Bug). These are created once by the hub.
-
-### Hub Registration (consumer only)
-
-**Skip for full-hub profile.**
-
-For consumer repos, check that the hub knows about this repo's pipelines:
-
-1. Read `hubProject` from infra.json — report `✓ hub: <name>` or `⚠ hubProject not set in infra.json`
-2. Remind user: "Verify that this repo's PR Answer pipeline ID is registered in the hub's `ADO_PR_ANSWER_PIPELINE_MAP` Lambda env var."
-3. Remind user: "For multi-repo code agents (DevAgent/BugFix/DoD-Fix/Simple), verify this repo is registered as an alias in the hub's `repos.json` registry — the KAI-HUB router fans those agents out per repo (no per-pipeline cross-repo map)."
+Check that WI hooks exist (project-scoped, User Story + Bug). Required when work-item-triggered agents (DoD, QA, DevAgent, DOCAgent, Estimation) are enabled.
 
 ## 5. Summary Report
 
-Adapt the report format to the profile:
-
-### For full-hub:
-
 ```markdown
-## Automation Health Check (Full Hub)
+## Automation Health Check
 
 ### Local Files
 | Check | Status |
 |-------|--------|
-| Agent steps (DoR, PR Review, PR Answer) | ✓ / ✗ |
-| Lambda handlers | ✓ / ✗ |
+| Lambda handlers | ✓ / ✗ / — (skipped — pipeline-only) |
 | Pipeline YAMLs | ✓ / ✗ |
 | infra.json (no placeholders) | ✓ / ✗ |
 | repos.json (optional) | ✓ / — absent (ok) / ✗ invalid JSON |
@@ -189,32 +167,15 @@ Adapt the report format to the profile:
 | <PREFIX>-WI-Router | ✓ Active | ✓ nodejs20.x | ✓ recent | 22 set |
 | <PREFIX>-PR-Router | ✓ Active | ✓ nodejs20.x | ✓ recent | 11 set |
 
-### Overall: ✓ Healthy / ⚠️ Issues found
-<List any failed checks with remediation steps>
-```
-
-### For consumer:
-
-```markdown
-## Automation Health Check (Consumer)
-
-### Local Files
-| Check | Status |
-|-------|--------|
-| Pipeline YAMLs | ✓ / ✗ |
-| infra.json (no placeholders) | ✓ / ✗ |
-| repos.json (optional) | ✓ / — absent (ok) / ✗ invalid JSON |
-
-### ADO Pipelines
-| Pipeline | ID | Status | YAML Path |
-|----------|-----|--------|-----------|
-| <consumer pipelines — pr-review, pr-answer, eval, devagent, bugfix, dod-fix> | ... | ... | ... |
-
 ### Webhooks & Policies
 | Check | Status |
 |-------|--------|
 | PR Answer hook (repo-scoped) | ✓ / ⚠ missing |
 | PR Review build policy | ✓ / ⚠ missing |
+| WI hooks (project-scoped) | ✓ / ⚠ missing (if WI agents enabled) |
+
+### Overall: ✓ Healthy / ⚠️ Issues found
+<List any failed checks with remediation steps>
 
 ### Hub Registration
 | Check | Status |

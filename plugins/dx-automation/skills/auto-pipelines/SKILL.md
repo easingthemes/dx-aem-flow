@@ -1,10 +1,11 @@
 ---
 name: auto-pipelines
-description: Import ADO pipelines for enabled AI automation agents and set all required pipeline variables. Profile-aware — imports only pipelines for the configured profile (consumer or full-hub). Reads config from .ai/automation/infra.json.
+description: Import ADO pipelines for enabled AI automation agents and set all required pipeline variables. Imports all enabled pipelines — each project is self-contained. Reads config from .ai/automation/infra.json.
+when_to_use: "Use when importing ADO pipelines for AI automation agents, when the user says 'import pipelines', 'set up ADO pipelines', 'create automation pipelines', or after /auto-init to register the pipelines in ADO."
 argument-hint: ""
 ---
 
-You import ADO pipeline YAML files into Azure DevOps and set all required variables. Uses `az pipelines` (audit-wrapped) and reads config from `.ai/automation/infra.json`. Only imports pipelines that are enabled for the configured profile.
+You import ADO pipeline YAML files into Azure DevOps and set all required variables. Uses `az pipelines` (audit-wrapped) and reads config from `.ai/automation/infra.json`. Each project is self-contained — imports all enabled pipelines regardless of profile.
 
 ## 0. Prerequisites
 
@@ -14,7 +15,6 @@ export AUDIT_LOG_PREFIX=infra
 ```
 
 Read `.ai/automation/infra.json`. Extract:
-- `automationProfile` — determines which pipelines to import
 - `adoOrg` — ADO org URL
 - `adoProject` — ADO project name
 - `pipelineFolder` — optional ADO pipeline folder path (e.g. `\\KAI`). If set, pipelines are created inside this folder.
@@ -22,15 +22,13 @@ Read `.ai/automation/infra.json`. Extract:
 
 Read `.ai/config.yaml` to get `scm.repo` (repository name for pipeline import).
 
-Print: `Profile: <profile> — importing <N> pipelines`
+If `automationProfile` is `consumer`, `pr-only`, or `pr-delegation` (legacy): warn `⚠ Legacy profile — re-run /auto-init to migrate to per-project model.` Proceed with all enabled pipelines.
 
-Expected pipelines per profile:
-- **consumer** (or legacy `pr-only`/`pr-delegation`): pr-review, pr-answer, eval, devagent, bugfix, dod-fix, simple
-- **full-hub**: all enabled pipelines (includes `simple` — the SimpleAgent pipeline, `@kai-simple` comment trigger, YAML `ado-cli-simple.yml`)
+Print: `Importing <N> enabled pipelines`
 
 **SimpleAgent + the KAI-HUB router are imported here like any other pipeline.** SimpleAgent has *no Lambda* — its trigger is an Azure-native Service Hook + Incoming WebHook service connection (configured by `/auto-webhooks`, not here). But "no Lambda" only affects the *trigger*: the pipeline YAML still must be imported as an ADO definition and given variables, which is exactly this skill's job. So:
-- **`simple`** (`ado-cli-simple.yml`) — enabled by default; imported for both consumer and full-hub when not `disabled`. This dual-mode worker is what the comment hook fires directly in a single-repo project.
-- **`hub`** (`ado-cli-hub.yml`) — **multi-repo only, `"disabled": true` by default** in `infra.template.json`. Import it only when the project routes `@kai-<agent>` comments centrally and fans agents out across repos. Skip it (like any disabled entry) unless explicitly enabled.
+- **`simple`** (`ado-cli-simple.yml`) — enabled by default when not `disabled`.
+- **`hub`** (`ado-cli-hub.yml`) — **multi-repo only, `"disabled": true` by default**. Import only when explicitly enabled.
 
 ## 1. Import Pipelines
 

@@ -1,6 +1,7 @@
 ---
 name: dx-req-tasks
 description: Create or close child Task work items under an Azure DevOps/Jira User Story. Use to break down a story into FE/BE/Authoring tasks with hour estimates, or use "close" argument to close all child tasks after development is done.
+when_to_use: "Use to create or close child Task work items under a User Story. Trigger on 'create tasks', 'break down story into tasks', 'add child tasks', 'close tasks', or 'dx-req-tasks <id>'."
 argument-hint: "[Work Item ID] [BE|FE|Authoring] or [Work Item ID] close"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
