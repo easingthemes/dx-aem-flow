@@ -11,7 +11,13 @@ Delta to: [2026-05-30-salesforce-agentic-engineering.md](2026-05-30-salesforce-a
 2. **Victory-declaration bias is our #1 unaddressed failure mode.** We have `dx-step-verify` but it is not wired into the `Stop` hook — agents can declare done without running it. LangChain's key win was a self-verification loop at session end.
 3. **Microsoft CodeAct (Build 2026) reduces orchestration token cost 63.9%.** One Python program replaces multi-turn tool chains. Track for dx-automation.
 4. **Our cross-platform story is broken for Copilot/Cursor.** `.github/hooks/hooks.json` is missing; `hooks-cursor.json` is referenced but doesn't exist. Safety is Claude-Code-only.
-5. **Overall rating: 7/10.** Architecture and philosophy are ahead of most agencies. Execution gaps are in cross-platform parity, Stop-hook enforcement, and observability.
+5. **Ratings by platform scope (disregarding easy/mechanical fixes — see below):**
+
+| Scope | Rating | Key blocker |
+|-------|--------|-------------|
+| All platforms (raw) | 7/10 | Cross-platform gaps pull it down |
+| Claude + Copilot only | **7.5/10** | `.github/hooks` missing; oversized skills break Copilot reads |
+| Claude only | **8/10** | Stop-hook verify not wired; no local automation agents |
 
 ---
 
@@ -162,22 +168,80 @@ Full codebase read: 77 skills, 13 agents, hooks in 4 plugins, templates, CLI, au
 
 ---
 
-## Top 5 Highest-ROI Fixes
+## Adjusted Ratings by Platform Scope
+
+The raw 7/10 includes drag from mechanical tasks (adding `model`/`effort` to 62 skills, one-liner agent fixes, removing phantom manifest references, wiring env vars). These are real debt but don't represent structural design gaps. The ratings below disregard anything that is: mechanical repetition across files, a single-file patch, or under ~2 days of unambiguous work.
+
+### What's Disregarded
+
+| Item | Why disregarded |
+|------|----------------|
+| Add `model`/`effort` to 62 skills | Mechanical frontmatter, no design decisions |
+| `dx-code-reviewer` missing `tools:` | One-line fix |
+| Remove phantom `hooks-cursor.json` field from manifests | 30-minute manifests cleanup |
+| Wire `GITHUB_COPILOT_PROMPT_MODE_*` into dx-init | 1-2 hour script addition |
+| GEMINI.md stub | Copy AGENTS.md + minor edits, 1 hour |
+| Remove `--additional-mcp-config` from setup docs | One doc line |
+| Add TOC to reference files >100 lines | Low-effort formatting |
+
+### Claude Only — **8/10**
+
+Remaining structural gaps after disregarding easy fixes:
+
+| Gap | Impact | TODO |
+|-----|--------|------|
+| `Stop` hook not wired to verification | Victory-declaration bias — #1 production failure mode; agents can claim done without verify ever running | #159 |
+| No circuit breaker / observability | Runaway automation agents have no kill switch; no failure-rate data to tune against | #160 |
+| No local agents for dx-automation | Can't develop/test automation workflows locally; pipeline-only is a development bottleneck | — |
+| Config validation missing | Silent misconfiguration causes wrong-environment bugs that are hard to diagnose | #161 |
+| TODO backlog governance | 118 open items with no quarterly roadmap — backlog grows faster than it closes | — |
+
+**To reach 9/10 (Claude only):** Wire Stop-hook verify (#159) + circuit breaker (#160) + config validation (#161). Local automation agents would push it to 9.5.
+
+The architecture is genuinely sound — config-driven, correct hook semantics, DOT digraph flow control, resumable recovery. The 8/10 gap is missing enforcement at session end and missing observability, not design flaws.
+
+### Claude + Copilot — **7.5/10**
+
+Same base as Claude-only plus two structural Copilot-specific gaps that are NOT easy fixes:
+
+| Additional gap | Why it's structural | TODO |
+|----------------|--------------------|----- |
+| `.github/hooks/hooks.json` missing | 7 hooks to port with Copilot-specific event names, regex matchers (v1.0.36+), and cross-platform testing. Design decisions needed: which hooks translate, which need Copilot-specific behavior. Not mechanical. | #22 |
+| 3 skills >200 lines break Copilot partial-reads | Copilot CLI partial-reads cut at ~100 lines; `aem-fe-verify` (366), `dx-step-verify` (439), `aem-component` (263) silently lose critical guidance. Fix requires content architecture decisions (what moves to `references/` vs stays inline), not just trimming. | #108 #113 |
+| Shared/ path resolution (ongoing) | Copilot CLI path resolution for plugin `shared/` dirs has known issues (TODO #20). No fix released as of June 2026. Workaround exists but fragile. | #20 |
+
+**To reach 9/10 (Claude + Copilot):** Port hooks (#22) + fix oversized skills (#108/#113) + resolve shared/ paths (#20) + all Claude-only gaps above.
+
+The 0.5 gap between Claude-only and Claude+Copilot comes entirely from the `.github/hooks` absence — Copilot users get zero harness safety (branch protection, next-step guidance, workflow state tracking). That's a meaningful regression from the Claude Code experience.
+
+---
+
+## Top Structural Fixes (by platform scope)
+
+### If Claude only
 
 **1. Wire `Stop` hook → verification loop** (TODO #159, ~1 day)
-Self-verification before declaring done. Guards against victory-declaration bias — the #1 production failure mode. Call `dx-step-verify` (already exists) from a `Stop` hook when `DX_TICKET` is set. This is exactly what moved LangChain 25 spots.
+Guards victory-declaration bias — the #1 production failure mode validated by LangChain's Terminal Bench result. `dx-step-verify` already exists; the hook guard is ~10 lines. Highest ratio of impact to effort in the entire backlog.
 
-**2. Port hooks to `.github/hooks/hooks.json`** (TODO #22, ~3 days)
-Branch guard, next-step hints, and workflow state for Copilot CLI users. Currently zero safety on Copilot. Wire `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` into `/dx-init` at same time (TODO #97).
+**2. Add circuit breaker — loop-detection PostToolUse hook** (TODO #160, ~1 day)
+Same tool + args + file within 5 turns → exit 2 + ABORT. Prevents runaway automation agents from exhausting budget on a stuck cycle. Structural new capability, not a refinement.
 
-**3. Add `model` + `effort` to all 62 remaining skills** (~2 days, mechanical)
-Lambda automation agents can't replicate local skill behavior without these. The tier table in CLAUDE.md is correct — stamp it onto frontmatter.
+**3. Config validation gate** (TODO #161, ~2 days)
+`dx-doctor --config-validate` + optional `SessionStart` pre-flight. Catches silent misconfiguration before it causes wrong-environment bugs 8 phases into a run.
 
-**4. Fix `hooks-cursor.json` manifests** (TODO #69-cross-platform, 2 hours)
-4 `.cursor-plugin/plugin.json` files reference non-existent files. Either create them (port hooks.json) or remove the `hooks` field.
+**4. Local agents for dx-automation** (large, but directionally important)
+dx-automation has no `agents/` directory — can't develop or test automation locally. Even a single `auto-local-agent.md` that wraps the Lambda flow in a testable Claude Code agent would close this gap.
 
 **5. Evaluate Microsoft CodeAct for dx-automation** (TODO #158, research)
-63.9% token reduction on multi-tool orchestration. If it holds up for ADO-workflow tool chains, it changes how we sequence automation agent steps.
+63.9% token reduction on multi-tool orchestration. First check: does Dynamic Workflows (v2.1.154) already solve this natively? If not, pilot on read-heavy phases (dx-req Phase 1, auto-triage).
+
+### If Claude + Copilot (add these on top)
+
+**A. Port hooks to `.github/hooks/hooks.json`** (TODO #22, ~3 days)
+Zero harness safety for Copilot users today. Branch guard, next-step hints, workflow state — all missing. This is the single biggest regression from the Claude experience. Not mechanical: requires event-name mapping, Copilot-specific regex (v1.0.36+), and integration testing.
+
+**B. Refactor the 3 oversized skills** (`aem-fe-verify` 366 lines, `dx-step-verify` 439 lines, `aem-component` 263 lines) (TODO #108/#113, ~3 days)
+Copilot CLI partial-reads truncate at ~100 lines — critical guidance at the bottom of these skills is silently invisible to Copilot users. Requires content architecture decisions (progressive disclosure via `references/`), not just trimming.
 
 ---
 
