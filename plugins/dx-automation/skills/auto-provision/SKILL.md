@@ -1,6 +1,7 @@
 ---
 name: auto-provision
 description: Create all AWS resources for AI automation agents — DynamoDB tables, SQS queue, S3 bucket, SNS topic, IAM role, Lambda functions, and API Gateway. Reads config from .ai/automation/infra.json. Idempotent — skips already-existing resources.
+when_to_use: "Use when creating AWS infrastructure for AI automation from scratch, when the user says 'provision automation', 'create AWS resources', 'set up DynamoDB / SQS / Lambda', or 'bootstrap automation infra'."
 argument-hint: ""
 ---
 

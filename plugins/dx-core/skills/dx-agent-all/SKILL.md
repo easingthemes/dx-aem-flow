@@ -1,6 +1,7 @@
 ---
 name: dx-agent-all
 description: Full pipeline from ADO story to executed code. Runs requirements, planning, execution, build, review, commit, and PR in sequence with optional human review checkpoints. Use for end-to-end story implementation.
+when_to_use: "Use for end-to-end story implementation — from ADO story to executed code and PR. Trigger on 'implement this story', 'full pipeline for ticket X', 'run the full agent pipeline', or 'do the whole story'."
 argument-hint: "[ADO Work Item ID or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 hooks:

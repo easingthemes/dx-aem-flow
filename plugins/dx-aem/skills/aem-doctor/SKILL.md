@@ -1,6 +1,7 @@
 ---
 name: aem-doctor
 description: Check health of AEM project infrastructure — verifies component definitions, OSGi configs, dispatcher rules, and content structure against expected state. Use to diagnose configuration drift or after making infrastructure changes.
+when_to_use: "Use when AEM infrastructure seems broken, after making infrastructure changes, when components are missing from dialogs, or when the user says 'check AEM health', 'diagnose AEM config', 'something is wrong with AEM'."
 argument-hint: "[components|osgi|dispatcher|content|code|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---

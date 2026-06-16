@@ -1,6 +1,7 @@
 ---
 name: aem-init
 description: Configure AEM-specific settings for the dx workflow. Detects AEM project structure, component paths, and brands. Appends aem section to .ai/config.yaml. Run after /dx-init.
+when_to_use: "Use when setting up AEM-specific dx configuration for the first time, after /dx-init, when the user says 'configure AEM', 'set up AEM workflow', or 'initialize AEM settings'."
 argument-hint: "(no arguments — interactive)"
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---

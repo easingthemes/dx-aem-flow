@@ -1,6 +1,7 @@
 ---
 name: dx-council
 description: "Run any question, decision, or artifact through a council of 3 AI advisors who independently analyze it, peer-review each other anonymously, and synthesize a final verdict. Adapted from Karpathy's LLM Council. MANDATORY TRIGGERS: 'council this', 'run the council', 'war room this', 'pressure-test this', 'stress-test this', 'debate this'. STRONG TRIGGERS (use when combined with a real decision or tradeoff): 'should I X or Y', 'which option', 'what would you do', 'is this the right move', 'validate this', 'get multiple perspectives', 'council the plan', 'council the implementation'. Do NOT trigger on simple yes/no questions, factual lookups, or casual 'should I' without a meaningful tradeoff. DO trigger when the user presents a genuine decision with stakes, multiple options, or an artifact they want pressure-tested from multiple angles."
+when_to_use: "MANDATORY TRIGGERS: 'council this', 'run the council', 'war room this', 'pressure-test this', 'stress-test this', 'debate this'. STRONG TRIGGERS: 'should I X or Y', 'which option', 'validate this', 'get multiple perspectives', 'council the plan'."
 argument-hint: "<question, decision, or 'the plan' / 'the implementation'>"
 model: sonnet
 allowed-tools: ["read", "glob", "grep", "agent"]

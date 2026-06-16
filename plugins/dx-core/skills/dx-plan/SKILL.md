@@ -1,6 +1,7 @@
 ---
 name: dx-plan
 description: Generate an implementation plan with status-tracked steps. Creates implement.md from explain.md + research.md. Uses extended thinking for deep reasoning. Use after requirements are ready (from ADO flow or import).
+when_to_use: "Use to generate an implementation plan after requirements are ready. Trigger on 'create plan', 'plan this story', 'write implement.md', 'dx-plan', or after /dx-req completes."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
 effort: high

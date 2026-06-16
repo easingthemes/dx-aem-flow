@@ -1,6 +1,7 @@
 ---
 name: dx-pr-review
 description: Review a PR — analyze code, present findings, optionally post comments and patches to ADO. Also supports standalone posting of saved findings (for automation pipelines). Use when you want to review a pull request.
+when_to_use: "Use to review a PR — analyze code, present findings, optionally post to ADO. Trigger on 'review PR', 'review this pull request', 'code review', 'check the PR', or when given a PR URL or ID."
 model: opus
 effort: high
 argument-hint: "[PR URL or ID]"

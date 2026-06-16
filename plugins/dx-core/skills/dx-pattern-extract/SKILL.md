@@ -1,6 +1,7 @@
 ---
 name: dx-pattern-extract
 description: Scan completed tickets for recurring patterns and promote to cross-ticket knowledge. Run periodically or after completing several tickets. Creates .ai/graph/nodes/patterns/ entries.
+when_to_use: "Use when scanning completed tickets for recurring patterns. Trigger on 'extract patterns', 'promote patterns', 'find recurring patterns', 'update cross-ticket knowledge', or 'run pattern extraction'."
 argument-hint: "[--dry-run (preview without writing)]"
 model: haiku
 effort: low

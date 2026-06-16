@@ -1,6 +1,7 @@
 ---
 name: dx-doctor
 description: Check health of all dx workflow files — config, rules, scripts, seed data, MCP, settings. Detects installed plugins and checks each. Use after upgrading plugins or when something seems broken.
+when_to_use: "Use after upgrading plugins or when something seems broken. Trigger on 'check health', 'doctor', 'diagnose workflow', 'something is broken', 'verify dx setup', or 'what is wrong with my dx config'."
 argument-hint: "[dx|aem|auto|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
@@ -246,6 +247,29 @@ Reporting:
 
 These are **informational warnings**, not blockers. The workaround still functions; it's just unnecessary.
 
+### 6.5c. Copilot CLI v1.0.40+ prompt-mode env vars
+
+Skip if Copilot CLI is not installed (`which gh` fails or `gh copilot --version` errors).
+
+Check for the required env vars in the user's shell profile files (`~/.zshrc`, `~/.bashrc`, `~/.zprofile`):
+
+```bash
+REPOS_HOOKS=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null | head -1)
+WORKSPACE_MCP=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null | head -1)
+```
+
+Also check if they are currently set in the environment:
+
+```bash
+[ -n "${GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS:-}" ] && HOOKS_ACTIVE=1 || HOOKS_ACTIVE=0
+[ -n "${GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP:-}" ] && MCP_ACTIVE=1 || MCP_ACTIVE=0
+```
+
+Reporting:
+- Both exported in current env → `✓ Copilot CLI v1.0.40+ prompt-mode env vars set (repo hooks + workspace MCP enabled)`
+- Missing from current env but found in shell rc → `⚠ Copilot CLI prompt-mode env vars in shell rc but not active — restart shell or run: source ~/.zshrc`
+- Missing entirely → `✗ MISSING: Copilot CLI v1.0.40+ requires GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1 and GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1 in your shell profile. Without them, repo hooks and workspace MCP are silently disabled. Run /dx-init to add them.`
+
 ## 7. AEM Plugin (conditional)
 
 Skip if aem plugin not configured or not in scope.
@@ -344,32 +368,20 @@ Skip if automation plugin not configured or not in scope.
 
 - `.ai/automation/infra.json` exists → `✓` or `✗ MISSING`
 - If exists, read it and check:
-  - `automationProfile` value → report: `Profile: <full-hub|consumer>` (if field absent, report `Profile: full-hub (legacy — no profile field)`). Treat legacy `pr-only` and `pr-delegation` values as `consumer`.
-  - `{{` placeholder remnants — **profile-aware check:**
-    1. Find all `{{...}}` placeholders in the file
-    2. Determine which pipeline entries are **expected** for this profile:
-       - `full-hub`: all pipelines + Lambda + storage + monitoring + apiGateway + webhooks
-       - `consumer`: `pr-review`, `pr-answer`, `eval`, `devagent`, `bugfix`, `dod-fix` pipeline entries + `webhooks.pr-answer` (consumers need their own repo-scoped PR Answer hook)
-    3. Classify each placeholder:
-       - **Relevant to profile** (pipeline ID or config for an expected agent, or `webhooks.pr-answer` for consumers) → `⚠ unresolved`
-       - **Hub-only** (pipeline ID or config for agents NOT expected in this profile, or Lambda/storage/monitoring/apiGateway sections, or WI webhook entries for consumers) → `— hub-only (not applicable for consumer)`
-    4. Report:
-       - If no relevant placeholders remain → `✓ no unresolved placeholders`
-       - If relevant placeholders found → `⚠ <N> unresolved placeholders` + list only the relevant ones
-       - If hub-only placeholders found → `ℹ <N> hub-only placeholders ignored (not applicable for consumer — these entries belong to the hub project)`
-    5. **Legacy detection:** If profile is `consumer` but infra.json contains `lambdas`, `storage`, `monitoring`, or `apiGateway` sections → `⚠ infra.json contains hub-only sections (likely initialized with old plugin). Run /auto-init to re-scaffold with correct profile.` Note: `webhooks.pr-answer` IS expected for consumers (repo-scoped hook) — only WI webhook entries are hub-only.
+  - `automationProfile` value → report: `Profile: <value>`. If value is `consumer`, `pr-only`, or `pr-delegation` (legacy): `⚠ Legacy profile — re-run /auto-init to migrate to per-project model.` If field absent: `Profile: per-project (legacy — no profile field)`.
+  - `{{` placeholder remnants — report all unresolved `{{...}}` placeholders as `⚠ unresolved`.
 
 ### 9b. Supporting Files
 
 - `.ai/automation/repos.json` exists and is valid JSON → `✓` or `✗`
 - `.ai/automation/policy/pipeline-policy.yaml` exists → `✓` or `✗`
 
-### 9c. Profile-Aware File Checks
+### 9c. File Checks
 
-Read `automationProfile` from infra.json. Check only files expected for the profile:
-
-- **full-hub:** Expect Lambda handlers, agent steps, and all pipeline YAMLs. Report missing files as `✗`.
-- **consumer** (or legacy `pr-only`/`pr-delegation`): Only expect pipeline YAMLs for consumer agents and config files. Do NOT report missing Lambda handlers (`lambda/`), agent step directories (`agents/dor/`, `agents/pr-review/`, `agents/pr-answer/`), or shared libs as errors — these are hub-only files.
+Check files based on which agents are enabled (not `disabled: true`) in infra.json:
+- If any Lambda-based agents enabled (DoD, QA, DevAgent, DOCAgent, Estimation, PR Answer): expect Lambda handlers in `.ai/automation/lambda/` → report missing as `✗`.
+- Always expect pipeline YAMLs for all enabled agents → report missing as `✗`.
+- Legacy consumer installs will be missing Lambda files → the profile warning in 9a alerts user to re-run `/auto-init`.
 
 ### 9d. Delegation
 

@@ -1,6 +1,7 @@
 ---
 name: dx-hub-dispatch
 description: Dispatch a ticket to multiple repos via VS Code terminals. Reads ticket, detects involved repos, opens independent Claude sessions in each repo. Trigger on "dispatch ticket", "hub dispatch", "work on ticket across repos".
+when_to_use: "Use to dispatch a ticket to multiple repos via VS Code terminals. Trigger on 'dispatch ticket', 'hub dispatch', 'work on ticket across repos', 'fan out to repos', or 'multi-repo dispatch'."
 argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash", "mcp__vscode-automator__*", "mcp__ado__*", "mcp__atlassian__*"]
 ---

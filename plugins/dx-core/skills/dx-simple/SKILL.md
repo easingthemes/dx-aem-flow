@@ -1,6 +1,7 @@
 ---
 name: dx-simple
 description: Apply a small AEM change (a11y label, color, spacing, copy, css-class, icon, focus trap, or other small behavior tweak) by splitting work into authoring (JCR writes) and code (file edits → PR) paths. Reads the ADO story directly — a structured ```simple``` block is recommended but optional. Trigger on "simple change", "small tweak", "apply tweak".
+when_to_use: "Use for small AEM changes — a11y labels, colors, spacing, copy, CSS classes, icons, focus traps. Trigger on 'simple change', 'small tweak', 'apply tweak', '@kai-simple', or when a ticket is a minor AEM adjustment."
 argument-hint: "<ADO Work Item ID or full URL>"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 model: sonnet

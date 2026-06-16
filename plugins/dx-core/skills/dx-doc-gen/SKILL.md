@@ -1,6 +1,7 @@
 ---
 name: dx-doc-gen
 description: Generate wiki documentation from completed spec files — architecture decisions, usage guide, API changes. Posts to ADO Wiki or Confluence depending on provider config. Use as the final step after implementation is done. Invoked automatically by /dx-agent-all Phase 7 and /dx-req-dod.
+when_to_use: "Use as the final step after implementation to generate wiki documentation. Trigger on 'generate docs', 'create wiki page', 'document this story', 'post to wiki', or when /dx-agent-all reaches Phase 7."
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---

@@ -1,6 +1,7 @@
 ---
 name: auto-deploy
 description: Deploy Lambda code for AI automation agents (wi-router and/or pr-router). Packages agent steps + shared libs into a zip and uploads to AWS Lambda. Safe to re-run after code changes. Reads function names from .ai/automation/infra.json.
+when_to_use: "Use when deploying Lambda code changes for wi-router or pr-router, when the user says 'deploy automation', 'update Lambda', 'push Lambda changes', or after modifying agent prompts or shared libs."
 argument-hint: "[wi-router|pr-router|all]"
 ---
 

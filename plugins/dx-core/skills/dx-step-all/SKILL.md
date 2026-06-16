@@ -1,6 +1,7 @@
 ---
 name: dx-step-all
 description: Autonomous execution loop — runs each plan step (implement + test + review + commit internally), with step-fix for failures. Stops after 2 consecutive fix failures on the same step. Use to execute the full plan hands-free.
+when_to_use: "Use to execute all plan steps autonomously. Trigger on 'execute plan', 'run all steps', 'step-all', 'implement everything', 'do all the steps', or when the plan is ready and full automation is desired."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

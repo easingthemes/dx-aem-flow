@@ -1,6 +1,7 @@
 ---
 name: dx-step-verify
 description: 6-phase verification with auto-fix — compile, lint, test, secret scan, architecture, then code review with fix loop (max 3 cycles). Only passes when all phases are clean. Use after /dx-step-build passes and before creating a PR.
+when_to_use: "Use after /dx-step-build to run full verification — compile, lint, test, secrets, architecture, code review. Trigger on 'verify', 'run checks', 'step-verify', 'is the code ready', or 'check for issues before PR'."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
 effort: high

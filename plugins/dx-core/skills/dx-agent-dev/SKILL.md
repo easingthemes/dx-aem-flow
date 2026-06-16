@@ -1,6 +1,7 @@
 ---
 name: dx-agent-dev
 description: Implement code from an RE spec as the Dev Agent — read requirements, implement changes, run self-check (build/test/lint), fix failures, and commit. Use when you want the AI Developer Agent to implement a story or fix a bug. Trigger on "dev agent", "implement from spec", "developer agent".
+when_to_use: "Use when the user says 'dev agent', 'implement from spec', 'developer agent', 'implement the requirements', or 'code this up' after requirements have been analyzed. Reads RE spec from run-context."
 argument-hint: "[ADO Work Item ID (optional — reads re.json from run-context)]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
