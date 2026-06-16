@@ -253,5 +253,58 @@ Copilot CLI partial-reads truncate at ~100 lines — critical guidance at the bo
 
 ---
 
+## Re-review — June 16, 2026 (post-rebase with main PR #173)
+
+PR #173 closed 6 open TODOs (#34, #97, #98, #104, #105, #133). Changes verified against the live codebase.
+
+### What Changed
+
+| TODO | Change | Verified |
+|------|--------|---------|
+| #34 | `validate-plugin-edit.sh` uses exit 2; removed `|| true` fallback in hooks.json | ✓ |
+| #97/#98 | `dx-init/SKILL.md` exports both `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` and `WORKSPACE_MCP=1` with idempotent `grep -q` guard | ✓ |
+| #104 | `dx-req` and `dx-plan` check `orchestrating.flag` with 7200-second age gate | ✓ |
+| #105 | All 76 skills have `when_to_use:` frontmatter | ✓ |
+| #133 | `auto-init` is now per-project only (`automationProfile: "per-project"`); hub/consumer question removed | ✓ |
+
+### Updated Ratings
+
+**Raw (all platforms): 7.5/10** (was 7/10, +0.5)
+
+The five changes collectively close the most visible drag items: exit-code correctness makes hook safety reliable, `when_to_use` on all 76 skills is the primary skill-discovery signal for both Claude Code and Copilot CLI, and the KAI-HUB per-project simplification removes an architectural inconsistency that was surfacing in automation debug sessions.
+
+| Area | Previous | Now | Driver |
+|------|----------|-----|--------|
+| Hook exit codes | Wrong (`|| true` suppressed exit 2) | ✓ Fixed | #34 |
+| Skill discovery | 62/76 missing `when_to_use` | ✓ All 76 done | #105 |
+| Copilot env vars | Not wired in dx-init | ✓ Wired + idempotent | #97/#98 |
+| Orchestration guard | Missing re-entry flag | ✓ 7200s age gate | #104 |
+| Automation model | Hub/consumer ambiguity | ✓ Per-project only | #133 |
+
+**Claude only (disregarding easy/mechanical) — 8.5/10** (was 8/10, +0.5)
+
+The `when_to_use` completion was the **HIGH** open item from the June 15 audit (skills scored 6.5/10 with this as the primary driver). With it done, skills score moves to ~8/10. Hub architectural simplification (#133) removes a class of debug confusion. Exit code fix (#34) means the blocking hook path now works correctly end-to-end.
+
+Remaining structural gaps (unchanged from June 15 analysis):
+
+| Gap | TODO | Impact |
+|-----|------|--------|
+| `Stop` hook not wired to `dx-step-verify` | #159 | Victory-declaration bias — agents can declare done without verify running |
+| No circuit breaker / loop-detection | #160 | Runaway automation has no kill switch |
+| No local agents for dx-automation | — | Can't develop or test automation workflows without deploying to Lambda |
+| Config validation gate | #161 | Silent misconfiguration reaches phase 8 before surfacing |
+
+**To reach 9/10 (Claude only):** Wire Stop-hook verify (#159) + circuit breaker (#160) + config validation (#161). These are structural new capabilities, each ~1 day.
+
+**Claude + Copilot — 8/10** (was 7.5/10, +0.5)
+
++0.5 from: Copilot env vars now wired (#97/#98) — when `.github/hooks/hooks.json` is ported (#22), the env var precondition is already satisfied. `when_to_use` on all skills is the main discovery mechanism for Copilot CLI. Hub cleanup removes cross-platform config ambiguity.
+
+Still 0.5 below Claude-only because `.github/hooks/hooks.json` does not exist — Copilot users get zero harness safety (no branch guard, no next-step hints, no workflow state tracking). That gap hasn't moved.
+
+**To close the Claude vs. Claude+Copilot gap:** Port hooks (#22, ~3 days) + refactor oversized skills (#108/#113, ~3 days). Once those are done, Claude+Copilot should reach parity with Claude-only (9/10 if the Claude-only gaps are also closed).
+
+---
+
 **Next research update:** Check v2.1.160+ changelog for Dynamic Workflows maturation + any hook system changes.
 Last platform state: [2026-05-29-platform-state-update.md](2026-05-29-platform-state-update.md)
