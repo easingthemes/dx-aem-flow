@@ -341,3 +341,129 @@ The article validates these design choices. The main gaps are in **structured ha
 - [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, Anthropic Labs, Mar 24 2026
 - [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Justin Young, Anthropic, Nov 2025
 - [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic Engineering
+
+---
+
+## June 2026 Update — External Research Findings
+
+Added from [2026-06-15-dev-agency-harness-review.md](../research/2026-06-15-dev-agency-harness-review.md). New patterns found in production from April–June 2026.
+
+---
+
+### 10. Stop-Hook Verification Loop (Victory-Declaration Bias)
+
+**What LangChain proved (March 2026):** Their coding agent jumped 30th → 5th on Terminal Bench 2.0 without changing the model. The primary lever was a **self-verification system prompt loop** that ran before the agent declared done. Hooks enforced it.
+
+**The failure mode it fixes:** "Victory declaration bias" — agents frequently mark tasks complete without verifying the outcome. Confirmed as the #1 production failure mode across multiple teams.
+
+**What we have today:**
+- `dx-step-verify` (6-phase gate) already exists and works well
+- But it is only invoked explicitly — `/dx-step-verify` or called from `dx-step-all`
+- An agent running `/dx-step` directly can complete and stop without the evaluator ever firing
+
+**Gap:** We have the evaluator but it's not enforced at session end. The `Stop` hook fires when Claude finishes a turn — wiring verify there closes the gap.
+
+**Recommendation — Stop hook with ticket guard:**
+
+```json
+{
+  "Stop": [{
+    "matcher": "",
+    "hooks": [{
+      "type": "command",
+      "command": "if [ -n \"$DX_TICKET\" ] && [ -f \".ai/specs/$DX_TICKET-*/implement.md\" ]; then echo 'Verification required before stopping. Run /dx-step-verify or confirm step is complete.' >&2; exit 2; fi",
+      "statusMessage": "Checking step verification status..."
+    }]
+  }]
+}
+```
+
+A lighter variant: instead of blocking, use `asyncRewake: true` to surface a reminder without forcing a block. Start blocking, move to advisory if too noisy.
+
+**Priority:** High — this is the highest-ROI single change based on external validation (LangChain benchmark).
+
+**Done-when:** `grep -r "Stop" plugins/dx-core/hooks/hooks.json` shows a verification-check hook; a `/dx-step` session ending without verify fires a warning or block.
+
+**Related:** TODO #159
+
+---
+
+### 11. Circuit Breaker Pattern
+
+**What production teams use:** Borrowed from distributed systems, adapted for agents. A circuit breaker monitors agent behavior (failure rate, loop detection, cost velocity) and transitions through states:
+- **Closed** — normal operation
+- **Open** — failing too often; escalate to human or stop
+- **Half-open** — testing recovery after a cooldown
+
+**What we have today:**
+- Loop-detection is implicit (the model notices it's looping, sometimes)
+- `dx-step-fix` handles individual step failures
+- BugFix recovery has a `TRANSIENT/VALIDATION/PERMANENT` taxonomy
+- No automatic circuit opening based on observed failure rate
+
+**Gap:** We have retry logic but no circuit breaker. A runaway agent in `dx-step-all` that hits the same failure repeatedly will exhaust budget without escalating.
+
+**Recommendation — Add loop-detection middleware hook:**
+
+`PostToolUse` hook that watches for repeated identical tool calls (same tool, same args, same file target within the last 5 turns). On detection, writes `ABORT_REASON=loop_detected` to a state file and exits 2 to block continuation. The coordinator skill reads the state file on resume.
+
+This is a strict subset of the circuit breaker pattern — the most common failure mode for our automation agents.
+
+**Priority:** Medium — important for long-running automation agents (BugFix, DevAgent) but not blocking for interactive use.
+
+**Done-when:** `dx-step-all` stopped by a loop-detection hook after 3 identical `Edit` calls to the same file produces an ABORT comment on the ADO work item.
+
+**Related:** TODO #160
+
+---
+
+### 12. Observability Layer
+
+**What production teams use:** LangSmith (LangChain-specific), OpenTelemetry, or custom trace logs. The core pattern: record every tool call with inputs/outputs, trace agent decisions, surface failure patterns across runs. Claude Code v2.1.126 added `claude_code.skill_activated` OTel events (TODO #100).
+
+**What we have today:**
+- `SubagentStart/SubagentStop` logging hooks (TODO #19 Done)
+- Spec dir files as audit trail (implement.md, verify.md, etc.)
+- `confidence.json` per step (from context graphs work)
+- But: no cross-run aggregation, no failure pattern detection, no cost/latency per skill
+
+**Gap:** We can inspect a single run's spec dir, but we can't answer "which skill fails most often?" or "what's the average cost per ticket?" across all runs. This is what TODO #144 tracks.
+
+**Recommendation — Phase 1 (low effort):**
+
+`Stop` hook (async, non-blocking) that appends a single JSON line to `.ai/telemetry.jsonl`:
+```json
+{"ts":"2026-06-15T12:00:00Z","skill":"dx-step","ticket":"PROJ-123","turns":14,"outcome":"success"}
+```
+
+`dx-doctor` reads `telemetry.jsonl` and reports failure rate by skill, average turn count, and common abort reasons.
+
+**Priority:** Low for interactive use; Medium for automation agents where debugging blind is expensive.
+
+**Related:** TODO #160, TODO #144
+
+---
+
+### 13. Config Schema Validation
+
+**What most frameworks do:** Validate config at startup, fail fast with a clear error if required fields are missing or mistyped. We don't.
+
+**What we have today:**
+- `config.yaml.template` is well-documented
+- But skills silently use defaults when a field is missing or mistyped
+- No `SessionStart` hook that validates config before the first skill runs
+
+**Gap:** A user who writes `aem.author_url` (underscore) instead of `aem.author-url` (hyphen) gets silent fallback to localhost. No diagnostic.
+
+**Recommendation:**
+
+`dx-doctor` gains a `--config-validate` mode that reads `config.yaml` and checks:
+1. Required fields present (`project.name`, `scm.org`, `scm.base-branch`)
+2. AEM fields present when `aem:` section exists
+3. No deprecated field names (migration check)
+
+Optionally, hook this into `SessionStart` as a fast pre-flight.
+
+**Priority:** Medium — prevents a whole class of silent misconfiguration bugs.
+
+**Related:** TODO #161
