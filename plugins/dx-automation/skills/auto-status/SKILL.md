@@ -1,6 +1,7 @@
 ---
 name: auto-status
 description: Show operational dashboard for AI automation agents — DLQ depth, monthly token budget, and daily rate limit usage. Hub profile only — requires AWS credentials. Read-only.
+when_to_use: "Use to see the operational dashboard for AI automation agents — DLQ depth, token budget, rate limit usage. Trigger on 'automation status', 'check automation health', 'how is the automation doing', 'token usage'."
 argument-hint: ""
 ---
 

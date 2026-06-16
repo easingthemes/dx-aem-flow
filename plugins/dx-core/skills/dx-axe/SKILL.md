@@ -1,6 +1,7 @@
 ---
 name: dx-axe
 description: Run accessibility testing on a URL using the axe MCP Server — analyze violations, get remediation guidance, apply fixes, and verify. Use when asked to check accessibility, run a11y audit, or fix WCAG issues.
+when_to_use: "Use when asked to check accessibility, run an a11y audit, fix WCAG issues, or when the user says 'check accessibility', 'axe audit', 'a11y test', 'are there any accessibility violations'."
 argument-hint: "<URL to test> [--fix] [--standard wcag2aa|wcag21aa|best-practice]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "axe-mcp-server/*", "playwright/*"]
 ---

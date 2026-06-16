@@ -1,6 +1,7 @@
 ---
 name: dx-hub-status
 description: Show status of hub dispatches — which repos are running, done, blocked, or failed. Use to check multi-repo progress. Trigger on "hub status", "dispatch status", "what's running".
+when_to_use: "Use to check the status of hub dispatches. Trigger on 'hub status', 'dispatch status', 'what is running', 'which repos are done', or 'show multi-repo progress'."
 argument-hint: "[ticket-id (optional) | --clean]"
 allowed-tools: ["Read", "Glob", "Grep", "Write", "Bash"]
 ---

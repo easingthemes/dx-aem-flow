@@ -1,6 +1,7 @@
 ---
 name: dx-figma-extract
 description: Extract design context, tokens, and screenshots from a Figma URL. Saves figma-extract.md and reference screenshots. Use after requirements phase when a Figma URL is in the story. Trigger on "extract figma", "figma design", "get figma". Do NOT use for general Figma browsing, viewing designs without a story, or when no spec directory exists.
+when_to_use: "Use after requirements when a Figma URL is available. Trigger on 'extract figma', 'figma design', 'get figma', 'read figma', or when a Figma URL is in the story and design context is needed."
 argument-hint: "[ADO Work Item ID] [Figma URL] — both optional, any order. Uses most recent story if ID omitted."
 compatibility: "Requires Figma desktop app with Dev Mode MCP enabled (port 3845). File must be open in Figma."
 metadata:

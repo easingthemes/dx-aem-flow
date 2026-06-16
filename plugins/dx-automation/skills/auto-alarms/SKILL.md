@@ -1,6 +1,7 @@
 ---
 name: auto-alarms
 description: Create CloudWatch alarms and SNS subscription for AI automation monitoring. Creates 4 alarms (DLQ depth, WI-Router errors, PR-Router errors, throttles) and subscribes an email address to alerts. Reads config from .ai/automation/infra.json.
+when_to_use: "Use when setting up CloudWatch monitoring for AI automation, when the user says 'create alarms', 'set up monitoring', 'configure alerts', or 'add SNS notifications' for the automation pipeline."
 argument-hint: "[--email you@example.com]"
 ---
 

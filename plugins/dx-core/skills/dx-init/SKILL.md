@@ -1,6 +1,7 @@
 ---
 name: dx-init
 description: Set up the dx workflow for a new project. Detects your environment, asks a few questions, and generates .ai/config.yaml plus supporting files. Run this first before using any other dx skill.
+when_to_use: "Use when setting up dx for a new project, when reinitializing after an upgrade, or when the user says 'initialize dx', 'set up dx', 'configure dx workflow', 'dx-init', or 'start dx'."
 argument-hint: "(no arguments — interactive)"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
@@ -763,6 +764,25 @@ If `.github/hooks/hooks.json` already exists, merge new hooks into the existing 
 - Exact tool names (`Edit`, `Task`, `Write`) — work as-is in both runtimes.
 - Claude-style permission rules like `Bash(git commit*)` — work in Claude Code but may be interpreted as literal regex in Copilot CLI. Inline commands in this template do their own `git commit` substring check, so the matcher acts only as a coarse filter; verification still happens in the script.
 - If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
+
+**Copilot CLI v1.0.40+ required env vars:** Copilot CLI v1.0.40 introduced opt-in gates that silently disable repo hooks and workspace MCP without these exports. Add them to the user's shell profile idempotently:
+
+```bash
+SHELL_RC=""
+if [ -f "$HOME/.zshrc" ]; then SHELL_RC="$HOME/.zshrc"
+elif [ -f "$HOME/.bashrc" ]; then SHELL_RC="$HOME/.bashrc"
+fi
+
+if [ -n "$SHELL_RC" ]; then
+  grep -q "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" "$SHELL_RC" || \
+    echo 'export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1' >> "$SHELL_RC"
+  grep -q "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" "$SHELL_RC" || \
+    echo 'export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1' >> "$SHELL_RC"
+  echo "Added Copilot CLI v1.0.40+ env vars to $SHELL_RC — restart your shell or run: source $SHELL_RC"
+fi
+```
+
+Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). Without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1`, `.github/hooks/hooks.json` is silently ignored. Without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1`, project `.mcp.json` is silently ignored.
 
 ## 10. Confirm
 

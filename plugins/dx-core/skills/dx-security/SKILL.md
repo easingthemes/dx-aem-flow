@@ -1,6 +1,7 @@
 ---
 name: dx-security
 description: Security hardening audit — OWASP Top 10 prevention, secrets scan, dependency audit, input validation, auth review. Use before PR or when handling user input, authentication, or external integrations.
+when_to_use: "Use before PR creation or when handling user input / auth / external integrations. Trigger on 'security review', 'check for vulnerabilities', 'OWASP', 'scan for secrets', 'security audit', or 'is this code safe'."
 argument-hint: "[scope: 'changes' | 'full' (default: changes)]"
 model: opus
 effort: high
