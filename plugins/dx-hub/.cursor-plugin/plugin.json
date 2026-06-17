@@ -1,7 +1,7 @@
 {
   "name": "dx-hub",
   "description": "Multi-repo hub orchestration — run dx skills across sibling repositories from a single hub directory.",
-  "version": "3.5.1",
+  "version": "3.5.2",
   "author": {
     "name": "Dragan Filipovic"
   },
