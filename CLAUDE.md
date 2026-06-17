@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## This Repo's SCM
+
+**This repo is on GitHub** (`github.com/easingthemes/dx-aem-flow`), not Azure DevOps. For any git operation on this repo (branches, PRs, commits, checks), use `git` and `gh` CLI — **never** ADO MCP tools (`mcp__ado__repo_*`, `mcp__ado__pipelines_*`). The plugin *contents* describe ADO workflows for consumer projects; the repo itself is GitHub.
+
 ## What This Is
 
 Four Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
