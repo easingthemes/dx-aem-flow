@@ -55,21 +55,17 @@ http://admin:admin@host.docker.internal:4502/content/...?wcmmode=disabled
 
 ### Remote AEM (QA / Stage)
 
-Read `.ai/config.yaml` for `aem.qa-basic-auth`. If the URL matches a QA/Stage host (`aem.author-url-qa`, `aem.publish-url-qa`) and has no credentials, embed them:
+Follow the `qa-basic-auth` rule. Resolve credentials in priority order:
+1. Env vars: `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS`
+2. `.ai/config.yaml` keys `aem.qa-basic-auth.username` / `aem.qa-basic-auth.password`
 
-```yaml
-# .ai/config.yaml
-aem:
-  qa-basic-auth:
-    username: "<user>"
-    password: "<pass>"
-```
+If credentials are found, embed them in the URL for the **first** navigation only — the session cookie persists for subsequent navigations:
 
 ```
 https://<user>:<pass>@qa.example.com/content/...
 ```
 
-If `qa-basic-auth` is not configured and the URL looks like a QA/Stage host, warn the user that auth may be needed.
+If no credentials are found and the URL is a non-localhost QA/Stage host, warn the user that `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS` env vars are not set and auth will likely fail.
 
 ### Public URLs
 
