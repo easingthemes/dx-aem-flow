@@ -1,3 +1,10 @@
+## [3.5.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.1...v3.5.2) (2026-06-17)
+
+
+### Bug Fixes
+
+* **playwright:** resolve QA Basic Auth credentials before browser_navigate ([#175](https://github.com/easingthemes/dx-aem-flow/issues/175)) ([e03e8d1](https://github.com/easingthemes/dx-aem-flow/commit/e03e8d168eb61d60099b62efaf7585055a2f48d7))
+
 ## [3.5.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.0...v3.5.1) (2026-06-16)
 
 
