@@ -105,9 +105,7 @@ steps:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
-      AEM_AUTHOR_URL: $(AEM_AUTHOR_URL)
-      AEM_USER: $(AEM_USER)
-      AEM_PASS: $(AEM_PASS)
+      AEM_INSTANCES: $(AEM_INSTANCES)
       MAX_TURNS: "30"
       ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
     timeoutInMinutes: 15
