@@ -1,3 +1,10 @@
+## [3.5.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.2...v3.5.3) (2026-06-18)
+
+
+### Bug Fixes
+
+* **pipelines:** replace split AEM vars with AEM_INSTANCES, add QA Basic Auth ([#176](https://github.com/easingthemes/dx-aem-flow/issues/176)) ([42a13a7](https://github.com/easingthemes/dx-aem-flow/commit/42a13a75f41d03f2909d1680a474ebf42cf0fe19))
+
 ## [3.5.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.1...v3.5.2) (2026-06-17)
 
 
