@@ -151,40 +151,21 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)
 
   - bash: |
-      set -e
-      SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-automation/data/mcp/simple-mcp.json"
-      DST="$(TARGET_DIR)/.mcp.json"
-      if [ ! -f "$SRC" ]; then
-        echo "ERROR: simple-mcp.json not found in cloned plugins — check it is merged to main on GitHub" >&2
-        exit 1
-      fi
-      if [ -f "$DST" ]; then
-        # Merge: pipeline servers (AEM, playwright) WIN, but any other servers
-        # already declared in the consumer repo (e.g., ADO, Atlassian) are
-        # preserved. Backup first for forensics.
-        cp "$DST" "$DST.pre-bugfix-bak"
-        jq -s '.[0] * .[1]' "$DST" "$SRC" > "$DST.merged"
-        mv "$DST.merged" "$DST"
-        echo "Merged $SRC into existing $DST (backup at $DST.pre-bugfix-bak)"
-      else
-        cp "$SRC" "$DST"
-        echo "Installed fresh $DST from $SRC"
-      fi
-    displayName: "Install pipeline MCP overrides (merge)"
-
-  - bash: |
       # Pre-flight: probe AEM QA. Unlike SimpleAgent (which MUST write to AEM and so
       # hard-fails here), BugFix only READS AEM during /dx-bug-verify, and verify is
       # non-blocking in /dx-bug-all. So an unreachable QA is a WARNING — triage + fix
       # still run. We surface it loudly so a degraded verify is explained in the log.
-      echo "Probing AEM QA at $AEM_QA_URL ..."
+      # Parse the 'qa' instance from AEM_INSTANCES using dx-common.sh.
+      COMMON="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-core/data/lib/dx-common.sh"
+      eval "$(bash "$COMMON" aem-instance "qa")"
+      echo "Probing AEM QA at $AEM_URL ..."
       HTTP=$(curl -fsS -o /dev/null -w '%{http_code}' \
-                  -u "$AEM_QA_USER:$AEM_QA_PASSWORD" \
+                  -u "$AEM_USER:$AEM_PASS" \
                   --max-time 15 \
-                  "$AEM_QA_URL/system/console/bundles.json" || echo "000")
+                  "$AEM_URL/system/console/bundles.json" || echo "000")
       if [ "$HTTP" != "200" ]; then
         echo "##[warning]AEM QA not reachable (HTTP $HTTP from ubuntu-latest agent)."
-        echo "##[warning]  url: $AEM_QA_URL"
+        echo "##[warning]  url: $AEM_URL"
         echo "##[warning]  /dx-bug-verify will degrade to blocked/warn; triage + fix continue."
         echo "##[warning]  If verify must run, use a self-hosted ADO agent in the corp network."
       else
@@ -192,17 +173,15 @@ steps:
       fi
     displayName: "Pre-flight: AEM QA reachability (non-fatal)"
     env:
-      AEM_QA_URL: $(AEM_QA_URL)
-      AEM_QA_USER: $(AEM_QA_USER)
-      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+      AEM_INSTANCES: $(AEM_INSTANCES)
 
   - bash: |
       set -e
       # Pre-flight: confirm the MCP npx packages resolve + install Chromium so the
       # agent doesn't waste its first turns on a broken MCP launch / missing browser.
-      echo "Smoke-testing aem-mcp-server@${AEM_MCP_VERSION} ..."
-      timeout 30s npx -y "aem-mcp-server@${AEM_MCP_VERSION}" --help >/dev/null 2>&1 || {
-        echo "ERROR: aem-mcp-server@${AEM_MCP_VERSION} --help failed — check version pin or npm registry" >&2
+      echo "Smoke-testing aem-mcp-server ..."
+      timeout 30s npx -y "aem-mcp-server" --help >/dev/null 2>&1 || {
+        echo "ERROR: aem-mcp-server --help failed — check npm registry" >&2
         exit 1
       }
       echo "Smoke-testing @playwright/mcp@${PLAYWRIGHT_MCP_VERSION} ..."
@@ -326,9 +305,9 @@ steps:
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
-      AEM_QA_URL: $(AEM_QA_URL)
-      AEM_QA_USER: $(AEM_QA_USER)
-      AEM_QA_PASSWORD: $(AEM_QA_PASSWORD)
+      AEM_INSTANCES: $(AEM_INSTANCES)
+      QA_BASIC_AUTH_USER: $(QA_BASIC_AUTH_USER)
+      QA_BASIC_AUTH_PASS: $(QA_BASIC_AUTH_PASS)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       DX_PIPELINE_MODE: "true"
       DX_HOOK_PROFILE: "minimal"
