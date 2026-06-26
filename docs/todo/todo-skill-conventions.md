@@ -263,6 +263,27 @@ linking to canonical upstream docs.
 **Approach:** Bundle with whichever larger refactor next touches each
 skill. Don't do as its own pass.
 
+## 13. No-op audit — remove filler instructions that don't change agent behavior
+
+**Added:** 2026-06-26
+**Problem:** Skills can accumulate "no-op" lines — instructions that sound meaningful but don't actually change what the agent does, because the agent would do it anyway. Examples: "be thorough", "think carefully", "write clear commit messages", "make the output easy to read". These burn tokens on every skill invocation, make skills harder to audit, and dilute the signal of the instructions that actually matter. This codebase has very few (1–2 confirmed vs. the ~77 SKILL.md files), but they should be removed, and a convention should prevent new ones from creeping in via AI-assisted skill authoring.
+**Scope:**
+- `plugins/dx-core/skills/dx-figma-extract/SKILL.md:275` — "be thorough" (the rationale "only Figma interaction" is fine; the "be thorough" phrase is not)
+- `plugins/dx-core/skills/dx-figma-prototype/SKILL.md:152` — explanatory sentence ("This ensures the prototype is grounded in the actual component library...") adds rationale but no behavioral constraint
+- `CLAUDE.md` Conventions checklist — add a no-op rule
+**Done-when:**
+```bash
+# Confirmed no-ops removed:
+grep -n "be thorough" plugins/dx-core/skills/dx-figma-extract/SKILL.md  # returns empty
+grep -n "grounded in the actual component library" plugins/dx-core/skills/dx-figma-prototype/SKILL.md  # returns empty
+# No-op rule present in checklist:
+grep -n "no-op" CLAUDE.md  # returns a line in the Checklist section
+```
+**Approach:** Three steps, in order:
+1. **Remove the 2 confirmed no-ops** — targeted Edit on each file. Test: re-read the surrounding context and confirm the removal doesn't drop a behavioral constraint (the "be thorough" removal keeps the "only Figma interaction" rationale; the prototype sentence removal is safe because the preceding steps already instruct the agent to use the component library).
+2. **Add to CLAUDE.md checklist** — one bullet: *"No no-ops — every instruction must change agent behavior. No 'be thorough', 'think carefully', 'write clear X'. Test: remove the line; if output doesn't change, the line was a no-op."*
+3. **Broader section-level audit** (deferred, pair with #9 concise-body audit) — scan the 10 longest SKILL.md files for entire paragraphs that describe *what* the skill does rather than constraining *how*. These are subtler no-ops: rationale prose that makes the skill feel complete but doesn't alter execution.
+
 ---
 
 ## Dropped after reality check against Claude Code docs
