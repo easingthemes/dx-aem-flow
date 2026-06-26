@@ -200,7 +200,9 @@
 | 160 | Add circuit breaker + observability layer to local harness | Medium | Open | 2026-06-15 | [todo-harness-design.md#11-circuit-breaker-pattern](todo-harness-design.md#11-circuit-breaker-pattern) — (1) Loop-detection `PostToolUse` hook: same tool + args + file within 5 turns → exit 2 + ABORT comment. (2) `Stop` async hook appending JSON line to `.ai/telemetry.jsonl` (ts, skill, ticket, turns, outcome). `dx-doctor --config-validate` reads and reports failure rates. Phase 1 is low effort. |
 | 161 | `dx-doctor` config schema validation gate | Medium | Open | 2026-06-15 | [todo-harness-design.md#13-config-schema-validation](todo-harness-design.md#13-config-schema-validation) — Silent misconfiguration (e.g. `aem.author_url` vs `aem.author-url`) causes skills to fall back to localhost silently. `dx-doctor --config-validate` checks required fields, deprecated names, AEM section completeness. Optional `SessionStart` hook for always-on pre-flight. |
 
-**Counts:** 161 total — 34 done (+6 from main: #34 #97 #98 #104 #105 #133), 102 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test, 1 mitigated
+| 162 | No-op skill audit — remove filler instructions that don't change agent behavior | Low | Open | 2026-06-26 | [todo-skill-conventions.md#13-no-op-audit](todo-skill-conventions.md#13-no-op-audit--remove-filler-instructions-that-dont-change-agent-behavior) |
+
+**Counts:** 162 total — 34 done (+6 from main: #34 #97 #98 #104 #105 #133), 103 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test, 1 mitigated
 
 Last platform state research: [2026-05-29-platform-state-update.md](../research/2026-05-29-platform-state-update.md) (delta to [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md))
 
