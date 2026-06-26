@@ -266,6 +266,7 @@ skill. Don't do as its own pass.
 ## 13. No-op audit — remove filler instructions that don't change agent behavior
 
 **Added:** 2026-06-26
+**Source:** https://x.com/mattpocockuk/status/2069784839474032896?s=46
 **Problem:** Skills can accumulate "no-op" lines — instructions that sound meaningful but don't actually change what the agent does, because the agent would do it anyway. Examples: "be thorough", "think carefully", "write clear commit messages", "make the output easy to read". These burn tokens on every skill invocation, make skills harder to audit, and dilute the signal of the instructions that actually matter. This codebase has very few (1–2 confirmed vs. the ~77 SKILL.md files), but they should be removed, and a convention should prevent new ones from creeping in via AI-assisted skill authoring.
 **Scope:**
 - `plugins/dx-core/skills/dx-figma-extract/SKILL.md:275` — "be thorough" (the rationale "only Figma interaction" is fine; the "be thorough" phrase is not)
