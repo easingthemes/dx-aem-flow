@@ -83,6 +83,7 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 4. **Port Stop guard using `agentStop` event (newly available)**
 5. Audit existing `preToolUse` `matcher` patterns — v1.0.36 fixed regex matching, previously-loose patterns may now over-filter.
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6; release notes for v1.0.18, v1.0.35, v1.0.36.
+**Status update 2026-07-01:** Still not ported — `.github/hooks/hooks.json` does not exist, so Copilot CLI users get zero harness safety (no branch guard, next-step hints, or workflow-state tracking). Single biggest driver of the Copilot CLI score (6.5/10) in the July re-rating. Env-var precondition (#97/#98) already satisfied, so this is now the top unblocked Copilot fix. See [2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
 
 ## Prompt-Mode Gates v1.0.40
 

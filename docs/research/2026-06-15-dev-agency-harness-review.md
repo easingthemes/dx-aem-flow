@@ -308,3 +308,11 @@ Still 0.5 below Claude-only because `.github/hooks/hooks.json` does not exist â€
 
 **Next research update:** Check v2.1.160+ changelog for Dynamic Workflows maturation + any hook system changes.
 Last platform state: [2026-05-29-platform-state-update.md](2026-05-29-platform-state-update.md)
+
+---
+
+## Follow-up â€” July 1, 2026 (Claude Code + Copilot CLI scoped re-rating)
+
+A scoped re-rating against current official docs found skill bloat had **regressed** (13 skills now exceed Anthropic's 500-line ceiling vs. 3 over ~260 in June), pulling Claude Code to **8/10** and Copilot CLI to **6.5/10** (`.github/hooks/hooks.json` still missing).
+
+See: [2026-07-01-plugin-eval-claude-copilot.md](2026-07-01-plugin-eval-claude-copilot.md)
