@@ -21,6 +21,8 @@
 
 **Impact:** Low — screenshot saves to disk, `additionalContext` tells the skill where the file is. Only downside is ~500K wasted tokens per screenshot.
 
+**Upstream check (2026-07-01):** PARTIAL — now actionable. Claude Code v2.1.121 (2026-04-28) generalized `PostToolUse.updatedToolOutput` from MCP-only to **all** tools, but the [hooks docs](https://code.claude.com/docs/en/hooks) do not confirm it replaces an **image content block** (base64) with text — so this specific waste is NOT confirmed fixed. Next step: live re-test against the **current** screenshot hook path (Figma MCP was replaced by Playwright/Chrome-DevTools MCP in the v3.0.0 migration — the old `mcp__figma__get_screenshot` matcher no longer applies). Tracked as GH #16. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
+
 ## DoR Comment Deduplication
 
 **Added:** 2026-03-22
@@ -40,6 +42,8 @@
 **Scope:** `@azure-devops/mcp` (microsoft/azure-devops-mcp). Local mitigation lives in `plugins/dx-core/data/lib/validate-image.sh` (PNG/JPEG/GIF/WebP structural decode that catches truncation before Read).
 **Done-when:** A 100 KB+ ADO attachment fetched via `mcp__ado__wit_get_work_item_attachment` returns the full byte stream — `bash plugins/dx-core/data/lib/validate-image.sh <saved-file>` exits 0 with `ok:` rather than `skip: truncated: ...`. Until then, the validator quarantines truncated files into INDEX.md's `## Skipped` section so dx-req can complete.
 **Approach:** File issue against `microsoft/azure-devops-mcp`. Until upstream fix lands, defense-in-depth in the validator is sufficient — affected attachments get skipped rather than 400-ing the turn. Optional follow-up: add a REST-API fallback in `fetch-raw-story.js` that re-fetches with curl + ADO PAT when MCP returns truncated bytes.
+
+**Upstream check (2026-07-01):** STILL UNTRACKED UPSTREAM — no issue exists in `microsoft/azure-devops-mcp` for this truncation bug (closest #392/#1213/#299 are unrelated & closed). Latest ADO MCP is `@azure-devops/mcp` v2.8.0 (2026-06-24). Local tracking issue [#179](https://github.com/easingthemes/dx-aem-flow/issues/179) opened with the ready-to-file report; **still needs submitting to `microsoft/azure-devops-mcp`**. Local `validate-image.sh` mitigation remains required. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 
 ## Forked skills break standalone UX
 
