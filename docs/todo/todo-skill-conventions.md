@@ -101,6 +101,14 @@ current line counts:
 `find plugins -name SKILL.md | xargs wc -l | sort -rn | head -10`. Only
 refactor skills genuinely above 500 — the earlier 150-line threshold
 from the Google review was too aggressive.
+**Status update 2026-07-01:** Regressed — **13 skills now exceed 500
+lines** (was 3 over ~260 in June). Top offenders: `dx-pr-review` (1121),
+`dx-simple` (1025), `dx-init` (941), `dx-pr-answer` (938), `dx-req`
+(754), `dx-bug-verify` (740), `dx-agent-all` (737). This is now a
+confirmed violation of Anthropic's documented <500-line rule, not just a
+Copilot partial-read issue. See
+[2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
+Priority raised Medium → High.
 
 ## 5. Enforce one-level-deep reference structure
 
@@ -211,6 +219,10 @@ verbose explanations have been removed. No skill exceeds 500 lines
 prompts and confirm no regression.
 **Approach:** This is editorial work, not mechanical. Pair with #10
 (consistent terminology) since both touch the same files.
+**Status update 2026-07-01:** Longest skills have grown, not shrunk —
+median skill is 283 lines, max 1121 (`dx-pr-review`). Re-run the scope
+command; start with the 13 skills over 500 lines flagged in #4. See
+[2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
 
 ## 10. Consistent terminology audit
 
