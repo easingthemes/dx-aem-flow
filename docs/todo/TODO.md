@@ -202,7 +202,9 @@
 
 | 162 | No-op skill audit — remove filler instructions that don't change agent behavior | Low | Open | 2026-06-26 | [todo-skill-conventions.md#13-no-op-audit](todo-skill-conventions.md#13-no-op-audit--remove-filler-instructions-that-dont-change-agent-behavior) |
 
-**Counts:** 162 total — 34 done (+6 from main: #34 #97 #98 #104 #105 #133), 103 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test, 1 mitigated
+| 163 | X (Twitter) MCP for content research — mobile/web setup via env-var-injected token | Low | Open | 2026-07-01 | [todo-research-mcp.md#x-twitter-mcp-for-content-research](todo-research-mcp.md#x-twitter-mcp-for-content-research) — research-only server (`https://api.x.com/mcp`, read-only Bearer) for plugin-improvement work; committed root `.mcp.json` with `${X_BEARER_TOKEN}` placeholder + token set as a Claude-Code-web environment variable (no local `.env`, no GitHub-secrets bridge on web). Independent of shipped plugins — never under `plugins/*/`. |
+
+**Counts:** 163 total — 34 done (+6 from main: #34 #97 #98 #104 #105 #133), 104 open, 5 blocked, 10 watch, 0 deferred, 1 decision needed, 1 pending, 1 ongoing, 1 re-test, 1 mitigated
 
 Last platform state research: [2026-05-29-platform-state-update.md](../research/2026-05-29-platform-state-update.md) (delta to [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md))
 
