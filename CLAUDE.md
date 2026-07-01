@@ -146,18 +146,18 @@ Skill/agent files use the Claude Code prefix shown above. On other platforms the
 | Claude Code | `mcp__plugin_<plugin>_<server>__<tool>` (double underscore) | `mcp__plugin_dx-aem_AEM__getNodeContent` |
 | Copilot CLI | bare name (no prefix; LLM maps from Claude prefix) | `getNodeContent` |
 | VS Code Chat | bare name | `getNodeContent` |
-| Codex CLI | TOML-configured `[mcp_servers.<server>]`; tool prefix scheme not yet publicly documented (track in `docs/todo/todo-cross-platform.md`) | TBD |
-| Gemini CLI | `mcp_<server>_<tool>` (single underscore, lowercase server name) | `mcp_aem_getnodecontent` |
+| Codex CLI | TOML-configured `[mcp_servers.<server>]`; **no dotted tool-name prefix** — tool names constrained to `^[a-zA-Z0-9_-]+$` (dots disallowed). Plugins (`.codex-plugin/`, Mar 2026) bundle skills/hooks/MCP/apps, not agents. | `getNodeContent` |
+| Gemini CLI | `mcp_<server>_<tool>` (single underscore). Server name **must not contain `_`**; on cross-server tool-name collision Gemini promotes to `serverAlias__tool` (double underscore). | `mcp_aem_getnodecontent` |
 
 When adding a new MCP server, no per-platform action is needed — the LLM resolves names from the `tools:` and `mcpServers:` declarations in agent frontmatter.
 
 ### Hook System — Platform Separation
 
-Plugin hooks and Copilot CLI hooks are **completely separate systems** with no overlap:
+Plugin hooks and Copilot CLI hooks are **largely separate systems**, with one overlap: Copilot CLI *also* reads plugin `hooks/hooks.json` (confirmed back to 2026-05-05 logs), so it is not Claude-Code-exclusive.
 
 | Hook source | Active in |
 |-------------|-----------|
-| Plugin `hooks/hooks.json` | Claude Code CLI only — `Stop` / `SubagentStop` events |
+| Plugin `hooks/hooks.json` | Claude Code CLI (`Stop` / `SubagentStop`) **and** Copilot CLI (reads the same file). Copilot ignored `PostToolUse` `matcher` through v1.0.45 — **fixed in v1.0.63 (2026-06-15)**, matchers now honored. |
 | `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; `agentStop`/`subagentStop` closed 2026-04-07). **v1.0.40+ requires `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` exported in shell** — without it, repo hooks are silently ignored. |
 | Agent frontmatter `hooks:` | VS Code Chat (1.111+); skill-isolated subagents experimental in 1.118+ |
 

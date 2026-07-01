@@ -49,6 +49,7 @@ Tracking alignment with the [Open Plugins spec](https://open-plugins.com/) (v1.0
 **Scope:** All 4 plugins — `plugins/dx-core/`, `plugins/dx-aem/`, `plugins/dx-hub/`, `plugins/dx-automation/`. Each has `assets/logo.png` (256x256, rendered from `website/public/kai-logo.svg`) and `"logo": "./assets/logo.png"` in `plugin.json`.
 **Done-when:** VS Code renders the KAI logo in the Chat Customizations panel instead of the generic puzzle-piece icon.
 **Approach:** Tracked in [microsoft/vscode#304758](https://github.com/microsoft/vscode/issues/304758) — assigned to Connor Peet, milestone "On Deck". Field name will be `logo` (per Open Plugins spec). Our plugins are already prepared — the field is silently ignored until VS Code ships support. When it lands, verify the logo renders correctly and adjust dimensions if needed.
+**Upstream check (2026-07-01):** STILL OPEN — [vscode#304758](https://github.com/microsoft/vscode/issues/304758) remains Open (assignee connor4312, milestone "On Deck", no date). Not shipped. Note the VS Code field is expected to be `icon`; keep our prepared `logo`/`icon` assets ready.
 
 ## Monitor Spec Finalization
 
@@ -58,3 +59,4 @@ Tracking alignment with the [Open Plugins spec](https://open-plugins.com/) (v1.0
 **Scope:** All alignment items above depend on spec stability.
 **Done-when:** `github.com/vercel-labs/open-plugin` is public and has a tagged release.
 **Approach:** Periodic check (monthly). Once public, review the full spec and re-evaluate all items above. The Agent Skills layer (SKILL.md) is already stable and adopted — the packaging layer is the uncertain part.
+**Upstream check (2026-07-01):** Repo **renamed** `vercel-labs/open-plugin` → **[vercel-labs/open-plugin-spec](https://github.com/vercel-labs/open-plugin-spec)** (old URL 404s). The document self-declares **canonical v1.0.0**, but there is still **NO git tagged release** ("No releases published") — so the Done-when is not met. In-spec now: `.plugin/plugin.json` (host MUST check), `commands/` dir, `${PLUGIN_ROOT}` env var (no `CLAUDE_PLUGIN_ROOT` alias), `.mdc` as the *default* rules extension, and `outputStyles/`. **CANNOT CONFIRM** that Claude Code or Copilot CLI actually discover `.plugin/` or honor `${PLUGIN_ROOT}` yet — no primary source shows host conformance. Hold all alignment items until a tagged release + confirmed host support. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
