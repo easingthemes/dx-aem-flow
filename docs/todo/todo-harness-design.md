@@ -384,6 +384,8 @@ A lighter variant: instead of blocking, use `asyncRewake: true` to surface a rem
 
 **Done-when:** `grep -r "Stop" plugins/dx-core/hooks/hooks.json` shows a verification-check hook; a `/dx-step` session ending without verify fires a warning or block.
 
+**Status update 2026-07-01:** Still not wired. `Stop` in `dx-core/hooks/hooks.json` only calls an optional project-level `stop-guard.sh` passthrough (`|| true`) — no verification gate. Confirmed unchanged in the July Claude Code + Copilot CLI re-rating; remains the highest-ROI Claude-only fix. See [2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
+
 **Related:** TODO #159
 
 ---
