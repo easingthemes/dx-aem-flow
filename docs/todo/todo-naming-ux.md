@@ -32,8 +32,9 @@
 **Added:** 2026-03-03
 **Problem:** All skill directories are prefixed with their plugin abbreviation (`dx-init`, `aem-doctor`) to work around broken `plugin:skill` resolution in Claude Code CLI. This makes directory names longer than necessary.
 **Scope:** All skill directories across 4 plugins. Validation script: `scripts/validate-skills.sh`.
-**Done-when:** Claude Code CLI correctly resolves `plugin:skill` names (check: `dx-core:init` triggers correctly instead of requiring `/dx-init`). Track at https://github.com/anthropics/claude-code/issues.
+**Done-when:** Claude Code CLI correctly resolves `plugin:skill` names (check: `dx-core:init` triggers correctly instead of requiring `/dx-init`). Track at [anthropics/claude-code#50486](https://github.com/anthropics/claude-code/issues/50486).
 **Approach:** Blocked on upstream fix. When resolved, rename all skill directories to drop the plugin prefix (e.g., `dx-init` → `init`), update `validate-skills.sh`, and update all cross-references.
+**Upstream check (2026-07-01):** STILL BLOCKED. Concrete upstream tracker is now [#50486](https://github.com/anthropics/claude-code/issues/50486) (Open, `stale`) — previously "needs filing". Claude Code v2.1.178 added `<dir>:<name>` namespacing but only for nested `.claude/skills`, not plugin skills. Related: [#22063](https://github.com/anthropics/claude-code/issues/22063), [#15944](https://github.com/anthropics/claude-code/issues/15944), [#43695](https://github.com/anthropics/claude-code/issues/43695). Keep the prefix workaround. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 
 ## Visual Separation in Logs — DONE
 
