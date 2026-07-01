@@ -43,6 +43,7 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Scope:** `plugins/dx-core/agents/*.md` (12 files) AND `plugins/dx-core/templates/agents/*.agent.md.template` (15 files). Also `plugins/dx-aem/agents/` and `plugins/dx-aem/templates/agents/`. Install script: `plugins/dx-core/data/lib/install-copilot-agents.sh`.
 **Done-when:** Either (a) single-source agent files work on both platforms (check: `ls plugins/dx-core/templates/agents/` returns empty or doesn't exist), OR (b) Copilot CLI `handoffs:` works (check: GitHub issue [#561](https://github.com/github/copilot-cli/issues/561) is closed).
 **Approach:** Watch for #561 resolution AND VS Code/Copilot CLI supporting Claude-format tool names natively. Current: `install-copilot-agents.sh` copies templates → `.github/agents/` with post-copy transforms (editFiles→edit, chrome-devtools→chrome-devtools-mcp, allowed-tools injection).
+**Upstream check (2026-07-01):** STILL BLOCKED. [#561](https://github.com/github/copilot-cli/issues/561) and [#1180](https://github.com/github/copilot-cli/issues/1180) remain Open; no runtime `handoffs:` execution shipped through Copilot CLI v1.0.67 (2026-06-30). Dual-file maintenance continues. (GH #19.)
 
 ## Shared Path Resolution
 
@@ -52,6 +53,7 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Done-when:** Either (a) Copilot CLI fixes plugin path resolution for `shared/`, OR (b) critical logic from reference files is moved into main SKILL.md bodies (check: `grep -rn "Read.*shared/" plugins/*/skills/*/SKILL.md | wc -l` — if zero, all critical logic has been inlined).
 **Approach:** May be upstream Copilot CLI bug. Workaround: inline critical reference file logic (like DoR dedup checks) into SKILL.md. Non-critical context (provider detection) can remain in reference files.
 **Evidence:** `internal/learnings/2026-03-22-skill-simplification-refactor.md` bug #2
+**Upstream check (2026-07-01):** STILL OPEN. Confirmed upstream at [#1090](https://github.com/github/copilot-cli/issues/1090) (Open; shared skills libraries / symlinks / scripts not resolving); no fix after v1.0.36 through v1.0.67. Related discovery issues [#2390](https://github.com/github/copilot-cli/issues/2390), [#1080](https://github.com/github/copilot-cli/issues/1080) also open. Keep inlining critical logic / use canonical paths (TODO #20, #90).
 
 ## Attachment Download
 
@@ -61,6 +63,7 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Done-when:** `grep -n "Do NOT download\|NEVER download\|preserve.*attachment.*URL" plugins/dx-core/skills/dx-req/SKILL.md` returns a match with explicit "Do NOT download attachments" instruction.
 **Approach:** Add stronger instruction to SKILL.md Phase 1: "Do NOT download attachments — ADO requires browser auth. Preserve `<img>` URLs as-is in the raw story." Current wording is too soft for Copilot CLI to follow.
 **Evidence:** `internal/learnings/2026-03-22-skill-simplification-refactor.md` bug #3
+**Upstream check (2026-07-01):** STABLE — no regression. Copilot CLI attachment handling improved since v1.0.32 (large-file sends v1.0.60, resume fidelity v1.0.62/64) through v1.0.67; the shipped mitigation still holds (TODO #91). No further action needed.
 
 ## Hooks Porting — UNBLOCKED 2026-04-07
 
@@ -109,10 +112,12 @@ Without these, Copilot CLI silently ignores both. This breaks our entire Copilot
 3. Update auto-init for similar handling in CI environments.
 
 **Evidence:** Copilot CLI v1.0.40 release notes (2026-05-01); [2026-05-01 platform state update](../research/2026-05-01-platform-state-update.md).
+**Upstream check (2026-07-01):** ADO auto-disable of the GitHub MCP server is CONFIRMED PRESENT through v1.0.67 (introduced v1.0.46, reinforced ~v1.0.62). The `mcp__github__` audit for `dx-automation` (TODO #102) is still warranted — those calls silently no-op on detected ADO repos.
 
 ## PostToolUse `matcher` Ignored on Plugin Hooks
 
 **Added:** 2026-05-16
+**Upstream check (2026-07-01):** ✅ FIXED UPSTREAM in Copilot CLI **v1.0.63** (2026-06-15) — changelog: *"PostToolUse hook matchers (e.g. `Edit|Write`) are now honored instead of silently dropped."* This resolves the "fires every hook on every turn" behavior. Our `CLAUDE_TOOL_NAME` guards (shipped 2026-05-16) are now defense-in-depth and can stay. Remaining follow-up items: file the retroactive upstream issue is now moot; the CLAUDE.md hook-platform table correction (#125) still stands. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 **Problem:** Copilot CLI v1.0.45 fires every `PostToolUse` hook entry in `~/.copilot/installed-plugins/.../hooks/hooks.json` after every AI turn, regardless of (a) whether any tool was called and (b) whether the entry's `matcher` field matches the tool that was called. This produces:
 - `[ERROR] Hook execution failed` log noise for hooks that call project-level scripts which don't exist (e.g., `.ai/lib/figma-screenshot-hook.sh` in a fresh project)
 - Spurious side-effect files (e.g., `.ai/screenshots/screenshot-log.txt` with `unknown` rows appearing in projects that never used AEM)
@@ -159,6 +164,7 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 **Problem:** Three Copilot CLI experimental features would significantly improve coordinator workflows if they stabilize. Need to monitor and prototype when ready.
 **Scope:** Coordinator skills (`dx-step-all`, `dx-agent-all`, `dx-bug-all`, `dx-req`) and init skills (`dx-init`, `aem-init`).
 **Done-when:** Each feature is individually actionable — check `/experimental` in Copilot CLI for GA status.
+**Upstream check (2026-07-01, v1.0.67):** `MULTI_TURN_AGENTS` confirmed real (referenced since v1.0.35). `SUBAGENT_COMPACTION` **could not be confirmed** from primary sources — treat as unverified until visible in `/experimental`. Subagent config knobs (model/effort/context tier, nested concurrency) shipped v1.0.62; parent-tool-restriction inheritance v1.0.67 — but skills-from-subagents / `/fleet` skill support still missing (GH #20).
 
 ### MULTI_TURN_AGENTS — Persistent subagents with write_agent
 
