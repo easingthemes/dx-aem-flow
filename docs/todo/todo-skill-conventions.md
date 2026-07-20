@@ -297,6 +297,52 @@ grep -n "no-op" CLAUDE.md  # returns a line in the Checklist section
 2. **Add to CLAUDE.md checklist** — one bullet: *"No no-ops — every instruction must change agent behavior. No 'be thorough', 'think carefully', 'write clear X'. Test: remove the line; if output doesn't change, the line was a no-op."*
 3. **Broader section-level audit** (deferred, pair with #9 concise-body audit) — scan the 10 longest SKILL.md files for entire paragraphs that describe *what* the skill does rather than constraining *how*. These are subtler no-ops: rationale prose that makes the skill feel complete but doesn't alter execution.
 
+## 14. Add negative-trigger clauses to collision-prone skill descriptions
+
+**Added:** 2026-07-20
+**Source:** [2026-07-20-skill-authoring-best-practices.md](../research/2026-07-20-skill-authoring-best-practices.md)
+§6 + §8 rule 3 (Philipp Schmid, "Don't Ship Skills Without Evals"). The talk's
+#1 rule: trigger problems cause 50%+ of skill failures, and rewriting the
+description alone fixed 5 of 7 failures in their eval suite. Defining when a
+skill should **NOT** fire is half of that fix.
+**Problem:** Only **4 of 77** skills state when they should NOT trigger
+(`dx-council`, `dx-figma-extract`, `dx-figma-prototype`, `dx-figma-verify`).
+Meanwhile the catalog has dense keyword clusters that compete for the same
+prompts: **7 `dx-pr-*`** skills all keyed on "PR"/"review"
+(`dx-pr`, `dx-pr-commit`, `dx-pr-review`, `dx-pr-review-all`,
+`dx-pr-review-report`, `dx-pr-reviews-report`, `dx-pr-answer`); **5 verify**
+skills (`aem-verify`, `aem-fe-verify`, `aem-qa`, `dx-step-verify`,
+`dx-figma-verify`); **4 `dx-bug-*`**; **4 `dx-req-*`**; **3 doc-gen**. When a
+user says "review my PR", six skills have a claim and nothing disambiguates
+them. Broad, negative-free descriptions hijack unrelated prompts (the talk's
+"Use for any coding task" anti-pattern). This is the single highest-leverage,
+lowest-effort trigger fix available for our catalog.
+**Scope:** `when_to_use:` (preferred, per #1) or `description:` frontmatter of the
+cluster members above — frontmatter-only change. Not every skill needs one; only
+those that share keywords with a sibling.
+**Done-when:** Each skill in a collision cluster has an explicit "Do NOT
+trigger for …" clause naming the sibling it's most confused with, **in the
+frontmatter** (`description`/`when_to_use`) — not in the body (a body-scoped
+grep false-passes on procedural lines like "do not push to main"). Verify:
+```bash
+for s in dx-pr dx-pr-commit dx-pr-review dx-pr-review-all dx-pr-review-report \
+         dx-pr-reviews-report dx-pr-answer aem-verify aem-fe-verify aem-qa \
+         dx-step-verify dx-bug-all dx-bug-fix dx-bug-triage dx-bug-verify \
+         dx-req dx-req-import dx-req-tasks dx-req-dod; do
+  f=$(find plugins -path "*/skills/$s/SKILL.md")
+  fm=$(awk 'NR==1&&/^---/{f=1;next} f&&/^---/{exit} f{print}' "$f")
+  echo "$fm" | grep -qiE "do not|don't|not for" || echo "MISSING negative trigger: $s"
+done
+# Target: no output (all 19 currently print MISSING as of 2026-07-20)
+```
+**Approach:** Frontmatter-only editorial pass, cluster by cluster (start with
+`dx-pr-*` — highest overlap). For each member, name the one sibling it's most
+confused with, e.g. `dx-pr-review`: *"Do NOT use to create or push a PR (that's
+dx-pr) or to answer existing review comments (that's dx-pr-answer)."* The **test**
+side lives in todo-testing.md "Cross-harness + negative eval coverage" — add a
+`should_trigger: false` case per cluster so a too-broad clause fails CI. Pairs
+with #2 (expand positive trigger coverage) and #106.
+
 ---
 
 ## Dropped after reality check against Claude Code docs
