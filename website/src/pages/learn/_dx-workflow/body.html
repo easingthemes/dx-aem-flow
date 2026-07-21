@@ -1,0 +1,130 @@
+<div class="wrap">
+  <header>
+    <h1>dx Workflow — From Ticket to PR</h1>
+    <p class="subtitle">How the dx skill pipeline turns an ADO/Jira ticket into a merged PR — and how it manages context along the way: skill-level forking with a file-based handoff, Task-tool subagent delegation, multi-repo hops, and config overrides.</p>
+  </header>
+
+  <div class="controls">
+    <div class="controls-group">
+      <span class="controls-group-label">Layout</span>
+      <div class="controls-toggles">
+        <label class="toggle">
+          <input type="checkbox" id="t-show-files" checked>
+          <span class="switch"></span>
+          <span>Files</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="t-show-diagram" checked>
+          <span class="switch"></span>
+          <span>Diagram</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Default</span>
+      <div class="controls-toggles">
+        <label class="toggle locked" title="Always visible">
+          <input type="checkbox" checked disabled>
+          <span class="switch"></span>
+          <span>Ticket</span>        </label>
+        <label class="toggle locked" title="Always visible">
+          <input type="checkbox" checked disabled>
+          <span class="switch"></span>
+          <span>Pipeline</span>        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Base</span>
+      <div class="controls-toggles">
+        <label class="toggle toggle--tool">
+          <input type="checkbox" id="t-config">
+          <span class="switch"></span>
+          <span>Config</span>
+        </label>
+        <label class="toggle toggle--subagent">
+          <input type="checkbox" id="t-subagents">
+          <span class="switch"></span>
+          <span>Subagents</span>
+        </label>
+        <label class="toggle toggle--hooks">
+          <input type="checkbox" id="t-multirepo">
+          <span class="switch"></span>
+          <span>Multi-repo</span>
+        </label>
+        <label class="toggle toggle--fork">
+          <input type="checkbox" id="t-fork">
+          <span class="switch"></span>
+          <span>Skill fork</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="controls-group-label">Extended</span>
+      <div class="controls-toggles">
+        <label class="toggle toggle--tool">
+          <input type="checkbox" id="t-config-detail">
+          <span class="switch"></span>
+          <span>Config</span>
+        </label>
+        <label class="toggle toggle--subagent">
+          <input type="checkbox" id="t-subagents-detail">
+          <span class="switch"></span>
+          <span>Subagents</span>
+        </label>
+        <label class="toggle toggle--hooks">
+          <input type="checkbox" id="t-multirepo-detail">
+          <span class="switch"></span>
+          <span>Multi-repo</span>
+        </label>
+        <label class="toggle toggle--fork">
+          <input type="checkbox" id="t-fork-detail">
+          <span class="switch"></span>
+          <span>Skill fork</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout-2col">
+    <aside class="tree-panel">
+      <p class="tree-panel-title">.ai/ files in your project</p>
+      <div class="stage-buttons" id="stage-buttons" role="group" aria-label="File visibility stages">
+        <button class="stage-btn active" data-stage="0" type="button" aria-pressed="true">0</button>
+        <button class="stage-btn" data-stage="1" type="button" aria-pressed="false">1</button>
+        <button class="stage-btn" data-stage="2" type="button" aria-pressed="false">2</button>
+        <button class="stage-btn" data-stage="3" type="button" aria-pressed="false">3</button>
+        <button class="stage-btn" data-stage="4" type="button" aria-pressed="false">4</button>
+        <button class="stage-btn" data-stage="5" type="button" aria-pressed="false">5</button>
+        <button class="stage-btn" data-stage="6" type="button" aria-pressed="false">6</button>
+        <button class="stage-btn" data-stage="7" type="button" aria-pressed="false">7</button>
+      </div>
+      <p class="stage-hint" id="stage-hint">Project setup only — pick a stage to follow the ticket through the pipeline.</p>
+      <div class="tree-split">
+        <ul id="tree-list" class="tree-list"></ul>
+        <div id="detail-panel" class="detail-panel"></div>
+      </div>
+    </aside>
+    <div class="diagram-col">
+      <div class="diagram">
+        <svg id="diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diag-title diag-desc">
+          <title id="diag-title">dx workflow pipeline diagram</title>
+          <desc id="diag-desc">Flowchart from ADO/Jira ticket to merged PR, with optional layers for subagent delegation, multi-repo hops, and config overrides.</desc>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--step-fill); border:1px solid var(--step-stroke);"></span>Pipeline step</span>
+        <span><span class="swatch" style="background:var(--context-fill); border:1px solid var(--context-stroke);"></span>Spec file / knowledge</span>
+        <span><span class="swatch" style="background:var(--model-fill); border:1px solid var(--model-stroke);"></span>Decision gate</span>
+        <span><span class="swatch" style="background:var(--subagent-fill); border:1px solid var(--subagent-stroke);"></span>Subagent</span>
+        <span><span class="swatch" style="background:var(--hook-fill); border:1px solid var(--hook-stroke);"></span>Cross-repo</span>
+        <span><span class="swatch" style="background:var(--tool-fill); border:1px solid var(--tool-stroke);"></span>Config layers</span>
+        <span><span class="swatch" style="background:var(--fork-fill); border:1px solid var(--fork-stroke);"></span>Skill-level context fork</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>Toggle Skill fork and Subagents to see the two different ways this pipeline isolates context — and how each hands control back with only a short summary.</footer>
+</div>
