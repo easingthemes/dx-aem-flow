@@ -1,0 +1,165 @@
+# Context Engineering for Claude 5 Models — Anthropic
+
+**Title:** "The New Rules of Context Engineering (for the Claude 5 generation)"
+**Author:** Thariq (@trq212), Anthropic
+**Source:** X/Twitter thread + long-form article, ~12K likes / 1.7K reposts / 24K bookmarks
+**Captured:** 2026-07-25
+**Status:** Complete
+**Relevance:** Directly informs this repo's skill/CLAUDE.md/rules conventions —
+Model Tier Strategy, concise-body audit (TODO #113), lean system prompt default,
+progressive disclosure, three-layer override system.
+
+Anthropic removed **over 80% of Claude Code's system prompt** for the newest
+models (Opus 5, Fable 5) with **no measurable loss** on coding evals. The core
+message: newer models have better judgement, so over-constraining them with
+rules, examples, and repetition now *hurts*. Best practices are shipped via
+`/doctor` ("rightsize your skills and CLAUDE.md files").
+
+---
+
+## The core insight: unhobbling
+
+Claude Code was over-constrained through the system prompt, CLAUDE.md, and
+skills. Reading internal transcripts, they found **conflicting instructions in a
+single request** — e.g. "leave documentation as appropriate" vs. "DO NOT add
+comments" — as system prompt, skills, and user requests clash. Claude *can*
+resolve these, but it burns reasoning deciding what to obey. Many guardrails
+that were once needed to avoid worst-case behavior (deleting files, bad
+comments) can now be deleted and left to model judgement.
+
+---
+
+## "Then vs. Now" — the eight myths
+
+| Then (old best practice) | Now (Claude 5 era) |
+|--------------------------|--------------------|
+| Give Claude **rules** | Let Claude use **judgement** |
+| Give Claude **examples** | **Design interfaces** (expressive params) |
+| Put it all **upfront** | Use **progressive disclosure** |
+| **Repeat yourself** | **Simple tool descriptions** |
+| Memory in **CLAUDE.md** | **Auto-memory** (Claude saves relevant memories) |
+| **Simple specs** (markdown plans) | **Rich references** (HTML artifacts, code, tests, rubrics) |
+
+**Rules → judgement.** Old system prompt: *"default to writing no comments,
+never multi-line comment blocks…"* — wrong for a subset of prompts. New system
+prompt: *"Write code that reads like the surrounding code: match its comment
+density, naming, and idiom."*
+
+**Examples → interfaces.** Examples constrain the model's exploration space.
+Instead, make tool parameters expressive. A Todo tool's `status` enum
+(pending/in_progress/completed) plus "keep one item in_progress" defines behavior
+without examples. *(Diagram: the "before" TodoWrite doc was ≈9,100 characters of
+when-to-use lists and worked examples; the "after" replaces all of it with a
+one-line description + the status enum + "only one task in_progress at a time".)*
+
+**Upfront → progressive disclosure.** Move situational context (code review,
+verification) into skills that load on demand. Applies to tools too: "deferred
+loading" tools require `ToolSearch` before use, so they cost no context until
+needed. Same for CLAUDE.md/SKILL.md — prefer **a tree of files loaded at the
+right time** over one central repository of every practice.
+
+**Repeat → simple descriptions.** Older models needed repetition and favored
+end-of-context instructions. Now: put tool instructions in the tool description,
+not duplicated in the system prompt.
+
+**CLAUDE.md memory → auto-memory.** Claude now automatically saves memories
+relevant to the work and the user, instead of manual `#` writes.
+
+**Simple specs → rich references.** Claude handles richer references now: HTML
+artifacts, **code as spec** (a test suite or a function to port), and **rubrics**
+(let verifier agents check your taste, e.g. "what does good API design look
+like"). Prefer references that live *in code* — high-fidelity, in a language
+Claude knows well.
+
+---
+
+## How to assemble your context
+
+The article's context-stack diagram, top (most specific) to bottom (most general):
+
+```
+Your prompt          ← most specific, per-request
+References           ← @-mentioned files, specs, mockups, codebases, artifacts
+System prompt        ← product context
+Claude.MDs           ← repo purpose + gotchas
+Skills               ← opinionated guides, loaded on demand
+Memory               ← auto-saved, relevant to work + user
+```
+
+
+- **System prompt** — tied to product context (what product, what it's doing).
+  For Claude Code you'll never touch it; if building your own harness, spend time
+  here.
+- **CLAUDE.md** — keep lightweight. Briefly say what the repo is for, then spend
+  most tokens on **gotchas** (e.g. "types live in one monolithic file"). Avoid
+  stating the obvious that Claude can see from the filesystem. Use progressive
+  disclosure — push detailed verification steps into a skill referenced from
+  CLAUDE.md.
+- **Skills** — lightweight guides to find info when needed. Avoid
+  over-constraining except in highly important areas. Split long skills into many
+  files (progressive disclosure). Best when they encode **opinions, knowledge, or
+  best practices particular to you/your team/product**.
+- **References** — `@`-mention files (specs, mockups, whole codebases). Prefer
+  code/files: an HTML mockup beats a screenshot or prose description.
+
+**Tooling:** `/doctor` ("claude doctor") auto-simplifies your system prompt,
+skills, and CLAUDE.md. See the Fable field guide for advanced-model prompting.
+
+---
+
+## Findings — instruction-conflict audit (TODO #169), run 2026-07-25
+
+Ran the audit the article's named failure mode ("conflicting instructions in a
+single assembled context") points at, across the full override stack: 6 plugin
+`rules/*.md`, 7 `templates/rules/*`, 77 skill `SKILL.md` files, and root
+`CLAUDE.md` / `AGENTS.md`. Three topics: comment/documentation policy,
+verbosity/output-length, and always/never imperatives.
+
+**Result: no genuine cross-layer contradictions found.** The comment-policy
+Done-when check passes cleanly.
+
+Topic-by-topic:
+
+- **Comment/documentation policy — clean, and empty.** Grep for any code-comment
+  directive (`never/do not/always write|add … comment|docstring`) across skills
+  and rules returns **zero** hits. Every "comment" occurrence in the tree is
+  about *PR/Jira comments* (`jira_add_comment`, review comments), not code
+  comments. So the repo never had the Anthropic system-prompt conflict at all —
+  there is no "default to no comments" rule anywhere to fight a project's
+  documentation preference. *Note:* this is an **absence**, not a resolved
+  conflict. The article's new-era guidance ("match the surrounding code's comment
+  density and idiom") is also absent — a possible small gap, but out of scope for
+  a conflict audit; it's an addition, not a contradiction.
+- **Verbosity/output-length — no conflict.** All 6 hits are skill-local and
+  govern one specific output (e.g. `dx-council` "150–300 words, no preamble";
+  `aem-doctor` "list up to 5 matches"; `pr-answer` "concise and actionable").
+  None is a global blanket rule, so none can contradict another layer.
+- **Interactive vs. autonomous — no conflict (properly gated).** Every
+  "proceed without asking / auto-proceed / no prompt" directive is conditioned
+  on an explicit mode: `AUTOMATION=1`, "mine mode", "Active PR exists", or
+  "plugin-owned files". These are branches of one decision, not competing
+  unconditional orders. The global `pragmatism.md` ("only ask if blocking") and
+  the skills that re-state "sensible default / only ask if clear"
+  (`dx-req-tasks`, `dx-council`) all push the **same** direction — reinforcement,
+  not contradiction.
+- **Global rules (`pr-review`, `pr-answer`, `task-progress`, `plan-format`) —
+  internally consistent and topic-scoped.** No rule's imperative is re-stated
+  with opposite polarity in a skill.
+
+**Not conflicts, but noted for the sibling TODOs:**
+
+- *Minor duplication* — `dx-req-tasks` / `dx-council` re-inline the
+  minimize-questions stance instead of referencing `pragmatism.md`. Same polarity,
+  so no conflict; it's recurring-token duplication → belongs to **#113**
+  (concise-body) / **#107** (MUST/MUST NOT), not #169.
+- *Clarifying-questions scaffolding* — only 2 skills still carry a dedicated
+  clarifying-questions section; consistent with `pragmatism.md`, so not a
+  conflict. Tracked separately by **#111** (workflow-with-checklist pattern).
+
+**Verdict for #169:** the comment slice — the article's canonical example — is
+resolved (vacuously; the repo never had it). No (a) real conflicts to reconcile
+and no (c) obsolete guardrails to delete surfaced in the three audited topics.
+The residue is duplication/absence, which the existing concise-body (#113),
+imperative-strength (#107), and comment-density-guidance work should pick up.
+Re-run this audit **after** #170's `/doctor` pass to confirm its cuts don't
+introduce a new contradiction.
