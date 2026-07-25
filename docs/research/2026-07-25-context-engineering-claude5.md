@@ -1,6 +1,8 @@
 # Context Engineering for Claude 5 Models — Anthropic
 
-**Source:** Anthropic thread on context engineering (Claude 5 generation — Opus 5, Fable 5)
+**Title:** "The New Rules of Context Engineering (for the Claude 5 generation)"
+**Author:** Thariq (@trq212), Anthropic
+**Source:** X/Twitter thread + long-form article, ~12K likes / 1.7K reposts / 24K bookmarks
 **Captured:** 2026-07-25
 **Status:** Complete
 **Relevance:** Directly informs this repo's skill/CLAUDE.md/rules conventions —
@@ -46,7 +48,9 @@ density, naming, and idiom."*
 **Examples → interfaces.** Examples constrain the model's exploration space.
 Instead, make tool parameters expressive. A Todo tool's `status` enum
 (pending/in_progress/completed) plus "keep one item in_progress" defines behavior
-without examples.
+without examples. *(Diagram: the "before" TodoWrite doc was ≈9,100 characters of
+when-to-use lists and worked examples; the "after" replaces all of it with a
+one-line description + the status enum + "only one task in_progress at a time".)*
 
 **Upfront → progressive disclosure.** Move situational context (code review,
 verification) into skills that load on demand. Applies to tools too: "deferred
@@ -70,6 +74,18 @@ Claude knows well.
 ---
 
 ## How to assemble your context
+
+The article's context-stack diagram, top (most specific) to bottom (most general):
+
+```
+Your prompt          ← most specific, per-request
+References           ← @-mentioned files, specs, mockups, codebases, artifacts
+System prompt        ← product context
+Claude.MDs           ← repo purpose + gotchas
+Skills               ← opinionated guides, loaded on demand
+Memory               ← auto-saved, relevant to work + user
+```
+
 
 - **System prompt** — tied to product context (what product, what it's doing).
   For Claude Code you'll never touch it; if building your own harness, spend time
