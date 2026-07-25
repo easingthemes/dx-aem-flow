@@ -104,3 +104,62 @@ Memory               ← auto-saved, relevant to work + user
 
 **Tooling:** `/doctor` ("claude doctor") auto-simplifies your system prompt,
 skills, and CLAUDE.md. See the Fable field guide for advanced-model prompting.
+
+---
+
+## Findings — instruction-conflict audit (TODO #169), run 2026-07-25
+
+Ran the audit the article's named failure mode ("conflicting instructions in a
+single assembled context") points at, across the full override stack: 6 plugin
+`rules/*.md`, 7 `templates/rules/*`, 77 skill `SKILL.md` files, and root
+`CLAUDE.md` / `AGENTS.md`. Three topics: comment/documentation policy,
+verbosity/output-length, and always/never imperatives.
+
+**Result: no genuine cross-layer contradictions found.** The comment-policy
+Done-when check passes cleanly.
+
+Topic-by-topic:
+
+- **Comment/documentation policy — clean, and empty.** Grep for any code-comment
+  directive (`never/do not/always write|add … comment|docstring`) across skills
+  and rules returns **zero** hits. Every "comment" occurrence in the tree is
+  about *PR/Jira comments* (`jira_add_comment`, review comments), not code
+  comments. So the repo never had the Anthropic system-prompt conflict at all —
+  there is no "default to no comments" rule anywhere to fight a project's
+  documentation preference. *Note:* this is an **absence**, not a resolved
+  conflict. The article's new-era guidance ("match the surrounding code's comment
+  density and idiom") is also absent — a possible small gap, but out of scope for
+  a conflict audit; it's an addition, not a contradiction.
+- **Verbosity/output-length — no conflict.** All 6 hits are skill-local and
+  govern one specific output (e.g. `dx-council` "150–300 words, no preamble";
+  `aem-doctor` "list up to 5 matches"; `pr-answer` "concise and actionable").
+  None is a global blanket rule, so none can contradict another layer.
+- **Interactive vs. autonomous — no conflict (properly gated).** Every
+  "proceed without asking / auto-proceed / no prompt" directive is conditioned
+  on an explicit mode: `AUTOMATION=1`, "mine mode", "Active PR exists", or
+  "plugin-owned files". These are branches of one decision, not competing
+  unconditional orders. The global `pragmatism.md` ("only ask if blocking") and
+  the skills that re-state "sensible default / only ask if clear"
+  (`dx-req-tasks`, `dx-council`) all push the **same** direction — reinforcement,
+  not contradiction.
+- **Global rules (`pr-review`, `pr-answer`, `task-progress`, `plan-format`) —
+  internally consistent and topic-scoped.** No rule's imperative is re-stated
+  with opposite polarity in a skill.
+
+**Not conflicts, but noted for the sibling TODOs:**
+
+- *Minor duplication* — `dx-req-tasks` / `dx-council` re-inline the
+  minimize-questions stance instead of referencing `pragmatism.md`. Same polarity,
+  so no conflict; it's recurring-token duplication → belongs to **#113**
+  (concise-body) / **#107** (MUST/MUST NOT), not #169.
+- *Clarifying-questions scaffolding* — only 2 skills still carry a dedicated
+  clarifying-questions section; consistent with `pragmatism.md`, so not a
+  conflict. Tracked separately by **#111** (workflow-with-checklist pattern).
+
+**Verdict for #169:** the comment slice — the article's canonical example — is
+resolved (vacuously; the repo never had it). No (a) real conflicts to reconcile
+and no (c) obsolete guardrails to delete surfaced in the three audited topics.
+The residue is duplication/absence, which the existing concise-body (#113),
+imperative-strength (#107), and comment-density-guidance work should pick up.
+Re-run this audit **after** #170's `/doctor` pass to confirm its cuts don't
+introduce a new contradiction.

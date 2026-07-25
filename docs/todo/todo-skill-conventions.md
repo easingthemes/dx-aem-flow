@@ -390,6 +390,20 @@ skill-local mechanics) and delete the duplicate. Prefer the article's new-era
 phrasing — "match the surrounding code's comment density and idiom" — over
 absolute bans. Pairs with #107 (MUST/MUST NOT) and #16 (`/doctor` pass).
 
+**Audit run 2026-07-25 — no conflicts found.** Swept all 6 plugin `rules/*.md`,
+7 `templates/rules/*`, 77 skills, and root `CLAUDE.md`/`AGENTS.md` across the
+three scoped topics. Comment-policy Done-when check **passes** — grep for any
+code-comment directive returns zero hits (every "comment" in the tree is
+PR/Jira comments, not code). Verbosity directives are all skill-local (no
+blanket rule to collide). "Proceed-without-asking" directives are all mode-gated
+(`AUTOMATION=1` / mine-mode / active-PR / plugin-owned) and reinforce, not
+contradict, `pragmatism.md`. Global rules are internally consistent and
+topic-scoped. Residue is **duplication/absence, not contradiction** → routed to
+#113 (concise-body), #107 (imperative strength), #111 (clarifying-questions
+scaffolding). Full write-up + verify commands:
+[2026-07-25-context-engineering-claude5.md § Findings](../research/2026-07-25-context-engineering-claude5.md#findings--instruction-conflict-audit-todo-169-run-2026-07-25).
+**Re-run after #170's `/doctor` pass** to confirm cuts don't reintroduce a clash.
+
 ## 16. Rightsize CLAUDE.md + skills with `/doctor`
 
 **Added:** 2026-07-25
