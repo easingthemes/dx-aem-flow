@@ -345,6 +345,100 @@ with #2 (expand positive trigger coverage) and #106.
 
 ---
 
+## 15. Instruction-conflict audit across the override stack
+
+**Added:** 2026-07-25
+**Source:** [2026-07-25-context-engineering-claude5.md](../research/2026-07-25-context-engineering-claude5.md)
+(Thariq / Anthropic, "The New Rules of Context Engineering for Claude 5 models").
+Core finding: Anthropic removed 80%+ of Claude Code's system prompt for Claude 5
+models with no eval loss, because the model resolves intent better than rigid
+rules do. The named failure mode is **conflicting instructions in a single
+assembled context** — their example: system prompt says "leave documentation as
+appropriate", a skill says "do not add comments", the user says "just make it
+work like the old one". Claude *can* reconcile these, but it spends reasoning
+doing so, and the guardrails that forced them were for older models.
+**Problem:** Our three-layer override system (`.ai/rules/` > `config.yaml`
+overrides > plugin `rules/*.md`) plus 77 skills plus project `CLAUDE.md` all
+stack into one context. Nothing today checks that a directive in one layer
+doesn't contradict another — e.g. a "never write comments" imperative in a skill
+vs. a project rule asking for JSDoc, or a `pragmatism.md` rule that fights a
+skill's verbosity gate. These clashes are invisible until they degrade a run.
+This is distinct from #13 (no-op filler — lines that do nothing) and #107 (weak
+imperatives): here the lines each do something, but they **disagree**.
+**Scope:** `plugins/*/rules/*.md`, `plugins/*/skills/*/SKILL.md` (imperative
+lines), the shipped `.ai/rules/*.md` templates
+(`plugins/dx-core/templates/rules/`), and the guidance in root `CLAUDE.md` /
+`AGENTS.md`. Focus on comment/documentation policy, verbosity/output-length
+policy, and "always/never" pairs that appear in more than one layer.
+**Done-when:** A written audit at `docs/research/` (or a section appended to the
+2026-07-25 research doc) lists every cross-layer contradiction found, classified
+as (a) real conflict → reconcile to one owning layer, (b) intentional override →
+document the precedence, or (c) obsolete guardrail → delete per the "let Claude
+use judgement" finding. Concretely, the comment-policy check must pass: no two
+layers give opposing comment directives for the same context. Verify the
+comment-policy slice with:
+```bash
+grep -rniE "(never|do not|don't|always) (write|add).*(comment|docstring|documentation)" \
+     plugins/*/skills/*/SKILL.md plugins/*/rules/*.md plugins/dx-core/templates/rules/ \
+  | sort
+# Then confirm no two matching lines target the same situation with opposite polarity.
+```
+**Approach:** Grep the "always/never + verb" imperatives per topic, group by
+topic, diff polarities across layers. For each real conflict pick the single
+owning layer (usually `.ai/rules/` for project taste, skill body only for
+skill-local mechanics) and delete the duplicate. Prefer the article's new-era
+phrasing — "match the surrounding code's comment density and idiom" — over
+absolute bans. Pairs with #107 (MUST/MUST NOT) and #16 (`/doctor` pass).
+
+**Audit run 2026-07-25 — no conflicts found.** Swept all 6 plugin `rules/*.md`,
+7 `templates/rules/*`, 77 skills, and root `CLAUDE.md`/`AGENTS.md` across the
+three scoped topics. Comment-policy Done-when check **passes** — grep for any
+code-comment directive returns zero hits (every "comment" in the tree is
+PR/Jira comments, not code). Verbosity directives are all skill-local (no
+blanket rule to collide). "Proceed-without-asking" directives are all mode-gated
+(`AUTOMATION=1` / mine-mode / active-PR / plugin-owned) and reinforce, not
+contradict, `pragmatism.md`. Global rules are internally consistent and
+topic-scoped. Residue is **duplication/absence, not contradiction** → routed to
+#113 (concise-body), #107 (imperative strength), #111 (clarifying-questions
+scaffolding). Full write-up + verify commands:
+[2026-07-25-context-engineering-claude5.md § Findings](../research/2026-07-25-context-engineering-claude5.md#findings--instruction-conflict-audit-todo-169-run-2026-07-25).
+**Re-run after #170's `/doctor` pass** to confirm cuts don't reintroduce a clash.
+
+## 16. Rightsize CLAUDE.md + skills with `/doctor`
+
+**Added:** 2026-07-25
+**Source:** [2026-07-25-context-engineering-claude5.md](../research/2026-07-25-context-engineering-claude5.md).
+The article ships its best practices as the `/doctor` (a.k.a. `claude doctor`)
+command, described as auto-simplifying an over-constrained system prompt,
+`CLAUDE.md`, and skills for the Claude 5 generation. It directly targets the
+over-specification our own concise-body (#113) and no-op (#162) audits chase by
+hand.
+**Problem:** Our `CLAUDE.md` is large and prose-heavy, and the skill catalog has
+13 skills over the 500-line reference threshold (#108) with a median ~283 lines
+(#113). The article's CLAUDE.md guidance is narrower than what we ship: keep it
+light, state the repo's purpose briefly, then spend most tokens on **gotchas**,
+and push detail into progressively-disclosed skills. We have never run the
+first-party rightsizing tool against our files to get a baseline of what it would
+cut.
+**Scope:** root `CLAUDE.md`, `AGENTS.md`, and the top offenders from #113/#108
+(`dx-pr-review`, `dx-simple`, `dx-init` SKILL.md). Tool: `/doctor` in an
+interactive Claude Code session (not available in this non-interactive
+environment).
+**Done-when:** `/doctor` has been run against `CLAUDE.md` and the three top
+offender skills, and its recommendations are recorded — either applied as commits
+or captured as a decision list in #113 with per-file accept/reject rationale.
+Concretely, a note in this item records the `/doctor` output date and the
+token-delta it proposed for `CLAUDE.md`. Feed the numbers into #137's
+token-footprint baseline so #113 is ranked by measured cost, not guesswork.
+**Approach:** Run `/doctor` interactively; treat its cuts as a proposal, not
+gospel — keep the gotcha-density content the article explicitly wants in
+`CLAUDE.md`, accept the prose/rule-bloat cuts. Cross-ref #113 (concise-body),
+#108 (500-line threshold), #137 (footprint baseline), #162 (no-op audit), #15
+(conflict audit — run before/after so `/doctor`'s cuts don't reintroduce a
+contradiction).
+
+---
+
 ## Dropped after reality check against Claude Code docs
 
 These were in the initial Google-derived list but were rejected against
