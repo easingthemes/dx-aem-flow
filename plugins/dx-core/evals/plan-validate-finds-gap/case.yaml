@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: plan-validate-finds-gap
+
+# case.yaml exists only to carry context.* — prompt.md cannot hold these keys.
+# Everything else (prompt, tools, limits) lives in prompt.md next to this file.
+context:
+  scaffold_script: resources/setup.sh
