@@ -85,4 +85,6 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
 - No hardcoded org URLs, project names, paths, build commands, or branch names
 - Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-verify`, `auto-deploy`)
 - Versioning is automated via semantic-release on push to `main`
+- Structural validation (`scripts/validate-*.sh`) runs in CI on every PR
+- Behavioral evals live in `plugins/<plugin>/evals/` and run via `claude plugin eval` — one suite so far (`dx-plan-validate`); add one alongside non-trivial skill changes where practical
 - See `CLAUDE.md` for the full contributor guide with architecture details
