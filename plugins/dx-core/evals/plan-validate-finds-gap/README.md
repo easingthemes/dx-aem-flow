@@ -30,8 +30,16 @@ extra ones).
 
 ## Running it
 
+`claude plugin eval` is in early access and gated per organization. If it
+prints `` `plugin eval` is currently in early access ``, enablement has not
+reached this machine — some clients need an enablement environment variable,
+which Anthropic provides during early-access onboarding. Set it in your shell
+or `~/.claude/settings.json` `env`, not in this repo. Self-test by running
+`claude plugin eval` in an empty directory: `No eval cases found …` means it
+is enabled.
+
 ```bash
-TMPDIR=/tmp CLAUDE_CODE_WALNUT_SPIRE=1 \
+TMPDIR=/tmp \
   claude plugin eval plugins/dx-core --case plan-validate-finds-gap \
   --runs 3 --ablation none --scaffold --no-publish \
   --allow-tools Write Bash
@@ -39,8 +47,7 @@ TMPDIR=/tmp CLAUDE_CODE_WALNUT_SPIRE=1 \
 
 `TMPDIR=/tmp` matters: sandbox `.claude/` discovery walks *up* from the run
 directory, so a temp dir under `$HOME` lets the child find `~/.claude/skills`
-and contaminates the baseline. `CLAUDE_CODE_WALNUT_SPIRE=1` opens the
-early-access gate — do not commit it anywhere public.
+and contaminates the baseline.
 
 Pin `--model` and `--judge-model` before comparing scores across time,
 otherwise a model rollout reads as a regression.
