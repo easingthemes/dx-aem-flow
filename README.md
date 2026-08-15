@@ -138,6 +138,26 @@ These plugins work across the AI coding agent ecosystem at three levels:
 
 The scaffold generates `AGENTS.md` (read by Codex CLI, Windsurf, Copilot coding agent) and `.github/agents/` (read by VS Code Chat, Copilot CLI) so agent profiles work even without plugin installation.
 
+## Quality
+
+Two layers, both in the open:
+
+**Structural validation** runs in CI on every PR — skill and agent naming, frontmatter,
+manifest/version consistency, no cross-plugin collisions (`scripts/validate-*.sh`).
+
+**Behavioral evals** check what the skills actually do. Because a skill is instructions
+for a model rather than code, the same prompt can give different answers on different
+runs — so a skill is scored across repeated runs against fixtures whose correct answer
+is known in advance, using the first-party `claude plugin eval` harness.
+
+This is early: **one suite so far**, covering `dx-plan-validate` — a plan with one
+planted defect, graded for both catching the real gap and *not* inventing extra ones.
+It's a starting point, not coverage. Suites are added per skill as they're written, and
+each lives beside the plugin it tests in `plugins/<plugin>/evals/`.
+
+See [the suite's README](plugins/dx-core/evals/plan-validate-finds-gap/README.md) for how
+a case and its graders are put together, including what the first run got wrong.
+
 ## Documentation
 
 Full documentation: [KAI Website](https://easingthemes.github.io/dx-aem-flow/)
