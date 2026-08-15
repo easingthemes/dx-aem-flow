@@ -1,3 +1,10 @@
+# [3.6.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.3...v3.6.0) (2026-08-15)
+
+
+### Features
+
+* add first plugin eval suite for dx-plan-validate ([#188](https://github.com/easingthemes/dx-aem-flow/issues/188)) ([db512be](https://github.com/easingthemes/dx-aem-flow/commit/db512be7584280ec6b09028e0491d1e00e767035))
+
 ## [3.5.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.2...v3.5.3) (2026-06-18)
 
 
