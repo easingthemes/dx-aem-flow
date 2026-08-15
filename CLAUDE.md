@@ -36,7 +36,36 @@ AEM project knowledge (seed data) is now built into dx-aem — no separate plugi
 node cli/bin/dx-scaffold.js /tmp/test-project --all
 ```
 
-No compilation, linting, or automated test suite — verify skills manually by running them in a test project and checking that config is read correctly, output files land in expected locations, and no hardcoded values leak in.
+No compilation step. Verification happens at three levels:
+
+| Level | What it checks | How |
+|-------|----------------|-----|
+| Structural | naming, frontmatter, manifest/version consistency, collisions | `scripts/validate-*.sh` — runs in CI on every PR |
+| Helper scripts | deterministic bash in `skills/*/scripts/` | per-skill `tests/run-tests.sh` (currently `dx-discover-repos`, `dx-simple`) |
+| Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` |
+
+Everything not covered above is still manual — run the skill in a test project and check that config is read correctly, output files land in expected locations, and no hardcoded values leak in.
+
+### Behavioral evals (`plugins/<plugin>/evals/`)
+
+A skill is instructions for a model, so the same prompt can produce different output on different runs. Evals score a skill over repeated runs against a fixture whose correct answer is known in advance — the opposite of an assertion, which expects one exact value.
+
+```bash
+TMPDIR=/tmp claude plugin eval plugins/dx-core --case <case-name> \
+  --runs 3 --ablation none --scaffold --no-publish --allow-tools Write Bash
+```
+
+`claude plugin eval` is in early access and gated per organization; if it prints `` `plugin eval` is currently in early access ``, enablement has not reached the machine (some clients need a variable Anthropic provides during onboarding — set it in your shell or `~/.claude/settings.json`, never in this repo). `TMPDIR=/tmp` keeps the sandbox from discovering `~/.claude/skills`. Pin `--model` and `--judge-model` before comparing scores over time, or a model rollout reads as a regression.
+
+Cost is real: agent runs are billed, `llm`/`baseline` graders add 3 judge calls each, and `--ablation with-without` doubles the run count. Structural graders (`regex`, `file_exists`, `tool_used`, `tool_order`) are free. Pilot with `--runs 1` and cap with `--max-cost-usd`. Don't wire this to every push — release tags or manual dispatch.
+
+**Authoring rules:**
+- Fixtures carry a **known** defect plus correct distractors, so graders measure both recall (found the real problem) and precision (didn't invent others).
+- Prefer deterministic graders. Use `llm` only when no exact oracle exists — **a judge can be argued out of its rubric by a confident wrong answer; a regex cannot.**
+- **Sanity-check every suite against a known-bad input.** A green suite means either the skill is good or the grader is blind, and you can't tell which until something that should fail does. Each grader needs its own failing case; one scenario only exercises the graders it touches.
+- Run artifacts land in `plugins/*/evals/results/` and are gitignored.
+
+Current coverage is one suite (`dx-core/evals/plan-validate-finds-gap`) — see its README for a worked example, including a judge that passed a report its rubric said to fail.
 
 ### Standalone CLI (`cli/`)
 
