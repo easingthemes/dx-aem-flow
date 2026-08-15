@@ -38,3 +38,6 @@ docs/brainstorming/
 .mcp.json
 logo.JPG
 tools/screenshots/
+
+# Eval run artifacts (timestamped; regenerate with `claude plugin eval`)
+plugins/*/evals/results/
