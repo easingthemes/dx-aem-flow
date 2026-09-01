@@ -1,0 +1,19 @@
+# Canned .ai/project/project.yaml — triggers the AEM-enriched Project Context
+# section in dx-ticket-analyze output.
+brand: examplebrand
+
+platforms:
+  - name: legacy
+    resource-type-prefix: examplebrand/components
+  - name: dxn
+    resource-type-prefix: examplebrand-dxn/components
+
+brands:
+  - name: examplebrand
+    markets:
+      - code: de
+        path: /content/examplebrand/de
+        language: de
+      - code: ca
+        path: /content/examplebrand/ca
+        language: en

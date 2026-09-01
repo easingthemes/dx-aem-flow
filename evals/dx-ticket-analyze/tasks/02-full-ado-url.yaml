@@ -1,0 +1,44 @@
+# Full dev.azure.com URL — project should be parsed from the URL,
+# not from config.yaml.
+id: full-ado-url
+name: Full dev.azure.com URL
+description: |
+  Skill should extract the ID and project from the URL itself rather
+  than falling back to scm.project in config.yaml.
+
+tags:
+  - ado
+  - url-parsing
+
+inputs:
+  prompt: "/dx-ticket-analyze https://dev.azure.com/myorg/MyProject/_workitems/edit/2416553"
+  files:
+    - path: .ai/config.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
+          base-branch: develop
+
+expected:
+  output_contains:
+    - "## Ticket: #2416553"
+
+graders:
+  - name: project_from_url
+    type: code
+    config:
+      assertions:
+        # Skill should mention project from URL ("MyProject"),
+        # not the default in config.yaml ("DefaultProject").
+        - "'MyProject' in str(tool_calls) or 'MyProject' in output"
+
+  - name: required_headings
+    type: text
+    config:
+      regex_match:
+        - "^## Ticket: #2416553"
+        - "(?m)^### Components Found"

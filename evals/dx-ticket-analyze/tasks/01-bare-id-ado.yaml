@@ -1,0 +1,58 @@
+# Bare numeric ID with ADO provider — most common case.
+id: bare-id-ado
+name: Bare numeric ID with ADO provider
+description: |
+  User passes a bare numeric work item ID (no URL). Skill should read
+  tracker.provider and scm.project from .ai/config.yaml, fetch the
+  ADO work item, and produce the structured reference.
+
+tags:
+  - ado
+  - input-parsing
+
+inputs:
+  prompt: "/dx-ticket-analyze 2416553"
+  files:
+    - path: .ai/config.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
+          base-branch: develop
+        build:
+          command: mvn clean install
+    - path: .ai/project/component-index.md
+
+expected:
+  output_contains:
+    - "## Ticket: #2416553"
+    - "### Components Found"
+    - "### Acceptance Criteria"
+
+graders:
+  - name: required_headings
+    type: text
+    config:
+      regex_match:
+        - "^## Ticket: #2416553"
+        - "(?m)^### Components Found"
+        - "(?m)^### Acceptance Criteria"
+
+  - name: structural_assertions
+    type: code
+    config:
+      assertions:
+        - "'| File | Path |' in output or '|------|------|' in output"
+        - "'Save results to a file?' in output"
+        - "'.ai/specs/2416553' in output"
+
+  - name: docs_first_ordering
+    type: action_sequence
+    config:
+      matching_mode: in_order_match
+      expected_actions:
+        - "mcp__ado__wit_get_work_item"
+        - "Grep"

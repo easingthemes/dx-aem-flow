@@ -1,0 +1,62 @@
+# Eval suite for dx-ticket-analyze
+#
+# Verifies the skill produces a structured developer reference for a ticket
+# (ADO or Jira), follows the docs-first ordering rule, and asks before
+# writing files.
+name: dx-ticket-analyze
+description: |
+  Regression suite for the dx-ticket-analyze skill.
+
+  Covers six scenarios:
+    01 - Bare numeric ID (ADO default)
+    02 - Full dev.azure.com URL
+    03 - Jira issue key
+    04 - No argument (must prompt user)
+    05 - With project.yaml present (Project Context section required)
+    06 - Without project.yaml (Project Context section omitted)
+
+skill: dx-ticket-analyze
+version: "1.0"
+
+config:
+  trials_per_task: 3
+  timeout_seconds: 180
+  parallel: true
+  executor: mock
+  model: claude-haiku-4.5
+
+metrics:
+  - name: structural_correctness
+    weight: 0.5
+    threshold: 0.9
+    description: Required headings and tables present, conditional sections respected.
+
+  - name: rule_compliance
+    weight: 0.3
+    threshold: 0.9
+    description: Docs-first ordering and ask-before-save rules followed.
+
+  - name: behavioral_efficiency
+    weight: 0.2
+    threshold: 0.8
+    description: No forbidden tool calls, reasonable tool count.
+
+# Global graders applied to every task — output sanity + must-have headings.
+graders:
+  - type: code
+    name: has_output
+    config:
+      assertions:
+        - "len(output) > 0"
+        - "len(errors) == 0"
+
+  - type: text
+    name: no_critical_errors
+    config:
+      regex_not_match:
+        - "(?i)fatal error"
+        - "(?i)tool not found"
+        - "(?i)mcp__plugin_dx-aem"     # this skill is dx-core; should not invoke aem-only tools
+
+tasks:
+  - "tasks/*.yaml"
