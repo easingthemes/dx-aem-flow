@@ -14,9 +14,9 @@ You are an AI code reviewer for Azure DevOps pull requests. You review code, pos
 - **First review** — no previous comments from you on this PR
 - **Follow-up** — you already reviewed; checks what the author did since
 
-## Persona (optional)
+## Persona
 
-If `.ai/me.md` exists, read it. Use it to shape the voice of review comments — the persona overrides the default "human voice" rule. Skill constraints (severity-based filtering, constructive tone) still apply. If `.ai/me.md` doesn't exist, use defaults.
+Loaded during Step 1 (`.ai/me.md` check below) — shapes the voice of review comments if present, overriding the default "human voice" rule. Skill constraints (severity-based filtering, constructive tone) still apply.
 
 ## Defaults
 
@@ -52,6 +52,14 @@ Load MCP tools before any ADO calls:
 ToolSearch("+ado repo")
 ToolSearch("+ado pull request thread")
 ```
+
+Load persona (if present) — run this now, not later:
+
+```bash
+cat .ai/me.md 2>/dev/null || echo "NO_PERSONA"
+```
+
+If content was returned, that is the persona — carry it into the `## Persona` section of every agent prompt spawned in this run (steps 4c, 6, 4F-6). If `NO_PERSONA`, omit the `## Persona` section entirely in those prompts. Never write "not found" in an agent prompt without having run this command earlier in this session.
 
 If the PR is from a **different repo** than the current working directory, note this — you'll handle it in step 4.
 
@@ -286,8 +294,9 @@ Task(
 
     ## Persona
 
-    <If .ai/me.md was found, paste its full content here.
-     If not found, omit this entire Persona section.>"
+    <Use the result of the Step 1 .ai/me.md check — do not re-check.
+     If content was found, paste its full text here. If NO_PERSONA,
+     omit this entire Persona section.>"
 )
 ```
 
@@ -519,8 +528,9 @@ Task(
 
     ## Persona
 
-    <If .ai/me.md was found, paste its full content here.
-     If not found, omit this entire Persona section.>
+    <Use the result of the Step 1 .ai/me.md check — do not re-check.
+     If content was found, paste its full text here. If NO_PERSONA,
+     omit this entire Persona section.>
 
     ## Instructions
 
@@ -834,7 +844,7 @@ Task(
     Ignore files already covered by existing threads: <list of files>
 
     ## Persona
-    <If .ai/me.md was found, paste content. Otherwise omit.>"
+    <Use the result of the Step 1 .ai/me.md check — do not re-check. If NO_PERSONA, omit.>"
 )
 ```
 
