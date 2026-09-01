@@ -1,3 +1,10 @@
+## [3.6.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.0...v3.6.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* make dx-pr-review persona check a required Step 1 action ([#191](https://github.com/easingthemes/dx-aem-flow/issues/191)) ([15eca03](https://github.com/easingthemes/dx-aem-flow/commit/15eca030c7e7b67f109e8280455e26b41be10ad1))
+
 # [3.6.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.5.3...v3.6.0) (2026-08-15)
 
 
