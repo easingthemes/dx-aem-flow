@@ -96,10 +96,10 @@ The next 5 items are sub-goals contributing to this. Each is independently shipp
 **Added:** 2026-05-06
 **Problem:** Pipeline YAMLs set `ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"` (e.g. `ado-cli-bug-fix.yml:69`). Locally, Claude has unrestricted Bash, plus `WebFetch`, `WebSearch`, `TaskCreate`/`TaskUpdate` (for live progress UI), `NotebookEdit`, `AskUserQuestion`, `EnterPlanMode`. As a result:
 - DevAgent cannot run `mvn`, `npm test`, `node`, or any non-git Bash → cannot self-verify builds before opening a PR.
-- Coordinator skills cannot use `TaskCreate` — the `task-progress.md` rule (CLAUDE.md "Visual Separation in Logs") falls back to plain text in pipeline logs, hurting observability.
+- Coordinator skills have no `TaskCreate`. **Re-scoped 2026-09-12:** this is no longer a permissions gap. Since Claude Code v2.1.233 the task tools are absent by default on the models the pipelines run, so widening `ALLOWED_TOOLS` is an *opt-in* rather than a fix — naming `TaskCreate` there both permits and enables it. Progress observability no longer depends on it either way: every coordinator now writes a progress file (#177). Treat the task tools here as optional log decoration.
 - Skills that need to fetch a URL (e.g. checking a Confluence page) have no `WebFetch`.
 **Scope:** All YAMLs under `plugins/dx-automation/data/pipelines/cli/*.yml` (10 files) — the `ALLOWED_TOOLS:` env var.
-**Done-when:** `grep -n "ALLOWED_TOOLS:" plugins/dx-automation/data/pipelines/cli/*.yml` shows tool sets matched to each agent's needs (DevAgent gets build commands, DoR/DoD get `WebFetch`, all coordinators get `TaskCreate`) AND a DevAgent run in CI executes `mvn clean install` (or the project's `build.command`) without permission errors.
+**Done-when:** `grep -n "ALLOWED_TOOLS:" plugins/dx-automation/data/pipelines/cli/*.yml` shows tool sets matched to each agent's needs (DevAgent gets build commands, DoR/DoD get `WebFetch`) AND a DevAgent run in CI executes `mvn clean install` (or the project's `build.command`) without permission errors. `TaskCreate` is explicitly **not** part of this bar — it moved to #178.
 **Approach:** Build a per-agent matrix. Sketch:
 | Agent | Bash | Web | Tasks | Notebook |
 |---|---|---|---|---|

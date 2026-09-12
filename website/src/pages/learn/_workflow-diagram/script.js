@@ -547,7 +547,7 @@
         detail: {
           type: 'mixed',
           rows: [
-            { label: 'Built-in', value: 'Read · Write · Edit · Grep · Glob · Bash · WebFetch · WebSearch · TodoWrite' },
+            { label: 'Built-in', value: 'Read · Write · Edit · Grep · Glob · Bash · WebFetch · WebSearch' },
             { label: 'MCP',      value: 'playwright · aem-mcp · slack · github · linear · figma · …' },
             { label: 'Task',     value: 'built-in tool that spawns a subagent (subagent_type enum lists each one)' }
           ],

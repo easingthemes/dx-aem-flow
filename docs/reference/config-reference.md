@@ -333,6 +333,10 @@ These environment variables are set on ADO pipeline runs and read by skills at r
 | `ADO_ORG_NAME` | Short ADO org name (e.g. `myorg`). Read by `pipeline-agent.js` for org identification. Falls back to `"myorg"` if not set. |
 | `DX_RESEARCH_PROFILE` | `minimal` \| `frontend` \| `backend` \| `full`. Forces the Phase 4 research profile (`/dx-req`). Overrides `research.profile` in `config.yaml`. Set to `minimal` on 200k-context models. |
 | `DX_HOOK_PROFILE` | `minimal` \| `standard` \| `strict`. Hook strictness — see "Hook Profiles" in CLAUDE.md. |
+| `DX_PROGRESS_FILE` | Output filename for `shared/update-progress.sh`, relative to the spec dir (default `progress.md`). Each coordinator sets its own — `dev-all-progress.md`, `bug-progress.md`, `simple-progress.md`, `req-progress.md`, `dod-progress.md`, `figma-progress.md`. |
+| `DX_PROGRESS_TITLE` | Heading text for the progress file, rendered as `# <title> — #<ticket>` (default `Progress`). |
+| `DX_PROGRESS_LABEL` | First column header of the progress table (default `Phase`; `dx-bug-all` uses `Step`). |
+| `CLAUDE_CODE_ENABLE_TODO_TOOLS` | Set to `1` to opt a session back into `TaskCreate`/`TaskGet`/`TaskUpdate`/`TaskList`. Claude Code stopped offering them by default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer (v2.1.233). **Optional** — dx skills track progress in files and never require these tools. See `rules/task-progress.md`. |
 
 ### Dynamic-Checkout Workers (BugFix, DevAgent, DoD-Fix, Simple, …)
 

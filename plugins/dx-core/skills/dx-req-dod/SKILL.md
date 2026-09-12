@@ -30,7 +30,16 @@ Use ultrathink for this skill — cross-referencing multiple sources (ADO/Jira s
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create tasks using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). The progress **file** is the source of truth — write it at every phase transition:
+
+```bash
+DX_PROGRESS_FILE="dod-progress.md" DX_PROGRESS_TITLE="/dx-req-dod Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<phase>" "<status>"
+```
+
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per phase, updated in place.
+
+If `TaskCreate` is in this session's tool list, also mirror the same phases into tasks so the user gets a live checklist — `TaskList` first to cancel stale tasks from an interrupted run. If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block a phase transition on a task tool being present.
 
 1. DoD Check (gather evidence, evaluate criteria)
 2. Auto-Fix Gaps (if failures found)

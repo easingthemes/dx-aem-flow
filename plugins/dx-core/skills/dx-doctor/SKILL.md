@@ -138,6 +138,7 @@ Compare installed rules against plugin templates. The dx plugin templates live a
 | `.ai/rules/pr-answer.md` | `pr-answer.md.template` |
 | `.ai/rules/pragmatism.md` | `pragmatism.md.template` |
 | `.ai/rules/plan-format.md` | `plan-format.md.template` |
+| `.ai/rules/task-progress.md` | `task-progress.md.template` |
 
 **Note:** If AEM plugin is configured, `pr-review.md` and `pr-answer.md` will have AEM sections appended — this is expected. When comparing, check whether the dx template portion (before the AEM section) matches the template. If only the AEM section differs, report as up to date for dx purposes.
 
@@ -430,6 +431,7 @@ dx Rule Files                                      Status
   Template updated — run /dx-upgrade
 .ai/rules/pragmatism.md                            ✓ up to date
 .ai/rules/plan-format.md                           ✓ up to date
+.ai/rules/task-progress.md                         ✓ up to date
 .claude/rules/reuse-first.md                       ✓ up to date
 
 MCP Configuration                                  Status

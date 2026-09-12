@@ -11,7 +11,16 @@ You execute the next pending step from implement.md — implement the changes, v
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create a task for the current step using `TaskCreate` (e.g., "Step 3: Add dropdown field"). Mark `in_progress` when starting, `completed` when committed. On phase failures, update the task subject (e.g., "Step 3: Add dropdown field (test failed)").
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). The progress **file** is the source of truth — write it at every step transition:
+
+```bash
+DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Dev Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>"
+```
+
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per step, updated in place.
+
+If `TaskCreate` is in this session's tool list, also mirror the same steps into tasks so the user gets a live checklist — `TaskList` first to cancel stale tasks from an interrupted run. If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block a step transition on a task tool being present.
 
 ## Flow
 

@@ -36,11 +36,16 @@
 **Approach:** Blocked on upstream fix. When resolved, rename all skill directories to drop the plugin prefix (e.g., `dx-init` → `init`), update `validate-skills.sh`, and update all cross-references.
 **Upstream check (2026-07-01):** STILL BLOCKED. Concrete upstream tracker is now [#50486](https://github.com/anthropics/claude-code/issues/50486) (Open, `stale`) — previously "needs filing". Claude Code v2.1.178 added `<dir>:<name>` namespacing but only for nested `.claude/skills`, not plugin skills. Related: [#22063](https://github.com/anthropics/claude-code/issues/22063), [#15944](https://github.com/anthropics/claude-code/issues/15944), [#43695](https://github.com/anthropics/claude-code/issues/43695). Keep the prefix workaround. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 
-## Visual Separation in Logs — DONE
+## Visual Separation in Logs — REOPENED
 
 **Added:** 2026-03-03
-**Completed:** 2026-03-21 — commits `791c13f` + `b6325a4`
+**First solved:** 2026-03-21 — commits `791c13f` + `b6325a4`
+**Reopened:** 2026-09-12 — the solution depended on a tool that is no longer offered by default
 **Problem:** Coordinator skills (`dx-req`, `dx-step-all`, `dx-agent-all`, `dx-bug-all`) run many steps sequentially. In terminal output, step boundaries blended together — hard to see where one step ended and the next began.
 **Scope:** All `-all` coordinator skills in `plugins/dx-core/skills/`.
-**Done-when:** `grep -l "TaskCreate\|task-progress" plugins/dx-core/skills/dx-agent-all/SKILL.md plugins/dx-core/rules/task-progress.md` returns both files.
-**Resolution:** Solved differently than originally proposed (horizontal rules). Instead, added TaskCreate-based live progress tracking to all 5 coordinators (`b6325a4`) with a universal `task-progress.md` rule (`791c13f`). Users see a live checklist in Claude Code CLI; Copilot CLI falls back to Step N/M text output.
+**Done-when:** every coordinator writes a progress file — `grep -L "update-progress.sh" plugins/dx-core/skills/dx-{agent-all,step-all,step,req,req-dod,bug-all,figma-all,simple}/SKILL.md` returns nothing.
+**First resolution (2026-03-21, now partly void):** Solved differently than originally proposed (horizontal rules) — TaskCreate-based live progress in all 5 coordinators (`b6325a4`) plus a `task-progress.md` rule (`791c13f`). Users saw a live checklist in Claude Code CLI; Copilot CLI fell back to Step N/M text.
+**Why it broke:** two problems, found 2026-09-12.
+1. Claude Code v2.1.233 stopped offering `TaskCreate`/`TaskGet`/`TaskUpdate`/`TaskList`/`TodoWrite` on Opus 4.8, Sonnet 5, Fable 5, Mythos 5 and newer; v2.1.260 narrowed the allowlist again to Claude 3.x, Opus 4.0–4.7, Sonnet 4.0–4.6, Haiku 4.5. Anthropic's stated reason: newer models track multi-step work without a written checklist, and the tool definitions cost context. `dx-step` and `dx-req` pin `model: sonnet`, which resolves to Sonnet 5 — so no dx skill escaped.
+2. `rules/task-progress.md` carried the right guard ("check if `TaskCreate` exists before using it") but had **zero references** anywhere in `plugins/` and no `templates/rules/` counterpart, so it was never installed to `.ai/rules/` and never reached the model. Seven SKILL.md files said "you MUST use `TaskCreate`" with nothing to soften it.
+**Second resolution (2026-09-12, #177):** the progress *file* is the source of truth in all 8 skills, written by one shared `shared/update-progress.sh`; task tools are an optional mirror when the session has them. The rule is rewritten as a contract and is now actually wired (template + `/dx-doctor` row). The live-checklist half is opt-in — see #178.
