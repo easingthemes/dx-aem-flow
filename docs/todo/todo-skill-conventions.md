@@ -406,6 +406,16 @@ scaffolding). Full write-up + verify commands:
 
 ## 16. Rightsize CLAUDE.md + skills with `/doctor`
 
+**Re-anchored 2026-09-13 — blocked, needs an interactive session.** Claude Code
+v2.1.261 (2026-09-04) shipped **`/skill-doctor`**, which reports which loaded
+skills go unused and what each costs in context. That is a more direct instrument
+than the general `/doctor` this item was written against, and it is the same
+measurement #137 needs, so run both in one session. Neither `/doctor` nor
+`/skill-doctor` has a headless equivalent — this item cannot be closed from a
+background or pipeline run, and its tracker Status says so. Record the raw
+per-skill numbers in § 9 (concise-body audit, #113) before interpreting them.
+
+
 **Added:** 2026-07-25
 **Source:** [2026-07-25-context-engineering-claude5.md](../research/2026-07-25-context-engineering-claude5.md).
 The article ships its best practices as the `/doctor` (a.k.a. `claude doctor`)

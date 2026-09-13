@@ -63,6 +63,8 @@
 3. The `## Return` block stays mandatory as the LAST emitted block in both paths — that way the orchestrator's "read only the Return block" instruction still works (the verbose part is in its tool result but not echoed to the user's main context).
 4. Verify both paths empirically: standalone gives full UX, orchestrator path keeps the lean tool-result.
 
+## Subagent hooks
+
 **Added:** 2026-03-03
 **Resolved:** 2026-04-25
 **Status:** Both Claude Code (`SubagentStart`/`SubagentStop` first-class events since v2.1.x) and Copilot CLI (`agentStop`/`subagentStop` shipped, [#1157](https://github.com/github/copilot-cli/issues/1157)/[#2253](https://github.com/github/copilot-cli/issues/2253) closed 2026-04-07) support these hooks natively. TaskCreate progress already covers most observability needs.
