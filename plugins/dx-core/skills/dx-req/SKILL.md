@@ -1,7 +1,7 @@
 ---
 name: dx-req
 description: Full requirements pipeline — fetch ADO/Jira story, validate DoR, distill requirements, research codebase, generate team summary. Replaces the dx-req-fetch → dor → explain → research → share sequence. Use to start working on any ticket.
-when_to_use: "Use when starting work on a story or ticket. Trigger on 'start story', 'analyze ticket', 'requirements for X', 'fetch requirements', 'dx-req <id>', or when given an ADO/Jira URL and asked to begin."
+when_to_use: "Use when starting work on a story or ticket. Trigger on 'start story', 'analyze ticket', 'requirements for X', 'fetch requirements', 'dx-req <id>', or when given an ADO/Jira URL and asked to begin. Do NOT use when there is no ticket and requirements come from a file or document (that's dx-req-import), to create child Tasks (dx-req-tasks), or to check Definition of Done (dx-req-dod)."
 argument-hint: "[ADO Work Item ID, Jira key, or URL]"
 model: sonnet
 context: fork
