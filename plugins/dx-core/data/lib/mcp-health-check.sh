@@ -5,6 +5,12 @@
 # Output: one line per server with status.
 set -euo pipefail
 
+# Shared config parser (yaml_val). Sourcing is safe — dx-common.sh only runs its
+# CLI dispatch when executed directly.
+# shellcheck source=./dx-common.sh
+. "$(dirname "${BASH_SOURCE[0]}")/dx-common.sh"
+set -euo pipefail   # re-assert: dx-common.sh sets its own options
+
 SCOPE="${1:-all}"
 FAILED=0
 
@@ -21,7 +27,7 @@ check_ado() {
 check_aem() {
   # AEM: try hitting the author URL from config
   local author_url
-  author_url=$(grep 'author-url:' .ai/config.yaml 2>/dev/null | head -1 | sed 's/.*: *//' | tr -d '"' | tr -d "'")
+  author_url=$(CONFIG_FILE=.ai/config.yaml yaml_val 'aem.author-url')
   if [ -z "$author_url" ]; then
     echo "⚠ AEM: no author-url in .ai/config.yaml"
     return
