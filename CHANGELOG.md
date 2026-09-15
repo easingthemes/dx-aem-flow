@@ -1,3 +1,10 @@
+## [3.6.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.4...v3.6.5) (2026-09-15)
+
+
+### Bug Fixes
+
+* **dx-core:** config parsers mangle values with inline comments ([#195](https://github.com/easingthemes/dx-aem-flow/issues/195)) ([e8ef262](https://github.com/easingthemes/dx-aem-flow/commit/e8ef26238ebc5860517f4d0d0e8b567c92c4d631)), closes [#0](https://github.com/easingthemes/dx-aem-flow/issues/0)
+
 ## [3.6.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.3...v3.6.4) (2026-09-15)
 
 
