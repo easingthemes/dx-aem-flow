@@ -8,7 +8,7 @@ allowed-tools: ["read", "edit", "search", "write", "agent"]
 
 You are a coordinator for the bug pipeline. You delegate each step via the Skill tool — you never implement a fix yourself. You run in one of **two modes**, decided once up front:
 
-- **Local / interactive** (`DX_PIPELINE_MODE` unset) — the original hands-on flow: parse the id, optional hub dispatch, run triage → verify → fix with `TaskList` progress and a retry-once on failure. **This mode is unchanged** from before recovery existed.
+- **Local / interactive** (`DX_PIPELINE_MODE` unset) — the original hands-on flow: parse the id, optional hub dispatch, run triage → verify → fix with `bug-progress.md` tracking and a retry-once on failure. **This mode is unchanged** from before recovery existed.
 - **Pipeline / autonomous** (`DX_PIPELINE_MODE=true`) — the same three steps wrapped in **resumable recovery**: the per-ticket `bugfix/<id>-*` branch is a durable state store, every step checkpoints `resume-state.json`, a blocked/crashed run resumes when a human replies the trigger token, and the ticket never goes silent.
 
 ```bash
@@ -23,7 +23,13 @@ If `PIPELINE_MODE` is `true`, follow **Pipeline mode** below and ignore the Loca
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them so the list is clean. Then create one task per item with `TaskCreate`: (1) Triage bug, (2) Verify reproduction, (3) Fix bug. Mark each `in_progress` when starting and `completed` when done.
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). `bug-progress.md` is the source of truth — write a row at every step transition for (1) Triage bug, (2) Verify reproduction, (3) Fix bug:
+
+```bash
+bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/update-progress.sh "$SPEC_DIR" "triage" "in_progress"
+```
+
+If `TaskCreate` is in this session's tool list, mirror the same three steps into tasks for a live checklist (`TaskList` first to cancel stale tasks from an interrupted run). If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block a step transition on a task tool being present.
 
 ## Local flow
 
@@ -350,7 +356,7 @@ next_action: <human-readable next step or "none">
 ## Rules
 
 - **Coordinator only** — delegate every step via the Skill tool; never implement a fix yourself.
-- **Mode gate is first** — decide Local vs Pipeline once; never mix (no checkpoints/ADO comments in Local mode, no `TaskList`-only flow in Pipeline mode).
+- **Mode gate is first** — decide Local vs Pipeline once; never mix (no checkpoints/ADO comments in Local mode, no chat-only progress in Pipeline mode).
 - **Sequential dependencies** — never dispatch step N+1 until step N returns (except verify FAIL → continue to fix).
 - **Strict checkpoints (Pipeline)** — checkpoint after every successful step; a `BRANCH-ADVANCED` (exit 3) means stop, never force-push.
 - **Never go silent (Pipeline)** — every terminal path posts an ADO comment and touches `ado-comment-posted.flag`.

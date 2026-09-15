@@ -30,7 +30,16 @@ Build a combined argument string from whatever was provided (e.g., `2416553 http
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each item using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). The progress **file** is the source of truth — write it at every item transition:
+
+```bash
+DX_PROGRESS_FILE="figma-progress.md" DX_PROGRESS_TITLE="/dx-figma-all Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<item>" "<status>"
+```
+
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per item, updated in place.
+
+If `TaskCreate` is in this session's tool list, also mirror the same items into tasks so the user gets a live checklist — `TaskList` first to cancel stale tasks from an interrupted run. If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block an item transition on a task tool being present.
 
 1. Extract design from Figma
 2. Generate prototype

@@ -93,6 +93,9 @@ recompute run 1's slug and must discover the ticket's existing branch + committe
 state. Phase 0 emits `SPEC_DIR=…` / `BRANCH=…`; capture those values.
 
 **Fresh-run state init (only when Phase 0 dispatch is `fresh`):**
+
+Progress follows `.ai/rules/task-progress.md` — `simple-progress.md` is the source of truth, written at every phase/gate transition. Task tools, if this session has them, are an optional mirror; never block a transition on one.
+
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh "$SPEC_DIR" "Preflight" "done"
 echo '{"gates":{}}' > "$SPEC_DIR/confidence.json"
