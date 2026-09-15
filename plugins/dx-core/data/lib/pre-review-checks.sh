@@ -82,6 +82,27 @@ LINT_CSS_CMD=$(yaml_val "lint-css")
 FE_DIR=$(yaml_val "frontend-dir")
 BASE_BRANCH=$(yaml_val "base-branch")
 
+# --- Command runner ---
+# Phase commands come from config and may print anything. Their stdout must not
+# reach ours: this script's only output is the JSON the caller parses, so a
+# chatty build tool would corrupt it. Capture both streams to a log instead of
+# discarding them — a failed phase can then report why it failed.
+RUN_LOG_DIR=$(mktemp -d "${TMPDIR:-/tmp}/dx-pre-review.XXXXXX")
+trap 'rm -rf "$RUN_LOG_DIR"' EXIT
+
+# run_cmd <log-name> <command-string>  -> exit status of the command
+run_cmd() {
+  local log="$RUN_LOG_DIR/$1"; shift
+  eval "$*" >"$log" 2>&1
+}
+
+# log_lines <log-name> [max]  -> last N non-blank lines, one ISSUES entry each
+log_lines() {
+  local log="$RUN_LOG_DIR/$1" max="${2:-10}"
+  [ -s "$log" ] || return 0
+  sed 's/\r$//' "$log" | grep -v '^[[:space:]]*$' | tail -n "$max" | sed 's/^/  | /'
+}
+
 # --- Determine base SHA ---
 if [ -n "$BASE_BRANCH" ]; then
   BASE_SHA=$(git merge-base "$BASE_BRANCH" HEAD 2>/dev/null || git merge-base "origin/$BASE_BRANCH" HEAD 2>/dev/null || echo "")
@@ -101,11 +122,12 @@ HAS_FE=$(echo "$CHANGED_FILES" | grep -cE '\.(js|jsx|ts|tsx|scss|css)$' || true)
 # --- Phase 1: Compile ---
 phase1_pass=true
 if [ "$HAS_COMPILABLE" -gt 0 ] && [ -n "$COMPILE_CMD" ]; then
-  if eval "$COMPILE_CMD" -q 2>/dev/null; then
+  if run_cmd compile.log "$COMPILE_CMD"; then
     PHASES+=('{"phase": 1, "name": "Compile", "status": "passed"}')
   else
     PHASES+=('{"phase": 1, "name": "Compile", "status": "failed"}')
     ISSUES+=("Compilation failed — run: $COMPILE_CMD")
+    while IFS= read -r l; do ISSUES+=("$l"); done < <(log_lines compile.log)
     phase1_pass=false
     OVERALL=false
   fi
@@ -119,23 +141,21 @@ fi
 if [ "$HAS_FE" -gt 0 ] && [ -n "$FE_DIR" ] && [ -d "$FE_DIR" ]; then
   lint_issues=()
 
-  # JS lint
-  if [ -n "$LINT_JS_CMD" ]; then
-    if $AUTO_FIX; then
-      eval "$LINT_JS_CMD" 2>/dev/null || lint_issues+=("JS lint found issues (auto-fix applied, check remaining)")
-    else
-      eval "$LINT_JS_CMD" 2>/dev/null || lint_issues+=("JS lint found issues — run lint to auto-fix")
-    fi
+  # run_lint <log-name> <command> <message-on-failure>
+  run_lint() {
+    run_cmd "$1" "$2" && return 0
+    lint_issues+=("$3")
+    while IFS= read -r l; do lint_issues+=("$l"); done < <(log_lines "$1")
+  }
+
+  if $AUTO_FIX; then
+    lint_note="auto-fix applied, check remaining"
+  else
+    lint_note="run lint to auto-fix"
   fi
 
-  # CSS lint
-  if [ -n "$LINT_CSS_CMD" ]; then
-    if $AUTO_FIX; then
-      eval "$LINT_CSS_CMD" 2>/dev/null || lint_issues+=("CSS lint found issues (auto-fix applied, check remaining)")
-    else
-      eval "$LINT_CSS_CMD" 2>/dev/null || lint_issues+=("CSS lint found issues — run lint to auto-fix")
-    fi
-  fi
+  [ -n "$LINT_JS_CMD" ]  && run_lint lint-js.log  "$LINT_JS_CMD"  "JS lint found issues — $lint_note"
+  [ -n "$LINT_CSS_CMD" ] && run_lint lint-css.log "$LINT_CSS_CMD" "CSS lint found issues — $lint_note"
 
   if [ ${#lint_issues[@]} -eq 0 ]; then
     PHASES+=('{"phase": 2, "name": "Lint", "status": "passed"}')
@@ -154,11 +174,12 @@ fi
 
 # --- Phase 3: Test ---
 if [ "$HAS_COMPILABLE" -gt 0 ] && [ "$phase1_pass" = true ] && [ -n "$TEST_CMD" ]; then
-  if eval "$TEST_CMD" -q 2>/dev/null; then
+  if run_cmd test.log "$TEST_CMD"; then
     PHASES+=('{"phase": 3, "name": "Test", "status": "passed"}')
   else
     PHASES+=('{"phase": 3, "name": "Test", "status": "failed"}')
     ISSUES+=("Tests failed — run: $TEST_CMD")
+    while IFS= read -r l; do ISSUES+=("$l"); done < <(log_lines test.log)
     OVERALL=false
   fi
 elif [ "$phase1_pass" = false ]; then
