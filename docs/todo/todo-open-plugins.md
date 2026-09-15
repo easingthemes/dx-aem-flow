@@ -17,7 +17,7 @@ CLI, the Copilot SDK and the Copilot app on 2026-08-12.
 | Layout | `.plugin/` + `commands/` + `rules/*.mdc` + `outputStyles/` | root `plugin.json` + optional `skills/` + optional `mcp.json` (+ `schemas/`) |
 | Required fields | (v1.0.0 set) | **`$schema` and `name` only** |
 | Design stance | configurable | "a minimal, genuinely portable interoperability floor" — "fixed conventions and flat layouts over configurable indirection" |
-| Status | self-declared canonical v1.0.0, no tagged release | status page still reads **Working Draft** |
+| Status | self-declared canonical v1.0.0, no tagged release | **1.0.0 released**; 1.1.0 is the current Working Draft |
 
 **Honest consequence, not a conclusion:** the five Vercel-spec surfaces tracked
 below — `.plugin/plugin.json`, `.mdc` rules, a `commands/` directory,
@@ -125,7 +125,7 @@ do not act on it until the verdict is written.
 **Updated:** 2026-04-06 — `vercel-labs/open-plugin` repo now accessible (last updated 2026-04-03). Vercel actively using the spec for their own `vercel-plugin` (34 skills). Copilot CLI now supports `.plugin/` manifest directories alongside `.claude-plugin/`. Spec appears to be stabilizing.
 **Problem:** The Open Plugins GitHub repo (`vercel-labs/open-plugin`) was returning 404. The spec was only on the website. Until the repo is public, the spec may change significantly.
 **Scope:** All alignment items above depend on spec stability.
-**Done-when (re-anchored 2026-09-13):** [`github.com/agentplugins/agent-plugins-spec`](https://github.com/agentplugins/agent-plugins-spec) has a **tagged release** and its status page no longer reads *Working Draft*. *(Superseded Done-when, kept as history: "`github.com/vercel-labs/open-plugin` is public and has a tagged release" — that repo was renamed to `vercel-labs/open-plugin-spec` and the effort has since been absorbed into Agent Plugins 1.0, so the old URL is dead and the old check can never pass.)*
+**Done-when (re-anchored 2026-09-13):** the **1.0.0** spec text at [`github.com/agentplugins/agent-plugins-spec`](https://github.com/agentplugins/agent-plugins-spec) has been read and this file records, for each of the five surfaces below (`.plugin/plugin.json`, `.mdc` rules, `commands/`, `${PLUGIN_ROOT}`, `outputStyles/`), whether it is **in 1.0.0**, **out of scope**, or **deferred to the 1.1.0 Working Draft** — with the retire-or-keep call for #26–#30 written down. (Verified 2026-09-13: **1.0.0 is already released**, so "wait for a tagged release" is no longer a blocker; "Working Draft" now labels 1.1.0.) *(Superseded Done-when, kept as history: "`github.com/vercel-labs/open-plugin` is public and has a tagged release" — that repo was renamed to `vercel-labs/open-plugin-spec` and the effort has since been absorbed into Agent Plugins 1.0, so the old URL is dead and the old check can never pass.)*
 **Approach:** Periodic check (monthly). Once public, review the full spec and re-evaluate all items above. The Agent Skills layer (SKILL.md) is already stable and adopted — the packaging layer is the uncertain part.
 **Upstream check (2026-07-01):** Repo **renamed** `vercel-labs/open-plugin` → **[vercel-labs/open-plugin-spec](https://github.com/vercel-labs/open-plugin-spec)** (old URL 404s). The document self-declares **canonical v1.0.0**, but there is still **NO git tagged release** ("No releases published") — so the Done-when is not met. In-spec now: `.plugin/plugin.json` (host MUST check), `commands/` dir, `${PLUGIN_ROOT}` env var (no `CLAUDE_PLUGIN_ROOT` alias), `.mdc` as the *default* rules extension, and `outputStyles/`. **CANNOT CONFIRM** that Claude Code or Copilot CLI actually discover `.plugin/` or honor `${PLUGIN_ROOT}` yet — no primary source shows host conformance. Hold all alignment items until a tagged release + confirmed host support. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 
@@ -134,8 +134,8 @@ do not act on it until the verdict is written.
 Cursor / Microsoft / OpenAI / Vercel maintainers with Google joining; launch
 clients ChatGPT, Codex, Cursor, GitHub Copilot, Kiro, VS Code; GitHub shipped GA
 across VS Code, Copilot CLI, the Copilot SDK and the Copilot app on 2026-08-12).
-Status still reads **Working Draft**, so the watch stays open — but it is now
-pointed at a live repo instead of a dead one. On the next check, also read the
-five surfaces above (`.plugin/plugin.json`, `.mdc`, `commands/`, `${PLUGIN_ROOT}`,
-`outputStyles/`) against the spec text and record retire-or-keep for each; the
+**1.0.0 is released** (the *Working Draft* label has moved on to 1.1.0), so the
+blocker is no longer "wait for a release" — it is that nobody has read the 1.0.0
+text yet. On the next check, read the five surfaces above (`.plugin/plugin.json`,
+`.mdc`, `commands/`, `${PLUGIN_ROOT}`, `outputStyles/`) against the spec text and record retire-or-keep for each; the
 minimal-floor design stance suggests they are gone, but that is unconfirmed.

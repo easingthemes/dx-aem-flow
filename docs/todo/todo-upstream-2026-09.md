@@ -1,8 +1,9 @@
 # TODO — Upstream Changes (September 2026 intake)
 
 Claude Code shipped a batch of plugin/hook/effort features between v2.1.251 and
-v2.1.269 that our docs and scripts do not reflect yet. One intake file per sweep
-keeps the provenance of each claim (release + date) next to the work item.
+v2.1.269 — plus one v2.1.257 security fix — that our docs and scripts do not
+reflect yet. One intake file per sweep keeps the provenance of each claim
+(release + date) next to the work item.
 
 Release versions below are the shipping version stated in the intake notes; each
 item's **Done-when** is checkable in this repo, not against the changelog.
@@ -71,9 +72,11 @@ what the tier table actually costs now (#137 / `/skill-doctor`) before capping i
 made `--plugin-dir` accept a *folder of plugins*: every child folder with a
 manifest loads, and children added or removed while running are picked up. Our
 `plugins/` directory is exactly that shape — one `--plugin-dir plugins` would
-replace the marketplace dance for local development. The same release made
-`/plugin` install/enable/disable take effect on menu close, so the
-`/reload-plugins` step some of our docs still imply is unnecessary.
+replace the marketplace dance for local development. Separately, since
+v2.1.221 plugins installed from `/plugin` activate immediately when safe instead
+of always requiring `/reload-plugins`, so the explicit reload step some of our
+docs imply is usually unnecessary — v2.1.265 kept `/reload-plugins` and extended
+it to headless sessions, so it is still the fallback, not a removed command.
 **Scope:** `CLAUDE.md` § "Testing Changes"; the setup/contributing pages on the
 docs site that repeat the marketplace instructions
 (`website/src/pages/contributing/`). Both are owned by the docs workstream —
@@ -111,10 +114,12 @@ machine without the CLI instead of failing the PR.
 ## Symlinked plugin component paths are now refused
 
 **Added:** 2026-09-13
-**Problem:** Claude Code v2.1.266 (2026-09-08) fixed a plugin escape: a plugin
+**Problem:** Claude Code v2.1.257 (2026-09-01) fixed a plugin escape: a plugin
 could read outside its own directory by pointing a command / agent / skill /
-hooks component path at a symlink. Such paths now error. Verified in this repo on
-2026-09-13: `find . -type l -not -path './node_modules/*' -not -path './.git/*'`
+hooks component path at a symlink. Such paths now error. (v2.1.265 followed up
+with a backslash-spelled path that bypassed the same containment check on macOS
+and Linux, and v2.1.267 with the marketplace-entry equivalent.) Verified in this
+repo on 2026-09-13: `find . -type l -not -path './node_modules/*' -not -path './.git/*'`
 returns nothing, so no plugin component path here is a symlink and all four
 plugins are unaffected. The open question is the *documented* layout:
 `.codex/INSTALL.md` tells users to `ln -sf` every
