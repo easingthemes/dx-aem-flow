@@ -1,3 +1,10 @@
+## [3.6.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.3...v3.6.4) (2026-09-15)
+
+
+### Bug Fixes
+
+* **dx-core:** make progress tracking file-first, not tool-dependent ([#192](https://github.com/easingthemes/dx-aem-flow/issues/192)) ([64662eb](https://github.com/easingthemes/dx-aem-flow/commit/64662eb4389be07e7a3ff38e7e9e1701e6535623))
+
 ## [3.6.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.2...v3.6.3) (2026-09-15)
 
 
