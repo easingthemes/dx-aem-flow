@@ -1,3 +1,10 @@
+## [3.6.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.1...v3.6.2) (2026-09-15)
+
+
+### Bug Fixes
+
+* remove unsupported "version" key from plugin hooks.json ([#194](https://github.com/easingthemes/dx-aem-flow/issues/194)) ([f5ad424](https://github.com/easingthemes/dx-aem-flow/commit/f5ad424c792a8396117b3804319f88ae6116e053))
+
 ## [3.6.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.0...v3.6.1) (2026-09-01)
 
 
