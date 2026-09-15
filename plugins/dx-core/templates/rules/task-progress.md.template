@@ -27,11 +27,15 @@ crashed run.
 - **Write it with the shared script**, so every skill produces the same table:
   ```bash
   DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="/dx-agent-all Progress" \
-    bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
+    bash .ai/lib/update-progress.sh "$SPEC_DIR" "Planning" "in_progress"
   ```
   Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` ·
   `blocked`. One row per phase, updated in place — never append a second row
   for the same phase.
+
+  The script path is project-relative on purpose: `/dx-init` installs the script
+  to `.ai/lib/`, and `$CLAUDE_PLUGIN_ROOT` is set only by Claude Code — it is
+  unset on Copilot CLI, Codex CLI and Gemini CLI, and in the ADO pipeline agents.
 - **Mirror into task tools only when they exist.** If `TaskCreate` is in the
   session's tool list, mirror the same phases so the user gets a live checklist.
   If it is absent, say nothing about it and carry on — a missing tool is the

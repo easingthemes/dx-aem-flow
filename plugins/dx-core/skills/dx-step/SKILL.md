@@ -14,9 +14,15 @@ You execute the next pending step from implement.md — implement the changes, v
 Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). The progress **file** is the source of truth — write it at every step transition:
 
 ```bash
-DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Dev Progress" \
-  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>"
+DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<n>: <title>" "<status>"
 ```
+
+The row key is `<n>: <title>` — the step number and title exactly as they appear
+in `implement.md`. `dx-step-all` invokes this skill once per step and writes the
+same file with the same key and the same `DX_PROGRESS_TITLE`, so a step must
+produce **one** row however it was started, and `dx-agent-all` counts it (its
+counters anchor on `^\| [0-9]+:`). Never key a row on a free-form label.
 
 Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per step, updated in place.
 

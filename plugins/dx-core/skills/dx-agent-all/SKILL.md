@@ -165,7 +165,7 @@ At the start, determine which optional phases will run and calculate the total. 
 | Execution | pending | — |
 ```
 
-Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked` — the same set every dx skill writes, so `dx-agent-all` and a nested `dx-step-all` produce one readable file. Parse it with `grep -c "| done "`, not by emoji.
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked` — the same set every dx skill writes, so `dx-agent-all` and a nested `dx-step-all` produce one readable file.
 
 ### Execution Methodology
 
@@ -462,9 +462,13 @@ Skill invocations are blocking — the orchestrator does NOT poll mid-execution.
 ```bash
 # Phase rows and step rows share this file, so anchor on the "<n>: <title>"
 # step-row shape — a bare "| done " also matches completed phase rows.
-DONE=$(grep -cE "^\| [0-9]+:.*\| done \|" "$SPEC_DIR/dev-all-progress.md" || echo 0)
-TOTAL=$(grep -cE "^\| [0-9]+:" "$SPEC_DIR/dev-all-progress.md" || echo 0)
-HEAL=$(grep -c "healing" "$SPEC_DIR/dev-all-progress.md" || echo 0)   # heal cycles live in the note column
+# `grep -c` already prints 0 when nothing matches, but exits 1 doing it — so
+# `|| true` keeps the count a single line ( `|| echo 0` appends a second "0" ).
+DONE=$(grep -cE "^\| [0-9]+:.*\| done \|" "$SPEC_DIR/dev-all-progress.md" || true)
+TOTAL=$(grep -cE "^\| [0-9]+:" "$SPEC_DIR/dev-all-progress.md" || true)
+# Heal cycles live in the note column — anchor there so a step whose *title*
+# says "healing" is not counted.
+HEAL=$(grep -cE "^\|[^|]*\|[^|]*\|[^|]*healing" "$SPEC_DIR/dev-all-progress.md" || true)
 echo "Phase 3: Execution — $DONE/$TOTAL steps done; $HEAL heal cycles"
 ```
 

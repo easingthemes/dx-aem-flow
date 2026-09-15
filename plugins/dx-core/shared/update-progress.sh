@@ -36,19 +36,15 @@ mkdir -p "$SPEC_DIR"
 # Resolve ticket id from spec dir name (e.g., 9999999-foo-bar -> 9999999)
 TICKET=$(basename "$SPEC_DIR" | grep -oE '^[0-9]+' || echo "unknown")
 
-# Escape regex metachars in PHASE so phase names like "Phase(A.1)" or
-# "Build|Deploy" are matched literally in grep/sed patterns (C1).
-PHASE_REGEX=$(printf '%s' "$PHASE" | sed 's/[][\.*^$/(){}?+|]/\\&/g')
+# A literal '|' in any value would add a markdown column, so swap it for
+# U+2223 (DIVIDES). This is the ONLY transform applied to a value — the row is
+# matched and rewritten with literal string comparison (awk `index`), never a
+# regex or a sed replacement, so phase names like "Phase(A.1)", "Build|Deploy"
+# or notes like "color #FF0000 & more" need no further escaping.
+cell() { printf '%s' "$1" | sed 's/|/∣/g'; }
 
-# Sanitize values used in sed replacements and table cells (C2):
-#   - escape sed replacement metachars: & \ #
-#   - replace '|' with U+2223 (DIVIDES) so the markdown table column count
-#     stays intact even when notes/statuses contain a literal pipe
-sanitize() {
-  printf '%s' "$1" | sed -e 's/[&\\#]/\\&/g' -e 's/|/∣/g'
-}
-STATUS_S=$(sanitize "$STATUS")
-NOTE_S=$(sanitize "$NOTE")
+PHASE_CELL=$(cell "$PHASE")
+ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") |"
 
 # Initialize the file on first write. The header is generated here rather than
 # read from a template so a coordinator needs no per-skill template file.
@@ -60,19 +56,22 @@ if [[ ! -f "$PROGRESS" ]]; then
   } > "$PROGRESS"
 fi
 
-# If the phase row already exists, update it; otherwise append
-if grep -qE "^\| ${PHASE_REGEX} \|" "$PROGRESS"; then
-  # Use '#' as the sed delimiter to avoid collisions with the literal '|'
-  # characters in the markdown table rows. Portable across BSD and GNU sed.
-  if sed --version >/dev/null 2>&1; then
-    sed -i "s#^\(| ${PHASE_REGEX} | \).*#\\1${STATUS_S} | ${NOTE_S} |#" "$PROGRESS"
-  else
-    sed -i '' "s#^\(| ${PHASE_REGEX} | \).*#\\1${STATUS_S} | ${NOTE_S} |#" "$PROGRESS"
-  fi
-else
-  # Append literal phase name (not the regex-escaped form) but use sanitized
-  # status/note so a stray '|' in the note can't break the table layout.
-  printf '| %s | %s | %s |\n' "$PHASE" "$STATUS_S" "$NOTE_S" >> "$PROGRESS"
-fi
+# Rewrite the row in place if the phase is already listed, else append it.
+# Values reach awk through the environment rather than `-v`, because `-v`
+# interprets backslash escapes in the value and a phase name may contain one.
+TMP=$(mktemp "${TMPDIR:-/tmp}/dx-progress.XXXXXX")
+trap 'rm -f "$TMP"' EXIT
+
+DX_ROW_KEY="| $PHASE_CELL | " DX_ROW="$ROW" awk '
+  index($0, ENVIRON["DX_ROW_KEY"]) == 1 {
+    # One row per phase: rewrite the first match, drop any duplicate.
+    if (!seen) { print ENVIRON["DX_ROW"]; seen = 1 }
+    next
+  }
+  { print }
+  END { if (!seen) print ENVIRON["DX_ROW"] }
+' "$PROGRESS" > "$TMP"
+
+cat "$TMP" > "$PROGRESS"
 
 echo "OK: progress updated for ${PHASE} → ${STATUS}" >&2
