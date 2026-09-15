@@ -299,6 +299,13 @@ grep -n "no-op" CLAUDE.md  # returns a line in the Checklist section
 
 ## 14. Add negative-trigger clauses to collision-prone skill descriptions
 
+**Status: Done (2026-09-13).** A "Do NOT use …" clause was added to the
+`when_to_use` frontmatter of all 20 cluster members, each naming the sibling it
+is most confused with. `dx-estimate` also had its `description` quoted — the
+unquoted `Batch mode: ` made the YAML frontmatter unparseable. The Done-when
+loop below returns no output; `validate-skills.sh` and `validate-agents.sh`
+pass on all 77 skills and 13 agents.
+
 **Added:** 2026-07-20
 **Source:** [2026-07-20-skill-authoring-best-practices.md](../research/2026-07-20-skill-authoring-best-practices.md)
 §6 + §8 rule 3 (Philipp Schmid, "Don't Ship Skills Without Evals"). The talk's
@@ -405,6 +412,15 @@ scaffolding). Full write-up + verify commands:
 **Re-run after #170's `/doctor` pass** to confirm cuts don't reintroduce a clash.
 
 ## 16. Rightsize CLAUDE.md + skills with `/doctor`
+
+**Status: Blocked — needs an interactive session (re-anchored 2026-09-13).**
+Claude Code v2.1.261 (2026-09-04) shipped **`/skill-doctor`**, which reports which loaded
+skills go unused and what each costs in context. That is a more direct instrument
+than the general `/doctor` this item was written against, and it is the same
+measurement #137 needs, so run both in one session. Neither `/doctor` nor
+`/skill-doctor` has a headless equivalent — this item cannot be closed from a
+background or pipeline run, and its tracker Status says so. Record the raw
+per-skill numbers in § 9 (concise-body audit, #113) before interpreting them.
 
 **Added:** 2026-07-25
 **Source:** [2026-07-25-context-engineering-claude5.md](../research/2026-07-25-context-engineering-claude5.md).

@@ -1,7 +1,7 @@
 ---
 name: dx-pr
 description: Create a pull request after all plan steps are complete. Verifies all steps are done, generates PR description from share-plan.md, pushes branch, and creates PR via ADO MCP tools. Use as the final step in the execution pipeline.
-when_to_use: "Use when creating a pull request after all plan steps are complete. Trigger on 'create PR', 'open pull request', 'submit PR', or as the final step in the execution pipeline."
+when_to_use: "Use when creating a pull request after all plan steps are complete. Trigger on 'create PR', 'open pull request', 'submit PR', or as the final step in the execution pipeline. Do NOT use to stage or write commits (that's dx-pr-commit), to review a PR (dx-pr-review), or to answer review comments (dx-pr-answer)."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---

@@ -1,7 +1,7 @@
 ---
 name: dx-bug-triage
 description: Fetch a Bug work item from Azure DevOps/Jira, find the affected component in the codebase, and save triage findings. Creates raw-bug.md (faithful dump) and triage.md (component analysis + root cause hypothesis). Posts a clarification comment if ambiguities are found. Use when starting work on a bug ticket.
-when_to_use: "Use when starting work on a bug ticket to fetch it from ADO/Jira and find the affected component. Trigger on 'triage bug', 'analyze bug', 'what is this bug', or when given a Bug work item ID to start."
+when_to_use: "Use when starting work on a bug ticket to fetch it from ADO/Jira and find the affected component. Trigger on 'triage bug', 'analyze bug', 'what is this bug', or when given a Bug work item ID to start. Do NOT use to reproduce the bug in a browser (that's dx-bug-verify), to implement the fix (dx-bug-fix), or when the whole workflow is wanted in one go (dx-bug-all)."
 argument-hint: "[ADO Bug Work Item ID, Jira Issue Key, or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "AEM/*"]
 ---

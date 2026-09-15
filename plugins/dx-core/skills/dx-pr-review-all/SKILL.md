@@ -1,7 +1,7 @@
 ---
 name: dx-pr-review-all
 description: Review multiple Azure DevOps pull requests in batch. Use when reviewing several PRs at once or checking active PRs for a repo.
-when_to_use: "Use to review multiple PRs in batch. Trigger on 'review all PRs', 'batch review', 'review my PRs', 'review pending pull requests', or 'check all open PRs'."
+when_to_use: "Use to review multiple PRs in batch. Trigger on 'review all PRs', 'batch review', 'review my PRs', 'review pending pull requests', or 'check all open PRs'. Do NOT use for a single PR (that's dx-pr-review) or to generate reports from reviews already done (dx-pr-reviews-report)."
 argument-hint: "[PR URL | Repo URL | count] [count]"
 disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]

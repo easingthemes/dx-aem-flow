@@ -1,7 +1,7 @@
 ---
 name: dx-req-dod
 description: Check Definition of Done compliance and auto-fix gaps — reviews PR, tasks, docs. Posts summary to ADO.
-when_to_use: "Use to check Definition of Done compliance and auto-fix gaps. Trigger on 'check DoD', 'dod check', 'is this done', 'verify definition of done', or 'review PR for completeness'."
+when_to_use: "Use to check Definition of Done compliance and auto-fix gaps. Trigger on 'check DoD', 'dod check', 'is this done', 'verify definition of done', or 'review PR for completeness'. Do NOT use to fetch requirements (that's dx-req), to create or close child Tasks (dx-req-tasks), or to run code verification before a PR (dx-step-verify)."
 argument-hint: "[ADO Work Item ID, Jira Issue Key, or full URL]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
