@@ -55,7 +55,7 @@ TMPDIR=/tmp claude plugin eval plugins/dx-core --case <case-name> \
   --runs 3 --ablation none --scaffold --no-publish --allow-tools Write Bash
 ```
 
-`claude plugin eval` is in early access and gated per organization; if it prints `` `plugin eval` is currently in early access ``, enablement has not reached the machine (some clients need a variable Anthropic provides during onboarding — set it in your shell or `~/.claude/settings.json`, never in this repo). `TMPDIR=/tmp` keeps the sandbox from discovering `~/.claude/skills`. Pin `--model` and `--judge-model` before comparing scores over time, or a model rollout reads as a regression.
+`claude plugin eval` shipped as a documented command in Claude Code v2.1.269 (2026-09-11) — no early-access enablement needed any more; run `claude plugin eval --help` for the current flags. `TMPDIR=/tmp` keeps the sandbox from discovering `~/.claude/skills`. Pin `--model` and `--judge-model` before comparing scores over time, or a model rollout reads as a regression.
 
 Cost is real: agent runs are billed, `llm`/`baseline` graders add 3 judge calls each, and `--ablation with-without` doubles the run count. Structural graders (`regex`, `file_exists`, `tool_used`, `tool_order`) are free. Pilot with `--runs 1` and cap with `--max-cost-usd`. Don't wire this to every push — release tags or manual dispatch.
 
@@ -135,12 +135,16 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 
 | Tier | Effort | Use | Agents / Skills |
 |------|--------|-----|-----------------|
-| Opus 4.8 | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the new `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
-| Opus 4.8 | `high` | Deep reasoning (code review, planning, verification). **`high` is the default effort for Opus 4.8** (Claude Code v2.1.154+) | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
+| Opus | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
+| Opus | `high` | Deep reasoning (code review, planning, verification). `high` is the current Opus default effort | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
 | Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
 | Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
-**Tier escalation:** As of Claude Code v2.1.154 Opus 4.8 is the default model and runs at `high` effort by default — so every `model: opus` skill/agent already gets deep reasoning without setting `effort`. Use `xhigh` only as a deliberate step **above** that baseline: when a step has demonstrably failed at `high`, or when reviewing >5 files of changes. `xhigh` costs more and runs slower — it's not a free upgrade. The **lean system prompt is also default** as of v2.1.154 (all models except Haiku/Sonnet/Opus ≤4.7), so skills need less hand-holding prose — see the concise-body audit ([TODO #113](docs/todo/todo-skill-conventions.md)).
+Write `model: opus | sonnet | haiku` in frontmatter, never a version-pinned model id — the alias follows the current default generation, a pinned id goes stale.
+
+**Tier escalation:** Opus runs at `high` effort by default, so every `model: opus` skill/agent already gets deep reasoning without setting `effort`. Use `xhigh` only as a deliberate step **above** that baseline: when a step has demonstrably failed at `high`, or when reviewing >5 files of changes. `xhigh` costs more and runs slower — it's not a free upgrade. The **lean system prompt is also default** (all models except Haiku/Sonnet/Opus ≤4.7), so skills need less hand-holding prose — see the concise-body audit ([TODO #113](docs/todo/todo-skill-conventions.md)).
+
+**`effort:` frontmatter only started taking effect in v2.1.267 (2026-09-09)**, which fixed `effort:` on custom commands, skills and subagents being **silently ignored** on models whose default effort is pinned (Opus 4.7, Opus 4.8, Fable 5). Any `effort:` we set before that release was a no-op on those models — so the tiering above is only now actually in force, and the `xhigh` skills have never been measured against `high`. Re-check before assuming an escalation helped. Related: the same release added a `maxEffortLevel` setting (top-level or per-model under `modelSettings`) that caps effort across every provider — useful as a cost ceiling for `dx-automation` pipeline runs.
 
 ### MCP Servers
 

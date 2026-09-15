@@ -1,3 +1,17 @@
+## [3.6.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.2...v3.6.3) (2026-09-15)
+
+
+### Bug Fixes
+
+* add negative-trigger clauses to collision-prone skills ([#166](https://github.com/easingthemes/dx-aem-flow/issues/166)) ([#193](https://github.com/easingthemes/dx-aem-flow/issues/193)) ([4a7065e](https://github.com/easingthemes/dx-aem-flow/commit/4a7065e6ba81c6d70b5ef0cdce6c2c5720c75a00)), closes [#14](https://github.com/easingthemes/dx-aem-flow/issues/14) [#172](https://github.com/easingthemes/dx-aem-flow/issues/172) [#177-182](https://github.com/easingthemes/dx-aem-flow/issues/177-182) [#26-30](https://github.com/easingthemes/dx-aem-flow/issues/26-30) [#31](https://github.com/easingthemes/dx-aem-flow/issues/31) [#1](https://github.com/easingthemes/dx-aem-flow/issues/1) [#173-176](https://github.com/easingthemes/dx-aem-flow/issues/173-176) [#137](https://github.com/easingthemes/dx-aem-flow/issues/137) [#170](https://github.com/easingthemes/dx-aem-flow/issues/170) [#17](https://github.com/easingthemes/dx-aem-flow/issues/17) [#20](https://github.com/easingthemes/dx-aem-flow/issues/20) [#22](https://github.com/easingthemes/dx-aem-flow/issues/22) [#40](https://github.com/easingthemes/dx-aem-flow/issues/40) [#87](https://github.com/easingthemes/dx-aem-flow/issues/87) [#90](https://github.com/easingthemes/dx-aem-flow/issues/90) [#91](https://github.com/easingthemes/dx-aem-flow/issues/91) [#102](https://github.com/easingthemes/dx-aem-flow/issues/102) [#124](https://github.com/easingthemes/dx-aem-flow/issues/124) [#83](https://github.com/easingthemes/dx-aem-flow/issues/83) [#88](https://github.com/easingthemes/dx-aem-flow/issues/88) [#89](https://github.com/easingthemes/dx-aem-flow/issues/89) [#99](https://github.com/easingthemes/dx-aem-flow/issues/99) [#100](https://github.com/easingthemes/dx-aem-flow/issues/100) [#171](https://github.com/easingthemes/dx-aem-flow/issues/171) [#172](https://github.com/easingthemes/dx-aem-flow/issues/172) [#69-74](https://github.com/easingthemes/dx-aem-flow/issues/69-74) [#183-188](https://github.com/easingthemes/dx-aem-flow/issues/183-188) [#75-80](https://github.com/easingthemes/dx-aem-flow/issues/75-80) [#189-194](https://github.com/easingthemes/dx-aem-flow/issues/189-194) [#33](https://github.com/easingthemes/dx-aem-flow/issues/33) [-#41](https://github.com/-/issues/41) [#31](https://github.com/easingthemes/dx-aem-flow/issues/31)
+
+## [3.6.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.1...v3.6.2) (2026-09-15)
+
+
+### Bug Fixes
+
+* remove unsupported "version" key from plugin hooks.json ([#194](https://github.com/easingthemes/dx-aem-flow/issues/194)) ([f5ad424](https://github.com/easingthemes/dx-aem-flow/commit/f5ad424c792a8396117b3804319f88ae6116e053))
+
 ## [3.6.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.0...v3.6.1) (2026-09-01)
 
 

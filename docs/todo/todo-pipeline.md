@@ -99,7 +99,7 @@ The next 5 items are sub-goals contributing to this. Each is independently shipp
 - Coordinator skills have no `TaskCreate`. **Re-scoped 2026-09-12:** this is no longer a permissions gap. Since Claude Code v2.1.233 the task tools are absent by default on the models the pipelines run, so widening `ALLOWED_TOOLS` is an *opt-in* rather than a fix — naming `TaskCreate` there both permits and enables it. Progress observability no longer depends on it either way: every coordinator now writes a progress file (#177). Treat the task tools here as optional log decoration.
 - Skills that need to fetch a URL (e.g. checking a Confluence page) have no `WebFetch`.
 **Scope:** All YAMLs under `plugins/dx-automation/data/pipelines/cli/*.yml` (10 files) — the `ALLOWED_TOOLS:` env var.
-**Done-when:** `grep -n "ALLOWED_TOOLS:" plugins/dx-automation/data/pipelines/cli/*.yml` shows tool sets matched to each agent's needs (DevAgent gets build commands, DoR/DoD get `WebFetch`) AND a DevAgent run in CI executes `mvn clean install` (or the project's `build.command`) without permission errors. `TaskCreate` is explicitly **not** part of this bar — it moved to #178.
+**Done-when:** `grep -n "ALLOWED_TOOLS:" plugins/dx-automation/data/pipelines/cli/*.yml` shows tool sets matched to each agent's needs (DevAgent gets build commands, DoR/DoD get `WebFetch`) AND a DevAgent run in CI executes `mvn clean install` (or the project's `build.command`) without permission errors. `TaskCreate` is explicitly **not** part of this bar — it moved to #196.
 **Approach:** Build a per-agent matrix. Sketch:
 | Agent | Bash | Web | Tasks | Notebook |
 |---|---|---|---|---|

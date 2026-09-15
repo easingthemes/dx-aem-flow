@@ -4,7 +4,7 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 
 **What already works:** `plugin.json`, `marketplace.json`, SKILL.md, `.mcp.json`, hooks (`hooks.json` serves both), `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`, ToolSearch MCP discovery, `applyTo` arrays, plugin discovery via `--plugin-dir`, Open Plugins spec, Skill-to-Skill invocation (verified 2026-03-22).
 
-**Latest version:** v1.0.40 (2026-05-01). Key additions since v1.0.14 — see [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md) (delta) and [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md) for the full release table:
+**Latest version:** v1.0.83 (2026-09-04) — see § "Copilot CLI v1.0.83 hook capabilities" below for what changed since v1.0.40. Everything in the release list below was compiled against **v1.0.40 (2026-05-01)** and has not been re-verified since. Key additions since v1.0.14 — see [2026-05-01-platform-state-update.md](../research/2026-05-01-platform-state-update.md) (delta) and [2026-04-25-platform-state-update.md](../research/2026-04-25-platform-state-update.md) for the full release table:
 - v1.0.15: postToolUseFailure hook; MCP OAuth device-code flow.
 - v1.0.16: PermissionRequest hook; MCP servers reload after login.
 - v1.0.18: **Notification hook** (agent_completion, permission_prompt, elicitation).
@@ -18,7 +18,7 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 - v1.0.39: `ctrl+x → b` background tasks; ACP slash commands `/compact`, `/context`, `/usage`, `/env`.
 - v1.0.40: **`GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP` opt-in env-var gates** (BREAKING — see section below); MCP OAuth `client_credentials`; ADO auto-detect with GitHub MCP auto-disable; subagents respect own model; `/research` uses orchestrator/subagent model; autopilot capped at 5 continuations.
 
-**Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, prompt/agent hook types. Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields. **Note:** HTTP hook type now supported as of v1.0.35.
+**Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, prompt/agent hook types. *(Compiled against v1.0.40 — re-verify against v1.0.83 as part of the batch re-test, TODO #182.)* Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields. **Note:** HTTP hook type now supported as of v1.0.35.
 
 **`agentStop` / `subagentStop` events now exist** (Stop guard portable as of v1.0.x — see [#1157](https://github.com/github/copilot-cli/issues/1157), [#2253](https://github.com/github/copilot-cli/issues/2253), both closed 2026-04-07).
 
@@ -158,6 +158,44 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 - [ ] Remove `--additional-mcp-config` workaround from `website/src/pages/setup/copilot-cli.mdx`.
 - [ ] Verify in workflows that previously needed `--additional-mcp-config`.
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 1; release notes for v1.0.12.
+
+## Copilot CLI v1.0.83 hook capabilities
+
+**Added:** 2026-09-13
+**Problem:** Every Copilot CLI note in this file was written against v1.0.40
+(2026-05-01). Copilot CLI is now at **v1.0.83 (2026-09-04)** and has added three
+hook capabilities we neither use nor document:
+1. **Personal hooks from `~/.copilot/hooks`**, in addition to the repo-level
+   `.github/hooks`. Our hook-source table (`CLAUDE.md` § "Hook System — Platform
+   Separation", and the docs-site hooks page) lists only plugin `hooks/hooks.json`,
+   `.github/hooks/hooks.json` and agent-frontmatter `hooks:` — there is no row for
+   a user-level Copilot hook directory, so a consumer with personal hooks has an
+   undocumented fourth layer interacting with ours.
+2. **An `ask` permission decision for `preToolUse` hooks** — request user
+   confirmation before the tool executes, rather than only allow/deny. Our
+   `preToolUse`-shaped guards (branch-guard is the live example) are binary
+   today: `exit 2` blocks with stderr feedback, anything else lets the call
+   through. `ask` is the missing middle for guards that should warn rather than
+   hard-block.
+3. **OpenTelemetry trace context in hook input** (`traceparent` / `tracestate`),
+   so a hook can emit spans correlated with the agent run. This is the Copilot-side
+   counterpart of the OTel work in #100 and the telemetry line in #160
+   (`.ai/telemetry.jsonl`).
+**Scope:**
+- Docs (other workstream): `CLAUDE.md` § "Hook System — Platform Separation" table;
+  `website/src/pages/learn/hooks.mdx`.
+- Templates/implementation: `plugins/dx-core/hooks/hooks.json` (10 handlers today,
+  8 with `statusMessage`, 2 `async`), `plugins/dx-aem/hooks/hooks.json` (2 handlers),
+  and the `.github/hooks/` install performed by `/dx-init` step 9i.
+**Done-when:** `grep -rn "~/.copilot/hooks" CLAUDE.md website/src/pages/learn/hooks.mdx`
+returns the new hook-source row, AND `grep -rn '"ask"' plugins/*/hooks/hooks.json
+plugins/dx-core/skills/dx-init/SKILL.md` returns either an adopted `ask` decision
+or an explicit written decision not to adopt it.
+**Approach:** Document all three first — the personal-hooks row is a correctness
+fix to a table we ship, and costs nothing. `ask` is the only one worth adopting
+immediately, and only for advisory guards; branch-guard must stay a hard block.
+Defer OTel until #100/#160 pick a telemetry sink, otherwise it is spans with
+nowhere to go.
 
 ## Experimental Features
 
