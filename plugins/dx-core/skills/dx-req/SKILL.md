@@ -12,7 +12,16 @@ You run the full requirements pipeline: fetch a work item, validate its readines
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done.
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). The progress **file** is the source of truth — write it at every phase transition:
+
+```bash
+DX_PROGRESS_FILE="req-progress.md" DX_PROGRESS_TITLE="/dx-req Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<phase>" "<status>"
+```
+
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per phase, updated in place.
+
+If `TaskCreate` is in this session's tool list, also mirror the same phases into tasks so the user gets a live checklist — `TaskList` first to cancel stale tasks from an interrupted run. If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block a phase transition on a task tool being present.
 
 1. Fetch Story
 2. DoR Validation

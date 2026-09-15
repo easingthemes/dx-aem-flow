@@ -187,7 +187,9 @@ echo '{"authoring":[]}' > "$TMP/noCode.json"
 run "scope: missing .code key defaults to empty" \
   "$SCRIPTS/scope-check.sh" "$TMP/noCode.json"
 
-# C1: phase name with regex metachars (parens, dot) is treated literally
+# C1: phase name with regex metachars is matched literally. The row must not
+# only stay unique — the STATUS must actually flip. The old sed-based matcher
+# was green on the uniqueness check while silently failing to update the row.
 TMPSPEC2="$TMP/8888888-edge"
 run "progress: phase 'Phase(A.1)' creates row" \
   "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Phase(A.1)" "pending"
@@ -195,13 +197,41 @@ run "progress: same phase updates same row (no duplicate)" \
   "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Phase(A.1)" "done"
 run "progress: file has exactly 1 row for 'Phase(A.1)'" \
   bash -c "test \$(grep -cF '| Phase(A.1) |' $TMPSPEC2/simple-progress.md) -eq 1"
+run "progress: 'Phase(A.1)' row actually flipped to done" \
+  bash -c "grep -qF '| Phase(A.1) | done |' $TMPSPEC2/simple-progress.md"
 
-# C2: note with pipe and hash is sanitized, doesn't break table
+# C1b: a pipe in the PHASE name must not destroy the row or split the table.
+run "progress: phase 'Build|Deploy' creates row" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Build|Deploy" "in_progress"
+run "progress: phase 'Build|Deploy' updates in place" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC2" "Build|Deploy" "done" "ok"
+run "progress: 'Build|Deploy' is one row, status done" \
+  bash -c "test \$(grep -c 'Build' $TMPSPEC2/simple-progress.md) -eq 1 && grep -q 'Deploy | done | ok |' $TMPSPEC2/simple-progress.md"
+# A literal '|' in a value would add a markdown column. Every table line must
+# split into exactly 5 awk fields: "" | c1 | c2 | c3 | "".
+run "progress: every table row has exactly 3 columns" \
+  bash -c "awk -F'|' '/^\\|/ && NF != 5 { bad = 1 } END { exit bad + 0 }' $TMPSPEC2/simple-progress.md"
+
+# C2: note with pipe and hash is sanitized, doesn't break table — and the note
+# must be stored verbatim, with no sed replacement escapes leaking into it.
 TMPSPEC3="$TMP/7777777-special"
 run "progress: note with pipe and hash chars" \
   "$SCRIPTS/update-progress.sh" "$TMPSPEC3" "Phase 1" "done" "color #FF0000 | reverted"
 run "progress: file has clean row (no sed error, no extra | columns)" \
   bash -c "grep -q '| Phase 1 | done |' $TMPSPEC3/simple-progress.md"
+run "progress: note kept verbatim, no backslash escapes leaked" \
+  bash -c "grep -qF 'color #FF0000' $TMPSPEC3/simple-progress.md && ! grep -qF '\\#' $TMPSPEC3/simple-progress.md"
+
+# C2b: '&' in a note is a sed replacement metachar — it must not be escaped
+# into the file, and the appended value must equal the updated value.
+run "progress: note with ampersand on first write (append path)" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC3" "Phase Amp" "done" "A & B"
+run "progress: ampersand note stored verbatim on append" \
+  bash -c "grep -qF '| Phase Amp | done | A & B |' $TMPSPEC3/simple-progress.md"
+run "progress: same note on update path (in-place)" \
+  "$SCRIPTS/update-progress.sh" "$TMPSPEC3" "Phase Amp" "failed" "A & B"
+run "progress: append and update produce the same note" \
+  bash -c "grep -qF '| Phase Amp | failed | A & B |' $TMPSPEC3/simple-progress.md"
 
 # ===== rollback-authoring + aem-revert tests (offline — no actual HTTP) =====
 expect_exit "rollback: missing file exits 5" 5 \

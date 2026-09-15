@@ -27,7 +27,7 @@ fi
 
 Per-phase / per-step progress lines during the run are allowed in both paths.
 
-The orchestrator (`dx-agent-all`) cannot see your TaskList directly. To preserve user-visible progress, you MUST update `$SPEC_DIR/dev-all-progress.md` after each step transition:
+You run forked, so nothing inside this skill is visible to the orchestrator (`dx-agent-all`) — the progress file is the only channel. You MUST update `$SPEC_DIR/dev-all-progress.md` after each step transition:
 
 - Mark step in_progress at the start of execution
 - Mark step done | failed | healing immediately on transition
@@ -35,7 +35,14 @@ The orchestrator (`dx-agent-all`) cannot see your TaskList directly. To preserve
 
 The orchestrator reads this file after this skill returns and prints a one-line status summary to the user. Skill invocations are blocking — the orchestrator does not poll mid-execution. If you skip an update, the user sees stale progress when they ask for a recap.
 
-**Format** — one row per step in a table (see `.ai/templates/spec/dev-all-progress.md.template` if it exists, else use the existing format from prior runs):
+**Write it with the shared script** — it creates the file on first call and updates a row in place on later calls:
+
+```bash
+DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "1: <title>" "in_progress"
+```
+
+**Format** — one row per step:
 
 | Step | Status | Note |
 |---|---|---|
@@ -45,7 +52,9 @@ The orchestrator reads this file after this skill returns and prints a one-line 
 
 ## Progress Tracking
 
-After loading `implement.md`, use `TaskList` to check for existing tasks from a previous run. If stale tasks exist, cancel them first with `TaskUpdate` (status: `cancelled`). Then create a task for each plan step using `TaskCreate` (e.g., "Step 1: Create dialog XML"). Mark each `in_progress` when executing, `completed` when committed. On fix attempts, update the task subject (e.g., "Step 1: Create dialog XML (fix 1)"). On heal cycles, add a task: "Healing: <corrective action>".
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). After loading `implement.md`, write one `pending` row per plan step into `dev-all-progress.md` (see above), then move each to `in_progress` when executing and `done` when committed. Fix attempts and heal cycles go in the **note** column (`fix 1`, `healing: <corrective action>`) — never as a new row, or the step is duplicated.
+
+This skill runs forked (`context: fork`), so per `.ai/rules/task-progress.md` it does **not** create its own task tree — a forked skill's task list is invisible to its parent. The file is the channel.
 
 ## Flow
 
@@ -233,7 +242,7 @@ Check the step-fix return:
   New steps: <list of step numbers and titles>
   Total steps now: <updated total>
   ```
-  Update TaskList to reflect the new steps. Proceed to "Execute corrective steps".
+  Add the corrective steps to `dev-all-progress.md` (and mirror into tasks if they exist). Proceed to "Execute corrective steps".
 - **unrecoverable** → print: `Step <N> unrecoverable after 2 fixes + healing. Human intervention needed.` Proceed to "STOP: Human intervention needed".
 
 ### Execute corrective steps
