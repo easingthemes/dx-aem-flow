@@ -1,7 +1,7 @@
 ---
 name: dx-bug-all
 description: Run the full bug fix workflow — triage, verify, and fix — all in one command. Fetches the bug from ADO, reproduces it in browser, generates and executes a fix, and creates a PR. Use when starting work on a bug ticket.
-when_to_use: "Use when starting work on a bug ticket — fetches from ADO, reproduces it in browser, generates a fix, and creates a PR. Trigger on 'fix bug', 'work on bug ticket', 'bug all', or when given a Bug work item ID."
+when_to_use: "Use when starting work on a bug ticket — fetches from ADO, reproduces it in browser, generates a fix, and creates a PR. Trigger on 'fix bug', 'work on bug ticket', 'bug all', or when given a Bug work item ID. Do NOT use when only one phase is wanted — triage only (dx-bug-triage), reproduction only (dx-bug-verify), or fix and PR from existing triage (dx-bug-fix)."
 argument-hint: "<ADO Bug Work Item ID or full URL>"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

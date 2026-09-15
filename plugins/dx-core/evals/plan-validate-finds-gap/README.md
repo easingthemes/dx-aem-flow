@@ -30,13 +30,11 @@ extra ones).
 
 ## Running it
 
-`claude plugin eval` is in early access and gated per organization. If it
-prints `` `plugin eval` is currently in early access ``, enablement has not
-reached this machine — some clients need an enablement environment variable,
-which Anthropic provides during early-access onboarding. Set it in your shell
-or `~/.claude/settings.json` `env`, not in this repo. Self-test by running
-`claude plugin eval` in an empty directory: `No eval cases found …` means it
-is enabled.
+`claude plugin eval` shipped as a documented command in Claude Code v2.1.269
+(2026-09-11); the earlier per-organization early-access gate is gone. Run
+`claude plugin eval --help` for the current flags. Self-test by running
+`claude plugin eval` in an empty directory — `No eval cases found …` means the
+command is present and working.
 
 ```bash
 TMPDIR=/tmp \

@@ -2,14 +2,18 @@
 
 > **2026-08-15 — the runner question is settled.** Every item below was written
 > against a hand-rolled `tests/run-evals.sh` that never landed. It is superseded:
-> Anthropic ships **`claude plugin eval`** (in the CLI since 2.1.198, early-access
-> gated, still publicly undocumented), which covers cases, graders, repeated runs,
+> Anthropic ships **`claude plugin eval`** (in the CLI since 2.1.198; **GA and
+> documented as of Claude Code v2.1.269, 2026-09-11 — `claude plugin eval --help`
+> works, no early-access enablement, no org gate**), which covers cases, graders, repeated runs,
 > sandbox isolation, ablation, a stable v1 JSON result document, and CI exit codes.
 > The first suite is live at `plugins/dx-core/evals/plan-validate-finds-gap/`
 > (score 1.00 at `--runs 3`). Re-scope the items below against that harness rather
 > than rebuilding it — **but note it only drives `claude`**, so the cross-harness
 > half of #168 still needs a custom runner. Conventions and the run command are in
 > CLAUDE.md § Behavioral evals.
+>
+> **2026-09-13:** nothing in this file is blocked on enablement any more. Every
+> item below is executable by anyone with a current Claude Code install.
 
 ## First suite landed — extend coverage
 

@@ -1,7 +1,7 @@
 ---
 name: dx-req-import
 description: Validate external requirements and create spec structure without ADO. Reads a requirements document, checks completeness, and generates explain.md + optional research.md. Use when you have requirements from a BA, Confluence page, or email instead of an ADO ticket.
-when_to_use: "Use when importing requirements from a markdown file or local spec instead of an ADO/Jira ticket. Trigger on 'import requirements', 'requirements from file', 'dx-req-import', or when there is no ticket to fetch."
+when_to_use: "Use when importing requirements from a markdown file or local spec instead of an ADO/Jira ticket. Trigger on 'import requirements', 'requirements from file', 'dx-req-import', or when there is no ticket to fetch. Do NOT use when an ADO/Jira ticket exists (that's dx-req), to create child Tasks (dx-req-tasks), or to check Definition of Done (dx-req-dod)."
 argument-hint: "[path to requirements document]"
 disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent"]

@@ -1,7 +1,7 @@
 ---
 name: dx-bug-verify
 description: Reproduce a bug using Playwright — navigate to the repro URL, follow repro steps, take screenshots, and confirm whether the bug is reproducible. Supports `before` (default), `after`, and `qa` modes. Works with Azure DevOps/Jira. Use after /dx-bug-triage, after /dx-bug-fix (with `after`), or after PR merge (with `qa`) to verify on QA environment.
-when_to_use: "Use to reproduce a bug using Playwright before or after a fix. Trigger on 'verify bug', 'reproduce bug', 'check if bug is fixed', 'take screenshots of the bug', or after /dx-bug-fix with 'after' mode."
+when_to_use: "Use to reproduce a bug using Playwright before or after a fix. Trigger on 'verify bug', 'reproduce bug', 'check if bug is fixed', 'take screenshots of the bug', or after /dx-bug-fix with 'after' mode. Do NOT use to fetch or analyse the ticket (that's dx-bug-triage), to implement the fix (dx-bug-fix), or for full story QA on AEM (aem-qa)."
 argument-hint: "<work-item-id or issue-key> [before|after|qa]  (default: before)"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*", "playwright/*"]
 ---
