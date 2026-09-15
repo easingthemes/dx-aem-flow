@@ -757,7 +757,7 @@ helper to Forms.js
                 id: 'a-dev-progress', label: 'dev-all-progress.md', type: 'file', color: 'fork', badge: 'gitignored',
                 oneLiner: 'Per-step execution log — how progress survives dx-step-all\'s fork',
                 when: 'Updated after every step during autonomous execution',
-                description: "dx-step-all runs forked, so the orchestrator can't see its TaskList directly. This file is the only window into per-step progress — the orchestrator reads it after the fork returns its ## Return block.",
+                description: "dx-step-all runs forked, so nothing inside it is visible to the orchestrator. This file is the only window into per-step progress — the orchestrator reads it after the fork returns its ## Return block.",
                 target: 'skill-fork-box', enables: ['t-fork', 't-fork-detail'],
                 sample: `| Step | Status | Note |
 |---|---|---|

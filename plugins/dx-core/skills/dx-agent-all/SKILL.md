@@ -152,20 +152,20 @@ All phases in order (max 15):
 
 At the start, determine which optional phases will run and calculate the total. Update the total if a phase gets skipped mid-run (e.g., build failure skips review, commit, PR).
 
-**Progress file:** Create `.ai/specs/<id>-<slug>/dev-all-progress.md` at pipeline start. Update after each phase:
+**Progress file:** `.ai/specs/<id>-<slug>/dev-all-progress.md`, written via `shared/update-progress.sh` (see Progress Tracking). The script creates it on the first call. Shape:
 
 ```markdown
-# Pipeline Progress: #<id>
+# Pipeline Progress — #<id>
 
-| Phase | Status | Time |
-|-------|--------|------|
-| Requirements | ✓ done | — |
-| Project Enrichment | ⊘ skipped | — |
-| Planning | ⏳ running | — |
-| Execution | — | — |
+| Phase | Status | Note |
+|---|---|---|
+| Requirements | done | — |
+| Project Enrichment | skipped | not an AEM repo |
+| Planning | in_progress | — |
+| Execution | pending | — |
 ```
 
-Status values: `✓ done`, `⊘ skipped`, `✗ failed`, `⏳ running`, `—` (not started).
+Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked` — the same set every dx skill writes, so `dx-agent-all` and a nested `dx-step-all` produce one readable file.
 
 ### Execution Methodology
 
@@ -179,7 +179,16 @@ If `superpowers:executing-plans` is available, invoke it before starting Phase 1
 
 ## Progress Tracking
 
-Before creating tasks, use `TaskList` to check for existing tasks from a previous run (e.g., user interrupted and restarted). If stale tasks exist, delete them all first with `TaskUpdate` (status: `cancelled`) so the list is clean. Then create a task for each applicable phase using `TaskCreate`. Mark each `in_progress` when starting, `completed` when done. Delete tasks for phases that get skipped at runtime.
+Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). `dev-all-progress.md` (created below) is the source of truth — write it at every phase transition:
+
+```bash
+DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
+  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
+```
+
+A phase skipped at runtime gets a `skipped` row, not a deleted one — the file is the run record.
+
+As the outermost coordinator, you are the only skill that may mirror phases into task tools. If `TaskCreate` is in this session's tool list, mirror the same phases for a live checklist (`TaskList` first to cancel stale tasks from an interrupted run). If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently. Never block a phase transition on a task tool being present.
 
 Use the phase table above to determine which phases apply. Example tasks for a typical run:
 
@@ -451,9 +460,15 @@ Invoke `Skill(/dx-step-all <id>)` (context: fork). The skill writes per-step sta
 Skill invocations are blocking — the orchestrator does NOT poll mid-execution. After the skill returns, **read `$SPEC_DIR/dev-all-progress.md`** and emit a one-line summary derived from the file:
 
 ```bash
-DONE=$(grep -c "| done " "$SPEC_DIR/dev-all-progress.md" || echo 0)
-TOTAL=$(grep -c "^| [0-9]" "$SPEC_DIR/dev-all-progress.md" || echo 0)
-HEAL=$(grep -c "| healing " "$SPEC_DIR/dev-all-progress.md" || echo 0)
+# Phase rows and step rows share this file, so anchor on the "<n>: <title>"
+# step-row shape — a bare "| done " also matches completed phase rows.
+# `grep -c` already prints 0 when nothing matches, but exits 1 doing it — so
+# `|| true` keeps the count a single line ( `|| echo 0` appends a second "0" ).
+DONE=$(grep -cE "^\| [0-9]+:.*\| done \|" "$SPEC_DIR/dev-all-progress.md" || true)
+TOTAL=$(grep -cE "^\| [0-9]+:" "$SPEC_DIR/dev-all-progress.md" || true)
+# Heal cycles live in the note column — anchor there so a step whose *title*
+# says "healing" is not counted.
+HEAL=$(grep -cE "^\|[^|]*\|[^|]*\|[^|]*healing" "$SPEC_DIR/dev-all-progress.md" || true)
 echo "Phase 3: Execution — $DONE/$TOTAL steps done; $HEAL heal cycles"
 ```
 

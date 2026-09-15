@@ -117,6 +117,31 @@ else
   echo "  No sensitive patterns found"
 fi
 
+# --- shared/ <-> data/lib/ script parity ---
+# Scripts that skills call as $CLAUDE_PLUGIN_ROOT/shared/<x>.sh are also shipped
+# to installed projects as .ai/lib/<x>.sh (copied from data/lib/). The two copies
+# must stay byte-identical or an installed project silently runs older logic.
+echo
+echo "Checking shared/ <-> data/lib/ script parity..."
+parity_checked=0
+parity_drift=0
+for shared_script in "$REPO_ROOT"/plugins/dx-core/shared/*.sh; do
+  [ -e "$shared_script" ] || continue
+  lib_script="$REPO_ROOT/plugins/dx-core/data/lib/$(basename "$shared_script")"
+  [ -e "$lib_script" ] || continue   # shared-only scripts are fine
+  parity_checked=$((parity_checked + 1))
+  if ! cmp -s "$shared_script" "$lib_script"; then
+    echo "ERROR: drift between shared/ and data/lib/ copies of $(basename "$shared_script")"
+    parity_drift=$((parity_drift + 1))
+    ERRORS=$((ERRORS + 1))
+  fi
+done
+if [ "$parity_drift" -gt 0 ]; then
+  echo "  $parity_drift of $parity_checked paired script(s) drifted — copy shared/ over data/lib/"
+else
+  echo "  $parity_checked paired script(s) — all identical"
+fi
+
 # --- Summary ---
 echo
 echo "=== Summary ==="

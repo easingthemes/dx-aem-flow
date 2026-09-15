@@ -1,0 +1,72 @@
+# Progress Tracking
+
+Every coordinator skill (`-all` suffix, plus `dx-req`, `dx-step`, `dx-simple`)
+reports progress through a **progress file** in the spec directory. The file is
+the single source of truth. Task-tracking tools are an optional display layer
+that may not exist.
+
+## Why a file, not a tool
+
+Claude Code stopped offering `TaskCreate` / `TaskGet` / `TaskUpdate` /
+`TaskList` / `TodoWrite` by default on Opus 4.8, Sonnet 5, Fable 5, Mythos 5
+and newer models (v2.1.233; narrowed again in v2.1.260 — they now ship only on
+Claude 3.x, Opus 4.0–4.7, Sonnet 4.0–4.6 and Haiku 4.5). Anthropic's reasoning:
+newer models track multi-step work without a written checklist, and the tool
+definitions cost context. They are opt-in from there on.
+
+Those tools also never existed on Copilot CLI, Codex CLI or Gemini CLI, and
+they are invisible in an ADO pipeline log, where no human watches a transcript.
+A file survives every one of those cases, plus `/clear`, compaction and a
+crashed run.
+
+## Rules
+
+- **The progress file is mandatory; the task tools are not.** Write the file
+  first, every phase transition. Never make a phase transition conditional on a
+  task tool being present.
+- **Write it with the shared script**, so every skill produces the same table:
+  ```bash
+  DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="/dx-agent-all Progress" \
+    bash .ai/lib/update-progress.sh "$SPEC_DIR" "Planning" "in_progress"
+  ```
+  Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` ·
+  `blocked`. One row per phase, updated in place — never append a second row
+  for the same phase.
+
+  The script path is project-relative on purpose: `/dx-init` installs the script
+  to `.ai/lib/`, and `$CLAUDE_PLUGIN_ROOT` is set only by Claude Code — it is
+  unset on Copilot CLI, Codex CLI and Gemini CLI, and in the ADO pipeline agents.
+- **Mirror into task tools only when they exist.** If `TaskCreate` is in the
+  session's tool list, mirror the same phases so the user gets a live checklist.
+  If it is absent, say nothing about it and carry on — a missing tool is the
+  normal case, not a degraded one.
+- **Top-level only.** Only the outermost coordinator mirrors into tasks.
+  Subagents and forked skills (`context: fork`) write the progress file and
+  never create their own task tree — a forked skill's task list is invisible to
+  its parent anyway.
+- **One progress file per skill invocation.** If a coordinator delegates to
+  another coordinator (`dx-agent-all` → `dx-step-all`), the inner skill writes
+  rows into the outer skill's file rather than starting its own.
+- **Reference, do not quote.** Point at the progress file in chat and emit a
+  one-line summary derived from it. Re-printing the whole table on each phase
+  re-anchors it in context and doubles the cost of every recap.
+- **Skipped phases** get a `skipped` row, not a deleted one. The file is a run
+  record; a reader needs to see that a phase was considered and dropped.
+- **Retries** update the note column (`retry 1`, `fix 2`, `healing`), not the
+  phase name — otherwise the row is duplicated.
+
+## Re-enabling the task tools (opt-in)
+
+If a project wants the live checklist back on newer models, any one of these
+opts the session in — no skill change needed:
+
+| Where | How |
+|---|---|
+| Shell | `export CLAUDE_CODE_ENABLE_TODO_TOOLS=1` |
+| Project | name `TaskCreate` in `.claude/settings.json` permissions allow list |
+| One session | `claude --allowedTools TaskCreate` |
+| ADO pipeline | add `TaskCreate,TaskUpdate,TaskList` to `ALLOWED_TOOLS` |
+| Agent SDK | `allowedTools` / `tools` / `env` option (TypeScript `env` replaces the subprocess environment — spread `...process.env`) |
+
+This is a display preference. It must never become a requirement for a skill to
+complete.
