@@ -36,12 +36,43 @@ OVERALL=true
 # --- Read config ---
 CONFIG_FILE=".ai/config.yaml"
 
-# Simple YAML value reader (key: value on its own line)
+# Read a scalar value from config.yaml.
+# Usage: yaml_val <key>
+#   <key> is either a bare key ("compile") — first match at any depth — or a
+#   dotted path ("dx-simple.recovery.trigger-token") resolved segment by
+#   segment through the indentation tree, so it never bleeds into siblings.
+# Output: prints the value, with any inline `# comment` and surrounding
+#   quotes stripped. Prints nothing when the key is absent.
 yaml_val() {
-  local key="$1"
-  if [ -f "$CONFIG_FILE" ]; then
-    grep -E "^\s*${key}:" "$CONFIG_FILE" 2>/dev/null | head -1 | sed "s/^[^:]*:\s*//" | sed 's/^"//' | sed 's/"$//' | xargs
-  fi
+  local key="${1:-}"
+  [ -n "$key" ] || return 0
+  [ -f "${CONFIG_FILE:-}" ] || return 0
+  awk -v path="$key" '
+    function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+    BEGIN { n = split(path, seg, "."); depth = 1; want = seg[1]; parent = -1; q = sprintf("%c", 39) }
+    {
+      line = $0; sub(/\r$/, "", line)
+      if (line ~ /^[[:space:]]*(#|$)/) next          # blank or comment line
+      match(line, /^[[:space:]]*/); indent = RLENGTH
+      rest = substr(line, indent + 1)
+      if (rest !~ /^[^:]+:/) next                    # not a key: line
+      if (indent <= parent) exit                     # left the parent block: no match
+      k = rest; sub(/:.*$/, "", k)
+      if (trim(k) != want) next
+      v = rest; sub(/^[^:]*:/, "", v); v = trim(v)
+      if (depth == n) {
+        if (substr(v, 1, 1) == "\"") {               # double-quoted: take up to the close
+          v = substr(v, 2); i = index(v, "\""); if (i > 0) v = substr(v, 1, i - 1)
+        } else if (substr(v, 1, 1) == q) {           # single-quoted: same
+          v = substr(v, 2); i = index(v, q); if (i > 0) v = substr(v, 1, i - 1)
+        } else {                                     # bare: drop any trailing comment
+          sub(/[[:space:]]+#.*$/, "", v); v = trim(v)
+        }
+        print v; exit
+      }
+      parent = indent; depth++; want = seg[depth]
+    }
+  ' "$CONFIG_FILE"
 }
 
 COMPILE_CMD=$(yaml_val "compile")

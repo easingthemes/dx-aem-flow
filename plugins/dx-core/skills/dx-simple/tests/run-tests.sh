@@ -510,6 +510,46 @@ run "repos_table: BetaBrandX row has brand=brandx" \
 run "yaml_block_val: strips trailing inline comment" \
   bash -c "printf 'project:\n  role: backend  # the be repo\n' > $TMP/c.yaml; export CONFIG_FILE=$TMP/c.yaml; source '$DXC'; [ \"\$(yaml_block_val project role)\" = 'backend' ]"
 
+# ===== yaml_val =====
+# Regression guard: yaml_val used to be a grep|sed|xargs pipeline that neither
+# stripped inline `# comments` nor survived the unbalanced quote that stripping
+# left behind, so `base-branch: "development"  # e.g., develop, main` resolved
+# to garbage (or to nothing, when xargs aborted on the unmatched quote). That
+# silently no-op'd pre-review-checks.sh: merge-base failed, and the gate exited
+# 0 reporting a pass with zero of its five phases run.
+CFG_YV="$TMP/yaml-val.yaml"
+cat > "$CFG_YV" <<'YVEOF'
+project:
+  name: "acme"
+scm:
+  base-branch: "development"         # e.g., develop, development, main
+build:
+  compile: mvn compile -pl core      # unquoted, trailing comment
+aem:
+  author-url: "http://localhost:4502"    # colons in the value
+  theme-color: "#0af"
+dx-simple:
+  recovery:
+    trigger-token: "@kai-simple"     # keyword that re-triggers a paused run
+    max-attempts: 3
+# dx-bug-all:
+#   recovery:
+#     trigger-token: "@kai-bugfix"
+YVEOF
+
+yv() { bash -c "export CONFIG_FILE='$CFG_YV'; source '$DXC' && [ \"\$(yaml_val '$1')\" = '$2' ]"; }
+
+run "yaml_val: strips inline comment from quoted value"    yv 'scm.base-branch' 'development'
+run "yaml_val: strips inline comment from bare value"      yv 'build.compile' 'mvn compile -pl core'
+run "yaml_val: keeps colons inside the value"              yv 'aem.author-url' 'http://localhost:4502'
+run "yaml_val: keeps a leading # that is not a comment"    yv 'aem.theme-color' '#0af'
+run "yaml_val: bare key still matches at any depth"        yv 'base-branch' 'development'
+run "yaml_val: dotted path resolves nested keys"           yv 'dx-simple.recovery.trigger-token' '@kai-simple'
+run "yaml_val: dotted path reads a numeric scalar"         yv 'dx-simple.recovery.max-attempts' '3'
+run "yaml_val: absent key yields empty"                    yv 'scm.nope' ''
+run "yaml_val: commented-out block does not match"         yv 'dx-bug-all.recovery.trigger-token' ''
+run "yaml_val: dotted path does not bleed into siblings"   yv 'scm.compile' ''
+
 # ===== repo-guard =====
 GUARD="$SCRIPTS/repo-guard.sh"
 mkblock() { printf '%s\n' "$@" > "$TMP/blk.yaml"; }
