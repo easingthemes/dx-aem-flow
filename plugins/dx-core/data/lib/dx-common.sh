@@ -110,7 +110,7 @@ yaml_val() {
   [ -f "${CONFIG_FILE:-}" ] || return 0
   awk -v path="$key" '
     function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
-    BEGIN { n = split(path, seg, "."); depth = 1; want = seg[1]; parent = -1; q = sprintf("%c", 39) }
+    BEGIN { n = split(path, seg, "."); depth = 1; want = seg[1]; parent = -1; expect = -1; q = sprintf("%c", 39) }
     {
       line = $0; sub(/\r$/, "", line)
       if (line ~ /^[[:space:]]*(#|$)/) next          # blank or comment line
@@ -118,6 +118,10 @@ yaml_val() {
       rest = substr(line, indent + 1)
       if (rest !~ /^[^:]+:/) next                    # not a key: line
       if (indent <= parent) exit                     # left the parent block: no match
+      if (depth > 1) {                               # past depth 1, only DIRECT children count
+        if (expect < 0) expect = indent              # first child of the match sets the level
+        else if (indent != expect) next              # deeper: a rejected sibling subtree
+      }
       k = rest; sub(/:.*$/, "", k)
       if (trim(k) != want) next
       v = rest; sub(/^[^:]*:/, "", v); v = trim(v)
@@ -131,7 +135,7 @@ yaml_val() {
         }
         print v; exit
       }
-      parent = indent; depth++; want = seg[depth]
+      parent = indent; depth++; want = seg[depth]; expect = -1
     }
   ' "$CONFIG_FILE"
 }
