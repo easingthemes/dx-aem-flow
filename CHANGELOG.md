@@ -1,3 +1,10 @@
+## [3.6.7](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.6...v3.6.7) (2026-09-16)
+
+
+### Bug Fixes
+
+* fetch-raw-story fails on ADO MCP v2.10.0; harden yaml_val and update-progress ([#198](https://github.com/easingthemes/dx-aem-flow/issues/198)) ([32ef945](https://github.com/easingthemes/dx-aem-flow/commit/32ef9459f72cc7ce2622a5de39e61baa71d8b97a)), closes [#2740509](https://github.com/easingthemes/dx-aem-flow/issues/2740509) [#2612832](https://github.com/easingthemes/dx-aem-flow/issues/2612832) [#199](https://github.com/easingthemes/dx-aem-flow/issues/199) [#2740509](https://github.com/easingthemes/dx-aem-flow/issues/2740509) [#2612832](https://github.com/easingthemes/dx-aem-flow/issues/2612832)
+
 ## [3.6.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.5...v3.6.6) (2026-09-16)
 
 
