@@ -2,7 +2,7 @@
 # parse-wi-images.sh — Extract image references from an ADO work item.
 #
 # Pure data transformation: no network, no auth, no file writes. Reads the
-# JSON body of a wit_work_item action=get response (expand=all) on stdin and emits
+# JSON body of a wit_work_item action=get response (expand=All) on stdin and emits
 # one TSV row per unique image reference on stdout.
 #
 # Used by dx-req (and any skill that ingests ADO work items) to turn the
