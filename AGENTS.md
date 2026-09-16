@@ -85,9 +85,10 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
 - No hardcoded org URLs, project names, paths, build commands, or branch names
 - Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-verify`, `auto-deploy`)
 - Versioning is automated via semantic-release on push to `main`
-- Structural validation (`scripts/validate-*.sh`) runs in CI on every PR, as do the helper-script suites
-  (`plugins/dx-core/skills/dx-simple/tests/run-tests.sh`, `plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh`)
-  and the shared-lib tests (`node --test plugins/dx-core/data/lib/fetch-raw-story.test.js`)
+- Structural validation (`scripts/validate-*.sh`) runs in CI on every PR, as do all test suites — CI
+  discovers every `run-tests.sh`, `*.test.sh` and `*.test.js` under `plugins/` rather than listing them,
+  so a new suite needs no workflow change but MUST be hermetic (no live ADO/AEM/network, no reliance on
+  ambient git config)
 - Structural checks cannot tell you a script works, and `node --check` / `bash -n` only parse syntax — run the
   relevant suite when changing anything under `data/lib/` or `skills/*/scripts/`
 - Behavioral evals live in `plugins/<plugin>/evals/` and run via `claude plugin eval` — one suite so far (`dx-plan-validate`); add one alongside non-trivial skill changes where practical

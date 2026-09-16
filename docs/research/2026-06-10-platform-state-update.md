@@ -148,8 +148,12 @@ and the official `code.claude.com/docs/en/changelog`.
 > here was renumbered into it. Anything below that still has value should be re-checked
 > against the current platform and filed fresh as part of the #171 September sweep — several
 > items (`--safe-mode` docs, the hook-table refresh, `disableBundledSkills` as a #113
-> measurement lever) are cheap and probably still stand; the Fable 5 tier evaluation has
-> since been partly answered in `CLAUDE.md` § Model Tier Strategy.
+> measurement lever) are cheap and probably still stand. The Fable 5 tier evaluation is **not**
+> answered by `CLAUDE.md` § Model Tier Strategy — Fable 5 appears there exactly once, in passing,
+> as an example of a model whose default effort is pinned. The tier table is still
+> Opus / Sonnet / Haiku, the instruction is still `model: opus | sonnet | haiku`, and all three
+> gating unknowns from §3 Tier 2 are open: the Claude Code `model:` selector token, Bedrock/Vertex
+> availability for the `dx-automation` Lambda runtime, and the verified price delta vs Opus 4.8.
 | # | Item | Trigger | Proposed priority |
 |---|------|---------|-------------------|
 | 154 | **Evaluate `claude-fable-5` for the `xhigh` escalation tier** — verify CC `model:` token + Bedrock/Vertex availability + price vs Opus 4.8 *before* touching tier tables | v2.1.170 | **Medium — evaluate, gated on availability** |
