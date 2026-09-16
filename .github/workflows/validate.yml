@@ -14,6 +14,7 @@ on:
       - 'plugins/**'
       - 'scripts/validate-*.sh'
       - 'website/src/config/stats.ts'
+      - '.github/workflows/validate.yml'
 
 jobs:
   validate:
@@ -28,3 +29,17 @@ jobs:
         run: bash scripts/validate-structure.sh
       - name: Validate stats
         run: bash scripts/validate-stats.sh
+
+      # The four checks above are structural — they read frontmatter, manifests
+      # and counts. They cannot tell whether a script works. Until these three
+      # suites ran here, a test fixture sat red on main for weeks and two fatal
+      # defects in .ai/lib shipped in a release (see #197, #198).
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Test — dx-core libs (node)
+        run: node --test plugins/dx-core/data/lib/fetch-raw-story.test.js
+      - name: Test — dx-simple helper scripts
+        run: bash plugins/dx-core/skills/dx-simple/tests/run-tests.sh
+      - name: Test — dx-discover-repos helper scripts
+        run: bash plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh

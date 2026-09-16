@@ -36,15 +36,18 @@ AEM project knowledge (seed data) is now built into dx-aem — no separate plugi
 node cli/bin/dx-scaffold.js /tmp/test-project --all
 ```
 
-No compilation step. Verification happens at three levels:
+No compilation step. Verification happens at four levels:
 
 | Level | What it checks | How |
 |-------|----------------|-----|
 | Structural | naming, frontmatter, manifest/version consistency, collisions | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/` | per-skill `tests/run-tests.sh` (currently `dx-discover-repos`, `dx-simple`) |
-| Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` |
+| Helper scripts | deterministic bash in `skills/*/scripts/` | per-skill `tests/run-tests.sh` (currently `dx-discover-repos`, `dx-simple`) — runs in CI on every PR |
+| Shared libs | deterministic JS in `plugins/dx-core/data/lib/` | `node --test plugins/dx-core/data/lib/*.test.js` — runs in CI on every PR |
+| Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
 
 Everything not covered above is still manual — run the skill in a test project and check that config is read correctly, output files land in expected locations, and no hardcoded values leak in.
+
+**A structural check cannot tell you a script works.** The four `validate-*.sh` read frontmatter, manifests and counts; they pass happily over a script that dies on its first call. The suites above were local-only until 2026-09-17, and in that window a corrupt test fixture sat red on `main` and two fatal defects in `.ai/lib` shipped in a release ([#197](https://github.com/easingthemes/dx-aem-flow/pull/197), [#198](https://github.com/easingthemes/dx-aem-flow/pull/198)). Two habits follow: a change to anything under `data/lib/` or `skills/*/scripts/` needs its suite run, and `node --check` / `bash -n` are **not** verification — they parse syntax and cannot see a rejected argument, a schema change, or a wrong enum value. Run the thing.
 
 ### Behavioral evals (`plugins/<plugin>/evals/`)
 
@@ -196,7 +199,7 @@ Plugin hooks and Copilot CLI hooks are **largely separate systems**, with one ov
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard. **Event-name mapping:** Claude Code uses `Stop` / `SubagentStop`; Copilot CLI uses `agentStop` / `subagentStop`. See the docs site (`website/`) for full details.
 
-Latest platform research: `docs/research/2026-05-01-platform-state-update.md` (delta to `2026-04-25-platform-state-update.md`).
+Latest platform research: `docs/research/2026-06-10-platform-state-update.md` (delta to `2026-05-29-platform-state-update.md`; covers CC v2.1.156–170 + the Fable 5 launch). It is three months old and its proposals were never intaken — [TODO #171](docs/todo/TODO.md) tracks the overdue September sweep.
 
 **Copilot CLI v1.0.40+ shell exports** — when targeting Copilot, add these to `~/.zshrc` / `~/.bashrc`:
 
