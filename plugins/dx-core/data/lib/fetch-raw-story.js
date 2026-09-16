@@ -77,7 +77,20 @@ async function main(opts) {
   const client = new McpClient(['npx', '-y', '@azure-devops/mcp', org]);
   await client.start();
 
-  const wi = await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'all' });
+  // `expand` is a zod enum built from the WorkItemExpand TS enum *keys*, so the
+  // accepted values are capitalized: None | Relations | Fields | Links | All.
+  // Lowercase 'all' was valid on the pre-v2.9.0 wit_get_work_item schema; here it
+  // fails zod validation before the handler runs, which kills the whole script on
+  // its first call.
+  const wi = await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'All' });
+  if (!wi || typeof wi !== 'object') {
+    // Never render a story from unparsed content: an empty raw-story.md that
+    // exits 0 is worse than a failure, because every later phase trusts it.
+    throw new Error(
+      `wit_work_item action=get returned content this script could not parse for #${id}. ` +
+      `Got ${typeof wi}${typeof wi === 'string' ? `: ${wi.slice(0, 200)}` : ''}`
+    );
+  }
   const commentsRaw = await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 });
   const comments = Array.isArray(commentsRaw) ? commentsRaw : (commentsRaw && commentsRaw.comments) || [];
 
@@ -176,6 +189,29 @@ function deriveSlug(id, title) {
 // MCP stdio JSON-RPC client (line-delimited)
 // ------------------------------------------------------------------
 
+// @azure-devops/mcp v2.10.0 wraps tool output in prompt-injection sentinels:
+//
+//   <<nonce>> [UNTRUSTED AZURE DEVOPS … CONTENT — …] <<nonce>>
+//   { …json… }
+//   <</nonce>>
+//
+// `JSON.parse` on that throws, and returning the raw string on failure is what
+// made this silent: every `wi.fields` read downstream became undefined, so the
+// script wrote an empty raw-story.md and still exited 0. Strip the wrapper, then
+// parse. The nonce is back-referenced so a stray `<<…>>` inside a description
+// cannot be mistaken for the closing marker.
+const TOOL_SENTINEL = /^<<([0-9a-f]{8,})>>[^\n]*\n([\s\S]*?)\n?<<\/\1>>$/;
+
+function parseToolText(raw) {
+  const s = String(raw == null ? '' : raw);
+  try { return JSON.parse(s); } catch (_) { /* fall through to unwrapping */ }
+  const m = TOOL_SENTINEL.exec(s.trim());
+  if (m) {
+    try { return JSON.parse(m[2]); } catch (_) { /* wrapped but not JSON */ }
+  }
+  return s;
+}
+
 class McpClient {
   constructor(cmd) {
     this.cmd = cmd;
@@ -224,7 +260,7 @@ class McpClient {
     const content = (result && result.content) || [];
     const text = content.find(c => c.type === 'text');
     if (!text) return result;
-    try { return JSON.parse(text.text); } catch (_) { return text.text; }
+    return parseToolText(text.text);
   }
 
   _onData(chunk) {
@@ -916,6 +952,7 @@ if (require.main === module) {
 module.exports = {
   main,
   parseCliArgs,
+  parseToolText,
   parseOrg,
   findParentId,
   extractSprint,

@@ -101,7 +101,7 @@ If no argument is provided, ask the user for the work item ID.
 **ADO (deterministic fast path — preferred):**
 
 Run `.ai/lib/fetch-raw-story.js`. It spawns `@azure-devops/mcp` over stdio,
-calls `wit_get_work_item` (`expand: "all"`), `wit_list_work_item_comments`,
+calls `wit_get_work_item` (`expand: "All"`), `wit_list_work_item_comments`,
 and a parent `wit_get_work_item` if a hierarchy-reverse relation exists, then
 writes the deterministic output: `raw-workitem.json`, `raw-story.md`, and
 `.sprint`. The work-item JSON never enters this skill's context — only the
@@ -139,10 +139,10 @@ one of three exit lines on stdout:
 mcp__ado__wit_get_work_item
   project: "<ADO project from config>"
   id: <work item ID>
-  expand: "all"
+  expand: "All"
 ```
 
-`expand: "all"` returns fields + relations + `multilineFieldsFormat`. Extract
+`expand: "All"` returns fields + relations + `multilineFieldsFormat`. Extract
 ALL fields: ID, Title, Type, State, Assigned To, Area Path, Iteration Path,
 Tags, Description (`System.Description`), Acceptance Criteria
 (`Microsoft.VSTS.Common.AcceptanceCriteria`), Business Benefits
