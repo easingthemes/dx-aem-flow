@@ -165,3 +165,199 @@ it locally and paste the numbers back into `todo-skill-conventions.md`.
 **Approach:** One session, all four plugins loaded, record raw numbers before
 interpreting them. Rank #113 by measured cost; feed the "unused" column into
 #167 as retirement candidates.
+
+---
+
+## Second pass (v2.1.270–v2.1.273, intake 2026-09-16)
+
+The first pass above covered v2.1.251–v2.1.269 and was scoped to hooks, effort
+and plugin validation. A re-read of the [plugins reference](https://code.claude.com/docs/en/plugins-reference),
+the [hooks reference](https://code.claude.com/docs/en/hooks) and the changelog
+through **v2.1.273** found five surfaces that no TODO row covers at all —
+verified by grep returning zero hits across `docs/`, `plugins/` and `CLAUDE.md`.
+
+## Plugin `userConfig` — native config prompting and secret storage
+
+**Added:** 2026-09-16
+**Problem:** `plugin.json` supports a `userConfig` block: typed values
+(`string`, `number`, `boolean`, `directory`, `file`) prompted when the plugin is
+enabled, readable as `${user_config.KEY}` inside plugin content, exported to
+hooks as `CLAUDE_PLUGIN_OPTION_<KEY>`, settable non-interactively via
+`claude plugin install --config key=value`, and — with `sensitive: true` —
+masked on entry and stored in the OS keychain instead of a file. v2.1.271 added
+an `options` picker for enumerated values.
+
+This is the native version of a large part of `/dx-init`'s interview. Today every
+project-specific value lands in `.ai/config.yaml` in plaintext, including the
+values that should never be in a file: the ADO PAT and the AEM credentials. Grep
+confirms zero use: `grep -rn "userConfig" plugins/ docs/` → 0.
+
+This does **not** replace `.ai/config.yaml` — that file is read by skills, by the
+Lambda agents and by the standalone `cli/` scaffold, none of which can see
+Claude Code's plugin config. The candidate scope is narrower: the handful of
+values that are per-user rather than per-project, and the secrets.
+**Scope:** `plugins/*/.claude-plugin/plugin.json` (and the `.cursor-plugin`
+twins, which do **not** share this field — check before assuming parity);
+`plugins/dx-core/skills/dx-init/SKILL.md` (the interview steps that would be
+superseded); `docs/reference/config-reference.md`.
+**Done-when:** `docs/todo/todo-config.md` records a per-field decision for every
+value `/dx-init` asks for — `userConfig`, `.ai/config.yaml`, or both — **and**,
+if any field moves, `grep -n "userConfig" plugins/dx-core/.claude-plugin/plugin.json`
+returns it and `/dx-init` no longer prompts for it twice.
+**Approach:** Start with secrets only (ADO PAT, AEM credentials) where the
+keychain is a clear win over a file. Cross-platform is the catch: Copilot CLI and
+Cursor read `plugin.json` too, and a field they ignore means the value is simply
+missing there — so anything moved to `userConfig` needs a documented fallback, or
+it must stay duplicated in `.ai/config.yaml`. Decide that before moving anything.
+
+## Headless runtime flags for `dx-automation` pipelines
+
+**Added:** 2026-09-16
+**Problem:** Five flags/settings shipped between v2.1.259 and v2.1.268 that exist
+for exactly the way our pipelines run Claude Code, and none appear anywhere in
+this repo (`grep -rn` → 0 for each):
+
+| Flag / setting | Release | What it does |
+|---|---|---|
+| `--permission-prompts none` | v2.1.259 | unattended headless hosts — no prompt can hang the run |
+| `bashOutputMaxChars` / `taskOutputMaxChars` | v2.1.261 | inline output caps, up to 128K |
+| `--append-subagent-system-prompt-file` | v2.1.261 | large subagent prompts from a file |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | v2.1.268 | subagent model override, behaviour made consistent |
+| `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` | v2.1.268 | concurrency ceiling for workflow agents |
+
+The pipelines today pass an `ALLOWED_TOOLS` list and little else (#119). A
+pipeline agent that hits a permission prompt blocks until the job times out, and
+a long `mvn` run can blow the default inline output cap — both are failure modes
+we have no configured defence against.
+**Scope:** `plugins/dx-automation/**` pipeline YAML and the agent launcher that
+builds the `claude` invocation; `plugins/dx-automation/skills/auto-pipelines/`.
+Overlaps #119 (tooling matrix per agent) and #178 (`maxEffortLevel` ceiling) —
+these belong in the same launcher change, not three separate ones.
+**Done-when:** `grep -rn "permission-prompts" plugins/dx-automation/` returns the
+launcher flag, and `docs/reference/config-reference.md` documents the caps and the
+subagent-model override alongside the existing env-var table.
+**Approach:** `--permission-prompts none` first — it is the one that turns a hang
+into a clean failure. Everything else is tuning and should wait for a pipeline run
+that actually shows the limit being hit; guessing cap values is how voodoo
+constants get committed.
+
+## Managed MCP settings — org distribution and the `allowedMcpServers` semantic change
+
+**Added:** 2026-09-16
+**Problem:** v2.1.259 added `managedMcpServers` (organizations push HTTP/SSE MCP
+servers to their users through managed settings) and **changed what
+`allowedMcpServers` governs** — it now applies only to user-added servers, with
+`deniedMcpServers` as the filter for the rest. v2.1.268 extended
+`managedMcpServers`; v2.1.273 added `allowManagedMcpServersOnly` and
+`disableClaudeAiConnectors`.
+
+We ship six MCP servers (ADO, Atlassian, Figma, axe, AEM, Playwright) into
+consumer projects that are mostly enterprises with managed settings. Two
+consequences we have not written down anywhere: an org that sets
+`allowManagedMcpServersOnly` silently loses every plugin-provided server, and any
+consumer relying on `allowedMcpServers` to permit our servers is relying on
+pre-v2.1.259 behaviour. `grep -rn "managedMcpServers\|deniedMcpServers\|allowedMcpServers" .`
+→ 0.
+**Scope:** `docs/reference/` MCP setup docs and the website MCP page; the
+per-plugin `.mcp.json` files are unchanged — this is a documentation and
+consumer-guidance item, not a plugin change.
+**Done-when:** the MCP setup docs state which of our six servers survive under
+`allowManagedMcpServersOnly` and what an org admin must add to `managedMcpServers`
+to keep them, i.e. `grep -rn "allowManagedMcpServersOnly" docs/ website/src`
+returns the guidance.
+**Approach:** Documentation only, and cheap. Verify the behaviour against a
+managed-settings file before writing it down — the changelog states the fields but
+not how a plugin-provided server is classified, and guessing that is exactly the
+kind of claim this repo has been burned by before.
+
+## `omitClaudeMd` on subagents
+
+**Added:** 2026-09-16
+**Problem:** v2.1.271 added `omitClaudeMd` to agent frontmatter and to the
+`--agents` JSON for custom and plugin subagents: the subagent runs without
+CLAUDE.md in its context. Our own research
+([2026-05-05-orchestration-context-pollution.md](../research/2026-05-05-orchestration-context-pollution.md))
+identified inherited coordinator context as a cost driver, and this is the
+first-party lever for it. Zero uses: `grep -rn "omitClaudeMd" plugins/` → 0.
+
+The obvious candidates are the narrow, single-purpose agents that never need
+repository conventions: `dx-file-resolver`, `dx-doc-searcher`, `aem-page-finder`
+(all Haiku/`low`). The obvious non-candidates are the reviewers — `dx-code-reviewer`
+and `dx-pr-reviewer` exist to enforce conventions that live in CLAUDE.md, so
+omitting it there would break them.
+**Scope:** `plugins/dx-core/agents/*.md`, `plugins/dx-aem/agents/*.md` — frontmatter
+only. Consumer-side effect: the omitted file is the *consumer project's*
+CLAUDE.md, not this repo's.
+**Done-when:** `grep -rn "omitClaudeMd" plugins/*/agents/` returns it on the three
+lookup agents, and `docs/reference/agent-catalog.md` records which agents omit
+CLAUDE.md and why.
+**Approach:** Lookup agents only, and measure — this is exactly the kind of change
+that reads as a free win and silently degrades an agent that turned out to need one
+line of project context. Pair with #137's `/skill-doctor` baseline so the saving is a
+number, not a claim. Claude Code only; the field has no meaning for Copilot CLI or
+Cursor, which is fine (they ignore unknown frontmatter) but should be stated in the
+catalog.
+
+## MCP server load policy — `alwaysLoad` vs deferred tool search
+
+**Added:** 2026-09-16
+**Problem:** MCP servers can be marked `alwaysLoad` to skip tool-search deferral;
+otherwise their tools are discovered through tool search on demand. v2.1.261 and
+v2.1.269 both improved mid-conversation usability for `alwaysLoad` servers, and
+v2.1.268 fixed tool search resolving full `mcp__server__tool` names. We declare six
+servers across two plugins and have never made a deliberate choice: `alwaysLoad`
+appears once in this repo, in a May research file, and in no `.mcp.json`.
+
+This matters because of our own MCP-prefix rule in `CLAUDE.md`: subagents resolve
+tools "by exact name or ToolSearch". Which of those two paths is live per server is
+currently an accident of defaults.
+**Scope:** `plugins/dx-core/.mcp.json`, `plugins/dx-aem/.mcp.json`;
+`CLAUDE.md` § "Plugin MCP Tool Naming" and § "MCP Servers".
+**Done-when:** each of the six servers is recorded as `alwaysLoad` or deferred with
+a one-line reason, i.e. `grep -n "alwaysLoad" plugins/*/.mcp.json` matches the
+documented decision — or `CLAUDE.md` states that all six stay deferred and why.
+**Approach:** Default to deferred; `alwaysLoad` is a context cost paid every
+session. The plausible exception is the AEM server in `dx-aem`, where nearly every
+skill in the plugin calls it. Decide it with the #137 numbers, not from taste.
+
+## Hook event list in CLAUDE.md is incomplete
+
+**Added:** 2026-09-16
+**Problem:** `CLAUDE.md` § "Hook Authoring — Key Fields" lists 29 events. The
+current hooks reference documents several more, of which these are missing here:
+`MessageDisplay` (fires while assistant text streams), `DirectoryAdded` (matcher
+values `slash_command`, `register_repo_root`), and the two model-switch events
+already tracked separately (#177). `MessageDisplay` appears in three research
+files but never made it into the contributor guide.
+
+Two handler-level facts are also absent and are the ones people get wrong: the
+`PreToolUse` decision field accepts `showPrompt` alongside `allow`/`deny`, and can
+return `updatedInput` to rewrite the call; `PermissionDenied` accepts `retry: true`.
+**Scope:** `CLAUDE.md` § "Hook Authoring — Key Fields"; the hooks page on the docs
+site (`website/src/pages/learn/hooks.mdx`); `AGENTS.md` if the event list is
+mirrored there.
+**Done-when:** `grep -c "MessageDisplay\|DirectoryAdded" CLAUDE.md` is non-zero and
+the `updatedInput` / `showPrompt` / `retry` decision fields are documented next to
+the exit-code table.
+**Approach:** Documentation only. Fold into the #177 docs pass — same section, same
+file, one edit.
+
+## Declare `experimental.evals` in the plugin manifests
+
+**Added:** 2026-09-16
+**Problem:** The plugins reference lists `experimental.evals` as the manifest field
+that points at eval case directories. We have `plugins/dx-core/evals/` and none of
+the four manifests declares it. `claude plugin eval plugins/<plugin>` has worked for
+us by path, so the field may be optional for path invocation and required only for
+discovery through an installed plugin — that is unverified, and the difference
+decides whether consumers can run our evals at all.
+**Scope:** `plugins/*/.claude-plugin/plugin.json`; `CLAUDE.md` § "Behavioral evals".
+**Done-when:** either `grep -n "evals" plugins/dx-core/.claude-plugin/plugin.json`
+returns the declaration, or `CLAUDE.md` states that path invocation is the only
+supported entry point and the field is deliberately unset.
+**Approach:** Low priority, and a verify-then-decide item, not a fix. Note the
+manifest hazard already documented in `CLAUDE.md`: adding `agents`/`skills` to a
+manifest that uses default directories **breaks Claude Code**. `evals` sits under
+`experimental`, so it is a different code path — but test it against a real
+`claude plugin validate --json` run (#180) before committing it to all four
+manifests.

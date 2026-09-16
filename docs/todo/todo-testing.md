@@ -180,3 +180,31 @@ results recorded.
 boolean + `expected_checks`). Add one negative case per collision cluster first
 (e.g. "review this React component" must not fire `dx-pr-review`). Defer the full
 cross-harness matrix until the single-harness suite is green.
+
+## Enforce the two documented skill limits in CI
+
+**Added:** 2026-09-16
+**Problem:** Anthropic's [skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
+state two hard numbers: `description` is capped at **1,024 characters** (a
+validation rule, not advice) and the SKILL.md body should stay **under 500 lines**.
+Our `scripts/validate-skills.sh` checks that `description:` exists and is non-empty
+and nothing else — neither limit is enforced anywhere, so #108 (references/
+progressive disclosure at 500 lines) and #113 (concise-body audit) are manual
+audits with no guard behind them. Measured 2026-09-16: 77 skills, 26,812 total
+lines, **11 over 500 lines**, worst `dx-pr-review/SKILL.md` at 1,131. No
+description currently exceeds 1,024 characters, so that check lands green today and
+stays a regression guard — which is the cheapest moment to add it.
+**Scope:** `scripts/validate-skills.sh` (the description block, around the existing
+non-empty check); `.github/workflows/validate.yml` already runs it on every PR, so
+no workflow change is needed.
+**Done-when:** `bash scripts/validate-skills.sh` fails on a skill whose
+`description:` exceeds 1,024 characters, and reports every SKILL.md over 500 body
+lines; a deliberately over-long fixture proves both fire (a validator nobody has
+seen fail is the exact failure this file's other items are about).
+**Approach:** Two different severities, and conflating them would block every PR on
+day one. The 1,024-character cap is a platform rule — **ERROR**, exit non-zero. The
+500-line threshold is guidance with 11 existing violations — **WARN** with the
+count, plus a ratchet: record today's 11 as the baseline and error only when the
+number goes up. That keeps #108/#113 as planned work instead of turning them into a
+merge blocker. Count body lines, not file lines — frontmatter does not count against
+the threshold.
