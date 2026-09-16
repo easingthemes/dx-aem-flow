@@ -101,8 +101,9 @@ If no argument is provided, ask the user for the work item ID.
 **ADO (deterministic fast path — preferred):**
 
 Run `.ai/lib/fetch-raw-story.js`. It spawns `@azure-devops/mcp` over stdio,
-calls `wit_get_work_item` (`expand: "All"`), `wit_list_work_item_comments`,
-and a parent `wit_get_work_item` if a hierarchy-reverse relation exists, then
+calls `wit_work_item` (`action: "get"`, `expand: "All"`), `wit_work_item`
+(`action: "list_comments"`), and a parent `wit_work_item` (`action: "get"`) if a
+hierarchy-reverse relation exists, then
 writes the deterministic output: `raw-workitem.json`, `raw-story.md`, and
 `.sprint`. The work-item JSON never enters this skill's context — only the
 slim `raw-story.md` is read by later phases.
@@ -136,7 +137,8 @@ one of three exit lines on stdout:
 
 **ADO (legacy / fallback path — only when the script cannot run):**
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project from config>"
   id: <work item ID>
   expand: "All"
@@ -162,7 +164,7 @@ Map fields per `shared/provider-config.md` Field Mapping.
 
 **ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2 — skip.
 
-**ADO legacy / Jira:** `mcp__ado__wit_list_work_item_comments` (ADO) or
+**ADO legacy / Jira:** `mcp__ado__wit_work_item` with `action: "list_comments"` (ADO) or
 `fields.comment.comments[]` from `jira_get_issue` (Jira). Keep human comments
 with author and date, skip system comments.
 
@@ -177,7 +179,7 @@ the direct parent — do NOT recurse.
 
 **ADO fast path:** already done by `.ai/lib/fetch-raw-story.js` in step 2.
 The script extracts `vstfs:///Git/Ref/` artifact links AND
-`vstfs:///Git/PullRequestId/` links, calls `repo_get_pull_request_by_id`
+`vstfs:///Git/PullRequestId/` links, calls `repo_pull_request` (`action: "get"`)
 for each PR (using the project GUID embedded in the artifact URL — PRs are
 often in a different project than the work item), derives missing branch
 names from `sourceRefName`, applies the WI-ID match filter, and renders
@@ -201,7 +203,8 @@ Match examples for ID `2435084`:
 
 **5b — for each matching PR artifact link:**
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   project: "<projectId from the artifact URL — see note>"
   repositoryId: "<repositoryId from the artifact URL>"
   pullRequestId: <PR ID extracted from vstfs URL>
@@ -259,7 +262,7 @@ Save sprint info: extract last segment of Iteration Path, normalize (`Sprint41` 
 ### 8. Download Embedded and Attached Images
 
 **ADO fast path:** the script in step 2 already handled **8a–8d** — it extracted
-the image manifest, called `wit_get_work_item_attachment` for each GUID,
+the image manifest, called `wit_work_item_attachment` for each GUID,
 applied the size + extension filters (vision-API-supported formats only:
 `png/jpg/jpeg/gif/webp`), ran `.ai/lib/validate-image.sh` on each saved file
 to reject anything Claude's vision API can't process (wrong MIME, > 5 MB,
@@ -290,7 +293,7 @@ Each row is `<source>\t<guid>\t<filename>\t<size>`. Source is either `attachment
 
 For each row in the manifest, call:
 ```
-mcp__ado__wit_get_work_item_attachment
+mcp__ado__wit_work_item_attachment
   project: "<ADO project from config>"
   attachmentId: "<guid from row>"
   fileName: "<filename from row>"
@@ -317,7 +320,7 @@ The MCP returns the file as a base64 `blob`. Decode and write to `$SPEC_DIR/imag
 bash .ai/lib/validate-image.sh "$SPEC_DIR/images/<filename>"
 ```
 
-The script checks MIME (must be `image/png`, `image/jpeg`, `image/gif`, or `image/webp`), file size (≤ 5 MB), dimensions (≤ 8000 px on a side, > 0 px), AND structural integrity — it walks the container's chunks/markers (PNG IHDR→IEND with CRCs, JPEG SOI/EOI, GIF trailer, WebP RIFF size) to catch truncated streams that header-only checks miss. The ADO MCP `wit_get_work_item_attachment` tool has been observed silently truncating large attachments around 75 KB — the file passes MIME/dimension checks because IHDR is intact but Anthropic's full-decode pass returns 400; the structural check rejects it before Read sees it. Exit 0 = safe to Read in step 8e. Exit 1 = unsafe — record the file in `INDEX.md` with status `skipped: <reason from stderr>` and **do not Read it in step 8e**. Exit 2 = usage error (treat as skip).
+The script checks MIME (must be `image/png`, `image/jpeg`, `image/gif`, or `image/webp`), file size (≤ 5 MB), dimensions (≤ 8000 px on a side, > 0 px), AND structural integrity — it walks the container's chunks/markers (PNG IHDR→IEND with CRCs, JPEG SOI/EOI, GIF trailer, WebP RIFF size) to catch truncated streams that header-only checks miss. The ADO MCP `wit_work_item_attachment` tool has been observed silently truncating large attachments around 75 KB — the file passes MIME/dimension checks because IHDR is intact but Anthropic's full-decode pass returns 400; the structural check rejects it before Read sees it. Exit 0 = safe to Read in step 8e. Exit 1 = unsafe — record the file in `INDEX.md` with status `skipped: <reason from stderr>` and **do not Read it in step 8e**. Exit 2 = usage error (treat as skip).
 
 This validator is the load-bearing fix for the "Could not process image" 400 errors: any file that fails validation here MUST NOT reach step 8e's Read call, because once that Read attaches the bytes to the conversation, the API call fails as a whole and the session is blocked. If in doubt, skip — a missing description is fixable; a blocked turn is not.
 

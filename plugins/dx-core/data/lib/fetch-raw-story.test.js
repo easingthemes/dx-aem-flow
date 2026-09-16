@@ -400,6 +400,43 @@ test('parseToolText — unwraps the v2.10.0 untrusted-content sentinels', () => 
   assert.equal(lib.parseToolText(null), '');
 });
 
+test('requireParsed — rejects unparsed content at every call site', () => {
+  // parseToolText returns the raw string when it cannot unwrap, and each of the
+  // three callTool sites degrades differently on that: wi renders an empty story,
+  // comments falls through Array.isArray then .comments to a silent [], and a
+  // string parent is truthy so the story prints "**#undefined: **". All exit 0.
+  const ok = { id: 1 };
+  assert.equal(lib.requireParsed(ok, 'x'), ok);
+  assert.deepEqual(lib.requireParsed([1, 2], 'x'), [1, 2]);
+
+  // Absent is normal for comments and parent, fatal for the work item.
+  assert.equal(lib.requireParsed(null, 'x'), null);
+  assert.equal(lib.requireParsed(undefined, 'x'), null);
+  assert.throws(() => lib.requireParsed(null, 'wit_work_item action=get for #7', { allowMissing: false }),
+    /wit_work_item action=get for #7 returned no content/);
+
+  // The actual failure mode: a sentinel-wrapped payload that did not unwrap.
+  const raw = '<<abc12345>> [UNTRUSTED …] <<abc12345>>\n{"id":7}';
+  assert.throws(
+    () => lib.requireParsed(raw, 'wit_work_item action=list_comments for #7'),
+    (e) => /action=list_comments for #7 returned content this script could not parse/.test(e.message)
+      && /Got string:/.test(e.message)
+  );
+
+  // Label names the site, so the error says which of the three failed.
+  assert.throws(() => lib.requireParsed('x', 'wit_work_item action=get for parent #99'),
+    /parent #99/);
+
+  // Long payloads are truncated rather than dumped whole.
+  const long = 'y'.repeat(5000);
+  try { lib.requireParsed(long, 'x'); assert.fail('should throw'); }
+  catch (e) { assert.ok(e.message.length < 400, `message not truncated: ${e.message.length} chars`); }
+
+  // Not just strings — any non-object scalar is unusable here.
+  assert.throws(() => lib.requireParsed(42, 'x'), /Got number/);
+  assert.throws(() => lib.requireParsed(true, 'x'), /Got boolean/);
+});
+
 test('parseCliArgs — happy + error paths', () => {
   // Missing args
   assert.match(lib.parseCliArgs([]).error, /Usage:/);

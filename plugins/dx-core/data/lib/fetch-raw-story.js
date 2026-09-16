@@ -82,24 +82,31 @@ async function main(opts) {
   // Lowercase 'all' was valid on the pre-v2.9.0 wit_get_work_item schema; here it
   // fails zod validation before the handler runs, which kills the whole script on
   // its first call.
-  const wi = await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'All' });
-  if (!wi || typeof wi !== 'object') {
-    // Never render a story from unparsed content: an empty raw-story.md that
-    // exits 0 is worse than a failure, because every later phase trusts it.
-    throw new Error(
-      `wit_work_item action=get returned content this script could not parse for #${id}. ` +
-      `Got ${typeof wi}${typeof wi === 'string' ? `: ${wi.slice(0, 200)}` : ''}`
-    );
-  }
-  const commentsRaw = await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 });
+  // Never render a story from unparsed content: an empty raw-story.md that exits 0
+  // is worse than a failure, because every later phase trusts it.
+  const wi = requireParsed(
+    await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'All' }),
+    `wit_work_item action=get for #${id}`,
+    { allowMissing: false }
+  );
+  const commentsRaw = requireParsed(
+    await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 }),
+    `wit_work_item action=list_comments for #${id}`
+  );
   const comments = Array.isArray(commentsRaw) ? commentsRaw : (commentsRaw && commentsRaw.comments) || [];
 
   let parent = null;
   const parentId = findParentId(wi);
   if (parentId) {
     try {
-      parent = await client.callTool('wit_work_item', { action: 'get', project, id: parentId });
+      parent = requireParsed(
+        await client.callTool('wit_work_item', { action: 'get', project, id: parentId }),
+        `wit_work_item action=get for parent #${parentId}`
+      );
     } catch (e) {
+      // Assignment happens before the throw, so the bad value would otherwise
+      // survive into the render.
+      parent = null;
       console.error(`fetch-raw-story: parent #${parentId} fetch failed (${e.message}) — continuing without parent context`);
     }
   }
@@ -201,6 +208,29 @@ function deriveSlug(id, title) {
 // parse. The nonce is back-referenced so a stray `<<…>>` inside a description
 // cannot be mistaken for the closing marker.
 const TOOL_SENTINEL = /^<<([0-9a-f]{8,})>>[^\n]*\n([\s\S]*?)\n?<<\/\1>>$/;
+
+// A payload parseToolText could not unwrap comes back as the raw string, and every
+// call site has to reject that rather than read fields off it. Each one degrades
+// differently and all three exit 0: `wi` renders an empty story, `comments` falls
+// through `Array.isArray` then `.comments` to a silent `[]`, and a string `parent`
+// is truthy so the story prints "**#undefined: **". One helper, so a call site
+// added later cannot quietly skip the check.
+//
+// `allowMissing` distinguishes "absent" from "unparseable": no comments and no
+// parent are normal, but a work item that isn't there means there is no story.
+function requireParsed(value, what, { allowMissing = true } = {}) {
+  if (value == null) {
+    if (allowMissing) return null;
+    throw new Error(`${what} returned no content for this script to parse.`);
+  }
+  if (typeof value !== 'object') {
+    throw new Error(
+      `${what} returned content this script could not parse. ` +
+      `Got ${typeof value}: ${String(value).slice(0, 200)}`
+    );
+  }
+  return value;
+}
 
 function parseToolText(raw) {
   const s = String(raw == null ? '' : raw);
@@ -402,12 +432,21 @@ async function fetchPRs(client, refs) {
     try {
       // The MCP `project` arg accepts either name or GUID — using the GUID
       // from the artifact URL means we don't have to resolve cross-project.
-      const pr = await client.callTool('repo_pull_request', {
-        action: 'get',
-        project: projectId,
-        pullRequestId: prId,
-        repositoryId,
-      });
+      // requireParsed, not just a truthiness check: Object.keys() on a string
+      // returns its character indices, so any non-empty unparsed payload would
+      // pass the length test below and be pushed as if it were a PR — making
+      // pr.sourceRefName undefined and dropping the linked branch silently.
+      // Throwing here is caught below and degrades to "continuing without",
+      // which is right for PR detail: supplementary, not load-bearing.
+      const pr = requireParsed(
+        await client.callTool('repo_pull_request', {
+          action: 'get',
+          project: projectId,
+          pullRequestId: prId,
+          repositoryId,
+        }),
+        `repo_pull_request action=get for PR #${prId}`
+      );
       if (pr && Object.keys(pr).length) out.push(pr);
       else console.error(`fetch-raw-story: PR #${prId} returned empty payload — skipping`);
     } catch (e) {
@@ -953,6 +992,7 @@ module.exports = {
   main,
   parseCliArgs,
   parseToolText,
+  requireParsed,
   parseOrg,
   findParentId,
   extractSprint,

@@ -191,6 +191,35 @@ run "progress: 25 concurrent writers keep every row" bash -c '
 run "progress: concurrent run leaves no lock or temp files behind" \
   bash -c "test \$(ls -a $TMPCONC | grep -vE '^\.\.?$|^simple-progress\.md$' | wc -l) -eq 0"
 
+# A lock left behind by a killed writer must not wedge later writers: it ages past
+# the staleness window and gets reclaimed. Deterministic via a back-dated mtime.
+TMPSTALE="$TMP/7777777-stale"
+mkdir -p "$TMPSTALE/simple-progress.md.lock"
+echo 99999 > "$TMPSTALE/simple-progress.md.lock/owner"
+if touch -t "$(date -v-5M +%Y%m%d%H%M 2>/dev/null || date -d '5 minutes ago' +%Y%m%d%H%M)" "$TMPSTALE/simple-progress.md.lock" 2>/dev/null; then
+  run "progress: stale lock is reclaimed, not waited out" bash -c '
+    start=$(date +%s)
+    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPSTALE"'" "Phase 1" done >/dev/null 2>&1
+    took=$(( $(date +%s) - start ))
+    grep -qE "^\| Phase 1 \| done \|" "'"$TMPSTALE"'/simple-progress.md" &&
+      [ ! -e "'"$TMPSTALE"'/simple-progress.md.lock" ] &&
+      [ "$took" -lt 5 ]
+  '
+else
+  echo "SKIP: progress: stale lock reclaim (no back-dating touch available)"
+fi
+
+# Releasing the lock by path alone is a live bug, not a style point: if our hold
+# outlives the staleness window another writer reclaims the path, and an
+# unconditional rmdir then deletes a lock we no longer own. Structural check —
+# the behavioural one would need a >60s hold.
+run "progress: lock release is gated on the owner stamp" bash -c '
+  s="'"$SCRIPTS"'/../../../shared/update-progress.sh"
+  test -f "$s" &&
+  [ "$(grep -c "LOCK/owner" "$s")" -ge 2 ] &&
+  ! grep -q "rmdir \"\$LOCK\"" "$s"
+'
+
 
 # ===== scope-check + progress edge cases =====
 

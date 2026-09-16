@@ -66,13 +66,22 @@ LOCK="$PROGRESS.lock"
 LOCKED=""
 cleanup() {
   [ -n "${TMP:-}" ] && rm -f "$TMP"
-  [ -n "$LOCKED" ] && rmdir "$LOCK" 2>/dev/null
+  # Release only a lock still stamped with our PID. Removing by path alone is the
+  # same class of bug as the -mmin -1 reclaim below, one threshold up: if our hold
+  # ever outlives the staleness window (a suspended laptop mid-critical-section is
+  # the realistic way), another writer reclaims the path and creates its own lock,
+  # and an unconditional rmdir here would delete a live one. Lock dirs would always
+  # be empty, so that rmdir would always succeed.
+  if [ -n "$LOCKED" ] && [ "$(cat "$LOCK/owner" 2>/dev/null)" = "$$" ]; then
+    rm -rf "$LOCK"
+  fi
   return 0
 }
 trap cleanup EXIT
 
 for _ in $(seq 1 200); do
-  if mkdir "$LOCK" 2>/dev/null; then LOCKED=1; break; fi
+  # Stamp the lock on acquire so the release above can tell ours from a successor's.
+  if mkdir "$LOCK" 2>/dev/null; then echo $$ > "$LOCK/owner"; LOCKED=1; break; fi
   # Reclaim an abandoned lock, but only on positive evidence of age: -mmin +1
   # prints the path only once the lock is over a minute old, and prints nothing
   # for a lock that is fresh OR that just vanished as its owner released it.
