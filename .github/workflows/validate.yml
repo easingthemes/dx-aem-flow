@@ -8,16 +8,22 @@ on:
       - 'scripts/validate-*.sh'
       - 'website/src/config/stats.ts'
       - '.github/workflows/validate.yml'
+  # Deliberately unfiltered. The job is ~14s, so a paths filter saves nothing and
+  # costs correctness: the previous one let changes under scripts/** (siblings the
+  # validators read) and docs/** through without ever running this workflow, and a
+  # PR editing only this file could not test itself. It would also hang a docs-only
+  # PR if `validate` ever became a required check — `main` is unprotected today, but
+  # a skipped run reports no conclusion, so that is a trap worth not setting.
   pull_request:
     branches: [main]
-    paths:
-      - 'plugins/**'
-      - 'scripts/validate-*.sh'
-      - 'website/src/config/stats.ts'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    # The structural checks either pass or die fast, but the suites include a
+    # 25-writer concurrency test with a bounded lock wait and mkdir retry loops.
+    # Without this, a wedged run sits on the 6h default. Real runtime is ~14s.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - name: Validate skills
@@ -28,3 +34,39 @@ jobs:
         run: bash scripts/validate-structure.sh
       - name: Validate stats
         run: bash scripts/validate-stats.sh
+
+      # The four checks above are structural — they read frontmatter, manifests and
+      # counts. They cannot tell whether a script works. Until the suites below ran
+      # here, a test fixture sat red on main for weeks and two fatal defects in
+      # .ai/lib shipped in a release (#197, #198).
+      #
+      # Suites are DISCOVERED, not listed. A hardcoded list is the same failure mode
+      # this workflow exists to close: the first revision of this file wired in three
+      # suites, review raised it to four, and discovery found six. Any new
+      # `run-tests.sh`, `*.test.sh` or `*.test.js` under plugins/ is picked up with no
+      # change here — so a suite must be hermetic (no live ADO/AEM/network). All six
+      # current ones are, and pass with no global git config and an empty HOME.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Test — shared-lib suites (node)
+        run: |
+          files=$(find plugins -type f -name '*.test.js' | sort)
+          if [ -z "$files" ]; then echo "::error::no *.test.js found under plugins/"; exit 1; fi
+          echo "$files" | sed 's/^/  /'
+          node --test $files
+
+      - name: Test — helper-script suites (bash)
+        run: |
+          fail=0
+          found=0
+          while IFS= read -r f; do
+            found=$((found + 1))
+            echo "::group::$f"
+            if bash "$f"; then echo "PASS $f"; else echo "::error::$f failed"; fail=1; fi
+            echo "::endgroup::"
+          done < <(find plugins -type f \( -name 'run-tests.sh' -o -name '*.test.sh' \) | sort)
+          if [ "$found" -eq 0 ]; then echo "::error::no bash suites found under plugins/"; exit 1; fi
+          echo "$found bash suites run"
+          exit $fail
