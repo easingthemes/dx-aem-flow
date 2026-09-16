@@ -21,7 +21,8 @@
 #   * files that fail a structural decode (truncated stream, corrupt
 #     chunk CRC, missing terminator) — header-only checks (`file`) miss
 #     these because IHDR can be intact while IDAT is incomplete. Observed
-#     failure mode: the ADO MCP (`wit_get_work_item_attachment`) silently
+#     failure mode: the ADO MCP (`wit_work_item_attachment`, formerly
+#     `wit_get_work_item_attachment` pre-v2.9.0) silently
 #     truncates large attachments, producing a file that passes MIME and
 #     dimension checks but trips Anthropic's full-decode pass with
 #     `API Error: 400 — Could not process image`.
