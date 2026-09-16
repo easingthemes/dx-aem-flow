@@ -18,11 +18,19 @@
 //   CLI needed; no PAT.
 //
 // Scope (v1):
-//   - Tools called: wit_get_work_item (main + parent if hierarchy-reverse exists),
-//     wit_list_work_item_comments.
+//   - Tools called: wit_work_item action=get (main + parent if hierarchy-reverse
+//     exists), wit_work_item action=list_comments.
 //   - Linked branches are extracted from artifact relations directly (no extra MCP call).
-//   - PR detail (git_get_pull_request) and image fetching (wit_get_work_item_attachment)
-//     are out of scope — the calling skill handles those after this script runs.
+//   - PR detail (repo_pull_request action=get) and image fetching
+//     (wit_work_item_attachment) are out of scope — the calling skill handles
+//     those after this script runs.
+//
+// @azure-devops/mcp v2.9.0 consolidated the single-purpose work-item and PR
+// tools used here into action-dispatched tools (wit_get_work_item +
+// wit_list_work_item_comments -> wit_work_item; repo_get_pull_request_by_id ->
+// repo_pull_request; wit_get_work_item_attachment -> wit_work_item_attachment,
+// name only). This script calls the new names/shapes directly — no version
+// detection, since @azure-devops/mcp is fetched via `npx -y` (always latest).
 //
 // Usage:
 //   node .ai/lib/fetch-raw-story.js <org-url> <project> <work-item-id> [<spec-dir>]
@@ -69,15 +77,15 @@ async function main(opts) {
   const client = new McpClient(['npx', '-y', '@azure-devops/mcp', org]);
   await client.start();
 
-  const wi = await client.callTool('wit_get_work_item', { project, id, expand: 'all' });
-  const commentsRaw = await client.callTool('wit_list_work_item_comments', { project, workItemId: id });
+  const wi = await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'all' });
+  const commentsRaw = await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 });
   const comments = Array.isArray(commentsRaw) ? commentsRaw : (commentsRaw && commentsRaw.comments) || [];
 
   let parent = null;
   const parentId = findParentId(wi);
   if (parentId) {
     try {
-      parent = await client.callTool('wit_get_work_item', { project, id: parentId });
+      parent = await client.callTool('wit_work_item', { action: 'get', project, id: parentId });
     } catch (e) {
       console.error(`fetch-raw-story: parent #${parentId} fetch failed (${e.message}) — continuing without parent context`);
     }
@@ -358,7 +366,8 @@ async function fetchPRs(client, refs) {
     try {
       // The MCP `project` arg accepts either name or GUID — using the GUID
       // from the artifact URL means we don't have to resolve cross-project.
-      const pr = await client.callTool('repo_get_pull_request_by_id', {
+      const pr = await client.callTool('repo_pull_request', {
+        action: 'get',
         project: projectId,
         pullRequestId: prId,
         repositoryId,
@@ -507,7 +516,7 @@ function decodeEntities(s) {
 
 // ------------------------------------------------------------------
 // Image fetch — extracts ADO attachments + embedded HTML <img> refs,
-// downloads each via wit_get_work_item_attachment, applies size + MIME
+// downloads each via wit_work_item_attachment, applies size + MIME
 // filters, names files per the policy in dx-req SKILL.md step 8, and
 // writes images/INDEX.md. Returns a Map<lowercase-guid, "./images/<file>">.
 // ------------------------------------------------------------------
@@ -577,7 +586,7 @@ async function fetchImages(client, wi, specDir, project) {
 
     let result;
     try {
-      result = await client.callTool('wit_get_work_item_attachment', {
+      result = await client.callTool('wit_work_item_attachment', {
         project,
         attachmentId: row.guid,
         fileName: row.filename,

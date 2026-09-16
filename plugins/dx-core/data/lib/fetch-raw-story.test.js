@@ -328,10 +328,13 @@ test('validate-image.sh — rejects vision-unsafe formats, accepts PNG', () => {
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fetchraw-validate-'));
   try {
-    // Tiny 1x1 transparent PNG
+    // Tiny 1x1 transparent PNG. Every chunk CRC must be correct — since
+    // `fix(dx-core): detect truncated ADO image attachments` (8ffdfee) the
+    // validator verifies IDAT CRCs, so a hand-trimmed PNG is rejected as
+    // corrupt and this test fails on the *good* file.
     const tinyPng = Buffer.from(
       '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489' +
-      '0000000d49444154789c63000100000500010d0a2db40000000049454e44ae426082',
+      '0000000b4944415478da636000020000050001e9fadcd80000000049454e44ae426082',
       'hex'
     );
     fs.writeFileSync(path.join(tmp, 'good.png'), tinyPng);
