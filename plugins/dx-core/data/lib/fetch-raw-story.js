@@ -77,16 +77,36 @@ async function main(opts) {
   const client = new McpClient(['npx', '-y', '@azure-devops/mcp', org]);
   await client.start();
 
-  const wi = await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'all' });
-  const commentsRaw = await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 });
+  // `expand` is a zod enum built from the WorkItemExpand TS enum *keys*, so the
+  // accepted values are capitalized: None | Relations | Fields | Links | All.
+  // Lowercase 'all' was valid on the pre-v2.9.0 wit_get_work_item schema; here it
+  // fails zod validation before the handler runs, which kills the whole script on
+  // its first call.
+  // Never render a story from unparsed content: an empty raw-story.md that exits 0
+  // is worse than a failure, because every later phase trusts it.
+  const wi = requireParsed(
+    await client.callTool('wit_work_item', { action: 'get', project, id, expand: 'All' }),
+    `wit_work_item action=get for #${id}`,
+    { allowMissing: false }
+  );
+  const commentsRaw = requireParsed(
+    await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 200 }),
+    `wit_work_item action=list_comments for #${id}`
+  );
   const comments = Array.isArray(commentsRaw) ? commentsRaw : (commentsRaw && commentsRaw.comments) || [];
 
   let parent = null;
   const parentId = findParentId(wi);
   if (parentId) {
     try {
-      parent = await client.callTool('wit_work_item', { action: 'get', project, id: parentId });
+      parent = requireParsed(
+        await client.callTool('wit_work_item', { action: 'get', project, id: parentId }),
+        `wit_work_item action=get for parent #${parentId}`
+      );
     } catch (e) {
+      // Assignment happens before the throw, so the bad value would otherwise
+      // survive into the render.
+      parent = null;
       console.error(`fetch-raw-story: parent #${parentId} fetch failed (${e.message}) — continuing without parent context`);
     }
   }
@@ -176,6 +196,52 @@ function deriveSlug(id, title) {
 // MCP stdio JSON-RPC client (line-delimited)
 // ------------------------------------------------------------------
 
+// @azure-devops/mcp v2.10.0 wraps tool output in prompt-injection sentinels:
+//
+//   <<nonce>> [UNTRUSTED AZURE DEVOPS … CONTENT — …] <<nonce>>
+//   { …json… }
+//   <</nonce>>
+//
+// `JSON.parse` on that throws, and returning the raw string on failure is what
+// made this silent: every `wi.fields` read downstream became undefined, so the
+// script wrote an empty raw-story.md and still exited 0. Strip the wrapper, then
+// parse. The nonce is back-referenced so a stray `<<…>>` inside a description
+// cannot be mistaken for the closing marker.
+const TOOL_SENTINEL = /^<<([0-9a-f]{8,})>>[^\n]*\n([\s\S]*?)\n?<<\/\1>>$/;
+
+// A payload parseToolText could not unwrap comes back as the raw string, and every
+// call site has to reject that rather than read fields off it. Each one degrades
+// differently and all three exit 0: `wi` renders an empty story, `comments` falls
+// through `Array.isArray` then `.comments` to a silent `[]`, and a string `parent`
+// is truthy so the story prints "**#undefined: **". One helper, so a call site
+// added later cannot quietly skip the check.
+//
+// `allowMissing` distinguishes "absent" from "unparseable": no comments and no
+// parent are normal, but a work item that isn't there means there is no story.
+function requireParsed(value, what, { allowMissing = true } = {}) {
+  if (value == null) {
+    if (allowMissing) return null;
+    throw new Error(`${what} returned no content for this script to parse.`);
+  }
+  if (typeof value !== 'object') {
+    throw new Error(
+      `${what} returned content this script could not parse. ` +
+      `Got ${typeof value}: ${String(value).slice(0, 200)}`
+    );
+  }
+  return value;
+}
+
+function parseToolText(raw) {
+  const s = String(raw == null ? '' : raw);
+  try { return JSON.parse(s); } catch (_) { /* fall through to unwrapping */ }
+  const m = TOOL_SENTINEL.exec(s.trim());
+  if (m) {
+    try { return JSON.parse(m[2]); } catch (_) { /* wrapped but not JSON */ }
+  }
+  return s;
+}
+
 class McpClient {
   constructor(cmd) {
     this.cmd = cmd;
@@ -224,7 +290,7 @@ class McpClient {
     const content = (result && result.content) || [];
     const text = content.find(c => c.type === 'text');
     if (!text) return result;
-    try { return JSON.parse(text.text); } catch (_) { return text.text; }
+    return parseToolText(text.text);
   }
 
   _onData(chunk) {
@@ -366,12 +432,21 @@ async function fetchPRs(client, refs) {
     try {
       // The MCP `project` arg accepts either name or GUID — using the GUID
       // from the artifact URL means we don't have to resolve cross-project.
-      const pr = await client.callTool('repo_pull_request', {
-        action: 'get',
-        project: projectId,
-        pullRequestId: prId,
-        repositoryId,
-      });
+      // requireParsed, not just a truthiness check: Object.keys() on a string
+      // returns its character indices, so any non-empty unparsed payload would
+      // pass the length test below and be pushed as if it were a PR — making
+      // pr.sourceRefName undefined and dropping the linked branch silently.
+      // Throwing here is caught below and degrades to "continuing without",
+      // which is right for PR detail: supplementary, not load-bearing.
+      const pr = requireParsed(
+        await client.callTool('repo_pull_request', {
+          action: 'get',
+          project: projectId,
+          pullRequestId: prId,
+          repositoryId,
+        }),
+        `repo_pull_request action=get for PR #${prId}`
+      );
       if (pr && Object.keys(pr).length) out.push(pr);
       else console.error(`fetch-raw-story: PR #${prId} returned empty payload — skipping`);
     } catch (e) {
@@ -916,6 +991,8 @@ if (require.main === module) {
 module.exports = {
   main,
   parseCliArgs,
+  parseToolText,
+  requireParsed,
   parseOrg,
   findParentId,
   extractSprint,
