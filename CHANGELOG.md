@@ -1,3 +1,10 @@
+## [3.6.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.5...v3.6.6) (2026-09-16)
+
+
+### Bug Fixes
+
+* update fetch-raw-story.js for @azure-devops/mcp v2.9.0 tool consolidation ([#197](https://github.com/easingthemes/dx-aem-flow/issues/197)) ([7eb737a](https://github.com/easingthemes/dx-aem-flow/commit/7eb737a4e4e8771c7a313f6e3d0a9869eeb63909)), closes [#198](https://github.com/easingthemes/dx-aem-flow/issues/198)
+
 ## [3.6.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.4...v3.6.5) (2026-09-15)
 
 
