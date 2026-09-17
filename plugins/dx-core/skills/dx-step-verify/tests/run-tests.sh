@@ -126,10 +126,41 @@ else
 fi
 
 # ===== temp logs are cleaned up =====
-if ls -d "${TMPDIR:-/tmp}"/dx-pre-review.* >/dev/null 2>&1; then
-  no "temp log dir removed on exit" "leftover dx-pre-review.* dir"
+# Point the gate at a private TMPDIR so this asserts on the dir *this* run
+# created. Globbing the real TMPDIR would read shared state and go red on any
+# leftover — a SIGKILLed gate run, or a concurrent /dx-step-verify, both of
+# which create dirs there too. This suite is discovered by CI, so it has to be
+# hermetic.
+LOGROOT="$TMP/logroot"; mkdir -p "$LOGROOT"
+R=$(mkrepo 'build:
+  compile: "true"
+')
+OUT=$( cd "$R" && TMPDIR="$LOGROOT" bash .ai/lib/pre-review-checks.sh 2>/dev/null )
+leftover=$(ls -d "$LOGROOT"/dx-pre-review.* 2>/dev/null)
+# The gate must have got past mktemp (valid JSON) and left nothing behind.
+check "gate ran under a private TMPDIR" "passed" "$(echo "$OUT" | jqq "d['phases'][0]['status']")"
+if [ -n "$leftover" ]; then
+  no "temp log dir removed on exit" "leftover: $leftover"
 else
   ok "temp log dir removed on exit"
+fi
+
+# ===== an unusable TMPDIR skips the gate instead of failing phases =====
+# With no log dir every run_cmd redirect fails, which used to report phases as
+# "failed" without running them and push mktemp's error onto stderr — the stream
+# the skill merges into the JSON it parses.
+R=$(mkrepo 'build:
+  compile: "echo hi"
+  test: "echo t"
+')
+OUT=$( cd "$R" && TMPDIR="$TMP/no-such-dir-xyz" bash .ai/lib/pre-review-checks.sh 2>&1 )
+check "unusable TMPDIR still emits parseable JSON" "ok"   "$(echo "$OUT" | jqq "'ok'")"
+check "unusable TMPDIR does not fail the gate"     "True" "$(echo "$OUT" | jqq "d['passed']")"
+check "unusable TMPDIR reports no phases"          "0"    "$(echo "$OUT" | jqq "len(d['phases'])")"
+if echo "$OUT" | grep -q "Could not create log dir"; then
+  ok "unusable TMPDIR explains itself in issues"
+else
+  no "unusable TMPDIR explains itself in issues" "$OUT"
 fi
 
 echo "---"

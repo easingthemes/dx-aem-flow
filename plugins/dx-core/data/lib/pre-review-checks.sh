@@ -87,7 +87,16 @@ BASE_BRANCH=$(yaml_val "base-branch")
 # reach ours: this script's only output is the JSON the caller parses, so a
 # chatty build tool would corrupt it. Capture both streams to a log instead of
 # discarding them — a failed phase can then report why it failed.
-RUN_LOG_DIR=$(mktemp -d "${TMPDIR:-/tmp}/dx-pre-review.XXXXXX")
+# A missing or unwritable TMPDIR must not surface as a phase failure. With no
+# log dir, every run_cmd redirect fails, so phases report "failed" without ever
+# running the command — and mktemp's own error goes to stderr, which the caller
+# merges into the JSON it parses (dx-step-verify/SKILL.md). Bail out with valid
+# JSON and exit 0, the way a missing base SHA does below.
+RUN_LOG_DIR=$(mktemp -d "${TMPDIR:-/tmp}/dx-pre-review.XXXXXX" 2>/dev/null) || RUN_LOG_DIR=""
+if [ -z "$RUN_LOG_DIR" ] || [ ! -d "$RUN_LOG_DIR" ]; then
+  echo '{"passed": true, "phases": [], "issues": ["Could not create log dir — skipping pre-review checks"]}'
+  exit 0
+fi
 trap 'rm -rf "$RUN_LOG_DIR"' EXIT
 
 # run_cmd <log-name> <command-string>  -> exit status of the command
