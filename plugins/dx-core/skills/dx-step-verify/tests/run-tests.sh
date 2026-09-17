@@ -41,8 +41,16 @@ mkrepo() {
   echo "$d"
 }
 
-# Run the gate, returning only stdout (the JSON contract).
-gate() { ( cd "$1" && bash .ai/lib/pre-review-checks.sh "${2:-}" 2>/dev/null ); }
+# Run the gate, returning only stdout. Use for the stdout-isolation tests,
+# where discarding stderr is the point. `shift` keeps the no-flag call a
+# genuine zero-argument invocation rather than passing one empty string.
+gate() { ( cd "$1" || exit 1; shift; bash .ai/lib/pre-review-checks.sh "$@" 2>/dev/null ); }
+
+# Run the gate the way the real caller does: dx-step-verify/SKILL.md runs
+# `bash .ai/lib/pre-review-checks.sh --fix 2>&1`, merging stderr into the
+# stdout it JSON-parses. The contract is therefore "both streams together
+# must be valid JSON" — gate() alone cannot see a violation of that.
+gate_merged() { ( cd "$1" || exit 1; shift; bash .ai/lib/pre-review-checks.sh "$@" 2>&1 ); }
 
 jqq() { python3 -c "import json,sys; d=json.load(sys.stdin); print($1)" 2>/dev/null; }
 
@@ -123,6 +131,117 @@ if echo "$OUT" | grep -q "auto-fix applied"; then
   ok "--fix selects the auto-fix wording"
 else
   no "--fix selects the auto-fix wording" "$OUT"
+fi
+
+# ===== the stream the skill actually parses =====
+# gate() discards stderr, but SKILL.md runs the gate as `... --fix 2>&1` and
+# JSON-parses the result. Assert on that merged stream too, or anything the
+# script writes to stderr stays invisible to this suite.
+
+R=$(mkrepo 'build:
+  compile: "echo on-stdout; echo on-stderr >&2; false"
+  test: "echo t"
+')
+OUT=$(gate_merged "$R")
+check "merged stdout+stderr parses as JSON"   "ok"     "$(echo "$OUT" | jqq "'ok'")"
+check "merged stream still reports phase 1"   "failed" "$(echo "$OUT" | jqq "d['phases'][0]['status']")"
+OUT=$(gate_merged "$R" --fix)
+check "merged stream parses with --fix too"   "ok"     "$(echo "$OUT" | jqq "'ok'")"
+
+# ===== diagnostics window on the errors, not the footer =====
+# log_lines used to tail the log. Build tools close with boilerplate (Maven
+# spends eight lines on "-> [Help 1]" and "re-run with -X"), so the cap was
+# consumed by the footer and the actual errors were truncated away.
+
+R=$(mkrepo 'build:
+  compile: "./fakemvn.sh"
+')
+cat > "$R/fakemvn.sh" <<'MEOF'
+#!/usr/bin/env bash
+echo "[INFO] Scanning for projects..."
+echo "[ERROR] FIRST-ERROR /src/A.java:[5,9] cannot find symbol"
+echo "[ERROR]   symbol:   variable foo"
+echo "[ERROR]   location: class A"
+echo "[ERROR] SECOND-ERROR /src/B.java:[9,3] cannot find symbol"
+echo "[ERROR] Failed to execute goal maven-compiler-plugin:compile: Compilation failure"
+echo "[ERROR] -> [Help 1]"
+echo "[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch."
+echo "[ERROR] Re-run Maven using the -X switch to enable full debug logging."
+echo "[ERROR] For more information about the errors and possible solutions, read:"
+echo "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException"
+echo "[ERROR] BOILERPLATE-TAIL-MARKER"
+exit 1
+MEOF
+chmod +x "$R/fakemvn.sh"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm mvn ) >/dev/null 2>&1
+OUT=$(gate "$R")
+for marker in FIRST-ERROR SECOND-ERROR; do
+  if echo "$OUT" | grep -q "| \[ERROR\] $marker"; then
+    ok "$marker survives the diagnostics cap"
+  else
+    no "$marker survives the diagnostics cap" "$OUT"
+  fi
+done
+if echo "$OUT" | grep -q "BOILERPLATE-TAIL-MARKER"; then
+  no "footer past the cap is dropped" "boilerplate tail reported instead of errors"
+else
+  ok "footer past the cap is dropped"
+fi
+if echo "$OUT" | grep -q "| \[ERROR\]   symbol:   variable foo"; then
+  ok "context lines after an error are kept"
+else
+  no "context lines after an error are kept" "$OUT"
+fi
+
+# Output with nothing error-shaped still gets reported (tail fallback).
+R=$(mkrepo 'build:
+  compile: "for i in 1 2 3; do echo plain-line-$i; done; false"
+')
+OUT=$(gate "$R")
+if echo "$OUT" | grep -q "| plain-line-3"; then
+  ok "unrecognised output falls back to the tail"
+else
+  no "unrecognised output falls back to the tail" "$OUT"
+fi
+
+# ===== phase 3 failure diagnostics =====
+# No fixture made the test phase fail, so the Phase 3 log_lines call and the
+# per-phase log naming (compile.log vs test.log) were both uncovered.
+
+R=$(mkrepo 'build:
+  compile: "echo compile-was-run"
+  test: "./failtest.sh"
+')
+cat > "$R/failtest.sh" <<'TEOF'
+#!/usr/bin/env bash
+echo "surefire-preamble-noise"
+echo "FAILURE-HEADLINE Tests run: 5, Failures: 1"
+for i in 02 03 04 05 06 07 08 09 10; do echo "ctx-$i"; done
+echo "BEYOND-CAP-LINE"
+exit 1
+TEOF
+chmod +x "$R/failtest.sh"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm failtest ) >/dev/null 2>&1
+OUT=$(gate "$R")
+check "compile still passes when tests fail" "passed" "$(echo "$OUT" | jqq "d['phases'][0]['status']")"
+check "failing tests mark phase 3 failed"    "failed" "$(echo "$OUT" | jqq "d['phases'][2]['status']")"
+check "failing tests fail the gate"          "False"  "$(echo "$OUT" | jqq "d['passed']")"
+check "diagnostics are capped at 10 lines"   "10"     "$(echo "$OUT" | jqq "len([i for i in d['issues'] if i.startswith('  | ')])")"
+if echo "$OUT" | grep -q "| FAILURE-HEADLINE"; then
+  ok "test failure output reaches issues"
+else
+  no "test failure output reaches issues" "$OUT"
+fi
+if echo "$OUT" | grep -q "BEYOND-CAP-LINE"; then
+  no "lines past the cap are excluded" "BEYOND-CAP-LINE reported"
+else
+  ok "lines past the cap are excluded"
+fi
+# compile.log leaking into the test diagnostics would prove the logs collided.
+if echo "$OUT" | grep -q "compile-was-run"; then
+  no "compile and test logs stay separate" "compile output appeared in test diagnostics"
+else
+  ok "compile and test logs stay separate"
 fi
 
 # ===== temp logs are cleaned up =====

@@ -109,11 +109,26 @@ run_cmd() {
   eval "$*" >"$log" 2>&1
 }
 
-# log_lines <log-name> [max]  -> last N non-blank lines, one ISSUES entry each
+# log_lines <log-name> [max]  -> up to N diagnostic lines, one ISSUES entry each
+#
+# Windows forward from the first error-ish line rather than tailing the log.
+# Build tools end with boilerplate — Maven closes a compile failure with eight
+# lines of "-> [Help 1]" and "re-run with -X" — so a blind tail spends the
+# budget on the footer and truncates the errors this exists to surface. Keeping
+# a window (not just the matching lines) preserves follow-on context such as
+# javac's "symbol:"/"location:" or a stack trace. Falls back to the tail when
+# nothing looks like an error, so unrecognised output is still reported.
 log_lines() {
   local log="$RUN_LOG_DIR/$1" max="${2:-10}"
   [ -s "$log" ] || return 0
-  sed 's/\r$//' "$log" | grep -v '^[[:space:]]*$' | tail -n "$max" | sed 's/^/  | /'
+  sed 's/\r$//' "$log" | grep -v '^[[:space:]]*$' | awk -v max="$max" '
+    { line[NR] = $0 }
+    !start && tolower($0) ~ /error|fail|warning/ { start = NR }
+    END {
+      if (!start) start = (NR > max ? NR - max + 1 : 1)
+      for (i = start; i < start + max && i <= NR; i++) print "  | " line[i]
+    }
+  '
 }
 
 # --- Determine base SHA ---
