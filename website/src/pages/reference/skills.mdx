@@ -69,12 +69,15 @@ import { stats } from '../../config/stats';
   bg="alt"
 />
 <Section>
-  <div class="grid md:grid-cols-3 gap-4">
+  <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:puzzle" iconColor="bg-brand-700" title="dx-core" tags={[{ label: `${stats.dxCoreSkills} skills`, color: 'primary' }]}>
       Platform-agnostic ADO/Jira workflow: requirements, planning, execution, review, PR, bug fix, documentation, and utility.
     </ContentCard>
     <ContentCard icon="mdi:web" iconColor="bg-cyan-dark" title="dx-aem" tags={[{ label: `${stats.dxAemSkills} skills`, color: 'secondary' }]}>
       AEM full-flow: component dialogs, JCR content, editorial QA, browser automation, demo capture, and documentation.
+    </ContentCard>
+    <ContentCard icon="mdi:source-branch" iconColor="bg-emerald-600" title="dx-hub" tags={[{ label: `${stats.dxHubSkills} skills`, color: 'info' }]}>
+      Multi-repo orchestration: hub init and config, repo discovery, cross-repo dispatch, and dispatch status.
     </ContentCard>
     <ContentCard icon="mdi:cog" iconColor="bg-amber-500" title="dx-automation" tags={[{ label: `${stats.dxAutomationSkills} skills`, color: 'warning' }]}>
       Autonomous agent infrastructure: AWS Lambda, ADO pipelines, CloudWatch alarms.
@@ -128,6 +131,7 @@ import { stats } from '../../config/stats';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full requirements pipeline: fetch work item, validate DoR, distill dev requirements, research codebase, generate team summary. Posts interactive checkbox comment to ADO/Jira (idempotent).</td><td class="p-3">All spec files + ADO comments</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Create child Task work items with hour estimates.</td><td class="p-3">ADO/Jira tasks</td></tr>
+        <tr><td class="p-3"><code>/dx-dor</code></td><td class="p-3"><code>&lt;work-item-id(s)&gt;</code> -- space-separated for batch</td><td class="p-3">Validate Definition of Ready -- fetch the wiki checklist, evaluate the story, post an ADO comment. Standalone at sprint start, in batch, or as part of <code>/dx-req</code>.</td><td class="p-3">ADO comment</td></tr>
         <tr><td class="p-3"><code>/dx-req-dod</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Check Definition of Done against ADO/Jira wiki checklist -- validates actual deliverables: PR, tests, build, docs, child tasks. Auto-fixes what is possible, creates tasks for the rest.</td><td class="p-3"><code>dod.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path-to-file&gt;</code></td><td class="p-3">Validate external (non-ADO) requirements document.</td><td class="p-3"><code>explain.md</code></td></tr>
       </tbody>
@@ -236,7 +240,7 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/dx-pr-review-all</code></td><td class="p-3">none</td><td class="p-3">Batch-review multiple open PRs assigned to you.</td><td class="p-3">Multiple reviews</td></tr>
         <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Answer open PR comments with codebase context, detect proposed patches. Applies agree-will-fix code changes, commits, pushes, and replies to threads.</td><td class="p-3">ADO replies + code</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Generate categorized report from PR review -- groups by category, tracks patch resolution, posts to wiki.</td><td class="p-3">Report + wiki page</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count]</code></td><td class="p-3">Generate categorized reports for multiple PR reviews -- batch reports posted to ADO Wiki or Confluence.</td><td class="p-3">Batch reports + wiki</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count] [count]</code></td><td class="p-3">Batch version -- lists reviewed PRs, generates a report for each, posts all to ADO Wiki or Confluence.</td><td class="p-3">Reports + wiki pages</td></tr>
       </tbody>
     </table>
   </div>
@@ -343,6 +347,11 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/dx-eject</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Eject plugin assets into local repo -- copies all skills, agents, rules, templates so project works without plugins.</td><td class="p-3"><code>.claude/skills/</code>, <code>.ai/ejected/</code></td></tr>
         <tr><td class="p-3"><code>/dx-help</code></td><td class="p-3"><code>&lt;question&gt;</code></td><td class="p-3">Answer architecture questions from local <code>.ai/</code> docs.</td><td class="p-3">Answer</td></tr>
         <tr><td class="p-3"><code>/dx-sync</code></td><td class="p-3"><code>[--dry-run] [--parallel] [repo1 repo2 ...]</code></td><td class="p-3">Sync plugin updates to consumer repos -- runs sync script with selected repos and options.</td><td class="p-3">Sync report</td></tr>
+        <tr><td class="p-3"><code>/dx-scan</code></td><td class="p-3"><code>[phase1|phase2|phase3|all]</code></td><td class="p-3">Deep project scan -- discover conventions from actual code, customise rule files with real values, generate seed data. Interactive. Run after <code>/dx-init</code> + <code>/dx-adapt</code> + <code>/aem-init</code>.</td><td class="p-3">Rule files, seed data</td></tr>
+        <tr><td class="p-3"><code>/dx-security</code></td><td class="p-3"><code>[changes|full]</code> (default <code>changes</code>)</td><td class="p-3">Security hardening audit -- OWASP Top 10, secrets scan, dependency audit, input validation, auth review. Use before a PR or when touching user input, auth, or external integrations.</td><td class="p-3">Audit report</td></tr>
+        <tr><td class="p-3"><code>/dx-simplify</code></td><td class="p-3"><code>[file or directory]</code> (defaults to changed files)</td><td class="p-3">Reduce complexity while preserving exact behavioural equivalence. Applies Chesterton's Fence (understand before changing) and the Rule of 500 (replace when simpler).</td><td class="p-3">Simplified code</td></tr>
+        <tr><td class="p-3"><code>/dx-simple</code></td><td class="p-3"><code>&lt;work-item-id or URL&gt;</code></td><td class="p-3">Apply a small AEM change (a11y label, colour, spacing, copy, css-class, icon, focus trap) by splitting work into authoring (JCR writes) and code (file edits &rarr; PR) paths. 9 confidence gates; limits of 5 files / 50 lines / 10 JCR writes. Backs the <code>@kai-simple</code> SimpleAgent pipeline.</td><td class="p-3">JCR writes or PR</td></tr>
+        <tr><td class="p-3"><code>/dx-pattern-extract</code></td><td class="p-3"><code>[--dry-run]</code></td><td class="p-3">Scan completed tickets for recurring patterns and promote them to cross-ticket knowledge. Run periodically or after finishing several tickets.</td><td class="p-3"><code>.ai/graph/nodes/patterns/</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -448,6 +457,37 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/aem-page-search</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Find all AEM pages using a specific component.</td><td class="p-3">Page list</td></tr>
         <tr><td class="p-3"><code>/aem-refresh</code></td><td class="p-3">none</td><td class="p-3">Update <code>.ai/project/</code> seed data from plugin, external docs repo, or manual sources.</td><td class="p-3">Seed data files</td></tr>
         <tr><td class="p-3"><code>/aem-doctor</code></td><td class="p-3"><code>[components|osgi|dispatcher|all]</code></td><td class="p-3">Check AEM project infrastructure health.</td><td class="p-3">Status report</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-hub                                                                  */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="dx-hub"
+  badgeColor="info"
+  title="Multi-Repo Orchestration (dx-hub-&#42;)"
+  subtitle="fan one ticket out across sibling repos"
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Skill</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Output</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-hub-init</code></td><td class="p-3"><code>[path]</code> (default <code>../.hub</code>)</td><td class="p-3">Initialise a hub directory -- discovers sibling repos, merges configs, validates CLI compatibility. Run once to set up hub mode.</td><td class="p-3">Hub directory</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | terminal-delay &lt;seconds&gt;]</code></td><td class="p-3">View and edit hub configuration -- add repos, adjust terminal delay.</td><td class="p-3">Config update</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id or URL&gt; [repo-a repo-b ...] [--skill /dx-agent-all]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals -- reads the ticket, detects involved repos, opens an independent Claude session in each.</td><td class="p-3">Parallel sessions</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[ticket-id] [--clean]</code></td><td class="p-3">Show status of hub dispatches -- which repos are running, done, blocked, or failed.</td><td class="p-3">Status report</td></tr>
+        <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Resolve which repos a work item touches, as a four-tier cascade (explicit directive &rarr; simple-block routing &rarr; cross-repo table &rarr; LLM). Used by the KAI-HUB router pipeline to fan an agent out across repos.</td><td class="p-3">Repo list</td></tr>
       </tbody>
     </table>
   </div>
