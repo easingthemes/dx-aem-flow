@@ -241,7 +241,6 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code> (optional)</td><td class="p-3">Answer open PR comments with codebase context, detect proposed patches. Applies agree-will-fix code changes, commits, pushes, and replies to threads.</td><td class="p-3">ADO replies + code</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR-id or URL&gt;</code></td><td class="p-3">Generate categorized report from PR review -- groups by category, tracks patch resolution, posts to wiki.</td><td class="p-3">Report + wiki page</td></tr>
         <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count] [count]</code></td><td class="p-3">Batch version -- lists reviewed PRs, generates a report for each, posts all to ADO Wiki or Confluence.</td><td class="p-3">Reports + wiki pages</td></tr>
-        <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [PR URL | Repo URL | count]</code></td><td class="p-3">Generate categorized reports for multiple PR reviews -- batch reports posted to ADO Wiki or Confluence.</td><td class="p-3">Batch reports + wiki</td></tr>
       </tbody>
     </table>
   </div>
@@ -488,7 +487,7 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | terminal-delay &lt;seconds&gt;]</code></td><td class="p-3">View and edit hub configuration -- add repos, adjust terminal delay.</td><td class="p-3">Config update</td></tr>
         <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id or URL&gt; [repo-a repo-b ...] [--skill /dx-agent-all]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals -- reads the ticket, detects involved repos, opens an independent Claude session in each.</td><td class="p-3">Parallel sessions</td></tr>
         <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[ticket-id] [--clean]</code></td><td class="p-3">Show status of hub dispatches -- which repos are running, done, blocked, or failed.</td><td class="p-3">Status report</td></tr>
-        <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Resolve which repos a work item touches, as a 3-tier cascade (explicit directive &rarr; simple-block routing &rarr; cross-repo table &rarr; LLM). Used by the KAI-HUB router pipeline to fan an agent out across repos.</td><td class="p-3">Repo list</td></tr>
+        <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Resolve which repos a work item touches, as a four-tier cascade (explicit directive &rarr; simple-block routing &rarr; cross-repo table &rarr; LLM). Used by the KAI-HUB router pipeline to fan an agent out across repos.</td><td class="p-3">Repo list</td></tr>
       </tbody>
     </table>
   </div>

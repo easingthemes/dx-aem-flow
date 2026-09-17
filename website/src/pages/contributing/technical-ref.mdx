@@ -77,7 +77,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>context: fork</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Isolated subagent</td><td class="py-2 px-4">Ignored (runs inline)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Subagent type for fork</td><td class="py-2 px-4">Ignored</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Alias: <code>opus</code> / <code>sonnet</code> / <code>haiku</code> -- never a pinned id</td><td class="py-2 px-4">Ignored</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code> -- only honored from v2.1.267</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code> / <code>max</code> -- only honored from v2.1.267</td><td class="py-2 px-4">Ignored</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>paths</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Limit auto-activation to file globs</td><td class="py-2 px-4">Ignored</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>disable-model-invocation</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Prevent auto-invoke</td><td class="py-2 px-4">Supported</td></tr>
       </tbody>
@@ -106,7 +106,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4"><code>kebab-case</code></td><td class="py-2 px-4"><code>PascalCase</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools</code></td><td class="py-2 px-4">Comma string: <code>Read, Glob, Bash</code></td><td class="py-2 px-4">YAML list: <code>[read, search, execute]</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">Alias: <code>sonnet</code>, <code>opus</code></td><td class="py-2 px-4">Full string or array (fallback chain)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code></td><td class="py-2 px-4">Not supported</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code> / <code>max</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>memory</code></td><td class="py-2 px-4"><code>project / user / local</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>isolation</code></td><td class="py-2 px-4"><code>worktree</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agents</code></td><td class="py-2 px-4">N/A</td><td class="py-2 px-4">Subagent restriction list</td></tr>
@@ -231,18 +231,20 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-200">
           <th class="text-left py-2 px-4 font-semibold">Group</th>
           <th class="text-left py-2 px-4 font-semibold">Events</th>
+          <th class="text-left py-2 px-4 font-semibold">Fires when</th>
+          <th class="text-left py-2 px-4 font-semibold">Typical use</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Session</td><td class="py-2 px-4"><code>SessionStart</code>, <code>Setup</code>, <code>SessionEnd</code>, <code>InstructionsLoaded</code>, <code>ConfigChange</code>, <code>CwdChanged</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Prompt</td><td class="py-2 px-4"><code>UserPromptSubmit</code>, <code>UserPromptExpansion</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Tools</td><td class="py-2 px-4"><code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>PostToolBatch</code> (parallel-tool batch)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Permissions</td><td class="py-2 px-4"><code>PermissionRequest</code>, <code>PermissionDenied</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Stop</td><td class="py-2 px-4"><code>Stop</code>, <code>StopFailure</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Subagents &amp; tasks</td><td class="py-2 px-4"><code>SubagentStart</code>, <code>SubagentStop</code>, <code>TaskCreated</code>, <code>TaskCompleted</code>, <code>TeammateIdle</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Files &amp; worktrees</td><td class="py-2 px-4"><code>FileChanged</code>, <code>WorktreeCreate</code>, <code>WorktreeRemove</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Context</td><td class="py-2 px-4"><code>PreCompact</code>, <code>PostCompact</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Other</td><td class="py-2 px-4"><code>Elicitation</code>, <code>ElicitationResult</code>, <code>Notification</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Session</td><td class="py-2 px-4"><code>SessionStart</code>, <code>Setup</code>, <code>SessionEnd</code>, <code>InstructionsLoaded</code>, <code>ConfigChange</code>, <code>CwdChanged</code></td><td class="py-2 px-4">Session starts or ends, or its environment changes</td><td class="py-2 px-4">Context setup, re-read config, teardown</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Prompt</td><td class="py-2 px-4"><code>UserPromptSubmit</code>, <code>UserPromptExpansion</code></td><td class="py-2 px-4">A prompt is submitted, before expansion completes</td><td class="py-2 px-4">Audit, inject context</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Tools</td><td class="py-2 px-4"><code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>PostToolBatch</code> (parallel-tool batch)</td><td class="py-2 px-4">Around each tool invocation, or a parallel batch</td><td class="py-2 px-4">Block dangerous ops, formatters, logging</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Permissions</td><td class="py-2 px-4"><code>PermissionRequest</code>, <code>PermissionDenied</code></td><td class="py-2 px-4">A permission is requested or denied</td><td class="py-2 px-4">Audit trail, custom allow logic</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Stop</td><td class="py-2 px-4"><code>Stop</code>, <code>StopFailure</code></td><td class="py-2 px-4">The agent finishes a turn, or fails to</td><td class="py-2 px-4">Cleanup, completion guards</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Subagents &amp; tasks</td><td class="py-2 px-4"><code>SubagentStart</code>, <code>SubagentStop</code>, <code>TaskCreated</code>, <code>TaskCompleted</code>, <code>TeammateIdle</code></td><td class="py-2 px-4">Subagent or background-task lifecycle</td><td class="py-2 px-4">Tracking, result processing</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Files &amp; worktrees</td><td class="py-2 px-4"><code>FileChanged</code>, <code>WorktreeCreate</code>, <code>WorktreeRemove</code></td><td class="py-2 px-4">A file changes on disk, or a worktree is created/removed</td><td class="py-2 px-4">Re-index, workspace setup and teardown</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Context</td><td class="py-2 px-4"><code>PreCompact</code>, <code>PostCompact</code></td><td class="py-2 px-4">Immediately before and after compaction</td><td class="py-2 px-4">Preserve state across a compact</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Other</td><td class="py-2 px-4"><code>Elicitation</code>, <code>ElicitationResult</code>, <code>Notification</code></td><td class="py-2 px-4">Interactive elicitation, or a notification is raised</td><td class="py-2 px-4">Custom prompts, external alerting</td></tr>
       </tbody>
     </table>
   </div>
