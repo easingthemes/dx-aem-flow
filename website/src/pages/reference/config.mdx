@@ -497,6 +497,27 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </table>
   </div>
 
+  <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-8">Progress Tracking</h3>
+  <p class="text-sm mb-3">
+    Read by <code>shared/update-progress.sh</code>. Progress tracking is <strong>file-first</strong>:
+    coordinators write a progress file in the spec dir, so they never depend on a todo tool being
+    offered by the session.
+  </p>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Variable</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>DX_PROGRESS_FILE</code></td><td class="p-3">Output filename relative to the spec dir (default <code>progress.md</code>). Each coordinator sets its own: <code>dev-all-progress.md</code>, <code>bug-progress.md</code>, <code>simple-progress.md</code>, <code>req-progress.md</code>, <code>dod-progress.md</code>, <code>figma-progress.md</code>.</td></tr>
+        <tr><td class="p-3"><code>DX_PROGRESS_TITLE</code></td><td class="p-3">Heading text, rendered as <code>{'# <title> — #<ticket>'}</code> (default <code>Progress</code>).</td></tr>
+        <tr><td class="p-3"><code>DX_PROGRESS_LABEL</code></td><td class="p-3">First column header of the progress table (default <code>Phase</code>; <code>dx-bug-all</code> uses <code>Step</code>).</td></tr>
+        <tr><td class="p-3"><code>CLAUDE_CODE_ENABLE_TODO_TOOLS</code></td><td class="p-3">Set to <code>1</code> to opt a session back into <code>TaskCreate</code> / <code>TaskGet</code> / <code>TaskUpdate</code> / <code>TaskList</code>. Claude Code stopped offering these by default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer (v2.1.233). <strong>Optional</strong> -- dx skills track progress in files and never require these tools. See <code>rules/task-progress.md</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <h3 class="text-lg font-semibold text-brand-900 mb-3 mt-8">Dynamic-Checkout Workers (BugFix, DevAgent, DoD-Fix, Simple, …)</h3>
   <div class="overflow-x-auto">
     <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
