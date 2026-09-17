@@ -30,10 +30,10 @@ export const base = import.meta.env.BASE_URL;
 <Section>
   <PipelineBlock
     label="Event Flow"
-    description="From ADO event to agent execution -- every webhook is routed, deduplicated, rate-limited, and dispatched."
+    description="From ADO event to agent execution for the Lambda-routed agents -- routed, deduplicated, rate-limited, and dispatched. The three comment-triggered agents (SimpleAgent, BugFix, DoR) skip everything between the Service Hook and the pipeline."
     steps={[
       { title: 'Tracker Events (ADO)', subtitle: 'WI updated + tag,\nPR comment,\nPR created' },
-      { title: 'Service Hooks', subtitle: 'WI hook,\nPR Answer hook,\nPR Review policy', color: '#0891b2' },
+      { title: 'Service Hooks', subtitle: 'WI hook,\nPR Answer hook,\nPR Review policy,\n3 comment hooks', color: '#0891b2' },
       { title: 'API Gateway', subtitle: 'AWS entry point', color: '#8b5cf6' },
       { title: 'Lambda Routers', subtitle: 'Deduplicate,\nRate limit,\nToken budget', color: '#d97706' },
       { title: 'ADO Pipelines', subtitle: `${stats.autonomousAgents} agent pipelines`, color: '#059669' },
@@ -44,7 +44,7 @@ export const base = import.meta.env.BASE_URL;
 <SectionHeading
   badge="Agents"
   title="Eleven Autonomous Agents"
-  subtitle="Two PR agents triggered automatically, eight work-item agents triggered by ADO tags, and SimpleAgent triggered by a comment via an Azure-native Service Hook (Jira label support planned)."
+  subtitle="Two PR agents triggered automatically, six work-item agents triggered by ADO tags via the Lambda router, and three (SimpleAgent, BugFix, DoR) triggered by a work-item comment via an Azure-native Service Hook (Jira label support planned)."
   bg="primary"
 />
 <Section>
@@ -80,15 +80,6 @@ export const base = import.meta.env.BASE_URL;
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
     <ContentCard
-      icon="mdi:check-circle"
-      iconColor="bg-emerald-600"
-      title="DoR Checker"
-      tags={[{ label: 'KAI-DOR-AUTOMATION', color: 'success' }, { label: '/dx-agent-re', color: 'secondary' }]}
-    >
-      Validates Definition of Readiness -- checks story completeness, acceptance criteria, and technical detail.
-    </ContentCard>
-
-    <ContentCard
       icon="mdi:format-list-checks"
       iconColor="bg-emerald-600"
       title="DoD Checker"
@@ -104,15 +95,6 @@ export const base = import.meta.env.BASE_URL;
       tags={[{ label: 'KAI-DOD-FIX-AUTOMATION', color: 'success' }, { label: '/dx-req-dod', color: 'secondary' }]}
     >
       Fixes DoD gaps found by the checker -- adds missing tests, docs, or acceptance criteria evidence.
-    </ContentCard>
-
-    <ContentCard
-      icon="mdi:bug"
-      iconColor="bg-red-500"
-      title="BugFix"
-      tags={[{ label: 'KAI-BUGFIX-AUTOMATION', color: 'error' }, { label: '/dx-bug-all', color: 'secondary' }]}
-    >
-      Analyzes the bug, finds affected code, creates a fix branch and PR. Supports cross-repo delegation.
     </ContentCard>
 
     <ContentCard
@@ -154,11 +136,12 @@ export const base = import.meta.env.BASE_URL;
 
   <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-600 mb-4 mt-8">Comment-triggered (Azure-native -- no Lambda)</h3>
 
-  <HighlightBox severity="success" title="How SimpleAgent Triggers">
-    A comment containing <code>@kai-simple</code> on a work item fires an ADO Service Hook
+  <HighlightBox severity="success" title="How comment triggers work">
+    A comment containing the agent's token on a work item fires an ADO Service Hook
     (event: <em>work item commented on</em>, filter: <em>comment contains the token</em>) that posts to an
-    Incoming WebHook service connection the pipeline listens on. No Lambda, no API Gateway. The same
-    event starts the first run and resumes a blocked one -- Phase 0 decides which.
+    Incoming WebHook service connection the pipeline listens on. No Lambda, no API Gateway. For
+    SimpleAgent and BugFix the same event starts the first run and resumes a blocked one -- Phase 0
+    decides which. DoR is a stateless check, so it has no resume path.
   </HighlightBox>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -170,6 +153,27 @@ export const base = import.meta.env.BASE_URL;
     >
       Applies a small AEM change (a11y label, color, spacing, copy) via an authoring (JCR write) or
       code (file edits &rarr; PR) split. 9 confidence gates, strict scope limits, resumable recovery.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:bug"
+      iconColor="bg-red-500"
+      title="BugFix"
+      tags={[{ label: '@kai-bugfix', color: 'error' }, { label: '/dx-bug-all', color: 'secondary' }]}
+    >
+      Analyzes the bug, finds affected code, creates a fix branch and PR. Supports cross-repo
+      delegation. Filtered to Bug work items; full resumable recovery across triage &rarr; verify
+      &rarr; fix, with the <code>bugfix/&lt;id&gt;-*</code> branch as the durable state store.
+    </ContentCard>
+
+    <ContentCard
+      icon="mdi:check-circle"
+      iconColor="bg-emerald-600"
+      title="DoR Checker"
+      tags={[{ label: '@kai-dor', color: 'success' }, { label: '/dx-agent-re', color: 'secondary' }]}
+    >
+      Validates Definition of Readiness -- checks story completeness, acceptance criteria, and
+      technical detail. Filtered to User Story work items. Stateless, so no recovery path.
     </ContentCard>
   </div>
 </Section>

@@ -111,14 +111,22 @@ import CommandBlock from '../../components/CommandBlock.astro';
       "Bash(npm:*)",
       "Bash(npx:*)",
       "Bash(mvn*)",
-      "mcp__ado__wit_get_work_item",
-      "mcp__ado__wit_list_work_item_comments",
+      "mcp__ado__wit_work_item",
+      "mcp__ado__repo_pull_request",
       "mcp__ado__search_code"
     ]
   }
 }`}</CommandBlock>
   <HighlightBox severity="warning" title="Avoid Wildcards">
     Do not use wildcards like <code>{"mcp__ado__*"}</code> — they send full tool schemas on every request, wasting tokens.
+  </HighlightBox>
+  <HighlightBox severity="info" title="ADO MCP v2.9.0 consolidated its tool names">
+    Older allow lists name tools that no longer exist, so they match nothing and you get prompted
+    anyway. <code>wit_get_work_item</code> and <code>wit_list_work_item_comments</code> are now
+    <code>wit_work_item</code> (with <code>action: get</code> / <code>list_comments</code>);
+    <code>repo_get_pull_request_by_id</code> is <code>repo_pull_request</code>;
+    <code>repo_create_pull_request</code> is <code>repo_pull_request_write</code>;
+    <code>pipelines_run_pipeline</code> is <code>pipelines_run</code>.
   </HighlightBox>
 
   <h3 class="text-base font-semibold text-white mt-8 mb-3">Co-authored Commit Footer</h3>

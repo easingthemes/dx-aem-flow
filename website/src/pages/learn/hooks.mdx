@@ -71,7 +71,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <CommandBlock label="hooks.json (simplified)">{`{
-  "version": 1,
   "hooks": {
     "SessionStart": [{
       "matcher": "",
@@ -90,9 +89,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
   }
 }`}</CommandBlock>
 
-  <HighlightBox severity="info" title="version: 1">
-    Setting <code>version: 1</code> makes the hooks file work in both Claude Code and
-    Copilot CLI (v1.0.6+). A single file, dual compatibility.
+  <HighlightBox severity="warning" title="No top-level version key">
+    Do <strong>not</strong> add a <code>version</code> field. Claude Code's hook schema has no such
+    key and logs <code>hooks.json: unknown key "version" ignored</code> at every session start.
+    A single file is still dual-compatible without it -- Copilot CLI reads the same plugin
+    <code>hooks/hooks.json</code>.
   </HighlightBox>
 </Section>
 

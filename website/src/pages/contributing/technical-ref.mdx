@@ -135,9 +135,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code (project-level)</td><td class="py-2 px-4"><code>{"mcp__<server>__<tool>"}</code></td><td class="py-2 px-4"><code>{"mcp__ado__wit_get_work_item"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code (project-level)</td><td class="py-2 px-4"><code>{"mcp__<server>__<tool>"}</code></td><td class="py-2 px-4"><code>{"mcp__ado__wit_work_item"}</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Claude Code (plugin)</td><td class="py-2 px-4"><code>{"mcp__plugin_<plugin>_<server>__<tool>"}</code></td><td class="py-2 px-4"><code>{"mcp__plugin_dx-aem_AEM__getNodeContent"}</code></td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Copilot</td><td class="py-2 px-4"><code>{"<server>/<tool>"}</code></td><td class="py-2 px-4"><code>{"ado/wit_get_work_item"}</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Copilot CLI / VS Code Chat</td><td class="py-2 px-4">Bare name (no prefix)</td><td class="py-2 px-4"><code>getNodeContent</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Codex CLI</td><td class="py-2 px-4">Bare name; TOML <code>{"[mcp_servers.<server>]"}</code>. Tool names constrained to <code>{"^[a-zA-Z0-9_-]+$"}</code> -- dots disallowed</td><td class="py-2 px-4"><code>getNodeContent</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Gemini CLI</td><td class="py-2 px-4"><code>{"mcp_<server>_<tool>"}</code> (single underscore). Server name must not contain <code>_</code></td><td class="py-2 px-4"><code>mcp_aem_getnodecontent</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -171,7 +173,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Hooks"
   badgeColor="secondary"
   title="Hook System"
-  subtitle="Platform-separated hook architecture -- no overlap, no double-firing."
+  subtitle="Which platform reads which hook file -- the plugin file is shared, the rest are not."
   bg="alt"
 />
 <Section>
@@ -184,12 +186,24 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Plugin <code>hooks/hooks.json</code></td><td class="py-2 px-4">Claude Code CLI only</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/hooks/hooks.json</code></td><td class="py-2 px-4">Copilot CLI only (v1.0.10+)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Plugin <code>hooks/hooks.json</code></td><td class="py-2 px-4">Claude Code CLI (<code>Stop</code> / <code>SubagentStop</code>) <strong>and</strong> Copilot CLI -- both read this same file</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/hooks/hooks.json</code></td><td class="py-2 px-4">Copilot CLI only (v1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Agent frontmatter <code>hooks:</code></td><td class="py-2 px-4">VS Code Chat only (v1.111+)</td></tr>
       </tbody>
     </table>
   </div>
+
+  <HighlightBox severity="warning" title="Copilot CLI v1.0.40+ needs an env var">
+    Repo hooks in <code>.github/hooks/hooks.json</code> are <strong>silently ignored</strong> unless
+    <code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1</code> is exported in your shell. The same applies to
+    project-root <code>.mcp.json</code>, which needs <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code>.
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="Event names differ per platform">
+    Claude Code uses <code>Stop</code> / <code>SubagentStop</code>; Copilot CLI uses
+    <code>agentStop</code> / <code>subagentStop</code>. To give both platforms the same safety hooks,
+    install to both locations -- <code>/dx-init</code> step 9i does this for branch-guard and the Stop guard.
+  </HighlightBox>
 
   <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Hook Events</h3>
   <div class="grid md:grid-cols-2 gap-4">
