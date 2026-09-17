@@ -76,6 +76,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>argument-hint</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">UI placeholder</td><td class="py-2 px-4">UI placeholder</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>context: fork</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Isolated subagent</td><td class="py-2 px-4">Ignored (runs inline)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agent</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Subagent type for fork</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Alias: <code>opus</code> / <code>sonnet</code> / <code>haiku</code> -- never a pinned id</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code> / <code>max</code> -- only honored from v2.1.267</td><td class="py-2 px-4">Ignored</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>paths</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Limit auto-activation to file globs</td><td class="py-2 px-4">Ignored</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>disable-model-invocation</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Prevent auto-invoke</td><td class="py-2 px-4">Supported</td></tr>
       </tbody>
     </table>
@@ -103,6 +106,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>name</code></td><td class="py-2 px-4"><code>kebab-case</code></td><td class="py-2 px-4"><code>PascalCase</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>tools</code></td><td class="py-2 px-4">Comma string: <code>Read, Glob, Bash</code></td><td class="py-2 px-4">YAML list: <code>[read, search, execute]</code></td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>model</code></td><td class="py-2 px-4">Alias: <code>sonnet</code>, <code>opus</code></td><td class="py-2 px-4">Full string or array (fallback chain)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>effort</code></td><td class="py-2 px-4"><code>low</code> / <code>medium</code> / <code>high</code> / <code>xhigh</code> / <code>max</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>memory</code></td><td class="py-2 px-4"><code>project / user / local</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>isolation</code></td><td class="py-2 px-4"><code>worktree</code></td><td class="py-2 px-4">Not supported</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>agents</code></td><td class="py-2 px-4">N/A</td><td class="py-2 px-4">Subagent restriction list</td></tr>
@@ -215,26 +219,91 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
   </div>
 
-  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">All Supported Events</h3>
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Hook Events (Claude Code)</h3>
+  <p class="text-sm mb-3">
+    Grouped by what they observe. This mirrors the list in <code>CLAUDE.md</code>; the upstream hooks
+    reference occasionally adds events ahead of us, so treat it as current-as-of-our-last-sweep rather
+    than exhaustive.
+  </p>
   <div class="overflow-x-auto">
     <table class="w-full text-sm border-collapse">
       <thead>
         <tr class="border-b border-gray-200">
-          <th class="text-left py-2 px-4 font-semibold">Event</th>
-          <th class="text-left py-2 px-4 font-semibold">When</th>
-          <th class="text-left py-2 px-4 font-semibold">Use Cases</th>
+          <th class="text-left py-2 px-4 font-semibold">Group</th>
+          <th class="text-left py-2 px-4 font-semibold">Events</th>
+          <th class="text-left py-2 px-4 font-semibold">Fires when</th>
+          <th class="text-left py-2 px-4 font-semibold">Typical use</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>PreToolUse</code></td><td class="py-2 px-4">Before tool invocation</td><td class="py-2 px-4">Block dangerous ops, modify input</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>PostToolUse</code></td><td class="py-2 px-4">After tool completes</td><td class="py-2 px-4">Formatters, logging</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>UserPromptSubmit</code></td><td class="py-2 px-4">User submits prompt</td><td class="py-2 px-4">Audit, inject context</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>SessionStart</code></td><td class="py-2 px-4">Session begins</td><td class="py-2 px-4">Context setup</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>SubagentStart / Stop</code></td><td class="py-2 px-4">Subagent lifecycle</td><td class="py-2 px-4">Tracking, result processing</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>Stop</code></td><td class="py-2 px-4">Agent finishes</td><td class="py-2 px-4">Cleanup</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Session</td><td class="py-2 px-4"><code>SessionStart</code>, <code>Setup</code>, <code>SessionEnd</code>, <code>InstructionsLoaded</code>, <code>ConfigChange</code>, <code>CwdChanged</code></td><td class="py-2 px-4">Session starts or ends, or its environment changes</td><td class="py-2 px-4">Context setup, re-read config, teardown</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Prompt</td><td class="py-2 px-4"><code>UserPromptSubmit</code>, <code>UserPromptExpansion</code></td><td class="py-2 px-4">A prompt is submitted, before expansion completes</td><td class="py-2 px-4">Audit, inject context</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Tools</td><td class="py-2 px-4"><code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>PostToolBatch</code> (parallel-tool batch)</td><td class="py-2 px-4">Around each tool invocation, or a parallel batch</td><td class="py-2 px-4">Block dangerous ops, formatters, logging</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Permissions</td><td class="py-2 px-4"><code>PermissionRequest</code>, <code>PermissionDenied</code></td><td class="py-2 px-4">A permission is requested or denied</td><td class="py-2 px-4">Audit trail, custom allow logic</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Stop</td><td class="py-2 px-4"><code>Stop</code>, <code>StopFailure</code></td><td class="py-2 px-4">The agent finishes a turn, or fails to</td><td class="py-2 px-4">Cleanup, completion guards</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Subagents &amp; tasks</td><td class="py-2 px-4"><code>SubagentStart</code>, <code>SubagentStop</code>, <code>TaskCreated</code>, <code>TaskCompleted</code>, <code>TeammateIdle</code></td><td class="py-2 px-4">Subagent or background-task lifecycle</td><td class="py-2 px-4">Tracking, result processing</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Files &amp; worktrees</td><td class="py-2 px-4"><code>FileChanged</code>, <code>WorktreeCreate</code>, <code>WorktreeRemove</code></td><td class="py-2 px-4">A file changes on disk, or a worktree is created/removed</td><td class="py-2 px-4">Re-index, workspace setup and teardown</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Context</td><td class="py-2 px-4"><code>PreCompact</code>, <code>PostCompact</code></td><td class="py-2 px-4">Immediately before and after compaction</td><td class="py-2 px-4">Preserve state across a compact</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Other</td><td class="py-2 px-4"><code>Elicitation</code>, <code>ElicitationResult</code>, <code>Notification</code></td><td class="py-2 px-4">Interactive elicitation, or a notification is raised</td><td class="py-2 px-4">Custom prompts, external alerting</td></tr>
       </tbody>
     </table>
   </div>
+  <p class="text-sm mt-3">
+    Handler <code>type:</code> values: <code>command</code>, <code>http</code>, <code>mcp_tool</code>,
+    <code>prompt</code>, <code>agent</code>.
+  </p>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-3">Hook Authoring -- Key Fields</h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Field</th>
+          <th class="text-left py-2 px-4 font-semibold">Purpose</th>
+          <th class="text-left py-2 px-4 font-semibold">Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>matcher</code></td><td class="py-2 px-4">Which tool events to listen for</td><td class="py-2 px-4"><code>"Bash"</code>, <code>"Edit"</code>, <code>"mcp__&#42;figma&#42;"</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>if</code></td><td class="py-2 px-4">Fine-grained permission-rule filter, evaluated before spawning</td><td class="py-2 px-4"><code>"Bash(git commit&#42;)"</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>statusMessage</code></td><td class="py-2 px-4">Spinner text while the hook runs</td><td class="py-2 px-4"><code>"Checking branch protection..."</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>async</code></td><td class="py-2 px-4">Non-blocking background execution</td><td class="py-2 px-4"><code>true</code> for observational hooks</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>asyncRewake</code></td><td class="py-2 px-4">Background execution that wakes Claude on exit code 2</td><td class="py-2 px-4"><code>true</code> for long checks that must signal failure</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>timeout</code></td><td class="py-2 px-4">Seconds before cancelling</td><td class="py-2 px-4"><code>30</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>once</code></td><td class="py-2 px-4">One-shot per session. Skill/agent frontmatter <strong>only</strong> -- not <code>settings.json</code></td><td class="py-2 px-4"><code>true</code> for init scripts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="error" title="Never use exit 1 to block">
+    <code>0</code> = success (JSON is parsed from stdout). <code>2</code> = <strong>blocking</strong>
+    error, with stderr fed back as feedback. Any other code is a <strong>non-blocking</strong> error,
+    shown only in verbose mode -- so a hook that exits <code>1</code> to reject something fails open
+    and looks like it did nothing.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-3">Hook Profiles -- <code>DX_HOOK_PROFILE</code></h3>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Profile</th>
+          <th class="text-left py-2 px-4 font-semibold">Level</th>
+          <th class="text-left py-2 px-4 font-semibold">Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>minimal</code></td><td class="py-2 px-4">1</td><td class="py-2 px-4">Only blocking safety hooks (branch-guard). Informational hooks skipped</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>standard</code></td><td class="py-2 px-4">2</td><td class="py-2 px-4"><strong>Default.</strong> All hooks enabled</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>strict</code></td><td class="py-2 px-4">3</td><td class="py-2 px-4">All hooks plus extra guardrails (future use)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-sm mt-3">
+    Export <code>DX_HOOK_PROFILE=minimal</code> to suppress informational hooks during focused work, or
+    <code>strict</code> for CI and pipeline environments. Hook scripts gate themselves with
+    <code>source hook-profile.sh &amp;&amp; require_profile "standard"</code>.
+  </p>
 </Section>
 
 <SectionHeading

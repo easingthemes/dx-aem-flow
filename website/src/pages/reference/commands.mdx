@@ -99,6 +99,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-req</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Full requirements pipeline (fetch, DoR, explain, research, share). Detects cross-repo scope when <code>repos:</code> exists in config.</td><td class="p-3">All spec files + ADO comments</td></tr>
+        <tr><td class="p-3"><code>/dx-dor</code></td><td class="p-3"><code>&lt;id(s)&gt;</code></td><td class="p-3">Validate Definition of Ready standalone or in batch (also runs inside <code>/dx-req</code>)</td><td class="p-3">ADO comment</td></tr>
         <tr><td class="p-3"><code>/dx-req-tasks</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Create child Task work items with estimates</td><td class="p-3">ADO/Jira tasks</td></tr>
         <tr><td class="p-3"><code>/dx-req-import</code></td><td class="p-3"><code>&lt;path&gt;</code></td><td class="p-3">Validate external requirements document</td><td class="p-3"><code>explain.md</code></td></tr>
       </tbody>
@@ -305,6 +306,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>/dx-pr-review-all</code></td><td class="p-3">none</td><td class="p-3">Batch-review multiple open PRs</td></tr>
         <tr><td class="p-3"><code>/dx-pr-answer</code></td><td class="p-3"><code>&lt;PR URL&gt;</code> (opt)</td><td class="p-3">Answer open PR comments, apply agree-will-fix changes</td></tr>
         <tr><td class="p-3"><code>/dx-pr-review-report</code></td><td class="p-3"><code>&lt;PR URL&gt;</code></td><td class="p-3">Generate categorized report, post to wiki</td></tr>
+        <tr><td class="p-3"><code>/dx-pr-reviews-report</code></td><td class="p-3"><code>[--any] [URL | count]</code></td><td class="p-3">Batch report for several reviewed PRs, posted to wiki</td></tr>
       </tbody>
     </table>
   </div>
@@ -347,7 +349,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="DoD"
   badgeColor="success"
   title="Definition of Done"
-  subtitle="Validate deliverables against the DoD checklist."
+  subtitle="Validate deliverables against the DoD checklist. For the readiness counterpart see /dx-dor under Requirements."
   bg="primary"
 />
 <Section>
@@ -451,8 +453,43 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>/dx-doctor</code></td><td class="p-3"><code>[dx|aem|seed-data|auto|all]</code></td><td class="p-3">Check health of all dx workflow files. Warns on stale <code>project.yaml</code> files.</td></tr>
         <tr><td class="p-3"><code>/dx-upgrade</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Fix all issues found by dx-doctor. Migrates legacy <code>project.yaml</code> fields into <code>config.yaml</code>.</td></tr>
         <tr><td class="p-3"><code>/dx-eject</code></td><td class="p-3"><code>[dx|aem|auto|all]</code></td><td class="p-3">Eject plugin assets into local repo</td></tr>
+        <tr><td class="p-3"><code>/dx-sync</code></td><td class="p-3"><code>[--dry-run] [--parallel] [repos...]</code></td><td class="p-3">Sync plugin updates to consumer repos</td></tr>
+        <tr><td class="p-3"><code>/dx-security</code></td><td class="p-3"><code>[changes|full]</code></td><td class="p-3">Security hardening audit -- OWASP Top 10, secrets, dependencies, input validation, auth</td></tr>
+        <tr><td class="p-3"><code>/dx-simplify</code></td><td class="p-3"><code>[path]</code></td><td class="p-3">Reduce complexity while preserving exact behaviour</td></tr>
+        <tr><td class="p-3"><code>/dx-simple</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Apply one small AEM change via an authoring (JCR) or code (PR) path, behind 9 confidence gates</td></tr>
+        <tr><td class="p-3"><code>/dx-pattern-extract</code></td><td class="p-3"><code>[--dry-run]</code></td><td class="p-3">Promote recurring patterns from completed tickets to cross-ticket knowledge</td></tr>
         <tr><td class="p-3"><code>/aem-refresh</code></td><td class="p-3">none</td><td class="p-3">Update <code>.ai/project/</code> seed data</td></tr>
         <tr><td class="p-3"><code>/aem-doctor</code></td><td class="p-3"><code>[components|osgi|dispatcher|all]</code></td><td class="p-3">Check AEM project infrastructure health</td></tr>
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* dx-hub                                                                  */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="dx-hub"
+  badgeColor="info"
+  title="Multi-Repo Orchestration"
+  subtitle="Fan one ticket out across sibling repos."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Command</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Argument</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Description</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/dx-hub-init</code></td><td class="p-3"><code>[path]</code></td><td class="p-3">Initialise a hub directory, discover sibling repos, merge configs</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | terminal-delay &lt;s&gt;]</code></td><td class="p-3">View and edit hub configuration</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id&gt; [repos...] [--skill]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[id] [--clean]</code></td><td class="p-3">Show which repos are running, done, blocked, or failed</td></tr>
+        <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Resolve which repos a work item touches (3-tier cascade)</td></tr>
       </tbody>
     </table>
   </div>
