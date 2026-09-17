@@ -244,6 +244,60 @@ else
   ok "compile and test logs stay separate"
 fi
 
+# ===== phase 4: secret scan =====
+# Fixture values are deliberately synthetic — never the canonical AWS doc key,
+# which trips real scanners. Only the shape matters to the pattern.
+
+R=$(mkrepo 'build: {}
+')
+mkdir -p "$R/conf"
+cat > "$R/conf/creds.env" <<'SEOF'
+AWS_SECRET_ACCESS_KEY=NOT-A-REAL-SECRET-0000000000000000000000
+SEOF
+printf -- '-----BEGIN RSA PRIVATE KEY-----\nNOT-A-REAL-KEY\n' > "$R/conf/id_rsa.pem"
+cat > "$R/conf/app.properties" <<'SEOF'
+password = "not-a-real-password"
+SEOF
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm secrets ) >/dev/null 2>&1
+OUT=$(gate "$R")
+check "secret scan flags planted credentials" "failed" "$(echo "$OUT" | jqq "d['phases'][3]['status']")"
+for f in creds.env id_rsa.pem app.properties; do
+  if echo "$OUT" | grep -q "Possible secret in: conf/$f"; then
+    ok "secret scan reports conf/$f"
+  else
+    no "secret scan reports conf/$f" "$OUT"
+  fi
+done
+
+# A mention of a credential name is not a credential. This is the regression
+# that made every dx sync PR fail phase 4: the scanner's own pattern literal
+# contains "aws_secret_access_key", so the gate flagged itself whenever it was
+# one of the changed files.
+R=$(mkrepo 'build: {}
+')
+mkdir -p "$R/docs"
+cat > "$R/docs/security.md" <<'SEOF'
+Never commit an aws_secret_access_key or aws_access_key_id to the repo.
+Keep the private key outside version control. BEGIN RSA is a PEM marker.
+SEOF
+cat > "$R/docs/sample.yaml" <<'SEOF'
+aws_access_key_id: ${env:AWS_KEY}
+password = ""
+SEOF
+# The gate script itself, as a changed file — the real-world sync-PR case.
+# This copies the *live* script, so the assertion tracks the real pattern:
+# add a bare-keyword alternative back and the script self-matches again,
+# reddening this case. That is the invariant, not just today's wording.
+cp "$GATE" "$R/docs/pre-review-checks.sh.copy"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm mentions ) >/dev/null 2>&1
+OUT=$(gate "$R")
+check "mentions alone do not trip the secret scan" "passed" "$(echo "$OUT" | jqq "d['phases'][3]['status']")"
+if echo "$OUT" | grep -q "Possible secret in"; then
+  no "no file is falsely reported as a secret" "$(echo "$OUT" | grep 'Possible secret in')"
+else
+  ok "no file is falsely reported as a secret"
+fi
+
 # ===== temp logs are cleaned up =====
 # Point the gate at a private TMPDIR so this asserts on the dir *this* run
 # created. Globbing the real TMPDIR would read shared state and go red on any

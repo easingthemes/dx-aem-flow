@@ -226,7 +226,12 @@ while IFS= read -r file; do
   case "$file" in
     *.png|*.jpg|*.gif|*.jar|*.zip|*.class|*.woff*|*.ttf|*.eot|*.svg) continue ;;
   esac
-  if grep -qEi '(aws_secret_access_key|aws_access_key_id|PRIVATE.KEY|BEGIN RSA|password\s*=\s*"[^"]{8,}|api[_-]?key\s*=\s*"[^"]{8,}|secret\s*=\s*"[^"]{8,}|token\s*=\s*"[a-zA-Z0-9]{20,})' "$file" 2>/dev/null; then
+  # Every alternative must require an assigned value or a real PEM header. A
+  # bare keyword match flags any file that merely *mentions* a credential name
+  # — security docs, .gitleaks configs, and this script itself, whose own
+  # pattern literal contains "aws_secret_access_key". That fired on every sync
+  # PR that touched this file.
+  if grep -qEi '((aws_secret_access_key|aws_access_key_id)\s*[=:]\s*\S{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password\s*=\s*"[^"]{8,}|api[_-]?key\s*=\s*"[^"]{8,}|secret\s*=\s*"[^"]{8,}|token\s*=\s*"[a-zA-Z0-9]{20,})' "$file" 2>/dev/null; then
     secret_files+=("$file")
   fi
 done <<< "$CHANGED_FILES"
