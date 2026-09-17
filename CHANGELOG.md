@@ -1,3 +1,10 @@
+## [3.6.9](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.8...v3.6.9) (2026-09-17)
+
+
+### Bug Fixes
+
+* **dx-core:** secret scan flags a mention, not just a credential ([#201](https://github.com/easingthemes/dx-aem-flow/issues/201)) ([093f2e6](https://github.com/easingthemes/dx-aem-flow/commit/093f2e64a5028c9442c2863754cf7fb5d99c86c2))
+
 ## [3.6.8](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.7...v3.6.8) (2026-09-17)
 
 
