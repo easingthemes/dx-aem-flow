@@ -89,11 +89,15 @@ import CommandBlock from '../../components/CommandBlock.astro';
   }
 }`}</CommandBlock>
 
-  <HighlightBox severity="warning" title="No top-level version key">
-    Do <strong>not</strong> add a <code>version</code> field. Claude Code's hook schema has no such
-    key and logs <code>hooks.json: unknown key "version" ignored</code> at every session start.
-    A single file is still dual-compatible without it -- Copilot CLI reads the same plugin
-    <code>hooks/hooks.json</code>.
+  <HighlightBox severity="warning" title="No top-level version key in a plugin hooks.json">
+    Do <strong>not</strong> add a <code>version</code> field to a plugin's
+    <code>hooks/hooks.json</code>. Claude Code's hook schema has no such key and logs
+    <code>hooks.json: unknown key "version" ignored</code> at every session start. One copy still
+    serves both platforms without it -- Copilot CLI reads that same plugin file.
+    <br /><br />
+    The exception is the Copilot-only repo-hooks file <code>/dx-init</code> generates at
+    <code>.github/hooks/hooks.json</code>, which keeps <code>"version": 1</code> -- a different
+    consumer with a different schema. Do not strip the key there.
   </HighlightBox>
 </Section>
 

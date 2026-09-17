@@ -126,7 +126,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <code>wit_work_item</code> (with <code>action: get</code> / <code>list_comments</code>);
     <code>repo_get_pull_request_by_id</code> is <code>repo_pull_request</code>;
     <code>repo_create_pull_request</code> is <code>repo_pull_request_write</code>;
-    <code>pipelines_run_pipeline</code> is <code>pipelines_run</code>.
+    <code>pipelines_run_pipeline</code> is <code>pipelines_write</code>
+    (with <code>action: run_pipeline</code>) — <code>pipelines_run</code> exists but is
+    read-only (<code>action: get</code> / <code>list</code>).
   </HighlightBox>
 
   <h3 class="text-base font-semibold text-white mt-8 mb-3">Co-authored Commit Footer</h3>
