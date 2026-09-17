@@ -66,6 +66,9 @@ description: What it does...      # Required. Used for auto-invocation matching
 argument-hint: "<expected args>"  # Optional. UI placeholder text
 context: fork                     # Optional. "fork" = isolated subagent execution
 agent: my-agent                   # Optional. Agent for the fork
+model: sonnet                     # Optional. opus | sonnet | haiku -- never a pinned id
+effort: high                      # Optional. low | medium | high | xhigh
+paths: ["**/*.ts"]                # Optional. Limit auto-activation to file patterns
 disable-model-invocation: false   # Optional. Prevent auto-invocation
 ---`}</CommandBlock>
 
@@ -137,6 +140,53 @@ isolation: worktree        # Isolated git worktree
       File lookups, doc search, git commits, config reads. Cost: 1x (baseline).
     </ContentCard>
   </div>
+
+  <HighlightBox severity="info" title="Write the alias, never a pinned model id">
+    Use <code>model: opus | sonnet | haiku</code>. An alias follows the current default generation;
+    a version-pinned id goes stale the moment a new model ships.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Effort, and when to escalate</h3>
+  <p class="text-sm mb-3">
+    Tiering applies at two levels: agents set <code>model:</code> in frontmatter, and skills can set
+    <code>model:</code> and <code>effort:</code> to run directly without an agent. Opus already runs at
+    <code>high</code> effort by default, so every <code>model: opus</code> skill gets deep reasoning
+    without setting anything.
+  </p>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Tier</th>
+          <th class="text-left py-2 px-4 font-semibold">Effort</th>
+          <th class="text-left py-2 px-4 font-semibold">Use</th>
+          <th class="text-left py-2 px-4 font-semibold">Where it is set today</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Opus</td><td class="py-2 px-4"><code>xhigh</code></td><td class="py-2 px-4">Escalation <em>above</em> the <code>high</code> baseline -- multi-file architectural review, complex verification</td><td class="py-2 px-4">Nothing today. Opt-in only</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Opus</td><td class="py-2 px-4"><code>high</code></td><td class="py-2 px-4">Deep reasoning -- planning, review, verification</td><td class="py-2 px-4"><code>dx-plan</code>, <code>dx-pr-review</code>, <code>dx-security</code>, <code>dx-simplify</code>, <code>dx-step-verify</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Sonnet</td><td class="py-2 px-4">(default)</td><td class="py-2 px-4">Execution -- steps, inspections</td><td class="py-2 px-4"><code>dx-step</code>, <code>dx-req</code>, <code>dx-step-fix</code></td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Haiku</td><td class="py-2 px-4"><code>low</code></td><td class="py-2 px-4">Simple lookups -- file and doc search</td><td class="py-2 px-4"><code>dx-help</code>, <code>dx-ticket-analyze</code>, <code>dx-pattern-extract</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="warning" title="xhigh is not a free upgrade">
+    Reach for <code>effort: xhigh</code> only when a step has demonstrably failed at <code>high</code>,
+    or when reviewing more than five files of changes. It costs more and runs slower. No skill in the
+    repo sets it today, so it has <strong>never been measured against <code>high</code></strong> --
+    re-check before assuming an escalation helped.
+  </HighlightBox>
+
+  <HighlightBox severity="error" title="effort: was silently ignored before v2.1.267">
+    That release (2026-09-09) fixed <code>effort:</code> on custom commands, skills and subagents being
+    dropped on models whose default effort is pinned (Opus 4.7, Opus 4.8, Fable 5). Any
+    <code>effort:</code> set before it was a no-op on those models, so this tiering is only now
+    actually in force. The same release added a <code>maxEffortLevel</code> setting (top-level or
+    per-model under <code>modelSettings</code>) that caps effort across every provider -- useful as a
+    cost ceiling for <code>dx-automation</code> pipeline runs.
+  </HighlightBox>
 </Section>
 
 <SectionHeading
@@ -240,6 +290,146 @@ isolation: worktree        # Isolated git worktree
 </Section>
 
 <SectionHeading
+  badge="Manifest"
+  badgeColor="warning"
+  title="Plugin Manifest -- Dual-Platform Format"
+  subtitle="One plugin.json, read by both Claude Code and Copilot CLI."
+  bg="primary"
+/>
+<Section>
+  <CommandBlock label=".claude-plugin/plugin.json">{`{
+  "name": "dx-core",
+  "version": "3.6.9",
+  "description": "ADO/Jira workflow for AI-assisted development",
+  "author": { "name": "..." }
+}`}</CommandBlock>
+
+  <HighlightBox severity="error" title="Never list agents or skills for default directories">
+    Adding <code>agents</code> or <code>skills</code> fields when using the default
+    <code>agents/</code> and <code>skills/</code> directories <strong>breaks Claude Code</strong> with
+    an <code>"agents: Invalid input"</code> validation error. Both platforms auto-discover those
+    directories. Only add the fields for non-standard paths, e.g.
+    <code>{'{"agents": ["./specialized-agents"]}'}</code>.
+  </HighlightBox>
+
+  <div class="overflow-x-auto mt-6">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Manifest</th>
+          <th class="text-left py-2 px-4 font-semibold">Read by</th>
+          <th class="text-left py-2 px-4 font-semibold">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude-plugin/plugin.json</code></td><td class="py-2 px-4">Claude Code, Copilot CLI</td><td class="py-2 px-4">Auto-discovers default directories</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.cursor-plugin/plugin.json</code></td><td class="py-2 px-4">Cursor</td><td class="py-2 px-4">Needs <strong>explicit</strong> skill / agent / hook paths</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>gemini-extension.json</code></td><td class="py-2 px-4">Gemini CLI</td><td class="py-2 px-4">Repo root, not per-plugin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="warning" title="Versioning is automated -- do not hand-edit">
+    <code>semantic-release</code> bumps every version file on push to <code>main</code> from the
+    conventional-commit prefix: all four plugin manifests (both <code>.claude-plugin</code> and
+    <code>.cursor-plugin</code>), <code>gemini-extension.json</code>, <code>marketplace.json</code>,
+    and the config template. The authoritative list is <code>scripts/bump-versions.sh</code> +
+    <code>.releaserc</code>, and <code>scripts/validate-structure.sh</code> enforces they stay in sync.
+    <code>feat:</code> is a minor bump, <code>fix:</code> a patch, <code>BREAKING CHANGE:</code> in the
+    body a major; <code>chore:</code>, <code>docs:</code> and <code>ci:</code> trigger no release.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="Verification"
+  badgeColor="secondary"
+  title="Verifying a Change"
+  subtitle="There is no build step -- so verification happens at four independent levels."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="text-left py-2 px-4 font-semibold">Level</th>
+          <th class="text-left py-2 px-4 font-semibold">What it checks</th>
+          <th class="text-left py-2 px-4 font-semibold">How</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Structural</td><td class="py-2 px-4">Naming, frontmatter, manifest/version consistency, collisions</td><td class="py-2 px-4"><code>scripts/validate-&#42;.sh</code> -- CI, every PR</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Helper scripts</td><td class="py-2 px-4">Deterministic bash in <code>skills/&#42;/scripts/</code> and <code>data/lib/</code></td><td class="py-2 px-4">Any <code>run-tests.sh</code> / <code>&#42;.test.sh</code> -- CI, every PR</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Shared libs</td><td class="py-2 px-4">Deterministic JS in <code>dx-core/data/lib/</code></td><td class="py-2 px-4">Any <code>&#42;.test.js</code> via <code>node --test</code> -- CI, every PR</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Behavioral (evals)</td><td class="py-2 px-4">Whether the skill actually produces the right result</td><td class="py-2 px-4"><code>claude plugin eval</code> -- <strong>not</strong> wired to CI (billed agent runs)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <HighlightBox severity="error" title="A structural check cannot tell you a script works">
+    The <code>validate-&#42;.sh</code> scripts read frontmatter, manifests and counts. They pass happily
+    over a script that dies on its first call. Two habits follow: a change to anything under
+    <code>data/lib/</code> or <code>skills/&#42;/scripts/</code> needs its suite run, and
+    <code>node --check</code> / <code>bash -n</code> are <strong>not</strong> verification -- they parse
+    syntax and cannot see a rejected argument, a schema change, or a wrong enum value. Run the thing.
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="CI discovers suites, it does not list them">
+    <code>validate.yml</code> globs for <code>run-tests.sh</code>, <code>&#42;.test.sh</code> and
+    <code>&#42;.test.js</code> under <code>plugins/</code>, so a new suite is picked up with no workflow
+    change -- a hardcoded list is how suites go unrun in the first place. The constraint this places on
+    a new suite: it must be <strong>hermetic</strong>. No live ADO, AEM or network, and no dependence on
+    ambient git config. Existing suites seed throwaway git repos and set <code>user.email</code> /
+    <code>user.name</code> per repo; they pass with <code>GIT_CONFIG_GLOBAL=/dev/null</code> and an empty
+    <code>HOME</code>. A check that needs a live service belongs in a skill, not a <code>&#42;.test.sh</code>.
+  </HighlightBox>
+
+  <h3 class="text-base font-semibold text-brand-900 mt-8 mb-3">Behavioral evals</h3>
+  <p class="text-sm mb-3">
+    A skill is instructions for a model, so the same prompt can produce different output on different
+    runs. An eval scores a skill over repeated runs against a fixture whose correct answer is known in
+    advance -- the opposite of an assertion, which expects one exact value. Suites live in
+    <code>plugins/&lt;plugin&gt;/evals/</code>.
+  </p>
+
+  <CommandBlock label="Run a suite">{`TMPDIR=/tmp claude plugin eval plugins/dx-core --case <case-name> \\
+  --runs 3 --ablation none --scaffold --no-publish --allow-tools Write Bash`}</CommandBlock>
+
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <ContentCard icon="mdi:target" iconColor="bg-brand-700" title="Fixtures carry a known defect">
+      Plus correct distractors -- so graders measure both recall (found the real problem) and precision
+      (did not invent others).
+    </ContentCard>
+    <ContentCard icon="mdi:ruler" iconColor="bg-cyan" title="Prefer deterministic graders">
+      Use <code>llm</code> only when no exact oracle exists. <strong>A judge can be argued out of its
+      rubric by a confident wrong answer; a regex cannot.</strong>
+    </ContentCard>
+    <ContentCard icon="mdi:alert-decagram" iconColor="bg-red-500" title="Sanity-check against known-bad input">
+      A green suite means either the skill is good or the grader is blind, and you cannot tell which
+      until something that should fail does. Each grader needs its own failing case.
+    </ContentCard>
+    <ContentCard icon="mdi:cash" iconColor="bg-amber-500" title="Cost is real">
+      Agent runs are billed; <code>llm</code>/<code>baseline</code> graders add 3 judge calls each, and
+      <code>--ablation with-without</code> doubles the run count. Structural graders
+      (<code>regex</code>, <code>file_exists</code>, <code>tool_used</code>, <code>tool_order</code>)
+      are free. Pilot with <code>--runs 1</code> and cap with <code>--max-cost-usd</code>.
+    </ContentCard>
+  </div>
+
+  <HighlightBox severity="warning" title="Pin your models before comparing scores">
+    Pin <code>--model</code> and <code>--judge-model</code>, or a model rollout reads as a regression.
+    <code>TMPDIR=/tmp</code> keeps the sandbox from discovering <code>~/.claude/skills</code>. Do not
+    wire evals to every push -- release tags or manual dispatch. Run artifacts land in
+    <code>plugins/&#42;/evals/results/</code> and are gitignored.
+  </HighlightBox>
+
+  <HighlightBox severity="info" title="Current coverage">
+    One suite: <code>dx-core/evals/plan-validate-finds-gap</code>. Its README is a worked example --
+    including a judge that passed a report its own rubric said to fail.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
   badge="Checklist"
   badgeColor="info"
   title="PR Checklist"
@@ -254,8 +444,12 @@ isolation: worktree        # Isolated git worktree
       <li>Config fields documented if new ones are introduced</li>
       <li>Skill/agent catalog docs updated</li>
       <li>Shell scripts are executable (<code>chmod +x</code>)</li>
+      <li><code>scripts/validate-&#42;.sh</code> pass</li>
+      <li>If <code>data/lib/</code> or <code>skills/&#42;/scripts/</code> changed, <strong>its suite was run</strong> -- not just <code>bash -n</code></li>
+      <li>Any new test suite is hermetic (no live ADO/AEM/network, no ambient git config)</li>
       <li>Tested with a real project</li>
       <li>Copilot template added if user-facing</li>
+      <li>Version numbers <strong>not</strong> hand-edited -- semantic-release owns them</li>
     </ul>
   </ContentCard>
 </Section>
