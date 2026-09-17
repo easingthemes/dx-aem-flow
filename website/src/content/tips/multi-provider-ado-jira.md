@@ -19,7 +19,7 @@ keyPoints:
 actionItems:
   - |
     **Provider mapping examples**
-    - ADO: mcp__ado__wit_get_work_item, mcp__ado__wit_update_work_item
+    - ADO: mcp__ado__wit_work_item, mcp__ado__wit_work_item_write
     - Jira: mcp__atlassian__get_issue, mcp__atlassian__update_issue
   - "**Quick switch** — Check your .ai/config.yaml for the tracker.provider value. Changing this one line switches the entire pipeline."
   - "**Customize field mappings** — Review shared/provider-config.md if your Jira instance uses custom field names that differ from the defaults"

@@ -201,7 +201,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Hooks"
   badgeColor="secondary"
   title="ADO Service Hooks"
-  subtitle="Three Lambda-routed hooks, plus one Azure-native hook for SimpleAgent (no Lambda)."
+  subtitle="Two Lambda-routed hooks, plus three Azure-native comment hooks (SimpleAgent, BugFix, DoR) that skip the Lambda entirely."
   bg="alt"
 />
 <Section>
@@ -219,13 +219,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <td class="p-3">WI User Story</td>
         <td class="p-3">workitem.updated</td>
         <td class="p-3">workItemType: User Story</td>
-        <td class="p-3">DoR, DoD, QA, DevAgent, DOCAgent, Estimation</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">WI Bug</td>
-        <td class="p-3">workitem.updated</td>
-        <td class="p-3">workItemType: Bug</td>
-        <td class="p-3">BugFix</td>
+        <td class="p-3">DoD, QA, DevAgent, DOCAgent, Estimation</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">PR Answer</td>
@@ -239,6 +233,18 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <td class="p-3">comment contains <code>@kai-simple</code></td>
         <td class="p-3">SimpleAgent (no Lambda)</td>
       </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">BugFix</td>
+        <td class="p-3">workitem.commented</td>
+        <td class="p-3">comment contains <code>@kai-bugfix</code>, workItemType: Bug</td>
+        <td class="p-3">BugFix (no Lambda)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3">DoR</td>
+        <td class="p-3">workitem.commented</td>
+        <td class="p-3">comment contains <code>@kai-dor</code>, workItemType: User Story</td>
+        <td class="p-3">DoR (no Lambda)</td>
+      </tr>
     </tbody>
   </table>
 
@@ -247,15 +253,18 @@ import CommandBlock from '../../components/CommandBlock.astro';
     when a PR is created, running as part of the PR build validation.
   </HighlightBox>
 
-  <HighlightBox severity="success" title="SimpleAgent -- Azure-native trigger (no Lambda)">
-    SimpleAgent is the one agent with **no Lambda in its path.** A comment containing
-    <code>@kai-simple</code> on a work item fires an ADO Service Hook
-    (event: *work item commented on*, filter: *comment contains the token*) that delivers to
-    an **Incoming WebHook service connection**, which the pipeline declares under
-    <code>resources.webhooks</code>. The same event drives both the first run and recovery --
-    Phase 0 (<code>resume-check.sh</code>) decides fresh-vs-resume. The WI Router's
-    <code>AGENTS</code> array has no <code>simple</code> entry, so the Lambda never sees it.
-    The filter token is config-driven (<code>dx-simple.recovery.trigger-token</code>).
+  <HighlightBox severity="success" title="Three agents with no Lambda in their path">
+    **SimpleAgent** (`@kai-simple`), **BugFix** (`@kai-bugfix`, Bug-filtered) and **DoR**
+    (`@kai-dor`, User Story-filtered) are all triggered Azure-natively. A comment containing the
+    token fires an ADO Service Hook (event: *work item commented on*, filter: *comment contains
+    the token*) that delivers to an **Incoming WebHook service connection**, which the pipeline
+    declares under <code>resources.webhooks</code>. The WI Router's <code>AGENTS</code> array has
+    no <code>simple</code>, <code>bugfix</code> or <code>dor</code> entry, so the Lambda never sees them.
+
+    For SimpleAgent and BugFix the **same event drives both the first run and recovery** -- Phase 0
+    (<code>resume-check.sh</code>) decides fresh-vs-resume, and a human re-typing the token resumes a
+    blocked run. DoR is a stateless check with no recovery. Filter tokens are config-driven
+    (<code>dx-simple.recovery.trigger-token</code>, <code>dx-bug-all.recovery.trigger-token</code>).
   </HighlightBox>
 </Section>
 
@@ -268,7 +277,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 />
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <ContentCard icon="mdi:cloud-off-outline" iconColor="bg-emerald-600" title="Azure-native (SimpleAgent model)">
+    <ContentCard icon="mdi:cloud-off-outline" iconColor="bg-emerald-600" title="Azure-native (SimpleAgent / BugFix / DoR model)">
       Service Hook &rarr; Incoming WebHook service connection &rarr; pipeline <code>resources.webhooks</code>.
       No AWS infra, nothing to deploy. **Trade-off:** you lose the Lambda's dedupe, per-agent rate
       limiting, monthly token-budget gating, and central tag-classification -- and any loop-prevention
@@ -276,7 +285,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       **human-initiated, low-volume** agents.
     </ContentCard>
 
-    <ContentCard icon="mdi:router" iconColor="bg-brand-700" title="Lambda router (the other 10)">
+    <ContentCard icon="mdi:router" iconColor="bg-brand-700" title="Lambda router (the remaining WI agents)">
       One hook fans out to many pipelines via tag-classification, with dedupe (ADO retry storms),
       rate limiting, and the monthly token budget applied centrally. Best for **high-volume
       autonomous** agents. Adding an agent is just env vars -- no new hook.
@@ -287,13 +296,15 @@ import CommandBlock from '../../components/CommandBlock.astro';
     ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**,
     **state/field change**, and **PR events** -- so any event-driven agent *can* be triggered this way.
 
-    - **In use:** SimpleAgent (`@kai-simple` comment).
+    - **In use:** SimpleAgent (`@kai-simple`), BugFix (`@kai-bugfix`, Bug-filtered), DoR (`@kai-dor`,
+      User Story-filtered) -- all comment-triggered.
     - **Already Lambda-free:** PR Reviewer (build validation policy).
     - **Natural next candidate:** PR Answerer via a `@kai-answer` comment keyword -- but it would lose the
       Lambda's cheap identity / loop / dedupe gates, which would move into the pipeline.
-    - **Could migrate, with a trade-off:** the tag-driven WI agents (DoR, DoD, QA, DevAgent, DOCAgent,
-      Estimation, BugFix) -- each via a per-agent tag, `@kai-...` comment, or State-transition hook --
-      but they'd lose dedupe, rate-limiting, and the token budget. Keep these on the Lambda router.
+    - **Could migrate, with a trade-off:** the tag-driven WI agents still on the router (DoD, QA,
+      DevAgent, DOCAgent, Estimation) -- each via a per-agent tag, `@kai-...` comment, or
+      State-transition hook -- but they'd lose dedupe, rate-limiting, and the token budget. These are
+      high-volume and autonomous, so keep them on the Lambda router.
     - **Not event-triggered:** DoD-Fixer (chained after the DoD check).
   </HighlightBox>
 </Section>
