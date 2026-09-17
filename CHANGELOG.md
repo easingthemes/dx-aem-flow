@@ -1,3 +1,10 @@
+## [3.6.8](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.7...v3.6.8) (2026-09-17)
+
+
+### Bug Fixes
+
+* **dx-core:** phase command output corrupts the pre-review JSON ([#196](https://github.com/easingthemes/dx-aem-flow/issues/196)) ([00daad3](https://github.com/easingthemes/dx-aem-flow/commit/00daad3693a62e2815101842d1f704da21d6266f))
+
 ## [3.6.7](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.6...v3.6.7) (2026-09-16)
 
 
