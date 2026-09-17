@@ -47,8 +47,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       tags={[{ label: '@azure-devops/mcp', color: 'primary' }]}
     >
       Work items, pull requests, repos, wiki, pipelines. Uses browser OAuth for authentication.
-      <CommandBlock label="Tools">{`wit_get_work_item, repo_create_pull_request,
-search_code, pipelines_run_pipeline`}</CommandBlock>
+      <CommandBlock label="Tools">{`wit_work_item, repo_pull_request,
+repo_pull_request_write, search_code,
+pipelines_write`}</CommandBlock>
     </ContentCard>
     <ContentCard
       icon="mdi:database"
@@ -144,7 +145,7 @@ remediate -- suggest fixes`}</CommandBlock>
       Auto-loaded when the plugin is installed. For servers bundled with a specific plugin
       (AEM, Playwright, Figma, axe).
       <CommandBlock label="Tool naming convention">{`# Project-level:
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
 
 # Plugin-level (dx-aem plugin):
 mcp__plugin_dx-aem_AEM__getNodeContent`}</CommandBlock>
