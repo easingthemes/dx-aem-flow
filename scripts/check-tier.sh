@@ -79,7 +79,18 @@ else
     fi
   fi
 
-  files=$(git diff --name-only "$BASE"...HEAD)
+  # Committed on this branch, PLUS anything still in the working tree. Diffing only
+  # BASE...HEAD is commit-to-commit, so an uncommitted edit to a SKILL.md reported
+  # "PASS — cannot change behaviour in a consumer project", which is the exact false
+  # negative this script exists to prevent. CONTRIBUTING tells people to run it BEFORE
+  # pushing, so the dirty tree is the normal case, not the edge case.
+  files=$(
+    {
+      git diff --name-only "$BASE"...HEAD
+      git diff --name-only HEAD          # staged + unstaged
+      git ls-files --others --exclude-standard   # untracked
+    } | sort -u
+  )
 fi
 
 # Drop blanks so an empty diff does not count as one unnamed file.
@@ -112,5 +123,5 @@ echo "$count of $total changed file(s) are loaded by every consumer project."
 echo
 echo "This is not a failure by itself — Tier B changes are normal and expected."
 echo "It means the diff needs validation in a real consumer project before merge,"
-echo "and must not be labelled 'tier-a'. See CONTRIBUTING.md § 1."
+echo "and must not be labelled 'tier/a'. See CONTRIBUTING.md § 1."
 exit 1
