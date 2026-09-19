@@ -105,5 +105,49 @@ expect_says "plugins/dx-core/skills/dx-init/SKILL.md" "lists the offending path"
 expect_says "Tier A" "names the tier for an inert diff" "docs/todo/TODO.md"
 
 echo
+echo "=== git mode: the working tree counts, not just commits ==="
+# stdin mode never shells out to git, so everything above leaves the git path
+# untested. It shipped with a false negative: diffing only BASE...HEAD missed
+# uncommitted edits, so a contributor running this before pushing -- which is what
+# CONTRIBUTING tells them to do -- got "PASS" on a modified SKILL.md.
+# Hermetic: throwaway repo, no global config, no network, per-repo identity.
+gitcase() {
+  local want="$1" label="$2" action="$3"
+  local repo; repo=$(mktemp -d)
+  (
+    export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null HOME="$repo"
+    cd "$repo" || exit 99
+    git init -q -b main .
+    git config user.email t@t.invalid && git config user.name t
+    mkdir -p plugins/dx-core/skills/dx-init docs
+    echo seed > docs/seed.md
+    echo seed > plugins/dx-core/skills/dx-init/SKILL.md
+    git add -A && git commit -qm seed
+    eval "$action"
+    bash "$SCRIPT" --base main >/dev/null 2>&1
+  )
+  local got=$?
+  rm -rf "$repo"
+  if [ "$got" = "$want" ]; then
+    echo "PASS: $label"; PASS=$((PASS + 1))
+  else
+    echo "FAIL: $label — expected exit $want, got $got"; FAIL=$((FAIL + 1))
+  fi
+}
+
+gitcase 0 "clean tree is Tier A"            "true"
+gitcase 1 "UNSTAGED edit to a SKILL.md"     "echo x >> plugins/dx-core/skills/dx-init/SKILL.md"
+gitcase 1 "STAGED edit to a SKILL.md"       "echo x >> plugins/dx-core/skills/dx-init/SKILL.md; git add -A"
+gitcase 1 "UNTRACKED new skill file"        "mkdir -p plugins/dx-core/skills/new && echo x > plugins/dx-core/skills/new/SKILL.md"
+# Committed-on-a-branch, clean tree: the only case that exercises BASE...HEAD.
+# Without it, deleting the commit diff entirely still passed 41/41.
+gitcase 1 "COMMITTED skill change on a branch" \
+  "git checkout -qb feat && echo x >> plugins/dx-core/skills/dx-init/SKILL.md && git commit -qam edit"
+gitcase 0 "COMMITTED docs change on a branch" \
+  "git checkout -qb feat && echo x >> docs/seed.md && git commit -qam edit"
+gitcase 0 "unstaged edit to a docs file"    "echo x >> docs/seed.md"
+gitcase 0 "untracked docs file"             "echo x > docs/fresh.md"
+
+echo
 echo "=== Summary: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ]

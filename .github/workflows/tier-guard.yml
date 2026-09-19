@@ -6,7 +6,7 @@ name: Tier guard
 # edits a SKILL.md reaches real projects with no version bump and nothing to notice.
 # Commit type is not a safety valve; the path is. See CONTRIBUTING.md § 1.
 #
-# This job reports the tier of every PR, and ENFORCES it on PRs labelled `tier-a` —
+# This job reports the tier of every PR, and ENFORCES it on PRs labelled `tier/a` —
 # the label outside contributors work under. With it, a contributor cannot break a
 # consumer project by accident, which is what makes the work safe to hand out.
 #
@@ -17,7 +17,7 @@ name: Tier guard
 on:
   pull_request:
     branches: [main]
-    # `labeled`/`unlabeled` matter: adding the tier-a label to an already-open PR must
+    # `labeled`/`unlabeled` matter: adding the tier/a label to an already-open PR must
     # re-run the check, or the label could be applied to a diff that never passed it.
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
@@ -58,15 +58,15 @@ jobs:
             exit 1
           fi
 
-      - name: Enforce on tier-a PRs
-        if: contains(github.event.pull_request.labels.*.name, 'tier-a')
+      - name: Enforce on tier/a PRs
+        if: contains(github.event.pull_request.labels.*.name, 'tier/a')
         run: |
           if [ "${{ steps.classify.outputs.code }}" != "0" ]; then
-            echo "::error::This PR is labelled 'tier-a' but changes files that ship to every consumer project."
+            echo "::error::This PR is labelled 'tier/a' but changes files that ship to every consumer project."
             echo ""
             echo "Either:"
             echo "  - drop the shipped paths from the diff, or"
-            echo "  - remove the 'tier-a' label and ask a maintainer to validate it"
+            echo "  - remove the 'tier/a' label and ask a maintainer to validate it"
             echo "    against a real consumer project."
             echo ""
             echo "See CONTRIBUTING.md § 1 for the path table."

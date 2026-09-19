@@ -41,7 +41,7 @@ project. Tier C is a property of the work rather than the diff, so the script ca
 that one is on you to flag.
 
 **If you were invited to help: take Tier A work only**, unless a maintainer says otherwise in the
-issue. CI enforces this on PRs labelled `tier-a`, so you cannot break anyone by accident.
+issue. CI enforces this on PRs labelled `tier/a`, so you cannot break anyone by accident.
 
 ---
 
