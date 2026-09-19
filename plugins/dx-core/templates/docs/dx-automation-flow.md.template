@@ -4,7 +4,7 @@
 
 # DX Automation Flow (dx-automation)
 
-Autonomous agent infrastructure — 10 AI agents running 24/7 as ADO pipelines triggered by AWS Lambda webhooks. No user interaction required after setup.
+Autonomous agent infrastructure — AI agents running 24/7 as ADO pipelines, triggered by Azure-native ADO Service Hooks (no AWS required; an AWS Lambda router is optional for central dedupe and rate limiting). No user interaction required after setup.
 
 ### Color Legend — steps that change a remote platform or project source code
 

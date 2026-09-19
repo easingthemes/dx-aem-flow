@@ -83,10 +83,12 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
 ## Contributing
 
 - No hardcoded org URLs, project names, paths, build commands, or branch names
+- `scm.provider` supports `ado` only — repo/PR skills call `mcp__ado__*` directly; there is no GitHub,
+  GitLab or Bitbucket code path. Work-item tracking is the one real choice (`tracker.provider: ado | jira`)
 - Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-verify`, `auto-deploy`)
 - Versioning is automated via semantic-release on push to `main`
 - Structural validation (`scripts/validate-*.sh`) runs in CI on every PR, as do all test suites — CI
-  discovers every `run-tests.sh`, `*.test.sh` and `*.test.js` under `plugins/` rather than listing them,
+  discovers every `run-tests.sh`, `*.test.sh` and `*.test.js` under `plugins/` (plus `*.test.js` under `cli/`) rather than listing them,
   so a new suite needs no workflow change but MUST be hermetic (no live ADO/AEM/network, no reliance on
   ambient git config)
 - Structural checks cannot tell you a script works, and `node --check` / `bash -n` only parse syntax — run the
