@@ -76,7 +76,7 @@ Current coverage is one suite (`dx-core/evals/plan-validate-finds-gap`) — see 
 
 `cli/bin/dx-scaffold.js` is a zero-dependency Node.js utility that replicates `/dx-init` + `/aem-init` output for any AI coding agent. It reads templates from `plugins/` at runtime — no bundling needed. When adding new templates or data files, the scaffold picks them up automatically (it iterates directories). Only changes to the scaffolding logic itself (new file categories, new placeholders) require updating `cli/lib/scaffold.js`.
 
-**Always-generated files:** `.github/agents/` (agent definitions) and `AGENTS.md` (agent discovery) are always generated regardless of flags — they're consumed by Copilot CLI, VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent — and, since Claude Code v2.1.277, by Claude Code itself in projects scaffolded **without** `CLAUDE.md` (see § Cross-Platform Agent Support). The `--copilot` flag only controls extra Copilot-specific files (`copilot-instructions.md`, `.github/README.md`).
+**Always-generated files:** `.github/agents/` (agent definitions) and `AGENTS.md` (agent discovery) are always generated regardless of flags — they're consumed by Copilot CLI, VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent — and, since Claude Code v2.1.277, by Claude Code itself in projects that have **no** `CLAUDE.md` (see § Cross-Platform Agent Support). The plugins deliberately do not generate a project `CLAUDE.md` — it describes the consumer's own codebase, not our workflow — so the install docs state it as a prerequisite (`/init` generates one). The `--copilot` flag only controls extra Copilot-specific files (`copilot-instructions.md`, `.github/README.md`).
 
 ## Architecture
 

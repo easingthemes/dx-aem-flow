@@ -372,7 +372,7 @@ already generate for other platforms. Four surfaces below; each verified absent
 from this repo by grep across `docs/`, `plugins/`, `cli/`, `scripts/` and
 `CLAUDE.md` before writing the row.
 
-## AGENTS.md is now a Claude Code instruction file — scaffolded projects are affected
+## AGENTS.md is now a Claude Code instruction file — CLAUDE.md is a documented prerequisite
 
 **Added:** 2026-09-19
 **Problem:** Claude Code v2.1.277 reads `AGENTS.md` through the built-in
@@ -397,23 +397,24 @@ Foundry**, which is where `dx-automation` pipeline runs may execute, so anything
 that depends on the fallback is silently absent there; and nested `AGENTS.md`
 files attach only on text `Read` calls and do not refresh after a mid-session
 edit, unlike native `CLAUDE.md` handling.
-**Scope:** `cli/lib/scaffold.js` (`installAgentsMd`, and whether a project
-`CLAUDE.md` should be generated at all); `plugins/dx-core/skills/dx-init/SKILL.md`;
-`CLAUDE.md` § "Cross-Platform Agent Support" (documented 2026-09-19);
-`website/src/pages/setup/scaffold.mdx` and `website/src/pages/learn/prompts.mdx`.
-**Done-when:** a scaffolded project either (a) gets a generated `CLAUDE.md`, so
-the fallback never fires, or (b) gets an `AGENTS.md` whose opening section is
-valid project instructions rather than only an `@AgentName` table — and
-`cli/README.md` states which of the two is the contract. Check with
-`mkdir -p /tmp/agents-md-check && node cli/bin/dx-scaffold.js /tmp/agents-md-check --all && head -20 /tmp/agents-md-check/AGENTS.md` (verified 2026-09-19: no `CLAUDE.md` written, `AGENTS.md` opens with the `@AgentName` table).
-**Approach:** (b) is cheaper and keeps one file per project: prepend a short
-"Project instructions" section (build command, base branch, spec directory
-convention — all already known to the scaffold from `.ai/config.yaml`) above the
-agent tables. (a) duplicates content into a second file that then has to be kept
-in sync, which is the problem this repo already tracks for its own two files.
-Do **not** tell consumers to switch the mode to `claude-md-and-agents-md` as the
-fix — that is a per-user setting, not something a scaffold can guarantee.
+**Decision (2026-09-19):** the plugins are **plugins** — they install into a project that is
+already set up, so a `CLAUDE.md` is assumed to exist and Claude Code's own `/init` is what
+creates one. We deliberately do **not** generate, append to, or modify a project `CLAUDE.md`:
+that file describes the consumer's codebase, ours describe the workflow, and owning a file we
+did not write means merging against the user's edits on every `/dx-upgrade`. Resolved as
+**documentation**, not a scaffold change. The 19 shipped files that tell agents to read
+`CLAUDE.md` are correct under this assumption and need no sweep.
 
+Residual risk, accepted: a consumer who never ran `/init` gets the `@AgentName` table as their
+project instructions. The install docs now state the prerequisite; nothing enforces it.
+**Scope:** `README.md` § Install; `website/src/pages/setup/index.mdx` Step 1;
+`website/src/pages/setup/claude-code.mdx` Prerequisites; `CLAUDE.md`
+§ "Cross-Platform Agent Support" and § "Standalone CLI".
+**Done-when:** `grep -rn "CLAUDE.md" README.md website/src/pages/setup/` states the
+prerequisite and names `/init`. **Done 2026-09-19.**
+**Follow-up (open):** `/dx-init` could warn — not write — when no `CLAUDE.md` is present, since
+that is the one moment we know the project state. Decide separately; a warning is cheap, but
+every added preflight check costs a step in an already long interview.
 ## `claude plugin test` — plugin test harness unused
 
 **Added:** 2026-09-19
