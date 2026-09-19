@@ -50,6 +50,19 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 /plugin install dx-aem@dx-aem-flow          # AEM projects only
 /plugin install dx-hub@dx-aem-flow          # Multi-repo orchestration only`}</CommandBlock>
 
+  <HighlightBox severity="warning" title="Prerequisite — your project should have a CLAUDE.md">
+    These are plugins: they install into a project that is already set up. If yours has no
+    <code>CLAUDE.md</code>, run Claude Code's own <code>/init</code> first -- the plugins never
+    create or modify it.
+    <br /><br />
+    Since Claude Code <strong>v2.1.277</strong>, a project with <em>no</em> <code>CLAUDE.md</code>
+    falls back to reading <code>AGENTS.md</code> instead. <code>/dx-init</code> generates
+    <code>AGENTS.md</code> as an <em>agent inventory table</em>, not project instructions -- so
+    without <code>CLAUDE.md</code>, that table is what Claude Code loads as your project's
+    instructions. With it present, the default mode ignores <code>AGENTS.md</code> and nothing
+    changes.
+  </HighlightBox>
+
   <HighlightBox severity="info" title="Updating Later">
     <code>/plugin marketplace update dx-aem-flow</code> updates all installed plugins to the latest version.
     After upgrading, run <code>/dx-upgrade</code> to sync project files to the new plugin version.

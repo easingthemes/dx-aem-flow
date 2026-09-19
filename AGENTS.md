@@ -2,7 +2,7 @@
 
 Cross-tool agent instructions for [dx-aem-flow](https://easingthemes.github.io/dx-aem-flow) — AI-assisted Azure DevOps development workflows.
 
-> This file is the cross-platform equivalent of `CLAUDE.md`. Tools that read AGENTS.md include Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI, and others. Claude Code reads `CLAUDE.md` (which contains the full contributor guide); this file provides the essential subset for all other agents.
+> This file is the cross-platform equivalent of `CLAUDE.md`. Tools that read AGENTS.md include Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI, and others. Claude Code reads `CLAUDE.md` (which contains the full contributor guide); this file provides the essential subset for all other agents. Since v2.1.277 Claude Code can read AGENTS.md as well, via the built-in `agents-md@builtin` plugin — but its default mode only falls back to AGENTS.md in projects that have no `CLAUDE.md`, so in this repo `CLAUDE.md` stays authoritative.
 
 ## What This Is
 
