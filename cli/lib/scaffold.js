@@ -45,6 +45,16 @@ class Scaffold {
       this.placeholders.projectRole = typeToRole[this.placeholders.projectType] || 'fullstack';
     }
 
+    // config.yaml.template needs the upper-case forms. Without these two the generated
+    // .ai/config.yaml shipped with literal {{PROJECT_TYPE}} / {{PROJECT_ROLE}} in the two
+    // fields the config reference marks required.
+    if (!this.placeholders.PROJECT_TYPE && this.placeholders.projectType) {
+      this.placeholders.PROJECT_TYPE = this.placeholders.projectType;
+    }
+    if (!this.placeholders.PROJECT_ROLE && this.placeholders.projectRole) {
+      this.placeholders.PROJECT_ROLE = this.placeholders.projectRole;
+    }
+
     // Default REPOS_TABLE placeholder for non-interactive CLI context
     if (!this.placeholders.REPOS_TABLE) {
       this.placeholders.REPOS_TABLE = '| Repo | Role | Platform | Base Branch |\n|---|---|---|---|\n| <!-- TODO: Fill in your repo table from config.yaml repos: section --> |';

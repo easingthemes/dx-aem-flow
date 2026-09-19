@@ -203,7 +203,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:robot" iconColor="bg-brand-700" title="Automated DoR">
-      Triggered by Lambda webhooks when work items are updated. Posts DoR results as comments and can transition work item state based on pass/fail.
+      Triggered by an Azure-native Service Hook when work items are updated (no AWS required; the Lambda router is optional). Posts DoR results as comments and can transition work item state based on pass/fail.
     </ContentCard>
     <ContentCard icon="mdi:robot" iconColor="bg-cyan" title="Automated DoD">
       Triggered when PRs are created or updated. Validates deliverables and posts results. <code>/dx-req-dod</code> can auto-remediate failures.

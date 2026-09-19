@@ -90,7 +90,12 @@ Output is JSON:
 }
 ```
 
-- `scm_provider`: `"ado"` → Azure DevOps, `"github"` → GitHub, `"unknown"` → ask the user
+- `scm_provider`: `"ado"` → Azure DevOps (the only supported SCM).
+  - `"github"` → **not supported.** Warn the user: "This repo's remote is GitHub. dx repo, branch and
+    PR skills call the Azure DevOps MCP server and will not work here. The planning, build, review and
+    AEM skills still work." Then ask whether to continue with `scm.provider: ado` left unconfigured,
+    or abort. Never write `provider: github` — no skill reads it.
+  - `"unknown"` → ask the user
 - If the remote URL points to a Bitbucket or Atlassian instance, or if the user selects `jira` when asked: set provider to `jira`
 - `base_branch`: `"unknown"` → ask the user
 - `ado_org` / `ado_project`: empty if not ADO or extraction failed → ask the user
@@ -873,7 +878,7 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 
 Ask:
 
-> **Set up AI automation?** Deploys eleven autonomous agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) as ADO pipelines. Most are triggered by AWS Lambda webhooks; SimpleAgent is Azure-native (ADO Service Hook, no Lambda). Requires the `automation` plugin installed plus AWS CLI and Azure CLI configured.
+> **Set up AI automation?** Deploys eleven autonomous agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) as ADO pipelines. Triggers are Azure-native by default (ADO Service Hook → Incoming WebHook service connection) — no AWS needed; an AWS Lambda router is optional for central dedupe and rate limiting. Requires the `automation` plugin installed plus Azure CLI configured (AWS CLI only for the optional Lambda path).
 >
 > 1. **Yes** — scaffold now (run `/auto-init` inline)
 > 2. **Skip** — set up later with `/auto-init`

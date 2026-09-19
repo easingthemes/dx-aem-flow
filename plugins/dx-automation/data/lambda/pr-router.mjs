@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import { queuePrAnswerPipeline } from "./queuePrAnswerPipeline.mjs";
-import { checkAndRecordEvent } from "./dedupe.js";
-import { sendToDLQ } from "./dlq.js";
-import { checkRateLimit } from "./rate-limiter.js";
+import { checkAndRecordEvent } from "./lib/dedupe.js";
+import { sendToDLQ } from "./lib/dlq.js";
+import { checkRateLimit } from "./lib/rate-limiter.js";
 
 function safeEq(a = "", b = "") {
   const ab = Buffer.from(String(a));
@@ -128,7 +128,11 @@ export const handler = async (event) => {
     }
 
     const runId = crypto.randomUUID();
-    const eventId = headers["x-vss-subscriptionid"] || headers["x-ms-delivery-id"] || null;
+    // body.id is unique per notification (GUID). x-vss-subscriptionid is the hook ID
+    // (constant per hook — NOT unique per event), so it must never be the dedupe key:
+    // using it made every comment after the first look like a duplicate for the whole
+    // dedupe TTL. Same ordering as wi-router.
+    const eventId = body.id || headers["x-ms-delivery-id"] || null;
 
     // Deduplication check
     const dedupe = await checkAndRecordEvent(eventId, "pr-answer");

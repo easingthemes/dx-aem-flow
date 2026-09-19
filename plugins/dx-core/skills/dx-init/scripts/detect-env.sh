@@ -7,6 +7,8 @@
 # Fields:
 #   remote_url      — git remote origin URL (or "")
 #   scm_provider    — "ado" | "github" | "unknown"
+#                     Only "ado" is supported by the skills. "github" is reported so
+#                     /dx-init can warn the user that repo/PR skills will not work.
 #   base_branch     — detected default branch (or "unknown")
 #   ado_org         — ADO organization name (or "")
 #   ado_project     — ADO project name (or "")

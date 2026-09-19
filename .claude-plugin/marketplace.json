@@ -34,7 +34,7 @@
     {
       "name": "dx-automation",
       "source": "./plugins/dx-automation",
-      "description": "Eleven autonomous AI agents for ADO workflows — DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix, QA, Dev, Doc, Estimation, and SimpleAgent. Run as ADO pipelines (most triggered by AWS Lambda webhooks; SimpleAgent is Azure-native).",
+      "description": "Eleven autonomous AI agents for ADO workflows — DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix, QA, Dev, Doc, Estimation, and SimpleAgent. Run as ADO pipelines triggered by Azure-native Service Hooks (no AWS required); an AWS Lambda router is optional for central dedupe and rate limiting.",
       "version": "3.6.9",
       "author": { "name": "Dragan Filipovic" }
     }

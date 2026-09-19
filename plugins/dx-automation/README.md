@@ -1,12 +1,15 @@
 # dx-automation — Autonomous Agent Infrastructure Plugin for Claude Code
 
-Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines. Most are triggered by AWS Lambda webhooks; **SimpleAgent and BugFix are triggered by Azure-native Service Hooks (no Lambda)** — see [Trigger mechanisms](#trigger-mechanisms). Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD checker, DoD fixer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) that run 24/7 as Azure DevOps pipelines. Unlike `dx-core`/`dx-aem` which run interactively with you, these agents operate without you — triggered by ADO events and responding automatically.
+
+**Azure-native is the default path, and needs no AWS at all.** An ADO Service Hook posts to an Incoming WebHook service connection that the pipeline declares under `resources.webhooks` — one hook, one connection, no infrastructure to provision, deploy or pay for. The **AWS Lambda router is optional**, for teams that want central tag-classification, cross-agent dedupe, per-agent rate limits and token-budget gating in one place. Start Azure-native; add Lambda only if you hit a governance need it solves. See [Trigger mechanisms](#trigger-mechanisms).
 
 ## Prerequisites
 
 - `dx-core` plugin installed
-- AWS CLI configured (`aws sts get-caller-identity` works)
 - Azure CLI configured (`az account show` works)
+- AWS CLI configured (`aws sts get-caller-identity` works) — **only for the optional Lambda router.**
+  Azure-native setups need no AWS account.
 
 ```bash
 /plugin marketplace add easingthemes/dx-aem-flow
@@ -21,15 +24,26 @@ Deploys eleven autonomous AI agents (DoR checker, PR reviewer, PR answerer, DoD 
 
 ## Quick Start
 
-Run these once, in order, to provision and connect the infrastructure:
+### Azure-native (recommended — no AWS)
 
 ```bash
 /auto-init          # Scaffold .ai/automation/ — generate infra.json, repos.json, .env.template
-/auto-provision     # Create AWS resources (DynamoDB, SQS, S3, Lambda, API Gateway)
 /auto-pipelines     # Import ADO pipelines + set LLM/ADO variables
+/auto-webhooks      # Create the Incoming WebHook service connections + ADO Service Hooks,
+                    # and the PR Review build policy
+```
+
+`/auto-init` detects an Azure-native-only selection and skips the AWS questions; it will not ask
+you to provision or deploy anything.
+
+### With the optional Lambda router
+
+Add these three steps — and `/auto-alarms` for CloudWatch — around the pipeline import:
+
+```bash
+/auto-provision     # Create AWS resources (DynamoDB, SQS, S3, Lambda, API Gateway)
 /auto-deploy        # Deploy Lambda code
 /auto-lambda-env    # Set Lambda env vars (ADO PAT, webhook secrets, table names)
-/auto-webhooks      # Configure ADO service hooks + PR Review build policy
 /auto-alarms        # Create CloudWatch alarms + subscribe email to SNS
 ```
 
@@ -84,26 +98,50 @@ These run as ADO pipelines (YAML). For ten agents the Lambda router receives ADO
 
 ## Trigger mechanisms
 
-Two paths start pipelines:
+Two paths start pipelines. **Azure-native is the default and is sufficient on its own** — the
+reference projects run this way, with no AWS account involved.
 
-- **AWS Lambda webhook router** — the WI Router (`wi-router.mjs`) and PR Router (`pr-router.mjs`) receive ADO service-hook events via API Gateway, deduplicate, rate-limit, apply the token budget, classify by tag / PR event, and queue the right pipeline. Used by every agent **except** SimpleAgent. (PR Reviewer is the other non-Lambda case: it runs from an ADO **build validation policy**, not a hook.)
-- **Azure-native Service Hook** — an ADO Service Hook with a simple subscription filter posts to an **Incoming WebHook service connection** that the pipeline declares under `resources.webhooks`. No AWS infra, nothing to deploy. Used by **SimpleAgent**: event *work item commented on*, filter *comment contains `@kai-simple`* → service connection → `ado-cli-simple.yml`. The same event drives both the first run and recovery; the pipeline's Phase 0 decides fresh-vs-resume.
+- **Azure-native Service Hook (default).** An ADO Service Hook with a subscription filter posts to
+  an **Incoming WebHook service connection** that the pipeline declares under `resources.webhooks`.
+  Nothing to provision, deploy, pay for or monitor; the trigger is visible and debuggable in the ADO
+  UI. Cost per agent: one Service Hook + one service connection + one `resources.webhooks` block.
+  Loop-prevention and dedupe live in the pipeline (the shipped pipelines dedupe on the work-item
+  revision, which increments per comment).
+- **AWS Lambda webhook router (optional).** The WI Router (`wi-router.mjs`) and PR Router
+  (`pr-router.mjs`) receive ADO service-hook events via API Gateway, deduplicate in DynamoDB,
+  rate-limit, apply the token budget, classify by tag / PR event, and queue the right pipeline.
+  Choose it when you want that governance centralised, or when one hook fanning out to many
+  pipelines beats one hook per agent — adding an agent then costs only new env vars.
 
-**Tradeoffs.** The Lambda path adds dedupe (ADO retry storms), per-agent rate limiting, monthly token-budget gating, and central tag-classification (one hook fans out to many pipelines; adding an agent is just env vars). The Azure-native path drops all of that infrastructure in exchange for one Service Hook + one service connection + one `resources.webhooks` block **per agent**, and any loop-prevention / dedupe must live in the pipeline itself. It fits low-frequency, human-initiated agents (a person types `@kai-simple`) better than high-volume autonomous ones.
+**Which to pick.** Default to Azure-native. Reach for Lambda when you need cross-agent dedupe
+against ADO retry storms, per-agent or per-identity rate limits, monthly token-budget gating, or a
+single hook fanning out to many pipelines. It is the granular-control option, not the starting
+point.
 
-**Which other pipelines could adopt it?** ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**, **state/field change**, and **PR events** — so technically any event-driven agent can be triggered this way (each needs its own hook + service connection + pipeline webhook resource):
+**Multi-repo.** `ado-cli-hub.yml` is the Azure-native equivalent of the WI Router: one
+`@kai-<agent>` comment fires the hub, which resolves the agent from
+`.ai/automation/registries/agents.json`, dedupes against recent worker runs, runs
+`/dx-discover-repos`, and fans the agent's worker pipeline out once per resolved repo. Multi-repo
+projects therefore do not need Lambda either.
 
-| Agent | Current trigger | Azure-native option | Notes |
-|-------|-----------------|---------------------|-------|
-| **SimpleAgent** | `@kai-simple` comment | ✅ in use (reference impl) | comment-contains filter |
-| **PR Reviewer** | build validation policy | already Lambda-free | keep policy, or use a "PR created" hook |
-| **PR Answerer** | PR comment → Lambda | ✅ "PR commented on" + `@kai-…` filter | but loses the Lambda's cheap identity/loop/dedupe gates — they'd move into the pipeline |
-| **DoR** | `@kai-dor` comment on a User Story | ✅ in use (Azure-native, no Lambda) | comment-contains + Story-type filter; stateless check (no recovery) |
-| **DoD / QA / DevAgent / DOCAgent / Estimation** | tag `KAI-*` + `KAI-TRIGGER` → Lambda | ✅ per-agent hook filtered on the agent tag (or a `@kai-…` comment, or a State transition) | loses dedupe + rate-limit + token-budget governance; one hook + connection per agent |
-| **BugFix** | `@kai-bugfix` comment on a Bug | ✅ in use (Azure-native, no Lambda) | comment-contains + Bug-type filter; resumable recovery (triage→verify→fix) |
-| **DoD Fixer** | chained after DoD check | n/a | not event-triggered — stays an internal chain |
+### Per-pipeline trigger status
 
-Recommended migration candidates: **human-initiated, low-volume** agents (like PR Answerer via a `@kai-answer` keyword). Keep the **high-volume autonomous** WI agents on the Lambda router so they retain dedupe, rate-limiting, and the token budget. Full write-up: [Automation Infrastructure → Azure-native Service Hook trigger](../../website/src/pages/architecture/automation-infra.mdx).
+Azure-native listeners that ship today (`resources.webhooks` in the pipeline YAML):
+`ado-cli-simple.yml`, `ado-cli-bug-fix.yml`, `ado-cli-dor.yml`, `ado-cli-hub.yml`.
+
+| Agent | Ships with its own Azure-native listener | How it runs without Lambda |
+|-------|------------------------------------------|----------------------------|
+| **SimpleAgent** | ✅ `@kai-simple` comment | direct; same event covers first run and recovery (Phase 0 decides) |
+| **BugFix** | ✅ `@kai-bugfix` comment on a Bug | direct; resumable recovery over triage→verify→fix |
+| **DoR** | ✅ `@kai-dor` comment on a User Story | direct; stateless check, no recovery |
+| **Hub router** | ✅ `@kai-<agent>` comment | fans out to any worker pipeline (multi-repo) |
+| **PR Reviewer** | n/a | ADO **build validation policy** — never used Lambda |
+| **DoD / DoD fixer / QA / DevAgent / DOCAgent / Estimation** | ❌ not yet | via the hub router, or a manual pipeline run. A per-agent hook needs a `resources.webhooks` block added to each YAML (mechanical — mirror `ado-cli-dor.yml`) |
+| **PR Answerer** | ❌ not yet | Lambda today. An Azure-native port also has to move the PR-Router's identity / self-comment / bot-loop gates into the pipeline |
+
+So: three agents plus the multi-repo router are Azure-native out of the box, PR Reviewer never
+needed AWS, and the remaining seven are reachable today through the hub router or a manual run.
+Closing the last two rows is tracked work, not a design limit.
 
 ## Configuration
 

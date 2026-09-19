@@ -20,9 +20,9 @@ project:
   brand: brand-a                  # optional — this repo's brand (split-platform frontends)
 
 scm:
-  provider: ado                   # ado | github
-  org: "https://myorg.visualstudio.com/"  # Organization URL
-  project: "My ADO Project"      # ADO project name (or GitHub org)
+  provider: ado                   # ado — only value implemented (see note below)
+  org: "https://myorg.visualstudio.com/"  # ADO organization URL
+  project: "My ADO Project"      # ADO project name
 
 tracker:
   provider: ado                   # ado | jira (preferred over scm.provider for work items)
@@ -162,11 +162,17 @@ roles:
 
 ### `scm`
 
+> **Only `provider: ado` is implemented.** Every repo, branch and PR skill calls the ADO MCP
+> server (`mcp__ado__*`) directly — there is no GitHub, GitLab or Bitbucket code path, and
+> none has ever been tested. A `github` value was documented in earlier versions by mistake;
+> it was never wired up. Jira *work items* are supported (`tracker.provider: jira`), but the
+> repository itself must still live in Azure DevOps.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | string | yes | `ado` or `github` |
-| `org` | string | yes | Organization URL |
-| `project` | string | yes | Project name within the org |
+| `provider` | string | yes | `ado` — the only supported value |
+| `org` | string | yes | ADO organization URL |
+| `project` | string | yes | ADO project name within the org |
 | `repo-id` | string | no | Repository UUID (auto-discovered if not set) |
 | `base-branch` | string | yes | Default PR target (e.g., `develop`, `main`) |
 | `wiki-id` | string | no | ADO wiki identifier UUID (for `/dx-doc-gen`, `/dx-pr-review-report` wiki posting) |

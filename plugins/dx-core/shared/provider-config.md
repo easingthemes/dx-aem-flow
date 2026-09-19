@@ -11,7 +11,9 @@ All skills that call work-item or wiki MCP tools must detect the provider and us
 
 If neither field is set, default to `ado`.
 
-**Why `tracker.provider`?** Work-item tracking (ADO/Jira) is separate from source-code management (ADO repos/GitHub/Bitbucket). A project can use Jira for tickets but ADO for code repos. `scm.provider` is kept for backward compatibility but `tracker.provider` is the canonical field.
+**Why `tracker.provider`?** Work-item tracking (ADO or Jira) is a separate choice from source-code management. A project can use Jira for tickets while its code lives in ADO repos. `scm.provider` is kept for backward compatibility but `tracker.provider` is the canonical field.
+
+**Source-code management is ADO-only.** `scm.provider` accepts `ado` and nothing else — every repo, branch and PR skill calls `mcp__ado__*` directly. GitHub, GitLab and Bitbucket repos are not supported and have never been tested.
 
 ## ADO Configuration
 
