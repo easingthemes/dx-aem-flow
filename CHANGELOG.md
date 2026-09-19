@@ -1,3 +1,10 @@
+## [3.6.10](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.9...v3.6.10) (2026-09-19)
+
+
+### Bug Fixes
+
+* remove false docs claims, fix two shipped bugs, add router + CLI tests ([#207](https://github.com/easingthemes/dx-aem-flow/issues/207)) ([c8445fd](https://github.com/easingthemes/dx-aem-flow/commit/c8445fdf3b7afbc0fed78ad01ea7986f3504c11d))
+
 ## [3.6.9](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.8...v3.6.9) (2026-09-17)
 
 
