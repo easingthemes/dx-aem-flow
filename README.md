@@ -24,6 +24,15 @@ KAI is a structured development workflow built as a plugin system for enterprise
 
 ## Install
 
+> **Prerequisite — your project should already have a `CLAUDE.md`.**
+> These are plugins: they install into a project that is already set up. If yours has no
+> `CLAUDE.md`, run Claude Code's own `/init` first. The plugins never create or modify it.
+>
+> This matters since Claude Code **v2.1.277**: in a project with *no* `CLAUDE.md`, Claude Code
+> falls back to reading `AGENTS.md` — and `/dx-init` generates `AGENTS.md` as an *agent inventory
+> table*, not project instructions. With `CLAUDE.md` present, the default mode
+> (`claude-md-or-agents-md`) ignores `AGENTS.md` and everything behaves as before.
+
 Add the marketplace, then install the plugins you need:
 
 ```bash

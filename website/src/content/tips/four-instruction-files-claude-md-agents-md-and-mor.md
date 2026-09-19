@@ -3,7 +3,7 @@ title: "Four Instruction Files: CLAUDE.md, AGENTS.md, and More"
 category: "Context — The Secret Sauce"
 focus: "All Tools"
 tags: ["CLAUDE.md","AGENTS.md","copilot-instructions","Instructions"]
-overview: "Each tool reads different instruction files — and some read multiple. CLAUDE.md (Claude Code primary), AGENTS.md (Copilot coding agent, open format), .github/copilot-instructions.md (legacy Copilot), plus .github/instructions/*.instructions.md for path-scoped rules. Rules in .claude/rules/ can be shared via an env var."
+overview: "Each tool reads different instruction files — and some read multiple. CLAUDE.md (Claude Code primary), AGENTS.md (open format — Copilot, and Claude Code itself since v2.1.277), .github/copilot-instructions.md (legacy Copilot), plus .github/instructions/*.instructions.md for path-scoped rules. Rules in .claude/rules/ can be shared via an env var."
 screenshot: null
 week: 2
 weekLabel: "Meet Your AI Tools"
@@ -13,7 +13,7 @@ keyPointsTitle: "Who Reads What"
 actionItemsTitle: "Cross-Platform Sharing"
 keyPoints:
   - "**CLAUDE.md** — Claude Code's primary file. Also read by Copilot coding agent (the cloud autonomous agent that works on GitHub issues). Supports @import for recursive includes."
-  - "**AGENTS.md** — the new open format (Aug 2025). Read by Copilot CLI, VS Code Chat, and the coding agent. Placed at root or nested per-directory."
+  - "**AGENTS.md** — the new open format (Aug 2025). Read by Copilot CLI, VS Code Chat, and the coding agent. Claude Code reads it too since v2.1.277, via the built-in `agents-md@builtin` plugin — but by default only in projects with no CLAUDE.md. Set `instructionFiles: claude-md-and-agents-md` in /config → Project instructions to load both."
   - "**.github/copilot-instructions.md** — the original Copilot format. Still works. Repo-wide scope."
   - "**.github/instructions/*.instructions.md** — path-scoped with `applyTo:` frontmatter. Like .claude/rules/ but for Copilot. Can exclude specific agents with `excludeAgent:`."
 actionItems:
