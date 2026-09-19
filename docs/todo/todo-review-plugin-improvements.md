@@ -187,6 +187,49 @@ we use (`name`, `description`, `when_to_use`, `argument-hint`, `model`, `effort`
 which of Claude Code / Copilot CLI / Codex / Gemini honours it. Record it in
 `docs/reference/` (skills read that directory) and link it from the conformance
 claims.
+
+**Status: Done (2026-09-19).** Mapping written to
+[`docs/reference/skill-frontmatter-compatibility.md`](../reference/skill-frontmatter-compatibility.md),
+measured across all 77 skills rather than read out of docs. Result: the spec is six
+fields (`name`, `description` required; `license`, `compatibility`, `metadata`,
+`allowed-tools` optional). We ship 13 top-level keys — 5 spec-core, 8 documented Claude
+Code extensions. Nothing is invented, and every extension degrades safely (Copilot CLI
+suppresses unknown-field warnings since v1.0.10; Codex documents only `name` and
+`description`). Hard spec rules pass 77/77.
+
+So the claim is **not wrong, it is imprecise** — "uses the open standard" reads as
+platform-neutral when the portable part is the body plus two fields. Corrected wording
+is drafted in the reference file; applying it, plus the two deviations the mapping
+surfaced, is #212 and #213. Full context: [2026-09-19 platform state sweep](../research/2026-09-19-platform-state-sweep.md).
+
+## Spec-conformance gaps in `validate-skills.sh`
+
+**Added:** 2026-09-19
+**Problem:** `scripts/validate-skills.sh` already enforces three of the Agent Skills
+spec's hard rules — `name` matches parent directory, name charset/length, and the
+1,024-char `description` cap — plus the 500-line body guidance as a ratcheted warning.
+Nobody framed it as a conformance checker, so two real deviations went unnoticed until
+the #41 mapping: (1) the spec defines `allowed-tools` as a **space-separated string**
+and all 64 skills that set it use a YAML list; (2) the spec names `metadata:` as the
+escape hatch for client-specific keys, and only 6 of 77 skills use it (for `version`,
+`mcp-server`, `category`) while the rest set nothing. Separately, the conformance claim
+itself is stated flat in three shipped files and overstates what is portable.
+**Scope:** `scripts/validate-skills.sh` and `scripts/validate-skills.test.sh`;
+`AGENTS.md:52`; `.codex/INSTALL.md:42`; `website/src/pages/learn/intro.mdx:247`;
+`website/src/pages/index.mdx:252` (the "OpenSkills, OpenPlugins" footnote — both names
+stale, Open Plugins was absorbed into Agent Plugins 1.0 on 2026-08-06); the dead
+`open-plugins.com` link in `docs/reference/allowed-tools-compatibility.md`.
+**Done-when:** `validate-skills.sh` warns on a YAML-list `allowed-tools` and on vendor
+keys set at top level instead of under `metadata:`, with a fixture in
+`validate-skills.test.sh` proving each fires; and
+`grep -rn 'Agent Skills.*open standard' AGENTS.md .codex/INSTALL.md website/src/` returns
+only the extensions-qualified wording from
+[`docs/reference/skill-frontmatter-compatibility.md`](../reference/skill-frontmatter-compatibility.md).
+**Approach:** Both new checks are WARN, not ERROR — they work today on Claude Code, and
+a merge blocker over a form preference is not worth it. Do **not** adopt
+[`skills-ref`](https://github.com/agentskills/agentskills/tree/main/skills-ref): it is
+Python, its README calls it a demonstration library, and it re-checks rules we already
+enforce. Extending our own bash validator keeps CI hermetic and dependency-free.
 **Approach:** Watch-level until the spec answers the core-vs-extension question.
 The cheap interim fix is honesty in the docs: say "Agent Skills format plus
 platform extensions", not bare "conformant". Related: #182 (Copilot hook
