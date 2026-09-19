@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'plugins/**'
+      - 'cli/**'
       - 'scripts/validate-*.sh'
       - 'website/src/config/stats.ts'
       - '.github/workflows/validate.yml'
@@ -47,20 +48,25 @@ jobs:
       # Suites are DISCOVERED, not listed. A hardcoded list is the same failure mode
       # this workflow exists to close: the first revision of this file wired in three
       # suites, review raised it to four, and discovery found six. Any new
-      # `*.test.js` under plugins/, or `run-tests.sh`/`*.test.sh` under plugins/ or
-      # scripts/, is picked up with no change here — so a suite must be hermetic (no
-      # live ADO/AEM/network). All seven current ones are, and pass with no global
-      # git config and an empty HOME.
+      # `*.test.js` under plugins/ or cli/, or `run-tests.sh`/`*.test.sh` under
+      # plugins/ or scripts/, is picked up with no change here — so a suite must be
+      # hermetic (no live ADO/AEM/network). All current ones are, and pass with no
+      # global git config and an empty HOME.
       - uses: actions/setup-node@v6
         with:
           node-version: 24
 
       - name: Test — shared-lib suites (node)
         run: |
-          files=$(find plugins -type f -name '*.test.js' | sort)
-          if [ -z "$files" ]; then echo "::error::no *.test.js found under plugins/"; exit 1; fi
+          files=$(find plugins cli -type f -name '*.test.js' | sort)
+          if [ -z "$files" ]; then echo "::error::no *.test.js found under plugins/ or cli/"; exit 1; fi
           echo "$files" | sed 's/^/  /'
           node --test $files
+        env:
+          # The cli/ suites seed throwaway git repos. Prove they depend on no ambient
+          # git identity or ~/.claude discovery, same contract as the bash suites.
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
 
       - name: Test — helper-script suites (bash)
         run: |

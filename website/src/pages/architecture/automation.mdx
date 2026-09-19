@@ -2,7 +2,7 @@
 layout: ../../layouts/SidebarLayout.astro
 title: Automation -- 24/7 Autonomous Agents
 sidebar: architecture
-description: "KAI 24/7 autonomous agents — DoR checker, DoD checker, PR reviewer, and more running as ADO pipelines via AWS Lambda."
+description: "KAI 24/7 autonomous agents — DoR checker, DoD checker, PR reviewer, and more running as ADO pipelines, triggered Azure-natively with no AWS required."
 ---
 
 import PageHero from '../../components/PageHero.astro';
@@ -17,25 +17,25 @@ export const base = import.meta.env.BASE_URL;
 
 <PageHero
   title="Automation -- 24/7 Autonomous Agents"
-  subtitle={`${stats.autonomousAgents} AI agents running as ADO pipelines -- most routed through AWS Lambda, three triggered Azure-natively by a work-item comment. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned.`}
+  subtitle={`${stats.autonomousAgents} AI agents running as ADO pipelines. Triggers are Azure-native by default -- an ADO Service Hook straight to the pipeline, no AWS account needed. An AWS Lambda router is optional, for teams that want central dedupe, rate limits and token-budget gating. Same skills as local workflow, zero human interaction required. Currently supports Azure DevOps. Jira webhook support planned.`}
 />
 
 <SectionHeading
   badge="Event Flow"
   badgeColor="error"
   title="Event Flow Architecture"
-  subtitle="From tracker event to agent execution -- Lambda-routed webhooks are deduplicated, rate-limited, and dispatched; the three comment-triggered agents bypass the router entirely."
+  subtitle="From tracker event to agent execution. The default Azure-native path is the short one: Service Hook straight to the pipeline. The optional Lambda router adds dedupe, rate limiting and token-budget gating in between."
   bg="alt"
 />
 <Section>
   <PipelineBlock
     label="Event Flow"
-    description="From ADO event to agent execution for the Lambda-routed agents -- routed, deduplicated, rate-limited, and dispatched. The three comment-triggered agents (SimpleAgent, BugFix, DoR) skip everything between the Service Hook and the pipeline."
+    description="The full path, with the optional Lambda router in place. Azure-native agents (SimpleAgent, BugFix, DoR, and the multi-repo hub router) skip everything between the Service Hook and the pipeline -- no API Gateway, no Lambda, no AWS."
     steps={[
       { title: 'Tracker Events (ADO)', subtitle: 'WI updated + tag,\nPR comment,\nPR created' },
       { title: 'Service Hooks', subtitle: 'WI hook,\nPR Answer hook,\nPR Review policy,\n3 comment hooks', color: '#0891b2' },
-      { title: 'API Gateway', subtitle: 'AWS entry point', color: '#8b5cf6' },
-      { title: 'Lambda Routers', subtitle: 'Deduplicate,\nRate limit,\nToken budget', color: '#d97706' },
+      { title: 'API Gateway', subtitle: 'AWS entry point\n(optional path)', color: '#8b5cf6' },
+      { title: 'Lambda Routers', subtitle: 'Optional --\nDeduplicate,\nRate limit,\nToken budget', color: '#d97706' },
       { title: 'ADO Pipelines', subtitle: `${stats.autonomousAgents} agent pipelines`, color: '#059669' },
     ]}
   />
@@ -44,7 +44,7 @@ export const base = import.meta.env.BASE_URL;
 <SectionHeading
   badge="Agents"
   title="Eleven Autonomous Agents"
-  subtitle="Two PR agents triggered automatically, five work-item agents triggered by ADO tags via the Lambda router, three (SimpleAgent, BugFix, DoR) triggered by a work-item comment via an Azure-native Service Hook, and DoD-Fixer, which is chained after the DoD check rather than event-triggered (Jira label support planned)."
+  subtitle="Three agents (SimpleAgent, BugFix, DoR) plus the multi-repo hub router ship with their own Azure-native Service Hook listener. PR Reviewer runs from an ADO build validation policy and never needed AWS. Five work-item agents are tag-triggered -- via the hub router Azure-natively, or via the optional Lambda router. DoD-Fixer is chained after the DoD check rather than event-triggered (Jira label support planned)."
   bg="primary"
 />
 <Section>
@@ -134,14 +134,18 @@ export const base = import.meta.env.BASE_URL;
     </ContentCard>
   </div>
 
-  <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-600 mb-4 mt-8">Comment-triggered (Azure-native -- no Lambda)</h3>
+  <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-600 mb-4 mt-8">Comment-triggered (Azure-native -- the default path, no AWS)</h3>
 
   <HighlightBox severity="success" title="How comment triggers work">
     A comment containing the agent's token on a work item fires an ADO Service Hook
     (event: <em>work item commented on</em>, filter: <em>comment contains the token</em>) that posts to an
-    Incoming WebHook service connection the pipeline listens on. No Lambda, no API Gateway. For
-    SimpleAgent and BugFix the same event starts the first run and resumes a blocked one -- Phase 0
-    decides which. DoR is a stateless check, so it has no resume path.
+    Incoming WebHook service connection the pipeline listens on. No Lambda, no API Gateway, no AWS
+    account -- nothing to provision, deploy or pay for, and the trigger stays visible in the ADO UI.
+    This is the recommended starting point. For SimpleAgent and BugFix the same event starts the
+    first run and resumes a blocked one -- Phase 0 decides which. DoR is a stateless check, so it has
+    no resume path. Multi-repo projects get the same deal from the hub router
+    (<code>ado-cli-hub.yml</code>), which resolves the agent from <code>agents.json</code> and fans
+    its worker pipeline out per repo -- the Azure-native equivalent of the Lambda WI Router.
   </HighlightBox>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -182,24 +186,28 @@ export const base = import.meta.env.BASE_URL;
   badge="Setup"
   badgeColor="success"
   title="Setup Flow"
-  subtitle="Two paths: full hub setup (7 steps) or lightweight consumer setup (3 steps)."
+  subtitle="Azure-native setup is three steps and needs no AWS. The Lambda router adds four more, and only if you want it. Consumer repos joining an existing hub stay at three."
   bg="alt"
 />
 <Section>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <HighlightBox severity="info" title="Hub (Full Setup)">
-      <code>/auto-init</code> &rarr; <code>/auto-provision</code> &rarr; <code>/auto-pipelines</code> &rarr;
-      <code>/auto-deploy</code> &rarr; <code>/auto-lambda-env</code> &rarr; <code>/auto-webhooks</code> &rarr;
-      <code>/auto-alarms</code>
+    <HighlightBox severity="info" title="Hub (Azure-native -- recommended)">
+      <code>/auto-init</code> &rarr; <code>/auto-pipelines</code> &rarr; <code>/auto-webhooks</code>
 
-      Creates AWS resources, deploys Lambdas, configures all {stats.autonomousAgents} pipelines, sets up monitoring.
+      Configures all {stats.autonomousAgents} pipelines, their Incoming WebHook service connections
+      and Service Hooks, plus the PR Review build policy. No AWS account, nothing to provision or
+      deploy. <code>/auto-init</code> skips the AWS questions when you select no Lambda agents.
+
+      Adding the optional Lambda router: <code>/auto-provision</code>, <code>/auto-deploy</code>,
+      <code>/auto-lambda-env</code> around the pipeline import, and <code>/auto-alarms</code> for
+      CloudWatch.
     </HighlightBox>
 
     <HighlightBox severity="success" title="Consumer (Lightweight)">
       <code>/auto-init</code> &rarr; <code>/auto-pipelines</code> (6 only) &rarr;
       <code>/auto-webhooks</code> (PR only)
 
-      No AWS provisioning. Uses hub's Lambda. Register in hub's pipeline maps.
+      No AWS provisioning. Reuses the hub's router (the Azure-native hub pipeline, or its Lambda if you opted in). Register in the hub's pipeline maps.
     </HighlightBox>
   </div>
 </Section>
