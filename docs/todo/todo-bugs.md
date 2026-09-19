@@ -88,3 +88,36 @@
 **Done-when:** `grep -rln 'wit_get_work_item\b\|wit_list_work_item_comments\|wit_get_work_item_attachment\|repo_get_pull_request_by_id' plugins/` returns nothing (or only files where the reference is clearly historical/comparison prose, not an instruction to call the tool by that name).
 **Update 2026-09-17 (partial progress):** `plugins/dx-core/skills/dx-req/SKILL.md` is **done** — all 8 references renamed (`wit_work_item` with `action:`, `wit_work_item_attachment`, `repo_pull_request` with `action:`) and `expand` recased. Review flagged that the half-updated state it was left in (old tool name + new enum casing) matched no real API, which is a fair reason not to leave a file half-swept. Accurate remaining scope: **36 files** under `plugins/` still match the old names — the earlier "~20" undercounted. The consolidation also changed the `expand` enum on `wit_work_item` — it is built from the `WorkItemExpand` TS enum *keys*, so the accepted values are capitalized (`None|Relations|Fields|Links|All`). Lowercase `"all"`, valid on the old `wit_get_work_item`, now fails zod validation before the handler runs. Fixed in `fetch-raw-story.js` and recased in the three `dx-req/SKILL.md` references; **any other prose this sweep touches must recase `expand` as well as rename the tool.** Separately, v2.10.0 wraps tool output in `<<nonce>> [UNTRUSTED …] <<nonce>>` sentinels, which broke `JSON.parse` in `fetch-raw-story.js` (silently — empty story, exit 0); handled there by `parseToolText`, but any other script parsing MCP text output needs the same treatment.
 **Approach:** Sweep each file, replace the old tool name + implicit params with the new action-dispatched call (see `fetch-raw-story.js` diff in the same commit for the exact old→new mapping and param shapes). Low risk — these are prose instructions to the model, which may already fuzzy-resolve via `ToolSearch`, but exact names should be kept current to avoid relying on that fallback.
+
+## `allowed-tools` values may grant nothing on Claude Code
+
+**Added:** 2026-09-19
+**Problem:** 64 of 77 skills set `allowed-tools` to lowercase values — `["read", "edit",
+"write", "search", "agent", "AEM/*", "playwright/*"]` — taken from the recommendation
+table in `docs/reference/allowed-tools-compatibility.md`, which is shaped around Copilot
+CLI's tool vocabulary. Claude Code's actual tool names are `Read`, `Edit`, `Write`,
+`Bash`, `Grep`, `Glob`. Whether Claude Code matches `allowed-tools` entries
+case-insensitively is **not documented anywhere and has never been tested here**. If it
+does not, then 64 skills carry an allowlist that suppresses no permission prompt at all
+on the platform we primarily target, and every structural check has been green over it
+the whole time — the exact failure mode `CLAUDE.md` describes when it says a structural
+check cannot tell you a script works. The field is also not free: `allowed-tools` is
+what makes multi-step skills usable without a prompt per tool call, so a dead allowlist
+is a real UX regression hiding behind a passing validator.
+**Scope:** the 64 `plugins/*/skills/*/SKILL.md` files with an `allowed-tools` key; the
+"Recommended Values by Skill Type" table in
+`docs/reference/allowed-tools-compatibility.md`; the new mapping in
+`docs/reference/skill-frontmatter-compatibility.md`, which currently records this as
+explicitly unverified.
+**Done-when:** a live probe is recorded in
+`docs/reference/allowed-tools-compatibility.md` — two throwaway skills, one with
+`allowed-tools: ["bash"]` and one with `allowed-tools: ["Bash"]`, each invoking a Bash
+command, with the observed result (prompt suppressed or not) written down per variant
+and the Claude Code version it was run on. A changelog entry or a docs sentence does not
+close this; the probe does.
+**Approach:** Same shape as the two probes in the [2026-09-19 upstream dependency
+check](../research/2026-09-19-upstream-dependency-check.md) — throwaway plugin, headless
+`claude -p` run. If lowercase does not match, the fix is a value sweep across 64 files
+plus a corrected recommendation table, and the table must then say which vocabulary
+belongs to which platform rather than offering one list for both. Found by the
+[2026-09-19 platform state sweep](../research/2026-09-19-platform-state-sweep.md).

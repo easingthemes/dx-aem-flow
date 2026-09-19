@@ -471,3 +471,73 @@ consumer sees as "installed" and is not mentioned anywhere in our setup pages.
 **Approach:** Docs only, and the smallest row in this pass. Confirm the flag's
 exact behaviour on a local marketplace path (not just a GitHub source) before
 replacing the documented two-step — our own testing loop uses a local path.
+
+---
+
+## Fourth pass (v2.1.278 + Copilot CLI v1.0.86, sweep 2026-09-19)
+
+Intake from the [2026-09-19 platform state sweep](../research/2026-09-19-platform-state-sweep.md).
+Unlike passes 1–3 this one was a *conformance* sweep, not a changelog read — two of the
+three items below come from reading the Agent Skills spec against our own files rather
+than from a release note.
+
+## claude.ai skill/plugin sync drops every extension field
+
+**Added:** 2026-09-19
+**Problem:** Claude Code v2.1.275 syncs skills and plugins enabled on claude.ai into
+terminal sessions (opt out via `syncClaudeAiSkills: false` / `syncClaudeAiPlugins:
+false`). Separately, the Claude Code skills reference states that skills uploaded to
+claude.ai support only `name`, `description`, `license`, `compatibility`, `metadata` and
+`allowed-tools` — the Agent Skills spec core, and nothing else. Put together, a skill of
+ours that reaches a terminal *via* claude.ai arrives stripped of `when_to_use`, `model`,
+`effort`, `context` and `agent`: a `context: fork` skill would run inline in the main
+context, and a `model: haiku` lookup would run at the session model. That is a silent
+behaviour change, not a load failure, so nobody would report it as a bug. Neither
+setting name appears anywhere in the repo (`grep -rn 'syncClaudeAi' .` → 0), so our
+install docs cannot tell a consumer which copy of a skill they are running.
+**Scope:** `docs/reference/skill-frontmatter-compatibility.md` (records the subset
+today); the install/setup pages in `website/`; `README.md`. Cross-ref #210, which covers
+the `--marketplace` half of the same release.
+**Done-when:** it is established and written down whether a *plugin* skill (as opposed
+to a personal skill uploaded to claude.ai) can reach a terminal session through this
+sync path at all. If it can, the setup docs name the two settings and state which fields
+survive; if it cannot, the reference file says so and the question is closed. Verify —
+do not document the subset as if it applies to us until the path is confirmed.
+
+## Copilot `include-custom-instructions` — decide with `omitClaudeMd`
+
+**Added:** 2026-09-19
+**Problem:** Copilot CLI v1.0.86 (2026-09-17): *"Custom agents can opt into repository
+instruction files (AGENTS.md, copilot-instructions.md, CLAUDE.md) by setting
+`include-custom-instructions: true` in their frontmatter."* This is the same knob as
+Claude Code's `omitClaudeMd` (v2.1.271, TODO #202) with the opposite default — Claude
+Code loads `CLAUDE.md` into subagents and lets you opt out, Copilot withholds repository
+instructions from custom agents and now lets you opt in. We ship 13 agents across
+`dx-core` and `dx-aem` and set neither field, so the same agent gets a full instruction
+context on one platform and none on the other, by accident rather than by decision.
+**Scope:** `plugins/dx-core/agents/*.md`, `plugins/dx-aem/agents/*.md` (13 files);
+`CLAUDE.md` § Cross-Platform Agent Support; `docs/reference/agent-catalog.md`.
+**Done-when:** each of the 13 agents has a recorded decision on instruction-file context,
+expressed as `omitClaudeMd` (Claude Code) and `include-custom-instructions` (Copilot CLI)
+where the answer is not the platform default, and `docs/reference/agent-catalog.md` shows
+the per-agent choice.
+**Approach:** **Fold into #202 — one decision, both platforms, one pass.** The candidates
+#202 already names are the same here: the Haiku/`low` lookup agents (`dx-file-resolver`,
+`dx-doc-searcher`, `aem-page-finder`) want neither file; the reviewers
+(`dx-code-reviewer`, `dx-pr-reviewer`) exist to enforce what lives in them and must keep
+it. Measure with #137 before assuming the lookups get cheaper.
+
+## `CLAUDE_CODE_AUTO_MODE_SERVER` — fold into the launcher change
+
+**Added:** 2026-09-19
+**Problem:** Claude Code v2.1.278 moved the auto-mode classifier server-side by default
+for Claude API, Enterprise and Bedrock/Vertex/Foundry, with `CLAUDE_CODE_AUTO_MODE_SERVER=0`
+as the opt-out on Bedrock/Vertex/Foundry — which is where `dx-automation` pipelines may
+run. It is a sixth runtime knob for the same headless launch path that #200, #119, #178
+and #209 all touch.
+**Scope:** the `dx-automation` pipeline launcher (same files as #200).
+**Done-when:** covered by #200's Done-when — do not track this separately.
+**Approach:** No action of its own. Recorded so the next sweep does not re-discover it as
+an unintaken v2.1.278 entry. Note the five `v2.1.277` references in `CLAUDE.md`,
+`AGENTS.md` and `README.md` need **no** repin — that is when AGENTS.md support shipped;
+v2.1.278 only restated the default.
