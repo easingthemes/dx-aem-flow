@@ -41,7 +41,7 @@ No compilation step. Verification happens at four levels:
 | Level | What it checks | How |
 |-------|----------------|-----|
 | Structural | naming, frontmatter, manifest/version consistency, collisions | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/` and `data/lib/` | any `run-tests.sh` or `*.test.sh` under `plugins/` — **discovered** and run in CI on every PR (5 today) |
+| Helper scripts | deterministic bash in `skills/*/scripts/` and `data/lib/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (7 today) |
 | Shared libs | deterministic JS in `plugins/dx-core/data/lib/` | any `*.test.js` under `plugins/` — **discovered** and run in CI on every PR via `node --test` |
 | Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
 
@@ -49,7 +49,7 @@ Everything not covered above is still manual — run the skill in a test project
 
 **A structural check cannot tell you a script works.** The four `validate-*.sh` read frontmatter, manifests and counts; they pass happily over a script that dies on its first call. The suites above were local-only until 2026-09-17, and in that window a corrupt test fixture sat red on `main` and two fatal defects in `.ai/lib` shipped in a release ([#197](https://github.com/easingthemes/dx-aem-flow/pull/197), [#198](https://github.com/easingthemes/dx-aem-flow/pull/198)). Two habits follow: a change to anything under `data/lib/` or `skills/*/scripts/` needs its suite run, and `node --check` / `bash -n` are **not** verification — they parse syntax and cannot see a rejected argument, a schema change, or a wrong enum value. Run the thing.
 
-**CI discovers suites, it does not list them.** `validate.yml` globs for `run-tests.sh`, `*.test.sh` and `*.test.js` under `plugins/`, so a new suite is picked up with no workflow change — a hardcoded list is how suites go unrun in the first place (that PR shipped with three of the six wired in, and review found a fourth before discovery found all six). The constraint this places on a new suite: **it must be hermetic** — no live ADO, AEM, or network, and no dependence on ambient git config. The existing suites seed throwaway git repos and set `user.email`/`user.name` per repo; they pass with `GIT_CONFIG_GLOBAL=/dev/null` and an empty `HOME`. A check that needs a live service belongs in a skill, not in a `*.test.sh`.
+**CI discovers suites, it does not list them.** `validate.yml` globs for `*.test.js` under `plugins/`, and for `run-tests.sh` / `*.test.sh` under `plugins/` **and `scripts/`** (the validators are scripts too, and a validator nobody has watched fail is indistinguishable from a blind one — `scripts/validate-skills.test.sh`), so a new suite is picked up with no workflow change — a hardcoded list is how suites go unrun in the first place (that PR shipped with three of the six wired in, and review found a fourth before discovery found all six). The constraint this places on a new suite: **it must be hermetic** — no live ADO, AEM, or network, and no dependence on ambient git config. The existing suites seed throwaway git repos and set `user.email`/`user.name` per repo; they pass with `GIT_CONFIG_GLOBAL=/dev/null` and an empty `HOME`. A check that needs a live service belongs in a skill, not in a `*.test.sh`.
 
 ### Behavioral evals (`plugins/<plugin>/evals/`)
 

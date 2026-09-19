@@ -183,6 +183,7 @@ cross-harness matrix until the single-harness suite is green.
 
 ## Enforce the two documented skill limits in CI
 
+**Status:** Done 2026-09-19.
 **Added:** 2026-09-16
 **Problem:** Anthropic's [skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
 state two hard numbers: `description` is capped at **1,024 characters** (a
@@ -201,6 +202,27 @@ no workflow change is needed.
 `description:` exceeds 1,024 characters, and reports every SKILL.md over 500 body
 lines; a deliberately over-long fixture proves both fire (a validator nobody has
 seen fail is the exact failure this file's other items are about).
+**Resolved 2026-09-19:** both checks live in `scripts/validate-skills.sh`.
+`description:` over `DESC_MAX` (1,024) is an ERROR; each SKILL.md whose body
+exceeds `BODY_MAX` (500) is a WARN, and `BODY_OVER_BASELINE` errors only when the
+oversized count grows past it. The baseline is **13**, not the 11 measured on
+2026-09-16 — that figure counted file lines. The check counts body lines with
+frontmatter excluded, which is why `dx-pr-review` reads 1,122 here and 1,131 there.
+When #108/#113 trim a skill, lower `BODY_OVER_BASELINE`; the validator prints a
+NOTE telling you to when the count drops.
+
+Per this file's own rule, the checks have been watched to fail:
+`scripts/validate-skills.test.sh` builds a fixture plugin tree under a temp dir
+(`REPO_ROOT` is overridable for exactly this) and asserts 13 things — over-long
+description errors, a description *exactly* at the cap passes, an over-long body
+warns without failing, a 500-line body plus frontmatter does **not** warn (catches
+a validator counting file lines), and the ratchet fires above the baseline, passes
+at it and notes an improvement below it. The suite was mutation-tested against
+three deliberately broken validators (cap removed, `wc -l` instead of the body
+count, ratchet disabled) and each mutation turned it red. CI bash-suite discovery
+in `.github/workflows/validate.yml` now searches `scripts/` alongside `plugins/`,
+so the suite runs on every PR with no further workflow change.
+
 **Approach:** Two different severities, and conflating them would block every PR on
 day one. The 1,024-character cap is a platform rule — **ERROR**, exit non-zero. The
 500-line threshold is guidance with 11 existing violations — **WARN** with the

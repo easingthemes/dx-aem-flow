@@ -40,6 +40,10 @@ jobs:
       # here, a test fixture sat red on main for weeks and two fatal defects in
       # .ai/lib shipped in a release (#197, #198).
       #
+      # scripts/ is in the search too: the validators themselves are scripts, and a
+      # validator nobody has watched fail is indistinguishable from a blind one
+      # (scripts/validate-skills.test.sh).
+      #
       # Suites are DISCOVERED, not listed. A hardcoded list is the same failure mode
       # this workflow exists to close: the first revision of this file wired in three
       # suites, review raised it to four, and discovery found six. Any new
@@ -66,7 +70,7 @@ jobs:
             echo "::group::$f"
             if bash "$f"; then echo "PASS $f"; else echo "::error::$f failed"; fail=1; fi
             echo "::endgroup::"
-          done < <(find plugins -type f \( -name 'run-tests.sh' -o -name '*.test.sh' \) | sort)
-          if [ "$found" -eq 0 ]; then echo "::error::no bash suites found under plugins/"; exit 1; fi
+          done < <(find plugins scripts -type f \( -name 'run-tests.sh' -o -name '*.test.sh' \) | sort)
+          if [ "$found" -eq 0 ]; then echo "::error::no bash suites found under plugins/ or scripts/"; exit 1; fi
           echo "$found bash suites run"
           exit $fail
