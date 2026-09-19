@@ -17,7 +17,7 @@ Periodic sweep of every open GitHub issue that is **blocked on / waiting for** a
 | [#21](https://github.com/easingthemes/dx-aem-flow/issues/21) — Copilot `context: fork` | STILL BLOCKED | [copilot-cli#1169](https://github.com/github/copilot-cli/issues/1169) Open |
 | [#20](https://github.com/easingthemes/dx-aem-flow/issues/20) — Copilot subagents can't invoke skills | STILL BLOCKED (**regressed**) | New tracker [copilot-cli#4708](https://github.com/github/copilot-cli/issues/4708) |
 | [#19](https://github.com/easingthemes/dx-aem-flow/issues/19) — Copilot `handoffs:` execution | STILL BLOCKED | [copilot-cli#561](https://github.com/github/copilot-cli/issues/561) Open since Nov 2025 |
-| [#179](https://github.com/easingthemes/dx-aem-flow/issues/179) — ADO MCP attachment truncation | STILL UNTRACKED UPSTREAM | No matching issue in `microsoft/azure-devops-mcp` |
+| [#179](https://github.com/easingthemes/dx-aem-flow/issues/179) — ADO MCP attachment truncation | **UNBLOCKED — fix is ours** | Upstream source read (v2.10.0): no size cap in the tool, and `savePath` skips base64 entirely |
 
 ---
 
@@ -57,12 +57,37 @@ Latest: v1.0.86 (2026-09-17), v1.0.87-0 pre-release (2026-09-18). Nothing in the
 - **#21 (`context: fork`)** — [#1169](https://github.com/github/copilot-cli/issues/1169) Open, unassigned, no PR. v1.0.87-0 added `worktreePathTemplate` (worktree *layout*, not skill-declared isolation).
 - **#19 (`handoffs:`)** — [#561](https://github.com/github/copilot-cli/issues/561) Open since 2025-11-14, still no labels, assignee or PR; [#1180](https://github.com/github/copilot-cli/issues/1180) Open.
 
-## ADO MCP (GH #179)
+**Other Copilot skill-system issues found while checking, not tracked by any of our issues** — worth knowing before we blame our own plugin for a report from a Copilot user:
+- [#4209](https://github.com/github/copilot-cli/issues/4209) **Closed** (2026-07-21, closed with no visible resolution comment or linked PR) — asked for `skill` as a tool alias in custom-agent `tools:` so agents can invoke skills instead of copying their bodies. Nothing in the v1.0.68–v1.0.87 release notes implements it, so treat it as closed-without-fix rather than shipped.
+- [#4545](https://github.com/github/copilot-cli/issues/4545) Open — personal skills in `~/.copilot/skills/` are never discovered despite being documented.
+- [#4886](https://github.com/github/copilot-cli/issues/4886) Open — skills loaded via `--plugin-dir` are missing from `/skills` and `/env`.
+- [#3699](https://github.com/github/copilot-cli/issues/3699) Open — `allowed-tools` frontmatter ignored in non-interactive mode, which is the mode `dx-automation` pipelines run in.
+- [#4438](https://github.com/github/copilot-cli/issues/4438) Open — `disable-model-invocation` makes a skill unreachable rather than manual-only.
 
-A search of `microsoft/azure-devops-mcp` still returns **no issue** describing the `wit_get_work_item_attachment` >75 KB base64 truncation. The ready-to-file report in #179 is still ours to file; `plugins/dx-core/data/lib/validate-image.sh` remains the mitigation. (Unverified here — reproducing it needs a live ADO work item, which this environment has no access to.)
+Release notes Jul–Sep are all skill *plumbing* (`copilot skill add/enable/disable`, discovery via `--add-dir`, plugin/skill persistence on resume) — nothing about routing or subagent access.
+
+## ADO MCP (GH #179) — source read, and we can route around it
+
+A search of `microsoft/azure-devops-mcp` still returns **no issue** describing the `wit_get_work_item_attachment` >75 KB base64 truncation, so the ready-to-file report in #179 is still ours to file. But reading the upstream source at **v2.10.0** (`src/tools/work-items.ts`, tool since renamed `wit_get_work_item_attachment` → `wit_work_item_attachment`) changes what we should do about it:
+
+**1. The tool has no size cap.** It streams the attachment, `Buffer.concat`s every chunk and base64-encodes the whole thing before returning a `resource` content block. Nothing in the tool trims it. That corroborates the original diagnosis — the loss is at the JSON-RPC/transport boundary, not in ADO's API or the tool's logic — and it means an upstream fix would be a protocol/transport change, not a one-line patch. Don't wait for it.
+
+**2. The tool now takes `savePath`, which skips base64 entirely.** With a relative directory, the tool does:
+
+```js
+fs.writeFileSync(path.join(savePath, resolvedFileName), buffer);
+return { content: [{ type: "text", text: `Attachment saved to: ${localFilePath}` }] };
+```
+
+No blob crosses the wire, so there is nothing to truncate. Constraints: `savePath` must be relative (absolute paths, drive letters and `..` are rejected), it resolves against the **MCP server's** cwd, and it throws if the file already exists.
+
+**3. We don't use it.** `plugins/dx-core/data/lib/fetch-raw-story.js` calls `wit_work_item_attachment` with `{project, attachmentId, fileName}` only — the base64 path, i.e. the buggy one, on every image in every ticket.
+
+So #179 flips from *blocked on upstream* to *actionable here*: pass `savePath` (the spec dir's `images/`) and drop the base64 decode on that path, keeping `validate-image.sh` as the guard for older server versions. TODO #103 relabelled **Actionable**; the issue keeps the upstream report for filing.
 
 ## Recommended next actions
 
-1. **Decide TODO #12** — now unblocked. Either rename 78 skill dirs to drop the prefix, or write the prefix down as a deliberate convention and close the TODO. Doing neither leaves a stale "Blocked" row.
-2. **File the two upstream issues we keep re-noting as untracked:** `microsoft/azure-devops-mcp` attachment truncation (#179) and `github/copilot-cli` skill `agent:` routing (#22).
-3. **Next sweep:** the four Copilot items only move when Copilot CLI ships; re-check on the next quarterly pass rather than per-release.
+1. **Use `savePath` in `fetch-raw-story.js`** (TODO #103) — the one code change this sweep produced. It removes the truncation class of failure instead of quarantining it.
+2. **Decide TODO #12** — now unblocked. Either rename 78 skill dirs to drop the prefix, or write the prefix down as a deliberate convention and close the TODO. Doing neither leaves a stale "Blocked" row.
+3. **File the two upstream issues we keep re-noting as untracked:** `microsoft/azure-devops-mcp` attachment truncation (#179) and `github/copilot-cli` skill `agent:` routing (#22).
+4. **Next sweep:** the four Copilot items only move when Copilot CLI ships; re-check on the next quarterly pass rather than per-release.
