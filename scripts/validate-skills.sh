@@ -6,17 +6,47 @@
 # 2. Name format: lowercase, numbers, hyphens only, max 64 chars
 # 3. No collisions across plugins (including automation)
 # 4. No collisions with known Claude Code built-in commands
-# 5. description: field exists and is non-empty
+# 5. description: field exists, is non-empty, and is at most 1024 chars (platform cap)
+# 6. SKILL.md body (frontmatter excluded) under 500 lines — WARN, ratcheted
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Overridable so the test suite can point the validator at a fixture tree.
+REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 ERRORS=0
 WARNINGS=0
 TOTAL=0
 
 # Known built-in Claude Code commands (avoid collisions)
 BUILTINS="help doctor init compact debug clear config review commit status memory cost login logout permissions"
+
+# Anthropic skill-authoring limits.
+#   DESC_MAX  — hard platform validation rule. ERROR.
+#   BODY_MAX  — authoring guidance, not a platform rule. WARN + ratchet:
+#               error only when the number of oversized skills grows past the
+#               recorded baseline, so #108/#113 stay planned work instead of
+#               becoming a day-one merge blocker.
+DESC_MAX=${DESC_MAX:-1024}
+BODY_MAX=${BODY_MAX:-500}
+# Measured 2026-09-19 across 77 skills. Lower this when a skill is trimmed.
+BODY_OVER_BASELINE=${BODY_OVER_BASELINE:-13}
+BODY_OVER=0
+
+# Extracts the full `description:` value from frontmatter — the line's own text
+# plus any indented continuation lines, block indicators dropped.
+DESC_AWK='
+  NR==1 && $0=="---" {fm=1; next}
+  fm!=1 {next}
+  $0=="---" {exit}
+  /^description:/ {
+    v=$0; sub(/^description:[ \t]*/, "", v)
+    if (v ~ /^[|>][-+0-9]*$/) v=""
+    out=v; c=1; next
+  }
+  c && /^[ \t]/ { l=$0; sub(/^[ \t]+/, "", l); out=(out=="" ? l : out " " l); next }
+  c { exit }
+  END { print out }
+'
 
 # Temp file for collision detection
 NAMES_FILE=$(mktemp)
@@ -42,17 +72,35 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   # Check name: frontmatter matches directory name
-  file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//')
+  # `|| true`: under `set -euo pipefail` a file with no `name:` line makes the
+  # pipeline return 1 and kills the script mid-scan, silently — the check below
+  # never runs and nothing is printed.
+  file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//') || true
   if [ "$file_name" != "$skill_name" ]; then
     echo "ERROR: $rel_path — name: '$file_name' does not match directory '$skill_name'"
     ERRORS=$((ERRORS + 1))
   fi
 
   # Check description: exists
-  file_desc=$(grep "^description:" "$skill_file" | head -1 | sed 's/^description: *//')
+  # Read the whole frontmatter value, not just the first line: a folded/block
+  # scalar (`description: >-`) or a plain continued one carries its text on the
+  # following indented lines, and `grep | head -1` measured none of it — an
+  # 1,800-char wrapped description passed the cap check as 0 chars.
+  file_desc=$(awk "$DESC_AWK" "$skill_file")
   if [ -z "$file_desc" ]; then
     echo "ERROR: $rel_path — missing or empty description: field"
     ERRORS=$((ERRORS + 1))
+  elif [ ${#file_desc} -gt "$DESC_MAX" ]; then
+    echo "ERROR: $rel_path — description too long (${#file_desc} chars, max $DESC_MAX)"
+    ERRORS=$((ERRORS + 1))
+  fi
+
+  # Check body length (frontmatter excluded) against the authoring threshold
+  body_lines=$(awk 'NR==1 && $0=="---" {fm=1; next} fm==1 && $0=="---" {fm=2; next} fm==2 {n++} END {print n+0}' "$skill_file")
+  if [ "$body_lines" -gt "$BODY_MAX" ]; then
+    echo "WARN: $rel_path — body is $body_lines lines (over $BODY_MAX; see TODO #108/#113)"
+    WARNINGS=$((WARNINGS + 1))
+    BODY_OVER=$((BODY_OVER + 1))
   fi
 
   # Check format: lowercase, numbers, hyphens only
@@ -84,6 +132,17 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
     fi
   done
 done
+
+# Ratchet: the count of oversized bodies may shrink, never grow
+if [ "$BODY_OVER" -gt "$BODY_OVER_BASELINE" ]; then
+  echo
+  echo "ERROR: $BODY_OVER skills over $BODY_MAX body lines, baseline is $BODY_OVER_BASELINE — do not add more"
+  ERRORS=$((ERRORS + 1))
+elif [ "$BODY_OVER" -lt "$BODY_OVER_BASELINE" ]; then
+  echo
+  echo "NOTE: only $BODY_OVER skills over $BODY_MAX body lines (baseline $BODY_OVER_BASELINE)"
+  echo "      lower BODY_OVER_BASELINE in scripts/validate-skills.sh to lock the win in"
+fi
 
 # Summary
 echo
