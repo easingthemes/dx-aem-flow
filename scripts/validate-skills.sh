@@ -32,6 +32,22 @@ BODY_MAX=${BODY_MAX:-500}
 BODY_OVER_BASELINE=${BODY_OVER_BASELINE:-13}
 BODY_OVER=0
 
+# Extracts the full `description:` value from frontmatter — the line's own text
+# plus any indented continuation lines, block indicators dropped.
+DESC_AWK='
+  NR==1 && $0=="---" {fm=1; next}
+  fm!=1 {next}
+  $0=="---" {exit}
+  /^description:/ {
+    v=$0; sub(/^description:[ \t]*/, "", v)
+    if (v ~ /^[|>][-+0-9]*$/) v=""
+    out=v; c=1; next
+  }
+  c && /^[ \t]/ { l=$0; sub(/^[ \t]+/, "", l); out=(out=="" ? l : out " " l); next }
+  c { exit }
+  END { print out }
+'
+
 # Temp file for collision detection
 NAMES_FILE=$(mktemp)
 trap 'rm -f "$NAMES_FILE"' EXIT
@@ -56,14 +72,21 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   # Check name: frontmatter matches directory name
-  file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//')
+  # `|| true`: under `set -euo pipefail` a file with no `name:` line makes the
+  # pipeline return 1 and kills the script mid-scan, silently — the check below
+  # never runs and nothing is printed.
+  file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//') || true
   if [ "$file_name" != "$skill_name" ]; then
     echo "ERROR: $rel_path — name: '$file_name' does not match directory '$skill_name'"
     ERRORS=$((ERRORS + 1))
   fi
 
   # Check description: exists
-  file_desc=$(grep "^description:" "$skill_file" | head -1 | sed 's/^description: *//')
+  # Read the whole frontmatter value, not just the first line: a folded/block
+  # scalar (`description: >-`) or a plain continued one carries its text on the
+  # following indented lines, and `grep | head -1` measured none of it — an
+  # 1,800-char wrapped description passed the cap check as 0 chars.
+  file_desc=$(awk "$DESC_AWK" "$skill_file")
   if [ -z "$file_desc" ]; then
     echo "ERROR: $rel_path — missing or empty description: field"
     ERRORS=$((ERRORS + 1))

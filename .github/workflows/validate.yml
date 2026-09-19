@@ -47,9 +47,10 @@ jobs:
       # Suites are DISCOVERED, not listed. A hardcoded list is the same failure mode
       # this workflow exists to close: the first revision of this file wired in three
       # suites, review raised it to four, and discovery found six. Any new
-      # `run-tests.sh`, `*.test.sh` or `*.test.js` under plugins/ is picked up with no
-      # change here — so a suite must be hermetic (no live ADO/AEM/network). All six
-      # current ones are, and pass with no global git config and an empty HOME.
+      # `*.test.js` under plugins/, or `run-tests.sh`/`*.test.sh` under plugins/ or
+      # scripts/, is picked up with no change here — so a suite must be hermetic (no
+      # live ADO/AEM/network). All seven current ones are, and pass with no global
+      # git config and an empty HOME.
       - uses: actions/setup-node@v6
         with:
           node-version: 24

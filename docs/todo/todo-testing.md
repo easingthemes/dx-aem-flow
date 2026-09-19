@@ -213,13 +213,30 @@ NOTE telling you to when the count drops.
 
 Per this file's own rule, the checks have been watched to fail:
 `scripts/validate-skills.test.sh` builds a fixture plugin tree under a temp dir
-(`REPO_ROOT` is overridable for exactly this) and asserts 13 things — over-long
+(`REPO_ROOT` is overridable for exactly this) and asserts 20 things — over-long
 description errors, a description *exactly* at the cap passes, an over-long body
 warns without failing, a 500-line body plus frontmatter does **not** warn (catches
 a validator counting file lines), and the ratchet fires above the baseline, passes
 at it and notes an improvement below it. The suite was mutation-tested against
-three deliberately broken validators (cap removed, `wc -l` instead of the body
-count, ratchet disabled) and each mutation turned it red. CI bash-suite discovery
+five deliberately broken validators (cap removed, `wc -l` instead of the body
+count, ratchet disabled, the wrapped-description read reverted, the `|| true`
+guard removed) and each mutation turned it red.
+
+Writing it found two holes in the validator it was written for, both now fixed and
+both covered:
+
+- **A wrapped `description:` was measured as its first line.** The value was read
+  with `grep "^description:" | head -1`, so a folded scalar (`description: >-`
+  followed by indented text) measured ~0 characters and passed the 1,024 cap at any
+  length — a fixture at 1,219 characters sailed through. It is now read from
+  frontmatter in full, continuation lines joined. The 77 real descriptions measure
+  byte-identical before and after.
+- **A missing frontmatter key killed the run silently.** Under `set -euo pipefail`
+  a `grep` that matches nothing returns 1, so a SKILL.md with no `description:` (or
+  no `name:`) aborted the script mid-scan: no message, no remaining skills checked,
+  a bare `exit 1`. The documented "description exists" check had never been
+  reachable. Both reads are now `|| true`-guarded, and the suite asserts the error
+  text appears *and* that the scan continues past the broken skill. CI bash-suite discovery
 in `.github/workflows/validate.yml` now searches `scripts/` alongside `plugins/`,
 so the suite runs on every PR with no further workflow change.
 

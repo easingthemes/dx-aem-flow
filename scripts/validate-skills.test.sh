@@ -35,6 +35,15 @@ make_skill() {
   } > "$dir/SKILL.md"
 }
 
+# Build one skill from raw SKILL.md content on stdin, for shapes make_skill
+# cannot express (wrapped descriptions, missing frontmatter keys).
+#   write_skill <name> <<'EOF' ... EOF
+write_skill() {
+  local dir="$FIXTURE_ROOT/plugins/dx-test/skills/$1"
+  mkdir -p "$dir"
+  cat > "$dir/SKILL.md"
+}
+
 reset_fixture() {
   rm -rf "${FIXTURE_ROOT:?}/plugins"
 }
@@ -111,7 +120,57 @@ out=$(BODY_OVER_BASELINE=5 run_validator); rc=$?
 check "ratchet notes an improvement below the baseline" "1" \
   "$(echo "$out" | grep -c 'lower BODY_OVER_BASELINE')"
 
-# --- 5. the real tree is still green ------------------------------------------
+# --- 5. a wrapped description is measured in full -----------------------------
+# `grep | head -1` saw only the first line, so a folded scalar of any length
+# measured as ~0 chars and sailed past the cap.
+reset_fixture
+{
+  echo "---"
+  echo "name: dx-folded"
+  echo "description: >-"
+  for ((i = 0; i < 20; i++)); do printf '  %s\n' "$(printf 'y%.0s' $(seq 1 60))"; done
+  echo "---"
+  echo
+  echo "body"
+} | write_skill "dx-folded"
+out=$(run_validator); rc=$?
+check "folded description over the cap errors" "1" "$rc"
+check "folded description is measured joined, not first-line" "1" \
+  "$(echo "$out" | grep -c 'description too long (1219 chars, max 1024)')"
+
+# --- 6. a missing frontmatter key reports, it does not abort ------------------
+# Under `set -euo pipefail` a grep that matches nothing returns 1 and killed the
+# whole run: no message, no further skills scanned, just a bare exit 1.
+reset_fixture
+write_skill "dx-nodesc" <<'SKILL'
+---
+name: dx-nodesc
+---
+
+body
+SKILL
+make_skill "dx-fine" "A short description." 10
+out=$(run_validator); rc=$?
+check "missing description exits non-zero" "1" "$rc"
+check "missing description says so" "1" \
+  "$(echo "$out" | grep -c 'missing or empty description: field')"
+check "a broken skill does not stop the scan" "1" \
+  "$(echo "$out" | grep -c 'Skills scanned: 2')"
+
+reset_fixture
+write_skill "dx-noname" <<'SKILL'
+---
+description: A short description.
+---
+
+body
+SKILL
+out=$(run_validator); rc=$?
+check "missing name exits non-zero" "1" "$rc"
+check "missing name says so" "1" \
+  "$(echo "$out" | grep -c "name: '' does not match directory 'dx-noname'")"
+
+# --- 7. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))
