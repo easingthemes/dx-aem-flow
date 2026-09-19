@@ -21,6 +21,8 @@
 
 **Impact:** Low — screenshot saves to disk, `additionalContext` tells the skill where the file is. Only downside is ~500K wasted tokens per screenshot.
 
+**RESOLVED 2026-09-19 — fixed upstream, verified by live probe.** On Claude Code **v2.1.277** a `PostToolUse` hook returning `updatedMCPToolOutput` **does** replace an MCP **image content block**: a probe MCP server returned a 1x1 PNG plus a text marker, the hook returned a replacement string, and the headless run received *only* the replacement text — no image, and the original text block dropped too. `updatedMCPToolOutput` alone is enough (tested with and without `updatedToolOutput`). The ~500 K-token-per-screenshot waste is gone. Note the matcher this item was written against (`mcp__figma__get_screenshot`) no longer exists — screenshots moved to Playwright / chrome-devtools MCP in v3.0.0 — so any *new* screenshot hook can rely on replacement working. GH #16 closed. See [2026-09-19-upstream-dependency-check.md](../research/2026-09-19-upstream-dependency-check.md).
+
 **Upstream check (2026-07-01):** PARTIAL — now actionable. Claude Code v2.1.121 (2026-04-28) generalized `PostToolUse.updatedToolOutput` from MCP-only to **all** tools, but the [hooks docs](https://code.claude.com/docs/en/hooks) do not confirm it replaces an **image content block** (base64) with text — so this specific waste is NOT confirmed fixed. Next step: live re-test against the **current** screenshot hook path (Figma MCP was replaced by Playwright/Chrome-DevTools MCP in the v3.0.0 migration — the old `mcp__figma__get_screenshot` matcher no longer applies). Tracked as GH #16. See [2026-07-01-upstream-dependency-check.md](../research/2026-07-01-upstream-dependency-check.md).
 
 ## DoR Comment Deduplication
