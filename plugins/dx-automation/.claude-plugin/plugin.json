@@ -1,6 +1,6 @@
 {
   "name": "dx-automation",
-  "description": "Autonomous AI agents for ADO workflows — Definition of Ready checker, Definition of Done checker, DoD fixer, PR reviewer, PR answerer. Runs as ADO pipelines triggered by AWS Lambda webhooks.",
+  "description": "Autonomous AI agents for ADO workflows — Definition of Ready checker, Definition of Done checker, DoD fixer, PR reviewer, PR answerer. Runs as ADO pipelines triggered by Azure-native Service Hooks (no AWS required); an AWS Lambda router is optional for central dedupe and rate limiting.",
   "version": "3.6.9",
   "author": {
     "name": "Dragan Filipovic"
