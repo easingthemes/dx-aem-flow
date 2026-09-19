@@ -24,16 +24,32 @@ lambda_shared_libs() {
   python3 -c "import json; libs=json.load(open('$INFRA'))['lambdas']['$1'].get('sharedLibs',[]); print(' '.join(libs))" 2>/dev/null || true
 }
 
+# deploy <function-name> <entry-files...> -- <shared-libs...>
+#
+# Entry files are zipped flat at the root; shared libs keep their lib/ prefix so the
+# deployed layout matches the repo layout and the routers' `./lib/x.js` imports resolve
+# in both. (They used to be copied flat and imported as `./x.js`, which meant the
+# handlers could not be imported or unit-tested outside a deploy.)
 deploy() {
   local name="$1"
   shift
-  local files=("$@")
+  local files=()
+  local libs=()
+  local in_libs=0
+  for arg in "$@"; do
+    if [[ "$arg" == "--" ]]; then in_libs=1; continue; fi
+    if [[ $in_libs -eq 1 ]]; then libs+=("lib/$arg"); else files+=("$arg"); fi
+  done
   local region
   region=$(lambda_region)
   local zip="${SCRIPT_DIR}/${name}.zip"
 
   echo "Packaging ${name}..."
+  rm -f "$zip"
   zip -j "$zip" "${files[@]}"
+  if [[ ${#libs[@]} -gt 0 ]]; then
+    ( cd "$SCRIPT_DIR" && zip "$zip" "${libs[@]}" )
+  fi
 
   aws_lambda_deploy "$name" "$zip"
 
@@ -55,24 +71,8 @@ deploy_agent() {
   files=$(lambda_files "$agent")
   shared_libs=$(lambda_shared_libs "$agent")
 
-  # Copy shared lib files from lambda/lib/ into lambda/ for flat zip
-  local copied_libs=()
-  if [[ -n "$shared_libs" ]]; then
-    for lib in $shared_libs; do
-      cp "$SCRIPT_DIR/lib/$lib" "$SCRIPT_DIR/$lib"
-      copied_libs+=("$lib")
-    done
-    # shellcheck disable=SC2086
-    files="$files $shared_libs"
-  fi
-
   # shellcheck disable=SC2086
-  deploy "$name" $files
-
-  # Clean up copied lib files
-  for lib in "${copied_libs[@]}"; do
-    rm -f "$SCRIPT_DIR/$lib"
-  done
+  deploy "$name" $files -- $shared_libs
 }
 
 TARGET="${1:-all}"

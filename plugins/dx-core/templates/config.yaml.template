@@ -11,7 +11,10 @@ project:
   role: "{{PROJECT_ROLE}}"              # frontend | backend | fullstack | config
 
 scm:
-  provider: ado                           # ado | github
+  provider: ado                           # ado — only Azure DevOps repos are implemented.
+                                          # GitHub/Bitbucket repos are NOT supported: every
+                                          # repo/PR skill calls the ADO MCP server. For Jira
+                                          # work items with ADO repos, set tracker.provider: jira.
   org: "{{SCM_ORG}}"                      # e.g., https://myorg.visualstudio.com/
   project: "{{SCM_PROJECT}}"              # ADO project name
   repo-id: "{{SCM_REPO_ID}}"             # Auto-discovered, or set manually

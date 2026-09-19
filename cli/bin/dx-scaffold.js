@@ -153,6 +153,15 @@ if (projectEnv.isAem) console.log(`  AEM detected: yes`);
 if (gitEnv.siblings.length > 0) console.log(`  Sibling repos: ${gitEnv.siblings.join(', ')}`);
 console.log('');
 
+// Only Azure DevOps repos are supported. The scaffold still runs — planning, build,
+// review and AEM skills are SCM-agnostic — but the ticket/repo/PR skills call the ADO
+// MCP server and have no other code path.
+if (gitEnv.scmProvider !== 'ado') {
+  console.log(`  WARNING: SCM provider "${gitEnv.scmProvider}" is not supported.`);
+  console.log('           dx ticket, repo and PR skills require Azure DevOps.');
+  console.log('           Scaffolding continues; fill in scm.* in .ai/config.yaml manually.\n');
+}
+
 // Auto-enable AEM if detected
 if (projectEnv.isAem && !flags.aem) {
   console.log('  AEM project detected — auto-enabling --aem');

@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import { checkAndRecordEvent } from "./dedupe.js";
-import { sendToDLQ } from "./dlq.js";
-import { checkRateLimit } from "./rate-limiter.js";
+import { checkAndRecordEvent } from "./lib/dedupe.js";
+import { sendToDLQ } from "./lib/dlq.js";
+import { checkRateLimit } from "./lib/rate-limiter.js";
 
 /**
  * Work Item Router — single Lambda handling all workitem.updated webhook events.

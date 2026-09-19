@@ -20,7 +20,7 @@ KAI is a structured development workflow built as a plugin system for enterprise
 - **AEM full-flow** — purpose-built AEM tooling covering Figma → component → dialog inspection → JCR content → editorial QA → browser automation → demo capture. Includes the [AEM MCP server](https://www.npmjs.com/package/aem-mcp-server) for live dialog and JCR access. The complete AEM development lifecycle, config-driven for your project.
 - **Config-driven, not prompt-driven** — your build commands, branch names, and conventions live in one config file. Every skill reads it. No hardcoded values, no repeated instructions.
 - **Persistent memory between steps** — each skill writes structured output to local files. The next skill picks it up automatically. Sessions can end and resume without losing context.
-- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by webhooks. Tag a ticket, get a verified bugfix with a PR.
+- **Autonomous mode** — the same skills that run locally also run unattended as ADO pipeline agents, triggered by Azure-native Service Hooks (no AWS required). Comment `@kai-bugfix` on a ticket, get a verified bugfix with a PR.
 
 ## Install
 
@@ -74,7 +74,9 @@ Requires dx plugin.
 
 ### [dx-automation](plugins/dx-automation/) — Autonomous Agents
 
-Eleven autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) running 24/7 as ADO pipelines. Most are triggered by AWS Lambda webhooks; SimpleAgent is fully Azure-native (ADO Service Hook, no Lambda).
+Eleven autonomous AI agents (DoR checker, DoD checker, DoD fixer, PR reviewer, PR answerer, BugFix agent, QA agent, DevAgent, DOCAgent, Estimation, SimpleAgent) running 24/7 as ADO pipelines.
+
+Triggers are **Azure-native by default — no AWS account needed.** An ADO Service Hook posts to an Incoming WebHook service connection the pipeline listens on. The AWS Lambda router is **optional**, for teams that want central dedupe, per-agent rate limits and token-budget gating in one place.
 
 Requires dx plugin.
 
