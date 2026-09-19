@@ -246,3 +246,90 @@ There are **two layers** to this: (1) a **router** that dispatches the right rep
 - `bash scripts/validate-structure.sh` → PASS.
 **Approach:** `ado-cli-dor.yml` is the closest template — stateless, work-item-comment, no recovery state. Each agent needs its own Service Hook + Incoming WebHook service connection, so document the per-agent cost honestly against the hub router's one-hook-for-all alternative. PR Answerer should be decided first: porting the gates into the pipeline may be more work than retiring the Lambda route in favour of the cron sweep that already exists.
 
+
+---
+
+## Idempotency guard on the direct webhook listeners
+
+**Added:** 2026-09-19
+**Problem:** The Azure-native path is the *default* trigger path, but it carries none of
+the reliability layer the Lambda path has (`plugins/dx-automation/data/lambda/lib/`:
+`dedupe.js`, `rate-limiter.js`, `dlq.js`, `retry.js`). `ado-cli-simple.yml` declares a
+`commentId` parameter with the comment *"for dedup/tracing"* (line 45) and then **never
+reads it** — `grep -n 'commentId\|COMMENT_ID' ado-cli-simple.yml` returns only the
+declaration and a doc line. `grep -c 'rev\|revision'` over the three direct listeners
+(`ado-cli-simple.yml`, `ado-cli-bug-fix.yml`, `ado-cli-dor.yml`) returns **0, 0, 0**;
+only `ado-cli-hub.yml` has revision handling. So a duplicated ADO Service Hook delivery,
+a retried delivery, or a human pasting the trigger token twice starts two concurrent runs
+against the same work item — both writing the same `bugfix/<id>-*` branch, the same
+`resume-state.json`, and (for SimpleAgent) the same JCR nodes. Under a human this is
+noise; unattended it is the primary correctness failure.
+**Scope:** `plugins/dx-automation/data/pipelines/cli/ado-cli-{simple,bug-fix,dor}.yml`
+(consume `commentId` / webhook `resource.revision`, add a pipeline-level
+`lockBehavior: sequential` or an equivalent run-key guard);
+`plugins/dx-automation/skills/auto-webhooks/SKILL.md` (document the guard as part of hook
+setup). Note #211 lists "revision-based dedup" in the scope for the *six new* listeners —
+this item covers the *four that already ship*, which #211 does not touch.
+**Done-when:** Firing the same work-item comment event twice within one minute produces
+exactly one run that does work; the second exits early with a logged reason. Verify with
+a replayed webhook payload (same `resource.id` + `resource.revision`) against a test
+project, and with `grep -n 'commentId' ado-cli-simple.yml` showing a read, not only a
+declaration.
+**Approach:** Cheapest first: `lockBehavior: sequential` on a `workItemId`-keyed pipeline
+lock kills the concurrency half with one YAML key. The duplicate-delivery half needs a
+marker — a bot comment `[<agent>] run started for comment <id>` checked before Phase 0 is
+consistent with how `dx-simple` already posts ADO comments and needs no external store.
+
+---
+
+## Resumable recovery as a shared primitive
+
+**Added:** 2026-09-19
+**Problem:** `resume-state.json` + `save-state.sh` + `resume-check.sh` exist under
+`plugins/dx-core/skills/dx-simple/scripts/` and `plugins/dx-core/skills/dx-bug-all/scripts/`
+— two near-identical copies, two `__tests__` directories (#141, #150). The other writing
+agents (DoD fixer, QA, DevAgent, DOCAgent, Estimation, PR Answerer) have no resumability
+at all: a crash or a blocked gate loses the whole run, and the only recovery is a full
+re-run, which A) repeats the ADO comments and B) collides with the missing idempotency
+guard above. For a platform whose thesis is unattended orchestration, resume is a contract
+every agent inherits, not a feature two skills happen to have.
+**Scope:** Promote the state helpers to `plugins/dx-core/data/lib/` (alongside
+`dx-common.sh`, `gather-context.sh`); leave thin per-skill wrappers in
+`skills/dx-simple/scripts/` and `skills/dx-bug-all/scripts/` so their existing tests keep
+passing; adopt in `ado-cli-{dod-fix,qa,dev-agent,doc-agent}.yml` and the matching skills.
+Read-only agents (DoR, Estimation, PR Review) stay stateless by design — say so
+explicitly rather than leaving it implied.
+**Done-when:** `ls plugins/dx-core/data/lib/ | grep -c 'save-state\|resume-check'` → 2,
+the two skills' `__tests__` suites still pass, and each writing agent's pipeline either
+calls the shared Phase 0 resume check or carries a one-line comment stating why it is
+stateless.
+**Approach:** The branch-as-durable-state design from #141 already generalizes — the only
+per-agent parts are the branch naming convention and the phase list. Make both arguments
+to `resume-check.sh` instead of constants.
+
+---
+
+## Confidence gates and blast-radius caps for every writing agent
+
+**Added:** 2026-09-19
+**Problem:** `grep -rl 'confidence.json' plugins/` returns **one** skill (`dx-simple`), and
+so does a grep for the `G1`–`G9` gate labels. SimpleAgent is the only agent with declared
+hard caps (≤5 files / ≤50 lines / ≤10 JCR writes) and the only one that writes a
+per-run score. DevAgent, BugFix and the DoD fixer write code and ADO content with no
+declared ceiling and no machine-readable verdict. Two consequences: (1) blast radius is
+undefined for the agents with the *largest* blast radius, and (2) **#144
+(agentic-metrics roll-up) cannot work** — its stated input is
+`.ai/specs/*/confidence.json`, which only one agent ever produces, so any roll-up built
+today describes SimpleAgent and nothing else.
+**Scope:** New shared rule `plugins/dx-core/rules/confidence-gates.md` (parameterized
+caps + the gate taxonomy), referenced from `.ai/rules/` via the existing three-layer
+override; `dx-simple/SKILL.md` re-pointed at it rather than carrying its own copy;
+per-agent caps declared in `.ai/config.yaml` (`<agent>.caps.*`); `confidence.json` emitted
+by `dx-bug-all`, `dx-agent-dev` and the DoD fixer.
+**Done-when:** `grep -rl 'confidence.json' plugins/ | wc -l` ≥ 4, every writing agent has
+a caps block in the config reference (`docs/reference/config-reference.md`), and a run of
+any writing agent leaves a `confidence.json` in its spec dir. Then #144's parser has more
+than one producer to read.
+**Approach:** Lift, don't rewrite — `dx-simple`'s G1–G9 taxonomy is already the design.
+The work is extracting it to a rule file, making the numeric caps config lookups, and
+having three more skills write the same JSON shape.

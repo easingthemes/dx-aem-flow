@@ -119,3 +119,40 @@ Create `scripts/generate-coordination-graph.sh`:
 
 - **Metadata drift**: Someone adds a `Skill()` call but forgets `delegates-to-skills`. Mitigation: validation script greps for `Skill(/` patterns in body and warns if skill not declared.
 - **YAML parsing in bash**: Flat format (`delegates-to-skills:` not nested) avoids this entirely.
+
+---
+
+## Spec-artifact contract + conformance validator
+
+**Added:** 2026-09-19
+**Problem:** The spec-directory convention ("skills find each other's output by
+convention — no data passing needed", CLAUDE.md § Spec Directory Convention) is an
+*implicit* interface with no schema and no validator. It holds because a human notices
+when `research.md` is empty or `explain.md` belongs to another ticket. Unattended, nothing
+does. The sharpest case: `plugins/dx-core/data/lib/plan-metadata.sh` parses step state out
+of `implement.md` with text matching, so **the Markdown heading format of `implement.md`
+is a load-bearing interface between `dx-plan` and every coordinator** — and it is
+unversioned, unvalidated and untested against a malformed input. A skill that changes its
+heading style makes `plan-metadata.sh` report `Steps: 0 total, 0 pending`, which a
+coordinator reads as "nothing left to do" and reports as success. A silent wrong-success is
+strictly worse than a crash, and none of the five `validate-*.sh` can see it: they check
+frontmatter, manifests and counts, never artifact shape.
+**Scope:** `docs/reference/spec-artifacts.md` (new — the per-file contract: required
+headings, required front sections, ticket-id stamp); `plugins/dx-core/data/lib/` (new
+`validate-spec-artifact.sh` + a `*.test.sh` suite with malformed fixtures, per the
+hermetic rules in CLAUDE.md § Testing Changes); consumers that must call it before reading
+an upstream artifact — `plan-metadata.sh`, `dx-step-all`, `dx-agent-all`, `dx-bug-all`,
+and the `ado-cli-*.yml` pipelines that chain phases. `docs/reference/skill-catalog.md`
+already lists each skill's Output column — that column becomes the contract's index.
+**Done-when:** `bash plugins/dx-core/data/lib/validate-spec-artifact.sh <spec-dir> implement.md`
+exits non-zero on (a) a missing file, (b) a file whose ticket-id stamp does not match the
+directory, and (c) an `implement.md` with zero parseable steps; the accompanying
+`*.test.sh` covers all three with fixtures and is picked up by CI discovery; and
+`plan-metadata.sh` returns non-zero instead of `Steps: 0 total` when the parse finds
+nothing.
+**Approach:** Do not introduce YAML front-matter into the spec artifacts — that breaks
+every existing `.ai/specs/` directory. Add a single stamped first line (ticket id +
+artifact kind + format version) and validate that plus the structural minimum each
+consumer actually depends on. Start with `implement.md`, because it is the only artifact
+currently parsed by a script rather than read by a model; extend to `explain.md` and
+`research.md` only if a real consumer parses them.
