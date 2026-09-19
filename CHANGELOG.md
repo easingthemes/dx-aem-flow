@@ -1,3 +1,10 @@
+# [3.7.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.10...v3.7.0) (2026-09-19)
+
+
+### Features
+
+* **validate:** enforce the two documented skill limits in CI ([#206](https://github.com/easingthemes/dx-aem-flow/issues/206)) ([5b745c5](https://github.com/easingthemes/dx-aem-flow/commit/5b745c5b5671dd7def555cc2711d34c40b2507c0))
+
 ## [3.6.10](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.9...v3.6.10) (2026-09-19)
 
 
