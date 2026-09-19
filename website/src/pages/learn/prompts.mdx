@@ -165,7 +165,7 @@ applyTo: "**/*.js"
   badge="AGENTS.md"
   badgeColor="secondary"
   title="AGENTS.md"
-  subtitle="Agent inventory at repo root -- Copilot CLI reads it for context about available agents."
+  subtitle="Agent inventory at repo root -- read by Copilot CLI, and by Claude Code since v2.1.277."
   bg="primary"
 />
 <Section>
@@ -174,6 +174,12 @@ applyTo: "**/*.js"
     descriptions, and capabilities. Copilot CLI uses this to understand which agents are
     available for <code>@AgentName</code> invocation. Claude Code agents are defined in
     plugin <code>agents/</code> directories instead.
+    <br /><br />
+    Since Claude Code v2.1.277 the built-in <code>agents-md@builtin</code> plugin lets Claude Code
+    read <code>AGENTS.md</code> as an instruction file as well. The default mode only falls back to
+    it when a project has no <code>CLAUDE.md</code>; choose
+    <code>claude-md-and-agents-md</code> under <code>/config</code> -&gt; Project instructions to load
+    both. Not available on Bedrock, Vertex or Foundry yet.
   </ContentCard>
 </Section>
 

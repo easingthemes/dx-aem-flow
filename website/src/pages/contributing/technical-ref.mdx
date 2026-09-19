@@ -40,7 +40,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.claude/rules/&#42;.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/instructions/&#42;&#42;/&#42;.instructions.md</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes (recursive since v1.111)</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>CLAUDE.md</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">Yes (via setting)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>AGENTS.md</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>AGENTS.md</code></td><td class="py-2 px-4">Yes (v2.1.277+, via <code>agents-md@builtin</code> — default mode reads it only when there is no <code>CLAUDE.md</code>)</td><td class="py-2 px-4">Yes</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.mcp.json</code></td><td class="py-2 px-4">Yes</td><td class="py-2 px-4">No</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.vscode/mcp.json</code></td><td class="py-2 px-4">No</td><td class="py-2 px-4">Yes</td></tr>
       </tbody>
@@ -48,7 +48,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="info" title="Cross-Platform Rule">
-    VS Code reads Claude's formats. Claude does NOT read VS Code's formats. Shared agents go in <code>.claude/agents/</code>. Shared skills go in <code>.claude/skills/</code>.
+    VS Code reads Claude's formats. Claude does NOT read VS Code's formats -- with one exception since Claude Code v2.1.277: <code>AGENTS.md</code>, through the built-in <code>agents-md@builtin</code> plugin. Shared agents go in <code>.claude/agents/</code>. Shared skills go in <code>.claude/skills/</code>.
   </HighlightBox>
 </Section>
 

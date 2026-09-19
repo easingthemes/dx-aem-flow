@@ -361,3 +361,112 @@ manifest that uses default directories **breaks Claude Code**. `evals` sits unde
 `experimental`, so it is a different code path — but test it against a real
 `claude plugin validate --json` run (#180) before committing it to all four
 manifests.
+
+---
+
+## Third pass (v2.1.274–v2.1.277, intake 2026-09-19)
+
+The two passes above stop at v2.1.273. Current is **v2.1.277**, which shipped
+**AGENTS.md support** — the first time Claude Code reads an instruction file we
+already generate for other platforms. Four surfaces below; each verified absent
+from this repo by grep across `docs/`, `plugins/`, `cli/`, `scripts/` and
+`CLAUDE.md` before writing the row.
+
+## AGENTS.md is now a Claude Code instruction file — scaffolded projects are affected
+
+**Added:** 2026-09-19
+**Problem:** Claude Code v2.1.277 reads `AGENTS.md` through the built-in
+`agents-md@builtin` plugin ([`mods/agents-md`](https://github.com/anthropics/claude-code/tree/main/mods/agents-md)).
+Its default mode, `claude-md-or-agents-md`, loads `AGENTS.md` **in any project
+that has no `CLAUDE.md`**.
+
+`cli/lib/scaffold.js` writes `AGENTS.md` unconditionally (`installAgentsMd()`,
+line ~590) and writes **no `CLAUDE.md`** — `grep -n "CLAUDE.md" cli/lib/scaffold.js`
+returns nothing, and `/dx-init` does not generate one either. So every project
+scaffolded by us hits the default fallback, and the file that becomes Claude
+Code's project instructions is an **agent inventory table** whose header reads
+"Invoke with `@AgentName` in Copilot CLI, VS Code Chat, or as subagents in
+Claude Code". That content was written as a discovery list for Copilot, not as
+project instructions, and `@AgentName` is not how Claude Code invokes a subagent.
+
+This repo itself is unaffected (it has a root `CLAUDE.md`, so the default mode
+ignores our `AGENTS.md`) — the exposure is entirely in consumer projects.
+
+Two further constraints: the plugin is **not available on Bedrock, Vertex or
+Foundry**, which is where `dx-automation` pipeline runs may execute, so anything
+that depends on the fallback is silently absent there; and nested `AGENTS.md`
+files attach only on text `Read` calls and do not refresh after a mid-session
+edit, unlike native `CLAUDE.md` handling.
+**Scope:** `cli/lib/scaffold.js` (`installAgentsMd`, and whether a project
+`CLAUDE.md` should be generated at all); `plugins/dx-core/skills/dx-init/SKILL.md`;
+`CLAUDE.md` § "Cross-Platform Agent Support" (documented 2026-09-19);
+`website/src/pages/setup/scaffold.mdx` and `website/src/pages/learn/prompts.mdx`.
+**Done-when:** a scaffolded project either (a) gets a generated `CLAUDE.md`, so
+the fallback never fires, or (b) gets an `AGENTS.md` whose opening section is
+valid project instructions rather than only an `@AgentName` table — and
+`cli/README.md` states which of the two is the contract. Check with
+`mkdir -p /tmp/agents-md-check && node cli/bin/dx-scaffold.js /tmp/agents-md-check --all && head -20 /tmp/agents-md-check/AGENTS.md` (verified 2026-09-19: no `CLAUDE.md` written, `AGENTS.md` opens with the `@AgentName` table).
+**Approach:** (b) is cheaper and keeps one file per project: prepend a short
+"Project instructions" section (build command, base branch, spec directory
+convention — all already known to the scaffold from `.ai/config.yaml`) above the
+agent tables. (a) duplicates content into a second file that then has to be kept
+in sync, which is the problem this repo already tracks for its own two files.
+Do **not** tell consumers to switch the mode to `claude-md-and-agents-md` as the
+fix — that is a per-user setting, not something a scaffold can guarantee.
+
+## `claude plugin test` — plugin test harness unused
+
+**Added:** 2026-09-19
+**Problem:** `mods/agents-md` ships a test suite run with `claude plugin test <dir>`,
+which is how Anthropic tests a plugin's hooks. Our four plugins have no hook
+tests at all: CI discovers `run-tests.sh`, `*.test.sh` and `*.test.js` under
+`plugins/`, none of which exercises a hook end-to-end — `hooks.json` handlers are
+verified only by `validate-structure.sh` reading the manifest, which is exactly
+the "a structural check cannot tell you a script works" trap `CLAUDE.md` already
+warns about. `grep -rn "plugin test" docs/ plugins/ scripts/ .github/` → 0.
+**Scope:** `.github/workflows/validate.yml`; `plugins/*/hooks/`;
+`CLAUDE.md` § "Testing Changes" (the four-level table).
+**Done-when:** `claude plugin test plugins/dx-core` runs a real case, **or**
+`CLAUDE.md` records why the command does not fit (e.g. it needs a billed agent
+run like `claude plugin eval`, which is why evals are not wired to CI either).
+**Approach:** Verify the cost model first — if it is a local harness and not a
+billed agent run, it belongs in CI next to the discovered suites and closes the
+biggest hole in the hook layer. If it bills, it goes with the evals: manual
+dispatch or release tags only.
+
+## `CLAUDE_CODE_MCP_STARTUP_WAIT_MS` for pipeline runs
+
+**Added:** 2026-09-19
+**Problem:** v2.1.274 added `CLAUDE_CODE_MCP_STARTUP_WAIT_MS`, bounding how long
+the first non-interactive turn waits for MCP servers to come up. `dx-automation`
+runs headless with up to six declared servers (ADO, Atlassian, Figma, axe, AEM,
+Playwright); today an MCP server that is slow or wedged is paid for on the first
+turn of every pipeline run with no ceiling. The same release fixed Streamable
+HTTP tool calls timing out at ~5 minutes despite a longer per-server timeout,
+and v2.1.277 fixed `claude -p` / SDK sessions hanging with no result after an
+internal error — both failure modes our pipelines would see as a job timeout.
+`grep -rn "CLAUDE_CODE_MCP_STARTUP_WAIT_MS" .` → 0.
+**Scope:** the `dx-automation` pipeline launcher — same file touched by #119,
+#178 and #200.
+**Done-when:** `grep -rn "CLAUDE_CODE_MCP_STARTUP_WAIT_MS" plugins/dx-automation/`
+returns the exported value, or #200 records a decision not to set it.
+**Approach:** Fold into #200. That row already collects five headless runtime
+flags for one launcher change — this is the sixth, not a separate pass.
+
+## `/plugin install --marketplace` and claude.ai plugin sync in the install docs
+
+**Added:** 2026-09-19
+**Problem:** v2.1.275 added `claude plugin install <plugin> --marketplace <source>`,
+which offers to add the marketplace if it is missing — the single-command install
+our setup docs have wanted since #16 (the marketplace-qualifier bug, closed
+upstream 2026-05-20). The same release added syncing of skills and plugins
+enabled on a claude.ai account into terminal sessions, which changes what a
+consumer sees as "installed" and is not mentioned anywhere in our setup pages.
+`grep -rn -- "--marketplace" docs/ website/ plugins/` → 0.
+**Scope:** `README.md` and `CLAUDE.md` § "Testing Changes" (the two-step
+`marketplace add` + `install` dance); the setup pages on the docs site.
+**Done-when:** the install instructions show the one-command form and
+`grep -rn -- "--marketplace" README.md website/src/pages/setup/` is non-zero.
+**Approach:** Docs only, and the smallest row in this pass. Confirm the flag's
+exact behaviour on a local marketplace path (not just a GitHub source) before
+replacing the documented two-step — our own testing loop uses a local path.

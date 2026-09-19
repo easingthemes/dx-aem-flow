@@ -76,7 +76,7 @@ Current coverage is one suite (`dx-core/evals/plan-validate-finds-gap`) — see 
 
 `cli/bin/dx-scaffold.js` is a zero-dependency Node.js utility that replicates `/dx-init` + `/aem-init` output for any AI coding agent. It reads templates from `plugins/` at runtime — no bundling needed. When adding new templates or data files, the scaffold picks them up automatically (it iterates directories). Only changes to the scaffolding logic itself (new file categories, new placeholders) require updating `cli/lib/scaffold.js`.
 
-**Always-generated files:** `.github/agents/` (agent definitions) and `AGENTS.md` (agent discovery) are always generated regardless of flags — they're consumed by Copilot CLI, VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent. The `--copilot` flag only controls extra Copilot-specific files (`copilot-instructions.md`, `.github/README.md`).
+**Always-generated files:** `.github/agents/` (agent definitions) and `AGENTS.md` (agent discovery) are always generated regardless of flags — they're consumed by Copilot CLI, VS Code Chat, Codex CLI, Windsurf, and the Copilot coding agent — and, since Claude Code v2.1.277, by Claude Code itself in projects scaffolded **without** `CLAUDE.md` (see § Cross-Platform Agent Support). The `--copilot` flag only controls extra Copilot-specific files (`copilot-instructions.md`, `.github/README.md`).
 
 ## Architecture
 
@@ -87,7 +87,7 @@ This repo supports multiple AI coding agents:
 | File | Purpose | Platforms |
 |------|---------|-----------|
 | `CLAUDE.md` | Full contributor guide (primary) | Claude Code |
-| `AGENTS.md` | Cross-tool instructions (subset of CLAUDE.md) | Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI |
+| `AGENTS.md` | Cross-tool instructions (subset of CLAUDE.md) | Codex, Copilot, Cursor, Windsurf, Zed, Jules, Gemini CLI — **and Claude Code since v2.1.277**, see below |
 | `GEMINI.md` | Gemini CLI context (references AGENTS.md) | Gemini CLI |
 | `gemini-extension.json` | Gemini extension manifest | Gemini CLI |
 | `.codex/INSTALL.md` | Codex skill symlink instructions | Codex |
@@ -95,6 +95,26 @@ This repo supports multiple AI coding agents:
 | `.cursor-plugin/` | Cursor manifests (with explicit paths) | Cursor |
 
 When updating architecture sections in CLAUDE.md, check if AGENTS.md needs a corresponding update.
+
+**Claude Code reads AGENTS.md too (v2.1.277+).** Support ships as a built-in plugin, `agents-md@builtin` ([`mods/agents-md`](https://github.com/anthropics/claude-code/tree/main/mods/agents-md)), not as engine behaviour. Four modes via the `instructionFiles` option:
+
+| Mode | Behaviour |
+|------|-----------|
+| `claude-md` | Only `CLAUDE.md` (pre-2.1.277 behaviour) |
+| `claude-md-or-agents-md` | **Default** — `AGENTS.md` is read only in projects that have no `CLAUDE.md` |
+| `claude-md-and-agents-md` | Both load together across the directory tree |
+| `managed-only` | Only org-managed instruction files; project files dropped |
+
+Set it in `/config` → Project instructions, or in `~/.claude/settings.json`:
+
+```json
+{ "pluginConfigs": { "agents-md@builtin": {
+    "options": { "instructionFiles": "claude-md-and-agents-md" } } } }
+```
+
+**What this means here:** this repo has a root `CLAUDE.md`, so under the default mode our `AGENTS.md` is still invisible to Claude Code — CLAUDE.md stays the primary file and AGENTS.md stays the cross-tool subset. Nothing changes unless a contributor opts into `claude-md-and-agents-md`, and if they do, the two files are both in context at once — one more reason to keep AGENTS.md a subset, never a copy.
+
+Caveats vs native `CLAUDE.md` handling: nested `AGENTS.md` files attach only on text `Read` calls, they do not refresh after mid-session edits, external `@` imports need prior approval carried over from `CLAUDE.md` imports, and the whole feature is **not yet available on Bedrock, Vertex or Foundry** — which is where `dx-automation` pipelines may run.
 
 ### Four-Plugin Design
 
