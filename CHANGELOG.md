@@ -1,3 +1,10 @@
+## [3.7.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.0...v3.7.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **dx-plan:** reframe plan-thinking.md away from "reasoning trace" wording ([#211](https://github.com/easingthemes/dx-aem-flow/issues/211)) ([594249a](https://github.com/easingthemes/dx-aem-flow/commit/594249ace1f8ffcaf20cca3964cd6c69692aaed9))
+
 # [3.7.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.6.10...v3.7.0) (2026-09-19)
 
 
