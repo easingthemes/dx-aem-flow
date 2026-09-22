@@ -34,7 +34,7 @@ Per-phase / per-step progress lines during the run are allowed in both paths.
 Two outputs are always required regardless of path:
 
 1. **`$SPEC_DIR/implement.md`** — the canonical plan, format defined in `.ai/templates/spec/implement.md.template`. This is what the executor reads.
-2. **`$SPEC_DIR/plan-thinking.md`** — your reasoning trace: alternatives considered, dependencies analyzed, risks evaluated. Write this BEFORE writing `implement.md`. Maximum 1000 words.
+2. **`$SPEC_DIR/plan-thinking.md`** — a design-rationale summary: the alternative approaches evaluated, dependencies and ordering constraints identified, and risks assessed for this plan. This is a finished analysis artifact, not a transcript of internal deliberation. Write it BEFORE writing `implement.md`. Maximum 1000 words.
 
 ## 1. Locate the Spec Directory
 
@@ -328,7 +328,7 @@ After all phases complete and only when running standalone, emit:
 
 ### Plan:
 - `implement.md` — <count> steps, <count> files referenced
-- `plan-thinking.md` — reasoning trace written
+- `plan-thinking.md` — design-rationale summary written
 
 ### Key Decisions:
 <if Key Decisions section exists: list each decision title in one line>
