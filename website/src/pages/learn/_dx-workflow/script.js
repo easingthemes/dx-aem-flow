@@ -245,8 +245,8 @@
     const titleH = 44;
 
     const groups = [
-      { label: 'FORKS (context: fork)', lines: ['dx-req · dx-plan · dx-plan-validate · dx-plan-resolve', 'dx-step-all · dx-step-build · dx-step-verify'] },
-      { label: 'STAYS INLINE', lines: ['dx-step, dx-step-fix — loop inside dx-step-all’s own fork', 'dx-pr, dx-req-dod, dx-doc-gen — light enough to share the caller’s context'] }
+      { label: 'FORKS (context: fork)', lines: ['dx-req · dx-plan · dx-plan-validate · dx-plan-resolve', 'dx-step-all · dx-step-build · dx-step-verify', 'dx-step · dx-step-fix — one nested fork per step, inside dx-step-all’s fork'] },
+      { label: 'STAYS INLINE', lines: ['dx-pr, dx-req-dod, dx-doc-gen — light enough to share the caller’s context'] }
     ];
     const groupH = groups.map(g => 28 + g.lines.length * 15 + 6);
     const groupsH = groupH.reduce((a, b) => a + b, 0);
@@ -451,7 +451,7 @@
     gap();
     let stepBoxMidY;
     {
-      const bullets = ['dev-all-progress.md tracks status', 'stops after 2 consecutive fix failures', '⑂ forked — loops /dx-step inline inside its own fork'];
+      const bullets = ['dev-all-progress.md tracks status', 'stops after 2 consecutive fix failures', '⑂ forked — each /dx-step runs in its own nested fork'];
       const h = boxHeight(true, bullets.length);
       push(tag('step-box', box(y, h, 'step', '/dx-step-all — Execute steps', 'implement → test → review → commit, per step', bullets)), h);
       stepBoxMidY = y - h / 2;
