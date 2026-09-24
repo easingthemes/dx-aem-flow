@@ -532,9 +532,9 @@ Invoke `Skill(/dx-step-fix)` with healing context:
 /dx-step-fix .ai/specs/<id>-<slug> --heal --failure-type review-failed
 ```
 
-Check the step-fix return:
-- **`unrecoverable`** → print: `Phase 4.5-heal: Unrecoverable after healing. Human intervention needed.` Skip Phase 5a. Continue to Final Summary.
-- **`healed`** → continue to Step 2.
+dx-step-fix runs forked. Its `## Return` block is a checkpoint — read the `verdict` and carry on with this phase:
+- **`unrecoverable`** (`verdict: fail`) → print: `Phase 4.5-heal: Unrecoverable after healing. Human intervention needed.` Skip Phase 5a. Continue to Final Summary.
+- **`healed`** (`verdict: warn`) → continue to Step 2.
 
 **Step 2:** Execute the new corrective steps.
 

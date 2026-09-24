@@ -5,9 +5,12 @@ when_to_use: "Use when a step fails — compilation error, test failure, or revi
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 model: sonnet
+context: fork
 ---
 
 You diagnose and fix issues that blocked a plan step — compilation errors, test failures, or review feedback. You try a direct fix first. If that fails, you escalate to creating corrective steps in implement.md for the step machinery to execute.
+
+You run forked (`context: fork`): coordinators (`dx-step-all`, `dx-bug-fix`, `dx-agent-all`) read only your final `## Return` block, so every terminal node below ends with one (see **Return** at the end for the verdict mapping). You fix **one** step. Never invoke `Skill(dx-step-fix)`, `/dx-step` or `/dx-step-all` yourself. The coordinator owns the loop.
 
 Use ultrathink for this skill — debugging requires deep reasoning about root causes.
 
@@ -80,11 +83,11 @@ Before attempting any fix, classify the error using `shared/error-handling.md`:
 
 ### PERMANENT: Mark blocked, report
 
-Do not attempt fix. Return: "PERMANENT error: [category]. Manual intervention required: [suggestion]."
+Do not attempt fix. Print: "PERMANENT error: [category]. Manual intervention required: [suggestion]." Then end with `## Return` — `verdict: fail`, `next_action: stop — unrecoverable`.
 
 ### TRANSIENT: Suggest retry
 
-Suggest retry, not code fix. Return: "TRANSIENT error: [category]. Re-run the step."
+Suggest retry, not code fix. Print: "TRANSIENT error: [category]. Re-run the step." Then end with `## Return` — `verdict: fail`, `next_action: retry step <N>`.
 
 ### Gather error context
 
@@ -153,6 +156,8 @@ Update the step's status to `done` in implement.md and print the summary:
 **Fix applied:** <one-line description of what was changed>
 **Verification:** PASSED
 ```
+
+Then end with `## Return` — `verdict: pass`, `next_action: continue`.
 
 ### Fix failed — escalate to heal?
 
@@ -254,7 +259,7 @@ Corrective steps have been appended to implement.md. Print summary:
 **Approach:** <how this differs from the failed attempt>
 ```
 
-Return `healed` — corrective steps created in implement.md, ready for step to execute.
+Then end with `## Return` — `verdict: warn`, `next_action: run corrective steps <list>`. This is the `healed` result: corrective steps created in implement.md, ready for step to execute.
 
 ### Return: unrecoverable
 
@@ -269,7 +274,7 @@ The issue cannot be auto-fixed. Print summary:
 **Recommendation:** <what the human should investigate>
 ```
 
-Return `unrecoverable` — do NOT create corrective steps. The pipeline stops here.
+Then end with `## Return` — `verdict: fail`, `next_action: stop — unrecoverable`. Do NOT create corrective steps. The pipeline stops here.
 
 ## Success Criteria
 
@@ -344,3 +349,25 @@ The failure requires a missing Maven dependency that isn't in the project. Retur
 - **Different approach required** — corrective steps MUST try a different strategy than the failed fix
 - **Include test commands** — every corrective step must have a verification command
 - **Heal creates steps, not code** — the heal escalation only creates steps in implement.md; let step do the actual coding
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md`. Coordinators branch on `verdict` first, then on `next_action`:
+
+| Outcome | `verdict` | `next_action` |
+|---|---|---|
+| Fixed — re-verification passed, step `done` | `pass` | `continue` |
+| Healed — corrective steps appended | `warn` | `run corrective steps <list>` |
+| TRANSIENT — not a code problem | `fail` | `retry step <N>` |
+| PERMANENT / unrecoverable | `fail` | `stop — unrecoverable` |
+
+Example:
+
+```markdown
+## Return
+verdict: warn
+summary: Step 3 heal — direct fix failed on missing HeroProps export; created corrective step 3h.
+artifacts:
+  - .ai/specs/2490722-microsite/implement.md
+next_action: run corrective steps 3h
+```

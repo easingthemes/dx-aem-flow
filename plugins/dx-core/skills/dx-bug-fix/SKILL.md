@@ -187,7 +187,11 @@ Do not proceed to any further sections. The user must fix the other repo first.
 
 ### Execute step cycle (step - test - review - fix)
 
-For each pending step in implement.md, run the step-test-review-fix cycle:
+For each pending step in implement.md, run the step-test-review-fix cycle. Before the first step, mark the step loop active, so the workers drop their "run X next" hints addressed to a human (`shared/orchestration-check.md` § Step-loop marker). Remove it at "All steps done?" → yes and at "STOP: Human intervention needed":
+
+```bash
+mkdir -p .ai/run-context && echo "$SPEC_DIR" > .ai/run-context/step-loop.flag   # rm -f on exit
+```
 
 **Execute Step:**
 
@@ -195,7 +199,7 @@ For each pending step in implement.md, run the step-test-review-fix cycle:
 Invoke /dx-step for spec directory <SPEC_DIR>
 ```
 
-`/dx-step` handles implementation, testing, review, and commit in one pass. If step is marked `blocked` → go to fix sub-cycle.
+`/dx-step` handles implementation, testing, review, and commit in one pass. It runs forked and ends with a `## Return` block — a checkpoint, not the end of this skill. `verdict: fail` (step `blocked`) → go to fix sub-cycle; otherwise continue to "All steps done?".
 
 **Fix (if needed):**
 
@@ -222,7 +226,7 @@ STOP the entire workflow.
 
 ### All steps done?
 
-Check implement.md for remaining pending steps:
+Check implement.md for remaining pending steps (`bash .ai/lib/plan-metadata.sh $SPEC_DIR`), never from memory:
 
 - **no, next step** → go back to "Execute step cycle (step - test - review - fix)" with the next pending step
 - **yes** → go to "Run build"

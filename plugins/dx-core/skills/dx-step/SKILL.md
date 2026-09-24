@@ -4,10 +4,26 @@ description: Execute the next pending step — implement code, run tests, review
 when_to_use: "Use to execute the next pending plan step one at a time. Trigger on 'next step', 'do step', 'dx-step', 'implement step', 'execute next', or when working through implement.md one step at a time."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: sonnet
+context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*"]
 ---
 
 You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.
+
+You run forked (`context: fork`): coordinators (`dx-step-all`, `dx-bug-fix`) call you once per step and read only your final `## Return` block. Before printing anything user-facing, check whether a step loop is driving you (see `plugins/dx-core/shared/orchestration-check.md` § Step-loop marker):
+
+```bash
+IN_STEP_LOOP=0
+LOOP_FLAG=".ai/run-context/step-loop.flag"
+if [ -f "$LOOP_FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$LOOP_FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && IN_STEP_LOOP=1
+fi
+```
+
+You are the worker for **one** step. Never invoke `Skill(dx-step)` or `/dx-step-all` yourself. The loop belongs to the coordinator.
+
+`$IN_STEP_LOOP == 1` only suppresses the "run X next" hints addressed to a human — it never changes what the step does.
 
 ## Progress Tracking
 
@@ -131,8 +147,8 @@ If a step has `**Status:** blocked`, skip it and find the next pending step. Pri
    ```
    > Cross-repo: This plan covers <current repo> only. Switch to <other repo(s)> and run `/dx-req <id>` there.
    ```
-2. Print: "All steps are done. Run `/dx-pr` to create a pull request."
-3. STOP.
+2. If `$IN_STEP_LOOP == 0`, print: "All steps are done. Run `/dx-pr` to create a pull request."
+3. End with the `## Return` block (`verdict: pass`, `next_action: none — no pending steps`).
 
 ### Step status?
 
@@ -322,9 +338,11 @@ Print:
 **Review:** <verdict>
 **Commit:** `<short hash>` — `<commit message>`
 **Next:** Step <N+1> — <title> (or "All steps done — run `/dx-pr`")
-
-Run `/dx-step` for the next step, or `/dx-step-all` to continue autonomously.
 ```
+
+If `$IN_STEP_LOOP == 0`, add: "Run `/dx-step` for the next step, or `/dx-step-all` to continue autonomously." When a loop is driving you, omit it — the coordinator already continues.
+
+Then end with the `## Return` block (`verdict: pass`).
 
 ### Mark blocked + present summary
 
@@ -338,7 +356,7 @@ Include the phase, error category, message, and suggested action:
 { status: "blocked", phase: "compile|test|review|commit", error: "<message>" }
 ```
 
-Print the summary with the failure details. The coordinator (`dx-step-all`) uses this to decide whether to call `dx-step-fix`.
+Print the summary with the failure details, then end with the `## Return` block (`verdict: fail`, the phase and error in `summary`). The coordinator (`dx-step-all`) branches on that verdict to decide whether to call `dx-step-fix`.
 
 ## Success Criteria
 
@@ -438,7 +456,7 @@ Common excuses for cutting corners during step execution — and why they're wro
 
 ## Rules
 
-- **One step at a time** — execute exactly one step, then stop. Let the coordinator or user decide what's next.
+- **One step at a time** — execute exactly one step, then end with the `## Return` block. The coordinator or user decides what's next.
 - **Read before writing** — always read a file before editing it. Never blindly edit.
 - **Follow conventions** — read `.claude/rules/` and `.github/instructions/` (if it exists) for the relevant file types before writing code. For AEM modal/overlay work, also check `shared/aem-dom-rules.md`.
 - **Don't improvise** — implement exactly what the step says. If instructions are unclear, mark the step blocked with a note rather than guessing.
@@ -449,3 +467,31 @@ Common excuses for cutting corners during step execution — and why they're wro
 - **Commit is mandatory** — never mark a step done without committing changes.
 - **Follow git-rules.md** — read `shared/git-rules.md` before committing. Stage specifically, never `git add -A`.
 - **No empty commits** — if nothing to stage, report and mark blocked.
+
+## Return
+
+This skill runs in a forked context. It MUST end with a `## Return` block per `plugins/dx-core/shared/skill-return-contract.md` — in both the standalone and the step-loop case.
+
+- `verdict: pass` — step committed and marked `done` (or no pending steps remain)
+- `verdict: fail` — step marked `blocked`; `summary` names the phase (`compile|test|review|commit`) and the error
+
+Examples:
+
+```markdown
+## Return
+verdict: pass
+summary: Step 3 done — Add dialog fields; committed 4bf6fe5; 12 tests passed; review APPROVED.
+artifacts:
+  - .ai/specs/2490722-microsite/implement.md
+  - .ai/specs/2490722-microsite/dev-all-progress.md
+next_action: next pending step is 4 — Wire the model
+```
+
+```markdown
+## Return
+verdict: fail
+summary: Step 3 blocked in phase test — 2 failures in HeroModelTest (null title).
+artifacts:
+  - .ai/specs/2490722-microsite/implement.md
+next_action: run /dx-step-fix
+```

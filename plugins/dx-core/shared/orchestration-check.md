@@ -33,3 +33,26 @@ The `## Return` block is ALWAYS emitted, in both paths, as the LAST text in the 
 ## When the flag is missing
 
 If `.ai/run-context/orchestrating.flag` does not exist (or is stale > 2h), the skill is being run standalone. This is the normal case for direct user invocation like `/dx-req 2435084`.
+
+## Step-loop marker
+
+A second, narrower marker tells the step workers (`dx-step`, `dx-step-fix`) that a **step loop** is driving them — `dx-step-all` or `dx-bug-fix` — rather than a human.
+
+Path: `.ai/run-context/step-loop.flag` (contents: the `$SPEC_DIR` being executed)
+
+- Written by the loop coordinator before its first step; touched at the top of every iteration so the mtime stays fresh.
+- Deleted by the loop coordinator at **every** exit — completion and STOP alike.
+- Independent of `orchestrating.flag`: `dx-step-all` run by hand sets this one but not that one.
+
+```bash
+IN_STEP_LOOP=0
+LOOP_FLAG=".ai/run-context/step-loop.flag"
+if [ -f "$LOOP_FLAG" ]; then
+  AGE=$(( $(date +%s) - $(date -r "$LOOP_FLAG" +%s) ))
+  [ "$AGE" -lt 7200 ] && IN_STEP_LOOP=1
+fi
+```
+
+When `IN_STEP_LOOP=1`, a worker omits hints addressed to a human ("Run `/dx-step-all` to continue", "Run `/dx-pr`"). It still prints its summary and still ends with `## Return`.
+
+**Why this exists:** a worker's closing hint is harmless when a human reads it, and a stop instruction when a coordinator does. Before `dx-step` was forked, its body loaded inline into `dx-step-all`, and its "execute exactly one step, then stop" rule plus its "Run `/dx-step-all` to continue" hint ended the coordinator after one step, every run. It also meant the coordinator never reached its own exit, so the run log was never written. Forking removed the inline load. This marker keeps the hint out of the coordinator's input even where forking falls back to inline (the subagent spawn-depth limit).

@@ -56,6 +56,15 @@ Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). 
 
 This skill runs forked (`context: fork`), so per `.ai/rules/task-progress.md` it does **not** create its own task tree — a forked skill's task list is invisible to its parent. The file is the channel.
 
+## Loop invariant
+
+This skill has exactly two exits: **"Completion summary + log run + promote fixes"** and **"STOP: Human intervention needed"**. No other point in the flow may end your turn.
+
+- A worker's summary (`## Step N complete`, `## Fix Result`, `## Heal Result`) and its `## Return` block are **input to you, not your output**. Read the verdict, then take the next edge in the graph.
+- Before you write any final message, run `bash .ai/lib/plan-metadata.sh $SPEC_DIR`. If a step is still `pending` or `in-progress` and neither STOP condition holds, you are not done — go to "Get next pending step".
+- Both exits write `.ai/learning/raw/runs.jsonl` (STOP included). A run that ends without that line ended in the wrong place.
+- **No-progress cap:** if "Get next pending step" picks the same step twice with its status unchanged in between, stop looping and go to "STOP: Human intervention needed". Don't spin.
+
 ## Flow
 
 ```dot
@@ -111,6 +120,12 @@ digraph step_all {
 
 ```bash
 SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir $ARGUMENTS)
+```
+
+Mark the step loop active, so the step workers drop their "run X next" hints addressed to a human (see `plugins/dx-core/shared/orchestration-check.md` § Step-loop marker):
+
+```bash
+mkdir -p .ai/run-context && echo "$SPEC_DIR" > .ai/run-context/step-loop.flag
 ```
 
 Maintain run state in `$SPEC_DIR/run-state.json`:
@@ -177,27 +192,37 @@ If it does not exist, skip silently.
 Re-read plan metadata to get the latest status (skills update implement.md). Especially important after step-fix creates new steps. Never read full implement.md in the orchestrator — workers handle that.
 
 ```bash
+touch .ai/run-context/step-loop.flag
 bash .ai/lib/plan-metadata.sh $SPEC_DIR
 ```
 
-Identify the next step with status `pending`.
+Identify the next step with status `pending`, then print the loop assertion — every iteration, verbatim shape:
+
+```
+Loop: <P> pending, <D> done of <N> — continuing with Step <n>
+Loop: 0 pending, <D> done of <N> — exiting
+```
+
+`<P>` counts `pending` + `in-progress` from the metadata output, not from memory.
 
 ### All steps done?
 
-Check if any `pending` or `in-progress` steps remain.
+Use `<P>` from the loop assertion — the count of `pending` + `in-progress` steps.
 
-- **yes** → proceed to "Completion summary + log run + promote fixes"
-- **no** → proceed to "Execute step" with the next pending step
+- **yes** (`<P>` = 0) → proceed to "Completion summary + log run + promote fixes"
+- **no** (`<P>` > 0) → proceed to "Execute step" with the next pending step
 
 ### Execute step
 
-Invoke `Skill(/dx-step)` for the current step. dx-step now handles implement + test + review + commit as internal phases — no separate dispatches needed.
+Invoke `Skill(/dx-step)` for the current step. dx-step handles implement + test + review + commit as internal phases — no separate dispatches needed.
+
+dx-step runs forked and ends with a `## Return` block. That block is a checkpoint, not your exit (see **Loop invariant**) — continue to "Step passed?".
 
 ### Step passed?
 
-Check the result from dx-step:
-- **success** → proceed to "Log progress + track fix patterns"
-- **failure** → classify the error (see **Error Classification** below), then proceed to "Fix attempt"
+Read the `verdict` of dx-step's `## Return` block, and confirm it against the step's status in `plan-metadata.sh` (the file wins if they disagree):
+- **`pass`** (step `done`) → proceed to "Log progress + track fix patterns"
+- **`fail`** (step `blocked`) → classify the error (see **Error Classification** below), then proceed to "Fix attempt"
 
 **Error Classification:** Before triggering healing, classify the failure using `shared/error-handling.md`:
 - **TRANSIENT** → Retry the step (counts toward consecutive failure limit)
@@ -212,9 +237,9 @@ Track fix attempts per step.
 
 ### Fix succeeded?
 
-Check the fix result:
-- **yes** → proceed to "Log progress + track fix patterns"
-- **no** → proceed to "Consecutive failures < 2?"
+Read the `verdict` of dx-step-fix's `## Return` block:
+- **yes** (`verdict: pass`) → proceed to "Log progress + track fix patterns"
+- **no** (`verdict: fail` or `warn`) → proceed to "Consecutive failures < 2?". A `warn` means dx-step-fix escalated to heal on its own: the direct fix failed, and the corrective steps it appended are already `pending` in implement.md. "Get next pending step" will pick them up. Don't re-create them.
 
 ### Consecutive failures < 2?
 
@@ -235,15 +260,15 @@ dx-step-fix now handles both fix and heal modes internally.
 
 ### Heal result?
 
-Check the step-fix return:
-- **healed** → re-read implement.md to find the new corrective step(s). Print a clear plan-mutation notice:
+Read the `verdict` of dx-step-fix's `## Return` block:
+- **healed** (`verdict: warn`, `next_action: run corrective steps …`) → re-read implement.md to find the new corrective step(s). Print a clear plan-mutation notice:
   ```
   ⚠ Plan modified by heal: <N> corrective step(s) added after Step <blocked-step>.
   New steps: <list of step numbers and titles>
   Total steps now: <updated total>
   ```
   Add the corrective steps to `dev-all-progress.md` (and mirror into tasks if they exist). Proceed to "Execute corrective steps".
-- **unrecoverable** → print: `Step <N> unrecoverable after 2 fixes + healing. Human intervention needed.` Proceed to "STOP: Human intervention needed".
+- **unrecoverable** (`verdict: fail`) → print: `Step <N> unrecoverable after 2 fixes + healing. Human intervention needed.` Proceed to "STOP: Human intervention needed".
 
 ### Execute corrective steps
 
@@ -338,6 +363,12 @@ Append one JSONL line to `.ai/learning/raw/runs.jsonl`:
 
 Use Bash to append — `echo '<json>' >> .ai/learning/raw/runs.jsonl`
 
+Clear the step-loop marker:
+
+```bash
+rm -f .ai/run-context/step-loop.flag
+```
+
 **Final promotion sweep:**
 
 Run one final pattern promotion check (same logic as incremental promotion in "Log progress + track fix patterns") to catch any patterns that crossed the 3-success threshold during the last step. This is a safety net — most promotions happen incrementally.
@@ -372,14 +403,7 @@ The execution loop has been halted. Either:
 
 Print the blocked step number, the error type, and a summary of what was tried. The user must manually intervene (edit `implement.md`, fix the environment, or re-plan).
 
-## Validation Gates
-
-| After Phase | Gate | Fail Action |
-|------------|------|-------------|
-| Step execution (2a) | Step status is `done` in `implement.md` | Enter fix loop (2b-2d) |
-| Fix attempt (2d) | Fix count < 2 for this step | If >=2: enter heal cycle (2d-heal) |
-| Heal cycle (2d-heal) | Corrective steps added to `implement.md` | If unrecoverable: STOP with blocked step report |
-| All steps complete | No `pending` or `in-progress` steps remain | Proceed to build phase |
+Log the run anyway — append the same `runs.jsonl` record as the completion node, with `"stopped":"<step N: reason>"` added and `steps_completed` < `total_steps`. Then clear the marker (`rm -f .ai/run-context/step-loop.flag`) and end with the `## Return` block (`verdict: fail`).
 
 ## Examples
 
