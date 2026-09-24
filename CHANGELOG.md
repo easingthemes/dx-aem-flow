@@ -1,3 +1,10 @@
+## [3.7.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.1...v3.7.2) (2026-09-24)
+
+
+### Bug Fixes
+
+* **dx-core:** fork dx-step and dx-step-fix so dx-step-all loops past step 1 ([#212](https://github.com/easingthemes/dx-aem-flow/issues/212)) ([610f8a1](https://github.com/easingthemes/dx-aem-flow/commit/610f8a10b1412038631e2190a2870eccb368b720)), closes [#220](https://github.com/easingthemes/dx-aem-flow/issues/220)
+
 ## [3.7.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.0...v3.7.1) (2026-09-22)
 
 
