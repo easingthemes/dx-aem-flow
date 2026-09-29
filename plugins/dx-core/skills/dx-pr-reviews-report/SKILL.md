@@ -78,7 +78,8 @@ ToolSearch("+ado wiki")
 Resolve the repo name to an ID:
 
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -98,7 +99,8 @@ git config user.email
 Fetch PRs where the current user is a reviewer:
 
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project
+mcp__ado__repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   status: "All"
   i_am_reviewer: true
@@ -110,7 +112,8 @@ mcp__ado__repo_list_pull_requests_by_repo_or_project
 **Filter to PRs with meaningful review comments.** For each remaining PR, fetch threads:
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -122,7 +125,8 @@ Skip PRs where **all threads are system-generated** (status updates, vote change
 Fetch recent PRs regardless of reviewer:
 
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project
+mcp__ado__repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   status: "All"
   top: <count>
@@ -131,7 +135,8 @@ mcp__ado__repo_list_pull_requests_by_repo_or_project
 Then filter to PRs with review threads — for each PR:
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -230,11 +235,11 @@ Use this template structure for the output — replace {{PLACEHOLDER}} tokens wi
 
 1. Load MCP tools: ToolSearch('+ado repo'), ToolSearch('+ado pull request thread'), ToolSearch('+ado wiki'), ToolSearch('+ado work item'). If provider = jira, also: ToolSearch('+atlassian confluence')
 
-2. Fetch PR details via mcp__ado__repo_get_pull_request_by_id. Extract title, author, reviewers, status, dates, work item links.
+2. Fetch PR details via mcp__ado__repo_pull_request (action: "get"). Extract title, author, reviewers, status, dates, work item links.
 
-3. Resolve linked work item if present — check PR description for #12345 patterns, fetch via mcp__ado__wit_get_work_item.
+3. Resolve linked work item if present — check PR description for #12345 patterns, fetch via mcp__ado__wit_work_item (action: "get").
 
-4. Fetch all review threads via mcp__ado__repo_list_pull_request_threads. For each thread, fetch full comments via mcp__ado__repo_list_pull_request_thread_comments (fullResponse: true).
+4. Fetch all review threads via mcp__ado__repo_pull_request_thread (action: "list"). For each thread, fetch full comments via mcp__ado__repo_pull_request_thread (action: "list_comments", fullResponse: true).
 
 5. Filter to meaningful threads — skip system-generated threads (status updates, vote changes). Keep threads with actual review comments.
 
@@ -247,8 +252,8 @@ Use this template structure for the output — replace {{PLACEHOLDER}} tokens wi
 8. Post to wiki based on provider:
    **If provider = ado:**
    - Page path: <wiki-pr-review-root>/<ticket-number> - <meaningful-title>
-   - Check parent exists (mcp__ado__wiki_get_page), create if needed
-   - Create page via mcp__ado__wiki_create_or_update_page
+   - Check parent exists (mcp__ado__wiki, action: "get_page"), create if needed
+   - Create page via mcp__ado__wiki_upsert_page
    **If provider = jira (Confluence):**
    - Find parent page: mcp__atlassian__confluence_search with CQL for <confluence.pr-review-root> in <confluence.space-key>
    - Convert markdown to Confluence storage format (XHTML) if server doesn't accept markdown

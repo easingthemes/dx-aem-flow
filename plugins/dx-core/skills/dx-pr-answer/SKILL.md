@@ -114,7 +114,8 @@ ToolSearch("+ado pull request thread")
 Resolve the repo name to an ID:
 
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -136,7 +137,8 @@ git config user.email
 If input is a PR URL or ID, fetch just that one:
 
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -156,7 +158,8 @@ This PR was created by <author> — not yours. Only your PRs can be answered. Us
 Fetch my active PRs:
 
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project
+mcp__ado__repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   created_by_me: true
   status: "Active"
@@ -225,7 +228,8 @@ For each selected PR:
 ### 5a. Fetch Active Threads
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   status: "Active"
@@ -237,7 +241,8 @@ mcp__ado__repo_list_pull_request_threads
 For each active thread, read the full conversation:
 
 ```
-mcp__ado__repo_list_pull_request_thread_comments
+mcp__ado__repo_pull_request_thread
+  action: "list_comments"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -571,7 +576,8 @@ If no patches were detected, skip this step entirely.
 For each approved answer, post the reply:
 
 ```
-mcp__ado__repo_reply_to_comment
+mcp__ado__repo_pull_request_thread_write
+  action: "reply"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -723,7 +729,8 @@ Skill(/dx-pr-commit, args: "apply reviewer-proposed patches")
 After `/dx-pr-commit` completes, reply to each successfully applied patch thread:
 
 ```
-mcp__ado__repo_reply_to_comment
+mcp__ado__repo_pull_request_thread_write
+  action: "reply"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>

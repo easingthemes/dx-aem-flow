@@ -40,7 +40,8 @@ ToolSearch("+ado work item")
 Resolve the repo ID first:
 
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -48,7 +49,8 @@ mcp__ado__repo_get_repo_by_name_or_id
 Then fetch the PR:
 
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -68,13 +70,18 @@ Try to find a linked ADO ticket:
 
 1. Fetch the PR's work item references:
    ```
-   mcp__ado__repo_list_pull_requests_by_commits
+   mcp__ado__repo_pull_request
+     action: "get"
+     repositoryId: "<repo ID>"
+     pullRequestId: <PR ID>
+     includeWorkItemRefs: true
    ```
    Or check the PR description for work item IDs (patterns: `#12345`, `AB#12345`, `ADO #12345`).
 
 2. If a work item is linked, fetch it:
    ```
-   mcp__ado__wit_get_work_item
+   mcp__ado__wit_work_item
+     action: "get"
      project: "<project>"
      id: <work item ID>
    ```
@@ -85,7 +92,8 @@ Try to find a linked ADO ticket:
 ## 3. Fetch All Review Threads
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -93,7 +101,8 @@ mcp__ado__repo_list_pull_request_threads
 For each thread, fetch the full conversation:
 
 ```
-mcp__ado__repo_list_pull_request_thread_comments
+mcp__ado__repo_pull_request_thread
+  action: "list_comments"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -210,7 +219,8 @@ If no ticket number: use `PR-<id>` as prefix (e.g., `PR-12345 - Fix Hero Null Re
 Check if parent page exists:
 
 ```
-mcp__ado__wiki_get_page
+mcp__ado__wiki
+  action: "get_page"
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_ROOT}"
@@ -219,7 +229,7 @@ mcp__ado__wiki_get_page
 If parent page doesn't exist (404), create it:
 
 ```
-mcp__ado__wiki_create_or_update_page
+mcp__ado__wiki_upsert_page
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_ROOT}"
@@ -229,7 +239,7 @@ mcp__ado__wiki_create_or_update_page
 Create or update the report page:
 
 ```
-mcp__ado__wiki_create_or_update_page
+mcp__ado__wiki_upsert_page
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_PATH}"

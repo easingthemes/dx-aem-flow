@@ -103,7 +103,7 @@ If `superpowers:finishing-a-development-branch` is available, invoke it to verif
 ## 3. Setup
 
 1. **Discover base branch** — per git-rules.md
-2. **Discover repo ID** — per git-rules.md (use `mcp__ado__repo_get_repo_by_name_or_id`)
+2. **Discover repo ID** — per git-rules.md (use `mcp__ado__repo_repository` with `action: "get"`)
 
 ## 4. Gather PR Content
 
@@ -128,7 +128,7 @@ If rejected after rebase, use `--force-with-lease` per git-rules.md.
 
 ## 6. Create PR via ADO MCP
 
-Use `mcp__ado__repo_create_pull_request` per git-rules.md:
+Use `mcp__ado__repo_pull_request_write` with `action: "create"` per git-rules.md:
 
 - **repositoryId:** auto-discovered in step 3
 - **sourceRefName:** `refs/heads/<current-branch>`
@@ -178,14 +178,14 @@ If `.ai/me.md` exists, uses the persona to shape the PR description text while m
 **Fix:** The skill uses `--force-with-lease` only after a rebase. If push fails for other reasons, it reports the error for manual resolution.
 
 ### PR creation fails with "repository not found"
-**Cause:** Repo ID discovery failed — `mcp__ado__repo_get_repo_by_name_or_id` needs the correct ADO project name.
+**Cause:** Repo ID discovery failed — `mcp__ado__repo_repository` (`action: "get"`) needs the correct ADO project name.
 **Fix:** Check `.ai/config.yaml` `scm.project` matches the ADO project where the repo lives. Remember repos need a GUID, not a name.
 
 ## Rules
 
 - **Follow git-rules.md** — read `shared/git-rules.md` and follow all conventions.
 - **All steps must be done** — never create a PR with incomplete steps
-- **ADO MCP only** — use `mcp__ado__repo_create_pull_request`, never `gh` CLI
+- **ADO MCP only** — use `mcp__ado__repo_pull_request_write` (`action: "create"`), never `gh` CLI
 - **Auto-discover base branch and repo ID** — per git-rules.md, never hardcode
 - **Push before PR** — ensure branch is pushed with -u flag
 - **Include ADO reference** — link to the work item via the `workItems` parameter
