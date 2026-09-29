@@ -159,13 +159,9 @@ Also read all modified files in full for broader context.
 
 Use the Task tool with `dx-code-reviewer` subagent type (if available), otherwise `general-purpose`. The project's agent definition (`agents/dx-code-reviewer.md`) provides all the review intelligence.
 
-**Prompt:**
+**Prompt** — with the `dx-code-reviewer` type the agent file is already its system prompt, so send only the context below. With the `general-purpose` fallback, put the full content of `agents/dx-code-reviewer.md` first, then `---`, then the context.
 
 ```
-<Include full content of agents/dx-code-reviewer.md here — the agent's system prompt>
-
----
-
 ## Review Context
 
 ### Upstream Provenance

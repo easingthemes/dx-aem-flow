@@ -149,8 +149,6 @@ The Figma design is composed of multiple UI building blocks — buttons, images,
 - **Compose:** Assemble the Figma element from the listed existing components. The prototype HTML should reflect the composition hierarchy (e.g., Card wrapping Image + Button).
 - **Create new:** Only for elements explicitly marked "Create New" in the reuse map. Follow the nearest existing component's patterns.
 
-This ensures the prototype is grounded in the actual component library and implementation can reuse existing code rather than rebuilding from scratch.
-
 ### 5e. Generation Rules
 
 **CSS (`prototype/styles.css`):**
