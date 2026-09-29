@@ -325,9 +325,9 @@ steps:
         mcp__plugin_dx-aem_playwright__browser_snapshot,
         mcp__plugin_dx-aem_playwright__browser_evaluate,
         mcp__plugin_dx-aem_playwright__browser_wait_for,
-        mcp__ado__wit_add_work_item_comment,
-        mcp__ado__wit_get_work_item,
-        mcp__ado__repo_create_pull_request
+        mcp__ado__wit_work_item_comment_write,
+        mcp__ado__wit_work_item,
+        mcp__ado__repo_pull_request_write
     # ~11s/turn observed; 200 turns can run ~35-40 min. Give the Azure step
     # enough wall-clock to actually reach MAX_TURNS rather than being killed at
     # the step boundary first. The wrapper's own TIMEOUT_MINUTES (default 60)

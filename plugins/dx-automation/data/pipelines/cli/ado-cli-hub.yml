@@ -204,7 +204,7 @@ steps:
       MAX_TURNS: "40"
       ALLOWED_TOOLS: >-
         Skill,Read,Write,Glob,Grep,Bash(*),
-        mcp__ado__wit_get_work_item
+        mcp__ado__wit_work_item
 
   - bash: |
       set -e
