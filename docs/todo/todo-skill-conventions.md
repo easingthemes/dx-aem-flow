@@ -55,6 +55,8 @@ guard against false-positive cross-matches.
 
 ## 3. Replace weak imperatives with MUST / MUST NOT
 
+**Status: Superseded 2026-09-29 — inverted.** Current Anthropic guidance for Claude 5 says the opposite: aggressive MUST/CRITICAL causes overtriggering and emphasis on many lines stops working. Replaced by § 9 phase 2 (de-emphasis). Kept below for history.
+
 **Added:** 2026-05-15
 **Problem:** Anthropic explicitly recommends *"stronger language like
 'MUST filter' instead of 'always filter'"* when rules must not be
@@ -154,6 +156,8 @@ headings within the first 100 lines.
 
 ## 7. Adopt workflow-with-checklist pattern for procedural skills
 
+**Rescoped 2026-09-29: unattended pipelines only.** CC v2.1.233 stopped offering TodoWrite/Task tools on newer models because they track multi-step work without a checklist; the Opus 5.5 prompting page still recommends a checklist file **plus a continuation nudge** for unattended runs. So: `dx-automation` pipeline agents only, not interactive skills. Overlaps #197 (progress-file re-inject + Stop gate).
+
 **Added:** 2026-05-15
 **Problem:** Anthropic documents a "Workflows for complex tasks" pattern
 with an embedded checkbox checklist Claude copies into its response and
@@ -198,31 +202,47 @@ TODO Done-when discipline. Example: `dx-init` should end with
 `build.command`; `.claude/settings.local.json` exists; `git status` is
 clean."*
 
-## 9. Concise-body audit for skills over ~200 lines
+## 9. Lean skills for Claude 5 — umbrella
 
-**Added:** 2026-05-15
-**Problem:** Anthropic's first principle: *"Default assumption: Claude is
-already very smart. Only add context Claude doesn't already have."* Our
-largest skills include explanatory prose that Claude doesn't need
-(definitions of common terms, justifications for design choices,
-narrative about why something matters). `aem-component` is 263 lines;
-several others exceed 200. Once a skill loads, all of it stays in
-context across turns — every paragraph competes with conversation
-history.
-**Scope:** Top 10 longest skills:
-`find plugins -name SKILL.md | xargs wc -l | sort -rn | head -10`.
-Start with `aem-component` (263 lines).
-**Done-when:** The top-10 longest skills have been audited line-by-line
-with the test *"does this paragraph justify its token cost?"* and
-verbose explanations have been removed. No skill exceeds 500 lines
-(threshold from #4). For each audited skill, run the relevant eval
-prompts and confirm no regression.
-**Approach:** This is editorial work, not mechanical. Pair with #10
-(consistent terminology) since both touch the same files.
-**Status update 2026-07-01:** Longest skills have grown, not shrunk —
-median skill is 283 lines, max 1121 (`dx-pr-review`). Re-run the scope
-command; start with the 13 skills over 500 lines flagged in #4. See
-[2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
+**Added:** 2026-05-15 · **Rewritten 2026-09-29** as the single tracker for "fewer rules, shorter
+skills". Absorbs #107 (inverted — see below) and #162. Measurements and sources:
+[2026-09-29-lean-skills-measurement.md](../research/2026-09-29-lean-skills-measurement.md).
+**Problem:** Claude Code cut its own system prompt 80%+ for Claude 5 with no eval loss, and
+Anthropic's current prompting guidance says skills written for older models are often too
+prescriptive and can degrade output; aggressive emphasis now causes overtriggering. Our skills
+were written for older models: 77 skills, ~290k tok, 13 over 500 lines, 162 CAPS imperatives in
+53 skills, only 8 use `references/`, and ~9.2k tok of descriptions load in every consumer
+session. **Measured 2026-09-29, the mass is procedure, templates (~25%) and mode branches — not
+filler:** rationale is 28 lines, no-ops 2. The old framing ("remove explanatory prose") would
+save little.
+**Constraint (2026-09-29):** no cutting until it can be tested. Every phase that changes
+behaviour is gated on an A/B eval.
+**Scope:** `plugins/*/skills/*/SKILL.md`, `plugins/*/agents/*.md`, `plugins/*/rules/*.md`,
+`plugins/*/templates/rules/`.
+**Phases** (each its own PR; the gate applies to 2–4):
+0. **Measure** — #170 (interactive `/skill-doctor` + `/doctor prompt-audit <path>`) and #137
+   (token baseline). Tooling for the gate: #167 plus a version A/B — run `claude plugin eval`
+   at both git refs with `--model`/`--judge-model` pinned, or skill-creator's blind version
+   comparison. At least one eval case per skill before it is cut.
+1. **No-behaviour cuts** (no eval needed): dev history in skill text (issue/TODO numbers,
+   dates, versions — 34 hits), the 2 no-ops, the 16 cross-skill duplicate paragraphs (move to
+   `shared/`).
+2. **De-emphasis** (inverts old #107): replace CAPS MUST/NEVER/CRITICAL with plain
+   imperatives; keep emphasis on at most a few load-bearing lines per skill; drop hedges.
+   Target ≤ 5 `CRITICAL|IMPORTANT` across all skills.
+3. **Restated and generic rules**: `## Rules`-type sections (~15.8k tok in 71 skills) keep only
+   non-obvious project gotchas; drop lines that repeat a step or describe behaviour Claude does
+   anyway ("Read before judging", "Human voice"). Verification scaffolding (27 lines) by model
+   tier: remove on Opus-tier skills, keep a concrete check on Sonnet/low-effort ones.
+4. **Size**: move templates, examples and rarely-taken branches (interactive vs automation,
+   Copilot install steps in `dx-init`) to `references/` — #108 threshold. Start with the top 5.
+**Done-when:** (per phase, checkable)
+- P1: `grep -rnE '\bTODO #[0-9]+|\bissue #[0-9]+' plugins/*/skills/*/SKILL.md` returns 0.
+- P2: `grep -rhoE '\b(CRITICAL|IMPORTANT)\b' plugins/*/skills/*/SKILL.md | wc -l` ≤ 5.
+- P3/P4: every changed skill has an eval result at old and new ref in `docs/research/`, with no
+  score drop; `find plugins -name SKILL.md -exec wc -l {} + | awk '$1>500 && $2!="total"' | wc -l` is 0.
+**Related:** #108 (500-line threshold), #111 (checklists — pipelines only), #137, #167, #170,
+#237 (review filter), #238 (description footprint), #239 (reasoning-echo lint), #222 (tiers).
 
 ## 10. Consistent terminology audit
 
@@ -276,6 +296,8 @@ linking to canonical upstream docs.
 skill. Don't do as its own pass.
 
 ## 13. No-op audit — remove filler instructions that don't change agent behavior
+
+**Status: Merged into § 9 (phase 1), 2026-09-29.** Measured: 2 no-ops in all skills, so this is a small part of phase 1, not its own item.
 
 **Added:** 2026-06-26
 **Source:** https://x.com/mattpocockuk/status/2069784839474032896?s=46
@@ -413,6 +435,8 @@ scaffolding). Full write-up + verify commands:
 
 ## 16. Rightsize CLAUDE.md + skills with `/doctor`
 
+**Update 2026-09-29:** absorbs #225 — v2.1.283 `/doctor prompt-audit` takes a path (`/doctor prompt-audit plugins/dx-core/skills/dx-pr-review`) and checks for old-model prompting patterns, stale paths and contradicting instruction files; run it in the same interactive session as `/skill-doctor` and #137. Adds a size target: the [memory docs](https://code.claude.com/docs/en/memory) say keep each CLAUDE.md under 200 lines (ours: 397), and v2.1.282 warns on combined instruction-file size. Extra Done-when: `wc -l < CLAUDE.md` ≤ 200, with moved architecture content in `website/` (keep gotchas). This is phase 0 of § 9.
+
 **Status: Blocked — needs an interactive session (re-anchored 2026-09-13).**
 Claude Code v2.1.261 (2026-09-04) shipped **`/skill-doctor`**, which reports which loaded
 skills go unused and what each costs in context. That is a more direct instrument
@@ -454,6 +478,54 @@ gospel — keep the gotcha-density content the article explicitly wants in
 contradiction).
 
 ---
+
+## 17. Split finding from filtering in PR review
+
+**Added:** 2026-09-29
+**Problem:** Anthropic's Sonnet 5 and Opus 5 prompting pages say review prompts that filter at
+find time ("only high severity", "be conservative", "don't nitpick") make the model find bugs
+and then not report them — recall drops. Fix: report every finding with confidence and
+severity, filter in a separate pass (or define the bar concretely). Our review stack filters at
+find time everywhere: `plugins/dx-core/rules/pr-review.md` (+ `templates/rules/pr-review.md.template`)
+"Only report issues with confidence >= 80", "Maximum 10 findings", "don't nitpick";
+`agents/dx-code-reviewer.md` (7 places), `agents/dx-pr-reviewer.md`, `skills/dx-pr-review/SKILL.md`.
+This also drives the automated PR Reviewer. #169 missed it: it looked for layers that
+disagree, and these all agree — they are an obsolete guardrail.
+**Scope:** the files above; `dx-pr-review` step that posts findings.
+**Done-when:** `grep -rnE 'confidence (>=|≥) ?80|Maximum 10' plugins/dx-core/agents plugins/dx-core/rules plugins/dx-core/templates/rules`
+returns only a separate filter step (not the finding instructions), AND an eval fixture with a
+real low-severity bug plus distractors is scored at the old and new ref (recall must not drop,
+posted-comment count must not rise past the current cap).
+**Approach:** Reviewer agent returns all findings with confidence + severity; the skill applies
+the ≥ 80 / top-10 filter when posting. Posting behaviour stays the same; only where the filter
+sits changes. Needs an eval before merging (§ 9 gate).
+
+## 18. Always-loaded description footprint
+
+**Added:** 2026-09-29
+**Problem:** Skill descriptions (+ `when_to_use`) load in every session of a consumer with all
+4 plugins: ~9.2k tok, avg 241 chars, max 847 (`dx-council`). That is the largest fixed cost we
+put in every session — larger than all always-loaded rules (~1.6k) — and it grew with the
+negative-trigger clauses of #166. Trimming it is low behaviour risk only if routing does not
+regress.
+**Scope:** `description:` / `when_to_use:` in `plugins/*/skills/*/SKILL.md`.
+**Done-when:** the re-measure snippet in the 2026-09-29 research note reports descriptions
+≤ 6k tok, no description > 400 chars, and the skill-routing eval (#168) passes at the new ref.
+**Approach:** Put trigger phrases in `when_to_use` only where they disambiguate; drop
+restatements of the skill name; keep #166 negative clauses short. Check whether rarely used
+skills should be `disable-model-invocation: true` (user-invoked only — no description in the
+listing).
+
+## 19. Lint for reasoning-echo instructions
+
+**Added:** 2026-09-29
+**Problem:** The Fable 5 / Opus 5.5 / Sonnet 5.5 prompting pages say prompts that make the model
+print its reasoning can be refused (`stop_reason: "refusal"`), and server-side fallback does
+not retry. A refusal in a pipeline agent fails the run. Grep today finds no such phrasing in
+`plugins/`, so this is prevention, not a fix.
+**Scope:** `scripts/validate-skills.sh`, `scripts/validate-skills.test.sh`.
+**Done-when:** `validate-skills.sh` errors on `explain your reasoning|show your (thinking|reasoning)|think step by step|reasoning trace`
+in `plugins/*/{skills,agents}`, and `validate-skills.test.sh` has a fixture that proves it fires.
 
 ## Dropped after reality check against Claude Code docs
 
