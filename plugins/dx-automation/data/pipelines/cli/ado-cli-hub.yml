@@ -64,7 +64,7 @@ steps:
       set -e
       # Resolve work item id — manual parameter wins, webhook payload is fallback.
       MANUAL_ID="${{ parameters.workItemId }}"
-      WEBHOOK_ID="${{ parameters.hubHook.resource.id }}"
+      WEBHOOK_ID="$HOOK_WI_ID"
       if [ -n "$MANUAL_ID" ]; then WI_ID="$MANUAL_ID"; TRIGGER="param";
       elif [ -n "$WEBHOOK_ID" ]; then WI_ID="$WEBHOOK_ID"; TRIGGER="webhook";
       else echo "ERROR: no work item id (need parameters.workItemId or webhook resource.id)" >&2; exit 1; fi
@@ -72,7 +72,7 @@ steps:
       # commentId: manual param wins; webhook fallback uses the work-item revision
       # as a per-comment dedup key (resource.rev increments on each comment).
       CID="${{ parameters.commentId }}"
-      if [ -z "$CID" ]; then CID="${{ parameters.hubHook.resource.rev }}"; fi
+      if [ -z "$CID" ]; then CID="$HOOK_REV"; fi
 
       echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
       echo "##vso[task.setvariable variable=COMMENT_ID]$CID"
@@ -80,7 +80,7 @@ steps:
 
       # Parse the @kai-<agent> tag from the comment text (System.History is the
       # comment body on a workitem.commented event; may be HTML).
-      COMMENT='${{ parameters.hubHook.resource.fields[''System.History''] }}'
+      COMMENT="$HOOK_COMMENT"
       PLAIN=$(printf '%s' "$COMMENT" | sed -E 's/<[^>]+>/ /g; s/&nbsp;/ /g')
       # Capture the raw token after @kai- (lowercased). The regex is permissive on
       # purpose — we resolve the ACTUAL agent below by matching against agents.json
@@ -124,6 +124,12 @@ steps:
       echo "##vso[task.setvariable variable=ROUTE_STATUS]ok"
       echo "Routing @kai-$TAG -> worker pipeline $WORKER (writes=$WRITES), work item $WI_ID, comment $CID"
     displayName: "Parse @kai tag + resolve agent"
+    env:
+      # Webhook payload goes through env, never into the script text: ADO expands
+      # ${{ }} before bash runs, so comment text would otherwise be parsed as shell.
+      HOOK_WI_ID: ${{ parameters.hubHook.resource.id }}
+      HOOK_REV: ${{ parameters.hubHook.resource.rev }}
+      HOOK_COMMENT: ${{ parameters.hubHook.resource.fields['System.History'] }}
 
   # If no tag / unknown agent, post a short note and stop (success — nothing to do).
   - bash: |

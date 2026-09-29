@@ -88,7 +88,7 @@ steps:
       set -e
       # Resolve bug work item id — manual parameter wins, webhook payload is fallback.
       MANUAL_ID="${{ parameters.bugId }}"
-      WEBHOOK_ID="${{ parameters.bugfixHook.resource.id }}"
+      WEBHOOK_ID="$HOOK_WI_ID"
       if [ -n "$MANUAL_ID" ]; then
         WI_ID="$MANUAL_ID"
         TRIGGER="manual"
@@ -128,15 +128,23 @@ steps:
       if [ "$TRIGGER" = "webhook" ]; then
         echo "Webhook event ID:    ${{ parameters.bugfixHook.id }}"
         echo "Subscription:        ${{ parameters.bugfixHook.subscriptionId }}"
-        echo "Commenter:           ${{ parameters.bugfixHook.resource.fields['System.ChangedBy'].displayName }}"
-        echo "Work item type:      ${{ parameters.bugfixHook.resource.fields['System.WorkItemType'] }}"
-        echo "Work item state:     ${{ parameters.bugfixHook.resource.fields['System.State'] }}"
+        echo "Commenter:           $HOOK_COMMENTER"
+        echo "Work item type:      $HOOK_WI_TYPE"
+        echo "Work item state:     $HOOK_STATE"
         echo "Comment (System.History below — raw, may be HTML):"
-        echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"
+        # Prefix each line so a '##vso[' line in the comment is not run as a logging command.
+        printf '%s\n' "$HOOK_COMMENT" | sed 's/^/  | /'
       fi
     displayName: "Resolve bug ID + execution mode (clone target in hub mode)"
     env:
       ADO_PAT: $(ADO_PAT)
+      # Webhook payload goes through env, never into the script text: ADO expands
+      # ${{ }} before bash runs, so comment text would otherwise be parsed as shell.
+      HOOK_WI_ID: ${{ parameters.bugfixHook.resource.id }}
+      HOOK_COMMENTER: ${{ parameters.bugfixHook.resource.fields['System.ChangedBy'].displayName }}
+      HOOK_WI_TYPE: ${{ parameters.bugfixHook.resource.fields['System.WorkItemType'] }}
+      HOOK_STATE: ${{ parameters.bugfixHook.resource.fields['System.State'] }}
+      HOOK_COMMENT: ${{ parameters.bugfixHook.resource.fields['System.History'] }}
 
   - task: Cache@2
     inputs:

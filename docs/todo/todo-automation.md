@@ -336,6 +336,8 @@ having three more skills write the same JSON shape.
 
 ## Comment text breaks pipeline scripts (unquoted webhook payload)
 
+**Status:** Done 2026-09-29. All `Hook.resource` expressions in the four listeners now go through `HOOK_*` env vars; comment echo in bug-fix prefixes each line so `##vso[` cannot start one. Test: `plugins/dx-automation/data/pipelines/cli/__tests__/webhook-payload.test.sh` (fails 8/12 against the pre-fix YAML). `todo-universal-trigger.md` snippet fixed the same way. Still to watch in that proposal: it passes comment text on as `$(PROMPT)`, and a `$(var)` macro is also pasted into the next script's text — use `$PROMPT` (env) there when it is built.
+
 **Added:** 2026-09-29
 **Decision (2026-09-29):** every ADO user is trusted and anyone may trigger an agent by comment — this is **not** a security item. It is a robustness bug.
 **Problem:** ADO expands `${{ }}` into the script text **before** bash runs. `ado-cli-bug-fix.yml:135` does `echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"` and `ado-cli-hub.yml:83` does `COMMENT='${{ ...System.History... }}'`. So ordinary comment text becomes shell code: an apostrophe ("doesn't work") ends the quote in hub mode, backticks or `$(...)` from a pasted snippet run as commands, and a line starting `##vso[` is read as a logging command. Result: step fails or does something odd on a normal bug comment, and the agent never starts.
