@@ -239,3 +239,30 @@ nowhere to go.
 | `SESSION_STORE` | Our agents don't depend on cross-session state |
 | `EXTENSIONS` | Too early — our hooks work fine |
 | `CONFIGURE_COPILOT_AGENT` | `/dx-init` already handles this |
+
+## Copilot reads `.claude/rules` natively — and the env var may never have worked
+
+**Added:** 2026-09-29
+**Problem:** Copilot CLI v1.0.89 (2026-09-28, [changelog](https://raw.githubusercontent.com/github/copilot-cli/main/changelog.md)) reads `.claude/rules` as custom instructions natively. Before that we relied on `COPILOT_CUSTOM_INSTRUCTIONS_DIRS=.claude/rules` (set by `/dx-init` step 9a-bis). The current [docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions) say that env var loads only `AGENTS.md` and `*.instructions.md` — our rules are plain `<name>.md`. So on <1.0.89 the rules may never have loaded on Copilot, though the list above marks it "works". On ≥1.0.89 they may load twice, and it is unknown if the native loader honours `applyTo:`.
+**Scope:** `plugins/dx-core/skills/dx-init/SKILL.md` (env-var step), `plugins/dx-core/templates/claude-code/settings.json.template`, `plugins/dx-aem/skills/aem-init/SKILL.md` (lines 22, 270, 342), `plugins/dx-hub/skills/dx-hub-init/`, `website/src/pages/architecture/cross-agent.mdx`, `plugins/*/templates/rules/**`.
+**Done-when:** `/instructions` output from a Copilot v1.0.89 session with and without the env var is recorded in this section, AND the dx-init env-var step is either removed or version-gated to match the result.
+
+## Tier Copilot custom agents — `model` + `reasoning-effort`
+
+**Added:** 2026-09-29
+**Problem:** Copilot v1.0.88 (2026-09-22) makes a custom agent's `reasoning-effort` actually apply (before, only `model` did); v1.0.85 (2026-09-16) added `model` as an ordered fallback list and `model-policy: required`. None of our `.github/agents` templates set `model`, `reasoning-effort` or `model-policy`, so the Opus/Sonnet/Haiku tiering in `CLAUDE.md` never reaches Copilot.
+**Scope:** `plugins/*/templates/agents/*.agent.md.template`, `cli/lib/scaffold.js` if it rewrites frontmatter.
+**Done-when:** `grep -rln "reasoning-effort" plugins/*/templates/agents` returns the tiered agents, OR this section records a decision not to tier.
+**Approach:** Decide together with #202/#215 (per-agent frontmatter pass). Use aliases or fallback lists, never a single pinned id.
+
+## v1.0.87–v1.0.89 notes for the batch re-test
+
+**Added:** 2026-09-29
+**Problem:** Changes that shift what the #182 re-test must check:
+- v1.0.85: plugin agents/skills/MCP no longer dropped in `-p` (so `--agent <plugin>:<agent>` works headless without `--plugin-dir`); `sessionEnd` fires on `/clear`; `${PLUGIN_ROOT}` expanded in agent `mcp-servers` frontmatter (#86); `allowManagedHooksOnly` also blocks extension callbacks.
+- v1.0.87: prompt mode exits 0 when a child task fails but parent recovers; `strictKnownMarketplaces: []` blocks built-in marketplaces.
+- v1.0.88: hooks without `cwd` run from project root **again** (regression between 1.0.83 and 1.0.87); namespaced custom skills + ignored skill dirs (→ #12, Copilot must resolve `dx-core:<name>` too).
+- v1.0.89: direct plugin installs can be enabled/disabled; valid workspace MCP servers kept when a sibling entry is invalid.
+- Upstream bugs still open at 2026-09-29: copilot-cli#4708, #4886, #4545 — #19–#22 stay blocked.
+**Scope:** #182 and rows #20, #22, #40, #87, #90, #91, #102, #124 (still say "current is v1.0.83").
+**Done-when:** `grep -c "v1.0.83" docs/todo/TODO.md` drops to the historical mentions only, with the re-test anchor at v1.0.89.

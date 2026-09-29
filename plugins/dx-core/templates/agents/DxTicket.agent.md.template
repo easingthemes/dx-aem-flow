@@ -9,7 +9,7 @@ tools:
   - search
   - search/codebase
   - agent
-  - 'ado/wit_get_work_item'
+  - 'ado/wit_work_item'
 agents: ['dx-doc-searcher', 'dx-file-resolver']
 handoffs:
   - label: "Look up a component"
@@ -52,10 +52,11 @@ If no argument provided, ask the user for the ADO URL or ID.
 ## 2. Fetch Ticket
 
 ```
-ado/wit_get_work_item
+ado/wit_work_item
+  action: "get"
   id: <work item ID>
   project: "<project>"
-  expand: "relations"
+  expand: "Relations"
 ```
 
 Extract:

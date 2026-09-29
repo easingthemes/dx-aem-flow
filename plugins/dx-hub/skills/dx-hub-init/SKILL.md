@@ -343,8 +343,8 @@ No build commands. This directory dispatches to repos.
 
 ## MCP Servers
 
-ADO MCP is configured — use `mcp__ado__wit_get_work_item` and
-`mcp__ado__wit_get_work_items_batch_by_ids` to read tickets directly.
+ADO MCP is configured — use `mcp__ado__wit_work_item` (`action: "get"`, or
+`action: "get_batch"` for several IDs) to read tickets directly.
 
 ## Specs & Progress
 

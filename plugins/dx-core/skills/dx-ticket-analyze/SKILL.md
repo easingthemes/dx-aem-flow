@@ -48,10 +48,11 @@ If no argument provided, ask the user for the ADO URL, Jira URL, or ticket ID.
 Use ADO MCP to get the work item:
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: <extracted project>
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 ### If provider = jira

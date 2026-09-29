@@ -72,15 +72,15 @@ digraph dx_dor {
 ### Fetch story
 
 - If `.ai/specs/<id>-*/` exists, reuse it as `$SPEC_DIR`. Otherwise fetch title via MCP, slugify, create `mkdir -p .ai/specs/<id>-<slug>/`
-- Fetch work item via MCP (ADO: `mcp__ado__wit_get_work_item`, Jira: `mcp__atlassian__jira_get_issue`)
-- Fetch comments (ADO: `mcp__ado__wit_list_work_item_comments`, Jira: comments included in issue response)
+- Fetch work item via MCP (ADO: `mcp__ado__wit_work_item` with `action: "get"`, Jira: `mcp__atlassian__jira_get_issue`)
+- Fetch comments (ADO: `mcp__ado__wit_work_item` with `action: "list_comments"`, Jira: comments included in issue response)
 - If `raw-story.md` doesn't exist, convert HTML to markdown per `shared/external-content-safety.md` and write it. If it exists and is current, reuse.
 
 ### Fetch DoR wiki
 
 - Read `references/wiki-parsing.md` for the full parsing and fallback chain logic
-- **Cache first:** check `.ai/cache/dor-checklist.md` (TTL 24h, override via `dor.cache-ttl-seconds`). If hit, skip the MCP call entirely — the checklist rarely changes and a tree-traversal `wiki_get_page` against a parent section pulls ~270kB of JSON (≈65–80k tokens) into the parent thread. This is the second-largest Phase 1 context cost (issue #136).
-- **Cache miss:** fetch the wiki page using the URL from config (`scm.wiki-dor-url` — preferred, no tree traversal) or Confluence (`confluence.dor-page-title`). If URL resolution fails, use `wiki_search` with the page title — never `wiki_get_page` against a parent section. If a tree fetch is genuinely needed, dispatch it to a subagent so the raw JSON never lands here.
+- **Cache first:** check `.ai/cache/dor-checklist.md` (TTL 24h, override via `dor.cache-ttl-seconds`). If hit, skip the MCP call entirely — the checklist rarely changes and a tree-traversal `wiki` (`action: "get_page"`) against a parent section pulls ~270kB of JSON (≈65–80k tokens) into the parent thread. This is the second-largest Phase 1 context cost (issue #136).
+- **Cache miss:** fetch the wiki page using the URL from config (`scm.wiki-dor-url` — preferred, no tree traversal) or Confluence (`confluence.dor-page-title`). If URL resolution fails, use `search_wiki` with the page title — never `wiki` (`action: "get_page"`) against a parent section. If a tree fetch is genuinely needed, dispatch it to a subagent so the raw JSON never lands here.
 - Write the resolved body to `.ai/cache/dor-checklist.md` with metadata in `.ai/cache/dor-checklist.meta.json`
 
 ### Existing [DoRAgent] comment?

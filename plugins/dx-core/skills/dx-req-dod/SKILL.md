@@ -74,7 +74,8 @@ Read `scm.wiki-dod-url` from `.ai/config.yaml`.
 
 **Fetch the wiki page content via MCP:**
 ```
-mcp__ado__wiki_get_page_content
+mcp__ado__wiki
+  action: "get_page_content"
   url: <scm.wiki-dod-url>
 ```
 
@@ -179,7 +180,8 @@ Before posting, check for an existing comment to avoid duplicates:
 
 1. Fetch existing comments:
    ```
-   mcp__ado__wit_list_work_item_comments
+   mcp__ado__wit_work_item
+     action: "list_comments"
      project: "<ADO project>"
      workItemId: <id>
    ```
@@ -209,11 +211,12 @@ Before posting, check for an existing comment to avoid duplicates:
 
 **Post:**
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project>"
   workItemId: <id>
   text: "<condensed dod results>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
 ### If provider = jira

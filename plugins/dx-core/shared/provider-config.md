@@ -21,7 +21,7 @@ When `tracker.provider = ado`:
 
 - **Organization:** `scm.org`
 - **Project:** `scm.project`
-- **Repo ID:** `scm.repo-id` (or discover via `mcp__ado__repo_get_repo_by_name_or_id`)
+- **Repo ID:** `scm.repo-id` (or discover via `mcp__ado__repo_repository` with `action: "get"`)
 - **Wiki ID:** `scm.wiki-id`
 - **Wiki Project:** `scm.wiki-project`
 
@@ -170,7 +170,7 @@ mcp__atlassian__jira_add_comment
   comment: "<comment text>"
 ```
 
-Comments support wiki markup on Server/DC. No `format` parameter needed (unlike ADO which requires `format: "markdown"`).
+Comments support wiki markup on Server/DC. No `format` parameter needed (unlike ADO, where skills pass `format: "Markdown"`).
 
 ### Jira Issue Creation
 
@@ -186,7 +186,7 @@ mcp__atlassian__jira_create_issue
   # components: ["hero"]
 ```
 
-**Sub-task vs child issue:** Jira Server uses "Sub-task" issue type for children. The equivalent of ADO `wit_add_child_work_items` is:
+**Sub-task vs child issue:** Jira Server uses "Sub-task" issue type for children. The equivalent of ADO `wit_work_item_write` (`action: "add_child"`) is:
 1. Create issues with `issue_type: "Sub-task"` and `parent_key: "<parent issue key>"`
 2. Or create regular Tasks and link them: `mcp__atlassian__jira_create_issue_link`
 

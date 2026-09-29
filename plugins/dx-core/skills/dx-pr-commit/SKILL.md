@@ -114,7 +114,8 @@ Commit and verify with `git log -1 --oneline`.
 When `$ORCHESTRATED == 1` (e.g. `/dx-pr-answer` applying fixes to a reviewer's open PR), the branch usually already has an Active PR and the intent is **update it**, not create a new one. After committing, check:
 
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project
+mcp__ado__repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   sourceRefName: "refs/heads/<current-branch>"
   status: "Active"
@@ -144,7 +145,7 @@ Run all pre-flight checks from git-rules.md before creating:
 
 ### 7b. Create PR via ADO MCP
 
-Use `mcp__ado__repo_create_pull_request` per git-rules.md:
+Use `mcp__ado__repo_pull_request_write` with `action: "create"` per git-rules.md:
 
 - **repositoryId:** auto-discovered
 - **sourceRefName:** `refs/heads/<current-branch>`
@@ -159,7 +160,7 @@ After creating the PR, verify merge status per git-rules.md. If conflicts detect
 
 ### 7d. Set Auto-Complete (optional)
 
-If the user asks, use `mcp__ado__repo_update_pull_request` with `autoComplete: true`.
+If the user asks, use `mcp__ado__repo_pull_request_write` with `action: "update"` and `autoComplete: true`.
 
 ## Examples
 

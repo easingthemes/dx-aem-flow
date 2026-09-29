@@ -49,19 +49,20 @@ project: "<scm.project value>"
 
 ## Work Item Comments — Always Use Markdown Format
 
-When posting comments to work items via `mcp__ado__wit_add_work_item_comment`, **always pass `format: "markdown"`**:
+When posting comments to work items via `mcp__ado__wit_work_item_comment_write` (`action: "add"`), **always pass `format: "Markdown"`**:
 
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<project>"
   workItemId: <id>
   text: "<your markdown content>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
-Without the `format` parameter, ADO renders the comment as plain text — markdown syntax like `**bold**` and `- lists` appears literally instead of being formatted.
+Without Markdown format, ADO renders the comment as plain text — markdown syntax like `**bold**` and `- lists` appears literally instead of being formatted. (`@azure-devops/mcp` v2.10.0 defaults `format` to `Markdown`; pass it explicitly anyway so the intent survives a server change. The value is case-sensitive — lowercase `"markdown"` fails validation.)
 
-PR thread comments (`mcp__ado__repo_create_pull_request_thread`, `mcp__ado__repo_reply_to_comment`) render markdown natively — no `format` parameter needed.
+PR thread comments (`mcp__ado__repo_pull_request_thread_write` with `action: "create"` or `action: "reply"`) render markdown natively — no `format` parameter needed.
 
 ## Wiki Configuration
 

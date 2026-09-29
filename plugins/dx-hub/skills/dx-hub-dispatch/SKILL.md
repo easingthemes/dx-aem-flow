@@ -88,10 +88,11 @@ Fetch the work item using the configured provider.
 
 **ADO:**
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<scm.project>"
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 **Jira:**
@@ -113,7 +114,8 @@ Also fetch comments:
 
 **ADO:**
 ```
-mcp__ado__wit_list_work_item_comments
+mcp__ado__wit_work_item
+  action: "list_comments"
   project: "<scm.project>"
   workItemId: <id>
 ```

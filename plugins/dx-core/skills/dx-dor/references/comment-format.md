@@ -7,7 +7,8 @@
 ### Fetch existing comments
 
 ```
-mcp__ado__wit_list_work_item_comments
+mcp__ado__wit_work_item
+  action: "list_comments"
   project: "<ADO project>"
   workItemId: <id>
 ```
@@ -35,7 +36,7 @@ If a `[DoRAgent]` comment exists, parse its checkbox lines to detect BA actions:
 
 If `ba_addressed_sections` is non-empty:
 1. Print: `BA checked <N> items: <list>. Re-fetching story to validate...`
-2. Re-fetch the work item via MCP (`mcp__ado__wit_get_work_item`) to get updated content
+2. Re-fetch the work item via MCP (`mcp__ado__wit_work_item`, `action: "get"`) to get updated content
    - **If provider = jira:** Re-fetch via `mcp__atlassian__jira_get_issue` with the issue key instead.
 3. Re-run the scorecard evaluation against the fresh story data
 4. Update `dor-report.md` with the new scores
@@ -50,11 +51,12 @@ If no checkboxes changed and report was not regenerated — Mode C (skip).
 Post the full DoR checklist. Read `.ai/templates/ado-comments/dor-check.md.template` and follow that structure exactly. Use checkboxes (`- [x]` for passing, `- [ ]` for failing/warning) instead of tables. The checklist dynamically reflects whatever wiki-parsed sections are defined — there is no fixed number.
 
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project>"
   workItemId: <id>
-  comment: "<comment following dor-check.md.template with checkboxes>"
-  format: "markdown"
+  text: "<comment following dor-check.md.template with checkboxes>"
+  format: "Markdown"
 ```
 
 #### If provider = jira
@@ -96,7 +98,7 @@ Print `DoR comment already posted to ADO #<id> — no changes detected — skipp
 
 ### Format rules
 
-- Use `format: "markdown"` — NEVER use `format: "html"`. ADO renders markdown natively.
+- Use `format: "Markdown"` — NEVER use `format: "Html"`. ADO renders markdown natively.
 - **Always use checkboxes** (`- [x]` / `- [ ]`) for DoR items — NEVER use tables. Checkboxes are interactive in ADO and enable the BA collaboration loop.
 - The checklist reflects wiki-parsed sections dynamically — do not assume a fixed count. Use `### [DoRAgent]` header for full post, `### [DoRAgent] DoR Update` for updates.
 - End with the signature line including action hint: `_[DoRAgent] Run | <date> · Check items above after updating the story, then re-run DoR._`

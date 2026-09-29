@@ -125,7 +125,8 @@ WIKI_PATH = "${WIKI_ROOT}/${SPRINT}/${PAGE_TITLE}"
 4. **Check if the sprint subfolder exists.** Try to get the sprint page:
 
 ```
-mcp__ado__wiki_get_page
+mcp__ado__wiki
+  action: "get_page"
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_ROOT}/${SPRINT}"
@@ -134,7 +135,7 @@ mcp__ado__wiki_get_page
 5. **If the sprint subfolder does NOT exist** (404), create it first:
 
 ```
-mcp__ado__wiki_create_or_update_page
+mcp__ado__wiki_upsert_page
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_ROOT}/${SPRINT}"
@@ -144,7 +145,8 @@ mcp__ado__wiki_create_or_update_page
 6. **Check for existing page by ID prefix.** The work item ID is unique — if a page already exists for this story (possibly with a different slug), reuse its path instead of creating a duplicate:
 
 ```
-mcp__ado__wiki_list_pages
+mcp__ado__wiki
+  action: "list_pages"
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_ROOT}/${SPRINT}"
@@ -155,7 +157,7 @@ Scan the returned child pages for any whose name starts with `<id>-` (e.g., `245
 7. **Create or update the wiki page:**
 
 ```
-mcp__ado__wiki_create_or_update_page
+mcp__ado__wiki_upsert_page
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_PATH}"

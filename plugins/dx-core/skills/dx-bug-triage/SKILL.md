@@ -52,10 +52,11 @@ If no argument is provided, ask the user for the work item ID.
 ## 2. Fetch Bug Work Item
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project from config>"
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 ### If provider = jira
@@ -95,7 +96,8 @@ Extract fields per `shared/bug-fields.md` (ADO path):
 ## 3. Fetch Comments
 
 ```
-mcp__ado__wit_list_work_item_comments
+mcp__ado__wit_work_item
+  action: "list_comments"
   project: "<ADO project from config>"
   workItemId: <work item ID>
 ```
@@ -113,7 +115,8 @@ Keep human comments with author and date. Skip system/automated comments.
 
 If relations include `System.LinkTypes.Hierarchy-Reverse`, fetch parent:
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project>"
   id: <parent ID>
 ```
@@ -134,8 +137,10 @@ From the relations fetched in step 2, look for Pull Request links (`ArtifactLink
 
 **If PRs are found**, fetch each PR via ADO MCP:
 ```
-mcp__ado__git_get_pull_request
+mcp__ado__repo_pull_request
+  action: "get"
   project: "<ADO project>"
+  repositoryId: <repo ID extracted from artifact URL>
   pullRequestId: <PR ID extracted from artifact URL>
 ```
 
@@ -500,11 +505,12 @@ Examples:
 If `## Clarifications Needed` section is non-empty, post to ADO:
 
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project>"
   workItemId: <id>
   text: "<markdown comment with clarification questions>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
 ### If provider = jira

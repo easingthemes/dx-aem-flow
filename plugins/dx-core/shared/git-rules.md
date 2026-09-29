@@ -46,14 +46,14 @@ Never hardcode the ADO org or project name — always read from `.ai/config.yaml
 
 ## Repo ID Discovery
 
-Use `mcp__ado__repo_get_repo_by_name_or_id` with the repo name and ADO project from config to get the **repository ID**. Never hardcode repo IDs. Cache the result for the session.
+Use `mcp__ado__repo_repository` (`action: "get"`, `repositoryNameOrId`) with the repo name and ADO project from config to get the **repository ID**. Never hardcode repo IDs. Cache the result for the session.
 
 ## SCM: Azure DevOps Only
 
 - **NEVER** use `gh` CLI or reference GitHub
 - All PR operations use ADO MCP tools (`mcp__ado__repo_*`)
-- PR creation: `mcp__ado__repo_create_pull_request`
-- PR updates: `mcp__ado__repo_update_pull_request`
+- PR creation: `mcp__ado__repo_pull_request_write` with `action: "create"`
+- PR updates: `mcp__ado__repo_pull_request_write` with `action: "update"`
 
 ## Branch Safety
 
@@ -126,8 +126,8 @@ Before creating a PR, run these checks in order:
 
 ### 1. Check for existing PR
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project(
-  repositoryId, sourceRefName: "refs/heads/<branch>",
+mcp__ado__repo_pull_request(
+  action: "list", repositoryId, sourceRefName: "refs/heads/<branch>",
   targetRefName: "refs/heads/$BASE_BRANCH", status: "All"
 )
 ```
@@ -150,9 +150,9 @@ If empty, push first.
 ### 4. After PR creation, check merge status
 After creating the PR, verify merge status:
 ```
-mcp__ado__repo_get_pull_request_by_id(repositoryId, pullRequestId)
+mcp__ado__repo_pull_request(action: "get", repositoryId, pullRequestId)
 ```
-If `mergeStatus` is `conflicts`, warn: "PR has merge conflicts. Rebase onto $BASE_BRANCH to resolve."
+If `mergeStatus` is `2` (`conflicts` — the tool returns the raw REST enum, so accept either the number or the name), warn: "PR has merge conflicts. Rebase onto $BASE_BRANCH to resolve."
 
 ## PR Description
 

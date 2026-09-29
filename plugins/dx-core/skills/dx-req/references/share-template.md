@@ -91,7 +91,8 @@ Before posting, check for an existing comment to avoid duplicates:
 
 1. Fetch existing comments:
    ```
-   mcp__ado__wit_list_work_item_comments
+   mcp__ado__wit_work_item
+     action: "list_comments"
      project: "<ADO project from config>"
      workItemId: <id>
    ```
@@ -120,11 +121,12 @@ Before posting, check for an existing comment to avoid duplicates:
 
 **Post:**
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project from config>"
   workItemId: <id>
-  format: "markdown"
-  comment: "<condensed share-plan>"
+  format: "Markdown"
+  text: "<condensed share-plan>"
 ```
 
 ### If provider = jira

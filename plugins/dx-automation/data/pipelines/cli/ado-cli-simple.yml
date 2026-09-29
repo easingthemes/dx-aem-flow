@@ -82,7 +82,7 @@ steps:
       set -e
       # Resolve workItemId — manual/hub parameter wins, webhook payload is fallback.
       MANUAL_ID="${{ parameters.workItemId }}"
-      WEBHOOK_ID="${{ parameters.simpleHook.resource.id }}"
+      WEBHOOK_ID="$HOOK_WI_ID"
       if [ -n "$MANUAL_ID" ]; then
         WI_ID="$MANUAL_ID"
         TRIGGER="param"
@@ -124,13 +124,19 @@ steps:
       if [ "$TRIGGER" = "webhook" ]; then
         echo "Webhook event ID:    ${{ parameters.simpleHook.id }}"
         echo "Subscription:        ${{ parameters.simpleHook.subscriptionId }}"
-        echo "Commenter:           ${{ parameters.simpleHook.resource.fields['System.ChangedBy'].displayName }}"
-        echo "Project:             ${{ parameters.simpleHook.resource.fields['System.TeamProject'] }}"
-        echo "Work item state:     ${{ parameters.simpleHook.resource.fields['System.State'] }}"
+        echo "Commenter:           $HOOK_COMMENTER"
+        echo "Project:             $HOOK_PROJECT"
+        echo "Work item state:     $HOOK_STATE"
       fi
     displayName: "Resolve work item ID + execution mode (clone target in hub mode)"
     env:
       ADO_PAT: $(ADO_PAT)
+      # Webhook payload goes through env, never into the script text: ADO expands
+      # ${{ }} before bash runs, so comment text would otherwise be parsed as shell.
+      HOOK_WI_ID: ${{ parameters.simpleHook.resource.id }}
+      HOOK_COMMENTER: ${{ parameters.simpleHook.resource.fields['System.ChangedBy'].displayName }}
+      HOOK_PROJECT: ${{ parameters.simpleHook.resource.fields['System.TeamProject'] }}
+      HOOK_STATE: ${{ parameters.simpleHook.resource.fields['System.State'] }}
 
   - task: Cache@2
     inputs:
@@ -325,9 +331,9 @@ steps:
         mcp__plugin_dx-aem_playwright__browser_snapshot,
         mcp__plugin_dx-aem_playwright__browser_evaluate,
         mcp__plugin_dx-aem_playwright__browser_wait_for,
-        mcp__ado__wit_add_work_item_comment,
-        mcp__ado__wit_get_work_item,
-        mcp__ado__repo_create_pull_request
+        mcp__ado__wit_work_item_comment_write,
+        mcp__ado__wit_work_item,
+        mcp__ado__repo_pull_request_write
     # ~11s/turn observed; 200 turns can run ~35-40 min. Give the Azure step
     # enough wall-clock to actually reach MAX_TURNS rather than being killed at
     # the step boundary first. The wrapper's own TIMEOUT_MINUTES (default 60)
