@@ -51,7 +51,7 @@ Unverified (secondary only): the "2,686 → 514 words" figure.
 | No-op phrases ("be thorough", "make sure to") | 2 | negligible |
 | Hedges ("try to", "consider") | 16 | small |
 | Dev history in skill text (issue/TODO #, dates, versions) | 34 | small, but pure waste — model can't use it |
-| CAPS emphasis (MUST/NEVER/CRITICAL/IMPORTANT/ALWAYS) | 162 in 53 skills (top: `dx-pr-review` 19, `dx-pr-answer` 10, `dx-plan` 10) | **against current guidance** |
+| CAPS emphasis (MUST/NEVER/CRITICAL/IMPORTANT/ALWAYS; 162 incl. bold "**Do not**/**Never**") | 120 in the re-measure grep, 53 skills (top: `dx-pr-review` 19, `dx-pr-answer` 10, `dx-plan` 10) | **against current guidance** |
 | `## Rules`-type sections | ~15.8k tok in 71 skills (5%) | mix of real gotchas and restated steps / generic behaviour ("Read before judging", "Human voice", "Scope your review") |
 | Verification scaffolding (double-check / re-verify) | 27 lines | tier-dependent (see guidance) |
 | Paragraphs duplicated across skills | 16, ~1.5k tok | small |
