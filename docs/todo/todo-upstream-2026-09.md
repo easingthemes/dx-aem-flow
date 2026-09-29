@@ -541,3 +541,80 @@ and #209 all touch.
 an unintaken v2.1.278 entry. Note the five `v2.1.277` references in `CLAUDE.md`,
 `AGENTS.md` and `README.md` need **no** repin — that is when AGENTS.md support shipped;
 v2.1.278 only restated the default.
+
+---
+
+# Fourth pass — 2026-09-29 (Claude Code v2.1.279–v2.1.285)
+
+Source for every item below: the Claude Code [CHANGELOG](https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md),
+release dates from `npm view @anthropic-ai/claude-code time`. Sweep write-up:
+[2026-09-29-upstream-sweep.md](../research/2026-09-29-upstream-sweep.md).
+
+## AGENTS.md caveat about Bedrock, Vertex and Foundry is now false
+
+**Added:** 2026-09-29
+**Problem:** v2.1.281 (2026-09-23) made AGENTS.md support work on Bedrock, Vertex AI,
+Foundry, LLM gateways and with telemetry off. `CLAUDE.md` § Cross-Platform Agent Support
+still says the feature is "not yet available on Bedrock, Vertex or Foundry — which is
+where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
+**Scope:** `CLAUDE.md` (line ~117), `AGENTS.md`, `README.md`, `website/src/pages/` setup pages.
+**Done-when:** `grep -rn "not yet available on Bedrock" CLAUDE.md AGENTS.md README.md website/src` returns nothing.
+**Approach:** Replace the caveat with "available on all providers since v2.1.281". Then decide if pipelines on Bedrock/Vertex now load a consumer `AGENTS.md` they did not before.
+
+## Re-verify model tier strategy against Opus 5.5 / Sonnet 5.5
+
+**Added:** 2026-09-29
+**Problem:** Opus 5.5 is the default Opus since v2.1.280 (2026-09-22, [announcement](https://www.anthropic.com/claude-opus-5-5)), Sonnet 5.5 the default Sonnet since v2.1.284 (2026-09-28). v2.1.280 also changed effort: launch-default effort no longer beats settings in `-p`/SDK runs, and a saved pre-per-model `/effort` is not applied to new models. v2.1.284 split Ultracode from `xhigh`. `CLAUDE.md` § Model Tier Strategy claims "Opus runs at `high` by default" and leans on the v2.1.267 pinned-effort story — both unchecked for Opus 5.5. `pipeline-agent.js` reads `CLAUDE_MODEL` from env; a pinned old id skips the new models.
+**Scope:** `CLAUDE.md` § Model Tier Strategy, `plugins/dx-automation/data/scripts/pipeline-agent.js`, pipeline YAMLs setting `CLAUDE_MODEL`, `scripts/check-tier.sh`.
+**Done-when:** `grep -n "Opus 5.5" CLAUDE.md` hits a statement of its default effort with a source link, AND `grep -rn "CLAUDE_MODEL" plugins/dx-automation/data/pipelines` shows alias values (or a recorded reason for a pinned id).
+**Approach:** Check docs for Opus 5.5 default effort first. Only rewrite the escalation guidance if the baseline changed.
+
+## Dangerous-`rm` prompt can stall bypass-mode pipeline runs
+
+**Added:** 2026-09-29
+**Problem:** v2.1.281 (2026-09-23): under bypass permissions a recursive `rm` whose target comes only from command substitution (`rm -rf "$(pwd)"`) now asks even with an allow rule; unanswered it waits 2 min then denies. `pipeline-agent.js` runs `permissionMode: "bypassPermissions"`; `dx-hub-status` and `dx-pr-review{,-all}` tell the model to `rm -rf` temp dirs — fine as literal paths, a stall if the model uses a variable.
+**Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-hub/skills/dx-hub-status/SKILL.md`, `plugins/dx-core/skills/dx-pr-review*/SKILL.md`.
+**Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation docs/todo` shows a decision (env set in pipeline, or skills changed to literal paths).
+**Approach:** Prefer literal paths in skill prose over disabling the guard (`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`). Fold the env decision into the #200 launcher change.
+
+## Managed model/provider allowlists for pipeline hosts
+
+**Added:** 2026-09-29
+**Problem:** v2.1.283 (2026-09-25) added `availableModelsMatch: "exact"` and `deniedModels`; v2.1.285 (2026-09-29) added `allowedProviders`. Together with `maxEffortLevel` these stop a new default model silently changing pipeline cost/behaviour (see the Opus 5.5 item above). Not mentioned anywhere.
+**Scope:** `docs/todo/todo-upstream-2026-09.md` #200 table, `website/` automation setup page.
+**Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src docs/todo` hits a recommended settings block for pipeline hosts.
+**Approach:** Docs only; ship with #200.
+
+## `/doctor prompt-audit` for the concise-body audit
+
+**Added:** 2026-09-29
+**Problem:** v2.1.283 (2026-09-25) added `/doctor prompt-audit`: audits CLAUDE.md, skills, agents and commands for old-model prompting patterns, stale paths and contradicting instruction files. That is the check #113 and #169 do by hand. Interactive only (same limit as #137/#170).
+**Scope:** all `plugins/*/skills/*/SKILL.md`, `plugins/*/agents/*.md`, `CLAUDE.md`; `docs/todo/todo-skill-conventions.md`.
+**Done-when:** a run over this repo is saved under `docs/research/` and linked from #113, with findings triaged.
+
+## Small v2.1.280–v2.1.285 notes for existing items
+
+**Added:** 2026-09-29
+**Problem:** Smaller changes that belong in open items, not new work:
+- `claude plugin validate` now flags dropped `.mcp.json` entries, undeclared `${user_config.*}`, insecure MCP URLs, unquoted `${CLAUDE_PLUGIN_ROOT}` in shell hooks, uninstallable marketplace names (v2.1.281/283) → #180.
+- `claude plugin configure <plugin> --values-stdin`, `claude plugin install --config <server>.<key>=<value>` (v2.1.285) → #199.
+- `CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH` (v2.1.280), `--agents <file>` with `-p` (v2.1.281), background Bash time limit 30 min / 2 h max (v2.1.285), `CLAUDE_CODE_DISABLE_WEB_FETCH` (v2.1.285) → #200.
+- 2 s wait for servers named in `--allowedTools` (v2.1.284) → #209. `_meta` alwaysLoad override (v2.1.285) → #205.
+- `claude plugin eval` needs git ≥ 2.31 (v2.1.283) → #206.
+- Missed in August: `experimental.cacheTtl` agent frontmatter + `promptCacheTtl`/`subagentPromptCacheTtl` (v2.1.243/248) → `docs/research/token-cache-deep-research.md`; `archive` plugin source with SHA-256 pin (v2.1.224).
+**Scope:** the listed TODO detail sections.
+**Done-when:** `grep -n "values-stdin" docs/todo/todo-upstream-2026-09.md` and `grep -n "cacheTtl" docs/research/token-cache-deep-research.md` both hit inside the target sections (not only here).
+
+## Remote MCP endpoints — ADO Remote MCP and Adobe unified AEM MCP
+
+**Added:** 2026-09-29
+**Problem:** Azure DevOps Remote MCP Server went GA 2026-08-05 ([devblogs](https://devblogs.microsoft.com/devops/azure-devops-remote-mcp-server-ga/); VS Code/Copilot CLI yes, Claude Code not yet — needs Entra dynamic client registration). Adobe launched a unified AEM MCP at `https://mcp.adobeaemcloud.com/adobe/mcp/aem` (July 2026, doc updated 2026-09-24, [Experience League](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/ai-in-aem/mcp-support/using-mcp-with-aem-as-a-cloud-service)) — Cloud Service only, runs as signed-in user, per-category read-only, lists Claude Code as client. Zero mentions in the repo; directly relevant to #127 (AEM MCP localhost dependency in pipelines).
+**Scope:** `plugins/dx-core/skills/dx-init/SKILL.md`, `plugins/dx-aem/skills/aem-init/SKILL.md`, `plugins/dx-aem/.mcp.json`, website setup pages, #127.
+**Done-when:** `grep -rln "adobeaemcloud.com/adobe/mcp" plugins website/src` hits the aem-init docs, and #127's detail records a decision on the Adobe endpoint.
+
+## Plugin4Shell — marketplace pin spoofing (watch)
+
+**Added:** 2026-09-29
+**Problem:** Disclosed 2026-09-17 ([The Hacker News](https://thehackernews.com/2026/09/plugin4shell-lets-repository-owners.html), medium-high credibility): a branch named like a pinned commit hash serves other code while the pin looks intact. Claude Code fixed in 2.1.179; Copilot CLI reported unpatched, and we support it.
+**Scope:** install docs (`README.md`, website install pages).
+**Done-when:** Copilot CLI changelog shows a fix (then close), or install docs carry one line of guidance on hosting marketplace mirrors.

@@ -333,3 +333,36 @@ than one producer to read.
 **Approach:** Lift, don't rewrite — `dx-simple`'s G1–G9 taxonomy is already the design.
 The work is extracting it to a rule file, making the numeric caps config lookups, and
 having three more skills write the same JSON shape.
+
+## Shell injection from webhook payload in pipeline scripts
+
+**Added:** 2026-09-29
+**Problem:** ADO expands `${{ }}` template expressions into the script text **before** bash runs. `ado-cli-bug-fix.yml:135` does `echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"` — the raw work-item comment. Any comment with `@kai-bugfix` plus `$(...)` or backticks runs as shell in a step that has `ADO_PAT` in env; echoing it also lets a commenter inject `##vso[task.setvariable ...]` logging commands. `ado-cli-hub.yml:83` does `COMMENT='${{ ...System.History... }}'` — one apostrophe breaks out. `todo-universal-trigger.md` proposes the same pattern. This is shell injection, not prompt injection — any user who can comment on a work item can run code on the agent.
+Source: Microsoft Learn, [Securely use variables and parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/security/inputs) (updated 2026-08-17).
+**Scope:** `plugins/dx-automation/data/pipelines/cli/*.yml` (every `resources.webhooks` listener: simple, bug-fix, dor, hub), `docs/todo/todo-universal-trigger.md`.
+**Done-when:** `grep -rnE '\$\{\{[^}]*Hook\.resource' plugins/dx-automation/data/pipelines | grep -v 'contains('` finds nothing inside `script:` bodies (only `env:` mappings), AND a hermetic `*.test.sh` feeds a comment containing `$(touch pwned)`, a `'` and `##vso[task.setvariable` through the step logic and asserts none takes effect.
+**Approach:** Map payload fields to `env:` and read `"$COMMENT"` quoted; never echo raw payload (strip or prefix lines so `##vso[` cannot start a line); set `settableVariables: none` (or a list) on these steps.
+
+## Commenter allowlist + untrusted-content rule for comment-triggered agents
+
+**Added:** 2026-09-29
+**Problem:** Comment tokens (`@kai-simple`, `@kai-bugfix`, `@kai-dor`) start writing agents for **anyone** who can comment. `System.ChangedBy` is only logged (`ado-cli-simple.yml:127`), never checked. The three writing coordinators `dx-simple`, `dx-bug-all`, `dx-agent-all` do not reference `plugins/dx-core/shared/external-content-safety.md` (grep count 0), though six other skills do. Pipelines use a static `ADO_PAT`, not the short-lived `System.AccessToken`. The claude-code-action default is write-access-only triggers ([security.md](https://github.com/anthropics/claude-code-action/blob/main/docs/security.md)).
+**Scope:** `plugins/dx-automation/data/pipelines/cli/ado-cli-{simple,bug-fix,dor,hub}.yml`, `plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md`, config template (`dx-simple.recovery.*` and siblings).
+**Done-when:** `grep -l external-content-safety plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md` returns all three, AND a config key such as `dx-simple.recovery.allowed-commenters` exists and each webhook pipeline checks it before the agent step.
+**Approach:** Ship with the shell-injection fix above; complements #216 (idempotency). Evaluate `System.AccessToken` vs PAT separately — scope of repo/PR writes may need the PAT.
+
+## Pin and scope the ADO MCP server in pipelines
+
+**Added:** 2026-09-29
+**Problem:** `pipeline-agent.js:62` runs `npx -y @azure-devops/mcp` with no version and no `-d` domain filter, so every run loads all tool domains (bigger tool list, more write surface) and takes whatever `latest` is. `ado-cli-dor.yml:124` does unpinned `npm install`; `dx-init/SKILL.md:322` also omits `-d`. The [ADO MCP README](https://github.com/microsoft/azure-devops-mcp) (v2.10.0, 2026-09-09) documents `-d` domains. Upcoming nightly adds a repo file create/update tool (#1620) — a new write capability that an unscoped server would pick up automatically.
+**Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-automation/data/pipelines/cli/*.yml`, `plugins/dx-core/skills/dx-init/SKILL.md`.
+**Done-when:** `grep -rn "@azure-devops/mcp" plugins/dx-automation` shows every use as `@azure-devops/mcp@<x.y.z>` with a `-d` list.
+**Approach:** Per-agent domain list (e.g. DoR needs `work-items` only). Keep dx-init interactive default broad but document `-d`.
+
+## Bump Playwright MCP and disable WebMCP
+
+**Added:** 2026-09-29
+**Problem:** `plugins/dx-aem/.mcp.json` pins `@playwright/mcp@0.0.75` (2026-05-07). Later releases fix path traversal (0.0.76), secret redaction (0.0.77) and symlink traversal (0.0.81). But 0.0.82 exposes tools a visited page registers (WebMCP) as MCP tools by default — a prompt-injection path for the QA/verify agents browsing AEM pages. Source: [playwright-mcp releases](https://github.com/microsoft/playwright-mcp/releases) (to v0.0.83, 2026-09-28).
+**Scope:** `plugins/dx-aem/.mcp.json`, `plugins/dx-aem/.cursor-plugin` MCP config if separate, any pipeline MCP config spawning Playwright.
+**Done-when:** `grep -rn "@playwright/mcp@" plugins` shows ≥0.0.83 and `grep -rn "no-webmcp" plugins/dx-aem` hits the same args list.
+**Approach:** Verify the exact opt-out flag name in the v0.0.82 release notes before bumping.
