@@ -99,7 +99,7 @@ Same three steps, wrapped in recovery. You DO read state and post ADO comments h
 `$ARGUMENTS` is `<id-or-url> [free text]`. Extract numeric `TICKET_ID`; trailing text is `INLINE_INPUT`. The free text after the trigger token is the **primary instruction** — exactly like `/dx-bug-all <id> <instruction>` locally. Resolve `USER_INPUT` once:
 
 1. If `INLINE_INPUT` non-empty → `USER_INPUT="$INLINE_INPUT"`, `TRIGGER_COMMENT_ID=""`.
-2. Else (fired by an ADO comment) fetch comments and pick the triggering one — `mcp__ado__wit_list_work_item_comments` with `workItemId=$TICKET_ID`; choose the comment that is (a) authored by a **non-bot** identity, (b) contains `$TRIGGER_TOKEN`, (c) has the **highest** ADO comment id. Strip the token → `USER_INPUT`; record its id as `TRIGGER_COMMENT_ID`.
+2. Else (fired by an ADO comment) fetch comments and pick the triggering one — `mcp__ado__wit_work_item` with `action: "list_comments"`, `workItemId=$TICKET_ID`; choose the comment that is (a) authored by a **non-bot** identity, (b) contains `$TRIGGER_TOKEN`, (c) has the **highest** ADO comment id. Strip the token → `USER_INPUT`; record its id as `TRIGGER_COMMENT_ID`.
 3. `USER_INPUT` may be empty (bare `@<keyword>` with no words) — then only the bug body drives the work.
 
 `USER_INPUT` is authoritative where it conflicts with the bug body. Pass it to triage/fix as extra context, and use it (with `TRIGGER_COMMENT_ID` vs `COMMENT_CURSOR`) on the `done`-reopen and blocked-answer paths.
@@ -122,7 +122,7 @@ MAX_ATTEMPTS=$(bash .ai/lib/dx-common.sh yaml-val 'dx-bug-all.recovery.max-attem
 bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/preflight.sh
 ```
 
-If it exits non-zero, **STOP**: post the stderr to ADO (`mcp__ado__wit_add_work_item_comment`), touch `.ai/run-context/ado-comment-posted.flag`, exit non-zero. No other action.
+If it exits non-zero, **STOP**: post the stderr to ADO (`mcp__ado__wit_work_item_comment_write`, `action: "add"`, stderr as `text`), touch `.ai/run-context/ado-comment-posted.flag`, exit non-zero. No other action.
 
 **Then touch the orchestration flag — unconditionally, on EVERY pipeline run (fresh AND resume), before Phase 0:**
 ```bash
@@ -268,7 +268,7 @@ If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is 
 
 1. Render `report.md` (completion table + PR URL + what-was-done + verify result).
 2. **Log the run** exactly as Local mode does (`runs.jsonl` + `bugs.jsonl`; hotspot + known-pattern checks).
-3. Post a truncated report to ADO (`mcp__ado__wit_add_work_item_comment`), then record it so the pipeline fallback doesn't double-post:
+3. Post a truncated report to ADO (`mcp__ado__wit_work_item_comment_write`, `action: "add"`), then record it so the pipeline fallback doesn't double-post:
    ```bash
    mkdir -p .ai/run-context && touch .ai/run-context/ado-comment-posted.flag
    ```

@@ -39,7 +39,7 @@ bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/preflight.sh
 If it exits non-zero, **STOP**. Post the stderr to ADO as a comment:
 
 ```
-mcp__ado__wit_add_work_item_comment with the preflight error text
+mcp__ado__wit_work_item_comment_write with action="add", text=<the preflight error text>
 ```
 
 Exit non-zero. **No other action.**
@@ -73,7 +73,7 @@ the pipeline; the words after it are the prompt. Resolve `USER_INPUT` once, here
 2. **Pipeline run** (fired by an ADO comment) — else fetch comments and select the
    triggering one:
    ```
-   mcp__ado__wit_list_work_item_comments with workItemId=$TICKET_ID
+   mcp__ado__wit_work_item with action="list_comments", workItemId=$TICKET_ID
    ```
    Pick the comment that is (a) authored by a **non-bot** identity, (b) contains
    `$TRIGGER_TOKEN`, (c) has the **highest** ADO comment id (ids are monotonic).
@@ -377,7 +377,7 @@ would). Refuse to reopen on a stale or already-consumed comment.
 Only on `resume-blocked-input` (or `ambiguous-branch` resolution). Select the
 human's answer and apply it before re-entering the blocked phase.
 
-1. Fetch comments (`mcp__ado__wit_list_work_item_comments`). Select the comment
+1. Fetch comments (`mcp__ado__wit_work_item`, `action: "list_comments"`). Select the comment
    that is: (a) authored by a **non-bot** identity, (b) contains the trigger token
    (`$TRIGGER_TOKEN`), (c) has the **highest ADO comment id** (ids are monotonic —
    order by id, not timestamp), and (d) id > the stored `comment-cursor`. If none
@@ -419,7 +419,7 @@ re-applies the work-plan as part of its normal flow.
 
 1. Fetch the work item:
    ```
-   mcp__ado__wit_get_work_item with id=$TICKET_ID
+   mcp__ado__wit_work_item with action="get", id=$TICKET_ID
    ```
    Write the description + comments to `$SPEC_DIR/raw-story.md` with provenance
    frontmatter. Record the resolved `USER_INPUT` (the post-trigger instruction, see
@@ -839,7 +839,7 @@ Write the review to `$SPEC_DIR/diff-review.md`.
      bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 6"
      ```
    - **Detect an existing open PR** for this branch first
-     (`mcp__ado__repo_list_pull_requests_by_repo_or_project` with
+     (`mcp__ado__repo_pull_request` with `action: "list"`,
      `sourceRefName: refs/heads/<branch>`, `status: Active`). If one exists, switch
      `/dx-pr-commit` to **update-mode** (push new commits + update the description)
      instead of creating a second PR — a crash between PR-create and the post-create
@@ -861,7 +861,7 @@ Render `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/report.md.tmpl` into `$SP
 
 Post a truncated version to ADO:
 ```
-mcp__ado__wit_add_work_item_comment with id=<ticket>, comment=<truncated report>
+mcp__ado__wit_work_item_comment_write with action="add", workItemId=<ticket>, text=<truncated report>
 ```
 
 After the comment posts successfully, record it so the pipeline's fallback step

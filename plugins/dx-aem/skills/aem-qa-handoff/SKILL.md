@@ -115,7 +115,8 @@ Read from spec dir (all optional):
 
 Also fetch ADO work item for title and PR link:
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   id: <work-item-id>
 ```
 
@@ -166,7 +167,8 @@ Fill in:
 
 Search comments for `[QAHandoff]` signature:
 ```
-mcp__ado__wit_list_work_item_comments
+mcp__ado__wit_work_item
+  action: "list_comments"
   workItemId: <work-item-id>
 ```
 
@@ -177,10 +179,11 @@ If found, take "yes" path. If not, "no".
 ### Post new comment to ADO
 
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   workItemId: <work-item-id>
   text: "<filled-template>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
 ### Post update comment to ADO

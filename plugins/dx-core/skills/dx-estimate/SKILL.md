@@ -163,7 +163,7 @@ Read `.ai/config.yaml` to get the ADO project name (`ado.project` or `scm.ado-pr
 
 **Check for existing estimation comment:**
 
-Use `mcp__ado__wit_list_work_item_comments` to list existing comments on the work item. Search for one containing the signature `<!-- ai:role:estimation-agent -->`.
+Use `mcp__ado__wit_work_item` with `action: "list_comments"` to list existing comments on the work item. Search for one containing the signature `<!-- ai:role:estimation-agent -->`.
 
 ### If provider = jira
 
@@ -173,7 +173,7 @@ mcp__atlassian__jira_get_issue
   issue_key: "<issue key>"
 ```
 
-- If found: use `mcp__ado__wit_update_work_item_comment` (or post a new comment — whichever the MCP supports) to update it. For Jira, use `mcp__atlassian__jira_edit_comment` if updating.
+- If found: use `mcp__ado__wit_work_item_comment_write` with `action: "update"` (`workItemId`, `commentId`, `text`) to update it. For Jira, use `mcp__atlassian__jira_edit_comment` if updating.
 - If not found: post a new comment
 
 **Dry run check:** If the user's prompt includes "dry run" (case-insensitive), print the estimation to stdout and do NOT post to ADO. Print: `(Dry run — estimation not posted to ADO)`
@@ -214,11 +214,12 @@ mcp__atlassian__jira_get_issue
 
 Post the comment:
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project>"
   workItemId: <id>
   text: "<comment markdown>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
 ### If provider = jira

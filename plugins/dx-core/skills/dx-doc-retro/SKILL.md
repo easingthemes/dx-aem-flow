@@ -26,10 +26,11 @@ Read `.ai/config.yaml` for:
 ## 2. Fetch Work Item
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: <scm.project>
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 Extract:
@@ -53,7 +54,8 @@ vstfs:///Git/PullRequestId/{projectId}%2F{repoId}%2F{pullRequestId}
 For each PR link, extract the `pullRequestId` and fetch:
 
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   repositoryId: <scm.repo-id>
   pullRequestId: <extracted PR ID>
 ```
@@ -168,8 +170,8 @@ Follow the same wiki posting logic as `/dx-doc-gen` (step 6a):
 1. Read wiki config (`scm.wiki-id`, `scm.wiki-project`, `scm.wiki-doc-root`)
 2. Build path: `<wiki-doc-root>/<Sprint XX>/<id>-<slug>`
 3. Create sprint subfolder if needed
-4. **Check for existing page by ID prefix** — list pages under the sprint folder (`mcp__ado__wiki_list_pages`) and check if any page name starts with `<id>-`. If found, reuse that existing path instead of the newly generated slug. The work item ID prefix is unique per story.
-5. Create or update the page via `mcp__ado__wiki_create_or_update_page`
+4. **Check for existing page by ID prefix** — list pages under the sprint folder (`mcp__ado__wiki` with `action: "list_pages"`) and check if any page name starts with `<id>-`. If found, reuse that existing path instead of the newly generated slug. The work item ID prefix is unique per story.
+5. Create or update the page via `mcp__ado__wiki_upsert_page`
 
 If `scm.wiki-id` is not configured, save locally only.
 
