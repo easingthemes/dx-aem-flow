@@ -8,12 +8,10 @@ tools:
   - codebase
   - search
   - search/codebase
-  - 'ado/repo_get_repo_by_name_or_id'
-  - 'ado/repo_get_pull_request_by_id'
-  - 'ado/repo_list_pull_requests_by_repo_or_project'
-  - 'ado/repo_list_pull_request_threads'
-  - 'ado/repo_list_pull_request_thread_comments'
-  - 'ado/repo_reply_to_comment'
+  - 'ado/repo_repository'
+  - 'ado/repo_pull_request'
+  - 'ado/repo_pull_request_thread'
+  - 'ado/repo_pull_request_thread_write'
 handoffs:
   - label: "Apply code fixes from agree-will-fix threads"
     agent: AEMPRFix
@@ -57,7 +55,8 @@ git remote get-url origin
 ## 2. Resolve Repo
 
 ```
-ado/repo_get_repo_by_name_or_id
+ado/repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -71,7 +70,8 @@ Detect current user via `git config user.email`.
 ### Single PR mode
 
 ```
-ado/repo_get_pull_request_by_id
+ado/repo_pull_request
+  action: "get"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -81,7 +81,8 @@ Verify PR is mine. If not: "This PR was created by <author> — not yours. Use @
 ### Multiple PR mode
 
 ```
-ado/repo_list_pull_requests_by_repo_or_project
+ado/repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   created_by_me: true
   status: "Active"
@@ -105,7 +106,8 @@ Check `.ai/pr-answers/pr-<id>.md`. If found:
 ### 5a. Fetch Active Threads
 
 ```
-ado/repo_list_pull_request_threads
+ado/repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   status: "Active"
@@ -115,7 +117,8 @@ ado/repo_list_pull_request_threads
 ### 5b. Read Thread Comments
 
 ```
-ado/repo_list_pull_request_thread_comments
+ado/repo_pull_request_thread
+  action: "list_comments"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -207,7 +210,8 @@ For any `disagree` thread, ask the user to confirm individually before including
 ## 7. Post Approved Answers
 
 ```
-ado/repo_reply_to_comment
+ado/repo_pull_request_thread_write
+  action: "reply"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>

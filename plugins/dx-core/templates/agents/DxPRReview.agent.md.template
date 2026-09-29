@@ -8,11 +8,10 @@ tools:
   - codebase
   - search
   - search/codebase
-  - 'ado/repo_get_repo_by_name_or_id'
-  - 'ado/repo_get_pull_request_by_id'
-  - 'ado/repo_list_pull_requests_by_repo_or_project'
-  - 'ado/repo_list_pull_request_threads'
-  - 'ado/repo_create_pull_request_thread'
+  - 'ado/repo_repository'
+  - 'ado/repo_pull_request'
+  - 'ado/repo_pull_request_thread'
+  - 'ado/repo_pull_request_thread_write'
 handoffs:
   - label: "Full branch code review"
     agent: DxCodeReview
@@ -71,7 +70,8 @@ Extract repo name from the remote URL.
 ## 2. Resolve Repo
 
 ```
-ado/repo_get_repo_by_name_or_id
+ado/repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -121,7 +121,8 @@ After presenting, ask the user:
 Post each comment as a thread:
 
 ```
-ado/repo_create_pull_request_thread
+ado/repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "<comment text>"
@@ -130,7 +131,7 @@ ado/repo_create_pull_request_thread
   rightFileEndLine: <line>
   rightFileStartOffset: 1
   rightFileEndOffset: 1
-  status: "active"
+  status: "Active"
 ```
 
 ## Rules

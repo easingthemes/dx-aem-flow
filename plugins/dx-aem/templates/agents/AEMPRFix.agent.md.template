@@ -10,11 +10,10 @@ tools:
   - runCommands
   - search
   - search/codebase
-  - 'ado/repo_get_repo_by_name_or_id'
-  - 'ado/repo_get_pull_request_by_id'
-  - 'ado/repo_list_pull_request_threads'
-  - 'ado/repo_list_pull_request_thread_comments'
-  - 'ado/repo_reply_to_comment'
+  - 'ado/repo_repository'
+  - 'ado/repo_pull_request'
+  - 'ado/repo_pull_request_thread'
+  - 'ado/repo_pull_request_thread_write'
 handoffs:
   - label: "Answer new PR comments"
     agent: AEMPRAnswer
@@ -71,7 +70,8 @@ If no session file exists for the given PR:
 
 1. Resolve the repo (use project from URL if provided, otherwise from config):
    ```
-   ado/repo_get_repo_by_name_or_id
+   ado/repo_repository
+     action: "get"
      project: "<project from URL if provided, otherwise from config>"
      repositoryNameOrId: "<repo name from URL or git remote>"
    ```
@@ -157,7 +157,8 @@ Use the **repo ID** from the session file directly — do NOT re-resolve from co
 For each fixed thread, post a follow-up reply:
 
 ```
-ado/repo_reply_to_comment
+ado/repo_pull_request_thread_write
+  action: "reply"
   repositoryId: "<repo ID from session>"
   pullRequestId: <PR ID>
   threadId: <thread ID>

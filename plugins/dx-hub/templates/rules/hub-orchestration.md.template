@@ -31,7 +31,7 @@ The hub dispatches work by opening VS Code terminals via the `vscode-automator` 
 
 ## Working with Tickets
 
-- Use the ADO MCP tools (`mcp__ado__wit_get_work_item`, `mcp__ado__wit_get_work_items_batch_by_ids`) to read work items.
+- Use the ADO MCP tools (`mcp__ado__wit_work_item` with `action: "get"`, or `action: "get_batch"` for several IDs) to read work items.
 - When asked about multiple tickets, batch-read them and present a summary table.
 - Check `state/<ticket-id>/status.json` for dispatch progress.
 
@@ -110,7 +110,7 @@ To assess where a ticket stands:
 ## Demo Preparation
 
 When asked to prepare for a demo or status update:
-1. Read all requested tickets from ADO (batch with `mcp__ado__wit_get_work_items_batch_by_ids`)
+1. Read all requested tickets from ADO (batch with `mcp__ado__wit_work_item`, `action: "get_batch"`)
 2. For each ticket, check `state/` for dispatch status and scan sibling repos for spec directories
 3. Summarize in a table: ticket ID, title, type (Story/Bug), repo, current stage, steps done/total, what's left
 4. Highlight blockers, open questions, or tickets with no progress
