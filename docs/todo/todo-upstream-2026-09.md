@@ -574,7 +574,7 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Added:** 2026-09-29
 **Problem:** v2.1.281 (2026-09-23): under bypass permissions a recursive `rm` whose target comes only from command substitution (`rm -rf "$(pwd)"`) now asks even with an allow rule; unanswered it waits 2 min then denies. `pipeline-agent.js` runs `permissionMode: "bypassPermissions"`; `dx-hub-status` and `dx-pr-review{,-all}` tell the model to `rm -rf` temp dirs — fine as literal paths, a stall if the model uses a variable.
 **Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-hub/skills/dx-hub-status/SKILL.md`, `plugins/dx-core/skills/dx-pr-review*/SKILL.md`.
-**Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation docs/todo` shows a decision (env set in pipeline, or skills changed to literal paths).
+**Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation` shows the env decision in the launcher, OR `grep -rnE 'rm -rf "?\$' plugins/*/skills` returns nothing (skills use literal paths only) (env set in pipeline, or skills changed to literal paths).
 **Approach:** Prefer literal paths in skill prose over disabling the guard (`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`). Fold the env decision into the #200 launcher change.
 
 ## Managed model/provider allowlists for pipeline hosts
@@ -582,7 +582,7 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Added:** 2026-09-29
 **Problem:** v2.1.283 (2026-09-25) added `availableModelsMatch: "exact"` and `deniedModels`; v2.1.285 (2026-09-29) added `allowedProviders`. Together with `maxEffortLevel` these stop a new default model silently changing pipeline cost/behaviour (see the Opus 5.5 item above). Not mentioned anywhere.
 **Scope:** `docs/todo/todo-upstream-2026-09.md` #200 table, `website/` automation setup page.
-**Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src docs/todo` hits a recommended settings block for pipeline hosts.
+**Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` hits a recommended settings block for pipeline hosts.
 **Approach:** Docs only; ship with #200.
 
 ## `/doctor prompt-audit` for the concise-body audit
