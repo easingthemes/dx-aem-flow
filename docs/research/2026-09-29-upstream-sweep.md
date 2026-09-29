@@ -19,9 +19,11 @@ Copilot retires GPT-5.5/5.4/5.4 mini/5 mini, Grok 4.5, Gemini 3.7 Flash on 2026-
 
 ## Verdict
 
-Current on the platform features, **behind on pipeline security**. The biggest finding is not
-upstream at all: webhook payload text is expanded into bash in two pipelines (#231), and
-comment-triggered writing agents have no commenter check (#232).
+Current on the platform features, behind on execution. Biggest finding is not upstream:
+webhook payload text is expanded into bash in two pipelines (#231), so a normal comment with an
+apostrophe or backticks breaks the step. **Threat model (decided 2026-09-29):** every ADO user is
+trusted and anyone may trigger an agent by comment — no commenter allowlist. #231 is robustness,
+#232 is only the external-content rule for text that did not come from ADO users.
 
 ## New TODOs
 
@@ -37,8 +39,8 @@ comment-triggered writing agents have no commenter check (#232).
 | 228 | Tier Copilot agents (`model`, `reasoning-effort`) | Medium | Copilot |
 | 229 | v1.0.87–89 notes, re-anchor re-test to v1.0.89 | Low | Copilot |
 | 230 | Tips use retiring Copilot models | Low | Copilot |
-| 231 | Shell injection from webhook payload | High | Practice |
-| 232 | Commenter allowlist + untrusted-content rule | High | Practice |
+| 231 | Comment text breaks pipeline scripts (unquoted payload) | Medium | Practice |
+| 232 | External-content rule in 3 writing coordinators (no allowlist) | Low | Practice |
 | 233 | Pin + `-d` scope ADO MCP in pipelines | Medium | Practice |
 | 234 | Bump Playwright MCP, disable WebMCP | Medium | Practice |
 | 235 | Remote MCP endpoints (ADO, Adobe AEM) | Low | Practice |

@@ -334,22 +334,24 @@ than one producer to read.
 The work is extracting it to a rule file, making the numeric caps config lookups, and
 having three more skills write the same JSON shape.
 
-## Shell injection from webhook payload in pipeline scripts
+## Comment text breaks pipeline scripts (unquoted webhook payload)
 
 **Added:** 2026-09-29
-**Problem:** ADO expands `${{ }}` template expressions into the script text **before** bash runs. `ado-cli-bug-fix.yml:135` does `echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"` — the raw work-item comment. Any comment with `@kai-bugfix` plus `$(...)` or backticks runs as shell in a step that has `ADO_PAT` in env; echoing it also lets a commenter inject `##vso[task.setvariable ...]` logging commands. `ado-cli-hub.yml:83` does `COMMENT='${{ ...System.History... }}'` — one apostrophe breaks out. `todo-universal-trigger.md` proposes the same pattern. This is shell injection, not prompt injection — any user who can comment on a work item can run code on the agent.
+**Decision (2026-09-29):** every ADO user is trusted and anyone may trigger an agent by comment — this is **not** a security item. It is a robustness bug.
+**Problem:** ADO expands `${{ }}` into the script text **before** bash runs. `ado-cli-bug-fix.yml:135` does `echo "${{ parameters.bugfixHook.resource.fields['System.History'] }}"` and `ado-cli-hub.yml:83` does `COMMENT='${{ ...System.History... }}'`. So ordinary comment text becomes shell code: an apostrophe ("doesn't work") ends the quote in hub mode, backticks or `$(...)` from a pasted snippet run as commands, and a line starting `##vso[` is read as a logging command. Result: step fails or does something odd on a normal bug comment, and the agent never starts.
 Source: Microsoft Learn, [Securely use variables and parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/security/inputs) (updated 2026-08-17).
-**Scope:** `plugins/dx-automation/data/pipelines/cli/*.yml` (every `resources.webhooks` listener: simple, bug-fix, dor, hub), `docs/todo/todo-universal-trigger.md`.
-**Done-when:** `grep -rnE '\$\{\{[^}]*Hook\.resource' plugins/dx-automation/data/pipelines | grep -v 'contains('` finds nothing inside `script:` bodies (only `env:` mappings), AND a hermetic `*.test.sh` feeds a comment containing `$(touch pwned)`, a `'` and `##vso[task.setvariable` through the step logic and asserts none takes effect.
-**Approach:** Map payload fields to `env:` and read `"$COMMENT"` quoted; never echo raw payload (strip or prefix lines so `##vso[` cannot start a line); set `settableVariables: none` (or a list) on these steps.
+**Scope:** `plugins/dx-automation/data/pipelines/cli/*.yml` (webhook listeners: simple, bug-fix, dor, hub), `docs/todo/todo-universal-trigger.md` (proposes the same pattern).
+**Done-when:** `grep -rnE '\$\{\{[^}]*Hook\.resource' plugins/dx-automation/data/pipelines | grep -v 'contains('` finds nothing inside `script:` bodies (only `env:` mappings), AND a hermetic `*.test.sh` runs the step logic with a comment containing `doesn't`, `` `npm run build` `` and a `##vso[` line and asserts the token is still parsed and nothing is executed.
+**Approach:** Map payload fields to `env:` and read `"$COMMENT"` quoted; don't echo the raw body (or prefix each line). Small, mechanical.
 
-## Commenter allowlist + untrusted-content rule for comment-triggered agents
+## External-content rule in the comment-triggered writing coordinators
 
 **Added:** 2026-09-29
-**Problem:** Comment tokens (`@kai-simple`, `@kai-bugfix`, `@kai-dor`) start writing agents for **anyone** who can comment. `System.ChangedBy` is only logged (`ado-cli-simple.yml:127`), never checked. The three writing coordinators `dx-simple`, `dx-bug-all`, `dx-agent-all` do not reference `plugins/dx-core/shared/external-content-safety.md` (grep count 0), though six other skills do. Pipelines use a static `ADO_PAT`, not the short-lived `System.AccessToken`. The claude-code-action default is write-access-only triggers ([security.md](https://github.com/anthropics/claude-code-action/blob/main/docs/security.md)).
-**Scope:** `plugins/dx-automation/data/pipelines/cli/ado-cli-{simple,bug-fix,dor,hub}.yml`, `plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md`, config template (`dx-simple.recovery.*` and siblings).
-**Done-when:** `grep -l external-content-safety plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md` returns all three, AND a config key such as `dx-simple.recovery.allowed-commenters` exists and each webhook pipeline checks it before the agent step.
-**Approach:** Ship with the shell-injection fix above; complements #216 (idempotency). Evaluate `System.AccessToken` vs PAT separately — scope of repo/PR writes may need the PAT.
+**Decision (2026-09-29):** no commenter allowlist and no `System.ChangedBy` check — anyone with ADO access may start a pipeline by comment; they already have more power than the pipeline (it only commits to a branch / opens a PR). Static `ADO_PAT` stays.
+**Problem:** Only residual gap: the three writing coordinators `dx-simple`, `dx-bug-all`, `dx-agent-all` don't reference `plugins/dx-core/shared/external-content-safety.md`, though six other skills do. The point is not distrust of ADO users but text that **did not come from them**: customer text pasted into bugs, email imports, AEM page content and web pages read via Playwright, Figma text.
+**Scope:** `plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md`.
+**Done-when:** `grep -l external-content-safety plugins/dx-core/skills/{dx-simple,dx-bug-all,dx-agent-all}/SKILL.md` returns all three.
+**Approach:** One line each, same wording as the other six skills.
 
 ## Pin and scope the ADO MCP server in pipelines
 
