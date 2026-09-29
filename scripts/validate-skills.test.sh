@@ -170,7 +170,57 @@ check "missing name exits non-zero" "1" "$rc"
 check "missing name says so" "1" \
   "$(echo "$out" | grep -c "name: '' does not match directory 'dx-noname'")"
 
-# --- 7. the real tree is still green ------------------------------------------
+# --- 7. reasoning-echo instructions are an ERROR (TODO #239) ------------------
+reset_fixture
+write_skill "dx-echo" <<'SKILL'
+---
+name: dx-echo
+description: A short description.
+---
+
+Before answering, think step by step and show your reasoning to the user.
+SKILL
+out=$(run_validator); rc=$?
+check "reasoning-echo in a skill body exits non-zero" "1" "$rc"
+check "reasoning-echo names file and line" "1" \
+  "$(echo "$out" | grep -c 'plugins/dx-test/skills/dx-echo/SKILL.md:6 — reasoning-echo')"
+
+# references/ are loaded too, so they are checked too
+reset_fixture
+make_skill "dx-refs" "A short description." 3
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/skills/dx-refs/references"
+echo "Explain your reasoning in the final report." \
+  > "$FIXTURE_ROOT/plugins/dx-test/skills/dx-refs/references/notes.md"
+out=$(run_validator); rc=$?
+check "reasoning-echo in references/ exits non-zero" "1" "$rc"
+check "reasoning-echo in references/ is located" "1" \
+  "$(echo "$out" | grep -c 'dx-refs/references/notes.md:1 — reasoning-echo')"
+
+# agents are prompts too
+reset_fixture
+make_skill "dx-ok" "A short description." 3
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/agents"
+printf -- '---\nname: dx-a\n---\nUse chain-of-thought and print your reasoning.\n' \
+  > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-a.md"
+out=$(run_validator); rc=$?
+check "reasoning-echo in an agent exits non-zero" "1" "$rc"
+check "one error per offending line" "1" \
+  "$(echo "$out" | grep -c 'agents/dx-a.md:4 — reasoning-echo')"
+
+# plain mention of reasoning is fine — the check targets instructions to print it
+reset_fixture
+write_skill "dx-plain" <<'SKILL'
+---
+name: dx-plain
+description: A short description.
+---
+
+Record the reasoning behind each decision in decisions.yaml.
+SKILL
+out=$(run_validator); rc=$?
+check "ordinary use of the word 'reasoning' passes" "0" "$rc"
+
+# --- 8. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))

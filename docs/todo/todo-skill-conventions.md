@@ -529,6 +529,8 @@ listing).
 
 ## 19. Lint for reasoning-echo instructions
 
+**Status:** Done 2026-09-29 — `scripts/validate-skills.sh` check 7; fixtures in `validate-skills.test.sh` (6 fail with the check disabled).
+
 **Added:** 2026-09-29
 **Problem:** The Fable 5 / Opus 5.5 / Sonnet 5.5 prompting pages say prompts that make the model
 print its reasoning can be refused (`stop_reason: "refusal"`), and server-side fallback does

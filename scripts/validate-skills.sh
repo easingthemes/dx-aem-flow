@@ -8,6 +8,7 @@
 # 4. No collisions with known Claude Code built-in commands
 # 5. description: field exists, is non-empty, and is at most 1024 chars (platform cap)
 # 6. SKILL.md body (frontmatter excluded) under 500 lines — WARN, ratcheted
+# 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 
 set -euo pipefail
 
@@ -31,6 +32,23 @@ BODY_MAX=${BODY_MAX:-500}
 # Measured 2026-09-19 across 77 skills. Lower this when a skill is trimmed.
 BODY_OVER_BASELINE=${BODY_OVER_BASELINE:-13}
 BODY_OVER=0
+
+# Asking the model to print its reasoning can make Claude 5 models refuse
+# (`stop_reason: "refusal"`), and server-side fallback does not retry it — a
+# failed pipeline run. Source: Anthropic prompting pages for Fable 5 /
+# Opus 5.5 / Sonnet 5.5. TODO #239.
+REASONING_ECHO='explain your reasoning|show your (thinking|reasoning|work)|think step[- ]by[- ]step|reasoning trace|chain[- ]of[- ]thought|print your reasoning'
+
+# check_reasoning_echo <file> <rel-path> — one ERROR per offending line
+check_reasoning_echo() {
+  local hits
+  hits=$(grep -niE "$REASONING_ECHO" "$1" || true)
+  [ -z "$hits" ] && return 0
+  while IFS= read -r hit; do
+    echo "ERROR: $2:${hit%%:*} — reasoning-echo instruction (Claude 5 may refuse; see TODO #239)"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$hits"
+}
 
 # Extracts the full `description:` value from frontmatter — the line's own text
 # plus any indented continuation lines, block indicators dropped.
@@ -95,6 +113,11 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
     ERRORS=$((ERRORS + 1))
   fi
 
+  # Skill body and its references/ are both loaded into the model's context
+  while IFS= read -r md; do
+    check_reasoning_echo "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
+  done < <(find "$plugin_dir" -name '*.md' -type f | sort)
+
   # Check body length (frontmatter excluded) against the authoring threshold
   body_lines=$(awk 'NR==1 && $0=="---" {fm=1; next} fm==1 && $0=="---" {fm=2; next} fm==2 {n++} END {print n+0}' "$skill_file")
   if [ "$body_lines" -gt "$BODY_MAX" ]; then
@@ -131,6 +154,12 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
       ERRORS=$((ERRORS + 1))
     fi
   done
+done
+
+# Agents are prompts too
+for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
+  [ -f "$agent_file" ] || continue
+  check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
 done
 
 # Ratchet: the count of oversized bodies may shrink, never grow
