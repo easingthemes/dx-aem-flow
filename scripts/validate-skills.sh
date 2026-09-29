@@ -9,6 +9,7 @@
 # 5. description: field exists, is non-empty, and is at most 1024 chars (platform cap)
 # 6. SKILL.md body (frontmatter excluded) under 500 lines — WARN, ratcheted
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
+# 8. Inline-chain context budget — WARN, ratcheted
 
 set -euo pipefail
 
@@ -32,6 +33,15 @@ BODY_MAX=${BODY_MAX:-500}
 # Measured 2026-09-19 across 77 skills. Lower this when a skill is trimmed.
 BODY_OVER_BASELINE=${BODY_OVER_BASELINE:-13}
 BODY_OVER=0
+
+# A skill that invokes another skill with no `context: fork` loads that
+# skill's whole body into its own context, and so on down the chain. Sum what
+# lands in one context and warn over CHAIN_MAX_TOK (chars/4). Ratcheted like
+# BODY_OVER: error only when more skills go over. TODO #241; fix is #240.
+CHAIN_MAX_TOK=${CHAIN_MAX_TOK:-15000}
+# Measured 2026-09-29: dx-agent-all ~29.6k, dx-bug-all ~22.9k, dx-pr-review-all ~16.5k.
+CHAIN_OVER_BASELINE=${CHAIN_OVER_BASELINE:-3}
+CHAIN_OVER=0
 
 # Asking the model to print its reasoning can make Claude 5 models refuse
 # (`stop_reason: "refusal"`), and server-side fallback does not retry it — a
@@ -161,6 +171,61 @@ for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
   [ -f "$agent_file" ] || continue
   check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
 done
+
+# Inline chains. Invocation forms used in skills: `Skill(/x)`, `Invoke /x`,
+# "Invoke `/x`", "Invoke the `/x` skill". Human hints ("Run /x manually") and
+# external skills (superpowers:*) are not counted.
+# One row per skill: name, ~tokens, forked(1/0), invoked skills. awk does the
+# graph walk (portable — no bash-4 associative arrays; macOS ships bash 3.2).
+CHAIN_TABLE=$(mktemp)
+trap 'rm -f "$NAMES_FILE" "$CHAIN_TABLE"' EXIT
+for skill_file in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  n=$(basename "$(dirname "$skill_file")")
+  tok=$(( $(wc -c < "$skill_file") / 4 ))
+  fork=$(awk 'NR==1 && $0=="---" {fm=1; next} fm && $0=="---" {exit} fm && /^context:[ \t]*fork/ {print 1; exit}' "$skill_file")
+  targets=$(grep -oE '(Skill\([[:space:]]*/?|[Ii]nvoke (the )?`?/)[a-z][a-z0-9-]+' "$skill_file" \
+    | sed -E 's/.*[(`/ ]//' | sort -u | grep -vx "$n" | tr '\n' ' ' || true)
+  echo "$n ${tok} ${fork:-0} $targets" >> "$CHAIN_TABLE"
+done
+
+# Prints "name tokens inline-targets..." for each skill over the budget.
+CHAIN_HITS=$(awk -v max="$CHAIN_MAX_TOK" '
+  { tok[$1]=$2; fork[$1]=$3; tg[$1]=""; for (i=4; i<=NF; i++) tg[$1]=tg[$1] " " $i }
+  function inl(n,   a, k, i, out) {
+    k=split(tg[n], a, " "); out=""
+    for (i=1; i<=k; i++) if ((a[i] in tok) && fork[a[i]]=="0") out=out " " a[i]
+    return out
+  }
+  END {
+    for (n in tok) {
+      direct=inl(n); if (direct=="") continue
+      split("", seen); sp=1; st[1]=n; total=0
+      while (sp>0) {
+        cur=st[sp]; sp--
+        if (cur in seen) continue
+        seen[cur]=1; total+=tok[cur]
+        k=split(inl(cur), a, " "); for (i=1; i<=k; i++) st[++sp]=a[i]
+      }
+      if (total>max) print n, total, direct
+    }
+  }' "$CHAIN_TABLE")
+
+while read -r n tok inline; do
+  [ -z "$n" ] && continue
+  echo "WARN: $n — ~${tok} tok in one context via unforked skills: ${inline} (over $CHAIN_MAX_TOK; see TODO #240/#241)"
+  WARNINGS=$((WARNINGS + 1))
+  CHAIN_OVER=$((CHAIN_OVER + 1))
+done <<< "$CHAIN_HITS"
+
+if [ "$CHAIN_OVER" -gt "$CHAIN_OVER_BASELINE" ]; then
+  echo
+  echo "ERROR: $CHAIN_OVER skills over the $CHAIN_MAX_TOK-tok inline-chain budget, baseline is $CHAIN_OVER_BASELINE — fork the worker (context: fork) instead"
+  ERRORS=$((ERRORS + 1))
+elif [ "$CHAIN_OVER" -lt "$CHAIN_OVER_BASELINE" ]; then
+  echo
+  echo "NOTE: only $CHAIN_OVER skills over the inline-chain budget (baseline $CHAIN_OVER_BASELINE)"
+  echo "      lower CHAIN_OVER_BASELINE in scripts/validate-skills.sh to lock the win in"
+fi
 
 # Ratchet: the count of oversized bodies may shrink, never grow
 if [ "$BODY_OVER" -gt "$BODY_OVER_BASELINE" ]; then

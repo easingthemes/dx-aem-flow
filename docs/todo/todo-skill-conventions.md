@@ -572,6 +572,8 @@ consumer run** (not mobile-doable for closure).
 
 ## 21. Inline-chain context budget lint
 
+**Status:** Done 2026-09-29 — `scripts/validate-skills.sh` check 8; baseline `CHAIN_OVER_BASELINE=3` (dx-agent-all, dx-bug-all, dx-pr-review-all). Lower it as #240 forks the workers.
+
 **Added:** 2026-09-29
 **Problem:** "Only the invoked skill body loads" is false for inline chains: a coordinator that
 `Skill()`s an unforked worker pays both bodies in one context. Nothing measures or limits this;

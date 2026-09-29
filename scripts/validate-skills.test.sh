@@ -220,7 +220,64 @@ SKILL
 out=$(run_validator); rc=$?
 check "ordinary use of the word 'reasoning' passes" "0" "$rc"
 
-# --- 8. the real tree is still green ------------------------------------------
+# --- 8. inline-chain budget (TODO #241) --------------------------------------
+# chain_skill <name> <fork:0|1> <invocation line> — ~400 chars of padding each
+chain_skill() {
+  local fork_line=""
+  [ "$2" = "1" ] && fork_line="context: fork"
+  {
+    echo "---"; echo "name: $1"; echo "description: A short description."
+    [ -n "$fork_line" ] && echo "$fork_line"
+    echo "---"; echo
+    echo "$3"
+    for ((i = 0; i < 20; i++)); do echo "padding line $i for size"; done
+  } | write_skill "$1"
+}
+chain_warns() { echo "$1" | grep -c "^WARN: $2 — .*unforked"; }
+
+# A -> B inline: both bodies land in A's context
+reset_fixture
+chain_skill dx-coord 0 'Invoke `/dx-worker` with the id.'
+chain_skill dx-worker 0 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=1 run_validator); rc=$?
+check "inline chain over budget warns" "1" "$(chain_warns "$out" dx-coord)"
+check "a single warning at the baseline does not fail" "0" "$rc"
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "inline-chain ratchet fails above the baseline" "1" "$rc"
+check "inline-chain ratchet says to fork" "1" "$(echo "$out" | grep -c 'fork the worker')"
+
+# the same chain with a forked worker costs the coordinator nothing
+reset_fixture
+chain_skill dx-coord 0 'Skill(/dx-worker) then report.'
+chain_skill dx-worker 1 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "forked worker is not counted" "0" "$(chain_warns "$out" dx-coord)"
+check "forked worker passes the ratchet" "0" "$rc"
+
+# transitive: A -> B -> C, all inline; C's body counts toward A
+reset_fixture
+chain_skill dx-a 0 'Invoke the `/dx-b` skill.'
+chain_skill dx-b 0 'Invoke /dx-c next.'
+chain_skill dx-c 0 'Leaf.'
+out=$(CHAIN_MAX_TOK=400 CHAIN_OVER_BASELINE=9 run_validator)
+check "transitive chain is summed (A over, B under)" "1:0" \
+  "$(chain_warns "$out" dx-a):$(chain_warns "$out" dx-b)"
+
+# a cycle must terminate and count each skill once
+reset_fixture
+chain_skill dx-p 0 'Invoke /dx-q first.'
+chain_skill dx-q 0 'Invoke /dx-p back.'
+out=$(CHAIN_MAX_TOK=100000 timeout 20 bash -c "REPO_ROOT='$FIXTURE_ROOT' bash '$VALIDATOR'" 2>&1); rc=$?
+check "a cycle terminates" "0" "$rc"
+
+# a hint to the human is not an invocation
+reset_fixture
+chain_skill dx-coord 0 'If it fails, run /dx-worker manually to debug.'
+chain_skill dx-worker 0 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "human 'run /x' hint is not counted" "0" "$rc"
+
+# --- 9. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))
