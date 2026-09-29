@@ -24,7 +24,7 @@ Unverified (secondary only): the "2,686 → 514 words" figure.
 
 ## Measured (2026-09-29)
 
-**Per invocation** — the invoked skill body loads, **plus every unforked skill it `Skill()`s** (inline chains stack: `dx-bug-all` ~31k, `dx-agent-all` ~17–33k — see #240/#241):
+**Per invocation** — the invoked skill body loads, **plus every unforked skill it `Skill()`s** (inline chains stack, `SKILL.md` bodies only, as `validate-skills.sh` check 8 measures them: `dx-agent-all` ~29.9k, `dx-bug-all` ~23.1k, `dx-pr-review-all` ~16.6k — see #240/#241):
 
 | | |
 |---|---|
@@ -38,7 +38,7 @@ Unverified (secondary only): the "2,686 → 514 words" figure.
 
 | | |
 |---|---|
-| Skill descriptions (+`when_to_use`) | **~9.2k tok** — avg 241 chars, max 847 (`dx-council`) |
+| Skill descriptions (+`when_to_use`) | **~9.2k tok of text** — avg 241 chars, max 847 (`dx-council`). **Not all of it loads in Claude Code:** the skill listing is capped at 1% of the context window (≈2k tok on 200k, ≈10k on 1M; [skills docs](https://code.claude.com/docs/en/skills)) and on overflow CC drops the descriptions of the least-used skills — name kept, trigger keywords gone. On 200k our listing overflows ~4×, so the cost is **routing loss**, not tokens. Platforms without a cap (Copilot, others — unverified) may pay the full text |
 | Agent descriptions | ~0.6k tok |
 | Always-loaded `.claude/rules` (no `paths:`) | ~1.6k tok (`hub-orchestration` 1.4k, `universal-tool-safety` 0.2k); AEM rules are path-scoped; `pr-review`/`pr-answer`/`plan-format`/`pragmatism`/`task-progress` go to `.ai/rules/` (read on demand) |
 | Root `CLAUDE.md` (this repo, contributors) | 397 lines |
@@ -59,7 +59,7 @@ Unverified (secondary only): the "2,686 → 514 words" figure.
 
 **Conclusion:** the size is procedure, templates and mode branches, not filler. "Delete explanatory
 prose" (old #113 framing) would save little. The real levers, in order of payoff per risk:
-1. Always-on cost: descriptions (~9.2k tok every session) — cheap, low behaviour risk.
+1. Description listing: ~4× over Claude Code's 200k-context listing budget, so descriptions get dropped and routing degrades — cheap to fix, low behaviour risk if the routing eval holds.
 2. Move templates/examples and rarely-taken branches to `references/` (only 8 skills do today).
 3. Drop CAPS emphasis and restated/generic rules.
 4. Behaviour changes (review filter split, verification scaffolding) — need evals first.

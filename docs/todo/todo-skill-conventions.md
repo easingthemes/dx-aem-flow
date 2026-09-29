@@ -211,8 +211,8 @@ skills". Absorbs #107 (inverted — see below) and #162. Measurements and source
 Anthropic's current prompting guidance says skills written for older models are often too
 prescriptive and can degrade output; aggressive emphasis now causes overtriggering. Our skills
 were written for older models: 77 skills, ~290k tok, 13 over 500 lines, 162 CAPS imperatives in
-53 skills, only 8 use `references/`, and ~9.2k tok of descriptions load in every consumer
-session. **Measured 2026-09-29, the mass is procedure, templates (~25%) and mode branches — not
+53 skills, only 8 use `references/`, and ~9.2k tok of description text overflows Claude Code's
+skill-listing budget ~4× on a 200k context (#238). **Measured 2026-09-29, the mass is procedure, templates (~25%) and mode branches — not
 filler:** rationale is 28 lines, no-ops 2. The old framing ("remove explanatory prose") would
 save little.
 **Constraint (2026-09-29):** no cutting until it can be tested. Every phase that changes
@@ -233,6 +233,9 @@ behaviour is gated on an A/B eval.
 2. **De-emphasis** (inverts old #107): replace CAPS MUST/NEVER/CRITICAL with plain
    imperatives; keep emphasis on at most a few load-bearing lines per skill; drop hedges.
    Target ≤ 5 `CRITICAL|IMPORTANT` across all skills.
+   Also the 5 "Use ultrathink for this skill" lines (`dx-plan`, `dx-plan-validate`,
+   `dx-plan-resolve`, `dx-figma-extract`, `dx-figma-prototype`): on Claude 5 thinking is always on
+   and depth follows `effort`, so move the intent to `effort:` frontmatter (#222 tiers) or drop it.
 3. **Restated and generic rules**: `## Rules`-type sections (~15.8k tok in 71 skills) keep only
    non-obvious project gotchas; drop lines that repeat a step or describe behaviour Claude does
    anyway ("Read before judging", "Human voice"). Verification scaffolding (27 lines) by model
@@ -522,18 +525,25 @@ sits changes. Needs an eval before merging (§ 9 gate).
 ## 18. Always-loaded description footprint
 
 **Added:** 2026-09-29
-**Problem:** Skill descriptions (+ `when_to_use`) load in every session of a consumer with all
-4 plugins: ~9.2k tok, avg 241 chars, max 847 (`dx-council`). That is the largest fixed cost we
-put in every session — larger than all always-loaded rules (~1.6k) — and it grew with the
-negative-trigger clauses of #166. Trimming it is low behaviour risk only if routing does not
-regress.
+**Problem:** Skill descriptions (+ `when_to_use`) of a consumer with all 4 plugins total ~9.2k
+tok of text (avg 241 chars, max 847 `dx-council`), and it grew with the negative-trigger clauses
+of #166. Claude Code does **not** load all of it: the skill listing is capped at 1% of the
+context window (≈2k tok on 200k, ≈10k on 1M — [skills docs](https://code.claude.com/docs/en/skills)
+§ troubleshooting), and on overflow it drops the descriptions of the least-used skills, keeping
+only their names. On a 200k context we overflow ~4×, so most of our skills route on name alone —
+the cost is **routing loss**, not tokens (a user's other skills compete for the same budget).
+Platforms without a cap may pay the full text (unverified). Trimming is low behaviour risk only
+if routing does not regress.
 **Scope:** `description:` / `when_to_use:` in `plugins/*/skills/*/SKILL.md`.
 **Done-when:** the re-measure snippet in the 2026-09-29 research note reports descriptions
-≤ 6k tok, no description > 400 chars, and the skill-routing eval (#168) passes at the new ref.
+≤ 2k tok for model-invocable skills (fits the 200k listing budget), no description > 400 chars,
+and the skill-routing eval (#168) passes at the new ref. Check with `/doctor` (listing cost and
+biggest contributors) in an interactive session (#170).
 **Approach:** Put trigger phrases in `when_to_use` only where they disambiguate; drop
 restatements of the skill name; keep #166 negative clauses short. Check whether rarely used
 skills should be `disable-model-invocation: true` (user-invoked only — no description in the
-listing).
+listing); coordinators and init/upgrade skills are the obvious candidates. Document
+`skillOverrides: "name-only"` / `skillListingBudgetFraction` for consumers who keep many skills.
 
 ## 19. Lint for reasoning-echo instructions
 
@@ -545,7 +555,7 @@ print its reasoning can be refused (`stop_reason: "refusal"`), and server-side f
 not retry. A refusal in a pipeline agent fails the run. Grep today finds no such phrasing in
 `plugins/`, so this is prevention, not a fix.
 **Scope:** `scripts/validate-skills.sh`, `scripts/validate-skills.test.sh`.
-**Done-when:** `validate-skills.sh` errors on `explain your reasoning|show your (thinking|reasoning)|think step by step|reasoning trace`
+**Done-when:** `validate-skills.sh` errors on instructions to output reasoning (`explain|show|write out|include … your reasoning`, `your reasoning in the response`, `reasoning trace`; plain "think step by step" is allowed — it asks for thinking, not for printing it)
 in `plugins/*/{skills,agents}`, and `validate-skills.test.sh` has a fixture that proves it fires.
 
 ## 20. Fork the remaining inline workers in coordinators
@@ -556,11 +566,11 @@ in `plugins/*/{skills,agents}`, and `validate-skills.test.sh` has a fixture that
 ("Next steps: run `/…`") can end the coordinator's loop. The class is still open elsewhere
 (measured 2026-09-29):
 - `dx-bug-all/SKILL.md:79-81` loads `dx-bug-triage`, `dx-bug-verify`, `dx-bug-fix` inline — none
-  forked; triage ends with "Next steps" (`:555`), verify and fix likewise. ~31k tok stacked in one
-  context, the biggest inline chain; may be why `ado-cli-bug-fix.yml` needs `MAX_TURNS: 250` vs
+  forked; triage ends with "Next steps" (`:555`), verify and fix likewise. ~23k tok of `SKILL.md`
+  bodies stacked in one context (check 8; `references/` read on demand come on top); may be why `ado-cli-bug-fix.yml` needs `MAX_TURNS: 250` vs
   dev-agent's 80.
 - `dx-agent-all` loads `dx-ticket-analyze`, `dx-figma-all` (→ extract/prototype/verify),
-  `dx-pr`, `dx-doc-gen` inline (~17k base, ~33k with Figma + docs). `dx-figma-all` ends with
+  `dx-pr`, `dx-doc-gen` inline (~30k tok, check 8 — the biggest inline chain). `dx-figma-all` ends with
   "Next Steps … `/dx-plan`", `dx-pr` with "Next step: run `/dx-step-verify`". `dx-agent-all:83`
   claims every phase runs lean via Skill — false for these five.
 - `dx-ticket-analyze` is `model: haiku, effort: low` loaded inline — whether that downgrades the
@@ -585,8 +595,7 @@ consumer run** (not mobile-doable for closure).
 **Added:** 2026-09-29
 **Problem:** "Only the invoked skill body loads" is false for inline chains: a coordinator that
 `Skill()`s an unforked worker pays both bodies in one context. Nothing measures or limits this;
-chains grew to ~31k (`dx-bug-all`) and ~33k (`dx-agent-all` with Figma) without anyone seeing
-it.
+chains grew to ~30k (`dx-agent-all`) and ~23k (`dx-bug-all`) without anyone seeing it.
 **Scope:** `scripts/validate-skills.sh`, `scripts/validate-skills.test.sh`.
 **Done-when:** `validate-skills.sh` sums the bodies reachable through `Skill(/x)` calls whose
 target has no `context: fork` and errors above a budget (start 15k tok, ratchet like the

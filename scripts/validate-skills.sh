@@ -43,11 +43,13 @@ CHAIN_MAX_TOK=${CHAIN_MAX_TOK:-15000}
 CHAIN_OVER_BASELINE=${CHAIN_OVER_BASELINE:-3}
 CHAIN_OVER=0
 
-# Asking the model to print its reasoning can make Claude 5 models refuse
-# (`stop_reason: "refusal"`), and server-side fallback does not retry it — a
-# failed pipeline run. Source: Anthropic prompting pages for Fable 5 /
-# Opus 5.5 / Sonnet 5.5. TODO #239.
-REASONING_ECHO='explain your reasoning|show your (thinking|reasoning|work)|think step[- ]by[- ]step|reasoning trace|chain[- ]of[- ]thought|print your reasoning'
+# Asking the model to reproduce its reasoning in the response can make Claude 5
+# models refuse (`stop_reason: "refusal"`, category `reasoning_extraction`), and
+# server-side fallback does not retry it — a failed pipeline run. Source:
+# Anthropic prompting pages for Fable 5 / Opus 5.5 / Sonnet 5.5. TODO #239.
+# Targets instructions to *output* reasoning; asking the model to think
+# ("think step by step") is not extraction and is not matched.
+REASONING_ECHO='(explain|show|print|write out|output|include|echo|transcribe|reproduce|narrate) (out )?your (internal )?(reasoning|thinking|thought process|chain[- ]of[- ]thought)|show your work|reasoning trace|your reasoning (in|into) (the|your) (response|answer|output|reply)'
 
 # check_reasoning_echo <file> <rel-path> — one ERROR per offending line
 check_reasoning_echo() {

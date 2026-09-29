@@ -207,6 +207,35 @@ check "reasoning-echo in an agent exits non-zero" "1" "$rc"
 check "one error per offending line" "1" \
   "$(echo "$out" | grep -c 'agents/dx-a.md:4 — reasoning-echo')"
 
+# the phrasing from Anthropic's pages ("write out", "include … in the response")
+reset_fixture
+write_skill "dx-echo2" <<'SKILL'
+---
+name: dx-echo2
+description: A short description.
+---
+
+Write out your reasoning before the verdict.
+Put your reasoning in the response so the reviewer can follow it.
+SKILL
+out=$(run_validator); rc=$?
+check "'write out your reasoning' exits non-zero" "1" "$rc"
+check "each offending line is reported" "2" \
+  "$(echo "$out" | grep -c 'dx-echo2/SKILL.md:[67] — reasoning-echo')"
+
+# asking the model to think is not asking it to print the thinking
+reset_fixture
+write_skill "dx-think" <<'SKILL'
+---
+name: dx-think
+description: A short description.
+---
+
+Think step by step about the dependency order before writing the plan.
+SKILL
+out=$(run_validator); rc=$?
+check "'think step by step' alone passes" "0" "$rc"
+
 # plain mention of reasoning is fine — the check targets instructions to print it
 reset_fixture
 write_skill "dx-plain" <<'SKILL'
