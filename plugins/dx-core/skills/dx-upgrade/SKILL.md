@@ -111,7 +111,7 @@ For each entry that dx-doctor reported as stale or missing, Read the plugin sour
 
 **Comment-only differences:** If dx-doctor reported the script as `✓ up to date (project-specific examples)` — meaning the only differences are in comment lines where the project uses real infrastructure names (e.g., `kai-dedupe`) instead of the plugin's generic placeholders (e.g., `myai-dedupe`) — do NOT overwrite. The project-specific names are intentional and correct. Only update scripts that have functional code changes.
 
-**Functional local divergence (automation bundle) — NEVER silently clobber:** `.ai/automation/**` files (pipeline YAMLs, lambda handlers, scripts) are plugin-owned, but they are also where consumers prototype improvements *first* — e.g. a no-AI cron gate (`pr-answer-gate.sh`), a `refName` branch-pin in the WI-Router queue payload, extra pipeline steps, or a connection-name convention. Before overwriting any stale automation file, check whether its diff vs the plugin is **functional** (code/logic/steps/structure) or merely comment / project-specific-name. If functional → do NOT auto-fix; reclassify as **Needs confirmation**, show the diff, and ask (default: keep local). Silently overwriting here erases the consumer's local work — this is the sync-clobber gap (TODO #151). Only auto-overwrite automation files whose diff is comment/name-only, or which the user explicitly confirms.
+**Functional local divergence (automation bundle) — NEVER silently clobber:** `.ai/automation/**` files (pipeline YAMLs, lambda handlers, scripts) are plugin-owned, but they are also where consumers prototype improvements *first* — e.g. a no-AI cron gate (`pr-answer-gate.sh`), a `refName` branch-pin in the WI-Router queue payload, extra pipeline steps, or a connection-name convention. Before overwriting any stale automation file, check whether its diff vs the plugin is **functional** (code/logic/steps/structure) or merely comment / project-specific-name. If functional → do NOT auto-fix; reclassify as **Needs confirmation**, show the diff, and ask (default: keep local). Silently overwriting here erases the consumer's local work — this is the sync-clobber gap. Only auto-overwrite automation files whose diff is comment/name-only, or which the user explicitly confirms.
 
 ### 3ab. Output Templates
 
@@ -174,7 +174,7 @@ For each `.md.template` file found:
    ```
    Without it, `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, and `/aem-editorial-guide` fail at first navigation.
 2. **Install the auth helper** if missing: copy `<aem-plugin>/data/lib/aem-playwright-auth.sh` → `.ai/lib/` (`chmod +x`) and ensure `.gitignore` has `.ai/playwright/`.
-3. **Report as manual-action:** `dx-perf` was removed in v3 (no replacement yet — see TODO #147). Any local `.claude/skills/dx-perf/` shadow or scripts referencing chrome-devtools tool names (`mcp__plugin_dx-aem_chrome-devtools-mcp__*`) must be updated to `mcp__plugin_dx-aem_playwright__browser_*`.
+3. **Report as manual-action:** `dx-perf` was removed in v3 (no replacement yet). Any local `.claude/skills/dx-perf/` shadow or scripts referencing chrome-devtools tool names (`mcp__plugin_dx-aem_chrome-devtools-mcp__*`) must be updated to `mcp__plugin_dx-aem_playwright__browser_*`.
 
 ### 3e. Copilot Agents and Skills
 

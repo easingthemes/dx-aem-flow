@@ -170,7 +170,143 @@ check "missing name exits non-zero" "1" "$rc"
 check "missing name says so" "1" \
   "$(echo "$out" | grep -c "name: '' does not match directory 'dx-noname'")"
 
-# --- 7. the real tree is still green ------------------------------------------
+# --- 7. reasoning-echo instructions are an ERROR (TODO #239) ------------------
+reset_fixture
+write_skill "dx-echo" <<'SKILL'
+---
+name: dx-echo
+description: A short description.
+---
+
+Before answering, think step by step and show your reasoning to the user.
+SKILL
+out=$(run_validator); rc=$?
+check "reasoning-echo in a skill body exits non-zero" "1" "$rc"
+check "reasoning-echo names file and line" "1" \
+  "$(echo "$out" | grep -c 'plugins/dx-test/skills/dx-echo/SKILL.md:6 — reasoning-echo')"
+
+# references/ are loaded too, so they are checked too
+reset_fixture
+make_skill "dx-refs" "A short description." 3
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/skills/dx-refs/references"
+echo "Explain your reasoning in the final report." \
+  > "$FIXTURE_ROOT/plugins/dx-test/skills/dx-refs/references/notes.md"
+out=$(run_validator); rc=$?
+check "reasoning-echo in references/ exits non-zero" "1" "$rc"
+check "reasoning-echo in references/ is located" "1" \
+  "$(echo "$out" | grep -c 'dx-refs/references/notes.md:1 — reasoning-echo')"
+
+# agents are prompts too
+reset_fixture
+make_skill "dx-ok" "A short description." 3
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/agents"
+printf -- '---\nname: dx-a\n---\nUse chain-of-thought and print your reasoning.\n' \
+  > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-a.md"
+out=$(run_validator); rc=$?
+check "reasoning-echo in an agent exits non-zero" "1" "$rc"
+check "one error per offending line" "1" \
+  "$(echo "$out" | grep -c 'agents/dx-a.md:4 — reasoning-echo')"
+
+# the phrasing from Anthropic's pages ("write out", "include … in the response")
+reset_fixture
+write_skill "dx-echo2" <<'SKILL'
+---
+name: dx-echo2
+description: A short description.
+---
+
+Write out your reasoning before the verdict.
+Put your reasoning in the response so the reviewer can follow it.
+SKILL
+out=$(run_validator); rc=$?
+check "'write out your reasoning' exits non-zero" "1" "$rc"
+check "each offending line is reported" "2" \
+  "$(echo "$out" | grep -c 'dx-echo2/SKILL.md:[67] — reasoning-echo')"
+
+# asking the model to think is not asking it to print the thinking
+reset_fixture
+write_skill "dx-think" <<'SKILL'
+---
+name: dx-think
+description: A short description.
+---
+
+Think step by step about the dependency order before writing the plan.
+SKILL
+out=$(run_validator); rc=$?
+check "'think step by step' alone passes" "0" "$rc"
+
+# plain mention of reasoning is fine — the check targets instructions to print it
+reset_fixture
+write_skill "dx-plain" <<'SKILL'
+---
+name: dx-plain
+description: A short description.
+---
+
+Record the reasoning behind each decision in decisions.yaml.
+SKILL
+out=$(run_validator); rc=$?
+check "ordinary use of the word 'reasoning' passes" "0" "$rc"
+
+# --- 8. inline-chain budget (TODO #241) --------------------------------------
+# chain_skill <name> <fork:0|1> <invocation line> — ~400 chars of padding each
+chain_skill() {
+  local fork_line=""
+  [ "$2" = "1" ] && fork_line="context: fork"
+  {
+    echo "---"; echo "name: $1"; echo "description: A short description."
+    [ -n "$fork_line" ] && echo "$fork_line"
+    echo "---"; echo
+    echo "$3"
+    for ((i = 0; i < 20; i++)); do echo "padding line $i for size"; done
+  } | write_skill "$1"
+}
+chain_warns() { echo "$1" | grep -c "^WARN: $2 — .*unforked"; }
+
+# A -> B inline: both bodies land in A's context
+reset_fixture
+chain_skill dx-coord 0 'Invoke `/dx-worker` with the id.'
+chain_skill dx-worker 0 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=1 run_validator); rc=$?
+check "inline chain over budget warns" "1" "$(chain_warns "$out" dx-coord)"
+check "a single warning at the baseline does not fail" "0" "$rc"
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "inline-chain ratchet fails above the baseline" "1" "$rc"
+check "inline-chain ratchet says to fork" "1" "$(echo "$out" | grep -c 'fork the worker')"
+
+# the same chain with a forked worker costs the coordinator nothing
+reset_fixture
+chain_skill dx-coord 0 'Skill(/dx-worker) then report.'
+chain_skill dx-worker 1 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "forked worker is not counted" "0" "$(chain_warns "$out" dx-coord)"
+check "forked worker passes the ratchet" "0" "$rc"
+
+# transitive: A -> B -> C, all inline; C's body counts toward A
+reset_fixture
+chain_skill dx-a 0 'Invoke the `/dx-b` skill.'
+chain_skill dx-b 0 'Invoke /dx-c next.'
+chain_skill dx-c 0 'Leaf.'
+out=$(CHAIN_MAX_TOK=400 CHAIN_OVER_BASELINE=9 run_validator)
+check "transitive chain is summed (A over, B under)" "1:0" \
+  "$(chain_warns "$out" dx-a):$(chain_warns "$out" dx-b)"
+
+# a cycle must terminate and count each skill once
+reset_fixture
+chain_skill dx-p 0 'Invoke /dx-q first.'
+chain_skill dx-q 0 'Invoke /dx-p back.'
+out=$(CHAIN_MAX_TOK=100000 timeout 20 bash -c "REPO_ROOT='$FIXTURE_ROOT' bash '$VALIDATOR'" 2>&1); rc=$?
+check "a cycle terminates" "0" "$rc"
+
+# a hint to the human is not an invocation
+reset_fixture
+chain_skill dx-coord 0 'If it fails, run /dx-worker manually to debug.'
+chain_skill dx-worker 0 'Do the work.'
+out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
+check "human 'run /x' hint is not counted" "0" "$rc"
+
+# --- 9. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))

@@ -585,7 +585,7 @@ This phase spawns parallel Explore subagents for codebase searching. Read `refer
    - `frontend` for FE-only changes
    - `backend` for API/service-only changes
    - `full` for Medium/Large stories or anything touching backend + frontend
-   Print: `Phase 4: research profile = <profile> (<reason>)`. This is the dominant Phase 1 context cost — picking `minimal` instead of `full` saves ~400k tokens on a typical run (issue #136).
+   Print: `Phase 4: research profile = <profile> (<reason>)`. This is the dominant Phase 1 context cost — picking `minimal` instead of `full` saves ~400k tokens on a typical run.
 5. **Dispatch the agents picked by the profile, in parallel.** Always pass the per-agent output budget (≤800 words, ≤10 files, no code >5 lines, early-exit) — see `references/research-patterns.md` "Per-Agent Output Budget":
    - **Agent 1: UI Layer** — templates, views, config/dialog files, frontend components *(skipped in `backend` profile)*
    - **Agent 2: Models & Data** — model/entity classes, properties, service dependencies *(skipped in `minimal` profile)*

@@ -46,7 +46,7 @@ Exit non-zero. **No other action.**
 
 ## Recovery config (read once, after pre-flight)
 
-Resumable recovery (TODO #141) is config-driven — never hardcode the token or the
+Resumable recovery is config-driven — never hardcode the token or the
 attempt cap. Read both from `.ai/config.yaml` (defaults applied if unset):
 
 ```bash
@@ -626,7 +626,7 @@ AEM instance. Record in `report.md`:
 **Read-before-write idempotency (always — even when this repo IS the owner).** Before
 each JCR write, `getNodeContent` the target property; if its current value already
 equals the target (`item.after`), **skip the write** and log `unchanged` in
-`authoring-diff.json`. This keeps recovery re-runs (#141) and any parallel
+`authoring-diff.json`. This keeps recovery re-runs and any parallel
 same-instance run side-effect-free. (The per-item drift check below applies the same
 read; the gate here is the general rule it implements.)
 
