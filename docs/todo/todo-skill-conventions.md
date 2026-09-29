@@ -226,7 +226,10 @@ behaviour is gated on an A/B eval.
    comparison. At least one eval case per skill before it is cut.
 1. **No-behaviour cuts** (no eval needed): dev history in skill text (issue/TODO numbers,
    dates, versions — 34 hits), the 2 no-ops, the 16 cross-skill duplicate paragraphs (move to
-   `shared/`).
+   `shared/`). Orchestration duplicates (measured 2026-09-29): "You run in a forked context…
+   determine whether invoked by the orchestrator" ×6 and "MUST end with `## Return`" ×8 — state
+   once in the coordinator's invocation args; `dx-step-verify:165` pastes the whole
+   `dx-code-reviewer` body into a subagent that already has it as its system prompt.
 2. **De-emphasis** (inverts old #107): replace CAPS MUST/NEVER/CRITICAL with plain
    imperatives; keep emphasis on at most a few load-bearing lines per skill; drop hedges.
    Target ≤ 5 `CRITICAL|IMPORTANT` across all skills.
@@ -236,13 +239,21 @@ behaviour is gated on an A/B eval.
    tier: remove on Opus-tier skills, keep a concrete check on Sonnet/low-effort ones.
 4. **Size**: move templates, examples and rarely-taken branches (interactive vs automation,
    Copilot install steps in `dx-init`) to `references/` — #108 threshold. Start with the top 5.
+   Mode branches are the biggest removable mass: `dx-bug-all` Pipeline-mode text is ~72% of the
+   file and loads in Local mode too; mode-branch lines: `dx-agent-all` 25, `dx-pr-review` 23,
+   `dx-step-all` 19, `dx-bug-all` 17. Also drop hub-mode re-checks in workers the coordinator
+   already gated (`dx-req`, `dx-step`, `dx-bug-fix`, `dx-bug-triage`).
+   Coordinator DOT graphs (~8k tok across coordinators, `dx-simple` alone ~2k): keep graphs for
+   loops and gates (the #220 fix relied on explicit loop invariants); for linear phases consider
+   dropping the node-per-heading duplication — a CLAUDE.md convention change + `validate-skills.sh`.
 **Done-when:** (per phase, checkable)
 - P1: `grep -rnE '\bTODO #[0-9]+|\bissue #[0-9]+' plugins/*/skills/*/SKILL.md` returns 0.
 - P2: `grep -rhoE '\b(CRITICAL|IMPORTANT)\b' plugins/*/skills/*/SKILL.md | wc -l` ≤ 5.
 - P3/P4: every changed skill has an eval result at old and new ref in `docs/research/`, with no
   score drop; `find plugins -name SKILL.md -exec wc -l {} + | awk '$1>500 && $2!="total"' | wc -l` is 0.
 **Related:** #108 (500-line threshold), #111 (checklists — pipelines only), #137, #167, #170,
-#237 (review filter), #238 (description footprint), #239 (reasoning-echo lint), #222 (tiers).
+#237 (review filter), #238 (description footprint), #239 (reasoning-echo lint), #222 (tiers),
+#240 (fork remaining inline workers), #241 (inline-chain budget lint), #242 (verification layering).
 
 ## 10. Consistent terminology audit
 
@@ -526,6 +537,65 @@ not retry. A refusal in a pipeline agent fails the run. Grep today finds no such
 **Scope:** `scripts/validate-skills.sh`, `scripts/validate-skills.test.sh`.
 **Done-when:** `validate-skills.sh` errors on `explain your reasoning|show your (thinking|reasoning)|think step by step|reasoning trace`
 in `plugins/*/{skills,agents}`, and `validate-skills.test.sh` has a fixture that proves it fires.
+
+## 20. Fork the remaining inline workers in coordinators
+
+**Added:** 2026-09-29
+**Problem:** #220 fixed one instance of a bug class: a worker loaded inline with `Skill()` (no
+`context: fork`) brings its whole body into the coordinator, and its human hand-off ending
+("Next steps: run `/…`") can end the coordinator's loop. The class is still open elsewhere
+(measured 2026-09-29):
+- `dx-bug-all/SKILL.md:79-81` loads `dx-bug-triage`, `dx-bug-verify`, `dx-bug-fix` inline — none
+  forked; triage ends with "Next steps" (`:555`), verify and fix likewise. ~31k tok stacked in one
+  context, the biggest inline chain; may be why `ado-cli-bug-fix.yml` needs `MAX_TURNS: 250` vs
+  dev-agent's 80.
+- `dx-agent-all` loads `dx-ticket-analyze`, `dx-figma-all` (→ extract/prototype/verify),
+  `dx-pr`, `dx-doc-gen` inline (~17k base, ~33k with Figma + docs). `dx-figma-all` ends with
+  "Next Steps … `/dx-plan`", `dx-pr` with "Next step: run `/dx-step-verify`". `dx-agent-all:83`
+  claims every phase runs lean via Skill — false for these five.
+- `dx-ticket-analyze` is `model: haiku, effort: low` loaded inline — whether that downgrades the
+  coordinator's turn is unverified; forking removes the question.
+- Nested forks (`dx-agent-all` → `dx-step-all` → `dx-step`) are untested; #220's Done-when only
+  covers standalone `/dx-step-all`.
+Current Claude 5 guidance favours this fix over adding "do not stop" emphasis (which would
+overtrigger).
+**Scope:** `plugins/dx-core/skills/{dx-bug-triage,dx-bug-verify,dx-bug-fix,dx-figma-all,dx-ticket-analyze,dx-doc-gen,dx-pr}/SKILL.md`,
+their callers `dx-bug-all`, `dx-agent-all`; forked workers must end with a `## Return` block.
+**Done-when:** `grep -L '^context: fork' plugins/dx-core/skills/{dx-bug-triage,dx-bug-verify,dx-bug-fix,dx-figma-all,dx-ticket-analyze,dx-doc-gen,dx-pr}/SKILL.md`
+prints nothing, AND one `/dx-bug-all` run and one `/dx-agent-all` run with ≥ 3 steps each
+complete without a nudge and write their `runs.jsonl` record. **Behaviour change — needs a
+consumer run** (not mobile-doable for closure).
+**Approach:** Same as #220. Check each worker's standalone use still prints its human summary
+(fork only changes what reaches the parent).
+
+## 21. Inline-chain context budget lint
+
+**Added:** 2026-09-29
+**Problem:** "Only the invoked skill body loads" is false for inline chains: a coordinator that
+`Skill()`s an unforked worker pays both bodies in one context. Nothing measures or limits this;
+chains grew to ~31k (`dx-bug-all`) and ~33k (`dx-agent-all` with Figma) without anyone seeing
+it.
+**Scope:** `scripts/validate-skills.sh`, `scripts/validate-skills.test.sh`.
+**Done-when:** `validate-skills.sh` sums the bodies reachable through `Skill(/x)` calls whose
+target has no `context: fork` and errors above a budget (start 15k tok, ratchet like the
+oversized-body check); `validate-skills.test.sh` has an over-budget fixture that proves it
+fires. No behaviour change — mobile-doable. Will fail until #240 lands, so ship it with a
+baseline ratchet.
+
+## 22. Verification layering audit
+
+**Added:** 2026-09-29
+**Problem:** One `/dx-agent-all` story is verified 5–6 layers deep: mandatory per-step review
+in `dx-step` (`:466`), `dx-plan-validate`, `dx-step-verify` (6 phases + up to 3 review cycles),
+heal (up to 2 cycles, each re-running verify → up to ~9 review passes), `aem-verify` /
+`aem-fe-verify`, then the automated PR Reviewer; `dx-simple` adds `dx-pr-reviewer` (`:805`).
+Anti-rationalization tables sit in 8 skills (`dx-step:452`, `dx-step-fix`, `dx-step-verify`,
+`dx-step-build`, …). Opus 5 prompting guidance: explicit verification instructions cause
+over-verification with no quality gain; Sonnet at low effort still needs a concrete check.
+**Scope:** the skills above; `dx-agent-all` heal loop; cross-ref #113 phase 3, #65, #159.
+**Done-when:** a written decision in this section naming one owner per check (per-step review
+vs verify vs heal), then `grep -lE 'Rationalization' plugins/*/skills/*/SKILL.md | wc -l` ≤ 2 (Sonnet-tier only) and an
+agent-all eval shows no score drop at old vs new ref. **Behaviour change — needs evals.**
 
 ## Dropped after reality check against Claude Code docs
 

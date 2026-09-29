@@ -24,7 +24,7 @@ Unverified (secondary only): the "2,686 → 514 words" figure.
 
 ## Measured (2026-09-29)
 
-**Per invocation** — only the invoked skill body loads:
+**Per invocation** — the invoked skill body loads, **plus every unforked skill it `Skill()`s** (inline chains stack: `dx-bug-all` ~31k, `dx-agent-all` ~17–33k — see #240/#241):
 
 | | |
 |---|---|
