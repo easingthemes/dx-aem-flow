@@ -272,7 +272,7 @@ Consult `references/mcp-fallback.md` for the full fallback strategy and error ha
 
 ## Rules
 
-- **Extract everything** — be thorough, this is the only Figma interaction
+- **Extract everything** — this is the only Figma interaction
 - **Save screenshots as files** — not just descriptions, actual image files via the hook
 - **Download assets** — the hook downloads localhost:3845 image URLs from get_design_context
 - **Smart node selection** — use story context to auto-drill-down when possible

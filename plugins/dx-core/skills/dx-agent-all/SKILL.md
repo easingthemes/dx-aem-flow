@@ -90,7 +90,7 @@ If the user said "autonomous", "auto", or "hands-free", use autonomous mode.
 
 If the user is on a 200k-context model OR the env var `DX_LOW_CONTEXT=1` is set, apply these defaults before Phase 1 starts:
 
-- `DX_RESEARCH_PROFILE=minimal` (Phase 4 of `/dx-req` dispatches 2 agents instead of 4 — see issue #136)
+- `DX_RESEARCH_PROFILE=minimal` (Phase 4 of `/dx-req` dispatches 2 agents instead of 4)
 - `dor.cache-ttl-seconds` honored (24h cache on the DoR checklist)
 - After each phase, print: `phase <N> done — context budget: <free>/200k (used <delta>k)`. Use the harness's reported usage; do not estimate.
 

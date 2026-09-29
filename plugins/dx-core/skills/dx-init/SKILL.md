@@ -294,7 +294,7 @@ Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai
 Do NOT auto-modify `.gitignore` — ask the user first.
 
 > **SimpleAgent recovery exception.** If this project uses autonomous SimpleAgent
-> (`/dx-simple`, `@kai-simple` comment trigger) with resumable recovery (TODO #141),
+> (`/dx-simple`, `@kai-simple` comment trigger) with resumable recovery,
 > `.ai/specs/` must be **tracked** — the per-ticket branch is the durable state
 > store. In that case omit the `.ai/specs/` line above (keep the others). Mention
 > this when the user enables SimpleAgent.
