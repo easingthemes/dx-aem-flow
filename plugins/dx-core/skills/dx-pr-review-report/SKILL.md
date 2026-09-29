@@ -72,8 +72,8 @@ Try to find a linked ADO ticket:
    ```
    mcp__ado__repo_pull_request
      action: "get"
-     repositoryId: "<repo>"
-     pullRequestId: <id>
+     repositoryId: "<repo ID>"
+     pullRequestId: <PR ID>
      includeWorkItemRefs: true
    ```
    Or check the PR description for work item IDs (patterns: `#12345`, `AB#12345`, `ADO #12345`).
