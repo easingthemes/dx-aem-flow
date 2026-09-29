@@ -59,10 +59,11 @@ If no argument, ask the user.
 ## 2. Fetch User Story
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project>"
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 ### If provider = jira
@@ -94,7 +95,8 @@ Extract (ADO path):
 
 Also fetch comments (ADO path):
 ```
-mcp__ado__wit_list_work_item_comments
+mcp__ado__wit_work_item
+  action: "list_comments"
   project: "<ADO project>"
   workItemId: <work item ID>
 ```
@@ -181,11 +183,12 @@ Write `.ai/run-context/re.json` (create dir if needed):
 Read `.ai/templates/ado-comments/re-summary.md.template` and follow that structure.
 
 ```
-mcp__ado__wit_add_work_item_comment
+mcp__ado__wit_work_item_comment_write
+  action: "add"
   project: "<ADO project>"
   workItemId: <id>
   text: "<comment markdown>"
-  format: "markdown"
+  format: "Markdown"
 ```
 
 ### If provider = jira
@@ -202,12 +205,12 @@ mcp__atlassian__jira_add_comment
 
 If confirmed, for each task:
 ```
-mcp__ado__wit_create_work_item
+mcp__ado__wit_work_item_write
+  action: "add_child"
   project: "<ADO project>"
-  type: "Task"
-  title: "<task title>"
-  description: "<task description>"
   parentId: <story id>
+  workItemType: "Task"
+  items: [{ "title": "<task title>", "description": "<task description>" }]
 ```
 
 ### If provider = jira

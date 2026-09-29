@@ -9,7 +9,7 @@ tools:
   - search
   - search/codebase
   - agent
-  - 'ado/wit_get_work_item'
+  - 'ado/wit_work_item'
   - 'AEM/searchContent'
 agents: ['dx-doc-searcher', 'aem-file-resolver', 'aem-page-finder']
 handoffs:
@@ -50,10 +50,11 @@ If no argument provided, ask the user for the ADO URL or ID.
 ## 2. Fetch Ticket
 
 ```
-ado/wit_get_work_item
+ado/wit_work_item
+  action: "get"
   id: <work item ID>
   project: "<project>"
-  expand: "relations"
+  expand: "Relations"
 ```
 
 Extract:

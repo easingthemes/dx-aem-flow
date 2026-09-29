@@ -69,10 +69,11 @@ ToolSearch("+ado wit")
 ## 3. Fetch Parent Story
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project from config>"
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 Extract:
@@ -109,7 +110,8 @@ Calculate **total budget hours** = Story Points × 8.
 Always check for existing children from the relations extracted in step 3. If child IDs exist, fetch their details:
 
 ```
-mcp__ado__wit_get_work_items_batch_by_ids
+mcp__ado__wit_work_item
+  action: "get_batch"
   project: "<ADO project from config>"
   ids: [<child IDs>]
   fields: ["System.Title", "System.WorkItemType", "System.State",
@@ -193,7 +195,7 @@ When planning new tasks (step 6), skip any task that already exists by matching 
 If **all groups already have tasks** but some tasks have **no estimates** (OriginalEstimate is null/0), switch to **estimate-only mode**:
 1. Skip task creation (step 8)
 2. Present existing tasks with inferred estimates marked `(inferred)`
-3. After user approval, update estimates on existing tasks via `wit_update_work_items_batch` (step 9)
+3. After user approval, update estimates on existing tasks via `wit_work_item_write` (`action: "update_batch"`) (step 9)
 4. Print summary with updated estimates
 
 ### Mixed mode (new tasks + missing estimates)
@@ -369,7 +371,8 @@ Repeat until the user says "go", "create", "yes", "looks good", or similar affir
 Once approved, create all tasks as children of the parent story:
 
 ```
-mcp__ado__wit_add_child_work_items
+mcp__ado__wit_work_item_write
+  action: "add_child"
   parentId: <story ID>
   project: "<ADO project from config>"
   workItemType: "Task"
@@ -408,8 +411,9 @@ After creation, set Original Estimate, Remaining Work, and Assigned To on **all 
 **Assignment rule:** All newly created tasks are assigned to the same person as the parent story (`System.AssignedTo`). If the parent has no assignee, leave tasks unassigned.
 
 ```
-mcp__ado__wit_update_work_items_batch
-  updates: [
+mcp__ado__wit_work_item_write
+  action: "update_batch"
+  batchUpdates: [
     {
       "id": <task ID>,
       "path": "/fields/Microsoft.VSTS.Scheduling.OriginalEstimate",
@@ -484,10 +488,11 @@ ToolSearch("+ado wit")
 ### C2. Fetch Parent Story + Children
 
 ```
-mcp__ado__wit_get_work_item
+mcp__ado__wit_work_item
+  action: "get"
   project: "<ADO project from config>"
   id: <work item ID>
-  expand: "relations"
+  expand: "Relations"
 ```
 
 Extract child Task IDs from relations (`System.LinkTypes.Hierarchy-Forward`).
@@ -496,7 +501,8 @@ If no children found, print "No child tasks found." and STOP.
 
 Fetch child details:
 ```
-mcp__ado__wit_get_work_items_batch_by_ids
+mcp__ado__wit_work_item
+  action: "get_batch"
   project: "<ADO project from config>"
   ids: [<child IDs>]
   fields: ["System.Title", "System.WorkItemType", "System.State",
@@ -562,8 +568,9 @@ For each closeable task, update in this order:
 3. Set State to Closed
 
 ```
-mcp__ado__wit_update_work_items_batch
-  updates: [
+mcp__ado__wit_work_item_write
+  action: "update_batch"
+  batchUpdates: [
     {
       "id": <task ID>,
       "path": "/fields/Microsoft.VSTS.Scheduling.CompletedWork",

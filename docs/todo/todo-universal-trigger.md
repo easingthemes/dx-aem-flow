@@ -115,8 +115,10 @@ parameters:
 
 steps:
   - bash: |
-      COMMENT="${{ parameters.universalHook.resource.fields['System.History'] }}"
-      WI_ID="${{ parameters.universalHook.resource.id }}"
+      # Payload arrives via env (see `env:` below), never via ${{ }} in the body —
+      # TODO #231: ADO expands ${{ }} before bash runs, so comment text becomes shell.
+      COMMENT="$HOOK_COMMENT"
+      WI_ID="$HOOK_WI_ID"
       MANUAL_WI="${{ parameters.workItemId }}"
       MANUAL_SKILL="${{ parameters.skill }}"
 
@@ -140,6 +142,9 @@ steps:
       echo "##vso[task.setvariable variable=PROMPT]$PROMPT"
       echo "##vso[task.setvariable variable=WI_ID]$WI_ID"
     displayName: Parse skill + args from comment
+    env:
+      HOOK_COMMENT: ${{ parameters.universalHook.resource.fields['System.History'] }}
+      HOOK_WI_ID: ${{ parameters.universalHook.resource.id }}
 
   - bash: |
       node .ai/automation/scripts/pipeline-agent.js "$(PROMPT)"

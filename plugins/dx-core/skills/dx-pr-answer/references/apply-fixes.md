@@ -214,7 +214,8 @@ ToolSearch("+ado pull request thread")
 For each fixed thread, post a short follow-up reply:
 
 ```
-mcp__ado__repo_reply_to_comment
+mcp__ado__repo_pull_request_thread_write
+  action: "reply"
   repositoryId: "<repo ID from session>"
   pullRequestId: <PR ID>
   threadId: <thread ID>

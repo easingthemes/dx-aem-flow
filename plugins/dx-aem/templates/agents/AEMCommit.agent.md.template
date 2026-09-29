@@ -8,11 +8,9 @@ tools:
   - codebase
   - runCommands
   - search
-  - 'ado/repo_get_repo_by_name_or_id'
-  - 'ado/repo_create_pull_request'
-  - 'ado/repo_update_pull_request'
-  - 'ado/repo_get_pull_request_by_id'
-  - 'ado/repo_list_pull_requests_by_repo_or_project'
+  - 'ado/repo_repository'
+  - 'ado/repo_pull_request_write'
+  - 'ado/repo_pull_request'
 handoffs:
   - label: "Review the PR"
     agent: DxPRReview
@@ -37,7 +35,7 @@ You handle git commits and Azure DevOps pull requests.
 ## 2. Setup
 
 1. **Discover base branch** — read `scm.base-branch` from `.ai/config.yaml`
-2. **Discover repo ID** — use `ado/repo_get_repo_by_name_or_id` with project from config
+2. **Discover repo ID** — use `ado/repo_repository` (`action: "get"`) with project from config
 3. **Check branch safety** — must be on `feature/*` or `bugfix/*`
 
 ## 3. Extract ADO Work Item ID
@@ -84,7 +82,8 @@ Commit and verify with `git log -1 --oneline`.
 ### 7b. Create PR
 
 ```
-ado/repo_create_pull_request
+ado/repo_pull_request_write
+  action: "create"
   repositoryId: "<repo ID>"
   sourceRefName: "refs/heads/<branch>"
   targetRefName: "refs/heads/<base branch>"

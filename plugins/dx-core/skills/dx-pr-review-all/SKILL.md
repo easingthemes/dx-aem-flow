@@ -124,7 +124,8 @@ Extract the repo name from the URL:
 
 Resolve the repo name to an ID:
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -138,7 +139,8 @@ Save the `id` field and `sshUrl` — needed for all subsequent calls.
 Detect the current user from `git config user.email`.
 
 ```
-mcp__ado__repo_list_pull_requests_by_repo_or_project
+mcp__ado__repo_pull_request
+  action: "list"
   repositoryId: "<repo ID>"
   status: "Active"
   top: <count>
@@ -146,7 +148,8 @@ mcp__ado__repo_list_pull_requests_by_repo_or_project
 
 Then fetch full details for each PR (parallel calls):
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -216,7 +219,8 @@ git -C <repoPath> fetch origin <branch1> <branch2> <branch3> ...
 For each selected PR, fetch existing review threads (make all calls in parallel):
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -402,7 +406,8 @@ Ask: **Post all** / **Edit** / **Cancel** (discard patches, post comments only).
 **Without patches (default):** Post each comment as a thread:
 
 ```
-mcp__ado__repo_create_pull_request_thread
+mcp__ado__repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "<approved comment text>"
@@ -411,17 +416,18 @@ mcp__ado__repo_create_pull_request_thread
   rightFileEndLine: <line>
   rightFileStartOffset: 1
   rightFileEndOffset: 1
-  status: "active"
+  status: "Active"
 ```
 
 Then post the summary (no filePath = general PR comment):
 
 ```
-mcp__ado__repo_create_pull_request_thread
+mcp__ado__repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "**Verdict**: <verdict>\n\nReviewed N files — N comments.\n\n<overall impression>"
-  status: "active"
+  status: "Active"
 ```
 
 **With patches:** For each fix, post a comment with the issue AND the specific patch:

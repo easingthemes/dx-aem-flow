@@ -376,14 +376,25 @@ Wait for user confirmation on each issue before proceeding.
 
 For each confirmed issue, create via ADO MCP:
 ```
-mcp__ado__wit_create_work_item
+mcp__ado__wit_work_item_write
+  action: "create"
   project: "<scm.project>"
-  type: "Bug"
-  title: "[AI-QA] <short description>"
-  reproSteps: "<HTML repro steps>"
-  severity: "<severity>"
-  parentId: <story id>
-  tags: "ai-generated,ai-qa"
+  workItemType: "Bug"
+  fields: [
+    { "name": "System.Title", "value": "[AI-QA] <short description>" },
+    { "name": "Microsoft.VSTS.TCM.ReproSteps", "value": "<HTML repro steps>" },
+    { "name": "Microsoft.VSTS.Common.Severity", "value": "<severity>" },
+    { "name": "System.Tags", "value": "ai-generated,ai-qa" }
+  ]
+```
+
+`create` takes no parent, so link the new Bug to the story in a second call:
+
+```
+mcp__ado__wit_work_item_link_write
+  action: "link"
+  project: "<scm.project>"
+  updates: [{ "id": <new bug ID>, "linkToId": <story ID>, "type": "parent" }]
 ```
 
 ### Save QA output

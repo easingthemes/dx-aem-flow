@@ -293,25 +293,25 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/aem-qa</code></td>
         <td class="p-3"><span class="text-red-600 font-semibold">Bug</span></td>
-        <td class="p-3"><code class="text-xs">wit_create_work_item</code></td>
+        <td class="p-3"><code class="text-xs">wit_work_item_write (create)</code></td>
         <td class="p-3"><code class="text-xs">[AI-QA] &lt;description&gt;</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-agent-re</code></td>
         <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
-        <td class="p-3"><code class="text-xs">wit_add_child_work_items</code></td>
+        <td class="p-3"><code class="text-xs">wit_work_item_write (add_child)</code></td>
         <td class="p-3"><code class="text-xs">&lt;task title&gt;</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-req-tasks</code></td>
         <td class="p-3"><span class="text-emerald-600 font-semibold">Task (batch)</span></td>
-        <td class="p-3"><code class="text-xs">wit_add_child_work_items + wit_update_work_items_batch</code></td>
+        <td class="p-3"><code class="text-xs">wit_work_item_write (add_child + update_batch)</code></td>
         <td class="p-3"><code class="text-xs">&lt;FE/BE/Authoring task&gt;</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-req-dod</code></td>
         <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
-        <td class="p-3"><code class="text-xs">wit_create_work_item</code></td>
+        <td class="p-3"><code class="text-xs">wit_work_item_write (create)</code></td>
         <td class="p-3"><code class="text-xs">&lt;fix description&gt;</code></td>
       </tr>
     </tbody>
@@ -394,7 +394,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:timer"
       iconColor="bg-amber-500"
       title="/dx-req-tasks (create)"
-      tags={[{ label: 'wit_update_work_items_batch', color: 'warning' }]}
+      tags={[{ label: 'wit_work_item_write · update_batch', color: 'warning' }]}
     >
       After creating child Task items, updates their estimation fields: **Original Estimate** and
       **Remaining Work**. Uses batch update for efficiency. Also sets assignment if configured.
@@ -404,7 +404,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:check-circle"
       iconColor="bg-emerald-600"
       title="/dx-req-tasks close"
-      tags={[{ label: 'wit_update_work_items_batch', color: 'success' }]}
+      tags={[{ label: 'wit_work_item_write · update_batch', color: 'success' }]}
     >
       Closes all open child tasks after development: moves **Remaining Work** into **Completed Work**,
       zeros remaining, sets state to **Closed**. Checks <code>implement.md</code> to verify all steps

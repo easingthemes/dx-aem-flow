@@ -36,7 +36,8 @@ ToolSearch("+ado repo")
 Resolve the repo ID if not in findings metadata:
 
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -48,7 +49,8 @@ mcp__ado__repo_get_repo_by_name_or_id
 **Before posting anything**, fetch the PR's existing threads so a re-run never double-posts. A re-run happens whenever the queue's `vote == 0` filter re-selects this PR: a prior run that posted threads but **crashed before casting the vote**, a manually cleared vote, or a verdict that mapped to `NoVote`.
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -64,7 +66,8 @@ For each issue in the findings (that survived the idempotency skip above):
 ### Without patch (no patch file, or issue not fixable)
 
 ```
-mcp__ado__repo_create_pull_request_thread
+mcp__ado__repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "<comment text>"
@@ -73,7 +76,7 @@ mcp__ado__repo_create_pull_request_thread
   rightFileEndLine: <end line>
   rightFileStartOffset: 1
   rightFileEndOffset: 1
-  status: "active"
+  status: "Active"
 ```
 
 **Inline positioning rules:**
@@ -107,7 +110,7 @@ To apply: `git apply` the patch from the summary comment, or copy this diff.
 > 2. **NEVER HTML-encode diff content** — write raw `<p>`, `<span>`, `<div>`, NOT `&lt;p&gt;`, `&lt;span&gt;`, `&lt;div&gt;`. The code fence handles escaping for display. HTML-encoding creates double-encoding that shows literal `&lt;` text to the reader.
 > 3. **Always include the triple-backtick code fence** with `diff` language tag — without it, HTML tags in the diff get parsed as actual HTML
 
-Post with the same `mcp__ado__repo_create_pull_request_thread` call.
+Post with the same `mcp__ado__repo_pull_request_thread_write` (`action: "create"`) call.
 
 If a thread fails to post: log the error and continue with remaining issues.
 
@@ -173,7 +176,8 @@ Determine vote from the verdict in the findings:
 Cast the vote via MCP (the tool auto-adds the caller as a reviewer if not already one):
 
 ```
-mcp__ado__repo_vote_pull_request
+mcp__ado__repo_pull_request_write
+  action: "vote"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
@@ -200,7 +204,7 @@ The findings carry the signal; a human casts any approving **or** blocking vote.
 
 When you clamp a `changes-requested`/`rejected` verdict to `NoVote`, the **summary thread (step 5) MUST state plainly that the bot is NOT approving because of a blocking-level (MUST-FIX) concern, and a human must review before merge** — keep the `MUST-FIX` severity labels on the individual issue comments intact. Do NOT write "neither blocks merge" or any phrasing that softens the MUST-FIX; sharpen it ("not approving — blocking concern flagged for a human"). You MUST NOT call `AskUserQuestion`.
 
-**When `AUTOMATION=0`** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_vote_pull_request`.
+**When `AUTOMATION=0`** (user invoked directly): use `AskUserQuestion` to confirm the vote, map the choice to the enum, then call `repo_pull_request_write` with `action: "vote"`.
 
 ## 7. Update Session
 

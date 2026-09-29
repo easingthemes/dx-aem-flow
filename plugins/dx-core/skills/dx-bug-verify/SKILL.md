@@ -485,7 +485,7 @@ Save to `$OUTPUT_FILE` (`verification.md` for `before`, `verification-local.md` 
 
 Read `shared/ado-config.md` for ADO project (or `shared/provider-config.md` for Jira).
 
-Use `mcp__ado__wit_add_work_item_comment` to post the result. **Always pass `format: "markdown"`** so ADO renders the comment correctly.
+Use `mcp__ado__wit_work_item_comment_write` with `action: "add"` to post the result (comment body goes in `text`). **Always pass `format: "Markdown"`** so ADO renders the comment correctly.
 
 **If provider = jira**, use `mcp__atlassian__jira_add_comment` instead:
 ```

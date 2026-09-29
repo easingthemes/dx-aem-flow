@@ -107,7 +107,8 @@ If hub mode is not active: continue with normal flow below.
 Resolve the repo ID first:
 
 ```
-mcp__ado__repo_get_repo_by_name_or_id
+mcp__ado__repo_repository
+  action: "get"
   project: "<project from URL if provided, otherwise from config>"
   repositoryNameOrId: "<repo name>"
 ```
@@ -117,7 +118,8 @@ mcp__ado__repo_get_repo_by_name_or_id
 Then fetch the PR:
 
 ```
-mcp__ado__repo_get_pull_request_by_id
+mcp__ado__repo_pull_request
+  action: "get"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -147,7 +149,8 @@ If `REVIEW_OWN_PRS=1`, do **not** skip — continue reviewing even when the auth
 Check for existing threads — these provide valuable context for the review:
 
 ```
-mcp__ado__repo_list_pull_request_threads
+mcp__ado__repo_pull_request_thread
+  action: "list"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
 ```
@@ -155,7 +158,8 @@ mcp__ado__repo_list_pull_request_threads
 For each **active thread that has comments from other reviewers** (not system-generated, not status-only), fetch the full conversation:
 
 ```
-mcp__ado__repo_list_pull_request_thread_comments
+mcp__ado__repo_pull_request_thread
+  action: "list_comments"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -611,7 +615,8 @@ AskUserQuestion(
 Post each comment as a thread:
 
 ```
-mcp__ado__repo_create_pull_request_thread
+mcp__ado__repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "<approved comment text>"
@@ -620,17 +625,18 @@ mcp__ado__repo_create_pull_request_thread
   rightFileEndLine: <line>
   rightFileStartOffset: 1
   rightFileEndOffset: 1
-  status: "active"
+  status: "Active"
 ```
 
 Then post the summary (no filePath = general PR comment):
 
 ```
-mcp__ado__repo_create_pull_request_thread
+mcp__ado__repo_pull_request_thread_write
+  action: "create"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   content: "**Verdict**: <verdict>\n\nReviewed N files — N comments.\n\n<overall impression>"
-  status: "active"
+  status: "Active"
 ```
 
 #### With patches
@@ -710,7 +716,8 @@ Map the user's choice to the `vote` enum and cast it via MCP:
 | Skip voting — comments only | *(no-op — do not call the tool)* | — |
 
 ```
-mcp__ado__repo_vote_pull_request
+mcp__ado__repo_pull_request_write
+  action: "vote"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
@@ -748,7 +755,8 @@ If no new commits since review commit: "No new commits since your last review. N
 Refetch all threads from ADO (already done in step 3). For each of **my** threads, read the full conversation:
 
 ```
-mcp__ado__repo_list_pull_request_thread_comments
+mcp__ado__repo_pull_request_thread
+  action: "list_comments"
   repositoryId: "<repo ID>"
   pullRequestId: <PR ID>
   threadId: <thread ID>
@@ -895,7 +903,7 @@ Task(
 
 Same as first-review steps 6-8 — generate patches if requested, post comments.
 
-For ARGUED thread reactions: reply via `mcp__ado__repo_reply_to_comment` (existing threads, not new ones).
+For ARGUED thread reactions: reply via `mcp__ado__repo_pull_request_thread_write` with `action: "reply"` (existing threads, not new ones).
 
 For IGNORED thread pings: reply to existing thread with a polite nudge.
 
@@ -923,7 +931,7 @@ Write `.ai/pr-reviews/pr-<id>.md`:
 **Last reviewed:** <ISO date>
 **Review commit:** <SHA>
 **Status:** reviewed | follow-up-needed | complete
-**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped> — set via `mcp__ado__repo_vote_pull_request`
+**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped> — set via `mcp__ado__repo_pull_request_write` (`action: "vote"`)
 
 ## My Threads
 
