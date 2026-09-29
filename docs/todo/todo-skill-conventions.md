@@ -251,6 +251,14 @@ behaviour is gated on an A/B eval.
 - P2: `grep -rhoE '\b(CRITICAL|IMPORTANT)\b' plugins/*/skills/*/SKILL.md | wc -l` ≤ 5.
 - P3/P4: every changed skill has an eval result at old and new ref in `docs/research/`, with no
   score drop; `find plugins -name SKILL.md -exec wc -l {} + | awk '$1>500 && $2!="total"' | wc -l` is 0.
+**Progress 2026-09-29 — phase 1 partly done (no behaviour change):** removed the 10 dev-history
+refs (TODO #141/#147/#151, issue #136) from 7 skills — `PR #12345`-style example IDs kept; removed
+the 2 no-ops (`dx-figma-extract` "be thorough", `dx-figma-prototype` rationale sentence;
+`dx-step-fix:337` is an anti-rationalization table row, kept); `dx-step-verify` now pastes the
+`dx-code-reviewer` body only on the `general-purpose` fallback (the typed agent already has it —
+saves ~2.6k tok per review). **Still open in phase 1:** the 16 cross-skill duplicate paragraphs and
+the forked-context boilerplate ×6–8 — moving them changes where instructions live and how workers
+detect orchestration, so they wait for the eval gate. P1 Done-when now passes for the history refs.
 **Related:** #108 (500-line threshold), #111 (checklists — pipelines only), #137, #167, #170,
 #237 (review filter), #238 (description footprint), #239 (reasoning-echo lint), #222 (tiers),
 #240 (fork remaining inline workers), #241 (inline-chain budget lint), #242 (verification layering).
