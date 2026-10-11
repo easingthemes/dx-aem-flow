@@ -1,0 +1,50 @@
+# With .ai/project/project.yaml present — output must include the
+# Project Context section (market scope, source files table, AEM pages).
+id: with-project-yaml
+name: With project.yaml present
+description: |
+  When project.yaml exists, the skill enables AEM enrichment: market
+  detection, parallel agent dispatch (dx-doc-searcher, aem-file-resolver,
+  aem-page-finder), and adds a "### Project Context" section.
+
+tags:
+  - aem
+  - project-yaml
+  - conditional-section
+
+inputs:
+  prompt: "/dx-ticket-analyze 2435084"
+  files:
+    - path: .ai/config.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
+        aem:
+          active-markets: [de]
+    - path: .ai/project/project.yaml
+    - path: .ai/project/component-index.md
+
+expected:
+  output_contains:
+    - "### Project Context"
+    - "### Components Found"
+
+graders:
+  - name: project_context_present
+    type: text
+    config:
+      regex_match:
+        - "(?m)^### Project Context"
+        - "(?m)^#### Market Scope"
+        - "(?m)^#### Source Files"
+
+  - name: parallel_agent_dispatch
+    type: action_sequence
+    config:
+      matching_mode: any_order_match
+      expected_actions:
+        - "Task"

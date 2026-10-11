@@ -1,0 +1,48 @@
+# Jira issue key — should route to atlassian MCP, not ADO.
+id: jira-key
+name: Jira issue key with jira provider
+description: |
+  Skill should detect tracker.provider=jira and use mcp__atlassian__jira_get_issue
+  rather than the ADO MCP. Output should still match the same structural template.
+
+tags:
+  - jira
+  - input-parsing
+  - provider-routing
+
+inputs:
+  prompt: "/dx-ticket-analyze PROJ-123"
+  files:
+    - path: .ai/config.yaml
+      content: |
+        tracker:
+          provider: jira
+        jira:
+          url: https://example.atlassian.net
+          project-key: PROJ
+        scm:
+          provider: jira
+          base-branch: main
+
+expected:
+  output_contains:
+    - "## Ticket: #PROJ-123"
+    - "### Components Found"
+
+graders:
+  - name: provider_routing
+    type: behavior
+    config:
+      max_tool_calls: 20
+      required_tools:
+        - "mcp__atlassian__jira_get_issue"
+      forbidden_tools:
+        - "mcp__ado__wit_get_work_item"
+
+  - name: required_headings
+    type: text
+    config:
+      regex_match:
+        - "^## Ticket: #PROJ-123"
+        - "(?m)^### Components Found"
+        - "(?m)^### Acceptance Criteria"

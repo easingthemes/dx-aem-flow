@@ -1,0 +1,46 @@
+# Without project.yaml — Project Context section MUST be omitted.
+# This is the "if no project.yaml: omit" rule from SKILL.md step 6.
+id: without-project-yaml
+name: Without project.yaml
+description: |
+  Without .ai/project/project.yaml the skill should NOT include the
+  Project Context, Market Scope, or AEM Pages sections, and should
+  not dispatch aem-file-resolver / aem-page-finder agents.
+
+tags:
+  - conditional-section
+  - non-aem
+
+inputs:
+  prompt: "/dx-ticket-analyze 2416553"
+  files:
+    - path: .ai/config.yaml
+      content: |
+        tracker:
+          provider: ado
+        scm:
+          provider: ado
+          org: myorg
+          project: DefaultProject
+    # NOTE: no project.yaml fixture — this is the point of the test.
+
+expected:
+  output_contains:
+    - "## Ticket: #2416553"
+
+graders:
+  - name: project_context_omitted
+    type: text
+    config:
+      regex_not_match:
+        - "(?m)^### Project Context"
+        - "(?m)^#### Market Scope"
+        - "(?m)^#### AEM Pages"
+
+  - name: no_aem_agents
+    type: behavior
+    config:
+      max_tool_calls: 15
+      forbidden_tools:
+        - "aem-file-resolver"
+        - "aem-page-finder"
