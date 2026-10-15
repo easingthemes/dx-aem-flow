@@ -1,3 +1,10 @@
+## [3.7.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.5...v3.7.6) (2026-10-15)
+
+
+### Bug Fixes
+
+* **dx-automation:** scope the ADO MCP server to the domains skills use ([#220](https://github.com/easingthemes/dx-aem-flow/issues/220)) ([7d02ac8](https://github.com/easingthemes/dx-aem-flow/commit/7d02ac8222204b78aeb9e6b19bd814c822d7bbe0))
+
 ## [3.7.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.4...v3.7.5) (2026-10-15)
 
 
