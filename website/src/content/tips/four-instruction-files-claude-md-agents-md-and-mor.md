@@ -19,10 +19,10 @@ keyPoints:
 actionItems:
   - |
     The sharing trick — no duplication needed
-    - Set `COPILOT_CUSTOM_INSTRUCTIONS_DIRS=".claude/rules"` as an env var
-    - Now BOTH Claude Code and Copilot CLI read the same rules
-    - Still need dual frontmatter (`paths:` + `applyTo:`) for path-matching in both tools
+    - Copilot CLI v1.0.89+ reads `.claude/rules/*.md` natively — no env var, no copies
+    - Now BOTH Claude Code and Copilot CLI read the same rules, and Copilot maps `paths:` to its scope
+    - `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` does NOT do this: it only loads `AGENTS.md` and `*.instructions.md` from the folder
   - "Check which instruction files your project has — ensure each tool can find what it needs"
-  - "Set `COPILOT_CUSTOM_INSTRUCTIONS_DIRS=\".claude/rules\"` so Copilot CLI reads your existing Claude Code rules"
+  - "Update Copilot CLI to v1.0.89+ so it reads your existing Claude Code rules — check with `copilot instruction list`"
   - "Use dual frontmatter (`paths:` for Claude Code + `applyTo:` for Copilot) in all rule files for cross-platform path-matching"
 ---

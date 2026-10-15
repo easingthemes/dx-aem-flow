@@ -1,4 +1,3 @@
-<!-- Source: skills/dx-ticket-analyze/SKILL.md -->
 ---
 name: DxTicket
 description: Research an ADO ticket and find all relevant source files and assets. Use when a developer pastes an ADO URL or mentions a work item ID and wants to know what files are involved.
@@ -18,7 +17,10 @@ handoffs:
   - label: "Get project help"
     agent: DxHelp
     prompt: "Answer questions about project architecture"
+model: ['Claude Haiku 5.5', 'Claude Haiku 4.5']
+reasoning-effort: low
 ---
+<!-- Source: skills/dx-ticket-analyze/SKILL.md -->
 
 # Ticket Research Agent
 

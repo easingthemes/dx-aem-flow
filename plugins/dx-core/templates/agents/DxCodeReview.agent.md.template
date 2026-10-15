@@ -1,4 +1,3 @@
-<!-- Source: agents/dx-code-reviewer.md -->
 ---
 name: DxCodeReview
 description: Senior code reviewer — reviews full branch diff against plan and conventions. Uses confidence-based filtering (>=80) to report only high-signal issues. Read-only. Use before creating a PR.
@@ -14,7 +13,10 @@ handoffs:
   - label: "Debug an issue"
     agent: DxDebug
     prompt: "Diagnose the error found during review"
+model: ['Claude Opus 5.5', 'Claude Opus 5']
+reasoning-effort: high
 ---
+<!-- Source: agents/dx-code-reviewer.md -->
 
 # Code Review Agent
 

@@ -624,19 +624,9 @@ bash ${CLAUDE_SKILL_DIR}/scripts/install-copilot-agents.sh
 
 This copies all `*.agent.md.template` files from the dx plugin's `templates/agents/` to `.github/agents/` (stripping `.template` suffix), applies post-copy transforms (editFiles→edit alias, allowed-tools injection). Files that already exist are skipped. Review the script output to report what was installed vs skipped.
 
-### 9a-bis. Set COPILOT_CUSTOM_INSTRUCTIONS_DIRS
+### 9a-bis. Copilot reads `.claude/rules/` natively — nothing to set
 
-Read `.claude/settings.json`. If no `env.COPILOT_CUSTOM_INSTRUCTIONS_DIRS` exists, add it:
-
-```json
-{
-  "env": {
-    "COPILOT_CUSTOM_INSTRUCTIONS_DIRS": ".claude/rules"
-  }
-}
-```
-
-This tells Copilot CLI (v1.0.6+) to read rules from `.claude/rules/` directly — the same location Claude Code uses. No `.github/instructions/` copies needed. Rules with dual frontmatter (`paths:` for Claude Code, `applyTo:` for Copilot CLI) work in both tools from a single source.
+Copilot CLI v1.0.89+ reads `.claude/rules/*.md` natively and maps `paths:` to its `applyTo:` scope, so the rules installed for Claude Code are the rules Copilot uses. **Do not add `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`**: it only loads `AGENTS.md` and `*.instructions.md` from the listed folders, never plain `<name>.md`, so it never loaded our rules on any version. If an existing `.claude/settings.json` has `env.COPILOT_CUSTOM_INSTRUCTIONS_DIRS: ".claude/rules"` from an older install, it is harmless (no duplicates on v1.0.98) and can be removed. On Copilot CLI older than v1.0.89 the rules do not load at all — tell the user to update Copilot.
 
 ### 9b. Install AEM agent templates (if AEM was set up in step 7)
 
@@ -648,7 +638,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/install-copilot-agents.sh "$AEM_PLUGIN_DIR"
 
 Where `$AEM_PLUGIN_DIR` is the path to the aem plugin root (resolve from the aem skill files found in step 7). This installs AEM agent templates (`AEMBefore.agent.md`, `AEMAfter.agent.md`, etc.) to `.github/agents/`.
 
-> **Note:** `.github/instructions/` copies are no longer needed. Copilot CLI reads rules directly from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` env var (set in step 9a-bis). If the directory exists from a previous install, leave it — Copilot reads both locations.
+> **Note:** `.github/instructions/` copies are no longer needed. Copilot CLI v1.0.89+ reads rules directly from `.claude/rules/` (step 9a-bis). If the directory exists from a previous install, leave it — Copilot reads both locations.
 
 ### 9c. Generate copilot-instructions.md
 

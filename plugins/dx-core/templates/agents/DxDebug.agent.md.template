@@ -1,4 +1,3 @@
-<!-- Source: dx-core Debug agent -->
 ---
 name: DxDebug
 description: Systematic error diagnosis for compilation errors, test failures, and runtime issues. Read-only analysis — identifies root cause and suggests fixes without modifying code. Use when something breaks during development.
@@ -16,6 +15,7 @@ handoffs:
     agent: DxCodeReview
     prompt: "Review the code around the error"
 ---
+<!-- Source: dx-core Debug agent -->
 
 # Debug Agent
 

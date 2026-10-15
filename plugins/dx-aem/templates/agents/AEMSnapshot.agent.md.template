@@ -1,4 +1,3 @@
-<!-- Source: agents/aem-inspector.md -->
 ---
 name: AEMSnapshot
 description: Inspect an AEM component — capture dialog fields, find pages, examine JCR properties. General-purpose component inspection without before/after context. Use for ad-hoc component research.
@@ -23,7 +22,9 @@ handoffs:
   - label: "Find source files"
     agent: DxComponent
     prompt: "Find all source files for this component"
+model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
 ---
+<!-- Source: agents/aem-inspector.md -->
 
 # AEM Component Inspector
 
