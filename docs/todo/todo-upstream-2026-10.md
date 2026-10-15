@@ -12,6 +12,8 @@ Claude Code v2.1.286–v2.1.301 and Copilot CLI v1.0.90–v1.0.98. Each item's
 **Done-when:** `grep -n '"onFailure": "block"' plugins/dx-core/hooks/hooks.json` hits the branch-guard entry, AND `grep -n "onFailure" CLAUDE.md` hits the Hook Authoring table.
 **Approach:** Blocking hooks only — informational hooks (`next-step.sh`, `context-loader.sh`) must stay fail-open. Check that Copilot CLI, which reads the same `hooks.json`, ignores the unknown key instead of rejecting the file.
 
+**Done 2026-10-15:** added to the PreToolUse branch-guard entry in `plugins/dx-core/hooks/hooks.json`. Copilot check against the v1.0.98 binary: its hook validator errors on wrong types, nesting and version, but has no unknown-field rejection; the same handler already carries the Claude-only `statusMessage`; and it already denies a `preToolUse` call when the hook errors ("Denied by preToolUse hook (hook errored)"). The `.github/hooks/` template (Copilot-only) is left unchanged. Not exercised live: the block path itself needs a billed `claude -p` run.
+
 ## Test our AEM MCP server against MCP protocol `2026-07-28`
 
 **Added:** 2026-10-15
