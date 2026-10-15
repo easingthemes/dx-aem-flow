@@ -542,6 +542,8 @@ echo "$AEM_INSTANCES"
    Alternative: add to .claude/settings.local.json under "env" (Claude Code only, not Copilot CLI).
    ```
 
+   If `aem.author-url` is an AEM as a Cloud Service host, also mention: Adobe hosts its own MCP server at `https://mcp.adobeaemcloud.com/adobe/mcp/aem`. It is Cloud Service only, OAuth with the user's Adobe ID, runs with that user's AEM permissions, and Content/Cloud Manager can be read-only. The user may add it next to the bundled server for ad-hoc work. It does **not** replace the bundled `AEM` server: dx-aem skills call that server's tools by name, and the Adobe server needs an interactive sign-in a pipeline cannot do.
+
 3. **Also update `.claude/settings.local.json`** — add the `AEM_INSTANCES` key as a placeholder. Do NOT overwrite existing values:
 
    a. **If file exists:** Merge `AEM_INSTANCES` into the existing `"env"` object.

@@ -43,6 +43,13 @@
 **Done-when:** Run any of these skills with `DX_PIPELINE_MODE=true` and an unreachable `aem.author-url` — skill exits non-zero with clear message instead of silently producing empty output.
 **Approach:** Each AEM skill should detect pipeline mode and either use `aem.qa-author-url` or skip with a comment.
 
+**Decision 2026-10-15 — Adobe's hosted AEM MCP (`https://mcp.adobeaemcloud.com/adobe/mcp/aem`) does not solve this.** Per its Experience League page (updated 2026-10-14):
+- it is AEM as a Cloud Service only;
+- it authenticates with OAuth on the user's Adobe ID and runs as that signed-in user;
+- the page documents no service or technical-account path.
+
+A pipeline has nobody to sign in, and consumers on local SDK / AEM 6.5 cannot reach it at all. It also exposes Adobe's own tools, not the `mcp__plugin_dx-aem_AEM__*` names our skills call. So #127 stays as scoped (`aem.qa-author-url` or fail fast). The Adobe server is documented as an optional add-on for interactive AEMaaCS users (`aem-init` step 11a, `website/src/pages/learn/mcps.mdx`). Revisit if Adobe ships a non-interactive credential for it.
+
 ## Pipeline `ALLOWED_TOOLS` missing MCP tools
 
 **Added:** 2026-05-28
