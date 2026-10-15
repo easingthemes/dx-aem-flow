@@ -245,6 +245,8 @@ Set these on the SimpleAgent pipeline (in addition to `ANTHROPIC_API_KEY` + plug
 | `AEM_QA_PASSWORD` | Service-account password on QA | Yes |
 | `PLAYWRIGHT_MCP_VERSION` | Playwright MCP (`@playwright/mcp`) version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
 | `AEM_MCP_VERSION` | AEM MCP version — defaults to value pinned in `ado-cli-simple.yml` (override only if needed) | No |
+| `ADO_MCP_VERSION` | ADO MCP (`@azure-devops/mcp`) version — defaults to the value pinned in `pipeline-agent.js` (override only if needed) | No |
+| `ADO_MCP_DOMAINS` | ADO MCP tool domains, comma-separated — default `core,work,work-items,search,repositories,wiki` (no `pipelines`, `test-plans`, `advanced-security`); `all` loads every domain | No |
 
 > **AEM QA author URL?** For SimpleAgent visual verification + authoring writes (e.g. `https://qa-author.example.com`)
 

@@ -8,6 +8,10 @@
  * Environment variables:
  *   ANTHROPIC_API_KEY     - required
  *   ADO_MCP_AUTH_TOKEN    - enables ADO MCP server with token auth
+ *   ADO_MCP_VERSION       - @azure-devops/mcp version, default: 2.10.0
+ *   ADO_MCP_DOMAINS       - comma-separated ADO MCP tool domains, default:
+ *                           core,work,work-items,search,repositories,wiki
+ *                           ("all" loads every domain)
  *   AEM_INSTANCES          - enables AEM MCP server (e.g. local:http://localhost:4502:admin:admin,qa:https://qa-host:user:pass)
  *   AEM_AUTHOR_URL         - (pipeline) AEM author URL — composed into AEM_INSTANCES if AEM_INSTANCES is not set
  *   AEM_USER / AEM_PASS    - (pipeline) AEM credentials — composed into AEM_INSTANCES if AEM_INSTANCES is not set
@@ -60,10 +64,21 @@ const mcpServers = {};
 // upstream tool rename or a new write tool reaches every pipeline unreviewed.
 // Override per run with the ADO_MCP_VERSION pipeline variable.
 const ADO_MCP_VERSION = process.env.ADO_MCP_VERSION || "2.10.0";
+// Without `-d` the server loads every domain, so each pipeline (which allows
+// mcp__ado__*) can also run builds (pipelines), edit test plans and read
+// advanced-security alerts. No skill uses those three; the default drops them.
+// `core` stays: the ADO MCP README says to always include it. Invalid names are
+// logged and skipped by the server; if none is valid it loads all. TODO #233.
+// Each domain must be its own argv entry: `domains` is a yargs array option, so
+// one "a,b,c" string reaches the server as a single invalid name and it falls
+// back to ALL domains — silently. `-d` goes last because an array option also
+// swallows any positional that follows it.
+const ADO_MCP_DOMAINS = (process.env.ADO_MCP_DOMAINS || "core,work,work-items,search,repositories,wiki")
+  .split(/[\s,]+/).filter(Boolean);
 if (process.env.ADO_MCP_AUTH_TOKEN) {
   mcpServers.ado = {
     command: "npx",
-    args: ["-y", `@azure-devops/mcp@${ADO_MCP_VERSION}`, process.env.ADO_ORG_NAME || "myorg", "--authentication", "envvar"],
+    args: ["-y", `@azure-devops/mcp@${ADO_MCP_VERSION}`, process.env.ADO_ORG_NAME || "myorg", "--authentication", "envvar", "-d", ...ADO_MCP_DOMAINS],
     env: { ADO_MCP_AUTH_TOKEN: process.env.ADO_MCP_AUTH_TOKEN },
   };
 }
