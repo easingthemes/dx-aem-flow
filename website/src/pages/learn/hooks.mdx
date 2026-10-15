@@ -31,6 +31,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <li><strong>PreToolUse</strong> -- before the AI calls a tool (can block it)</li>
       <li><strong>PostToolUse</strong> -- after the AI finishes calling a tool</li>
       <li><strong>SessionStop</strong> -- when the AI session ends</li>
+      <li><strong>PreModelSwitch</strong> / <strong>PostModelSwitch</strong> -- around a model change (Claude Code v2.1.251+; the pre hook can block, ask, or annotate)</li>
     </ul>
   </ContentCard>
 </Section>
@@ -126,6 +127,35 @@ import CommandBlock from '../../components/CommandBlock.astro';
     dx-core owns general hooks (branch guard, subagent log, Figma screenshots).
     dx-aem now has its own <code>hooks.json</code> for AEM full-flow hooks (Playwright screenshots, component inspection, editorial capture).
     Both plugins' hooks fire in the same session without conflict.
+  </HighlightBox>
+</Section>
+
+<SectionHeading
+  badge="v2.1.251"
+  badgeColor="info"
+  title="Model-Switch Hooks (Claude Code)"
+  subtitle="PreModelSwitch and PostModelSwitch fire around /model, a fast-mode toggle, or a settings change."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="PreModelSwitch">
+      Runs before the model changes. It can <strong>block</strong> the switch, <strong>ask</strong> the
+      user to confirm (Claude Code then shows that the full history will be re-read uncached), or add a
+      note. A session that cannot ask — <code>claude -p</code>, a pipeline — treats a required
+      confirmation as a block. Use it to keep a verification run from silently leaving the Opus /
+      <code>effort: high</code> tier it was tuned for.
+    </ContentCard>
+    <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="PostModelSwitch">
+      Runs after a switch went through. Observational: log which model a pipeline actually ended up on.
+      Same release: <code>SessionStart</code> on resume also receives how stale the session is and an
+      estimated re-cache cost.
+    </ContentCard>
+  </div>
+  <HighlightBox severity="info" title="Not shipped as a dx-core hook (yet)">
+    KAI documents these events but does not install a model-switch guard: a guard in
+    <code>dx-core/hooks/hooks.json</code> would fire for every consumer. If one is added it belongs behind
+    <code>DX_HOOK_PROFILE=strict</code>. Copilot CLI has no equivalent event.
   </HighlightBox>
 </Section>
 

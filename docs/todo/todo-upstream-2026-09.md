@@ -32,6 +32,17 @@ is non-zero for both files, AND — if the guard is adopted —
 guard belongs in `dx-core` hooks (fires for every consumer) or behind
 `DX_HOOK_PROFILE=strict`, which is what the profile tier exists for.
 
+**Done 2026-10-15.** Docs: `website/src/pages/learn/hooks.mdx` has both events in the event list, plus a section covering:
+- what `PreModelSwitch` can do (block / ask / annotate);
+- that a session that cannot ask treats a required confirmation as a block ("confirmation required, and this session cannot ask" — string from the v2.1.301 bundle);
+- `PostModelSwitch` as the observational hook;
+- the `SessionStart` resume fields.
+
+The site builds (98 pages). **Guard decision: not adopted for now.**
+- A model switch in a `dx-automation` run comes from config, `--model` or a provider fallback. A hook would only add a second place to keep in sync, and #224's managed allowlists are the right tool for "only these models on pipeline hosts".
+- If a guard is wanted later, it goes behind `DX_HOOK_PROFILE=strict`, so it does not fire for every consumer.
+- Not verified: hook payload fields (no live session). Copilot CLI has no equivalent event.
+
 ## maxEffortLevel setting
 
 **Added:** 2026-09-13
