@@ -201,3 +201,52 @@ import HighlightBox from '../components/HighlightBox.astro';
     </ContentCard>
   </div>
 </Section>
+
+<SectionHeading
+  badge="Pipeline hosts"
+  badgeColor="info"
+  title="Pin Models and Effort on Pipeline Hosts"
+  subtitle="Stop a new default model or a higher effort level from changing pipeline cost without anyone noticing."
+  bg="primary"
+/>
+<Section>
+  <p class="text-sm text-gray-300">
+    Skills name a tier (<code>model: opus</code>), not a version, and the alias moves when a new
+    model ships. On a laptop that is what you want. On the agent pool that runs <code>dx-automation</code>
+    24/7 it means cost and behaviour can change overnight. Claude Code reads a
+    <strong>managed settings</strong> file that no project or user setting can override. On a Linux
+    agent it lives at <code>/etc/claude-code/managed-settings.json</code>. The pipeline launcher loads
+    user and project settings, and managed settings always apply on top.
+  </p>
+  <pre class="mt-3 p-3 bg-gray-900 text-white rounded text-xs"><code>{`{
+  "availableModels": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
+  "availableModelsMatch": "exact",
+  "deniedModels": [],
+  "allowedProviders": ["anthropic"],
+  "maxEffortLevel": "high"
+}`}</code></pre>
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="availableModels + availableModelsMatch">
+      Allowlist of the model IDs the pool may use. With <code>"exact"</code> (v2.1.283+), an entry such as
+      <code>claude-opus-5-5</code> no longer lets in a later release that extends the ID. A new model needs
+      a one-line change here, which is the point. Trade-off: if the <code>opus</code> alias moves to a model
+      that is not listed, those runs stop instead of silently switching. Bump the list when you upgrade.
+    </ContentCard>
+    <ContentCard icon="mdi:cancel" iconColor="bg-red-500" title="deniedModels">
+      Block a family alias (<code>"opus"</code>) or a version in every spelling, even when the allowlist
+      would allow it (v2.1.283+). Use it to keep a known-bad or too-expensive model off the pool.
+    </ContentCard>
+    <ContentCard icon="mdi:cloud-lock" iconColor="bg-amber-500" title="allowedProviders">
+      Managed settings only (v2.1.285+). The providers this machine may call: <code>anthropic</code>,
+      <code>bedrock</code>, <code>vertex</code>, <code>foundry</code>, and others. List the one your
+      contract covers so a stray environment variable cannot route a run to another provider.
+    </ContentCard>
+    <ContentCard icon="mdi:speedometer" iconColor="bg-emerald-600" title="maxEffortLevel">
+      Caps effort on every provider (v2.1.267+). Anything higher (frontmatter, <code>--effort</code>, a
+      model default) is clamped. Set per model under <code>modelSettings.&lt;model&gt;.maxEffortLevel</code>.
+      <strong>Opt-in, not a KAI default:</strong> a cap of <code>high</code> turns the
+      <code>effort: xhigh</code> escalation tier into <code>high</code>, and that tier has not yet been
+      measured against <code>high</code>.
+    </ContentCard>
+  </div>
+</Section>

@@ -63,6 +63,8 @@ choice, not a default. Likeliest split: no cap locally, cap at `high` in
 pipelines. Ordering note: because `effort:` was a no-op until v2.1.267, measure
 what the tier table actually costs now (#137 / `/skill-doctor`) before capping it.
 
+**Done 2026-10-15:** decision recorded in `docs/todo/todo-config.md` § "Effort ceiling": no default ceiling; opt-in `maxEffortLevel` documented in the pipeline-host managed-settings block on the costs page.
+
 ## Plugin-dir folder loading simplifies the local test loop
 
 **Added:** 2026-09-13
@@ -608,6 +610,8 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Scope:** `docs/todo/todo-upstream-2026-09.md` #200 table, `website/` automation setup page.
 **Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` hits a recommended settings block for pipeline hosts.
 **Approach:** Docs only; ship with #200.
+
+**Done 2026-10-15.** Shipped on its own, not with #200: it is a host setting, not a launcher change. `website/src/pages/costs.mdx` § "Pin Models and Effort on Pipeline Hosts" (`grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` → 6). Semantics are taken from the settings' descriptions in the v2.1.301 bundle. One trade-off is spelled out: with `exact`, a moved `opus` alias stops runs instead of switching silently. Not verified: a live Agent SDK run (`settingSources: ["user","project"]`) honouring the managed file; managed settings are documented to apply regardless.
 
 ## `/doctor prompt-audit` for the concise-body audit
 
