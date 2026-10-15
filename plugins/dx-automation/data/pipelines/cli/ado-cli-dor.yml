@@ -127,7 +127,7 @@ steps:
 
   - bash: |
       npm install -g @anthropic-ai/claude-code
-      npm install --no-save @anthropic-ai/claude-agent-sdk @azure-devops/mcp
+      npm install --no-save @anthropic-ai/claude-agent-sdk "@azure-devops/mcp@${ADO_MCP_VERSION:-2.10.0}"
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
 

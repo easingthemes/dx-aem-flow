@@ -9,11 +9,12 @@
       "type": "stdio",
       "command": "npx",
       "args": [
-        "@playwright/mcp@0.0.75",
+        "@playwright/mcp@0.0.83",
         "--headless",
         "--isolated",
         "--viewport-size=1440,900",
         "--caps=storage",
+        "--no-webmcp",
         "--output-dir=.ai/playwright/screenshots"
       ]
     }

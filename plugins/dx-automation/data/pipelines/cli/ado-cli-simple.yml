@@ -59,7 +59,7 @@ resources:
 
 variables:
   - name: PLAYWRIGHT_MCP_VERSION
-    value: "0.0.75"
+    value: "0.0.83"
   - name: AEM_MCP_VERSION
     value: "1.6.2"
 
