@@ -1,4 +1,3 @@
-<!-- Source: skills/aem-component/SKILL.md -->
 ---
 name: AEMComponent
 description: Find all source files, AEM pages, and dialog fields for an AEM component. Use when asking "where is component X?", "what files for hero?", or any component lookup question.
@@ -25,6 +24,7 @@ handoffs:
     agent: DxComponent
     prompt: "Find all source files for this component"
 ---
+<!-- Source: skills/aem-component/SKILL.md -->
 
 # AEM Component Lookup
 

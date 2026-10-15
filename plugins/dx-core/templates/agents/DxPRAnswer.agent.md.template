@@ -1,4 +1,3 @@
-<!-- Source: skills/dx-pr-answer/SKILL.md -->
 ---
 name: DxPRAnswer
 description: Answer open comments on your ADO pull requests. Researches codebase context, drafts replies, categorizes each thread (agree-will-fix, question, disagree, skip), and posts approved answers. Use when you want to respond to PR review feedback.
@@ -20,6 +19,7 @@ handoffs:
     agent: DxPRReview
     prompt: "Review a pull request"
 ---
+<!-- Source: skills/dx-pr-answer/SKILL.md -->
 
 # PR Answer Agent
 

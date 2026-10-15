@@ -19,7 +19,7 @@ You configure AEM-specific settings by detecting the project structure and appen
 | **Component discovery** (.ai/project/component-discovery.md) | Offer to re-scan if stale (AEM dialog changes on QA) |
 | **Shared rule extensions** (pr-review.md, pr-answer.md AEM sections) | Validate sections exist, re-append if missing |
 | **Rule templates** (.claude/rules/be-*.md, fe-*.md) | Compare against plugin template → if template changed and user hasn't customized: update. If user customized: show diff, ask |
-| **Copilot instructions** | Read from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` — no copies needed |
+| **Copilot instructions** | Copilot CLI v1.0.89+ reads `.claude/rules/` natively — no copies, no env var |
 | **Copilot agents** (.github/agents/AEM*.md) | Compare against plugin template → update silently if changed |
 
 > **Inline execution from dx-init:** When this skill is run inline from `/dx-init` step 7 (AEM auto-chain), skip Copilot-related steps: **8a** (Copilot question), **8e** (AEM Copilot agent templates), and **8f** (copilot-instructions.md update). Also skip **step 9** (Confirm). These are handled by dx-init steps 9 and 10 instead. Set `COPILOT_ENABLED=false` as default — dx-init handles Copilot output separately.
@@ -267,7 +267,7 @@ If `.ai/rules/pr-review.md` or `.ai/rules/pr-answer.md` does not exist, skip and
 
 ## 8. Copy Convention Templates
 
-Unified convention templates (`templates/rules/`) contain dual frontmatter (`paths:` for Claude Code, `applyTo:` for Copilot CLI). Each template is copied to `.claude/rules/`. Copilot CLI reads rules from this same location via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` env var (set by `/dx-init` step 9a-bis) — no `.github/instructions/` copies needed.
+Unified convention templates (`templates/rules/`) contain dual frontmatter (`paths:` for Claude Code, `applyTo:` for Copilot CLI). Each template is copied to `.claude/rules/`. Copilot CLI v1.0.89+ reads rules from this same location natively and maps `paths:` to its scope — no `.github/instructions/` copies, no env var.
 
 ### 8a. Ask about Copilot support
 
@@ -339,7 +339,7 @@ Read from `.ai/config.yaml`:
 
 For each variable, if the config value is empty or missing, leave the placeholder as-is (consumer will fill in or the value is not relevant for this project).
 
-> **Note:** `.github/instructions/` copies are no longer generated. Copilot CLI reads rules directly from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` env var. Rules with dual frontmatter (`paths:` + `applyTo:`) work in both tools from a single source.
+> **Note:** `.github/instructions/` copies are no longer generated. Copilot CLI v1.0.89+ reads rules directly from `.claude/rules/`. Rules with dual frontmatter (`paths:` + `applyTo:`) work in both tools from a single source.
 
 ### 8d. (Removed — instruction templates merged into rule templates)
 
@@ -405,7 +405,7 @@ Copy the reusable auth helper so browser agents can authenticate to AEM without 
 
 **Rules** (`.claude/rules/`): <N> written, <N> skipped
 <If Copilot enabled:>
-**Copilot instructions**: read from `.claude/rules/` via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` (no copies needed)
+**Copilot instructions**: Copilot CLI v1.0.89+ reads `.claude/rules/` natively (no copies needed)
 **Copilot Agents** (`.github/agents/`): <N> written, <N> skipped
 ```
 
