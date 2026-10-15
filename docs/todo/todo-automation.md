@@ -365,6 +365,12 @@ Source: Microsoft Learn, [Securely use variables and parameters](https://learn.m
 
 **Update 2026-10-15 (from #226/#247):** Pipelines also `npm install --no-save @anthropic-ai/claude-agent-sdk` unpinned in every `ado-cli-*.yml`. That is why they already have the v2.1.296 `allowed-tools` fix; pin a floor (not an exact version) when this item lands.
 
+**Done 2026-10-15 (conservative scope).** `pipeline-agent.js` now passes `-d core work work-items search repositories wiki` by default, overridable with `ADO_MCP_DOMAINS` (`all` restores everything). Every ADO tool our plugins name maps to `work-items`, `repositories`, `wiki` or `search` in 2.10.0's `dist/tools/*.js`; nothing names a `pipelines`, `test-plans` or `advanced-security` tool, so those three are dropped — `pipelines` was the real write surface (run/queue builds). `core` stays per the README; `work` stays as cheap insurance.
+
+**Trap found while verifying:** 2.10.0 declares `domains` as a yargs `array` option, so `-d "a,b,c"` arrives as one name, is logged as invalid, and the server falls back to **all** domains with no visible error. The domains are therefore separate argv entries, and `-d` is last (an array option swallows following positionals). Verified by running the real `pipeline-agent.js` with a stub SDK and feeding its args to 2.10.0's own yargs + `DomainsManager`; locked in by `plugins/dx-automation/data/scripts/__tests__/pipeline-agent-ado-args.test.js`, which fails on the comma form.
+
+**Not done:** per-agent domain lists (e.g. DoR = `core work-items search`). Skills name tools in prose and the model can reach for one that is not listed; a missing domain makes that tool vanish mid-run. Do it only with a live pipeline run per agent.
+
 ## Bump Playwright MCP and disable WebMCP
 
 **Added:** 2026-09-29
