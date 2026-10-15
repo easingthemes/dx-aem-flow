@@ -254,9 +254,6 @@ Write/merge the following structure:
 ```json
 {
   "plansDirectory": ".ai/specs",
-  "env": {
-    "COPILOT_CUSTOM_INSTRUCTIONS_DIRS": ".claude/rules"
-  },
   "attribution": {
     "commit": "",
     "pr": ""

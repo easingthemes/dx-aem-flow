@@ -1,4 +1,3 @@
-<!-- Source: agents/aem-inspector.md -->
 ---
 name: AEMBefore
 description: Snapshot a component's AEM state before development — dialog fields, properties, and pages where it's used. Saves baseline to specs for later comparison. Use before starting implementation on a component.
@@ -18,7 +17,9 @@ handoffs:
   - label: "Create implementation plan"
     agent: DxPlanExecutor
     prompt: "Create and execute the implementation plan from the specs directory"
+model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
 ---
+<!-- Source: agents/aem-inspector.md -->
 
 # AEM Before — Baseline Snapshot
 

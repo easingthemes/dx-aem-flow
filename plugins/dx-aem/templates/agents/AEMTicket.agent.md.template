@@ -1,4 +1,3 @@
-<!-- Source: skills/dx-ticket-analyze/SKILL.md (with AEM enrichment) -->
 ---
 name: AEMTicket
 description: Research an ADO ticket with AEM project enrichment — find source files across repos, AEM pages, market scope, and design assets. Use when a developer pastes an ADO URL or mentions a work item ID.
@@ -22,7 +21,10 @@ handoffs:
   - label: "Gather full requirements"
     agent: DxReqAll
     prompt: "Run the full ADO requirements workflow for this ticket"
+model: ['Claude Haiku 5.5', 'Claude Haiku 4.5']
+reasoning-effort: low
 ---
+<!-- Source: skills/dx-ticket-analyze/SKILL.md (with AEM enrichment) -->
 
 # AEM Ticket Research
 

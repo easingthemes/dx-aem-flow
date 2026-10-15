@@ -141,7 +141,7 @@ aem:
     </ContentCard>
 
     <ContentCard icon="mdi:book-open-variant" iconColor="bg-emerald-600" title=".claude/rules/ (dual frontmatter)">
-      Single source for both tools. Claude Code reads <code>paths:</code>, Copilot CLI reads <code>applyTo:</code> via <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code>.
+      Single source for both tools. Claude Code reads <code>paths:</code>; Copilot CLI v1.0.89+ reads the folder natively and maps <code>paths:</code> to its scope. <code>applyTo:</code> stays for VS Code Chat.
       <CommandBlock label="Example: fe-javascript.md">
 {`# paths: ["**/*.js"]
 # applyTo: "**/*.js"

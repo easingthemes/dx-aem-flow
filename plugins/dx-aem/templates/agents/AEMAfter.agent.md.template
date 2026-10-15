@@ -1,4 +1,3 @@
-<!-- Source: agents/aem-inspector.md -->
 ---
 name: AEMAfter
 description: Verify a component on AEM after deployment — walk dialog fields, create a test page with the component configured, and save verification docs. Compares against baseline if available. Use after building and deploying changes to AEM.
@@ -24,7 +23,9 @@ handoffs:
   - label: "Review the changes"
     agent: DxCodeReview
     prompt: "Review the uncommitted code changes against the implementation plan"
+model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
 ---
+<!-- Source: agents/aem-inspector.md -->
 
 # AEM After — Post-Deployment Verification
 

@@ -10,6 +10,7 @@
 # 6. Shell scripts are executable
 # 7. shared/ <-> data/lib/ script parity
 # 8. Claude Code's own manifest/hook schema (claude plugin validate --json)
+# 9. Copilot agent templates: frontmatter on line 1; `model:` is a fallback list
 
 set -euo pipefail
 
@@ -143,6 +144,31 @@ if [ "$parity_drift" -gt 0 ]; then
 else
   echo "  $parity_checked paired script(s) — all identical"
 fi
+
+# --- Copilot agent templates ---
+# Frontmatter must open on line 1. A leading `<!-- Source: ... -->` comment hid
+# it from parsers that anchor `---` at the start of the file (Copilot's own
+# instruction parser does), so name/tools/model could be silently dropped.
+# `model:` must be a list (newest first) — a single pinned model goes stale, a
+# list falls through to the next entry. TODO #228.
+echo
+echo "Checking Copilot agent templates..."
+tpl_checked=0
+for t in "$REPO_ROOT"/plugins/*/templates/agents/*.agent.md.template; do
+  [ -f "$t" ] || continue
+  tpl_checked=$((tpl_checked + 1))
+  rel="${t#"$REPO_ROOT"/}"
+  if [ "$(head -1 "$t")" != "---" ]; then
+    echo "  ERROR: $rel — frontmatter must start on line 1 (move comments below the closing ---)"
+    ERRORS=$((ERRORS + 1))
+  fi
+  model_line=$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f && /^model:/ {print; exit}' "$t")
+  if [ -n "$model_line" ] && ! echo "$model_line" | grep -qE '^model:[[:space:]]*\['; then
+    echo "  ERROR: $rel — model: must be a fallback list, e.g. ['Claude Sonnet 5.5', 'Claude Sonnet 5']"
+    ERRORS=$((ERRORS + 1))
+  fi
+done
+echo "  $tpl_checked template(s) checked"
 
 # --- Claude Code schema check ---
 # The greps above encode repo rules the tool cannot know (version sync, prefixes).

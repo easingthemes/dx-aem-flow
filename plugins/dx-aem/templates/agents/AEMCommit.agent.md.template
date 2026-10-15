@@ -1,4 +1,3 @@
-<!-- Source: skills/dx-pr-commit/SKILL.md (enhanced with full flow) -->
 ---
 name: AEMCommit
 description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation via ADO MCP tools. Use when the user says "commit", "create PR", "push changes", or any variation.
@@ -19,6 +18,7 @@ handoffs:
     agent: DxCodeReview
     prompt: "Review all changes on the current branch against conventions"
 ---
+<!-- Source: skills/dx-pr-commit/SKILL.md (enhanced with full flow) -->
 
 # Commit Agent
 

@@ -1,4 +1,3 @@
-<!-- Source: agents/aem-editorial-guide-capture.md -->
 ---
 name: AEMEditorialGuide
 description: Capture editorial guide for a component dialog in AEM — open the editor, screenshot the dialog, and write an editor-friendly authoring guide. Use after development to document how to use the component.
@@ -18,7 +17,9 @@ tools:
   - 'playwright/browser_click'
   - 'playwright/browser_evaluate'
   - 'playwright/browser_wait_for'
+model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
 ---
+<!-- Source: agents/aem-editorial-guide-capture.md -->
 
 # AEM Demo Capture Agent
 

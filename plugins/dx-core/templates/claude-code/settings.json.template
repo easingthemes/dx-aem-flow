@@ -1,8 +1,5 @@
 {
   "plansDirectory": ".ai/specs",
-  "env": {
-    "COPILOT_CUSTOM_INSTRUCTIONS_DIRS": ".claude/rules"
-  },
   "permissions": {
     "allow": [
       "Read",

@@ -1,4 +1,3 @@
-<!-- Source: agents/dx-doc-searcher.md -->
 ---
 name: DxHelp
 description: Answer developer questions about project architecture, components, patterns, and workflows. Searches .ai/ index files and project docs. Use for general project questions.
@@ -17,7 +16,9 @@ handoffs:
   - label: "Research a ticket"
     agent: DxTicket
     prompt: "Find the ADO ticket and relevant files"
+model: ['Claude Haiku 5.5', 'Claude Haiku 4.5']
 ---
+<!-- Source: agents/dx-doc-searcher.md -->
 
 # Help Agent
 
