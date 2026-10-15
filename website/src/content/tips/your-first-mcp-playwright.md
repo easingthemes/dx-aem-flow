@@ -12,7 +12,7 @@ slackOneLiner: "🤖 Tip #31 — Playwright MCP: zero config, zero API keys — 
 keyPointsTitle: "What It Unlocks"
 actionItemsTitle: "Get Started in 2 Minutes"
 keyPoints:
-  - "**Zero-config setup** — Add one entry to .mcp.json with command 'npx' and args '@playwright/mcp@0.0.75'. No API keys, no authentication, no server to manage."
+  - "**Zero-config setup** — Add one entry to .mcp.json with command 'npx' and args '@playwright/mcp@0.0.83'. No API keys, no authentication, no server to manage."
   - |
     **Full browser capabilities**
     - Take screenshots of any page
@@ -25,7 +25,7 @@ actionItems:
   - |
     **Add Playwright MCP to your .mcp.json**
     - "command": "npx"
-    - "args": ["@playwright/mcp@0.0.75"]
+    - "args": ["@playwright/mcp@0.0.83"]
   - "**Restart Claude Code** — MCP servers are loaded at startup, so restart after adding the config"
   - "**Test it** — Ask the AI to take a screenshot of any localhost page and describe what it sees"
   - |

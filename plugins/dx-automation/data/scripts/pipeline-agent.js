@@ -56,10 +56,14 @@ const plugins = pluginNames
 
 // --- MCP servers ---
 const mcpServers = {};
+// Pinned: `npx -y` without a version pulls whatever is latest at run time, so an
+// upstream tool rename or a new write tool reaches every pipeline unreviewed.
+// Override per run with the ADO_MCP_VERSION pipeline variable.
+const ADO_MCP_VERSION = process.env.ADO_MCP_VERSION || "2.10.0";
 if (process.env.ADO_MCP_AUTH_TOKEN) {
   mcpServers.ado = {
     command: "npx",
-    args: ["-y", "@azure-devops/mcp", process.env.ADO_ORG_NAME || "myorg", "--authentication", "envvar"],
+    args: ["-y", `@azure-devops/mcp@${ADO_MCP_VERSION}`, process.env.ADO_ORG_NAME || "myorg", "--authentication", "envvar"],
     env: { ADO_MCP_AUTH_TOKEN: process.env.ADO_MCP_AUTH_TOKEN },
   };
 }
