@@ -40,10 +40,12 @@ No compilation step. Verification happens at four levels:
 
 | Level | What it checks | How |
 |-------|----------------|-----|
-| Structural | naming, frontmatter, manifest/version consistency, collisions | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (7 today) |
+| Structural | naming, frontmatter, manifest/version consistency, collisions, plus Claude Code's own manifest/hook schema (`claude plugin validate --json` via `scripts/check-plugin-schema.sh`; CI installs a pinned CLI) | `scripts/validate-*.sh` — runs in CI on every PR |
+| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (10 today) |
 | JS units | deterministic JS in `plugins/dx-core/data/lib/`, the `dx-automation` Lambda routers, and `cli/` | any `*.test.js` under `plugins/` or `cli/` — **discovered** and run in CI on every PR via `node --test` |
 | Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
+
+**`claude plugin test` does not fit here.** It runs a *mod's* `*.test.ts` files (a plugin with a JS/TS hooks module, v2.1.287+); our plugins have no mods, and our `hooks.json` command hooks are covered by `claude plugin validate` (schema) and the bash suites (scripts). Revisit only if we ship a mod (TODO #208, #246).
 
 Everything not covered above is still manual — run the skill in a test project and check that config is read correctly, output files land in expected locations, and no hardcoded values leak in.
 
@@ -163,13 +165,15 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 | Tier | Effort | Use | Agents / Skills |
 |------|--------|-----|-----------------|
 | Opus | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
-| Opus | `high` | Deep reasoning (code review, planning, verification). `high` is the current Opus default effort | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
-| Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
-| Haiku | `low` | Simple lookups (file search, doc search) — Haiku 5.5 is the default Haiku since v2.1.293, not yet re-verified for these roles ([TODO #222](docs/todo/todo-upstream-2026-09.md#re-verify-model-tier-strategy-against-opus-55--sonnet-55)) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
+| Opus | `high` | Deep reasoning (code review, planning, verification). **Set explicitly** — Opus 5.5 defaults to `medium`; `validate-skills.sh` errors on `model: opus` without `effort:` | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
+| Sonnet | (model default — `medium` on Sonnet 5.5) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
+| Haiku | `low` (skills); model default `medium` (agents) | Simple lookups (file search, doc search). Haiku 5.5 is the `haiku` alias since v2.1.293 | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 Write `model: opus | sonnet | haiku` in frontmatter, never a version-pinned model id — the alias follows the current default generation, a pinned id goes stale.
 
-**Tier escalation:** Opus runs at `high` effort by default, so every `model: opus` skill/agent already gets deep reasoning without setting `effort`. Use `xhigh` only as a deliberate step **above** that baseline: when a step has demonstrably failed at `high`, or when reviewing >5 files of changes. `xhigh` costs more and runs slower — it's not a free upgrade. The **lean system prompt is also default** (all models except Haiku/Sonnet/Opus ≤4.7), so skills need less hand-holding prose — see the concise-body audit ([TODO #113](docs/todo/todo-skill-conventions.md)).
+**Default effort moved with the 5.5 models.** Per the [model-config docs](https://code.claude.com/docs/en/model-config), Opus 5.5, Sonnet 5.5 and Haiku 5.5 default to `medium` — one level below Opus 5's `high` — while every other effort-capable model defaults to `high` (Opus 4.7: `xhigh`). The aliases resolve per provider: on the Anthropic API `opus`/`sonnet`/`haiku` are the 5.5 models; on Bedrock/Vertex/Foundry some resolve to older models with a `high` default. So the effort a `model:` line gets depends on where it runs — which is why Opus-tier files state `effort: high` instead of inheriting it (all five Opus skills and `dx-code-reviewer` do; TODO #222). Sonnet and Haiku agents deliberately inherit the vendor default.
+
+**Tier escalation:** with `effort: high` set explicitly, every Opus skill/agent gets deep reasoning. Use `xhigh` only as a deliberate step **above** that baseline: when a step has demonstrably failed at `high`, or when reviewing >5 files of changes. `xhigh` costs more and runs slower — it's not a free upgrade. The **lean system prompt is also default** (all models except Haiku/Sonnet/Opus ≤4.7), so skills need less hand-holding prose — see the concise-body audit ([TODO #113](docs/todo/todo-skill-conventions.md)).
 
 **`effort:` frontmatter only started taking effect in v2.1.267 (2026-09-09)**, which fixed `effort:` on custom commands, skills and subagents being **silently ignored** on models whose default effort is pinned (Opus 4.7, Opus 4.8, Fable 5). Any `effort:` we set before that release was a no-op on those models — so the tiering above is only now actually in force, and the `xhigh` skills have never been measured against `high`. Re-check before assuming an escalation helped. Related: the same release added a `maxEffortLevel` setting (top-level or per-model under `modelSettings`) that caps effort across every provider — useful as a cost ceiling for `dx-automation` pipeline runs.
 
@@ -275,7 +279,7 @@ name: my-skill
 description: One-line with trigger phrases
 argument-hint: "<what user passes>"
 model: sonnet          # optional — opus | sonnet | haiku
-effort: medium         # optional — low | medium | high | max
+effort: medium         # optional — low | medium | high | xhigh | max
 context: fork          # optional — run in isolated subagent
 agent: agent-name      # optional — subagent type for context: fork
 paths: ["**/*.ts"]     # optional — limit auto-activation to file patterns

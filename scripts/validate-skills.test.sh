@@ -306,7 +306,43 @@ chain_skill dx-worker 0 'Do the work.'
 out=$(CHAIN_MAX_TOK=150 CHAIN_OVER_BASELINE=0 run_validator); rc=$?
 check "human 'run /x' hint is not counted" "0" "$rc"
 
-# --- 9. the real tree is still green ------------------------------------------
+# --- 9. model: opus needs an explicit effort: (TODO #222) ---------------------
+reset_fixture
+write_skill "dx-deep" <<'SKILL'
+---
+name: dx-deep
+description: Deep work.
+model: opus
+---
+
+body
+SKILL
+out=$(run_validator); rc=$?
+check "opus skill without effort exits non-zero" "1" "$rc"
+check "opus skill without effort is named" "1" "$(echo "$out" | grep -c 'dx-deep — model: opus without effort:')"
+
+reset_fixture
+write_skill "dx-deep" <<'SKILL'
+---
+name: dx-deep
+description: Deep work.
+model: opus
+effort: high
+---
+
+body
+SKILL
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/agents"
+printf -- '---\nname: dx-light\ndescription: x\nmodel: sonnet\n---\nbody\n' > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-light.md"
+out=$(run_validator); rc=$?
+check "opus with effort, and sonnet without, pass" "0" "$rc"
+
+printf -- '---\nname: dx-rev\ndescription: x\nmodel: opus\n---\nbody\n' > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-rev.md"
+out=$(run_validator); rc=$?
+check "opus agent without effort exits non-zero" "1" "$rc"
+check "opus agent without effort is named" "1" "$(echo "$out" | grep -c 'agents/dx-rev.md — model: opus without effort:')"
+
+# --- 10. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))

@@ -2,6 +2,7 @@
 name: dx-code-reviewer
 description: Senior code reviewer. Reviews code changes against plans, project conventions, and production readiness. Uses confidence-based filtering (>=80) to report only issues that truly matter. Use for full-diff reviews before merging.
 model: opus
+effort: high
 memory: project
 maxTurns: 50
 permissionMode: plan

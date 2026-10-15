@@ -57,7 +57,7 @@ name: my-skill
 description: One-line with trigger phrases
 argument-hint: "<what user passes>"
 model: sonnet          # optional — opus | sonnet | haiku
-effort: medium         # optional — low | medium | high | max
+effort: medium         # optional — low | medium | high | xhigh | max
 ---
 ```
 

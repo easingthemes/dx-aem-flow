@@ -10,6 +10,7 @@
 # 6. SKILL.md body (frontmatter excluded) under 500 lines — WARN, ratcheted
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 # 8. Inline-chain context budget — WARN, ratcheted
+# 9. model: opus in a skill or agent sets effort: explicitly — ERROR
 
 set -euo pipefail
 
@@ -50,6 +51,21 @@ CHAIN_OVER=0
 # Targets instructions to *output* reasoning; asking the model to think
 # ("think step by step") is not extraction and is not matched.
 REASONING_ECHO='(explain|show|print|write out|output|include|echo|transcribe|reproduce|narrate) (out )?your (internal )?(reasoning|thinking|thought process|chain[- ]of[- ]thought)|show your work|reasoning trace|your reasoning (in|into) (the|your) (response|answer|output|reply)'
+
+# Opus 5.5 / Sonnet 5.5 / Haiku 5.5 default to effort `medium`; Opus 5 defaulted
+# to `high` (code.claude.com/docs/en/model-config). A `model: opus` file with no
+# `effort:` silently dropped a level when the alias moved. Opus is the tier we
+# pay for depth, so it must say which effort it wants. TODO #222.
+# check_opus_effort <file> <rel-path>
+check_opus_effort() {
+  local fm
+  fm=$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$1")
+  if echo "$fm" | grep -qE '^model:[[:space:]]*opus[[:space:]]*$' \
+     && ! echo "$fm" | grep -qE '^effort:[[:space:]]*[a-z]+'; then
+    echo "ERROR: $2 — model: opus without effort: (Opus 5.5 defaults to medium; set effort: high or another level explicitly, TODO #222)"
+    ERRORS=$((ERRORS + 1))
+  fi
+}
 
 # check_reasoning_echo <file> <rel-path> — one ERROR per offending line
 check_reasoning_echo() {
@@ -125,6 +141,8 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
     ERRORS=$((ERRORS + 1))
   fi
 
+  check_opus_effort "$skill_file" "$rel_path"
+
   # Skill body and its references/ are both loaded into the model's context
   while IFS= read -r md; do
     check_reasoning_echo "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
@@ -172,6 +190,7 @@ done
 for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
   [ -f "$agent_file" ] || continue
   check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
+  check_opus_effort "$agent_file" "${agent_file#"$REPO_ROOT"/}"
 done
 
 # Inline chains. Invocation forms used in skills: `Skill(/x)`, `Invoke /x`,

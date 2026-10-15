@@ -113,6 +113,8 @@ machine without the CLI instead of failing the PR.
 
 **Update 2026-10-15 (from #226/#247):** `claude plugin validate` now also flags dropped `.mcp.json` entries, undeclared `${user_config.*}`, insecure MCP URLs, unquoted `${CLAUDE_PLUGIN_ROOT}` in shell hooks, uninstallable marketplace names (v2.1.281/283), lists gating hooks with their `.catch` status (`gatingHooks` under `--json`, v2.1.290), and gives README install-line advice (v2.1.295).
 
+**Done 2026-10-15:** additive, as proposed. The call lives in `scripts/check-plugin-schema.sh` (so it can be tested in isolation) and `validate-structure.sh` invokes it as check 8. It parses `--json` with node, fails on any `errors[]` entry or `success: false`, and only counts warnings (the unknown `logo`/`homepage`/… fields other platforms read). Watched fail on: `agents` field in `plugin.json`, non-string `version`, unparseable `hooks.json`, unknown hook type. It does **not** catch a bad skill `name` (that stays `validate-skills.sh`'s job) or a plain-`http` MCP URL. Locally it skips without the CLI; under `CI=true` it fails, and `validate.yml` installs `@anthropic-ai/claude-code@2.1.301` — bump that pin with the upstream sweeps.
+
 ## Symlinked plugin component paths are now refused
 
 **Added:** 2026-09-13
@@ -447,6 +449,8 @@ dispatch or release tags only.
 
 **Update 2026-10-15 (from #226/#247):** `claude plugin test` now fails when a hook's `expect` fails or the engine refuses a stub answer (v2.1.292).
 
+**Done 2026-10-15 — does not fit.** `claude plugin test --help`: "Run a mod's tests … Runs every *.test.ts and *.test.tsx under dir … imports its kit from 'claude-code/testing'." It is the harness for mods (v2.1.287+), not for `hooks.json` command hooks. We ship no mods, so there is nothing for it to run. Our hooks get schema coverage from #180 and behaviour coverage only from manual runs. Recorded in `CLAUDE.md` § Testing Changes; revisit with #246 if we ever ship a mod.
+
 ## `CLAUDE_CODE_MCP_STARTUP_WAIT_MS` for pipeline runs
 
 **Added:** 2026-09-19
@@ -584,6 +588,8 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Approach:** Check docs for Opus 5.5 default effort first. Only rewrite the escalation guidance if the baseline changed.
 
 **Update 2026-10-15 (from #226/#247):** Haiku 5.5 (`claude-haiku-5-5`) is the default Haiku since v2.1.293 — the Haiku tier needs the same re-check. The Agent tool takes an `effort` parameter (v2.1.292); subagent frontmatter takes `autoCompactWindow` (v2.1.296); subagents preload at most 32 skills (v2.1.295).
+
+**Done 2026-10-15.** [model-config docs](https://code.claude.com/docs/en/model-config): "`high` on every model that supports effort, except that Opus 5.5, Sonnet 5.5, and Haiku 5.5 default to `medium`, Opus 4.7 defaults to `xhigh`". The old claim "Opus runs at `high` by default" was false since v2.1.280. Impact was small: all 5 `model: opus` skills already set `effort: high`; the one gap was the `dx-code-reviewer` agent, now `effort: high`. New guard: `validate-skills.sh` check 9 errors on `model: opus` without `effort:` (skills and agents), with fixtures in `validate-skills.test.sh`. Sonnet/Haiku files keep inheriting the vendor default (`medium`) — a deliberate choice, not re-measured. `CLAUDE_MODEL`: no pipeline YAML sets it; `pipeline-agent.js` passes it only when set, so runs use the SDK default alias. Copilot-side tiering stays with #228.
 
 ## Dangerous-`rm` prompt can stall bypass-mode pipeline runs
 
