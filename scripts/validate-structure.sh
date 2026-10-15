@@ -8,6 +8,8 @@
 # 4. Skills referencing agents that exist
 # 5. No hardcoded sensitive patterns
 # 6. Shell scripts are executable
+# 7. shared/ <-> data/lib/ script parity
+# 8. Claude Code's own manifest/hook schema (claude plugin validate --json)
 
 set -euo pipefail
 
@@ -140,6 +142,16 @@ if [ "$parity_drift" -gt 0 ]; then
   echo "  $parity_drift of $parity_checked paired script(s) drifted — copy shared/ over data/lib/"
 else
   echo "  $parity_checked paired script(s) — all identical"
+fi
+
+# --- Claude Code schema check ---
+# The greps above encode repo rules the tool cannot know (version sync, prefixes).
+# This asks the schema owner: `claude plugin validate --json` on the marketplace
+# and every plugin. Skips without the CLI locally; fails under CI.
+echo
+echo "Checking manifests and hooks with claude plugin validate..."
+if ! bash "$REPO_ROOT/scripts/check-plugin-schema.sh"; then
+  ERRORS=$((ERRORS + 1))
 fi
 
 # --- Summary ---

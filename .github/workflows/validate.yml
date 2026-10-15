@@ -27,6 +27,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      # validate-structure.sh asks Claude Code itself whether each manifest and
+      # hooks.json is valid (`claude plugin validate --json`, local, no login).
+      # Pinned so a new CLI release cannot turn main red on its own; bump it with
+      # the upstream sweeps. Under CI the check fails if the binary is missing.
+      - name: Install Claude Code (for claude plugin validate)
+        run: npm install -g @anthropic-ai/claude-code@2.1.301 && claude --version
       - name: Validate skills
         run: bash scripts/validate-skills.sh
       - name: Validate agents
@@ -52,10 +61,6 @@ jobs:
       # plugins/ or scripts/, is picked up with no change here — so a suite must be
       # hermetic (no live ADO/AEM/network). All current ones are, and pass with no
       # global git config and an empty HOME.
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
       - name: Test — shared-lib suites (node)
         run: |
           files=$(find plugins cli -type f -name '*.test.js' | sort)
