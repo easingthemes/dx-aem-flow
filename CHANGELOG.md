@@ -1,3 +1,10 @@
+## [3.7.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.3...v3.7.4) (2026-10-15)
+
+
+### Bug Fixes
+
+* **dx-core:** explicit Opus effort, and claude plugin validate in CI ([#180](https://github.com/easingthemes/dx-aem-flow/issues/180), [#208](https://github.com/easingthemes/dx-aem-flow/issues/208), [#222](https://github.com/easingthemes/dx-aem-flow/issues/222)) ([#218](https://github.com/easingthemes/dx-aem-flow/issues/218)) ([8d47f60](https://github.com/easingthemes/dx-aem-flow/commit/8d47f60fde1a0b106cd769f604d0e615e7ec1f54))
+
 ## [3.7.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.2...v3.7.3) (2026-10-15)
 
 
