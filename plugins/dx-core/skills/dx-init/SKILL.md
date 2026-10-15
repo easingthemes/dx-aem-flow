@@ -760,7 +760,7 @@ If `.github/hooks/hooks.json` already exists, merge new hooks into the existing 
 - Claude-style permission rules like `Bash(git commit*)` — work in Claude Code but may be interpreted as literal regex in Copilot CLI. Inline commands in this template do their own `git commit` substring check, so the matcher acts only as a coarse filter; verification still happens in the script.
 - If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
 
-**Copilot CLI v1.0.40+ required env vars:** Copilot CLI v1.0.40 introduced opt-in gates that silently disable repo hooks and workspace MCP without these exports. Add them to the user's shell profile idempotently:
+**Copilot CLI v1.0.40+ prompt-mode env vars:** in non-interactive runs (`copilot -p`), Copilot CLI loads repo hooks and workspace MCP only when the folder is trusted or these are exported. The value must be the string `true` — Copilot compares `=== "true"` (checked in the v1.0.40 and v1.0.98 bundles), so `=1` does nothing. Earlier dx-init versions wrote `=1`; the snippet rewrites those lines. Add them to the user's shell profile idempotently:
 
 ```bash
 SHELL_RC=""
@@ -769,15 +769,18 @@ elif [ -f "$HOME/.bashrc" ]; then SHELL_RC="$HOME/.bashrc"
 fi
 
 if [ -n "$SHELL_RC" ]; then
-  grep -q "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" "$SHELL_RC" || \
-    echo 'export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1' >> "$SHELL_RC"
-  grep -q "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" "$SHELL_RC" || \
-    echo 'export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1' >> "$SHELL_RC"
+  for v in GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP; do
+    if grep -q "^export $v=" "$SHELL_RC"; then
+      sed -i.bak "s/^export $v=.*/export $v=true/" "$SHELL_RC" && rm -f "$SHELL_RC.bak"
+    else
+      echo "export $v=true" >> "$SHELL_RC"
+    fi
+  done
   echo "Added Copilot CLI v1.0.40+ env vars to $SHELL_RC — restart your shell or run: source $SHELL_RC"
 fi
 ```
 
-Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). Without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1`, `.github/hooks/hooks.json` is silently ignored. Without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1`, project `.mcp.json` is silently ignored.
+Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). In `copilot -p` runs in an untrusted folder, without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` `.github/hooks/hooks.json` is silently ignored, and without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` project `.mcp.json` is silently ignored.
 
 ## 10. Confirm
 
