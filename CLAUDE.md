@@ -225,7 +225,7 @@ Plugin hooks and Copilot CLI hooks are **largely separate systems**, with one ov
 |-------------|-----------|
 | Plugin `hooks/hooks.json` | Claude Code CLI (`Stop` / `SubagentStop`) **and** Copilot CLI (reads the same file). Copilot ignored `PostToolUse` `matcher` through v1.0.45 — **fixed in v1.0.63 (2026-06-15)**, matchers now honored. |
 | `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; `agentStop`/`subagentStop` closed 2026-04-07). **v1.0.40+ requires `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` exported in shell** — without it, repo hooks are silently ignored. |
-| Agent frontmatter `hooks:` | VS Code Chat (1.111+); skill-isolated subagents experimental in 1.118+ |
+| Agent frontmatter `hooks:` | VS Code Chat (1.111+); skill-isolated subagents experimental in 1.118+. **Copilot CLI v1.0.97+** too, while that agent is selected — but only in a **trusted folder** (the prompt-mode env opt-in does not load them; verified on 1.0.98). Our shell-capable `.github/agents` templates carry the branch guard this way; `scripts/check-agent-hooks.sh` keeps them verbatim (TODO #245) |
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard. **Event-name mapping:** Claude Code uses `Stop` / `SubagentStop`; Copilot CLI uses `agentStop` / `subagentStop`. See the docs site (`website/`) for full details.
 

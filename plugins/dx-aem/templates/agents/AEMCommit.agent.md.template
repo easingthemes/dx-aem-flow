@@ -17,6 +17,28 @@ handoffs:
   - label: "Full code review before PR"
     agent: DxCodeReview
     prompt: "Review all changes on the current branch against conventions"
+hooks:
+  PreToolUse:
+    - type: command
+      command: |
+        if cat | grep -Eq '"command" *: *"[^"]*git +commit'; then
+          B=$(git branch --show-current 2>/dev/null)
+          case "$B" in main|master|develop|development)
+            R="BLOCKED: Do not commit on $B. Create a feature/* or bugfix/* branch first."
+            printf '{"permissionDecision":"deny","permissionDecisionReason":"%s","hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$R" "$R" ;;
+          esac
+        fi
+        exit 0
+      windows: |
+        $j = [Console]::In.ReadToEnd()
+        if ($j -match '"command"\s*:\s*"[^"]*git\s+commit') {
+          $b = git branch --show-current 2>$null
+          if ($b -in 'main','master','develop','development') {
+            $r = "BLOCKED: Do not commit on $b. Create a feature/* or bugfix/* branch first."
+            [ordered]@{ permissionDecision = 'deny'; permissionDecisionReason = $r; hookSpecificOutput = [ordered]@{ hookEventName = 'PreToolUse'; permissionDecision = 'deny'; permissionDecisionReason = $r } } | ConvertTo-Json -Compress
+          }
+        }
+        exit 0
 ---
 <!-- Source: skills/dx-pr-commit/SKILL.md (enhanced with full flow) -->
 
