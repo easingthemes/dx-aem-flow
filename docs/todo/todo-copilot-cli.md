@@ -266,3 +266,5 @@ nowhere to go.
 - Upstream bugs still open at 2026-09-29: copilot-cli#4708, #4886, #4545 — #19–#22 stay blocked.
 **Scope:** #182 and rows #20, #22, #40, #87, #90, #91, #102, #124 (still say "current is v1.0.83").
 **Done-when:** `grep -c "v1.0.83" docs/todo/TODO.md` drops to the historical mentions only, with the re-test anchor at v1.0.89.
+
+**Update 2026-10-15:** anchor moved straight to **v1.0.98** (2026-10-14) — 9 more releases since v1.0.89. What the #182 re-test must add: agent-scoped declarative hooks for custom agents (v1.0.97, → #245); `--plugin-dir` skills/agents now reach invocation and plugin hooks survive `--resume` (v1.0.97); autopilot denies a preToolUse `ask` instead of stalling (v1.0.97); MCP config applies between turns (v1.0.93); retired models removed (v1.0.92). Nothing on `.claude/rules` or AGENTS.md (#227 open). Remaining `v1.0.83` mentions in `TODO.md` are historical (#182's own title and the September intake line).

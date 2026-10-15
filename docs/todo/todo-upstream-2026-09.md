@@ -111,6 +111,8 @@ like cross-manifest version sync that the tool cannot know) and add the schema
 check beside them. Guard on `command -v claude` so the script still runs on a
 machine without the CLI instead of failing the PR.
 
+**Update 2026-10-15 (from #226/#247):** `claude plugin validate` now also flags dropped `.mcp.json` entries, undeclared `${user_config.*}`, insecure MCP URLs, unquoted `${CLAUDE_PLUGIN_ROOT}` in shell hooks, uninstallable marketplace names (v2.1.281/283), lists gating hooks with their `.catch` status (`gatingHooks` under `--json`, v2.1.290), and gives README install-line advice (v2.1.295).
+
 ## Symlinked plugin component paths are now refused
 
 **Added:** 2026-09-13
@@ -210,6 +212,8 @@ Cursor read `plugin.json` too, and a field they ignore means the value is simply
 missing there — so anything moved to `userConfig` needs a documented fallback, or
 it must stay duplicated in `.ai/config.yaml`. Decide that before moving anything.
 
+**Update 2026-10-15 (from #226/#247):** `claude plugin configure <plugin>` shows options and unset values, `--values-stdin` saves new values from stdin; `claude plugin install --config <server>.<key>=<value>` (v2.1.285). LSP servers get `${user_config.*}` substituted since v2.1.288.
+
 ## Headless runtime flags for `dx-automation` pipelines
 
 **Added:** 2026-09-16
@@ -240,6 +244,8 @@ subagent-model override alongside the existing env-var table.
 into a clean failure. Everything else is tuning and should wait for a pipeline run
 that actually shows the limit being hit; guessing cap values is how voodoo
 constants get committed.
+
+**Update 2026-10-15 (from #226/#247):** `CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH` (v2.1.280; default cap raised 2,048 → 4,096 chars in v2.1.296), `--agents <file>` with `-p` (v2.1.281), background Bash limit 30 min / 2 h max (v2.1.285), `CLAUDE_CODE_DISABLE_WEB_FETCH` (v2.1.285), `--bare` — only CLI-named MCP servers, no system reminders, no background tasks (v2.1.286), `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` (v2.1.296). Skill `allowed-tools`/`effort` were dropped in `-p` runs until v2.1.296 — a pipeline Bash denial before ~2026-10-09 may be that, not our code.
 
 ## Managed MCP settings — org distribution and the `allowedMcpServers` semantic change
 
@@ -320,6 +326,8 @@ documented decision — or `CLAUDE.md` states that all six stay deferred and why
 session. The plausible exception is the AEM server in `dx-aem`, where nearly every
 skill in the plugin calls it. Decide it with the #137 numbers, not from taste.
 
+**Update 2026-10-15 (from #226/#247):** `_meta` alwaysLoad override (v2.1.285); `alwaysLoad: false` now defers all of a server's tools behind tool search (v2.1.287).
+
 ## Hook event list in CLAUDE.md is incomplete
 
 **Added:** 2026-09-16
@@ -363,6 +371,8 @@ manifest that uses default directories **breaks Claude Code**. `evals` sits unde
 manifests.
 
 ---
+
+**Update 2026-10-15 (from #226/#247):** `claude plugin eval` needs git ≥ 2.31 (v2.1.283); `--disallow-tools` added and API-refused runs now score 0 and exit 1 (v2.1.299).
 
 ## Third pass (v2.1.274–v2.1.277, intake 2026-09-19)
 
@@ -435,6 +445,8 @@ billed agent run, it belongs in CI next to the discovered suites and closes the
 biggest hole in the hook layer. If it bills, it goes with the evals: manual
 dispatch or release tags only.
 
+**Update 2026-10-15 (from #226/#247):** `claude plugin test` now fails when a hook's `expect` fails or the engine refuses a stub answer (v2.1.292).
+
 ## `CLAUDE_CODE_MCP_STARTUP_WAIT_MS` for pipeline runs
 
 **Added:** 2026-09-19
@@ -453,6 +465,8 @@ internal error — both failure modes our pipelines would see as a job timeout.
 returns the exported value, or #200 records a decision not to set it.
 **Approach:** Fold into #200. That row already collects five headless runtime
 flags for one launcher change — this is the sixth, not a separate pass.
+
+**Update 2026-10-15 (from #226/#247):** Claude Code waits 2 s for servers named in `--allowedTools` (v2.1.284), and `-p`/SDK first turns no longer wait for HTTP/SSE MCP servers (v2.1.292).
 
 ## `/plugin install --marketplace` and claude.ai plugin sync in the install docs
 
@@ -569,6 +583,8 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Done-when:** `grep -n "Opus 5.5" CLAUDE.md` hits a statement of its default effort with a source link, AND `grep -rn "CLAUDE_MODEL" plugins/dx-automation/data/pipelines` shows alias values (or a recorded reason for a pinned id).
 **Approach:** Check docs for Opus 5.5 default effort first. Only rewrite the escalation guidance if the baseline changed.
 
+**Update 2026-10-15 (from #226/#247):** Haiku 5.5 (`claude-haiku-5-5`) is the default Haiku since v2.1.293 — the Haiku tier needs the same re-check. The Agent tool takes an `effort` parameter (v2.1.292); subagent frontmatter takes `autoCompactWindow` (v2.1.296); subagents preload at most 32 skills (v2.1.295).
+
 ## Dangerous-`rm` prompt can stall bypass-mode pipeline runs
 
 **Added:** 2026-09-29
@@ -576,6 +592,8 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-hub/skills/dx-hub-status/SKILL.md`, `plugins/dx-core/skills/dx-pr-review*/SKILL.md`.
 **Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation` shows the env decision in the launcher, OR `grep -rnE 'rm -rf "?\$' plugins/*/skills` returns nothing (skills use literal paths only) (env set in pipeline, or skills changed to literal paths).
 **Approach:** Prefer literal paths in skill prose over disabling the guard (`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`). Fold the env decision into the #200 launcher change.
+
+**Update 2026-10-15 (from #226/#247):** Dangerous `rm` inside `bash -c` now prompts too (v2.1.288) — the stall is more likely, not less.
 
 ## Managed model/provider allowlists for pipeline hosts
 
