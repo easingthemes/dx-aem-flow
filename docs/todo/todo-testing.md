@@ -91,7 +91,8 @@ the skill count by one. Related to the "Automation Eval" item below.
 - If pipeline-agent evals come back, they belong in `plugins/dx-automation/evals/` as `claude plugin eval` cases (#173), not in a skill.
 - Same commit `1800b25` also deleted the rest of `data/eval/` (`capture-fixture.js`, `process-dlq.js`, `gates.js`, `judge.js`, …) and the eval pipeline. The leftover references to it are cleaned up here too:
   - `/auto-test --capture` (named by the skill, no longer exists);
-  - `node .ai/automation/eval/process-dlq.js` in `runbook.md.template` → `/auto-status`;
+  - `node .ai/automation/eval/process-dlq.js` in `runbook.md.template` → a direct `aws sqs get-queue-attributes` on the DLQ URL from `infra.json` (not `/auto-status`, which is broken the same way: #251);
+  - the deleted eval pipeline in `auto-pipelines`, and `agents/lib/` + `eval/` in `dx-eject`'s tree;
   - "eval framework" in what `auto-init` / `dx-init` say they copy;
   - the "Eval" consumer pipeline in `dx-automation-flow.md.template`;
   - "eval validates automatically" in the runbook.

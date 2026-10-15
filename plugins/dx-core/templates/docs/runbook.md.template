@@ -24,7 +24,7 @@
 
 1. **Find the run** — ADO > Pipelines > select pipeline > recent runs
 2. **Check the bundle** — S3 bucket: `run.json`, `decision-journal.json`, `alerts.json`
-3. **Check DLQ** — `/auto-status` (DLQ depth, hub only)
+3. **Check DLQ** (Lambda path only) — `aws sqs get-queue-attributes --queue-url "$(jq -r .storage.sqs.dlq.queueUrl .ai/automation/infra.json)" --attribute-names ApproximateNumberOfMessages`
 
 ## Quick Rollback
 

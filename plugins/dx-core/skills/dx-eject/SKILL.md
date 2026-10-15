@@ -111,7 +111,7 @@ The script creates this structure:
 ├── data/             # Plugin data originals organized by plugin name
 │   ├── dx-core/  # lib/, templates/, hooks/
 │   ├── dx-aem/             # (if applicable)
-│   └── dx-automation/      # agents/lib/, pipelines/, lambda/, eval/
+│   └── dx-automation/      # pipelines/, lambda/, scripts/, policy/
 ├── templates/        # All plugin templates organized by plugin name
 │   ├── dx-core/  # rules/, skills/, agents/, docs/, instructions/
 │   ├── dx-aem/             # rules/, agents/, instructions/

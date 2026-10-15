@@ -147,3 +147,12 @@ belongs to which platform rather than offering one list for both. Found by the
 **Scope:** `plugins/dx-core/data/lib/fetch-raw-story.js` (+ `fetch-raw-story.test.js`), `plugins/dx-core/skills/dx-req/SKILL.md` (Auth note, line ~122), optionally `plugins/dx-core/skills/dx-init/SKILL.md` and `cli/lib/scaffold.js` (`.mcp.json` ADO entry). Research: `docs/research/2026-10-15-ado-mcp-auth-reuse.md`.
 **Done-when:** Running `node .ai/lib/fetch-raw-story.js <org> <project> <id>` twice in a row on a dev machine without `az` opens the browser at most once; `grep -n "reused — no second prompt" plugins/dx-core/skills/dx-req/SKILL.md` returns nothing; `node --test plugins/dx-core/data/lib/` passes.
 **Approach:** Pick after a hands-on test: A) shared local ADO MCP daemon with idle timeout (recommended), B) own PKCE login + refresh-token cache with `--authentication envvar`, C) PAT opt-in. Details and trade-offs in the research doc.
+
+## `/auto-status` runs deleted eval scripts
+
+**Added:** 2026-10-15
+**Problem:** `plugins/dx-automation/skills/auto-status/SKILL.md` builds its dashboard from three scripts: `node eval/process-dlq.js` (DLQ depth and list), `node eval/cost-report.js` (token budget) and `node eval/rate-limit-report.js` (rate limits). All of `data/eval/` was deleted in `1800b25` (2026-03-22, "remove old custom agent approach"), and `auto-init` no longer copies it. So every `/auto-status` run fails at step 1. Same root cause as `/auto-eval` (#176), found while removing that.
+**Scope:** `plugins/dx-automation/skills/auto-status/SKILL.md`; the DynamoDB tables and SQS DLQ named in `infra.template.json` (`storage.*`).
+**Done-when:** `grep -n "node eval/" plugins/dx-automation/skills/auto-status/SKILL.md` returns nothing, AND a hub with AWS credentials gets the three dashboard numbers from `/auto-status`.
+**Approach:** Replace the scripts with read-only AWS CLI calls built from `infra.json`: `aws sqs get-queue-attributes` on `storage.sqs.dlq.queueUrl` (DLQ depth), and `aws dynamodb get-item` / `query` on the budget and rate-limit tables the Lambda routers write. Check the key schema in `data/lambda/` (`rate-limiter.js`, `dedupe.js`). The second half of Done-when needs a live AWS account.
+
