@@ -3,12 +3,12 @@ title: "Model Selection: More Models Than You Think"
 category: "Meet Your AI Tools"
 focus: "All Tools"
 tags: ["Opus $$$","Sonnet $$","Haiku $","Multi-Model"]
-overview: "Claude Code uses Anthropic models (Opus/Sonnet/Haiku). Copilot CLI and VS Code Chat support Claude, GPT-5.x, Gemini, Grok, and fine-tuned models — switch mid-session with /model. Each model family has strengths. Copilot agents support model fallback chains: model: [claude-sonnet-4-6, gpt-5.4] — if one fails, try the next."
+overview: "Claude Code uses Anthropic models (Opus/Sonnet/Haiku). Copilot CLI and VS Code Chat support Claude, GPT, Gemini and more — switch mid-session with /model. Each model family has strengths. Copilot agents support model fallback chains: model: [claude-opus-5.5, claude-sonnet-5.5] — if one fails, try the next."
 screenshot: null
 week: 2
 weekLabel: "Meet Your AI Tools"
 order: 6
-slackOneLiner: "🤖 Tip #6 — Which tool you use determines your model options. Claude Code = Anthropic only. Copilot = Claude + GPT-5.x + Gemini + Grok. Tier wisely."
+slackOneLiner: "🤖 Tip #6 — Which tool you use determines your model options. Claude Code = Anthropic only. Copilot = Claude + GPT + Gemini. Tier wisely."
 keyPointsTitle: "The Model Landscape"
 keyPoints:
   - "The model landscape is wider than you think — which tool you use determines your options."
@@ -20,13 +20,12 @@ keyPoints:
     - Switch with /model or /fast for Sonnet quick-mode
   - |
     Copilot CLI & VS Code Chat — multi-provider
-    - Anthropic: Claude Opus 4.6, Sonnet 4.6, Haiku 4.5
-    - OpenAI: GPT-5.4, GPT-5.3-Codex, GPT-5.2, GPT-5.1-Codex, GPT-5 mini
-    - Google: Gemini 2.5 Pro, Gemini 3.1 Pro, Gemini 3 Flash
-    - xAI: Grok Code Fast 1
-    - Fine-tuned: Raptor mini, Goldeneye
+    - Anthropic: Claude Opus 5.5, Sonnet 5.5, Haiku 5.5
+    - OpenAI: GPT-6.1 Sol, GPT-6 Astra, GPT-6 Luna
+    - Google: Gemini 4 Argon
+    - The list changes monthly — models get added and retired, so check /model rather than memorizing it (as of Oct 2026)
     - Switch mid-session with /model — each model family has strengths
-  - "Copilot agent fallback chains — specify `model: [claude-sonnet-4-6, gpt-5.4]` in agent config. If Claude is down, fall back to GPT automatically. Claude Code doesn't support this."
+  - "Copilot agent fallback chains — specify `model: [claude-opus-5.5, claude-sonnet-5.5]` in agent config. If the first is unavailable, the next one is used — and the chain can mix providers. Claude Code doesn't support this."
 actionItemsTitle: "Tier Wisely, Save 10x"
 actionItems:
   - "The tiering principle — use the cheapest model that can do the job. Our agents use 3 tiers: Opus (code review), Sonnet (execution), Haiku (lookups). This saves 10x vs using Opus for everything."

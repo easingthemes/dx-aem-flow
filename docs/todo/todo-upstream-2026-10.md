@@ -47,3 +47,5 @@ Claude Code v2.1.286–v2.1.301 and Copilot CLI v1.0.90–v1.0.98. Each item's
 - "`verify` skills are run before commits, except docs-only and tests-only changes" (v2.1.286) — check whether this matches `dx-step-verify` by name and runs it unasked.
 **Scope:** the listed TODO detail sections; `CLAUDE.md` § Model Tier Strategy.
 **Done-when:** `grep -n "gatingHooks" docs/todo/todo-upstream-2026-09.md` and `grep -n "Haiku 5.5" CLAUDE.md` both hit, and the `verify`-skill question has a one-line answer in this section.
+
+**Update 2026-10-15:** notes distributed into #180, #199, #200, #205, #206, #208, #209, #222, #223 and #233. `verify`-skill question answered from the v2.1.286 entry: it applies only to a project or user skill named exactly `verify` — our `dx-step-verify` is a plugin skill with another name, so it is not run unasked. `Haiku 5.5` added to `CLAUDE.md` § Model Tier Strategy.
