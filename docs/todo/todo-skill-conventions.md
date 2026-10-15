@@ -553,7 +553,13 @@ listing); coordinators and init/upgrade skills are the obvious candidates. Docum
 - **Numbers:** 73 model-invocable skills, **36,795 chars**. On the 5.5 models 30 of the 73 are sent name-only (on a fresh install that is all of dx-aem, dx-hub and dx-automation); on a 200k model, 72 of 73. `when_to_use` is 17.1k of the total, and Copilot ignores it. 51 entries are over 400 chars; the longest is `dx-council` at 1,094. The earlier "~9.2k tok / avg 241" came from a first-line grep.
 - **Ratchet:** `scripts/validate-skills.sh` check 11 errors when the total grows past `LISTING_BASELINE=36795` (UTF-8 chars, quotes stripped, `disable-model-invocation` excluded). The 6 new cases in `validate-skills.test.sh` were seen failing under two mutations (byte counting; quotes kept).
 - **2026-10-15 (second pass):** `disable-model-invocation` verified live on both CLIs. It hides the skill from the listing, still runs on Claude `-p "/name"` (pipelines are safe), but **blocks every model or subagent Skill call** with "do not replicate this workflow" (Claude) or "Skill not found" (Copilot). Copilot `-p "/name"` does not expand skills at all. The proposal is narrowed to 16 entry-point admin skills nothing chains to. `dx-init`/`aem-init`/`auto-init`/`dx-doctor` must stay invocable (chained inline). `skillOverrides` does not apply to plugin skills. Found #250: `dx-estimate` batch mode is broken by its existing dmi.
-- **Not done:** the description rewrite itself (Step 1 `disable-model-invocation` on 25 user-only skills, −11,026 chars; Step 2 trim 48 to ≈140 chars), and the routing eval (#168, billed). Both are waiting on a decision. **Done-when unchanged.**
+- **2026-10-15 (applied, approved):**
+  - dmi on 16 entry-point admin skills.
+  - `when_to_use` removed and `description` rewritten on 56 model-invocable skills. The #14 negative clauses moved into `description`, so Copilot sees them too.
+  - Listing 36,795 → 12,144 chars, no description > 400 (max 268). Baseline lowered.
+  - Live: 57 of 57 sent with full text on the 5.5 models.
+  - The ≤2k-tok target is not met (~3k tok; a 200k model still keeps only 5 of 57). Routing eval (#168) not run.
+- **Previously not done:** the description rewrite itself (Step 1 `disable-model-invocation` on 25 user-only skills, −11,026 chars; Step 2 trim 48 to ≈140 chars), and the routing eval (#168, billed). Both are waiting on a decision. **Done-when unchanged.**
 
 ## 19. Lint for reasoning-echo instructions
 

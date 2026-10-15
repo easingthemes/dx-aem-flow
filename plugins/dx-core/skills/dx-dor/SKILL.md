@@ -1,7 +1,6 @@
 ---
 name: dx-dor
-description: Validate Definition of Ready — fetch wiki checklist, evaluate story, post ADO comment. Use standalone at sprint start, in batch, or as part of /dx-req.
-when_to_use: "Use at sprint start to validate a story's Definition of Ready before development. Trigger on 'check DoR', 'is this story ready', 'validate readiness', 'dor check', or when given a story ID at the start of a sprint."
+description: "Validate a story's Definition of Ready — fetch the wiki checklist, evaluate, post an ADO comment. Use at sprint start ('check DoR', 'is this story ready'), in batch, or via /dx-req."
 argument-hint: "<Work Item ID(s) — space-separated for batch>"
 model: sonnet
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]

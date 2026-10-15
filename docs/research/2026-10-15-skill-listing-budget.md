@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-15
 **Baselines:** Claude Code v2.1.301, Copilot CLI v1.0.98
-**Status:** measured, ratchet landed, proposal revised after live tests. The rewrite is **awaiting approval**.
+**Status:** Steps 1 and 2 **applied 2026-10-15** (approved). Step 3 (#250) and the routing eval (#168) are still open.
 
 **Method.** Every behaviour below was observed by running the real CLI against a local stub model, with no login and no billed calls:
 - Claude Code used `ANTHROPIC_BASE_URL` with `--plugin-dir` pointing at our four plugins.
@@ -94,3 +94,14 @@ bash scripts/validate-skills.sh | grep 'Skill listing'
 ```
 
 Live listing check (no login): run `claude -p hello --plugin-dir …` against a stub on `ANTHROPIC_BASE_URL` and count the `- plugin:name:` lines with and without text under "The following skills are available for use with the Skill tool:".
+
+## 6. Applied (2026-10-15)
+
+- **Step 1:** `disable-model-invocation: true` on the 16 entry-point admin skills listed above. 20 of 77 skills now carry it.
+- **Step 2:** `when_to_use` removed from all 56 remaining model-invocable skills (`auto-eval` was left alone; #229 deletes it). Each `description` was rewritten as what it does, plus one or two trigger phrases, plus a short "Not for X (sibling)" clause for the #14 collision clusters. Those negative clauses used to live in `when_to_use`, so **Copilot now sees them for the first time**. Longest description: 268 chars.
+- **Listing:** 36,795 → **12,144 chars** (`validate-skills.sh`; `LISTING_BASELINE` lowered to match).
+- **Live check** (stub model, all four plugins, fresh HOME):
+  - 5.5 models: **57 of 57 with full text** (was 43 of 73).
+  - 200k model (`claude-sonnet-4-5`): 5 of 57 (was 1 of 73). Fitting 200k would need ~100 chars per skill, which is not the target while the 5.5 models are the default.
+- #14 Done-when loop: no output. `validate-skills.sh` / `.test.sh` and every other suite pass. All frontmatters parse with PyYAML.
+- **Not verified:** that routing quality held. That needs the routing eval (#168), which is billed.

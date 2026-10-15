@@ -1,7 +1,6 @@
 ---
 name: aem-verify
-description: Verify a component on AEM after deployment — walk dialog fields, create a test page with the component configured, and save verification docs. Compares against baseline if /aem-snapshot was run. Use after deploying changes.
-when_to_use: "Use after deploying AEM changes to verify the component works, when the user says 'verify AEM', 'check the dialog', 'test the component on AEM', or to compare against a previous /aem-snapshot baseline. Do NOT use for pre-PR code checks (that's dx-step-verify), for visual comparison of the rendered frontend (aem-fe-verify), or for full story QA with Bug ticket creation (aem-qa)."
+description: "Verify a component on AEM after deployment — walk dialog fields, create a configured test page, compare with the /aem-snapshot baseline. Not for pre-PR code checks (dx-step-verify), visual frontend checks (aem-fe-verify) or full story QA (aem-qa)."
 argument-hint: "[component-name] [--qa] (e.g., hero, card --qa, banner)"
 context: fork
 agent: aem-inspector
