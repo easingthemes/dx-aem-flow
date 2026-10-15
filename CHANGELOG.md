@@ -1,3 +1,10 @@
+## [3.7.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.4...v3.7.5) (2026-10-15)
+
+
+### Bug Fixes
+
+* Copilot reads .claude/rules natively; tier Copilot agents; frontmatter on line 1 ([#219](https://github.com/easingthemes/dx-aem-flow/issues/219)) ([46c3e6b](https://github.com/easingthemes/dx-aem-flow/commit/46c3e6b3f6e8479dd363beeebc8cc191ea11419d))
+
 ## [3.7.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.3...v3.7.4) (2026-10-15)
 
 
