@@ -96,7 +96,7 @@ Context file: state/<ticket-id>/context.md
 1. Parse `hub.state-ttl` — support `7d`, `30d`, `24h` formats. Convert to seconds.
 2. Check each `state/<dir>/status.json`:
    - Read `started` timestamp
-   - If age exceeds TTL AND no repo is `running`, delete the directory with `rm -rf`
+   - If age exceeds TTL AND no repo is `running`, delete the directory with one `rm -rf state/<ticket-id>` per directory, the ticket id written out literally — no shell variable, loop or `$(...)` as the target (Claude Code v2.1.281+ stops on those for a permission prompt even in bypass mode, which stalls a pipeline run)
    - Never clean dispatches where any repo is still `running`
 3. Print summary:
 

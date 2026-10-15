@@ -342,7 +342,45 @@ out=$(run_validator); rc=$?
 check "opus agent without effort exits non-zero" "1" "$rc"
 check "opus agent without effort is named" "1" "$(echo "$out" | grep -c 'agents/dx-rev.md — model: opus without effort:')"
 
-# --- 10. the real tree is still green ------------------------------------------
+# --- 10. recursive rm on a dynamic target is an ERROR (TODO #223) -------------
+reset_fixture
+write_skill "dx-rm" <<'SKILL'
+---
+name: dx-rm
+description: A short description.
+---
+
+```bash
+rm -rf "$TMP_DIR"
+rm -rf /tmp/dx-review-<repo>
+rm -f "$PATCH"
+```
+SKILL
+out=$(run_validator); rc=$?
+check "rm -rf on a variable exits non-zero" "1" "$rc"
+check "only the recursive dynamic rm is flagged" "1" "$(echo "$out" | grep -c 'recursive rm on a variable')"
+check "rm finding names file and line" "1" "$(echo "$out" | grep -c 'dx-rm/SKILL.md:7 — recursive rm')"
+
+reset_fixture
+make_skill "dx-ok" "A short description." 3
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/agents"
+printf -- '---\nname: dx-a\n---\nClean up with rm -r -f $(mktemp -d).\n' > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-a.md"
+out=$(run_validator); rc=$?
+check "rm on a command substitution in an agent exits non-zero" "1" "$rc"
+
+reset_fixture
+write_skill "dx-rmok" <<'SKILL'
+---
+name: dx-rmok
+description: A short description.
+---
+
+Delete it with `rm -rf state/<ticket-id>` — one literal path per command.
+SKILL
+out=$(run_validator); rc=$?
+check "literal rm -rf path passes" "0" "$rc"
+
+# --- 11. the real tree is still green ------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))
