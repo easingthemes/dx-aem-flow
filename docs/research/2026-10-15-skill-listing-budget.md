@@ -1,62 +1,96 @@
-# Skill listing budget — measurement and proposal (TODO #238)
+# Skill listing budget and `disable-model-invocation` (TODO #238)
 
-**Date:** 2026-10-15 · **Baseline:** Claude Code v2.1.301 · **Status:** measured + ratchet landed; description rewrite **awaiting approval**
+**Date:** 2026-10-15
+**Baselines:** Claude Code v2.1.301, Copilot CLI v1.0.98
+**Status:** measured, ratchet landed, proposal revised after live tests. The rewrite is **awaiting approval**.
 
-## How Claude Code builds the listing (read from the v2.1.301 bundle)
+**Method.** Every behaviour below was observed by running the real CLI against a local stub model, with no login and no billed calls:
+- Claude Code used `ANTHROPIC_BASE_URL` with `--plugin-dir` pointing at our four plugins.
+- Copilot used BYOK `COPILOT_PROVIDER_BASE_URL` with the skills in `.github/skills/`.
 
-- One entry per model-invocable skill: `- <plugin>:<name>: <description> - <when_to_use>`. Entries are joined with newlines.
-- Each entry's text is cut at `skillListingMaxDescChars` (default **1536**).
-- Budget = context tokens × 4 chars/token × `skillListingBudgetFraction` (default **0.01**). That is **8,000 chars on a 200k context** and **40,000 on 1M**. `SLASH_COMMAND_TOOL_CHAR_BUDGET` overrides it.
-- Over budget it switches to "priority" mode: skills are sorted by a usage score; the most-used keep their full text until the budget runs out, and the rest are listed **by name only**. Bundled skills and `name-only` overrides always cost just their name.
-- `disable-model-invocation: true` removes a skill from the listing entirely. It also stops the **model** from invoking it through the Skill tool (from any skill, too). The user can still type `/name`.
+The stub records each request the CLI sends, so the listing, the skill bodies and the tool results can be read exactly. Docs and bundle strings were used only to explain what the logs show.
 
-## Measurement (this tree, `bash scripts/validate-skills.sh`)
+## 1. How the listing is built
 
-| | Value |
-|---|---|
-| Skills | 77, of which 73 model-invocable (4 already `disable-model-invocation`) |
-| Listing size | **36,795 chars** — 4.6× the 200k budget; fits 1M (40,000) with ~3k to spare |
-| Per entry | avg ~478 chars of description + `when_to_use`; 51 over 400; max `dx-council` 1,094 |
-| By plugin | dx-core 45 skills / 22.9k chars · dx-aem 12 / 5.5k · dx-automation 11 / 4.6k · dx-hub 5 / 2.0k |
+**Claude Code** (`hxt`/`Kun` in the v2.1.301 bundle, plus logs):
+- Each model-invocable skill becomes one line, `- <plugin>:<name>: <description> - <when_to_use>`, capped at 1536 chars.
+- The budget is context × 4 chars/token × `skillListingBudgetFraction` (0.01).
+- Over budget, skills are ranked by a usage score. The top ones keep their text; the rest are sent **by name only**.
 
-Earlier figure (~9.2k tok, avg 241 chars) came from a first-line-only grep. The validator now counts the way Claude Code does: full folded value, outer quotes stripped, characters not bytes.
+**Copilot CLI** sends `<available_skills>` with name + `description` only. **It ignores `when_to_use`** (seen in the request). No cap was hit with our five test skills; the cap is unknown.
 
-On a 200k session, a consumer with all four plugins gets full descriptions for roughly the dozen most-used skills. The rest route on their names alone, and any other plugins the user has compete for the same 8k.
+**Agent Skills spec** (agentskills.io): `name`, `description` (≤1024), `license`, `compatibility`, `metadata`, `allowed-tools`. Neither `when_to_use` nor `disable-model-invocation` is in it. The spec suggests about 100 tokens of metadata per skill.
 
-## Ratchet (landed)
+## 2. Measured, all four plugins, fresh `HOME` (no usage history)
 
-`scripts/validate-skills.sh` check 11 sums the listing exactly as above and fails if it grows past `LISTING_BASELINE=36795`. If it shrinks, a NOTE asks for the baseline to be lowered. Tests in `scripts/validate-skills.test.sh`:
-- at the baseline passes
-- one over fails
-- characters, not bytes (`é`)
-- quotes stripped, `''` unescaped
-- `when_to_use` joined with ` - `
-- `disable-model-invocation` excluded
+| Model | Listing used | Our 73 skills with full text | Name only |
+|---|---|---|---|
+| `claude-sonnet-5-5` / `opus-5-5` / `haiku-5-5` | 27,888 chars | 43 | **30** |
+| `claude-sonnet-4-5` (200k) | 7,031 chars | 1 | **72** |
 
-Two mutations were each caught (byte counting, quotes kept; 6 failures each).
+Our listing as written is **36,795 chars**. On 5.5 models the descriptions that get dropped are the plugins loaded last: **all of dx-aem**, dx-hub and dx-automation, plus `dx-ticket-analyze` and `dx-upgrade`. On a fresh install, AEM teams get AEM skills routed by name alone until usage history builds up. Another plugin the user has competes for the same budget.
 
-## Proposal (not applied — needs a yes)
+*Correction to the first draft:* "fits a 1M context (40k)" was arithmetic, not measurement. The real 5.5 budget seen here is about 28k.
 
-**Step 1 — `disable-model-invocation: true` on user-only skills: −11,026 chars → 25,769.**
-These are setup, admin and infra skills a user starts on purpose, never mid-task:
-- `auto-*`: alarms, deploy, doctor, eval, init, lambda-env, pipelines, provision, status, test, webhooks
-- `dx-init`, `aem-init`, `dx-upgrade`, `dx-eject`, `dx-sync`, `dx-scan`
-- `dx-doctor`, `aem-doctor`, `aem-refresh`
+## 3. What `disable-model-invocation: true` actually does (verified)
+
+| Path | Claude Code 2.1.301 | Copilot CLI 1.0.98 |
+|---|---|---|
+| Skill in the model's listing | absent | absent |
+| User types `/name args` (interactive) | runs (docs) | runs (docs; not tested) |
+| `-p "/name args"` (our pipelines) | **runs**: body expanded into the prompt | **not expanded**: the model gets the raw text, and can't load the skill |
+| Model calls the Skill tool | **blocked**: `cannot be used with Skill tool due to disable-model-invocation … Do not replicate this skill's workflow by other means` | **blocked**: `Skill "x" not found` |
+| Subagent calls it (via `Agent`) | **blocked**, same message, also with `/name …` at the start of the subagent prompt | — |
+| Preload via agent `skills:` / scheduled task with the skill as prompt | blocked (docs) | — |
+
+What follows from this:
+- A dmi skill is fine as an **entry point** a human types or a Claude pipeline starts with `-p "/name …"`.
+- It is fatal as a **step another skill or subagent reaches for**. The block message also forbids the model from working around it, so a chain stops and does not degrade.
+- `skillOverrides` (`name-only`, `user-invocable-only`) **does not apply to plugin skills** (Claude Code docs). It is no lever for our consumers.
+
+## 4. How our skills are reached today
+
+- **Pipelines** (`ado-cli-*.yml` → `pipeline-agent.js` → Agent SDK `query`) always start with a slash: `/dx-bug-all`, `/dx-pr-review`, `/dx-estimate`, `/dx-discover-repos`, … They are safe for dmi on Claude. None runs on Copilot `-p`.
+- **No** agent uses `skills:` preload. No scheduled task uses a skill as its prompt. No `.github/agents` template points at a dmi candidate.
+- **Chains that a dmi target would break:**
+  - `dx-init` runs the `/aem-init` and `/auto-init` flows "inline";
+  - `dx-upgrade` runs the `/dx-doctor` flow "inline";
+  - `dx-estimate` **batch mode** dispatches subagents with `Run /dx-estimate <id>`.
+- **Existing bug found:** `dx-estimate` already has `disable-model-invocation: true`, so its batch mode (more than one ID) cannot work. Each subagent's Skill call is blocked, as reproduced above. The single-ID pipeline path (`-p "/dx-estimate <id>"`) works.
+
+## 5. Revised proposal (not applied)
+
+**Step 1 — dmi only on entry-point admin skills that nothing chains to (16): −7,337 chars.**
+- `auto-alarms`, `auto-deploy`, `auto-lambda-env`, `auto-pipelines`, `auto-provision`, `auto-webhooks`, `auto-status`, `auto-test`
+- `dx-eject`, `dx-sync`, `dx-scan`
 - `dx-hub-init`, `dx-hub-config`
 - `dx-pattern-extract`, `dx-doc-retro`, `dx-pr-reviews-report`
 
-Caller check: no skill invokes these through the Skill tool. There is one exception to settle first: `dx-upgrade` says "run the full `/dx-doctor` flow inline". Either keep `dx-doctor` model-invocable (−~430 chars of savings) or have `dx-upgrade` read `dx-doctor/SKILL.md` instead of invoking it.
+**Keep model-invocable, trim instead:**
+- `dx-init`, `aem-init`, `auto-init` (chained from `dx-init`);
+- `dx-doctor` (chained from `dx-upgrade`);
+- `dx-upgrade`, `aem-doctor`, `auto-doctor`, `aem-refresh`. Users reach these by plain request ("something is broken", "update seed data").
 
-**Step 2 — trim the remaining 48 to ≈140 chars each (description + `when_to_use`) → ≈8,000.**
-- Keep one "what it does" clause plus the disambiguating trigger.
-- Drop restated names and "Use when the user says …" lists that repeat the description.
-- Keep the #166 negative clauses short ("not for X — use Y").
-- Gate: the routing eval (#168) must hold. It is billed, so it needs approval too.
+**Cost of Step 1:** the model no longer knows these 16 exist. Natural requests like "deploy the lambda" or "set up alarms" stop routing, and the user must type `/auto-deploy`. They are infra steps run on purpose, and `auto-init` / `auto-doctor` still name them, so that is the intended trade.
 
-**Step 3 — consumer docs:** on a 1M context the budget is 40k, so Step 1 alone already fits. Document `skillListingBudgetFraction` and `skillOverrides: "name-only"` for teams on 200k who keep many plugins.
+**Step 2 — trim what is left so the listing fits the measured 5.5 budget with room for other plugins.** Target ≤ 22k chars, which leaves ~6k of the ~28k for the user's other plugins.
+- After Step 1 and the `/auto-eval` removal (#229) the listing is 28,997, so about 7k must go.
+- **`when_to_use` is 17,121 of the 36,795 chars**: nearly half the listing, and Copilot never sees it. Most of it repeats the description as "Use when the user says '…'".
+- Cutting `when_to_use` to disambiguating triggers only (≤ 80 chars, or none) saves roughly 10k on its own and leaves Copilot routing untouched.
+- `description` (17,611 chars) stays the routing text for both platforms. Trim it only on the outliers: the ten longest entries (`dx-council` 1,094, `dx-figma-verify` 781, `aem-fe-verify` 739, `dx-pr-commit` 719, …) are 4.7k over a 250-char line.
+
+**Step 3 — fix `dx-estimate` batch** (separate from the budget). Either:
+- (a) drop `disable-model-invocation` from `dx-estimate` and rely on its own "confirm before posting" gate; or
+- (b) move the single-ID procedure to `dx-estimate/references/single.md` and have the batch subagents `Read` it instead of invoking the skill.
+
+(b) keeps the side-effect guard. Needs a decision.
+
+**Gate:** the routing eval (#168) at the new ref. It is billed, so it needs approval.
 
 ## Re-measure
 
 ```bash
 bash scripts/validate-skills.sh | grep 'Skill listing'
 ```
+
+Live listing check (no login): run `claude -p hello --plugin-dir …` against a stub on `ANTHROPIC_BASE_URL` and count the `- plugin:name:` lines with and without text under "The following skills are available for use with the Skill tool:".

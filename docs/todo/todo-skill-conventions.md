@@ -548,10 +548,11 @@ listing); coordinators and init/upgrade skills are the obvious candidates. Docum
 **Update 2026-10-15 — measured, ratchet landed, rewrite pending approval.** See [2026-10-15-skill-listing-budget.md](../research/2026-10-15-skill-listing-budget.md).
 - **Mechanism, from the Claude Code v2.1.301 bundle, not docs:**
   - entry = `- <plugin>:<name>: <description> - <when_to_use>`, capped at 1536 chars;
-  - budget = context × 4 chars/tok × `skillListingBudgetFraction` 0.01, so **8,000 chars on 200k** and 40,000 on 1M;
+  - budget = context × 4 chars/tok × `skillListingBudgetFraction` 0.01. **Measured live** (stub model, all four plugins): ~7k chars used on a 200k model, ~28k on the 5.5 models;
   - over budget, skills are ranked by usage, and the least-used drop to name-only.
-- **Numbers:** 73 model-invocable skills, **36,795 chars**. That is 4.6× over on 200k and fits on 1M. 51 entries are over 400 chars; the longest is `dx-council` at 1,094. The earlier "~9.2k tok / avg 241" came from a first-line grep.
+- **Numbers:** 73 model-invocable skills, **36,795 chars**. On the 5.5 models 30 of the 73 are sent name-only (on a fresh install that is all of dx-aem, dx-hub and dx-automation); on a 200k model, 72 of 73. `when_to_use` is 17.1k of the total, and Copilot ignores it. 51 entries are over 400 chars; the longest is `dx-council` at 1,094. The earlier "~9.2k tok / avg 241" came from a first-line grep.
 - **Ratchet:** `scripts/validate-skills.sh` check 11 errors when the total grows past `LISTING_BASELINE=36795` (UTF-8 chars, quotes stripped, `disable-model-invocation` excluded). The 6 new cases in `validate-skills.test.sh` were seen failing under two mutations (byte counting; quotes kept).
+- **2026-10-15 (second pass):** `disable-model-invocation` verified live on both CLIs. It hides the skill from the listing, still runs on Claude `-p "/name"` (pipelines are safe), but **blocks every model or subagent Skill call** with "do not replicate this workflow" (Claude) or "Skill not found" (Copilot). Copilot `-p "/name"` does not expand skills at all. The proposal is narrowed to 16 entry-point admin skills nothing chains to. `dx-init`/`aem-init`/`auto-init`/`dx-doctor` must stay invocable (chained inline). `skillOverrides` does not apply to plugin skills. Found #250: `dx-estimate` batch mode is broken by its existing dmi.
 - **Not done:** the description rewrite itself (Step 1 `disable-model-invocation` on 25 user-only skills, −11,026 chars; Step 2 trim 48 to ≈140 chars), and the routing eval (#168, billed). Both are waiting on a decision. **Done-when unchanged.**
 
 ## 19. Lint for reasoning-echo instructions

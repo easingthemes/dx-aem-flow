@@ -97,10 +97,10 @@ DESC_AWK='
 
 # Claude Code sends one skill listing per turn: `- <plugin>:<name>: <description
 # - when_to_use>` per model-invocable skill, each capped at 1536 chars. Its budget
-# is 1% of the context window at 4 chars/token — 8,000 chars on 200k, 40,000 on
-# 1M (read from the v2.1.301 bundle). Over budget, the least-used skills lose
-# their description and route on name alone. We are ~4.6x over on 200k, so the
-# total may shrink, never grow. `disable-model-invocation: true` drops a skill
+# is 1% of the context window at 4 chars/token (v2.1.301 bundle). Measured live
+# with all four plugins: ~7k used on a 200k model, ~28k on the 5.5 models. Over
+# budget, the least-used skills lose their description and route on name alone
+# (on 5.5, 30 of our 73). So the total may shrink, never grow. `disable-model-invocation: true` drops a skill
 # from the listing. TODO #238.
 LISTING_ENTRY_CAP=1536
 LISTING_BUDGET_200K=8000
