@@ -25,7 +25,7 @@ keyPoints:
     - `tools:` — read, edit, search, execute, codebase
     - `handoffs:` — interactive buttons to chain agents (VS Code)
     - `mcp-servers:` — inline MCP config in YAML
-    - `model:` — fallback chain: `[claude-sonnet, gpt-4o]`
+    - `model:` — fallback chain: `[claude-opus-5.5, claude-sonnet-5.5]`
     - `allowed-tools:` — auto-approve these tools
 actionItems:
   - "We maintain both — 13 plugin agents for Claude Code, 25 Copilot agents in `.github/agents/`. Generated from shared templates by the init script."

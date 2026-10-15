@@ -253,3 +253,7 @@ The costs page (`website/src/pages/costs.mdx`) documents:
 - [Claude Code Context Windows](https://platform.claude.com/docs/en/build-with-claude/context-windows)
 - [Automatic Context Compaction Cookbook](https://platform.claude.com/cookbook/tool-use-automatic-context-compaction)
 - [Anthropic Prompt Caching Announcement](https://www.anthropic.com/news/prompt-caching)
+
+## Addendum 2026-10-15 — per-agent cache TTL (missed in August)
+
+Claude Code v2.1.243/v2.1.248 added `experimental.cacheTtl` (`"5m"` or `"1h"`) to agent frontmatter — a per-agent prompt cache TTL used when no `subagentPromptCacheTtl` setting is configured — alongside the `promptCacheTtl` / `subagentPromptCacheTtl` settings. None of our agents set it. Source: Claude Code CHANGELOG (TODO #226).

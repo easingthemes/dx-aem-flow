@@ -114,7 +114,7 @@ Set it in `/config` → Project instructions, or in `~/.claude/settings.json`:
 
 **What this means here:** this repo has a root `CLAUDE.md`, so under the default mode our `AGENTS.md` is still invisible to Claude Code — CLAUDE.md stays the primary file and AGENTS.md stays the cross-tool subset. Nothing changes unless a contributor opts into `claude-md-and-agents-md`, and if they do, the two files are both in context at once — one more reason to keep AGENTS.md a subset, never a copy.
 
-Caveats vs native `CLAUDE.md` handling: nested `AGENTS.md` files attach only on text `Read` calls, they do not refresh after mid-session edits, external `@` imports need prior approval carried over from `CLAUDE.md` imports, and the whole feature is **not yet available on Bedrock, Vertex or Foundry** — which is where `dx-automation` pipelines may run.
+Caveats vs native `CLAUDE.md` handling: nested `AGENTS.md` files attach only on text `Read` calls, they do not refresh after mid-session edits, external `@` imports need prior approval carried over from `CLAUDE.md` imports, and a subdirectory's `AGENTS.md` also attaches on an `@`-mention since v2.1.290. Since **v2.1.281** the feature works on Bedrock, Vertex AI, Foundry, LLM gateways and with telemetry off — so a `dx-automation` pipeline on those providers now loads a consumer's `AGENTS.md` too when the consumer has no `CLAUDE.md`.
 
 ### Four-Plugin Design
 
@@ -165,7 +165,7 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 | Opus | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
 | Opus | `high` | Deep reasoning (code review, planning, verification). `high` is the current Opus default effort | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
 | Sonnet | (default) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture, aem-bug-executor; dx-step, dx-req, dx-step-fix skills |
-| Haiku | `low` | Simple lookups (file search, doc search) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
+| Haiku | `low` | Simple lookups (file search, doc search) — Haiku 5.5 is the default Haiku since v2.1.293, not yet re-verified for these roles ([TODO #222](docs/todo/todo-upstream-2026-09.md#re-verify-model-tier-strategy-against-opus-55--sonnet-55)) | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 Write `model: opus | sonnet | haiku` in frontmatter, never a version-pinned model id — the alias follows the current default generation, a pinned id goes stale.
 
@@ -257,10 +257,13 @@ Set in your shell: `export DX_HOOK_PROFILE=minimal` to suppress informational ho
 | `asyncRewake` | Background execution that wakes Claude on exit-code-2 | `true` for long checks that must signal failure |
 | `timeout` | Seconds before canceling | `30` for quick checks |
 | `once` | One-shot per-session (skill/agent frontmatter only — NOT settings.json) | `true` for init scripts |
+| `onFailure` | `"continue"` (default) or `"block"` — what happens when a `command`/`http` hook can't start, times out, exits with a code other than 0/2, or returns invalid output. `"block"` acts like exit 2 (denies on `PermissionRequest`). No effect on `Stop`/`SubagentStop`/`TaskCompleted`/`TeammateIdle` or on `async`/`asyncRewake` hooks. v2.1.295+ | `"block"` for safety guards (TODO #243) |
 
-**Available events (Claude Code):** `SessionStart`, `Setup`, `SessionEnd`, `UserPromptSubmit`, `UserPromptExpansion`, `Stop`, `StopFailure`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch` (parallel-tool batch), `PermissionRequest`, `PermissionDenied`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`, `FileChanged`, `ConfigChange`, `CwdChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `PreCompact`, `PostCompact`, `Elicitation`, `ElicitationResult`, `Notification`. Handler `type:` values: `command`, `http`, `mcp_tool`, `prompt`, `agent`.
+**Available events (Claude Code):** `SessionStart`, `Setup`, `SessionEnd`, `UserPromptSubmit`, `UserPromptExpansion`, `Stop`, `StopFailure`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch` (parallel-tool batch), `PermissionRequest`, `PermissionDenied`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`, `FileChanged`, `ConfigChange`, `CwdChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `PreCompact`, `PostCompact`, `Elicitation`, `ElicitationResult`, `Notification`, `MessageDisplay` (transform or hide assistant text as it is displayed), `DirectoryAdded` (after `/add-dir` or SDK `register_repo_root`), `PreModelSwitch` / `PostModelSwitch` (block, confirm or annotate a model switch, v2.1.251+). Handler `type:` values: `command`, `http`, `mcp_tool`, `prompt`, `agent`.
 
 **Exit codes:** `0` = success (parse JSON from stdout), `2` = blocking error (stderr as feedback), other = non-blocking error. **Never use exit 1 for blocking** — it's treated as a non-blocking error (shown only in verbose mode).
+
+**Decision fields (JSON on stdout, under `hookSpecificOutput`):** `PreToolUse` takes `permissionDecision` (`allow` | `deny` | `ask` | `defer`) + `permissionDecisionReason`, and `updatedInput` to rewrite the tool's arguments before it runs (validated like Claude's own input since v2.1.300). `PermissionDenied` takes `retry: true` to tell the model it may retry — exit codes are ignored on that event.
 
 ## Conventions for Adding Skills/Agents
 

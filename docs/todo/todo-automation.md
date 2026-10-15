@@ -363,6 +363,8 @@ Source: Microsoft Learn, [Securely use variables and parameters](https://learn.m
 **Done-when:** `grep -rn "@azure-devops/mcp" plugins/dx-automation` shows every use as `@azure-devops/mcp@<x.y.z>` with a `-d` list.
 **Approach:** Per-agent domain list (e.g. DoR needs `work-items` only). Keep dx-init interactive default broad but document `-d`.
 
+**Update 2026-10-15 (from #226/#247):** Pipelines also `npm install --no-save @anthropic-ai/claude-agent-sdk` unpinned in every `ado-cli-*.yml`. That is why they already have the v2.1.296 `allowed-tools` fix; pin a floor (not an exact version) when this item lands.
+
 ## Bump Playwright MCP and disable WebMCP
 
 **Added:** 2026-09-29
