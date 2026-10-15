@@ -192,7 +192,7 @@ mkdir -p .ai/automation
 
 ### 2.2. Copy data bundle
 
-Copy the entire data bundle (pipelines, Lambda handlers, prompts, eval, docs):
+Copy the entire data bundle (pipelines, Lambda handlers, scripts, policy):
 
 ```bash
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
@@ -284,7 +284,7 @@ If `agent.index.md` exists at the project root and does not already contain `## 
 
 | Path | What | Committed |
 |------|------|-----------|
-| `.ai/automation/` | CI/CD automation — pipeline agents, Lambda handlers, eval framework | Yes |
+| `.ai/automation/` | CI/CD automation — pipeline agents, Lambda handlers | Yes |
 | `.ai/automation/policy/` | Runtime policy (capability gating, redaction, rate limits) | Yes |
 
 | Agent | Trigger |
@@ -315,7 +315,7 @@ Only include agents that were enabled in Question 6. If `agent.index.md` doesn't
 **ADO identity:** <email, Name>
 
 **Files created:**
-- `.ai/automation/` — Lambda handlers, ADO pipelines, eval framework
+- `.ai/automation/` — Lambda handlers, ADO pipelines
 - `.ai/rules/` — shared rules (installed by dx-init). Edit to customize review criteria, answer tone, pragmatism filters. Changes apply to BOTH local dx skills and automation agents.
 - `.ai/automation/policy/pipeline-policy.yaml` — agent capability gates, redaction policy, rate limits, token budget. Update the three `← Update` fields.
 - `.ai/automation/infra.json` — fill remaining `{{PLACEHOLDER}}` values after provisioning
@@ -365,7 +365,7 @@ Run these skills in order to complete the setup:
 
 - **Interactive — use AskUserQuestion** — Every question, confirmation, or choice in this skill MUST use the `AskUserQuestion` tool to pause and wait for the user's response. Never proceed past a question without receiving the user's answer first. Present numbered options in the question text, then STOP and wait. Do not batch multiple questions into one message — ask one, wait for the answer, then continue.
 - **Agent question first** — ask which agents to enable before anything else (after dx-init check). This determines which tools are required.
-- **Skip AWS setup when no Lambda agents enabled** — if user picks only PR-pipeline agents (PR Review, PR Answer, Eval) and no Lambda-based agents, skip Questions 4/4b (resource prefix, region) and do not scaffold Lambda handlers, AWS resource scripts, or CloudWatch alarms. Never suggest running `/auto-provision`, `/auto-deploy`, `/auto-lambda-env`, or `/auto-alarms` for pipeline-only setups. DO still run `/auto-webhooks` (for PR Answer hook + PR Review build policy).
+- **Skip AWS setup when no Lambda agents enabled** — if user picks only PR-pipeline agents (PR Review, PR Answer) and no Lambda-based agents, skip Questions 4/4b (resource prefix, region) and do not scaffold Lambda handlers, AWS resource scripts, or CloudWatch alarms. Never suggest running `/auto-provision`, `/auto-deploy`, `/auto-lambda-env`, or `/auto-alarms` for pipeline-only setups. DO still run `/auto-webhooks` (for PR Answer hook + PR Review build policy).
 - **Prerequisites first** — check dx-init and audit.sh before anything else
 - **Never overwrite infra.json** — if it already exists, ask before replacing
 - **Validate on re-run** — every step executes on re-run; validate existing files against plugin data, smart-update what's outdated, ask when in doubt

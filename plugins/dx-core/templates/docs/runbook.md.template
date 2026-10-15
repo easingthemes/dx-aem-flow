@@ -24,13 +24,13 @@
 
 1. **Find the run** — ADO > Pipelines > select pipeline > recent runs
 2. **Check the bundle** — S3 bucket: `run.json`, `decision-journal.json`, `alerts.json`
-3. **Check DLQ** — `node .ai/automation/eval/process-dlq.js`
+3. **Check DLQ** — `/auto-status` (DLQ depth, hub only)
 
 ## Quick Rollback
 
 | What | How |
 |------|-----|
-| Bad prompt | `git revert <commit>`, push, eval validates automatically |
+| Bad prompt | `git revert <commit>`, push |
 | Bad Lambda | `aws lambda list-versions-by-function`, roll back via `aws_lambda_deploy` |
 | Disable one agent | Remove its `TAG_GATE_*` env var from WI Router Lambda |
 | Disable all agents | Disable WI service hooks in ADO, or set rate limit to 0 |

@@ -168,10 +168,9 @@ flowchart TD
 
     INIT --> PIPES --> HOOKS --> REG
 
-    subgraph CONSUMER_PIPES["Consumer Pipelines (6)"]
+    subgraph CONSUMER_PIPES["Consumer Pipelines (5)"]
         CP1["PR Review"]
         CP2["PR Answer"]
-        CP3["Eval"]
         CP4["DevAgent"]
         CP5["BugFix"]
         CP6["DoD-Fix"]

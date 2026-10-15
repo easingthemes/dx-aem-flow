@@ -89,7 +89,13 @@ the skill count by one. Related to the "Automation Eval" item below.
   - stats.ts (77→76, dx-automation 11→10).
 - Checks: `validate-stats.sh` passes, and the website builds.
 - If pipeline-agent evals come back, they belong in `plugins/dx-automation/evals/` as `claude plugin eval` cases (#173), not in a skill.
-- Not touched: `runbook.md.template` also names `node .ai/automation/eval/process-dlq.js`, which may be just as dead. Out of scope here, worth a look.
+- Same commit `1800b25` also deleted the rest of `data/eval/` (`capture-fixture.js`, `process-dlq.js`, `gates.js`, `judge.js`, …) and the eval pipeline. The leftover references to it are cleaned up here too:
+  - `/auto-test --capture` (named by the skill, no longer exists);
+  - `node .ai/automation/eval/process-dlq.js` in `runbook.md.template` → `/auto-status`;
+  - "eval framework" in what `auto-init` / `dx-init` say they copy;
+  - the "Eval" consumer pipeline in `dx-automation-flow.md.template`;
+  - "eval validates automatically" in the runbook.
+- `git log` shows the discover fixtures were added to `auto-eval` on 2026-06-12 (#170), three months after its runner was deleted (2026-03-22), and nothing ever ran them through `/auto-eval`.
 
 ## Layer 2: Skill Triggering Evals
 
