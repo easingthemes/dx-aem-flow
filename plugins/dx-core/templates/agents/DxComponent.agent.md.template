@@ -1,4 +1,3 @@
-<!-- Source: agents/dx-file-resolver.md -->
 ---
 name: DxComponent
 description: Find all source files for a component or module across the project. Returns file paths grouped by category. Use when asking "where is component X?", "what files for hero?", or any component lookup question.
@@ -18,7 +17,9 @@ handoffs:
   - label: "Help with this component"
     agent: DxHelp
     prompt: "Answer questions about this component's architecture and patterns"
+model: ['Claude Haiku 5.5', 'Claude Haiku 4.5']
 ---
+<!-- Source: agents/dx-file-resolver.md -->
 
 # Component Lookup Agent
 

@@ -55,8 +55,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
           </tr>
           <tr>
             <td>Copilot CLI</td>
-            <td><code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code></td>
-            <td><code>applyTo:</code></td>
+            <td>Auto-loads natively (v1.0.89+)</td>
+            <td><code>paths:</code> (mapped to its <code>applyTo</code> scope)</td>
           </tr>
         </tbody>
       </table>
@@ -65,8 +65,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <HighlightBox severity="info" title="History">
     Before v2.43.0, rules were copied to both <code>.claude/rules/</code> and <code>.github/instructions/</code>.
-    The <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code> env var (Copilot CLI v1.0.6+) eliminated this duplication.
-    <code>.github/instructions/</code> is no longer generated.
+    v2.43.0 replaced the copies with the <code>COPILOT_CUSTOM_INSTRUCTIONS_DIRS</code> env var — but that
+    variable only loads <code>AGENTS.md</code> and <code>*.instructions.md</code>, never plain <code>&lt;name&gt;.md</code>,
+    so Copilot CLI loaded none of these rules until v1.0.89 (2026-09-28) added native <code>.claude/rules</code> support.
+    Verified with <code>copilot instruction list</code> on v1.0.88 and v1.0.98. The env var is no longer set.
   </HighlightBox>
 </Section>
 

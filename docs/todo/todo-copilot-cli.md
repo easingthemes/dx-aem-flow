@@ -247,6 +247,15 @@ nowhere to go.
 **Scope:** `plugins/dx-core/skills/dx-init/SKILL.md` (env-var step), `plugins/dx-core/templates/claude-code/settings.json.template`, `plugins/dx-aem/skills/aem-init/SKILL.md` (lines 22, 270, 342), `plugins/dx-hub/skills/dx-hub-init/`, `website/src/pages/architecture/cross-agent.mdx`, `plugins/*/templates/rules/**`.
 **Done-when:** `/instructions` output from a Copilot v1.0.89 session with and without the env var is recorded in this section, AND the dx-init env-var step is either removed or version-gated to match the result.
 
+**Done 2026-10-15.** `copilot instruction list` works without a login, so this was measured, not inferred. Fixture: a repo with `.claude/rules/{cross-repo,pr-review}.md` (our templates) and a `ts-only.md` with only `paths: ["src/**/*.ts"]`.
+
+| Copilot CLI | env var unset | `COPILOT_CUSTOM_INSTRUCTIONS_DIRS=.claude/rules` |
+|---|---|---|
+| v1.0.88 | "No instruction sources found." | "No instruction sources found." (a `control.instructions.md` in the same folder **is** listed) |
+| v1.0.98 | all 3 rules listed; `ts-only.md` gets `"applyTo": ["src/**/*.ts"]` from `paths:` | same 3 rules, no duplicates |
+
+So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instructions.md` — and from v2.43.0 (when `.github/instructions/` copies were dropped) until Copilot v1.0.89 our rules did not reach Copilot at all. Native loading honours `paths:`. Done: removed step 9a-bis's env var (now says "nothing to set; existing value is harmless"), the env block in `templates/claude-code/settings.json.template`, `dx-hub-init` and this repo's `.claude/settings.json`; corrected `aem-init` and 4 website pages. `applyTo:` stays in the rule templates for VS Code Chat.
+
 ## Tier Copilot custom agents — `model` + `reasoning-effort`
 
 **Added:** 2026-09-29
@@ -254,6 +263,10 @@ nowhere to go.
 **Scope:** `plugins/*/templates/agents/*.agent.md.template`, `cli/lib/scaffold.js` if it rewrites frontmatter.
 **Done-when:** `grep -rln "reasoning-effort" plugins/*/templates/agents` returns the tiered agents, OR this section records a decision not to tier.
 **Approach:** Decide together with #202/#215 (per-agent frontmatter pass). Use aliases or fallback lists, never a single pinned id.
+
+**Done 2026-10-15.** Tiers follow each template's `<!-- Source: -->`: `DxCodeReview` → `model: ['Claude Opus 5.5', 'Claude Opus 5']` + `reasoning-effort: high`; 6 Sonnet-backed templates (`AEMAfter`, `AEMBefore`, `AEMEditorialGuide`, `AEMSnapshot`, `AEMVerify`, `DxPRReview`) → Sonnet list, no effort (vendor default, as on the Claude side); `DxComponent`, `DxHelp` → Haiku list; `AEMTicket`, `DxTicket` → Haiku list + `reasoning-effort: low` (their source skill sets `effort: low`). The 14 templates backed by untiered skills or coordinators stay unset. Display names, not ids: Copilot CLI accepts them since v1.0.24 and they are VS Code's documented format, so one value works in both. `model-policy` left at the default (`preferred`) so a user can still switch models.
+
+**Also found:** 20 of 25 templates opened with the `<!-- Source: -->` comment *before* `---`. Copilot's instruction parser anchors frontmatter at the start of the file (`(?s)^---`); if the agent parser does the same, those agents lost `name`/`tools`/`handoffs`. Not confirmed live (a Copilot session needs a login), but moving the comment below the closing `---` is correct for every parser. Consumers get the fixed files only via `/dx-upgrade` (it re-runs `install-copilot-agents.sh --force`); `/dx-init` skips existing files. Guarded by `validate-structure.sh` check 9.
 
 ## v1.0.87–v1.0.89 notes for the batch re-test
 
