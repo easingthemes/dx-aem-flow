@@ -114,7 +114,7 @@ Set it in `/config` → Project instructions, or in `~/.claude/settings.json`:
 
 **What this means here:** this repo has a root `CLAUDE.md`, so under the default mode our `AGENTS.md` is still invisible to Claude Code — CLAUDE.md stays the primary file and AGENTS.md stays the cross-tool subset. Nothing changes unless a contributor opts into `claude-md-and-agents-md`, and if they do, the two files are both in context at once — one more reason to keep AGENTS.md a subset, never a copy.
 
-Caveats vs native `CLAUDE.md` handling: nested `AGENTS.md` files attach only on text `Read` calls, they do not refresh after mid-session edits, external `@` imports need prior approval carried over from `CLAUDE.md` imports, (a subdirectory's `AGENTS.md` also attaches on an `@`-mention since v2.1.290). Since **v2.1.281** the feature works on Bedrock, Vertex AI, Foundry, LLM gateways and with telemetry off — so a `dx-automation` pipeline on those providers now loads a consumer's `AGENTS.md` too when the consumer has no `CLAUDE.md`.
+Caveats vs native `CLAUDE.md` handling: nested `AGENTS.md` files attach only on text `Read` calls, they do not refresh after mid-session edits, external `@` imports need prior approval carried over from `CLAUDE.md` imports, and a subdirectory's `AGENTS.md` also attaches on an `@`-mention since v2.1.290. Since **v2.1.281** the feature works on Bedrock, Vertex AI, Foundry, LLM gateways and with telemetry off — so a `dx-automation` pipeline on those providers now loads a consumer's `AGENTS.md` too when the consumer has no `CLAUDE.md`.
 
 ### Four-Plugin Design
 
