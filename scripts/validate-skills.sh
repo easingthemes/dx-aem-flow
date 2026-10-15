@@ -11,6 +11,7 @@
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 # 8. Inline-chain context budget — WARN, ratcheted
 # 9. model: opus in a skill or agent sets effort: explicitly — ERROR
+# 11. Skill-listing size (model-invocable descriptions) — ratcheted
 
 set -euo pipefail
 
@@ -94,6 +95,39 @@ DESC_AWK='
   END { print out }
 '
 
+# Claude Code sends one skill listing per turn: `- <plugin>:<name>: <description
+# - when_to_use>` per model-invocable skill, each capped at 1536 chars. Its budget
+# is 1% of the context window at 4 chars/token — 8,000 chars on 200k, 40,000 on
+# 1M (read from the v2.1.301 bundle). Over budget, the least-used skills lose
+# their description and route on name alone. We are ~4.6x over on 200k, so the
+# total may shrink, never grow. `disable-model-invocation: true` drops a skill
+# from the listing. TODO #238.
+LISTING_ENTRY_CAP=1536
+LISTING_BUDGET_200K=8000
+# Measured 2026-10-15: 73 model-invocable skills. Lower this when descriptions are trimmed.
+LISTING_BASELINE=${LISTING_BASELINE:-36795}
+LISTING_CHARS=0
+LISTING_SKILLS=0
+WTU_AWK="${DESC_AWK//description/when_to_use}"
+# Count characters, not bytes (descriptions carry em dashes): pick a UTF-8
+# locale that exists here, proven on a two-byte character.
+UTF8_LOCALE=""
+for _loc in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
+  if [ "$(LC_ALL=$_loc bash -c 'x=é; echo ${#x}' 2>/dev/null)" = 1 ]; then UTF8_LOCALE=$_loc; break; fi
+done
+# listing_value <text> — the YAML scalar as Claude Code sees it: outer quotes off
+listing_value() {
+  local v="$1"
+  case "$v" in
+    \"*\") v="${v#\"}"; v="${v%\"}"; v="${v//\\\"/\"}" ;;
+    \'*\') v="${v#\'}"; v="${v%\'}"; v="${v//\'\'/\'}" ;;
+  esac
+  printf '%s' "$v"
+}
+strlen() {
+  if [ -n "$UTF8_LOCALE" ]; then LC_ALL=$UTF8_LOCALE bash -c 'printf %s "${#1}"' _ "$1"; else printf '%s' "${#1}"; fi
+}
+
 # Temp file for collision detection
 NAMES_FILE=$(mktemp)
 trap 'rm -f "$NAMES_FILE"' EXIT
@@ -142,6 +176,19 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   check_opus_effort "$skill_file" "$rel_path"
+
+  # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)
+  if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -q '^disable-model-invocation:[[:space:]]*true'; then
+    listing_text=$(listing_value "$file_desc")
+    file_wtu=$(awk "$WTU_AWK" "$skill_file")
+    [ -n "$file_wtu" ] && listing_text="$listing_text - $(listing_value "$file_wtu")"
+    listing_len=$(strlen "$listing_text")
+    [ "$listing_len" -gt "$LISTING_ENTRY_CAP" ] && listing_len=$LISTING_ENTRY_CAP
+    entry="- $plugin:$skill_name: "
+    [ "$LISTING_SKILLS" -gt 0 ] && LISTING_CHARS=$((LISTING_CHARS + 1))
+    LISTING_CHARS=$((LISTING_CHARS + ${#entry} + listing_len))
+    LISTING_SKILLS=$((LISTING_SKILLS + 1))
+  fi
 
   # Skill body and its references/ are both loaded into the model's context
   while IFS= read -r md; do
@@ -257,6 +304,16 @@ elif [ "$BODY_OVER" -lt "$BODY_OVER_BASELINE" ]; then
   echo
   echo "NOTE: only $BODY_OVER skills over $BODY_MAX body lines (baseline $BODY_OVER_BASELINE)"
   echo "      lower BODY_OVER_BASELINE in scripts/validate-skills.sh to lock the win in"
+fi
+
+# Ratchet: the skill listing may shrink, never grow
+echo
+echo "Skill listing: $LISTING_SKILLS model-invocable skills, $LISTING_CHARS chars (Claude Code budget: $LISTING_BUDGET_200K on a 200k context; baseline $LISTING_BASELINE)"
+if [ "$LISTING_CHARS" -gt "$LISTING_BASELINE" ]; then
+  echo "ERROR: skill listing grew to $LISTING_CHARS chars, baseline is $LISTING_BASELINE — shorten a description or set disable-model-invocation: true (TODO #238)"
+  ERRORS=$((ERRORS + 1))
+elif [ "$LISTING_CHARS" -lt "$LISTING_BASELINE" ]; then
+  echo "NOTE: skill listing is below the baseline — lower LISTING_BASELINE in scripts/validate-skills.sh to $LISTING_CHARS to lock the win in"
 fi
 
 # Summary

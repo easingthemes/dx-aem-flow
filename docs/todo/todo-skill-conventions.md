@@ -545,6 +545,15 @@ skills should be `disable-model-invocation: true` (user-invoked only — no desc
 listing); coordinators and init/upgrade skills are the obvious candidates. Document
 `skillOverrides: "name-only"` / `skillListingBudgetFraction` for consumers who keep many skills.
 
+**Update 2026-10-15 — measured, ratchet landed, rewrite pending approval.** See [2026-10-15-skill-listing-budget.md](../research/2026-10-15-skill-listing-budget.md).
+- **Mechanism, from the Claude Code v2.1.301 bundle, not docs:**
+  - entry = `- <plugin>:<name>: <description> - <when_to_use>`, capped at 1536 chars;
+  - budget = context × 4 chars/tok × `skillListingBudgetFraction` 0.01, so **8,000 chars on 200k** and 40,000 on 1M;
+  - over budget, skills are ranked by usage, and the least-used drop to name-only.
+- **Numbers:** 73 model-invocable skills, **36,795 chars**. That is 4.6× over on 200k and fits on 1M. 51 entries are over 400 chars; the longest is `dx-council` at 1,094. The earlier "~9.2k tok / avg 241" came from a first-line grep.
+- **Ratchet:** `scripts/validate-skills.sh` check 11 errors when the total grows past `LISTING_BASELINE=36795` (UTF-8 chars, quotes stripped, `disable-model-invocation` excluded). The 6 new cases in `validate-skills.test.sh` were seen failing under two mutations (byte counting; quotes kept).
+- **Not done:** the description rewrite itself (Step 1 `disable-model-invocation` on 25 user-only skills, −11,026 chars; Step 2 trim 48 to ≈140 chars), and the routing eval (#168, billed). Both are waiting on a decision. **Done-when unchanged.**
+
 ## 19. Lint for reasoning-echo instructions
 
 **Status:** Done 2026-09-29 — `scripts/validate-skills.sh` check 7; fixtures in `validate-skills.test.sh` (6 fail with the check disabled).
