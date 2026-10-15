@@ -37,7 +37,7 @@
 
 ## Maintenance
 
-- **Weekly**: `/auto-status`, run eval (`node .ai/automation/eval/run.js --all`)
+- **Weekly**: `/auto-status`, `/auto-doctor`
 - **Monthly**: Review token budget, check DLQ empty, rotate ADO PAT if expiring
 
 ## Full Details

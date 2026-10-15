@@ -76,6 +76,21 @@ removed/rewritten so it no longer references a non-existent runner.
 against `plugins/dx-automation/evals/`; alternative is deletion, which also drops
 the skill count by one. Related to the "Automation Eval" item below.
 
+**Done 2026-10-15 — removed, not retargeted.**
+- Retargeting needs something to run. `plugins/dx-automation/evals/` does not exist, and `claude plugin eval` scores a plugin's own suites (billed), not a consumer's pipeline agents. So the skill would have kept pointing at nothing.
+- The claimed `dor` / `pr-review` / `pr-answer` fixtures never shipped. The only real fixtures were `fixtures/discover/01–04`:
+  - tiers 0–2 are deterministic and already exercised by `plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh` (CI, 19 cases);
+  - `04-llm-inference` only documented an expected alias set for the LLM tier, and is dropped with the skill.
+- Removed: the skill directory, plus the references in:
+  - `website/src/pages/reference/{commands,skills}.mdx` and `architecture/automation.mdx`;
+  - `docs/reference/skill-catalog.md` and `plugins/dx-automation/README.md`;
+  - the consumer templates `dx-automation-flow.md`, `runbook.md` (its `node .ai/automation/eval/run.js` line) and `testing.md`;
+  - `dx-eject`'s count;
+  - stats.ts (77→76, dx-automation 11→10).
+- Checks: `validate-stats.sh` passes, and the website builds.
+- If pipeline-agent evals come back, they belong in `plugins/dx-automation/evals/` as `claude plugin eval` cases (#173), not in a skill.
+- Not touched: `runbook.md.template` also names `node .ai/automation/eval/process-dlq.js`, which may be just as dead. Out of scope here, worth a look.
+
 ## Layer 2: Skill Triggering Evals
 
 **Added:** 2026-03-21
