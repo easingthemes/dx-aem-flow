@@ -1,3 +1,10 @@
+## [3.7.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.2...v3.7.3) (2026-10-15)
+
+
+### Bug Fixes
+
+* fail-closed branch guard, Playwright MCP 0.0.83 without WebMCP, pin ADO MCP in pipelines ([#216](https://github.com/easingthemes/dx-aem-flow/issues/216)) ([ec8ad33](https://github.com/easingthemes/dx-aem-flow/commit/ec8ad33fc6b3544132c8de7500774d4360ea6da9))
+
 ## [3.7.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.1...v3.7.2) (2026-09-24)
 
 
