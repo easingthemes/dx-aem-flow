@@ -37,7 +37,7 @@ Claude Code v2.1.286–v2.1.301 and Copilot CLI v1.0.90–v1.0.98. Each item's
 - **Check:** `scripts/check-agent-hooks.sh` requires the canonical block from `plugins/dx-core/templates/hooks/agent-branch-guard.yaml` verbatim in each shell-capable template; seen failing on 6 bad inputs (block removed, drifted branch list, no-`tools:` agent, new `execute` agent, missing canonical file; current `main` failed with 6 errors before the blocks were added).
 - **Not verified:** Copilot on Windows actually choosing `windows:` and running it in PowerShell (only the script logic was run, under pwsh on Linux); VS Code Chat honouring the same block (its docs use `hookSpecificOutput`, which the output also carries); agent hooks when the agent runs as a *subagent* of a coordinator.
 - #229's re-test anchor was already on v1.0.98.
-- **Side finding → #248:** the Copilot 1.0.98 bundle checks `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS === "true"`; the `=1` we tell users to export does nothing (seen live). Separate PR.
+- **Side finding → #249:** the Copilot 1.0.98 bundle checks `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS === "true"`; the `=1` we tell users to export does nothing (seen live). Separate PR.
 
 ## Claude Code Mods (watch)
 
