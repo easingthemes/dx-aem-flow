@@ -658,6 +658,14 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Scope:** `plugins/dx-core/skills/dx-init/SKILL.md`, `plugins/dx-aem/skills/aem-init/SKILL.md`, `plugins/dx-aem/.mcp.json`, website setup pages, #127.
 **Done-when:** `grep -rln "adobeaemcloud.com/adobe/mcp" plugins website/src` hits the aem-init docs, and #127's detail records a decision on the Adobe endpoint.
 
+**Done 2026-10-15.**
+- `grep -rln "adobeaemcloud.com/adobe/mcp" plugins website/src` now hits `plugins/dx-aem/skills/aem-init/SKILL.md` (step 11a, shown only when `aem.author-url` is an AEMaaCS host) and `website/src/pages/learn/mcps.mdx` (new "Vendor-Hosted MCP Endpoints" section; site builds).
+- #127 records the decision: not a fix for pipelines (interactive Adobe ID OAuth, Cloud Service only, different tool names).
+- Facts re-read on 2026-10-15:
+  - Adobe page updated 2026-10-14: unified + per-domain servers, runs as the signed-in user, read-only available for Content and Cloud Manager.
+  - ADO devblog: `https://mcp.dev.azure.com/{organization}`, Entra-backed orgs only, Claude Code not yet supported (needs Entra dynamic client registration).
+- Not verified: connecting to either endpoint (no Adobe or Entra login here).
+
 ## Plugin4Shell — marketplace pin spoofing (watch)
 
 **Added:** 2026-09-29
