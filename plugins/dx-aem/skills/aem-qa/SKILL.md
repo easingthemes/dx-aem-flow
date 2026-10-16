@@ -1,7 +1,6 @@
 ---
 name: aem-qa
-description: Verify a story's implementation on AEM as the QA Agent — navigate pages, check component rendering and dialogs, capture screenshots, and create Bug tickets for issues found. Requires AEM running locally. Use after deploying code.
-when_to_use: "Use when verifying a story's AEM implementation as QA, after deploying code, when the user says 'qa this', 'verify on AEM', 'check the component on AEM', or 'run QA on the story'. Do NOT use for a single component's dialog check (that's aem-verify), for visual frontend comparison alone (aem-fe-verify), or for code-level verification (dx-step-verify)."
+description: "QA a story on AEM — check component rendering and dialogs on pages, capture screenshots, create Bug tickets for issues. Use after deploying, for 'qa this', 'verify on AEM'. Not for one component's dialog (aem-verify) or visual-only checks (aem-fe-verify)."
 argument-hint: "[Work Item ID (optional — reads from run-context)]"
 allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---

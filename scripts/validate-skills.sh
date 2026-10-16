@@ -11,6 +11,9 @@
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 # 8. Inline-chain context budget — WARN, ratcheted
 # 9. model: opus in a skill or agent sets effort: explicitly — ERROR
+# 10. (RM_DYNAMIC — recursive rm on a variable target; lands with PR #224)
+# 11. Skill-listing size (model-invocable descriptions) — ratcheted
+# 12. A model-invocable description names a dmi skill only as a /command — ERROR
 
 set -euo pipefail
 
@@ -94,6 +97,40 @@ DESC_AWK='
   END { print out }
 '
 
+# Claude Code sends one skill listing per turn: `- <plugin>:<name>: <description
+# - when_to_use>` per model-invocable skill, each capped at 1536 chars. Its budget
+# is 1% of the context window at 4 chars/token (v2.1.301 bundle). Measured live
+# with all four plugins: ~7k used on a 200k model, ~28k on the 5.5 models. Over
+# budget, the least-used skills lose their description and route on name alone
+# (on 5.5, 30 of our 73). So the total may shrink, never grow. `disable-model-invocation: true` drops a skill
+# from the listing. TODO #238.
+LISTING_ENTRY_CAP=1536
+LISTING_BUDGET_200K=8000
+# Measured 2026-10-16 after the #238 trim: 57 model-invocable skills (was 36,795 / 73). Lower it when descriptions shrink;
+# raise it only for a deliberate addition (+2 on 2026-10-16: "/" before two dmi skill names, check 12).
+LISTING_BASELINE=${LISTING_BASELINE:-12131}
+LISTING_CHARS=0
+LISTING_SKILLS=0
+WTU_AWK="${DESC_AWK//description/when_to_use}"
+# Count characters, not bytes (descriptions carry em dashes): pick a UTF-8
+# locale that exists here, proven on a two-byte character.
+UTF8_LOCALE=""
+for _loc in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
+  if [ "$(LC_ALL=$_loc bash -c 'x=é; echo ${#x}' 2>/dev/null)" = 1 ]; then UTF8_LOCALE=$_loc; break; fi
+done
+# listing_value <text> — the YAML scalar as Claude Code sees it: outer quotes off
+listing_value() {
+  local v="$1"
+  case "$v" in
+    \"*\") v="${v#\"}"; v="${v%\"}"; v="${v//\\\"/\"}" ;;
+    \'*\') v="${v#\'}"; v="${v%\'}"; v="${v//\'\'/\'}" ;;
+  esac
+  printf '%s' "$v"
+}
+strlen() {
+  if [ -n "$UTF8_LOCALE" ]; then LC_ALL=$UTF8_LOCALE bash -c 'printf %s "${#1}"' _ "$1"; else printf '%s' "${#1}"; fi
+}
+
 # Temp file for collision detection
 NAMES_FILE=$(mktemp)
 trap 'rm -f "$NAMES_FILE"' EXIT
@@ -142,6 +179,19 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   check_opus_effort "$skill_file" "$rel_path"
+
+  # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)
+  if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -q '^disable-model-invocation:[[:space:]]*true'; then
+    listing_text=$(listing_value "$file_desc")
+    file_wtu=$(awk "$WTU_AWK" "$skill_file")
+    [ -n "$file_wtu" ] && listing_text="$listing_text - $(listing_value "$file_wtu")"
+    listing_len=$(strlen "$listing_text")
+    [ "$listing_len" -gt "$LISTING_ENTRY_CAP" ] && listing_len=$LISTING_ENTRY_CAP
+    entry="- $plugin:$skill_name: "
+    [ "$LISTING_SKILLS" -gt 0 ] && LISTING_CHARS=$((LISTING_CHARS + 1))
+    LISTING_CHARS=$((LISTING_CHARS + ${#entry} + listing_len))
+    LISTING_SKILLS=$((LISTING_SKILLS + 1))
+  fi
 
   # Skill body and its references/ are both loaded into the model's context
   while IFS= read -r md; do
@@ -257,6 +307,37 @@ elif [ "$BODY_OVER" -lt "$BODY_OVER_BASELINE" ]; then
   echo
   echo "NOTE: only $BODY_OVER skills over $BODY_MAX body lines (baseline $BODY_OVER_BASELINE)"
   echo "      lower BODY_OVER_BASELINE in scripts/validate-skills.sh to lock the win in"
+fi
+
+# --- 12. no routing to a skill the model cannot invoke -----------------------
+# A description that says "Not for X (dx-foo)" invites the model to call
+# dx-foo. If dx-foo has disable-model-invocation, the Skill tool refuses it
+# and tells the model not to work around it — a dead end. Name such skills
+# as the user's slash command ("/dx-foo") instead. TODO #238.
+DMI_NAMES=""
+for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' \
+    && DMI_NAMES="$DMI_NAMES $(basename "$(dirname "$f")")"
+done
+for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' && continue
+  d=$(awk "$DESC_AWK" "$f")
+  for n in $DMI_NAMES; do
+    if printf '%s' "$d" | grep -qE "(^|[^/[:alnum:]_-])$n([^[:alnum:]_-]|\$)"; then
+      echo "ERROR: ${f#"$REPO_ROOT"/} — description routes to $n, which has disable-model-invocation; write it as /$n (the user's command)"
+      ERRORS=$((ERRORS + 1))
+    fi
+  done
+done
+
+# Ratchet: the skill listing may shrink, never grow
+echo
+echo "Skill listing: $LISTING_SKILLS model-invocable skills, $LISTING_CHARS chars (Claude Code budget: $LISTING_BUDGET_200K on a 200k context; baseline $LISTING_BASELINE)"
+if [ "$LISTING_CHARS" -gt "$LISTING_BASELINE" ]; then
+  echo "ERROR: skill listing grew to $LISTING_CHARS chars, baseline is $LISTING_BASELINE — shorten a description, or raise LISTING_BASELINE in this script if the growth is deliberate (say why in the commit). Use disable-model-invocation only for skills nothing chains to (TODO #238)"
+  ERRORS=$((ERRORS + 1))
+elif [ "$LISTING_CHARS" -lt "$LISTING_BASELINE" ]; then
+  echo "NOTE: skill listing is below the baseline — lower LISTING_BASELINE in scripts/validate-skills.sh to $LISTING_CHARS to lock the win in"
 fi
 
 # Summary

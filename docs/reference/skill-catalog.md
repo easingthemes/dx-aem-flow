@@ -33,7 +33,7 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-estimate | `/dx-estimate` | `<work-item-id(s) or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
+| dx-estimate | `/dx-estimate` | `<work-item-id or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
 
 ### Requirements + DoR — 5 skills
 

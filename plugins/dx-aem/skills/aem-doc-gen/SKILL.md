@@ -1,7 +1,6 @@
 ---
 name: aem-doc-gen
-description: Generate AEM demo documentation — find or create docs page with configured component, capture dialog and website screenshots on QA, write authoring guide. Extends /aem-editorial-guide for automated pipeline use. Invoked by /dx-agent-all Phase 7 and /dx-req-dod.
-when_to_use: "Use when generating AEM documentation for a completed story, when the user says 'generate docs for this component', 'create authoring guide', or after /aem-verify to capture component documentation."
+description: "Generate AEM authoring docs for a finished story — find or create a demo page with the component, screenshot dialog and site on QA, write the authoring guide. Used by /dx-agent-all Phase 7 and /dx-req-dod."
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 context: fork
 agent: aem-editorial-guide-capture

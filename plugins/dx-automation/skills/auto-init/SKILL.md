@@ -1,7 +1,6 @@
 ---
 name: auto-init
-description: Scaffold AI automation for a project. Each project is self-contained — owns its own AWS infra and pipelines. Sets up .ai/automation/, generates infra.json. Run once after dx-init.
-when_to_use: "Use when setting up AI automation for a project for the first time, when the user says 'set up automation', 'initialize AI agents', 'configure automation pipeline', or 'scaffold automation'. Run once after /dx-init."
+description: "Scaffold AI automation for a project — sets up .ai/automation/ and infra.json; each project owns its pipelines (and optional AWS infra). Run once after /dx-init."
 argument-hint: ""
 ---
 

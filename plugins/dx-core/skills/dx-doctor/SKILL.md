@@ -1,7 +1,6 @@
 ---
 name: dx-doctor
-description: Check health of all dx workflow files — config, rules, scripts, seed data, MCP, settings. Detects installed plugins and checks each. Use after upgrading plugins or when something seems broken.
-when_to_use: "Use after upgrading plugins or when something seems broken. Trigger on 'check health', 'doctor', 'diagnose workflow', 'something is broken', 'verify dx setup', or 'what is wrong with my dx config'."
+description: "Check health of the dx workflow files — config, rules, scripts, seed data, MCP, settings — for each installed plugin. Use after upgrading plugins or when something seems broken."
 argument-hint: "[dx|aem|auto|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

@@ -3,6 +3,7 @@ name: auto-lambda-env
 description: Set environment variables on AI automation Lambda functions. Interactively collects secrets and operational values, then applies them via AWS CLI. Reads function names and pre-filled values from .ai/automation/infra.json.
 when_to_use: "Use when setting environment variables on Lambda functions, when onboarding a new project (API keys, org URLs), or when the user says 'set Lambda env vars', 'configure Lambda secrets', 'update automation credentials'."
 argument-hint: ""
+disable-model-invocation: true
 ---
 
 You set Lambda environment variables for the AI automation agents. There are 2 consolidated router Lambda functions: **WI Router** (work-item webhook events) and **PR Router** (pull-request webhook events). Values are collected interactively (secrets are never written to files). Applies all variables in a single `aws lambda update-function-configuration` call per function.

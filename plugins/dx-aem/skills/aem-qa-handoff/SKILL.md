@@ -1,7 +1,6 @@
 ---
 name: aem-qa-handoff
-description: Post QA handoff comment to ADO with QA page URLs, prerequisites, and wiki link. Reuses test page from /aem-doc-gen if available, otherwise creates its own on QA AEM. Use after /aem-doc-gen and /dx-doc-gen.
-when_to_use: "Use after /aem-doc-gen to post QA handoff information to ADO, when the user says 'post QA handoff', 'create QA comment', 'handoff to QA', or as the final step before handing work to QA."
+description: "Post the QA handoff comment to ADO — QA page URLs, prerequisites, wiki link. Use after /aem-doc-gen and /dx-doc-gen, or for 'handoff to QA'."
 argument-hint: "<component-name> <work-item-id> (e.g., hero 2416553)"
 context: fork
 agent: aem-inspector

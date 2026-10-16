@@ -1,7 +1,6 @@
 ---
 name: dx-init
-description: Set up the dx workflow for a new project. Detects your environment, asks a few questions, and generates .ai/config.yaml plus supporting files. Run this first before using any other dx skill.
-when_to_use: "Use when setting up dx for a new project, when reinitializing after an upgrade, or when the user says 'initialize dx', 'set up dx', 'configure dx workflow', 'dx-init', or 'start dx'."
+description: "Set up the dx workflow for a new project. Detects your environment, asks a few questions, and generates .ai/config.yaml plus supporting files. Run this first before using any other dx skill."
 argument-hint: "(no arguments — interactive)"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

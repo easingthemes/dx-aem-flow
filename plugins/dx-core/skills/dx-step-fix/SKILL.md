@@ -1,7 +1,6 @@
 ---
 name: dx-step-fix
-description: Diagnose and fix a blocked step — compilation error, test failure, or review rejection. Tries direct fix first; if that fails, creates corrective steps in implement.md (heal). Use when /dx-step reports a failure.
-when_to_use: "Use when a step fails — compilation error, test failure, or review rejection. Trigger on 'fix this error', 'step failed', 'build broke', 'step-fix', or after /dx-step reports a failure that needs diagnosis."
+description: "Diagnose and fix a blocked step — compile error, test failure, review rejection — directly or by adding corrective steps to implement.md. Use when /dx-step fails."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 model: sonnet

@@ -1,7 +1,6 @@
 ---
 name: dx-step-build
-description: Build and deploy to local dev environment, fix errors iteratively until the build passes. Use after code changes to verify everything compiles and deploys correctly.
-when_to_use: "Use after code changes to build and deploy to local dev environment. Trigger on 'build', 'compile', 'mvn install', 'build and deploy', 'run the build', or when verifying code compiles correctly."
+description: "Build and deploy to the local dev environment, fixing errors until the build passes. Use after code changes ('build', 'compile')."
 argument-hint: "[optional: build command override]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

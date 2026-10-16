@@ -1,7 +1,6 @@
 ---
 name: dx-simplify
-description: Code simplification — reduce complexity while maintaining exact behavioral equivalence. Applies Chesterton's Fence (understand before changing) and Rule of 500 (replace when simpler). Use when code works but is harder to maintain than necessary.
-when_to_use: "Use when code works but is harder to maintain than necessary. Trigger on 'simplify code', 'reduce complexity', 'clean up this function', 'make this simpler', or 'refactor for clarity without changing behavior'."
+description: "Simplify working code without changing its behavior — Chesterton's Fence, Rule of 500. Use for 'simplify', 'reduce complexity', 'refactor for clarity'."
 argument-hint: "[file path or directory (optional — defaults to changed files)]"
 model: opus
 effort: high

@@ -1,7 +1,6 @@
 ---
 name: auto-doctor
-description: Run a health check on the AI automation setup — verifies local file integrity, ADO pipeline configuration, and Lambda function state. Each project is self-contained.
-when_to_use: "Use when the AI automation setup seems broken, to verify Lambda functions are deployed, pipelines are configured, and infra.json is correct. Trigger on 'check automation', 'diagnose automation', 'automation health check'."
+description: "Health check of the AI automation setup — local files, ADO pipeline configuration, Lambda state. Use when automation seems broken, for 'check automation'."
 argument-hint: ""
 ---
 

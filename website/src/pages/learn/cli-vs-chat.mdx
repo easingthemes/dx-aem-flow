@@ -215,7 +215,7 @@ import { stats } from '../../config/stats';
     </ContentCard>
     <ContentCard icon="mdi:alert" iconColor="bg-amber-500" title="Limited" tags={[{ label: 'Degraded', color: 'warning' }]}>
       Skills using <code>context: fork</code> + <code>agent:</code> (subagent dispatch) or
-      <code>disable-model-invocation</code> (coordinator pattern).
+      <code>disable-model-invocation</code> (user-only entry points).
       VS Code Chat ignores these fields -- skills load but can't orchestrate subagents.
 
       <strong>Coordinators:</strong> <code>dx-agent-all</code>, <code>dx-req</code>,

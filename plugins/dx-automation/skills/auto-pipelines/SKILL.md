@@ -3,6 +3,7 @@ name: auto-pipelines
 description: Import ADO pipelines for enabled AI automation agents and set all required pipeline variables. Imports all enabled pipelines — each project is self-contained. Reads config from .ai/automation/infra.json.
 when_to_use: "Use when importing ADO pipelines for AI automation agents, when the user says 'import pipelines', 'set up ADO pipelines', 'create automation pipelines', or after /auto-init to register the pipelines in ADO."
 argument-hint: ""
+disable-model-invocation: true
 ---
 
 You import ADO pipeline YAML files into Azure DevOps and set all required variables. Uses `az pipelines` (audit-wrapped) and reads config from `.ai/automation/infra.json`. Each project is self-contained — imports all enabled pipelines regardless of profile.

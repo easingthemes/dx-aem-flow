@@ -342,7 +342,71 @@ out=$(run_validator); rc=$?
 check "opus agent without effort exits non-zero" "1" "$rc"
 check "opus agent without effort is named" "1" "$(echo "$out" | grep -c 'agents/dx-rev.md — model: opus without effort:')"
 
-# --- 10. the real tree is still green ------------------------------------------
+# --- 11. listing ratchet (TODO #238) -----------------------------------------
+# Entry = "- <plugin>:<name>: " + description [+ " - " + when_to_use], quotes off,
+# counted in characters. dx-test:dx-l1 → 17 + 9 (é is one char) = 26.
+reset_fixture
+write_skill "dx-l1" <<'SKILL'
+---
+name: dx-l1
+description: "Fix café."
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=26); rc=$?
+check "listing at the baseline passes" "0" "$rc"
+check "listing counts chars, strips quotes" "1" "$(echo "$out" | grep -c 'Skill listing: 1 model-invocable skills, 26 chars')"
+out=$(run_validator env LISTING_BASELINE=25); rc=$?
+check "listing over the baseline exits non-zero" "1" "$rc"
+check "listing ratchet names the fix" "1" "$(echo "$out" | grep -c 'skill listing grew to 26 chars, baseline is 25')"
+write_skill "dx-l2" <<'SKILL'
+---
+name: dx-l2
+description: Long text that only a user can invoke.
+when_to_use: 'Never by the model'
+disable-model-invocation: true
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=26); rc=$?
+check "disable-model-invocation skill is not in the listing" "0" "$rc"
+write_skill "dx-l3" <<'SKILL'
+---
+name: dx-l3
+description: Abc.
+when_to_use: 'it''s here'
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=100); rc=$?
+# 26 + 1 separator + "- dx-test:dx-l3: " (17) + "Abc. - it's here" (16) = 60
+check "when_to_use joins with ' - ', single quotes unescaped" "1" "$(echo "$out" | grep -c 'Skill listing: 2 model-invocable skills, 60 chars')"
+
+# --- 12. descriptions must not route to a dmi skill (TODO #238) -------------
+reset_fixture
+write_skill "dx-hidden" <<'SKILL'
+---
+name: dx-hidden
+description: A user-only skill.
+disable-model-invocation: true
+---
+SKILL
+write_skill "dx-router" <<'SKILL'
+---
+name: dx-router
+description: Does a thing. Not for the other thing (dx-hidden).
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999); rc=$?
+check "description naming a dmi skill exits non-zero" "1" "$rc"
+check "dmi routing error names both skills" "1" "$(echo "$out" | grep -c 'dx-router/SKILL.md — description routes to dx-hidden')"
+write_skill "dx-router" <<'SKILL'
+---
+name: dx-router
+description: Does a thing. Not for the other thing (user runs /dx-hidden).
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999); rc=$?
+check "naming a dmi skill as /command passes" "0" "$rc"
+
+# --- the real tree is still green --------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
   PASS=$((PASS + 1))
