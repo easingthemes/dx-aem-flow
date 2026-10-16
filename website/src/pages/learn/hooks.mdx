@@ -80,9 +80,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
       }]
     }],
     "PreToolUse": [{
-      "matcher": "Bash(git commit*)",
+      "matcher": "Bash",
       "hooks": [{
         "type": "command",
+        "if": "Bash(git commit*)",
         "command": "bash branch-guard.sh"
       }]
     }]
