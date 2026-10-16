@@ -107,6 +107,31 @@ remediate -- suggest fixes`}</CommandBlock>
 </Section>
 
 <SectionHeading
+  badge="Hosted"
+  badgeColor="info"
+  title="Vendor-Hosted MCP Endpoints"
+  subtitle="Remote servers you sign in to instead of running locally. Neither replaces the servers KAI ships."
+  bg="alt"
+/>
+<Section>
+  <div class="grid md:grid-cols-2 gap-4">
+    <ContentCard icon="mdi:microsoft-azure-devops" iconColor="bg-brand-700" title="Azure DevOps Remote MCP">
+      GA 2026-08-05 at <code>https://mcp.dev.azure.com/&lt;organization&gt;</code> (streamable HTTP, Microsoft
+      Entra sign-in, Entra-backed organizations only). Works today in VS Code + Copilot, Copilot CLI and
+      Visual Studio. <strong>Not yet in Claude Code</strong>: it needs Entra dynamic client registration.
+      KAI keeps the local <code>@azure-devops/mcp</code> server.
+    </ContentCard>
+    <ContentCard icon="mdi:adobe" iconColor="bg-red-600" title="Adobe AEM MCP (Cloud Service)">
+      Unified server at <code>https://mcp.adobeaemcloud.com/adobe/mcp/aem</code>. AEM as a Cloud Service only,
+      OAuth with your Adobe ID, and every call runs with your own AEM permissions. Content and Cloud Manager
+      tools can be limited to read-only. Useful next to KAI for ad-hoc work on AEMaaCS. dx-aem skills keep the
+      bundled <code>AEM</code> server: they call its tools by name, and they also run against local SDK / 6.5
+      authors and in pipelines, where nobody can sign in.
+    </ContentCard>
+  </div>
+</Section>
+
+<SectionHeading
   badge="Flow"
   badgeColor="warning"
   title="How It Works"
