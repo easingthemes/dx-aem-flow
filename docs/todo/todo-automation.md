@@ -39,16 +39,16 @@
 
 **Added:** 2026-05-28
 **Problem:** Phases 5, 5+, 5++ of `/dx-agent-all` and `/aem-editorial-guide` assume AEM is at `localhost:4502` (from `aem.author-url`). In pipeline mode, AEM is not available locally. Currently these phases either time out or "succeed" silently with empty results.
-**Scope:** `plugins/dx-aem/skills/aem-snapshot/`, `aem-verify/`, `aem-fe-verify/`, `aem-editorial-guide/`. Possibly add an `aem.qa-author-url` config key alongside the existing `aem.author-url`.
+**Scope:** `plugins/dx-aem/skills/aem-snapshot/`, `aem-verify/`, `aem-fe-verify/`, `aem-editorial-guide/`. Use the existing `aem.author-url-qa` config key (set by `aem-init`).
 **Done-when:** Run any of these skills with `DX_PIPELINE_MODE=true` and an unreachable `aem.author-url` — skill exits non-zero with clear message instead of silently producing empty output.
-**Approach:** Each AEM skill should detect pipeline mode and either use `aem.qa-author-url` or skip with a comment.
+**Approach:** Each AEM skill should detect pipeline mode and either use `aem.author-url-qa` or skip with a comment.
 
 **Decision 2026-10-15 — Adobe's hosted AEM MCP (`https://mcp.adobeaemcloud.com/adobe/mcp/aem`) does not solve this.** Per its Experience League page (updated 2026-10-14):
 - it is AEM as a Cloud Service only;
 - it authenticates with OAuth on the user's Adobe ID and runs as that signed-in user;
 - the page documents no service or technical-account path.
 
-A pipeline has nobody to sign in, and consumers on local SDK / AEM 6.5 cannot reach it at all. It also exposes Adobe's own tools, not the `mcp__plugin_dx-aem_AEM__*` names our skills call. So #127 stays as scoped (`aem.qa-author-url` or fail fast). The Adobe server is documented as an optional add-on for interactive AEMaaCS users (`aem-init` step 11a, `website/src/pages/learn/mcps.mdx`). Revisit if Adobe ships a non-interactive credential for it.
+A pipeline has nobody to sign in, and consumers on local SDK / AEM 6.5 cannot reach it at all. It also exposes Adobe's own tools, not the `mcp__plugin_dx-aem_AEM__*` names our skills call. So #127 stays as scoped (`aem.author-url-qa` or fail fast). The Adobe server is documented as an optional add-on for interactive AEMaaCS users (`aem-init` step 11a, `website/src/pages/learn/mcps.mdx`). Revisit if Adobe ships a non-interactive credential for it.
 
 ## Pipeline `ALLOWED_TOOLS` missing MCP tools
 
@@ -78,7 +78,7 @@ A pipeline has nobody to sign in, and consumers on local SDK / AEM 6.5 cannot re
 
 **Added:** 2026-05-28
 **Problem:** Microsoft-hosted ADO agents (`ubuntu-latest`) have egress to the public internet. If your QA AEM is on a private network (VPN-only, IP-allowlisted), pipelines will fail to reach it. Solution: self-hosted agent pool with network access, OR public-but-authed QA AEM, OR IP-allowlist Microsoft-hosted ranges.
-**Scope:** Infra documentation (`plugins/dx-automation/README.md`); possibly add a `/auto-doctor` check that hits `aem.qa-author-url` from the pipeline VM and reports reachability.
+**Scope:** Infra documentation (`plugins/dx-automation/README.md`); possibly add a `/auto-doctor` check that hits `aem.author-url-qa` from the pipeline VM and reports reachability.
 **Done-when:** README has a "Network requirements" section that explains the three options. `/auto-doctor` (or a new dry-run mode) confirms reachability before /dx-simple is enabled.
 **Approach:** Document. Optionally extend `/auto-doctor` to spawn a one-shot pipeline that curls `$AEM_QA_URL/libs/granite/core/content/login.html` and reports 200.
 

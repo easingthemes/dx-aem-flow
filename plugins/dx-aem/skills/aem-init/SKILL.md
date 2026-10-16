@@ -526,7 +526,7 @@ Check if `AEM_INSTANCES` is already set in the shell environment:
 echo "$AEM_INSTANCES"
 ```
 
-1. **If set:** Report: "AEM_INSTANCES detected in shell environment — AEM MCP will use it." Skip to step 12.
+1. **If set:** Report: "AEM_INSTANCES detected in shell environment — AEM MCP will use it." Skip items 2–3; still run the note below.
 
 2. **If not set:** Print setup instructions:
 
@@ -541,8 +541,6 @@ echo "$AEM_INSTANCES"
 
    Alternative: add to .claude/settings.local.json under "env" (Claude Code only, not Copilot CLI).
    ```
-
-   If `aem.author-url` is an AEM as a Cloud Service host, also mention: Adobe hosts its own MCP server at `https://mcp.adobeaemcloud.com/adobe/mcp/aem`. It is Cloud Service only, OAuth with the user's Adobe ID, runs with that user's AEM permissions, and Content/Cloud Manager can be read-only. The user may add it next to the bundled server for ad-hoc work. It does **not** replace the bundled `AEM` server: dx-aem skills call that server's tools by name, and the Adobe server needs an interactive sign-in a pipeline cannot do.
 
 3. **Also update `.claude/settings.local.json`** — add the `AEM_INSTANCES` key as a placeholder. Do NOT overwrite existing values:
 
@@ -564,6 +562,8 @@ echo "$AEM_INSTANCES"
    ```
 
    Report: "Updated `.claude/settings.local.json` with AEM_INSTANCES. Preferred: set in shell profile for both Claude Code and Copilot CLI."
+
+**Note (runs whether or not `AEM_INSTANCES` is set):** if `aem.author-url-qa` or `aem.author-url` has a hostname ending in `.adobeaemcloud.com` (AEM as a Cloud Service), also mention: Adobe hosts its own MCP server at `https://mcp.adobeaemcloud.com/adobe/mcp/aem`. It is Cloud Service only, OAuth with the user's Adobe ID, runs with that user's AEM permissions, and Content/Cloud Manager can be read-only. The user may add it next to the bundled server for ad-hoc work. It does **not** replace the bundled `AEM` server: dx-aem skills call that server's tools by name, and the Adobe server needs an interactive sign-in a pipeline cannot do.
 
 ## 12. Summary
 
