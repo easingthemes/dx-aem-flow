@@ -1,3 +1,10 @@
+## [3.7.7](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.6...v3.7.7) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-core:** branch guard never fired — matcher held permission-rule syntax ([#230](https://github.com/easingthemes/dx-aem-flow/issues/230)) ([9202dcc](https://github.com/easingthemes/dx-aem-flow/commit/9202dccd2f7fa8b1e5a861aba7e6133573e9ba41))
+
 ## [3.7.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.5...v3.7.6) (2026-10-15)
 
 
