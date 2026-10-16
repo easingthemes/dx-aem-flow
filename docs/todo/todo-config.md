@@ -52,3 +52,17 @@
 - Consumer wiki pages — DoD pages need migration to checkbox format
 **Done-when:** `grep -n "Who checks" plugins/dx-core/skills/dx-req-dod/SKILL.md` returns zero matches AND `grep "checkbox" website/src/pages/contributing/wiki-format.mdx` shows a single unified format for both DoR and DoD.
 **Approach:** Follow the dx-dor pattern — extract DoD wiki parsing into a shared reference, migrate DoD wiki pages to checkbox format, update dx-req-dod to parse dynamically.
+
+## Effort ceiling (`maxEffortLevel`) — decision: not shipped as a default
+
+**Added:** 2026-10-15 (decision record for TODO #178)
+**Problem:** Claude Code v2.1.267 added `maxEffortLevel`, top-level or per model under `modelSettings`. It clamps every effort source on every provider. `dx-automation` has no effort ceiling.
+**Scope:** `website/src/pages/costs.mdx` (pipeline-host section), `plugins/dx-automation/data/scripts/pipeline-agent.js` (no ceiling set), `/dx-init` config templates (none scaffolded).
+**Decision:** do **not** scaffold a ceiling from `/dx-init`, and do **not** set one in `pipeline-agent.js`. Document it as an opt-in in the pipeline-host managed-settings block (`website/src/pages/costs.mdx` § "Pin Models and Effort on Pipeline Hosts").
+**Why:**
+- A cap of `high` turns the `effort: xhigh` escalation tier (`dx-step-verify`, `dx-pr-review` escalation) into `high`. That is a policy choice about verification depth, not a cost default.
+- `effort:` only took effect from v2.1.267, so nobody has measured what `xhigh` buys over `high` (#137 / `/skill-doctor`, which needs an interactive session).
+- A ceiling in the launcher would also hide that cost from the people who pay it. A managed setting on the agent pool is visible and owned by whoever owns the pool.
+- Source: the setting's own description in the v2.1.301 bundle ("Anything above it … is clamped … on every provider including Bedrock, Vertex and Foundry … across settings files the lowest value wins … Enforced client-side: an effort supplied through CLAUDE_CODE_EXTRA_BODY is not clamped").
+**Done-when:** `grep -c maxEffortLevel website/src/pages/costs.mdx` ≥ 1 and `grep -c maxEffortLevel plugins/dx-automation/data/scripts/pipeline-agent.js` = 0 (documented as opt-in, not set by the launcher; closes #178 under its second Done-when branch). Revisit when #137 produces an `xhigh` vs `high` cost/quality number.
+

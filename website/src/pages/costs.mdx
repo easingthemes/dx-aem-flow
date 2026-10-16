@@ -201,3 +201,67 @@ import HighlightBox from '../components/HighlightBox.astro';
     </ContentCard>
   </div>
 </Section>
+
+<SectionHeading
+  badge="Pipeline hosts"
+  badgeColor="secondary"
+  title="Pin Models and Effort on Pipeline Hosts"
+  subtitle="Stop a new default model or a higher effort level from changing pipeline cost without anyone noticing."
+  bg="primary"
+/>
+<Section>
+  <p class="text-sm text-[#4a4a5a]">
+    Skills name a tier (<code>model: opus</code>), not a version, and the alias moves when a new
+    model ships. On a laptop that is what you want. On the agent pool that runs <code>dx-automation</code>
+    24/7 it means cost and behaviour can change overnight. Claude Code reads a
+    <strong>managed settings</strong> file that no project or user setting can override. On a Linux
+    agent it lives at <code>/etc/claude-code/managed-settings.json</code> (macOS:
+    <code>/Library/Application Support/ClaudeCode/</code>, Windows: <code>C:&#92;Program Files&#92;ClaudeCode&#92;</code>).
+    The pipeline launcher loads user and project settings, and managed settings always apply on top.
+  </p>
+  <p class="text-sm text-[#4a4a5a] mt-2">
+    <strong>Where the file comes from.</strong> The shipped pipelines use <code>vmImage: ubuntu-latest</code>,
+    a fresh Microsoft-hosted VM per job, so there is no machine to put the file on once. Either bake it
+    into a <strong>self-hosted</strong> agent pool, or write it in a step before the agent step:
+  </p>
+  <pre class="mt-2 p-3 bg-gray-900 text-white rounded text-xs"><code>{`- bash: |
+    sudo mkdir -p /etc/claude-code
+    echo "$MANAGED_SETTINGS" | sudo tee /etc/claude-code/managed-settings.json >/dev/null
+  displayName: Pin models (managed settings)
+  env:
+    MANAGED_SETTINGS: $(managedSettingsJson)`}</code></pre>
+  <p class="text-sm text-[#4a4a5a] mt-2">Recommended content:</p>
+  <pre class="mt-3 p-3 bg-gray-900 text-white rounded text-xs"><code>{`{
+  "availableModels": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
+  "availableModelsMatch": "exact",
+  "deniedModels": [],
+  "allowedProviders": ["anthropic"]
+}`}</code></pre>
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="availableModels + availableModelsMatch">
+      Allowlist of the model IDs the pool may use. With <code>"exact"</code> (v2.1.283+), an entry such as
+      <code>claude-opus-5-5</code> no longer lets in a later release that extends the ID. A new model needs
+      a one-line change here, which is the point. If the <code>opus</code> alias moves to a model that is not
+      listed, the Default option falls back to a listed model and the run continues on it; Claude Code
+      refuses to start only when no listed model can be used. Haiku background/helper requests are not
+      restricted by this list. Bump the list when you upgrade.
+    </ContentCard>
+    <ContentCard icon="mdi:cancel" iconColor="bg-red-500" title="deniedModels">
+      Block a family alias (<code>"opus"</code>) or a version in every spelling, even when the allowlist
+      would allow it (v2.1.283+). Use it to keep a known-bad or too-expensive model off the pool.
+    </ContentCard>
+    <ContentCard icon="mdi:cloud-lock" iconColor="bg-amber-500" title="allowedProviders">
+      Managed settings only (v2.1.285+). The providers this machine may call: <code>anthropic</code>,
+      <code>bedrock</code>, <code>vertex</code>, <code>foundry</code>, and others. List the one your
+      contract covers so a stray environment variable cannot route a run to another provider.
+    </ContentCard>
+    <ContentCard icon="mdi:speedometer" iconColor="bg-emerald-600" title="maxEffortLevel">
+      Caps effort on every provider (v2.1.267+). Anything higher (frontmatter, <code>--effort</code>, a
+      model default) is clamped. Set per model under <code>modelSettings.&lt;model&gt;.maxEffortLevel</code>.
+      <strong>Opt-in, not a KAI default:</strong> a cap of <code>high</code> turns the
+      <code>effort: xhigh</code> escalation tier into <code>high</code>, and that tier has not yet been
+      measured against <code>high</code>. If you want the cap, add it as a separate line:
+      <pre class="mt-2 p-2 bg-gray-900 text-white rounded text-xs"><code>{`"maxEffortLevel": "high"`}</code></pre>
+    </ContentCard>
+  </div>
+</Section>
