@@ -1,3 +1,10 @@
+## [3.8.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.8.0...v3.8.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-hub:** literal rm targets so bypass-mode pipelines do not stall ([#224](https://github.com/easingthemes/dx-aem-flow/issues/224)) ([6396490](https://github.com/easingthemes/dx-aem-flow/commit/6396490592b39ad86a70cf00200a1f9205b5aa19)), closes [#223](https://github.com/easingthemes/dx-aem-flow/issues/223) [#223](https://github.com/easingthemes/dx-aem-flow/issues/223) [#223](https://github.com/easingthemes/dx-aem-flow/issues/223)
+
 # [3.8.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.8...v3.8.0) (2026-10-16)
 
 
