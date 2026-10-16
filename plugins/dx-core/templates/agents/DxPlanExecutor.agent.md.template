@@ -15,7 +15,7 @@ hooks:
   PreToolUse:
     - type: command
       command: |
-        if cat | grep -Eq '"command" *: *"[^"]*git +commit'; then
+        if cat | grep -Eq '"command" *: *"([^"\\]|\\.)*git( +-[cC] +[^ ]+)* +commit'; then
           B=$(git branch --show-current 2>/dev/null)
           case "$B" in main|master|develop|development)
             R="BLOCKED: Do not commit on $B. Create a feature/* or bugfix/* branch first."
@@ -25,7 +25,7 @@ hooks:
         exit 0
       windows: |
         $j = [Console]::In.ReadToEnd()
-        if ($j -match '"command"\s*:\s*"[^"]*git\s+commit') {
+        if ($j -match '"command"\s*:\s*"(?:[^"\\]|\\.)*git(?:\s+-[cC]\s+\S+)*\s+commit') {
           $b = git branch --show-current 2>$null
           if ($b -in 'main','master','develop','development') {
             $r = "BLOCKED: Do not commit on $b. Create a feature/* or bugfix/* branch first."

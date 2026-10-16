@@ -7,7 +7,8 @@
 # var; the agent-scoped block travels with the agent file itself.
 #
 # Rule: a template whose frontmatter grants a shell (`runCommands`, `execute`,
-# `terminal`, or no `tools:` key at all = every tool) must contain the canonical
+# `terminal`, `shell`, `bash`, `powershell`, `runInTerminal`, `'*'`, in block
+# or flow list style; or no `tools:` key at all = every tool) must contain the canonical
 # block from plugins/dx-core/templates/hooks/agent-branch-guard.yaml verbatim.
 # Verbatim, because command hooks are fail-closed on Copilot: a drifted copy
 # that errors denies every tool call of that agent.
@@ -34,10 +35,16 @@ for t in "$ROOT"/plugins/*/templates/agents/*.agent.md.template; do
   rel="${t#"$ROOT"/}"
   fm="$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$t")"
 
+  # Tool names that give an agent a shell, in either list style:
+  #   tools:            tools: [read, 'shell']
+  #     - runCommands
+  SHELL_TOOLS="runCommands|execute|execute/runInTerminal|runInTerminal|terminal|shell|bash|powershell|\\*"
   shell=0
   if ! printf '%s\n' "$fm" | grep -q '^tools:'; then
     shell=1
-  elif printf '%s\n' "$fm" | grep -qE "^[[:space:]]*-[[:space:]]*'?(runCommands|execute|terminal)'?[[:space:]]*$"; then
+  elif printf '%s\n' "$fm" | grep -qE "^[[:space:]]*-[[:space:]]*['\"]?($SHELL_TOOLS)['\"]?[[:space:]]*$"; then
+    shell=1
+  elif printf '%s\n' "$fm" | grep -E '^tools:[[:space:]]*\[' | tr -d "[]'\" " | sed 's/^tools://' | tr ',' '\n' | grep -qxE "$SHELL_TOOLS"; then
     shell=1
   fi
   [ "$shell" = 1 ] || continue
