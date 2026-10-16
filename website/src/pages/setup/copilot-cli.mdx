@@ -153,8 +153,8 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code></pre>
     <ContentCard icon="mdi:shield-lock-outline" iconColor="bg-red-600" title="Prompt-Mode Gates (v1.0.40)">
       Repo hooks and workspace MCP now require explicit opt-in env vars
       (<code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS</code>,
-      <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP</code>). Without them, plugin hooks and project
-      <code>.mcp.json</code> are silently ignored. <strong>Action required:</strong> see callout above.
+      <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP</code>, value <code>true</code>). Without them, <code>copilot -p</code> runs
+      outside a trusted folder silently ignore repo hooks and project <code>.mcp.json</code>. <strong>Action required:</strong> see callout above.
     </ContentCard>
     <ContentCard icon="mdi:lock-check-outline" iconColor="bg-emerald-600" title="Persisted Permissions Default (v1.0.37)">
       Location-based permission persistence is now on by default — approvals carry across sessions for

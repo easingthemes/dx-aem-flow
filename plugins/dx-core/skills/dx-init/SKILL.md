@@ -770,13 +770,18 @@ fi
 
 if [ -n "$SHELL_RC" ]; then
   for v in GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP; do
-    if grep -q "^export $v=" "$SHELL_RC"; then
-      sed -i.bak "s/^export $v=.*/export $v=true/" "$SHELL_RC" && rm -f "$SHELL_RC.bak"
-    else
-      echo "export $v=true" >> "$SHELL_RC"
-    fi
+    found=0
+    # Rewrite every existing export (any of the files dx-doctor reads, indented too)
+    for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
+      [ -f "$rc" ] || continue
+      if grep -qE "^[[:space:]]*export $v=" "$rc"; then
+        sed -i.bak -E "s/^([[:space:]]*)export $v=.*/\\1export $v=true/" "$rc" && rm -f "$rc.bak"
+        found=1
+      fi
+    done
+    [ "$found" = 1 ] || echo "export $v=true" >> "$SHELL_RC"
   done
-  echo "Added Copilot CLI v1.0.40+ env vars to $SHELL_RC — restart your shell or run: source $SHELL_RC"
+  echo "Copilot CLI v1.0.40+ env vars set to true — restart your shell or run: source $SHELL_RC"
 fi
 ```
 
