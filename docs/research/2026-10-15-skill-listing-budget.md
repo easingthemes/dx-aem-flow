@@ -104,4 +104,4 @@ Live listing check (no login): run `claude -p hello --plugin-dir …` against a 
   - 5.5 models: **57 of 57 with full text** (was 43 of 73).
   - 200k model (`claude-sonnet-4-5`): 5 of 57 (was 1 of 73). Fitting 200k would need ~100 chars per skill, which is not the target while the 5.5 models are the default.
 - #14 Done-when loop: no output. `validate-skills.sh` / `.test.sh` and every other suite pass. All frontmatters parse with PyYAML.
-- **Not verified:** that routing quality held. That needs the routing eval (#168), which is billed.
+- **Routing eval run 2026-10-16** (approved, ≈$6.41): 14-case suite `plugins/dx-core/evals/routing/`, sonnet 5.5, 2 runs, main vs #225. **Identical scores** on both: 13/14 cases 2/2. `pr-review` failed 0/2 on both because Claude picks the bundled `code-review` skill (not caused by this change). See the suite README.
