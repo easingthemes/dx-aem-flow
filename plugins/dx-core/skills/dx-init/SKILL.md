@@ -890,7 +890,7 @@ If **Yes**: run the full `auto-init` flow inline (Phases 0–3). Then append the
 
 | Path | What | Committed |
 |------|------|-----------|
-| `.ai/automation/` | CI/CD automation — pipeline agents, Lambda handlers, eval framework | Yes |
+| `.ai/automation/` | CI/CD automation — pipeline agents, Lambda handlers | Yes |
 
 | Agent | Trigger |
 |-------|---------|

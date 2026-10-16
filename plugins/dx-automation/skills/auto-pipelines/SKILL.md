@@ -35,7 +35,7 @@ Print: `Importing <N> enabled pipelines`
 
 For each enabled pipeline (in order), import the YAML into ADO.
 
-All pipelines use Claude Code CLI (single-step skill invocation): `.ai/automation/pipelines/cli/ado-cli-<agent>.yml`. The eval pipeline uses `.ai/automation/pipelines/eval/ado-eval-pipeline.yml`.
+All pipelines use Claude Code CLI (single-step skill invocation): `.ai/automation/pipelines/cli/ado-cli-<agent>.yml`.
 
 ### 1a. Check if pipeline already exists
 

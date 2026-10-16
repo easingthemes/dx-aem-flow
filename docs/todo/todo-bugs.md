@@ -162,3 +162,11 @@ belongs to which platform rather than offering one list for both. Found by the
 - `disable-model-invocation` stays, so an estimate is posted only when a person types `/dx-estimate` or the Estimation pipeline runs `-p "/dx-estimate <id>"`. That path was verified to expand a dmi skill.
 - If batch comes back, use approach (b) — subagents `Read` a references file — not a Skill call.
 
+## `/auto-status` runs deleted eval scripts
+
+**Added:** 2026-10-15
+**Problem:** `plugins/dx-automation/skills/auto-status/SKILL.md` builds its dashboard from three scripts: `node eval/process-dlq.js` (DLQ depth and list), `node eval/cost-report.js` (token budget) and `node eval/rate-limit-report.js` (rate limits). All of `data/eval/` was deleted in `1800b25` (2026-03-22, "remove old custom agent approach"), and `auto-init` no longer copies it. So every `/auto-status` run fails at step 1. Same root cause as `/auto-eval` (#176), found while removing that.
+**Scope:** `plugins/dx-automation/skills/auto-status/SKILL.md`; the DynamoDB tables and SQS DLQ named in `infra.template.json` (`storage.*`).
+**Done-when:** `grep -n "node eval/" plugins/dx-automation/skills/auto-status/SKILL.md` returns nothing, AND a hub with AWS credentials gets the three dashboard numbers from `/auto-status`.
+**Approach:** Replace the scripts with read-only AWS CLI calls built from `infra.json`: `aws sqs get-queue-attributes` on `storage.sqs.dlq.queueUrl` (DLQ depth), and `aws dynamodb get-item` / `query` on the budget and rate-limit tables the Lambda routers write. Check the key schema in `data/lambda/` (`rate-limiter.js`, `dedupe.js`). The second half of Done-when needs a live AWS account.
+

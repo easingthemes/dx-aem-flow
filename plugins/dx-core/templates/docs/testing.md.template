@@ -9,8 +9,7 @@
 | PR review | `/dx-pr-review <PR>` then `/dx-pr-answer` | Review posted, answers drafted |
 | AEM verify | `/aem-snapshot <comp>` then `/aem-verify <comp>` | Before/after snapshots captured |
 | Dry run | `/auto-test dor <ID> --dryRun` | Agent runs, nothing posted to ADO |
-| Eval gates | `/auto-eval --all` | All fixtures pass |
-| Unit tests | `node --test .ai/automation/agents/lib/__tests__/*.test.mjs` | All green |
+| Unit tests | `node --test .ai/automation/lambda/__tests__/*.test.js` | All green |
 | Health check | `/dx-doctor` and `/auto-doctor` | All checks pass |
 
 ## Remote (Autonomous Agents)

@@ -260,5 +260,4 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | `/auto-deploy` | `[dor\|dod\|pr-answer\|bugfix\|qa\|devagent\|docagent\|all]` | Redeploy Lambda after code changes. Safe to re-run at any time. |
 | `/auto-doctor` | — | Full health check: file integrity, ADO pipeline state, Lambda function state, env var coverage. |
 | `/auto-status` | — | Operational dashboard: DLQ depth, monthly token budget utilization, daily rate limit usage. |
-| `/auto-eval` | `[--all \| --agent X \| --tier2 \| --fixture name]` | Run evaluation framework against test fixtures. Use after changing prompts or agent steps. |
 | `/auto-test` | `<agent> <id> [--dryRun]` | Local dry-run against real ADO data. Verifies end-to-end connectivity without posting results. |
