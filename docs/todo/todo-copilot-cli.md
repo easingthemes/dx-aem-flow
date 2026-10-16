@@ -143,7 +143,7 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 1. ✅ Mitigation (shipped 2026-05-16): added `case "$CLAUDE_TOOL_NAME" in ... ) ;; *) exit 0 ;; esac` guards to plugin scripts; wrapped `hooks.json` inline commands with `[ "${CLAUDE_TOOL_NAME:-}" = "<exact-tool>" ] && [ -f <script> ] && bash <script> || true`.
 2. File upstream Copilot CLI bug. Title: "PostToolUse hooks fire on every AI turn regardless of matcher (plugin hooks at ~/.copilot/installed-plugins/)". Include the empirical trace.
 3. Update CLAUDE.md § Hook System — Platform Separation: change row to reflect that Copilot CLI also reads `hooks/hooks.json` but ignores `matcher` on PostToolUse.
-4. Test whether the same bug affects `PreToolUse`. Our branch-guard `Bash(git commit*)` matcher has not been reported as misfiring, suggesting v1.0.36's regex fix may have included matcher-honoring behavior for the pre side. Confirm with a targeted test.
+4. Test whether the same bug affects `PreToolUse`. **2026-10-16:** the branch-guard matcher `Bash(git commit*)` never misfired because it never fired at all — as a regex it matches no tool name, in Claude Code too. Now `Bash|bash|shell|execute` with an inline `git commit` stdin check (`plugins/dx-core/hooks/branch-guard-hook.test.sh`); whether Copilot honours a PreToolUse matcher is still untested.
 5. After upstream fix lands, audit our guards — they're defense-in-depth and harmless to keep, but the redundancy noise in `hooks.json` commands could be removed.
 
 **Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.
