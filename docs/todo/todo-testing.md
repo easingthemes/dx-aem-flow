@@ -76,6 +76,28 @@ removed/rewritten so it no longer references a non-existent runner.
 against `plugins/dx-automation/evals/`; alternative is deletion, which also drops
 the skill count by one. Related to the "Automation Eval" item below.
 
+**Done 2026-10-15 — removed, not retargeted.**
+- Retargeting needs something to run. `plugins/dx-automation/evals/` does not exist, and `claude plugin eval` scores a plugin's own suites (billed), not a consumer's pipeline agents. So the skill would have kept pointing at nothing.
+- The claimed `dor` / `pr-review` / `pr-answer` fixtures never shipped. The only real fixtures were `fixtures/discover/01–04`:
+  - tiers 0–2 are deterministic and already exercised by `plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh` (CI, 19 cases);
+  - `04-llm-inference` only documented an expected alias set for the LLM tier, and is dropped with the skill.
+- Removed: the skill directory, plus the references in:
+  - `website/src/pages/reference/{commands,skills}.mdx` and `architecture/automation.mdx`;
+  - `docs/reference/skill-catalog.md` and `plugins/dx-automation/README.md`;
+  - the consumer templates `dx-automation-flow.md`, `runbook.md` (its `node .ai/automation/eval/run.js` line) and `testing.md`;
+  - `dx-eject`'s count;
+  - stats.ts (77→76, dx-automation 11→10).
+- Checks: `validate-stats.sh` passes, and the website builds.
+- If pipeline-agent evals come back, they belong in `plugins/dx-automation/evals/` as `claude plugin eval` cases (#173), not in a skill.
+- Same commit `1800b25` also deleted the rest of `data/eval/` (`capture-fixture.js`, `process-dlq.js`, `gates.js`, `judge.js`, …) and the eval pipeline. The leftover references to it are cleaned up here too:
+  - `/auto-test --capture` (named by the skill, no longer exists);
+  - `node .ai/automation/eval/process-dlq.js` in `runbook.md.template` → a direct `aws sqs get-queue-attributes` on the DLQ URL from `infra.json` (not `/auto-status`, which is broken the same way: #251);
+  - the deleted eval pipeline in `auto-pipelines`, and `agents/lib/` + `eval/` in `dx-eject`'s tree;
+  - "eval framework" in what `auto-init` / `dx-init` say they copy;
+  - the "Eval" consumer pipeline in `dx-automation-flow.md.template`;
+  - "eval validates automatically" in the runbook.
+- `git log` shows the discover fixtures were added to `auto-eval` on 2026-06-12 (#170), three months after its runner was deleted (2026-03-22), and nothing ever ran them through `/auto-eval`.
+
 ## Layer 2: Skill Triggering Evals
 
 **Added:** 2026-03-21

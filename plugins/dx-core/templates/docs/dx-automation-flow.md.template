@@ -60,7 +60,6 @@ flowchart TD
     subgraph MONITOR["Ongoing Operations"]
         DOCTOR["/auto-doctor<br/>Health check"]
         STATUS["/auto-status<br/>DLQ depth, tokens, rates"]
-        EVAL["/auto-eval<br/>Test agent quality"]
         TEST["/auto-test<br/>Dry-run against real data"]
     end
 
@@ -169,10 +168,9 @@ flowchart TD
 
     INIT --> PIPES --> HOOKS --> REG
 
-    subgraph CONSUMER_PIPES["Consumer Pipelines (6)"]
+    subgraph CONSUMER_PIPES["Consumer Pipelines (5)"]
         CP1["PR Review"]
         CP2["PR Answer"]
-        CP3["Eval"]
         CP4["DevAgent"]
         CP5["BugFix"]
         CP6["DoD-Fix"]
@@ -408,23 +406,16 @@ flowchart TD
         S3["Daily rate limit<br/>usage per agent"]
     end
 
-    subgraph QUALITY["/auto-eval"]
-        E1["Tier-1: fixture format tests<br/>(no API calls)"]
-        E2["Tier-2: LLM quality tests<br/>(optional)"]
-    end
-
     subgraph DRYRUN["/auto-test"]
         T1["Run agent against<br/>real ADO data"]
         T2["--dryRun: no posts,<br/>verify connectivity"]
     end
 
     HEALTH --> DASHBOARD
-    DASHBOARD --> QUALITY
-    QUALITY --> DRYRUN
+    DASHBOARD --> DRYRUN
 
     style HEALTH fill:none,stroke:#90a4ae
     style DASHBOARD fill:none,stroke:#90a4ae
-    style QUALITY fill:none,stroke:#90a4ae
     style DRYRUN fill:none,stroke:#90a4ae
 ```
 
@@ -435,7 +426,7 @@ flowchart TD
 | Capability | Hub | Consumer |
 |-----------|-----|----------|
 | AWS resources (DynamoDB, SQS, S3, Lambda, API GW) | Creates and owns | Uses hub's |
-| Pipelines | 10 (all agents) | 6 (PR Review, PR Answer, Eval, DevAgent, BugFix, DoD-Fix) |
+| Pipelines | 10 (all agents) | 5 (PR Review, PR Answer, DevAgent, BugFix, DoD-Fix) |
 | WI service hooks | Creates (tag-filtered) | N/A (hub handles) |
 | PR Answer hook | Creates (repo-scoped) | Creates (points to hub's Lambda) |
 | PR Review policy | Creates | Creates |
