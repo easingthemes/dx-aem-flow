@@ -1,3 +1,10 @@
+## [3.9.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.9.0...v3.9.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-automation:** remove /auto-eval, which ran a runner that no longer exists ([#229](https://github.com/easingthemes/dx-aem-flow/issues/229)) ([1f7480c](https://github.com/easingthemes/dx-aem-flow/commit/1f7480c48b776811ec16b3be2adcb52a495d098f)), closes [#176](https://github.com/easingthemes/dx-aem-flow/issues/176) [#176](https://github.com/easingthemes/dx-aem-flow/issues/176) [#251](https://github.com/easingthemes/dx-aem-flow/issues/251) [#176](https://github.com/easingthemes/dx-aem-flow/issues/176) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#250](https://github.com/easingthemes/dx-aem-flow/issues/250)
+
 # [3.9.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.8.1...v3.9.0) (2026-10-16)
 
 
