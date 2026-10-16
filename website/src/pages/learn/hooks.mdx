@@ -30,8 +30,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <li><strong>SessionStart</strong> -- when the AI session begins</li>
       <li><strong>PreToolUse</strong> -- before the AI calls a tool (can block it)</li>
       <li><strong>PostToolUse</strong> -- after the AI finishes calling a tool</li>
-      <li><strong>SessionStop</strong> -- when the AI session ends</li>
-      <li><strong>PreModelSwitch</strong> / <strong>PostModelSwitch</strong> -- around a model change (Claude Code v2.1.251+; the pre hook can block, ask, or annotate)</li>
+      <li><strong>SessionEnd</strong> -- when the AI session ends</li>
+      <li><strong>PreModelSwitch</strong> / <strong>PostModelSwitch</strong> -- around a model change (Claude Code v2.1.251+; the pre hook can allow, deny, or ask)</li>
     </ul>
   </ContentCard>
 </Section>
@@ -134,24 +134,32 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="v2.1.251"
   badgeColor="info"
   title="Model-Switch Hooks (Claude Code)"
-  subtitle="PreModelSwitch and PostModelSwitch fire around /model, a fast-mode toggle, or a settings change."
+  subtitle="PreModelSwitch and PostModelSwitch fire around /model, the /config Model row, the model picker, fast mode when it changes the model, and an SDK / IDE / Remote Control set_model. Editing settings.json is not a trigger."
   bg="alt"
 />
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:swap-horizontal" iconColor="bg-amber-500" title="PreModelSwitch">
-      Runs before the model changes. It can <strong>block</strong> the switch, <strong>ask</strong> the
-      user to confirm (Claude Code then shows that the full history will be re-read uncached), or add a
-      note. A session that cannot ask — <code>claude -p</code>, a pipeline — treats a required
-      confirmation as a block. Use it to keep a verification run from silently leaving the Opus /
-      <code>effort: high</code> tier it was tuned for.
+      Runs before a switch someone asked for: <code>source</code> is <code>command</code>,
+      <code>picker</code> or <code>sdk</code>. Output <code>permissionDecision</code> is
+      <code>allow</code>, <code>deny</code> or <code>ask</code> (no <code>defer</code>). A session that
+      cannot ask (<code>claude -p</code>, a pipeline) treats <code>ask</code> as a block. It does
+      <strong>not</strong> fire on an automatic fallback or a resume, so it cannot keep a pipeline on Opus,
+      and the payload carries model IDs only, not effort. Use it to guard interactive and SDK switches.
     </ContentCard>
     <ContentCard icon="mdi:check-decagram" iconColor="bg-emerald-600" title="PostModelSwitch">
-      Runs after a switch went through. Observational: log which model a pipeline actually ended up on.
+      Runs after any switch, including <code>source: auto</code> (fallback) and <code>resume</code>. It
+      cannot undo the switch, but <code>hookSpecificOutput.additionalContext</code> reaches the new model,
+      so a pipeline can log the model it actually landed on and tell the new model about it.
       Same release: <code>SessionStart</code> on resume also receives how stale the session is and an
       estimated re-cache cost.
     </ContentCard>
   </div>
+  <p class="text-sm mt-4">
+    Input payload (both events): <code>from_model</code>, <code>to_model</code>, <code>requested_model</code>,
+    <code>source</code>, <code>context_tokens</code>, <code>prompt_cache_warm</code>, <code>cache_ttl</code>,
+    <code>estimated_cache_write_usd</code>, <code>pricing</code> (read from the v2.1.301 hook schema).
+  </p>
   <HighlightBox severity="info" title="Not shipped as a dx-core hook (yet)">
     KAI documents these events but does not install a model-switch guard: a guard in
     <code>dx-core/hooks/hooks.json</code> would fire for every consumer. If one is added it belongs behind
