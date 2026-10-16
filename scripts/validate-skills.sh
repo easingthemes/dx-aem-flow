@@ -11,7 +11,7 @@
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 # 8. Inline-chain context budget — WARN, ratcheted
 # 9. model: opus in a skill or agent sets effort: explicitly — ERROR
-# 10. (RM_DYNAMIC — recursive rm on a variable target; lands with PR #224)
+# 10. No recursive rm whose target is a variable or substitution in skills/agents — ERROR
 # 11. Skill-listing size (model-invocable descriptions) — ratcheted
 # 12. A model-invocable description names a dmi skill only as a /command — ERROR
 
@@ -77,6 +77,29 @@ check_reasoning_echo() {
   [ -z "$hits" ] && return 0
   while IFS= read -r hit; do
     echo "ERROR: $2:${hit%%:*} — reasoning-echo instruction (Claude 5 may refuse; see TODO #239)"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$hits"
+}
+
+# Since Claude Code v2.1.281 a recursive `rm` whose target comes from command
+# substitution asks for permission even under bypassPermissions + an allow rule
+# (v2.1.288: inside `bash -c` too); unanswered it waits 2 min, then denies. The
+# dx-automation pipelines run in bypass mode with nobody to answer, so a skill
+# that writes `rm -rf "$DIR"` or `rm -rf $(...)` stalls them. Skills and agents
+# name literal paths instead. Helper scripts are exempt: the model runs them as
+# `bash x.sh`, so the guard never sees their `rm`. TODO #223.
+# Matches -rf/-fr/-r -f/--recursive, `--`, and a `$` anywhere in the target
+# (`./"$X"`, `.ai/specs/$ID`). A backtick counts only at the start of the
+# target, so markdown like `rm -rf state/<id>` is not a hit.
+RM_DYNAMIC='(^|[^[:alnum:]_.-])rm([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(["'"'"']?`|[^;&|[:space:]`]*\$)'
+
+# check_rm_target <file> <rel-path> — one ERROR per offending line
+check_rm_target() {
+  local hits
+  hits=$(grep -nE "$RM_DYNAMIC" "$1" || true)
+  [ -z "$hits" ] && return 0
+  while IFS= read -r hit; do
+    echo "ERROR: $2:${hit%%:*} — recursive rm on a variable/substitution target; name a literal path (stalls bypass-mode pipelines; see TODO #223)"
     ERRORS=$((ERRORS + 1))
   done <<< "$hits"
 }
@@ -196,6 +219,7 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   # Skill body and its references/ are both loaded into the model's context
   while IFS= read -r md; do
     check_reasoning_echo "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
+    check_rm_target "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
   done < <(find "$plugin_dir" -name '*.md' -type f | sort)
 
   # Check body length (frontmatter excluded) against the authoring threshold
@@ -240,6 +264,7 @@ done
 for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
   [ -f "$agent_file" ] || continue
   check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
+  check_rm_target "$agent_file" "${agent_file#"$REPO_ROOT"/}"
   check_opus_effort "$agent_file" "${agent_file#"$REPO_ROOT"/}"
 done
 

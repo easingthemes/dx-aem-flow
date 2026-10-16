@@ -596,10 +596,17 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Added:** 2026-09-29
 **Problem:** v2.1.281 (2026-09-23): under bypass permissions a recursive `rm` whose target comes only from command substitution (`rm -rf "$(pwd)"`) now asks even with an allow rule; unanswered it waits 2 min then denies. `pipeline-agent.js` runs `permissionMode: "bypassPermissions"`; `dx-hub-status` and `dx-pr-review{,-all}` tell the model to `rm -rf` temp dirs — fine as literal paths, a stall if the model uses a variable.
 **Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-hub/skills/dx-hub-status/SKILL.md`, `plugins/dx-core/skills/dx-pr-review*/SKILL.md`.
-**Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation` shows the env decision in the launcher, OR `grep -rnE 'rm -rf "?\$' plugins/*/skills` returns nothing (skills use literal paths only) (env set in pipeline, or skills changed to literal paths).
+**Done-when:** `bash scripts/validate-skills.sh` exits 0 — its check 10 (`RM_DYNAMIC`) finds no recursive `rm` with a variable/substitution target in skills, references or agents. *(Rewritten 2026-10-16: the original grep over `plugins/*/skills` also matched helper `*.sh` scripts, which are out of scope, and would reopen this item.)*
 **Approach:** Prefer literal paths in skill prose over disabling the guard (`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`). Fold the env decision into the #200 launcher change.
 
 **Update 2026-10-15 (from #226/#247):** Dangerous `rm` inside `bash -c` now prompts too (v2.1.288) — the stall is more likely, not less.
+
+**Done 2026-10-15 — decision: literal paths, no launcher env.**
+- Disabling the guard (`CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`) in `pipeline-agent.js` would remove a safety check from runs that execute with bypass permissions. Not done — and #200 does not need to carry it.
+- Audit: no `SKILL.md`, `references/*.md` or agent file had a recursive `rm` on a variable/substitution target. The literal cleanups (`rm -rf /tmp/dx-review-<repo>` in `dx-pr-review{,-all}`) are fine: the model substitutes the placeholder text. The one open-ended spot was `dx-hub-status` `--clean` ("delete the directory with `rm -rf`"), where a model might well loop with `$dir`. It now asks for one `rm -rf state/<ticket-id>` per directory with the id written literally.
+- Ratchet: `scripts/validate-skills.sh` check 10 (`RM_DYNAMIC`) errors on a recursive `rm` whose target starts with `$` or a backtick, in skills (incl. references/) and agents. `scripts/validate-skills.test.sh` covers a variable target in a skill, a `$(...)` target in an agent, non-recursive `rm -f "$X"` not flagged, and a literal path passing. With the check disabled the suite goes 4 red.
+- **Done-when narrowed:** the original `grep -rnE 'rm -rf "?\$' plugins/*/skills` still matches helper `*.sh` scripts and test suites (`sync-consumers.sh`, `run-tests.sh` traps). They are out of scope: the model runs them as `bash x.sh`, and the Bash-tool guard inspects that command line only. The effective check is now `bash scripts/validate-skills.sh` (check 10).
+- **Not verified:** a live bypass-mode run hitting the prompt. The behaviour is taken from the v2.1.281/v2.1.288 changelog, not reproduced.
 
 ## Managed model/provider allowlists for pipeline hosts
 
