@@ -1,6 +1,6 @@
 ---
 name: dx-pr-review-report
-description: "Write a categorized report of an existing PR review (bug, a11y, regression, …) with patch status, posted to ADO Wiki or Confluence. Not for doing the review (dx-pr-review) or many reviews at once (dx-pr-reviews-report)."
+description: "Write a categorized report of an existing PR review (bug, a11y, regression, …) with patch status, posted to ADO Wiki or Confluence. Not for doing the review (dx-pr-review) or many reviews at once (/dx-pr-reviews-report)."
 argument-hint: "<PR URL or ID>"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---

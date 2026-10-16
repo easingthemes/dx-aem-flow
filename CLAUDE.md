@@ -338,6 +338,7 @@ Full schema and compatibility matrix: see the docs site (`website/`) → "Plugin
 - Config fields documented if new ones are introduced
 - Update `docs/reference/skill-catalog.md` or `docs/reference/agent-catalog.md`
 - Shell scripts are `chmod +x`
+- A new or longer model-invocable `description` grows the skill listing; `validate-skills.sh` check 11 fails past `LISTING_BASELINE`. Trim first. Raising the baseline is fine when the growth is deliberate — say why in the commit and the comment next to it. Do not reach for `disable-model-invocation` to make room unless nothing (skill, subagent, request) needs to reach that skill (TODO #238).
 - **Versioning is automated** — semantic-release bumps every version file on push to `main` based on conventional commit prefixes: all 4 plugin manifests (both `.claude-plugin` and `.cursor-plugin`), `gemini-extension.json`, `marketplace.json`, and the config template. The authoritative list lives in `scripts/bump-versions.sh` + `.releaserc`; `scripts/validate-structure.sh` enforces they stay in sync. Use `feat:` for minor, `fix:` for patch, `BREAKING CHANGE:` in body for major. `chore:`, `docs:`, `ci:` do not trigger releases. Do NOT manually edit version numbers.
 
 ### Superpowers Soft-Dependency Pattern

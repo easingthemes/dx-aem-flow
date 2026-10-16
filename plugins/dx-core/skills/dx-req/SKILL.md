@@ -1,6 +1,6 @@
 ---
 name: dx-req
-description: "Start any ticket — fetch the ADO/Jira story, check DoR, distill requirements, research the codebase, write a team summary. Not for requirements from a file (dx-req-import), child Tasks (dx-req-tasks) or DoD (dx-req-dod)."
+description: "Start any ticket — fetch the ADO/Jira story, check DoR, distill requirements, research the codebase, write a team summary. Not for requirements from a file (/dx-req-import), child Tasks (dx-req-tasks) or DoD (dx-req-dod)."
 argument-hint: "[ADO Work Item ID, Jira key, or URL]"
 model: sonnet
 context: fork

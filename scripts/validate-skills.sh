@@ -11,7 +11,9 @@
 # 7. No reasoning-echo instructions in skills (incl. references/) or agents — ERROR
 # 8. Inline-chain context budget — WARN, ratcheted
 # 9. model: opus in a skill or agent sets effort: explicitly — ERROR
+# 10. (RM_DYNAMIC — recursive rm on a variable target; lands with PR #224)
 # 11. Skill-listing size (model-invocable descriptions) — ratcheted
+# 12. A model-invocable description names a dmi skill only as a /command — ERROR
 
 set -euo pipefail
 
@@ -104,8 +106,9 @@ DESC_AWK='
 # from the listing. TODO #238.
 LISTING_ENTRY_CAP=1536
 LISTING_BUDGET_200K=8000
-# Measured 2026-10-15 after the #238 trim: 57 model-invocable skills (was 36,795 / 73). Lower it when descriptions shrink.
-LISTING_BASELINE=${LISTING_BASELINE:-12129}
+# Measured 2026-10-16 after the #238 trim: 57 model-invocable skills (was 36,795 / 73). Lower it when descriptions shrink;
+# raise it only for a deliberate addition (+2 on 2026-10-16: "/" before two dmi skill names, check 12).
+LISTING_BASELINE=${LISTING_BASELINE:-12131}
 LISTING_CHARS=0
 LISTING_SKILLS=0
 WTU_AWK="${DESC_AWK//description/when_to_use}"
@@ -306,11 +309,32 @@ elif [ "$BODY_OVER" -lt "$BODY_OVER_BASELINE" ]; then
   echo "      lower BODY_OVER_BASELINE in scripts/validate-skills.sh to lock the win in"
 fi
 
+# --- 12. no routing to a skill the model cannot invoke -----------------------
+# A description that says "Not for X (dx-foo)" invites the model to call
+# dx-foo. If dx-foo has disable-model-invocation, the Skill tool refuses it
+# and tells the model not to work around it — a dead end. Name such skills
+# as the user's slash command ("/dx-foo") instead. TODO #238.
+DMI_NAMES=""
+for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' \
+    && DMI_NAMES="$DMI_NAMES $(basename "$(dirname "$f")")"
+done
+for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' && continue
+  d=$(awk "$DESC_AWK" "$f")
+  for n in $DMI_NAMES; do
+    if printf '%s' "$d" | grep -qE "(^|[^/[:alnum:]_-])$n([^[:alnum:]_-]|\$)"; then
+      echo "ERROR: ${f#"$REPO_ROOT"/} — description routes to $n, which has disable-model-invocation; write it as /$n (the user's command)"
+      ERRORS=$((ERRORS + 1))
+    fi
+  done
+done
+
 # Ratchet: the skill listing may shrink, never grow
 echo
 echo "Skill listing: $LISTING_SKILLS model-invocable skills, $LISTING_CHARS chars (Claude Code budget: $LISTING_BUDGET_200K on a 200k context; baseline $LISTING_BASELINE)"
 if [ "$LISTING_CHARS" -gt "$LISTING_BASELINE" ]; then
-  echo "ERROR: skill listing grew to $LISTING_CHARS chars, baseline is $LISTING_BASELINE — shorten a description or set disable-model-invocation: true (TODO #238)"
+  echo "ERROR: skill listing grew to $LISTING_CHARS chars, baseline is $LISTING_BASELINE — shorten a description, or raise LISTING_BASELINE in this script if the growth is deliberate (say why in the commit). Use disable-model-invocation only for skills nothing chains to (TODO #238)"
   ERRORS=$((ERRORS + 1))
 elif [ "$LISTING_CHARS" -lt "$LISTING_BASELINE" ]; then
   echo "NOTE: skill listing is below the baseline — lower LISTING_BASELINE in scripts/validate-skills.sh to $LISTING_CHARS to lock the win in"
