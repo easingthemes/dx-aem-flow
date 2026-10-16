@@ -1,7 +1,6 @@
 ---
 name: dx-ticket-analyze
-description: Research an Azure DevOps/Jira ticket and find all relevant source files and assets. Use when a developer pastes an ADO URL or Jira issue key and wants to know what files are involved.
-when_to_use: "Use when given an ADO/Jira ticket URL and asked what files are involved. Trigger on 'analyze ticket', 'what files does this ticket touch', 'dx-ticket-analyze', or 'find files for this story'."
+description: "Research an ADO/Jira ticket and list the source files and assets it involves. Use when given a ticket URL and asked 'what files does this touch?'."
 argument-hint: "[ADO URL, Jira URL, work item ID, or issue key]"
 model: haiku
 effort: low

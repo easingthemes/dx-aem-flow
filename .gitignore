@@ -41,3 +41,4 @@ tools/screenshots/
 
 # Eval run artifacts (timestamped; regenerate with `claude plugin eval`)
 plugins/*/evals/results/
+plugins/*/evals/**/results/

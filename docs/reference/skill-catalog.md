@@ -33,7 +33,7 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-estimate | `/dx-estimate` | `<work-item-id(s) or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
+| dx-estimate | `/dx-estimate` | `<work-item-id or URL>` | Analyze ADO/Jira User Story and produce structured estimation — hours/SP, implementation plan, AEM pages, open questions. Posts as ADO/Jira comment. Batch mode: space-separated IDs for parallel estimation. | ADO/Jira comment |
 
 ### Requirements + DoR — 5 skills
 
@@ -260,5 +260,4 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | `/auto-deploy` | `[dor\|dod\|pr-answer\|bugfix\|qa\|devagent\|docagent\|all]` | Redeploy Lambda after code changes. Safe to re-run at any time. |
 | `/auto-doctor` | — | Full health check: file integrity, ADO pipeline state, Lambda function state, env var coverage. |
 | `/auto-status` | — | Operational dashboard: DLQ depth, monthly token budget utilization, daily rate limit usage. |
-| `/auto-eval` | `[--all \| --agent X \| --tier2 \| --fixture name]` | Run evaluation framework against test fixtures. Use after changing prompts or agent steps. |
 | `/auto-test` | `<agent> <id> [--dryRun]` | Local dry-run against real ADO data. Verifies end-to-end connectivity without posting results. |

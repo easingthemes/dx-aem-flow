@@ -73,7 +73,6 @@ After setup, verify everything works:
 |-------|----------|-------------|
 | `/auto-doctor` | — | Health check: file integrity, infra.json completeness, ADO pipeline state, Lambda function state. |
 | `/auto-status` | — | Operational dashboard: DLQ depth, monthly token budget utilization, daily rate limit usage. |
-| `/auto-eval` | `[--all \| --agent X \| --tier2 \| --fixture name]` | Run evaluation framework against test fixtures. Use after changing prompts or agent logic. |
 | `/auto-test` | `<agent> <id> [--dryRun]` | Local dry-run against real ADO data — verifies end-to-end connectivity without posting results. |
 
 ## What Gets Deployed

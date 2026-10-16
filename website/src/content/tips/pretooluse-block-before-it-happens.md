@@ -12,8 +12,8 @@ slackOneLiner: "🤖 Tip #33 — PreToolUse hooks block dangerous operations bef
 keyPointsTitle: "How Prevention Works"
 actionItemsTitle: "Patterns to Implement"
 keyPoints:
-  - "PreToolUse fires before any tool call — if the hook exits with code 1, the tool call is blocked. The AI gets the error message and must find another approach."
-  - "**Branch protection example** — hook matches `Bash(git commit*)`, script checks current branch, blocks if it's main/master/development/develop with a clear message."
+  - "PreToolUse fires before any tool call — if the hook exits with code 2, the tool call is blocked (exit 1 is a non-blocking error). The AI gets the error message and must find another approach."
+  - "**Branch protection example** — `\"matcher\": \"Bash\"` + `\"if\": \"Bash(git commit*)\"`, script checks current branch, blocks if it's main/master/development/develop with a clear message."
   - "**Why a hook instead of instructions** — instructions get forgotten in long sessions. Context windows compress. Conventions drift. Hooks are structural and can't be overridden by context loss."
 actionItems:
   - |
@@ -24,5 +24,5 @@ actionItems:
     - Validate file paths before write operations
   - "Add a branch protection hook — test it by asking the AI to commit on `main` and watch it get blocked gracefully"
   - "List the 3 most dangerous commands for your project and write a PreToolUse matcher for each"
-  - "Keep hook scripts simple — check one thing, exit 0 (allow) or exit 1 (block with message). Complex scripts slow down every tool call."
+  - "Keep hook scripts simple — check one thing, exit 0 (allow) or exit 2 (block, stderr goes to the AI). Complex scripts slow down every tool call."
 ---

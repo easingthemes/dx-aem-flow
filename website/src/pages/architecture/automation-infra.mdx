@@ -313,7 +313,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Variables"
   badgeColor="error"
   title="Pipeline Variable Reference"
-  subtitle="Complete reference for all ADO pipeline variables across 11 pipelines (10 CLI + 1 Eval)."
+  subtitle="Complete reference for all ADO pipeline variables across the <code>ado-cli-*.yml</code> pipelines (12 today)."
   bg="primary"
 />
 <Section>
@@ -400,11 +400,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <td class="p-3">--</td>
         <td class="p-3">3</td>
       </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3"><strong>Eval</strong></td>
-        <td class="p-3">--</td>
-        <td class="p-3">0</td>
-      </tr>
     </tbody>
   </table>
 
@@ -472,7 +467,7 @@ lambda/deploy.sh wi-router
 lambda/deploy.sh pr-router`}
     </CommandBlock>
     The deploy script reads <code>infra.json</code> for function names and source files, copies shared
-    libs from <code>agents/lib/</code>, creates a flat zip, and calls
+    libs from <code>lambda/lib/</code> (the <code>sharedLibs</code> list in <code>infra.json</code>), creates a flat zip, and calls
     <code>aws lambda update-function-code</code>.
   </HighlightBox>
 

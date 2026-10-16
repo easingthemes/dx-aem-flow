@@ -11,6 +11,7 @@
 # 7. shared/ <-> data/lib/ script parity
 # 8. Claude Code's own manifest/hook schema (claude plugin validate --json)
 # 9. Copilot agent templates: frontmatter on line 1; `model:` is a fallback list
+# 10. Shell-capable Copilot agent templates carry the branch guard (check-agent-hooks.sh)
 
 set -euo pipefail
 
@@ -169,6 +170,14 @@ for t in "$REPO_ROOT"/plugins/*/templates/agents/*.agent.md.template; do
   fi
 done
 echo "  $tpl_checked template(s) checked"
+
+# Copilot CLI v1.0.97+ runs agent-scoped `hooks:` — shell-capable templates
+# must carry the canonical branch guard verbatim. TODO #245.
+echo
+echo "Checking Copilot agent branch guard..."
+if ! bash "$REPO_ROOT/scripts/check-agent-hooks.sh" "$REPO_ROOT"; then
+  ERRORS=$((ERRORS + 1))
+fi
 
 # --- Claude Code schema check ---
 # The greps above encode repo rules the tool cannot know (version sync, prefixes).
