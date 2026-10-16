@@ -1,7 +1,6 @@
 ---
 name: dx-upgrade
-description: Upgrade consumer project to latest plugin versions — runs dx-doctor, then fixes stale files, installs missing files, and reports what needs manual action. Use after upgrading plugins.
-when_to_use: "Use after upgrading plugins to sync stale files and fix missing config. Trigger on 'upgrade dx', 'update plugin files', 'dx-upgrade', 'sync after plugin update', or 'what changed in the new version'."
+description: "Upgrade a consumer project to the installed plugin versions — run dx-doctor, fix stale and missing files, list manual actions. Use after upgrading plugins."
 argument-hint: "[dx|aem|auto|all]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

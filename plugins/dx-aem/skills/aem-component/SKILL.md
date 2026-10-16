@@ -1,7 +1,6 @@
 ---
 name: aem-component
-description: Find all source files, AEM pages, and dialog fields for an AEM component. Use when a developer asks "where is component X?", "what files for hero?", or any component lookup question.
-when_to_use: "Use when a developer asks 'where is component X?', 'what files for hero?', 'show me the banner component', or any component lookup. Also trigger on 'find component', 'locate component', 'component files'."
+description: "Find all source files, AEM pages and dialog fields for an AEM component. Use for 'where is component X?', 'what files for hero?', 'find component'."
 argument-hint: "[component name (e.g., hero, banner, accordion)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---

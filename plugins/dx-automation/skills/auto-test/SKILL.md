@@ -3,6 +3,7 @@ name: auto-test
 description: Run a local dry-run of an AI automation agent against real ADO data (no posts/commits made). Use to verify end-to-end connectivity and agent output before going live. Requires ADO PAT and LLM credentials in .env.
 when_to_use: "Use to dry-run an AI automation agent against real ADO data before going live, when the user says 'test automation', 'dry run agent', 'verify end-to-end', or 'preview what the agent would do'."
 argument-hint: "[dor|dod|dod-fix|pr-review|pr-answer|bugfix|qa|devagent|docagent|estimation] [id] [[repoName]] [--dryRun]"
+disable-model-invocation: true
 ---
 
 You run an AI automation agent locally against real ADO data. With `--dryRun`, results are logged but nothing is posted to ADO or committed. Without `--dryRun`, the agent runs fully (posts comments, applies fixes).

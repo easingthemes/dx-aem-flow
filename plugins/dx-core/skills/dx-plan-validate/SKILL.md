@@ -1,7 +1,6 @@
 ---
 name: dx-plan-validate
-description: Cross-check the implementation plan against requirements. Verifies every requirement has a step, no unrequested features snuck in, and dependencies flow correctly. Use after /dx-plan and before /dx-step.
-when_to_use: "Use to cross-check an implementation plan against requirements. Trigger on 'validate plan', 'check the plan', 'plan-validate', 'is the plan complete', or between /dx-plan and /dx-step."
+description: "Cross-check implement.md against the requirements — every requirement covered, nothing unrequested, dependencies in order. Use between /dx-plan and /dx-step."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

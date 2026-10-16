@@ -199,8 +199,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
 
   <HighlightBox severity="warning" title="Copilot CLI v1.0.40+ needs an env var">
     Repo hooks in <code>.github/hooks/hooks.json</code> are <strong>silently ignored</strong> unless
-    <code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1</code> is exported in your shell. The same applies to
-    project-root <code>.mcp.json</code>, which needs <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code>.
+    <code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true</code> is exported in your shell (the value must be <code>true</code> — <code>1</code> is ignored) or the folder is trusted. The same applies to
+    project-root <code>.mcp.json</code>, which needs <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code>.
   </HighlightBox>
 
   <HighlightBox severity="info" title="Event names differ per platform">

@@ -1,7 +1,6 @@
 ---
 name: dx-hub-status
-description: Show status of hub dispatches — which repos are running, done, blocked, or failed. Use to check multi-repo progress. Trigger on "hub status", "dispatch status", "what's running".
-when_to_use: "Use to check the status of hub dispatches. Trigger on 'hub status', 'dispatch status', 'what is running', 'which repos are done', or 'show multi-repo progress'."
+description: "Show hub dispatch status — which repos are running, done, blocked or failed. Use for 'hub status', 'what's running'."
 argument-hint: "[ticket-id (optional) | --clean]"
 allowed-tools: ["Read", "Glob", "Grep", "Write", "Bash"]
 ---
@@ -96,7 +95,7 @@ Context file: state/<ticket-id>/context.md
 1. Parse `hub.state-ttl` — support `7d`, `30d`, `24h` formats. Convert to seconds.
 2. Check each `state/<dir>/status.json`:
    - Read `started` timestamp
-   - If age exceeds TTL AND no repo is `running`, delete the directory with `rm -rf`
+   - If age exceeds TTL AND no repo is `running`, delete the directory with one `rm -rf state/<ticket-id>` per directory, the ticket id written out literally — never `state` or `state/` itself, no shell variable, loop or `$(...)` as the target (Claude Code v2.1.281+ stops on those for a permission prompt even in bypass mode, which stalls a pipeline run)
    - Never clean dispatches where any repo is still `running`
 3. Print summary:
 
