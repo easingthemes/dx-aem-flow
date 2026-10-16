@@ -1,7 +1,6 @@
 ---
 name: dx-init
-description: Set up the dx workflow for a new project. Detects your environment, asks a few questions, and generates .ai/config.yaml plus supporting files. Run this first before using any other dx skill.
-when_to_use: "Use when setting up dx for a new project, when reinitializing after an upgrade, or when the user says 'initialize dx', 'set up dx', 'configure dx workflow', 'dx-init', or 'start dx'."
+description: "Set up the dx workflow for a new project. Detects your environment, asks a few questions, and generates .ai/config.yaml plus supporting files. Run this first before using any other dx skill."
 argument-hint: "(no arguments — interactive)"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
@@ -753,14 +752,16 @@ The template includes:
 
 Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` so the same template works in both Claude Code (which sets `CLAUDE_PLUGIN_ROOT`) and Copilot CLI v1.0.26+ (which sets `PLUGIN_ROOT` and `COPILOT_PLUGIN_ROOT`).
 
+The shell-capable `.github/agents/` (DxCommit, DxPRFix, DxDebug, DxPlanExecutor, AEMCommit, AEMPRFix) also carry the branch guard in their own frontmatter `hooks:` block — Copilot CLI v1.0.97+ runs it while that agent is selected in a trusted folder, independent of this file.
+
 If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 
 **Matcher compatibility note (Copilot CLI v1.0.36+):** As of v1.0.36, `preToolUse` matcher patterns are evaluated as full regex and now actually filter (previously some patterns were silently ignored). Audit any custom matchers added to merged hook configs:
 - Exact tool names (`Edit`, `Task`, `Write`) — work as-is in both runtimes.
-- Claude-style permission rules like `Bash(git commit*)` — work in Claude Code but may be interpreted as literal regex in Copilot CLI. Inline commands in this template do their own `git commit` substring check, so the matcher acts only as a coarse filter; verification still happens in the script.
+- Claude-style permission rules like `Bash(git commit*)` — **never** put them in `matcher`. Both runtimes read such a matcher as a regex against the tool name, and it matches nothing. The tool name goes in `matcher` (this template uses `Bash|bash|shell|execute`), and the inline command does its own `git commit` check on stdin.
 - If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
 
-**Copilot CLI v1.0.40+ required env vars:** Copilot CLI v1.0.40 introduced opt-in gates that silently disable repo hooks and workspace MCP without these exports. Add them to the user's shell profile idempotently:
+**Copilot CLI v1.0.40+ prompt-mode env vars:** in non-interactive runs (`copilot -p`), Copilot CLI loads repo hooks and workspace MCP only when the folder is trusted or these are exported. The value must be the string `true` — Copilot compares `=== "true"` (checked in the v1.0.40 and v1.0.98 bundles), so `=1` does nothing. Earlier dx-init versions wrote `=1`; the snippet rewrites those lines. Add them to the user's shell profile idempotently:
 
 ```bash
 SHELL_RC=""
@@ -769,15 +770,23 @@ elif [ -f "$HOME/.bashrc" ]; then SHELL_RC="$HOME/.bashrc"
 fi
 
 if [ -n "$SHELL_RC" ]; then
-  grep -q "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" "$SHELL_RC" || \
-    echo 'export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1' >> "$SHELL_RC"
-  grep -q "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" "$SHELL_RC" || \
-    echo 'export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1' >> "$SHELL_RC"
-  echo "Added Copilot CLI v1.0.40+ env vars to $SHELL_RC — restart your shell or run: source $SHELL_RC"
+  for v in GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP; do
+    found=0
+    # Rewrite every existing export (any of the files dx-doctor reads, indented too)
+    for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
+      [ -f "$rc" ] || continue
+      if grep -qE "^[[:space:]]*export $v=" "$rc"; then
+        sed -i.bak -E "s/^([[:space:]]*)export $v=.*/\\1export $v=true/" "$rc" && rm -f "$rc.bak"
+        found=1
+      fi
+    done
+    [ "$found" = 1 ] || echo "export $v=true" >> "$SHELL_RC"
+  done
+  echo "Copilot CLI v1.0.40+ env vars set to true — restart your shell or run: source $SHELL_RC"
 fi
 ```
 
-Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). Without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1`, `.github/hooks/hooks.json` is silently ignored. Without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1`, project `.mcp.json` is silently ignored.
+Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). In `copilot -p` runs in an untrusted folder, without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` `.github/hooks/hooks.json` is silently ignored, and without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` project `.mcp.json` is silently ignored.
 
 ## 10. Confirm
 

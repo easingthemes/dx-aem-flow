@@ -32,7 +32,7 @@ instructions under ~5,000 tokens, with detail in `references/`.
 |---|---|---|---|---|---|
 | `name` | **core (req)** | documented | honored | honored | 77 / 77 |
 | `description` | **core (req)** | documented | honored | honored | 77 / 77 |
-| `when_to_use` | extension | documented — appended to `description` | ignored (v1.0.10+) | ignored | 77 / 77 |
+| `when_to_use` | extension | documented — appended to `description` | ignored (v1.0.10+; not sent to the model, verified 1.0.98) | ignored | 21 / 77 — dropped from model-invocable skills 2026-10-15 (#238): Copilot never sees it, and it was half the Claude listing |
 | `argument-hint` | extension | documented — autocomplete hint | ignored | ignored | 77 / 77 |
 | `allowed-tools` | **core (opt)** | documented | ignored (v1.0.10+) | ignored | 64 / 77 |
 | `model` | extension | documented | ignored | ignored | 15 / 77 |
@@ -41,7 +41,7 @@ instructions under ~5,000 tokens, with detail in `references/`.
 | `metadata` | **core (opt)** | accepted, not acted on | ignored | ignored | 6 / 77 |
 | `compatibility` | **core (opt)** | accepted, not acted on | ignored | ignored | 6 / 77 |
 | `agent` | extension | documented (needs `context: fork`) | **unsupported — GH #22** | ignored | 6 / 77 |
-| `disable-model-invocation` | extension | documented | ignored | ignored | 4 / 77 |
+| `disable-model-invocation` | extension | documented — hidden from the listing; the Skill tool refuses it for the model and for subagents; `-p "/name"` still runs it | **honored** (verified 1.0.98: hidden from `<available_skills>`, `skill` tool returns "not found", `-p "/name"` is not expanded) | documented | 20 / 77 |
 | `hooks` | extension | documented | see hook table in `CLAUDE.md` | ignored | 2 / 77 |
 | `paths` | extension | documented | ignored | ignored | 0 / 77 (TODO #38) |
 

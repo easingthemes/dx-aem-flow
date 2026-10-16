@@ -1,3 +1,31 @@
+## [3.8.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.8.0...v3.8.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-hub:** literal rm targets so bypass-mode pipelines do not stall ([#224](https://github.com/easingthemes/dx-aem-flow/issues/224)) ([6396490](https://github.com/easingthemes/dx-aem-flow/commit/6396490592b39ad86a70cf00200a1f9205b5aa19)), closes [#223](https://github.com/easingthemes/dx-aem-flow/issues/223) [#223](https://github.com/easingthemes/dx-aem-flow/issues/223) [#223](https://github.com/easingthemes/dx-aem-flow/issues/223)
+
+# [3.8.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.8...v3.8.0) (2026-10-16)
+
+
+### Features
+
+* **skills:** fit the skill listing in the 5.5 budget — dmi on admin skills, one-field descriptions ([#225](https://github.com/easingthemes/dx-aem-flow/issues/225)) ([9dee989](https://github.com/easingthemes/dx-aem-flow/commit/9dee98963bbf3a0c3410937a613775de8d9738b6)), closes [#250](https://github.com/easingthemes/dx-aem-flow/issues/250) [#1](https://github.com/easingthemes/dx-aem-flow/issues/1) [#105](https://github.com/easingthemes/dx-aem-flow/issues/105)
+
+## [3.7.8](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.7...v3.7.8) (2026-10-16)
+
+
+### Bug Fixes
+
+* **copilot:** prompt-mode env vars must be "true", not "1" ([#223](https://github.com/easingthemes/dx-aem-flow/issues/223)) ([d2228cd](https://github.com/easingthemes/dx-aem-flow/commit/d2228cd6964bad97b5c5fe75d8f4d643a155371c)), closes [#97](https://github.com/easingthemes/dx-aem-flow/issues/97) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249)
+
+## [3.7.7](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.6...v3.7.7) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-core:** branch guard never fired — matcher held permission-rule syntax ([#230](https://github.com/easingthemes/dx-aem-flow/issues/230)) ([9202dcc](https://github.com/easingthemes/dx-aem-flow/commit/9202dccd2f7fa8b1e5a861aba7e6133573e9ba41))
+
 ## [3.7.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.5...v3.7.6) (2026-10-15)
 
 
