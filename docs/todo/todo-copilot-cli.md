@@ -89,8 +89,8 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 
 **Added:** 2026-05-01
 **Problem:** Copilot CLI v1.0.40 (released 2026-05-01) gates two previously-default behaviors behind opt-in environment variables:
-- `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` — required for `.github/hooks/hooks.json` (repo-level hooks) to load.
-- `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1` — required for project-root `.mcp.json` (workspace MCP) to load.
+- `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` — required for `.github/hooks/hooks.json` (repo-level hooks) to load.
+- `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` — required for project-root `.mcp.json` (workspace MCP) to load.
 
 Without these, Copilot CLI silently ignores both. This breaks our entire Copilot setup on v1.0.40+ — branch-guard hooks, Stop guards, ADO MCP, Atlassian MCP — without any error message.
 
@@ -106,6 +106,8 @@ Without these, Copilot CLI silently ignores both. This breaks our entire Copilot
 - `dx-doctor` checks both env vars and warns if missing on Copilot ≥ 1.0.40.
 - A test session on Copilot v1.0.40 with the env vars unset confirms hooks/MCP do not load (negative test).
 - A test session on Copilot v1.0.40 with the env vars set confirms `Stop` guard fires and ADO MCP servers are visible.
+
+**Correction 2026-10-15 (TODO #249):** the value was wrong from day one. Copilot CLI compares both variables `=== "true"` — seen in the `@github/copilot@1.0.40` bundle (`process.env.GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS==="true"`) and again in the 1.0.98 `cli-main.js`, where the gate is `COPILOT_ALLOW_ALL==="true" || GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS==="true" || folderTrustIsTrusted(cwd)`. So the `=1` we exported never enabled anything. Live check on 1.0.98 (BYOK stub model, untrusted folder, repo `preToolUse` hook writing a marker file): `=true` → hook fires; `=1` → it does not. Also: the gate only exists in prompt mode (`-p`); a trusted folder loads repo hooks and workspace MCP without any env var. Fixed: dx-init writes `=true` and rewrites existing `export …=<anything>` lines (snippet run twice against fresh / old `=1` / mixed rc files — all end with two `=true` lines, no duplicates); dx-doctor checks for `true` and reports a wrong value; CLAUDE.md, `website/src/pages/setup/copilot-cli.mdx`, `website/src/pages/contributing/technical-ref.mdx`. Not touched: dated research notes under `docs/research/` (historical record).
 
 **Approach:**
 1. Add an `init-copilot-shell-exports.sh` helper invoked from `/dx-init` step 9i that detects Copilot CLI version and appends the two exports to `~/.zshrc` / `~/.bashrc` (idempotently).
@@ -143,7 +145,7 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 1. ✅ Mitigation (shipped 2026-05-16): added `case "$CLAUDE_TOOL_NAME" in ... ) ;; *) exit 0 ;; esac` guards to plugin scripts; wrapped `hooks.json` inline commands with `[ "${CLAUDE_TOOL_NAME:-}" = "<exact-tool>" ] && [ -f <script> ] && bash <script> || true`.
 2. File upstream Copilot CLI bug. Title: "PostToolUse hooks fire on every AI turn regardless of matcher (plugin hooks at ~/.copilot/installed-plugins/)". Include the empirical trace.
 3. Update CLAUDE.md § Hook System — Platform Separation: change row to reflect that Copilot CLI also reads `hooks/hooks.json` but ignores `matcher` on PostToolUse.
-4. Test whether the same bug affects `PreToolUse`. Our branch-guard `Bash(git commit*)` matcher has not been reported as misfiring, suggesting v1.0.36's regex fix may have included matcher-honoring behavior for the pre side. Confirm with a targeted test.
+4. Test whether the same bug affects `PreToolUse`. **2026-10-16:** the branch-guard matcher `Bash(git commit*)` never misfired because it never fired at all — as a regex it matches no tool name, in Claude Code too. Now `Bash|bash|shell|execute` with an inline `git commit` stdin check (`plugins/dx-core/hooks/branch-guard-hook.test.sh`); whether Copilot honours a PreToolUse matcher is still untested.
 5. After upstream fix lands, audit our guards — they're defense-in-depth and harmless to keep, but the redundancy noise in `hooks.json` commands could be removed.
 
 **Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.

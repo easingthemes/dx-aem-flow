@@ -41,7 +41,7 @@ No compilation step. Verification happens at four levels:
 | Level | What it checks | How |
 |-------|----------------|-----|
 | Structural | naming, frontmatter, manifest/version consistency, collisions, plus Claude Code's own manifest/hook schema (`claude plugin validate --json` via `scripts/check-plugin-schema.sh`; CI installs a pinned CLI) | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (10 today) |
+| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (11 today) |
 | JS units | deterministic JS in `plugins/dx-core/data/lib/`, the `dx-automation` Lambda routers, and `cli/` | any `*.test.js` under `plugins/` or `cli/` — **discovered** and run in CI on every PR via `node --test` |
 | Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
 
@@ -224,21 +224,21 @@ Plugin hooks and Copilot CLI hooks are **largely separate systems**, with one ov
 | Hook source | Active in |
 |-------------|-----------|
 | Plugin `hooks/hooks.json` | Claude Code CLI (`Stop` / `SubagentStop`) **and** Copilot CLI (reads the same file). Copilot ignored `PostToolUse` `matcher` through v1.0.45 — **fixed in v1.0.63 (2026-06-15)**, matchers now honored. |
-| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; `agentStop`/`subagentStop` closed 2026-04-07). **v1.0.40+ requires `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` exported in shell** — without it, repo hooks are silently ignored. |
+| `.github/hooks/hooks.json` | Copilot CLI only (events: 1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+; `agentStop`/`subagentStop` closed 2026-04-07). **v1.0.40+: in `copilot -p` outside a trusted folder, requires `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` exported in shell** (`=1` is ignored) — without it, repo hooks are silently ignored. |
 | Agent frontmatter `hooks:` | VS Code Chat (1.111+); skill-isolated subagents experimental in 1.118+ |
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard. **Event-name mapping:** Claude Code uses `Stop` / `SubagentStop`; Copilot CLI uses `agentStop` / `subagentStop`. See the docs site (`website/`) for full details.
 
-Latest platform research: `docs/research/2026-06-10-platform-state-update.md` (delta to `2026-05-29-platform-state-update.md`; covers CC v2.1.156–170 + the Fable 5 launch). It is three months old and its proposals were never intaken — [TODO #171](docs/todo/TODO.md) tracks the overdue September sweep.
+Latest upstream sweep: `docs/research/2026-10-15-upstream-sweep.md` (Claude Code to v2.1.301, Copilot CLI to v1.0.98; each sweep is a delta to the previous one). The last full platform-state snapshot is still `docs/research/2026-06-10-platform-state-update.md` — [TODO #171](docs/todo/TODO.md) tracks the overdue one.
 
 **Copilot CLI v1.0.40+ shell exports** — when targeting Copilot, add these to `~/.zshrc` / `~/.bashrc`:
 
 ```bash
-export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1
-export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1
+export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true
+export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true
 ```
 
-Without `WORKSPACE_MCP`, project-root `.mcp.json` is also silently ignored.
+Without `WORKSPACE_MCP`, project-root `.mcp.json` is also silently ignored. **The value must be `true`** — Copilot compares `=== "true"` (v1.0.40 and v1.0.98 bundles; `=1` seen doing nothing on 1.0.98, TODO #249). The gates apply to `copilot -p` only; a trusted folder loads both without them.
 
 ### Hook Profiles — `DX_HOOK_PROFILE`
 
