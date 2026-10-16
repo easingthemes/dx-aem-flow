@@ -1,6 +1,6 @@
 ---
 name: dx-pr-review
-description: "Review an Azure DevOps pull request by ID or URL — analyze the diff, report findings, optionally post comments and patches. Not for a local diff or GitHub PR (code-review), creating a PR (dx-pr, dx-pr-commit), answering comments (dx-pr-answer) or a review write-up (dx-pr-review-report)."
+description: "Review a pull request by ID or URL in the configured SCM (scm.provider) — analyze the diff, report findings, optionally post comments. Not for a local diff (code-review), creating a PR (dx-pr, dx-pr-commit), answering comments (dx-pr-answer) or a review write-up (dx-pr-review-report)."
 model: opus
 effort: high
 argument-hint: "[PR URL or ID]"

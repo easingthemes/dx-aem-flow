@@ -105,7 +105,7 @@ DESC_AWK='
 LISTING_ENTRY_CAP=1536
 LISTING_BUDGET_200K=8000
 # Measured 2026-10-15 after the #238 trim: 57 model-invocable skills (was 36,795 / 73). Lower it when descriptions shrink.
-LISTING_BASELINE=${LISTING_BASELINE:-12142}
+LISTING_BASELINE=${LISTING_BASELINE:-12140}
 LISTING_CHARS=0
 LISTING_SKILLS=0
 WTU_AWK="${DESC_AWK//description/when_to_use}"

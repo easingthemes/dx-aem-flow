@@ -32,8 +32,8 @@ Pilot (2026-10-16, sonnet): ~$0.10 per run.
 
 | Variant (3 runs each, sonnet 5.5) | Picked |
 |---|---|
-| `dx-pr-review` description rewritten: "Review an **Azure DevOps** pull request by ID or URL … Not for a local diff or GitHub PR (code-review) …" | `code-review` 3/3 |
+| `dx-pr-review` description rewritten to name the provider and point local diffs and GitHub PRs to `code-review` | `code-review` 3/3 |
 | + project `CLAUDE.md` saying the repo is on Azure DevOps (`pr-review-ado` case, `--scaffold`) | `code-review` 3/3 |
 | + project `.claude/settings.json` `skillOverrides: { "code-review": "user-invocable-only" }` (not kept) | `code-review` 3/3 — inconclusive: unknown whether the eval sandbox loads project settings |
 
-The description alone does not beat the bundled skill for "look over pull request N". Its own description ("Review the current diff, or a PR number/branch/path target, for correctness bugs…") matches that phrasing too well. The rewritten description stays because it is more accurate: it names ADO, and it drops `dx-pr-review-all`, which is dmi and so cannot be routed to anyway. Next lever, untested: have `dx-init` write `skillOverrides` for `code-review`, and verify it in a real session rather than in the eval sandbox. `--scaffold` is needed for `pr-review-ado`.
+The description alone does not beat the bundled skill for "look over pull request N". Its own description ("Review the current diff, or a PR number/branch/path target, for correctness bugs…") matches that phrasing too well. The tested wording named Azure DevOps. That was wrong: the provider comes from `scm.provider` in `.ai/config.yaml`, so the kept description says "in the project's configured SCM (scm.provider)" and does not name a provider. It also drops `dx-pr-review-all`, which is dmi and so cannot be routed to anyway. Next lever, untested: have `dx-init` write `skillOverrides` for `code-review`, and verify it in a real session rather than in the eval sandbox. `--scaffold` is needed for `pr-review-ado`.
