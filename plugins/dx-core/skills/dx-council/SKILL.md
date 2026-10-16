@@ -1,6 +1,6 @@
 ---
 name: dx-council
-description: "Put a question, decision or artifact to a council of 3 AI advisors who analyze independently, peer-review anonymously and give a verdict. Use for 'council this', 'pressure-test this', 'debate this', or a real trade-off ('X or Y?'). Not for yes/no or factual questions."
+description: "Put a question, decision or artifact to a council of 3 AI advisors who analyze it, peer-review each other and give a verdict. Use for 'council this', 'pressure-test this', 'debate this', or a real trade-off. Not for yes/no or factual questions."
 argument-hint: "<question, decision, or 'the plan' / 'the implementation'>"
 model: sonnet
 allowed-tools: ["read", "glob", "grep", "agent"]
