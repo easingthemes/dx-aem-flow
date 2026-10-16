@@ -3,45 +3,38 @@ title: "Hook Matchers: Precision Targeting"
 category: "Hooks — Guardrails"
 focus: "Claude Code"
 tags: ["Matchers","Wildcards","Patterns"]
-overview: 'Hook matchers let you target specific operations. "Bash" matches all Bash calls. "Bash(git commit*)" matches only git commits. "Bash(git push --force*)" matches only force pushes. Wildcards give you precision without false positives.'
+overview: 'Hook matchers pick the tool; the `if` field picks the arguments. "Bash" matches every Bash call. Add `"if": "Bash(git commit*)"` and the hook only runs for git commits. Put `Bash(git commit*)` in the matcher itself and it silently matches nothing.'
 screenshot: null
 week: 8
 weekLabel: "Skills — Advanced"
 order: 36
-slackOneLiner: "🤖 Tip #36 — Hook matchers give you precision targeting — match only `git push --force`, not every Bash call. Glob-style wildcards, no regex."
+slackOneLiner: "🤖 Tip #36 — `matcher` selects the tool, `if` selects the arguments. `\"matcher\": \"Bash\"` + `\"if\": \"Bash(git push --force*)\"` hits only force pushes."
 keyPointsTitle: "Matcher Syntax"
 actionItemsTitle: "Matchers for Every Risk"
 keyPoints:
   - |
-    Tool name plus optional argument pattern in parentheses
-    - `"Bash"` — matches ALL Bash tool calls (too broad for most uses)
-    - `"Bash(git commit*)"` — matches Bash calls starting with "git commit" (perfect for branch protection)
-    - `"Bash(git push --force*)"` — matches only force pushes (precise, no false positives)
+    `matcher` matches the tool NAME only — three ways it is read
+    - `""`, `"*"` or omitted — every tool
+    - Only letters, digits, `_`, `-`, spaces, `,` and `|` — exact names: `"Bash"`, `"Edit|Write"`
+    - Anything else — an unanchored JavaScript regex: `"mcp__.*figma.*"`, `"^Notebook"`
   - |
-    MCP and other tool matchers
-    - `"mcp__*figma*"` — matches any MCP tool with "figma" in the name
-    - `"Edit"` — matches all Edit tool calls (good for file validation)
-    - `"Write(*.env*)"` — catches secret file creation
+    The trap: permission-rule syntax in `matcher`
+    - `"Bash(git commit*)"` contains `(`, `)` and `*`, so it is read as a regex — "Bash" followed by "git commi" — and no tool name contains that
+    - The hook never fires and nothing warns you. `claude plugin validate` accepts it too
+    - Our own branch guard shipped this way for months
   - |
-    Wildcard rules
-    - `*` matches anything (including nothing)
-    - Pattern matches tool name and optionally arguments in parentheses
-    - No regex — just glob-style wildcards
-  - |
-    The `if` field — fine-grained filtering inside a hook
-    - `matcher` selects which tool events to listen for; `if` adds a second filter using permission rule syntax
-    - Evaluated BEFORE spawning the hook process — avoids unnecessary shell invocations
-    - Example: `"matcher": "Bash"` + `"if": "Bash(git commit*)"` — the hook entry fires on all Bash events, but only spawns the script for git commits
-    - Example: `"matcher": "Edit"` + `"if": "Edit(**/.claude-plugin/**)"` — only validate plugin file edits, skip all other edits
-    - Use `if` when your matcher is broad but your script only applies to a subset
+    The `if` field — argument filtering, permission rule syntax
+    - `"matcher": "Bash"` + `"if": "Bash(git commit*)"` — fires on Bash, spawns the script only for git commits
+    - `"matcher": "Edit"` + `"if": "Edit(**/.claude-plugin/**)"` — only validate plugin file edits
+    - Evaluated before the hook process spawns; one rule per handler
+    - Best-effort, and other tools (Copilot CLI) ignore it — so the script should re-check its input too
 actionItems:
   - |
-    A matcher for every risk level
-    - `Bash(rm -rf*)` — catch destructive deletions
-    - `Bash(git reset --hard*)` — catch history destruction
-    - `Write(*.env*)` — catch secret file creation
-    - `Bash(curl*|*wget*)` — catch network calls
-  - "List the 3 most dangerous commands for your project — write a matcher for each and you have a safety net"
-  - "Start specific, not broad — `Bash(git commit*)` is better than `Bash` because it avoids false positives on harmless commands"
-  - "Test matchers by asking the AI to run the matched command — verify the hook fires and the error message is clear"
+    A filter for every risk level (all with `"matcher": "Bash"` unless noted)
+    - `"if": "Bash(rm -rf*)"` — catch destructive deletions
+    - `"if": "Bash(git reset --hard*)"` — catch history destruction
+    - `"matcher": "Write"` + `"if": "Write(*.env*)"` — catch secret file creation
+  - "List the 3 most dangerous commands for your project — write an `if` rule for each and you have a safety net"
+  - "Never put parentheses in `matcher` — the tool name goes there, the argument pattern goes in `if`"
+  - "Test every guard by asking the AI to run the matched command — a hook you have not watched fire is a hook you do not have"
 ---

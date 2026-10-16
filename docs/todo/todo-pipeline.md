@@ -145,5 +145,5 @@ Safety: keep `permissionMode: bypassPermissions` but rely on the allowlist + hea
 **Added:** 2026-05-06
 **Problem:** Locally, Claude auto-loads `CLAUDE.md` from the working directory (the system prompt confirms this). Unclear whether `pipeline-agent.js` (SDK) does the same — `settingSources: ["user", "project"]` is set at line 268 but no test confirms `CLAUDE.md` content actually reaches the model in the pipeline. If it doesn't, every pipeline run is operating without the project's contributor guide.
 **Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, plus a smoke test under `plugins/dx-automation/skills/auto-test/`.
-**Done-when:** A pipeline run with a prompt like `"What does CLAUDE.md say about hardcoding values?"` returns a correct answer referencing the actual file content. Add this as a fixture in `auto-eval`.
+**Done-when:** A pipeline run with a prompt like `"What does CLAUDE.md say about hardcoding values?"` returns a correct answer referencing the actual file content. Add this as a smoke check in `auto-test` (`auto-eval` was removed 2026-10-15, TODO #176).
 **Approach:** If SDK does NOT auto-load CLAUDE.md, add an explicit `systemPrompt` parameter that reads `CLAUDE.md` (and `AGENTS.md` as fallback) from `cwd` at startup. Document the behavior in `auto-init`.

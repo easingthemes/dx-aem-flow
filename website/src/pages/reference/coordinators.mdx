@@ -61,7 +61,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <ContentCard icon="mdi:robot-off" iconColor="bg-brand-700" title="Coordinator-Only Architecture">
-      All coordinators use <code>disable-model-invocation: true</code> -- they NEVER write code themselves.
+      Coordinators NEVER write code themselves. They stay model-invocable (no <code>disable-model-invocation</code>), so a request or another skill can reach them.
       Every phase is delegated via direct <code>Skill()</code> invocation, keeping the main
       context lean (approximately 10 tokens per status update vs approximately 200 for full file reads).
     </ContentCard>

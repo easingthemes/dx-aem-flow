@@ -1,7 +1,6 @@
 ---
 name: dx-bug-fix
-description: Generate a lightweight fix plan, execute it, run tests, and create a PR for a bug. Reads triage.md and verification.md, generates implement.md (2-5 steps), delegates execution to step, build to build, and PR to commit. Use after /dx-bug-triage or /dx-bug-verify.
-when_to_use: "Use after /dx-bug-triage or /dx-bug-verify to generate a fix plan and create a PR. Trigger on 'fix the bug', 'create a PR for the bug', 'implement the bug fix', or 'dx-bug-fix <id>'. Do NOT use before triage.md exists — run dx-bug-triage first; do NOT use for the whole workflow in one go (that's dx-bug-all) or to reproduce the bug (dx-bug-verify)."
+description: "Plan, implement, test and open a PR for a bug fix from triage.md / verification.md. Use after /dx-bug-triage or /dx-bug-verify. Not before triage exists, not for the whole workflow (dx-bug-all) or reproduction (dx-bug-verify)."
 argument-hint: "<ADO Bug Work Item ID (optional — uses most recent if omitted)>"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---

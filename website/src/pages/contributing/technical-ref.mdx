@@ -192,15 +192,15 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Plugin <code>hooks/hooks.json</code></td><td class="py-2 px-4">Claude Code CLI (<code>Stop</code> / <code>SubagentStop</code>) <strong>and</strong> Copilot CLI -- both read this same file</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4"><code>.github/hooks/hooks.json</code></td><td class="py-2 px-4">Copilot CLI only (v1.0.10+; Notification 1.0.18+; HTTP hooks 1.0.35+)</td></tr>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Agent frontmatter <code>hooks:</code></td><td class="py-2 px-4">VS Code Chat only (v1.111+)</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Agent frontmatter <code>hooks:</code></td><td class="py-2 px-4">VS Code Chat (v1.111+) and Copilot CLI (v1.0.97+, while that agent is selected, trusted folder only). KAI's shell-capable <code>.github/agents</code> carry the branch guard this way</td></tr>
       </tbody>
     </table>
   </div>
 
   <HighlightBox severity="warning" title="Copilot CLI v1.0.40+ needs an env var">
     Repo hooks in <code>.github/hooks/hooks.json</code> are <strong>silently ignored</strong> unless
-    <code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1</code> is exported in your shell. The same applies to
-    project-root <code>.mcp.json</code>, which needs <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code>.
+    <code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true</code> is exported in your shell (the value must be <code>true</code> — <code>1</code> is ignored) or the folder is trusted. The same applies to
+    project-root <code>.mcp.json</code>, which needs <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code>.
   </HighlightBox>
 
   <HighlightBox severity="info" title="Event names differ per platform">
