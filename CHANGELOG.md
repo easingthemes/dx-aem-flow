@@ -1,3 +1,17 @@
+## [3.7.8](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.7...v3.7.8) (2026-10-16)
+
+
+### Bug Fixes
+
+* **copilot:** prompt-mode env vars must be "true", not "1" ([#223](https://github.com/easingthemes/dx-aem-flow/issues/223)) ([d2228cd](https://github.com/easingthemes/dx-aem-flow/commit/d2228cd6964bad97b5c5fe75d8f4d643a155371c)), closes [#97](https://github.com/easingthemes/dx-aem-flow/issues/97) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249)
+
+## [3.7.7](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.6...v3.7.7) (2026-10-16)
+
+
+### Bug Fixes
+
+* **dx-core:** branch guard never fired — matcher held permission-rule syntax ([#230](https://github.com/easingthemes/dx-aem-flow/issues/230)) ([9202dcc](https://github.com/easingthemes/dx-aem-flow/commit/9202dccd2f7fa8b1e5a861aba7e6133573e9ba41))
+
 ## [3.7.6](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.5...v3.7.6) (2026-10-15)
 
 

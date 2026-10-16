@@ -1,7 +1,6 @@
 ---
 name: dx-plan-resolve
-description: Resolve risks and issues flagged by plan-validate. Researches codebase for concrete solutions and updates implement.md steps with fixes. Use after /dx-plan-validate reports warnings or risks.
-when_to_use: "Use to resolve risks and issues flagged by /dx-plan-validate. Trigger on 'resolve plan issues', 'fix plan risks', 'plan-resolve', or after /dx-plan-validate reports warnings that need addressing."
+description: "Resolve risks flagged by /dx-plan-validate — research the codebase and update implement.md steps with concrete fixes."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

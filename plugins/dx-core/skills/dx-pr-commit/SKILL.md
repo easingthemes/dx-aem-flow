@@ -1,7 +1,6 @@
 ---
 name: dx-pr-commit
-description: Commit changes and optionally create an ADO pull request. Handles staging, commit messages with ADO work item IDs, rebasing onto the base branch, and PR creation via ADO MCP tools. Use when the user says "commit", "create PR", "open PR", "push changes", or any variation. This is the ONLY skill for commits and PRs — always use it instead of gh CLI or manual git workflows.
-when_to_use: "Use to commit changes and optionally create an ADO PR. Trigger on 'commit', 'create PR', 'open PR', 'push changes', 'commit and PR', or as the final step after implementation is complete. Do NOT use to review a PR (that's dx-pr-review) or to answer review comments (dx-pr-answer); for the end-of-plan PR with a generated description use dx-pr."
+description: "Commit changes (work item ID in the message, rebase onto base) and optionally open a PR in the configured SCM. Use for 'commit', 'push', 'create PR'. Not for reviews (dx-pr-review) or replies (dx-pr-answer); the end-of-plan PR is dx-pr."
 argument-hint: "[optional: commit message or 'pr' to also create PR]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
