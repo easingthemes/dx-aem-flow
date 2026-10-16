@@ -752,6 +752,8 @@ The template includes:
 
 Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` so the same template works in both Claude Code (which sets `CLAUDE_PLUGIN_ROOT`) and Copilot CLI v1.0.26+ (which sets `PLUGIN_ROOT` and `COPILOT_PLUGIN_ROOT`).
 
+The shell-capable `.github/agents/` (DxCommit, DxPRFix, DxDebug, DxPlanExecutor, AEMCommit, AEMPRFix) also carry the branch guard in their own frontmatter `hooks:` block — Copilot CLI v1.0.97+ runs it while that agent is selected in a trusted folder, independent of this file.
+
 If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 
 **Matcher compatibility note (Copilot CLI v1.0.36+):** As of v1.0.36, `preToolUse` matcher patterns are evaluated as full regex and now actually filter (previously some patterns were silently ignored). Audit any custom matchers added to merged hook configs:
