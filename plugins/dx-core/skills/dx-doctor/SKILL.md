@@ -262,14 +262,20 @@ WORKSPACE_MCP=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" ~/.zshrc ~/.
 Also check if they are currently set in the environment:
 
 ```bash
-[ -n "${GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS:-}" ] && HOOKS_ACTIVE=1 || HOOKS_ACTIVE=0
-[ -n "${GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP:-}" ] && MCP_ACTIVE=1 || MCP_ACTIVE=0
+[ "${GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS:-}" = true ] && HOOKS_ACTIVE=1 || HOOKS_ACTIVE=0
+[ "${GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP:-}" = true ] && MCP_ACTIVE=1 || MCP_ACTIVE=0
+WRONG_VALUE=$(grep -hE "^[[:space:]]*export GITHUB_COPILOT_PROMPT_MODE_(REPO_HOOKS|WORKSPACE_MCP)=" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null \
+  | tr -d '\r' | sed -E 's/[[:space:]]+#.*$//; s/[[:space:]]+$//' \
+  | grep -vE "=[\"']?true[\"']?$" | head -1)
 ```
 
+Copilot CLI compares the value to the string `true` — `=1` (what older dx-init wrote) is the same as unset.
+
 Reporting:
+- `WRONG_VALUE` non-empty → `✗ WRONG VALUE: <line> — Copilot CLI only accepts =true; =1 is ignored. Run /dx-init to rewrite it.` Report only this row; skip the rows below.
 - Both exported in current env → `✓ Copilot CLI v1.0.40+ prompt-mode env vars set (repo hooks + workspace MCP enabled)`
 - Missing from current env but found in shell rc → `⚠ Copilot CLI prompt-mode env vars in shell rc but not active — restart shell or run: source ~/.zshrc`
-- Missing entirely → `✗ MISSING: Copilot CLI v1.0.40+ requires GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1 and GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1 in your shell profile. Without them, repo hooks and workspace MCP are silently disabled. Run /dx-init to add them.`
+- Missing entirely → `✗ MISSING: Copilot CLI v1.0.40+ requires GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true and GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true in your shell profile. Without them, `copilot -p` runs in an untrusted folder silently skip repo hooks and workspace MCP. Run /dx-init to add them.`
 
 ## 7. AEM Plugin (conditional)
 
