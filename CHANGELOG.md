@@ -1,3 +1,10 @@
+# [3.9.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.8.1...v3.9.0) (2026-10-16)
+
+
+### Features
+
+* **copilot:** branch guard as agent-scoped hooks in shell-capable agents ([#222](https://github.com/easingthemes/dx-aem-flow/issues/222)) ([7ede89f](https://github.com/easingthemes/dx-aem-flow/commit/7ede89f99a7a8441aac0442388bde8588bbd2906)), closes [#245](https://github.com/easingthemes/dx-aem-flow/issues/245) [#245](https://github.com/easingthemes/dx-aem-flow/issues/245) [#249](https://github.com/easingthemes/dx-aem-flow/issues/249) [#245](https://github.com/easingthemes/dx-aem-flow/issues/245)
+
 ## [3.8.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.8.0...v3.8.1) (2026-10-16)
 
 
