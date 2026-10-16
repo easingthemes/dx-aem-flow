@@ -369,6 +369,21 @@ out=$(run_validator); rc=$?
 check "rm on a command substitution in an agent exits non-zero" "1" "$rc"
 
 reset_fixture
+write_skill "dx-rm2" <<'SKILL'
+---
+name: dx-rm2
+description: A short description.
+---
+
+rm -rf -- "$X"
+rm --recursive --force "$X"
+rm -rf ./"$X"
+rm -rf .ai/specs/$ID
+SKILL
+out=$(run_validator); rc=$?
+check "rm variants (--, long opts, ./\"\$X\", \$ mid-path) all flagged" "4" "$(echo "$out" | grep -c 'recursive rm on a variable')"
+
+reset_fixture
 write_skill "dx-rmok" <<'SKILL'
 ---
 name: dx-rmok
@@ -376,6 +391,7 @@ description: A short description.
 ---
 
 Delete it with `rm -rf state/<ticket-id>` — one literal path per command.
+Never pass a `$(...)` or `$VAR` as the target; also `rm -rf /tmp/x`.
 SKILL
 out=$(run_validator); rc=$?
 check "literal rm -rf path passes" "0" "$rc"

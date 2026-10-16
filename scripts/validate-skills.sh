@@ -86,7 +86,10 @@ check_reasoning_echo() {
 # that writes `rm -rf "$DIR"` or `rm -rf $(...)` stalls them. Skills and agents
 # name literal paths instead. Helper scripts are exempt: the model runs them as
 # `bash x.sh`, so the guard never sees their `rm`. TODO #223.
-RM_DYNAMIC='rm[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*-[a-zA-Z]*[rR][a-zA-Z]*([[:space:]]+-[a-zA-Z]+)*[[:space:]]+["'"'"']?(\$|`)'
+# Matches -rf/-fr/-r -f/--recursive, `--`, and a `$` anywhere in the target
+# (`./"$X"`, `.ai/specs/$ID`). A backtick counts only at the start of the
+# target, so markdown like `rm -rf state/<id>` is not a hit.
+RM_DYNAMIC='(^|[^[:alnum:]_.-])rm([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(["'"'"']?`|[^;&|[:space:]`]*\$)'
 
 # check_rm_target <file> <rel-path> — one ERROR per offending line
 check_rm_target() {
