@@ -12,6 +12,8 @@ Each item is independent — adopt incrementally.
 
 ## 1. Adopt the dedicated `when_to_use` frontmatter field
 
+**Status: Superseded 2026-10-16 by § 18 (#238).** `when_to_use` was removed from every skill: Copilot ignores it, and it was 17.1k of the 36.8k-char listing. Its trigger phrases and negative clauses now live in `description`. Kept below for history.
+
 **Added:** 2026-05-15
 **Problem:** Anthropic provides a dedicated `when_to_use` field separate from
 `description`, designed for trigger phrases and example requests. The
@@ -544,6 +546,22 @@ restatements of the skill name; keep #166 negative clauses short. Check whether 
 skills should be `disable-model-invocation: true` (user-invoked only — no description in the
 listing); coordinators and init/upgrade skills are the obvious candidates. Document
 `skillOverrides: "name-only"` / `skillListingBudgetFraction` for consumers who keep many skills.
+
+**Update 2026-10-15 — measured, ratchet landed, rewrite pending approval.** See [2026-10-15-skill-listing-budget.md](../research/2026-10-15-skill-listing-budget.md).
+- **Mechanism, from the Claude Code v2.1.301 bundle, not docs:**
+  - entry = `- <plugin>:<name>: <description> - <when_to_use>`, capped at 1536 chars;
+  - budget = context × 4 chars/tok × `skillListingBudgetFraction` 0.01. **Measured live** (stub model, all four plugins): ~7k chars used on a 200k model, ~28k on the 5.5 models;
+  - over budget, skills are ranked by usage, and the least-used drop to name-only.
+- **Numbers:** 73 model-invocable skills, **36,795 chars**. On the 5.5 models 30 of the 73 are sent name-only (on a fresh install that is all of dx-aem, dx-hub and dx-automation); on a 200k model, 72 of 73. `when_to_use` is 17.1k of the total, and Copilot ignores it. 51 entries are over 400 chars; the longest is `dx-council` at 1,094. The earlier "~9.2k tok / avg 241" came from a first-line grep.
+- **Ratchet:** `scripts/validate-skills.sh` check 11 errors when the total grows past `LISTING_BASELINE` (36,795 when it landed; 12,131 now) (UTF-8 chars, quotes stripped, `disable-model-invocation` excluded). The 6 new cases in `validate-skills.test.sh` were seen failing under two mutations (byte counting; quotes kept).
+- **2026-10-15 (second pass):** `disable-model-invocation` verified live on both CLIs. It hides the skill from the listing, still runs on Claude `-p "/name"` (pipelines are safe), but **blocks every model or subagent Skill call** with "do not replicate this workflow" (Claude) or "Skill not found" (Copilot). Copilot `-p "/name"` does not expand skills at all. The proposal is narrowed to 16 entry-point admin skills nothing chains to. `dx-init`/`aem-init`/`auto-init`/`dx-doctor` must stay invocable (chained inline). `skillOverrides` does not apply to plugin skills. Found #250: `dx-estimate` batch mode is broken by its existing dmi.
+- **2026-10-15 (applied, approved):**
+  - dmi on 16 entry-point admin skills.
+  - `when_to_use` removed and `description` rewritten on 56 model-invocable skills. The #14 negative clauses moved into `description`, so Copilot sees them too.
+  - Listing 36,795 → 12,144 chars, no description > 400 (max 268). Baseline lowered.
+  - Live: 57 of 57 sent with full text on the 5.5 models.
+  - The ≤2k-tok target is not met (~3k tok; a 200k model still keeps only 5 of 57). Routing eval (#168) not run.
+- **2026-10-16 (review fixes):** routing eval run (approved, ≈$7.26 total): no regression, 13/14 on both refs; `pr-review` loses to the bundled `code-review` on both. Check 12 added: a model-invocable description may name a dmi skill only as `/name`, so the model is not routed to a skill it cannot call. #250 closed by dropping `dx-estimate` batch mode. **Done-when still open:** the ≤2k-tok target (~3k now).
 
 ## 19. Lint for reasoning-echo instructions
 

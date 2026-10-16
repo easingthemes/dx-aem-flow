@@ -1,7 +1,6 @@
 ---
 name: dx-figma-verify
-description: Visually verify a generated prototype against the Figma reference screenshot. Opens prototype in Chrome, takes a screenshot, compares with Figma reference using multimodal vision, fixes gaps, and produces a verification report. Use after /dx-figma-prototype. Trigger on "verify prototype", "compare prototype", "figma verify", "check prototype against figma". Do NOT use without a generated prototype or when no Figma reference screenshot exists.
-when_to_use: "Use after /dx-figma-prototype to verify it matches the Figma reference. Trigger on 'verify prototype', 'compare prototype', 'figma verify', 'check prototype against figma', or 'does the prototype match'. Do NOT use to verify a component on a running AEM instance (that's aem-fe-verify) or to run pre-PR code checks (dx-step-verify)."
+description: "Compare a generated prototype with the Figma reference screenshot in a browser, fix gaps, write a report. Use after /dx-figma-prototype. Not for components on AEM (aem-fe-verify) or pre-PR checks (dx-step-verify)."
 argument-hint: "<ADO Work Item ID (optional — uses most recent if omitted)>"
 compatibility: "Requires Playwright MCP (playwright) and a generated prototype from /dx-figma-prototype with figma-reference.png from /dx-figma-extract."
 metadata:

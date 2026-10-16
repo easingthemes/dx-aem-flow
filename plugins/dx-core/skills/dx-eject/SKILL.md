@@ -3,6 +3,7 @@ name: dx-eject
 description: Eject all plugin assets into the consumer repo — copies skills, agents, rules, templates, shared files, hooks, and MCP config so the project works without plugins installed. Use when a team wants to own all dx files locally instead of depending on plugins.
 when_to_use: "Use when a team wants to own all dx files locally without depending on plugins. Trigger on 'eject', 'copy plugin files locally', 'make dx self-contained', or 'I want to own the dx files'."
 argument-hint: "[dx|aem|auto|all]"
+disable-model-invocation: true
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
@@ -52,7 +53,7 @@ Present this warning and **wait for explicit confirmation**:
 This will copy ALL assets from the following plugins into your repo:
 - dx-core (50 skills, 7 agents, 5 rules, shared files, data, templates)
 - dx-aem (12 skills, 6 agents, shared files, templates)
-- dx-automation (11 skills, 1 rule, data files, templates)
+- dx-automation (10 skills, 1 rule, data files, templates)
 
 ### What happens:
 1. **Claude Code skills** → `.claude/skills/` (shadows plugin skills — Claude Code loads local over plugin)
@@ -111,7 +112,7 @@ The script creates this structure:
 ├── data/             # Plugin data originals organized by plugin name
 │   ├── dx-core/  # lib/, templates/, hooks/
 │   ├── dx-aem/             # (if applicable)
-│   └── dx-automation/      # agents/lib/, pipelines/, lambda/, eval/
+│   └── dx-automation/      # pipelines/, lambda/, scripts/, policy/
 ├── templates/        # All plugin templates organized by plugin name
 │   ├── dx-core/  # rules/, skills/, agents/, docs/, instructions/
 │   ├── dx-aem/             # rules/, agents/, instructions/

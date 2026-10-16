@@ -32,6 +32,17 @@ is non-zero for both files, AND — if the guard is adopted —
 guard belongs in `dx-core` hooks (fires for every consumer) or behind
 `DX_HOOK_PROFILE=strict`, which is what the profile tier exists for.
 
+**Done 2026-10-15.** Docs: `website/src/pages/learn/hooks.mdx` has both events in the event list, plus a section covering:
+- what `PreModelSwitch` can do (`allow` / `deny` / `ask`; sources `command`, `picker`, `sdk` only);
+- that a session that cannot ask treats a required confirmation as a block ("confirmation required, and this session cannot ask" — string from the v2.1.301 bundle);
+- `PostModelSwitch` (also fires on `auto` fallback and `resume`; can return `additionalContext`);
+- the `SessionStart` resume fields.
+
+The site builds (98 pages). **Guard decision: not adopted for now.**
+- A model switch in a `dx-automation` run comes from config, `--model` or a provider fallback. A hook would only add a second place to keep in sync, and #224's managed allowlists are the right tool for "only these models on pipeline hosts".
+- If a guard is wanted later, it goes behind `DX_HOOK_PROFILE=strict`, so it does not fire for every consumer.
+- **Review fix 2026-10-16:** payload fields and the `source` enums read from the v2.1.301 hook schema in the binary (`PreModelSwitch` = `command|picker|sdk`; `PostModelSwitch` adds `auto|resume`). So `PreModelSwitch` cannot catch a pipeline's fallback off Opus; the page now says so. Also fixed `SessionStop` → `SessionEnd` in the event list. Not verified: a live hook firing (no login). Copilot CLI has no equivalent event.
+
 ## maxEffortLevel setting
 
 **Added:** 2026-09-13
@@ -62,6 +73,8 @@ Opus default, so a cap of `high` makes `effort: xhigh` a no-op — that is a pol
 choice, not a default. Likeliest split: no cap locally, cap at `high` in
 pipelines. Ordering note: because `effort:` was a no-op until v2.1.267, measure
 what the tier table actually costs now (#137 / `/skill-doctor`) before capping it.
+
+**Done 2026-10-15:** decision recorded in `docs/todo/todo-config.md` § "Effort ceiling": no default ceiling; opt-in `maxEffortLevel` documented in the pipeline-host managed-settings block on the costs page.
 
 ## Plugin-dir folder loading simplifies the local test loop
 
@@ -596,10 +609,17 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Added:** 2026-09-29
 **Problem:** v2.1.281 (2026-09-23): under bypass permissions a recursive `rm` whose target comes only from command substitution (`rm -rf "$(pwd)"`) now asks even with an allow rule; unanswered it waits 2 min then denies. `pipeline-agent.js` runs `permissionMode: "bypassPermissions"`; `dx-hub-status` and `dx-pr-review{,-all}` tell the model to `rm -rf` temp dirs — fine as literal paths, a stall if the model uses a variable.
 **Scope:** `plugins/dx-automation/data/scripts/pipeline-agent.js`, `plugins/dx-hub/skills/dx-hub-status/SKILL.md`, `plugins/dx-core/skills/dx-pr-review*/SKILL.md`.
-**Done-when:** `grep -rn "DANGEROUS_RM\|SUBSTITUTION_RM" plugins/dx-automation` shows the env decision in the launcher, OR `grep -rnE 'rm -rf "?\$' plugins/*/skills` returns nothing (skills use literal paths only) (env set in pipeline, or skills changed to literal paths).
+**Done-when:** `bash scripts/validate-skills.sh` exits 0 — its check 10 (`RM_DYNAMIC`) finds no recursive `rm` with a variable/substitution target in skills, references or agents. *(Rewritten 2026-10-16: the original grep over `plugins/*/skills` also matched helper `*.sh` scripts, which are out of scope, and would reopen this item.)*
 **Approach:** Prefer literal paths in skill prose over disabling the guard (`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`). Fold the env decision into the #200 launcher change.
 
 **Update 2026-10-15 (from #226/#247):** Dangerous `rm` inside `bash -c` now prompts too (v2.1.288) — the stall is more likely, not less.
+
+**Done 2026-10-15 — decision: literal paths, no launcher env.**
+- Disabling the guard (`CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`) in `pipeline-agent.js` would remove a safety check from runs that execute with bypass permissions. Not done — and #200 does not need to carry it.
+- Audit: no `SKILL.md`, `references/*.md` or agent file had a recursive `rm` on a variable/substitution target. The literal cleanups (`rm -rf /tmp/dx-review-<repo>` in `dx-pr-review{,-all}`) are fine: the model substitutes the placeholder text. The one open-ended spot was `dx-hub-status` `--clean` ("delete the directory with `rm -rf`"), where a model might well loop with `$dir`. It now asks for one `rm -rf state/<ticket-id>` per directory with the id written literally.
+- Ratchet: `scripts/validate-skills.sh` check 10 (`RM_DYNAMIC`) errors on a recursive `rm` whose target starts with `$` or a backtick, in skills (incl. references/) and agents. `scripts/validate-skills.test.sh` covers a variable target in a skill, a `$(...)` target in an agent, non-recursive `rm -f "$X"` not flagged, and a literal path passing. With the check disabled the suite goes 4 red.
+- **Done-when narrowed:** the original `grep -rnE 'rm -rf "?\$' plugins/*/skills` still matches helper `*.sh` scripts and test suites (`sync-consumers.sh`, `run-tests.sh` traps). They are out of scope: the model runs them as `bash x.sh`, and the Bash-tool guard inspects that command line only. The effective check is now `bash scripts/validate-skills.sh` (check 10).
+- **Not verified:** a live bypass-mode run hitting the prompt. The behaviour is taken from the v2.1.281/v2.1.288 changelog, not reproduced.
 
 ## Managed model/provider allowlists for pipeline hosts
 
@@ -608,6 +628,8 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Scope:** `docs/todo/todo-upstream-2026-09.md` #200 table, `website/` automation setup page.
 **Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` hits a recommended settings block for pipeline hosts.
 **Approach:** Docs only; ship with #200.
+
+**Done 2026-10-15.** Shipped on its own, not with #200: it is a host setting, not a launcher change. `website/src/pages/costs.mdx` § "Pin Models and Effort on Pipeline Hosts" (`grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` → 6). Semantics are taken from the settings' descriptions in the v2.1.301 bundle. One trade-off is spelled out: with `exact`, a moved `opus` alias stops runs instead of switching silently. Not verified: a live Agent SDK run (`settingSources: ["user","project"]`) honouring the managed file; managed settings are documented to apply regardless.
 
 ## `/doctor prompt-audit` for the concise-body audit
 

@@ -1,7 +1,6 @@
 ---
 name: auto-doctor
-description: Run a health check on the AI automation setup — verifies local file integrity, ADO pipeline configuration, and Lambda function state. Each project is self-contained.
-when_to_use: "Use when the AI automation setup seems broken, to verify Lambda functions are deployed, pipelines are configured, and infra.json is correct. Trigger on 'check automation', 'diagnose automation', 'automation health check'."
+description: "Health check of the AI automation setup — local files, ADO pipeline configuration, Lambda state. Use when automation seems broken, for 'check automation'."
 argument-hint: ""
 ---
 
@@ -44,7 +43,7 @@ For each enabled pipeline entry in `infra.json`, check that the YAML file refere
 - Missing → `✗ MISSING`
 
 ### Lambda handlers (when Lambda agents are enabled):
-Skip Lambda file checks if no Lambda-based agents are enabled (i.e., only PR Review, PR Answer, and Eval are in the enabled list — those run as ADO pipelines without Lambda).
+Skip Lambda file checks if no Lambda-based agents are enabled (i.e., only PR Review and PR Answer are in the enabled list — those run as ADO pipelines without Lambda).
 
 - `lambda/wi-router.mjs`
 - `lambda/pr-router.mjs`
@@ -78,7 +77,7 @@ Report: ✓ / ✗ for each pipeline with name and ID.
 
 ## 3. Lambda Function State
 
-Skip if no Lambda-based agents are enabled (PR Review, PR Answer, Eval only — pipeline-only setup).
+Skip if no Lambda-based agents are enabled (PR Review, PR Answer only — pipeline-only setup).
 
 Check each Lambda function (WI Router, PR Router):
 
@@ -219,7 +218,7 @@ Check that WI hooks exist (project-scoped, User Story + Bug). Required when work
 
 ## Rules
 
-- **Enabled-agents-aware** — read `automationProfile` from infra.json FIRST. If value is `consumer`, `pr-only`, or `pr-delegation` (legacy), warn to re-run `/auto-init` and treat as `per-project`. Skip Lambda file checks and Lambda function state checks when no Lambda-based agents are enabled (i.e., only PR Review, PR Answer, and Eval are in the enabled list).
+- **Enabled-agents-aware** — read `automationProfile` from infra.json FIRST. If value is `consumer`, `pr-only`, or `pr-delegation` (legacy), warn to re-run `/auto-init` and treat as `per-project`. Skip Lambda file checks and Lambda function state checks when no Lambda-based agents are enabled (i.e., only PR Review and PR Answer are in the enabled list).
 - **`repos.json` is optional** — never report its absence as `✗` or count it toward the Overall verdict. It has no runtime consumer (no pipeline, Lambda, or skill reads it). Only a *present-but-malformed* `repos.json` is a failure.
 - **Read-only** — no AWS/ADO mutations in this skill (read commands only)
 - **Cross-check infra.json vs reality** — pipeline IDs and Lambda names must match

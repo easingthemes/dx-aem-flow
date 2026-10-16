@@ -6,7 +6,7 @@ on:
     paths:
       - 'plugins/**'
       - 'cli/**'
-      - 'scripts/validate-*.sh'
+      - 'scripts/**'
       - 'website/src/config/stats.ts'
       - '.github/workflows/validate.yml'
   # Deliberately unfiltered. The job is ~14s, so a paths filter saves nothing and

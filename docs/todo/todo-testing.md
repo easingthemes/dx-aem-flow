@@ -76,12 +76,35 @@ removed/rewritten so it no longer references a non-existent runner.
 against `plugins/dx-automation/evals/`; alternative is deletion, which also drops
 the skill count by one. Related to the "Automation Eval" item below.
 
+**Done 2026-10-15 — removed, not retargeted.**
+- Retargeting needs something to run. `plugins/dx-automation/evals/` does not exist, and `claude plugin eval` scores a plugin's own suites (billed), not a consumer's pipeline agents. So the skill would have kept pointing at nothing.
+- The claimed `dor` / `pr-review` / `pr-answer` fixtures never shipped. The only real fixtures were `fixtures/discover/01–04`:
+  - tiers 0–2 are deterministic and already exercised by `plugins/dx-hub/skills/dx-discover-repos/tests/run-tests.sh` (CI, 19 cases);
+  - `04-llm-inference` only documented an expected alias set for the LLM tier, and is dropped with the skill.
+- Removed: the skill directory, plus the references in:
+  - `website/src/pages/reference/{commands,skills}.mdx` and `architecture/automation.mdx`;
+  - `docs/reference/skill-catalog.md` and `plugins/dx-automation/README.md`;
+  - the consumer templates `dx-automation-flow.md`, `runbook.md` (its `node .ai/automation/eval/run.js` line) and `testing.md`;
+  - `dx-eject`'s count;
+  - stats.ts (77→76, dx-automation 11→10).
+- Checks: `validate-stats.sh` passes, and the website builds.
+- If pipeline-agent evals come back, they belong in `plugins/dx-automation/evals/` as `claude plugin eval` cases (#173), not in a skill.
+- Same commit `1800b25` also deleted the rest of `data/eval/` (`capture-fixture.js`, `process-dlq.js`, `gates.js`, `judge.js`, …) and the eval pipeline. The leftover references to it are cleaned up here too:
+  - `/auto-test --capture` (named by the skill, no longer exists);
+  - `node .ai/automation/eval/process-dlq.js` in `runbook.md.template` → a direct `aws sqs get-queue-attributes` on the DLQ URL from `infra.json` (not `/auto-status`, which is broken the same way: #251);
+  - the deleted eval pipeline in `auto-pipelines`, and `agents/lib/` + `eval/` in `dx-eject`'s tree;
+  - "eval framework" in what `auto-init` / `dx-init` say they copy;
+  - the "Eval" consumer pipeline in `dx-automation-flow.md.template`;
+  - "eval validates automatically" in the runbook.
+- `git log` shows the discover fixtures were added to `auto-eval` on 2026-06-12 (#170), three months after its runner was deleted (2026-03-22), and nothing ever ran them through `/auto-eval`.
+
 ## Layer 2: Skill Triggering Evals
 
 **Added:** 2026-03-21
 **Problem:** No automated way to verify that natural language prompts or explicit `/dx-*` invocations trigger the correct skill. Skill description changes can silently break triggering.
 **Scope:** ~~New `tests/` directory at repo root~~ → **superseded 2026-08-15**: routing cases go in `plugins/<plugin>/evals/` alongside the outcome cases, using `claude plugin eval`. No bash harness needed.
 **Done-when:** A routing case exists whose grader is `type: tool_used, tool: Skill, input_match: '"skill"\s*:\s*"(?:[\w-]+:)?<name>"'`, and it passes for the intended skill. Verified empirically 2026-08-15 that the trace carries `{"skill":"dx-core:dx-pr-review"}` in exactly that shape.
+**Done 2026-10-16:** `plugins/dx-core/evals/routing/` — 14 cases, 13 pass 2/2 for their intended skill on sonnet 5.5 (main and #225). `pr-review` fails on both refs (the bundled `code-review` wins). Run is billed and manual; not in CI.
 **Note on scoring:** under `--ablation with-without`, `tool_used` graders on `Skill` are **excluded from the score in both arms** (the baseline can never fire a skill, so scoring it would rig the delta). Routing cases therefore need `--ablation none`, or a non-routing grader alongside.
 **Approach:**
 - [ ] Create `tests/` directory with bash test helpers
