@@ -89,7 +89,7 @@ This is the same question from Phase 0 step 3. If already answered there, use th
 **Question 5 — Enable all agents, or customize?**
 > **Which agents to enable?** Each project is self-contained — it owns its own AWS infrastructure and pipeline agents. You can enable all agents or pick the ones you need.
 >
-> 1. **All agents** (default) — DoR, DoD, DoD Fix, PR Review, PR Answer, BugFix, QA, DevAgent, DOCAgent, Estimation, Eval, SimpleAgent
+> 1. **All agents** (default) — DoR, DoD, DoD Fix, PR Review, PR Answer, BugFix, QA, DevAgent, DOCAgent, Estimation, SimpleAgent
 > 2. **Customize** — pick individual agents
 
 **If user chose customize, show the agent list:**
@@ -97,15 +97,14 @@ This is the same question from Phase 0 step 3. If already answered there, use th
 >
 > 1. **PR Review** — reviews PRs via build validation (no Lambda)
 > 2. **PR Answer** — responds to PR comments (needs PR-Router Lambda)
-> 3. **Eval** — quality gates on `.ai/` changes (no Lambda)
-> 4. **DoR** — Definition of Ready check on tagged work items
-> 5. **DoD** — Definition of Done check on tagged work items
-> 6. **DoD Fix** — auto-fixes DoD failures (cross-repo aware)
-> 7. **BugFix** — triages and fixes Bugs (cross-repo aware)
-> 8. **QA** — browser-based AEM verification
-> 9. **DevAgent** — full autonomous development (cross-repo, Figma support)
-> 10. **DOCAgent** — wiki docs + AEM demo pages
-> 11. **Estimation** — auto-estimates story points
+> 3. **DoR** — Definition of Ready check on tagged work items
+> 4. **DoD** — Definition of Done check on tagged work items
+> 5. **DoD Fix** — auto-fixes DoD failures (cross-repo aware)
+> 6. **BugFix** — triages and fixes Bugs (cross-repo aware)
+> 7. **QA** — browser-based AEM verification
+> 8. **DevAgent** — full autonomous development (cross-repo, Figma support)
+> 9. **DOCAgent** — wiki docs + AEM demo pages
+> 10. **Estimation** — auto-estimates story points
 
 Resolve the chosen selection into a list of enabled agents. Save `automationProfile: "per-project"` in infra.json alongside the enabled agents list.
 
