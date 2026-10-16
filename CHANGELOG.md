@@ -1,3 +1,10 @@
+# [3.10.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.9.1...v3.10.0) (2026-10-16)
+
+
+### Features
+
+* **dx-aem:** point AEMaaCS users at Adobe's hosted AEM MCP during aem-init ([#228](https://github.com/easingthemes/dx-aem-flow/issues/228)) ([12ff1cc](https://github.com/easingthemes/dx-aem-flow/commit/12ff1cc889320b07f3e09353d136a38d87a47a86)), closes [#127](https://github.com/easingthemes/dx-aem-flow/issues/127) [#235](https://github.com/easingthemes/dx-aem-flow/issues/235)
+
 ## [3.9.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.9.0...v3.9.1) (2026-10-16)
 
 
