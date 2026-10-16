@@ -147,3 +147,18 @@ belongs to which platform rather than offering one list for both. Found by the
 **Scope:** `plugins/dx-core/data/lib/fetch-raw-story.js` (+ `fetch-raw-story.test.js`), `plugins/dx-core/skills/dx-req/SKILL.md` (Auth note, line ~122), optionally `plugins/dx-core/skills/dx-init/SKILL.md` and `cli/lib/scaffold.js` (`.mcp.json` ADO entry). Research: `docs/research/2026-10-15-ado-mcp-auth-reuse.md`.
 **Done-when:** Running `node .ai/lib/fetch-raw-story.js <org> <project> <id>` twice in a row on a dev machine without `az` opens the browser at most once; `grep -n "reused — no second prompt" plugins/dx-core/skills/dx-req/SKILL.md` returns nothing; `node --test plugins/dx-core/data/lib/` passes.
 **Approach:** Pick after a hands-on test: A) shared local ADO MCP daemon with idle timeout (recommended), B) own PKCE login + refresh-token cache with `--authentication envvar`, C) PAT opt-in. Details and trade-offs in the research doc.
+
+## `dx-estimate` batch mode blocked by `disable-model-invocation`
+
+**Added:** 2026-10-15
+**Problem:** `plugins/dx-core/skills/dx-estimate/SKILL.md` sets `disable-model-invocation: true`, and its batch mode (several IDs) dispatches one subagent per ID with the prompt `Run /dx-estimate <id>`. Claude Code 2.1.301 refuses every Skill-tool call to a dmi skill from the model or a subagent: "cannot be used with Skill tool due to disable-model-invocation … Do not replicate this skill's workflow by other means". A subagent prompt that starts with `/dx-estimate` is not expanded either. Both cases were reproduced against a local stub model on 2026-10-15 (`docs/research/2026-10-15-skill-listing-budget.md` §3). So batch estimation cannot work. The single-ID path the Estimation pipeline uses (`-p "/dx-estimate <id>"`) does expand and works.
+**Scope:** `plugins/dx-core/skills/dx-estimate/SKILL.md` (batch section, frontmatter).
+**Done-when:** with a stub model, a batch run's subagents receive the per-ID procedure (no `disable-model-invocation` tool error in any tool result), and the single-ID `-p` path still expands.
+**Approach:** (a) drop `disable-model-invocation` and rely on the skill's own confirm-before-post step; or (b) move the per-ID procedure to `references/single.md` and have batch subagents `Read` it. (b) keeps the guard against unprompted estimation.
+
+**Done 2026-10-16 — batch mode removed.** Neither (a) nor (b): batch estimation is not needed for now.
+- `dx-estimate` takes one work item ID. If given several, it estimates the first and tells the user to run `/dx-estimate <id>` per remaining story.
+- Removed: the "Single or batch?" and "Batch Mode" sections, the batch example, and the batch wording in `description`, `argument-hint` and `docs/reference/skill-catalog.md`.
+- `disable-model-invocation` stays, so an estimate is posted only when a person types `/dx-estimate` or the Estimation pipeline runs `-p "/dx-estimate <id>"`. That path was verified to expand a dmi skill.
+- If batch comes back, use approach (b) — subagents `Read` a references file — not a Skill call.
+
