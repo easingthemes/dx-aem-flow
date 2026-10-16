@@ -156,3 +156,9 @@ belongs to which platform rather than offering one list for both. Found by the
 **Done-when:** with a stub model, a batch run's subagents receive the per-ID procedure (no `disable-model-invocation` tool error in any tool result), and the single-ID `-p` path still expands.
 **Approach:** (a) drop `disable-model-invocation` and rely on the skill's own confirm-before-post step; or (b) move the per-ID procedure to `references/single.md` and have batch subagents `Read` it. (b) keeps the guard against unprompted estimation.
 
+**Done 2026-10-16 — batch mode removed.** Neither (a) nor (b): batch estimation is not needed for now.
+- `dx-estimate` takes one work item ID. If given several, it estimates the first and tells the user to run `/dx-estimate <id>` per remaining story.
+- Removed: the "Single or batch?" and "Batch Mode" sections, the batch example, and the batch wording in `description`, `argument-hint` and `docs/reference/skill-catalog.md`.
+- `disable-model-invocation` stays, so an estimate is posted only when a person types `/dx-estimate` or the Estimation pipeline runs `-p "/dx-estimate <id>"`. That path was verified to expand a dmi skill.
+- If batch comes back, use approach (b) — subagents `Read` a references file — not a Skill call.
+
