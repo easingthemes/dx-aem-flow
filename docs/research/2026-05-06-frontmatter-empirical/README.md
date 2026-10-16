@@ -36,8 +36,9 @@ We change *only* the `allowed-tools:` line on 4 probe skills, run each probe, co
 - **Copilot CLI v1.0.40+ env vars** must be exported in the shell that runs `copilot`:
 
   ```bash
-  export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1
-  export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1
+  # value must be "true" — Copilot ignores =1 (TODO #249)
+  export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true
+  export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true
   ```
 
   Without these, repo-level skills and `.mcp.json` are silently ignored — the test will appear to fail for unrelated reasons.

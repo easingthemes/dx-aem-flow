@@ -63,9 +63,9 @@ import { stats } from '../../config/stats';
     Starting in <strong>Copilot CLI v1.0.40</strong> (2026-05-01), repo-level hooks
     (<code>.github/hooks/hooks.json</code>) and workspace MCP (<code>.mcp.json</code>) are gated behind
     two opt-in environment variables. Without them, our plugin hooks and ADO/Atlassian MCP servers
-    will silently not load. Add to your shell profile:
-    <pre class="mt-2 p-2 bg-gray-900 text-white rounded text-xs"><code>export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1
-export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code></pre>
+    will silently not load in <code>copilot -p</code> runs outside a trusted folder. The value must be <code>true</code> — Copilot ignores <code>1</code>. Add to your shell profile:
+    <pre class="mt-2 p-2 bg-gray-900 text-white rounded text-xs"><code>export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true
+export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code></pre>
   </HighlightBox>
 
   <HighlightBox severity="success" title="Project .mcp.json Auto-Loaded (v1.0.12+)">
@@ -73,7 +73,7 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code></pre>
     project root automatically — same as Claude Code. The legacy workaround
     (<code>--additional-mcp-config</code> or a global <code>{"~"}/.copilot/mcp-config.json</code>) is
     no longer required for project-specific servers like ADO. On v1.0.40+, also export
-    <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code> as shown above.
+    <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code> as shown above.
   </HighlightBox>
 
   <p class="text-sm text-gray-300 mt-4">
@@ -153,8 +153,8 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=1</code></pre>
     <ContentCard icon="mdi:shield-lock-outline" iconColor="bg-red-600" title="Prompt-Mode Gates (v1.0.40)">
       Repo hooks and workspace MCP now require explicit opt-in env vars
       (<code>GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS</code>,
-      <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP</code>). Without them, plugin hooks and project
-      <code>.mcp.json</code> are silently ignored. <strong>Action required:</strong> see callout above.
+      <code>GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP</code>, value <code>true</code>). Without them, <code>copilot -p</code> runs
+      outside a trusted folder silently ignore repo hooks and project <code>.mcp.json</code>. <strong>Action required:</strong> see callout above.
     </ContentCard>
     <ContentCard icon="mdi:lock-check-outline" iconColor="bg-emerald-600" title="Persisted Permissions Default (v1.0.37)">
       Location-based permission persistence is now on by default — approvals carry across sessions for
