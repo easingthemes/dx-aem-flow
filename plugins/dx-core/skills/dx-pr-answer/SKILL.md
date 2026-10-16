@@ -1,6 +1,6 @@
 ---
 name: dx-pr-answer
-description: "Answer open comments on your ADO PRs — research context, draft and post replies, apply reviewer patches. Not for reviewing a PR (dx-pr-review) or creating/pushing one (dx-pr, dx-pr-commit)."
+description: "Answer open comments on your PRs in the configured SCM — draft and post replies, apply reviewer patches. Not for reviewing a PR (dx-pr-review) or creating/pushing one (dx-pr, dx-pr-commit)."
 argument-hint: "[PR URL | count]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---

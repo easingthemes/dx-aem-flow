@@ -1,6 +1,6 @@
 ---
 name: dx-pr-commit
-description: "Commit changes (work item ID in the message, rebase onto base) and optionally open an ADO PR. Use for 'commit', 'push', 'create PR' instead of gh or manual git. Not for reviews (dx-pr-review) or replies (dx-pr-answer); the end-of-plan PR is dx-pr."
+description: "Commit changes (work item ID in the message, rebase onto base) and optionally open a PR in the configured SCM. Use for 'commit', 'push', 'create PR'. Not for reviews (dx-pr-review) or replies (dx-pr-answer); the end-of-plan PR is dx-pr."
 argument-hint: "[optional: commit message or 'pr' to also create PR]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]

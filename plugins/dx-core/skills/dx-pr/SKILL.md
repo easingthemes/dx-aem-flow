@@ -1,6 +1,6 @@
 ---
 name: dx-pr
-description: "Create the PR when all plan steps are done — check the steps, write the description from share-plan.md, push, open via ADO. Not for staging or committing (dx-pr-commit), reviews (dx-pr-review) or replies (dx-pr-answer)."
+description: "Create the PR when all plan steps are done — write the description from share-plan.md, push, open it in the configured SCM. Not for staging or committing (dx-pr-commit), reviews (dx-pr-review) or replies (dx-pr-answer)."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
