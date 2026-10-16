@@ -1,7 +1,6 @@
 ---
 name: aem-editorial-guide
-description: Capture editorial guide for a component dialog in AEM — open editor, screenshot dialog, and write editor-friendly authoring guide. Use after /aem-verify or deploying changes to create editorial documentation.
-when_to_use: "Use after deploying AEM component changes to document dialog fields, when the user says 'create authoring guide', 'document the dialog', 'capture editorial guide', or 'what fields does this dialog have'."
+description: "Capture an editorial guide for a component dialog in AEM — open the editor, screenshot the dialog, write an author-friendly guide. Use for 'document the dialog', 'create authoring guide'."
 argument-hint: "[component-name] (e.g., hero, card, banner)"
 context: fork
 agent: aem-editorial-guide-capture
