@@ -1,3 +1,10 @@
+# [3.8.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.8...v3.8.0) (2026-10-16)
+
+
+### Features
+
+* **skills:** fit the skill listing in the 5.5 budget — dmi on admin skills, one-field descriptions ([#225](https://github.com/easingthemes/dx-aem-flow/issues/225)) ([9dee989](https://github.com/easingthemes/dx-aem-flow/commit/9dee98963bbf3a0c3410937a613775de8d9738b6)), closes [#250](https://github.com/easingthemes/dx-aem-flow/issues/250) [#1](https://github.com/easingthemes/dx-aem-flow/issues/1) [#105](https://github.com/easingthemes/dx-aem-flow/issues/105)
+
 ## [3.7.8](https://github.com/easingthemes/dx-aem-flow/compare/v3.7.7...v3.7.8) (2026-10-16)
 
 
