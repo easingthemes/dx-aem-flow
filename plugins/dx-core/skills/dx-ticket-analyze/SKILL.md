@@ -1,6 +1,6 @@
 ---
 name: dx-ticket-analyze
-description: "Research an ADO/Jira ticket and list the source files and assets it involves. Use when given a ticket URL and asked 'what files does this touch?'."
+description: "Research an ADO/Jira ticket and list the source files and assets it involves. Use for 'analyze ticket', 'what files does this touch?', 'find files for this story'."
 argument-hint: "[ADO URL, Jira URL, work item ID, or issue key]"
 model: haiku
 effort: low

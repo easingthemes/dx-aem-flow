@@ -1,6 +1,6 @@
 ---
 name: dx-doc-gen
-description: "Generate wiki docs from completed spec files — decisions, usage, API changes — and post to ADO Wiki or Confluence. Final step after implementation; used by /dx-agent-all Phase 7 and /dx-req-dod."
+description: "Generate wiki docs from completed spec files — decisions, usage, API changes — and post to ADO Wiki or Confluence. Final step after implementation; used by /dx-agent-all Phase 7 and /dx-req-dod. For a done story without spec files, the user runs /dx-doc-retro."
 argument-hint: "[ADO Work Item ID (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/*"]
 ---
@@ -43,7 +43,7 @@ Read these files from `$SPEC_DIR` (all optional — generate from what's availab
 - `aem-after.md` — post-deployment component state (produced by `/aem-verify`)
 - `qa-handoff.md` — QA testing steps with page URLs (produced by `/aem-qa-handoff`)
 
-If none exist (excluding authoring-guide.md), print "No spec files found — nothing to generate from" and STOP.
+If none exist (excluding authoring-guide.md), print "No spec files found — nothing to generate from. For a story finished without dx spec files, run `/dx-doc-retro <id>`." and STOP.
 
 ## 3. Determine Sprint
 
@@ -279,7 +279,7 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 
 - **"No spec files found — nothing to generate from"**
   **Cause:** The spec directory exists but contains no recognized files (explain.md, implement.md, etc.).
-  **Fix:** Run the requirements and planning pipeline first (`/dx-req <id>` or `/dx-plan <id>`). Even `raw-story.md` alone is enough for a basic page.
+  **Fix:** Run the requirements and planning pipeline first (`/dx-req <id>` or `/dx-plan <id>`). Even `raw-story.md` alone is enough for a basic page. For a story that was finished without dx, use `/dx-doc-retro <id>` instead.
 
 - **"docs/wiki-page.md already up to date — skipping"**
   **Cause:** The wiki page was already generated and the source files haven't changed.

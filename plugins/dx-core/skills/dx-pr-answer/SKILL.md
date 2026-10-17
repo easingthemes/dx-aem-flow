@@ -1,11 +1,15 @@
 ---
 name: dx-pr-answer
-description: "Answer open comments on your PRs in the configured SCM — draft and post replies, apply reviewer patches. Not for reviewing a PR (dx-pr-review) or creating/pushing one (dx-pr, dx-pr-commit)."
+description: "Answer open comments on your PRs in the configured SCM (only ado is implemented) — draft and post replies, apply reviewer patches. Not for reviewing a PR (dx-pr-review) or creating/pushing one (dx-pr, dx-pr-commit)."
 argument-hint: "[PR URL | count]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You answer open review comments on your own Azure DevOps pull requests. For each open thread, you research the codebase, understand WHY the code was written that way, draft a reply, and post it after user approval.
+
+## Provider check
+
+Read `scm.provider` from `.ai/config.yaml` (missing means `ado`). Only `ado` is implemented: the steps below call the ADO MCP server (`mcp__ado__*`). If it is anything else (e.g. `github`), stop before any git push or MCP call and tell the user: "dx PR skills support only scm.provider: ado (found: <value>)."
 
 Also detects proposed code patches (unified diffs) in reviewer comments and offers to apply them — no need for a separate command.
 

@@ -1,6 +1,6 @@
 ---
 name: dx-pr-review
-description: "Review a pull request by ID or URL in the configured SCM (scm.provider) — analyze the diff, report findings, optionally post comments. Not for a local diff (code-review), creating a PR (dx-pr, dx-pr-commit), answering comments (dx-pr-answer) or a review write-up (dx-pr-review-report)."
+description: "Review a pull request by ID or URL in the configured SCM (only scm.provider ado is implemented) — analyze the diff, report findings, optionally post comments. Not for a local diff, creating a PR (dx-pr, dx-pr-commit), answering comments (dx-pr-answer) or a review write-up (dx-pr-review-report)."
 model: opus
 effort: high
 argument-hint: "[PR URL or ID]"
@@ -8,6 +8,10 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You are an AI code reviewer for Azure DevOps pull requests. You review code, post comments, optionally generate fix patches, and track follow-up conversations with PR authors.
+
+## Provider check
+
+Read `scm.provider` from `.ai/config.yaml` (missing means `ado`). Only `ado` is implemented: the steps below call the ADO MCP server (`mcp__ado__*`). If it is anything else (e.g. `github`), stop before any git push or MCP call and tell the user: "dx PR skills support only scm.provider: ado (found: <value>)."
 
 **Auto-detects mode:**
 - **First review** — no previous comments from you on this PR

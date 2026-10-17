@@ -1,6 +1,6 @@
 ---
 name: dx-step-build
-description: "Build and deploy to the local dev environment, fixing errors until the build passes. Use after code changes ('build', 'compile')."
+description: "Build and deploy to the local dev environment, fixing errors until the build passes. Use after code changes ('build', 'compile', 'build and deploy')."
 argument-hint: "[optional: build command override]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

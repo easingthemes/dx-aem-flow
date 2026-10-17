@@ -562,6 +562,7 @@ listing); coordinators and init/upgrade skills are the obvious candidates. Docum
   - Live: 57 of 57 sent with full text on the 5.5 models.
   - The ≤2k-tok target is not met (~3k tok; a 200k model still keeps only 5 of 57). Routing eval (#168) not run.
 - **2026-10-16 (review fixes):** routing eval run (approved, ≈$7.26 total): no regression, 13/14 on both refs; `pr-review` loses to the bundled `code-review` on both. Check 12 added: a model-invocable description may name a dmi skill only as `/name`, so the model is not routed to a skill it cannot call. #250 closed by dropping `dx-estimate` batch mode. **Done-when still open:** the ≤2k-tok target (~3k now).
+- **2026-10-17 (post-merge review):** put back trigger phrases the trim dropped (`dx-ticket-analyze` 'analyze ticket', `dx-plan-validate` 'validate plan', `dx-plan-resolve`, `dx-step-build`, 'open PR' in `dx-pr-commit`); the four PR skills say only `ado` is implemented and stop on another `scm.provider`; `dx-doc-gen` points at `/dx-doc-retro`. Listing +303 chars (baseline 11,973). Not re-run: the routing eval (billed).
 
 ## 19. Lint for reasoning-echo instructions
 
