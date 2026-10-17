@@ -270,3 +270,11 @@ count, plus a ratchet: record today's 11 as the baseline and error only when the
 number goes up. That keeps #108/#113 as planned work instead of turning them into a
 merge blocker. Count body lines, not file lines — frontmatter does not count against
 the threshold.
+
+## Eval coverage gaps left by /auto-eval and the routing suite
+
+**Added:** 2026-10-17
+**Problem:** Two behavioral checks have no working coverage. (1) Discover-repos tier-3 (LLM inference of target repos) lost its only written expectation when `/auto-eval` was removed (#229); `dx-discover-repos/tests/run-tests.sh` covers tiers 0–2 only. (2) The routing suite's "no skill" grader (`min: 0 / max: 0`) has only ever passed, so it is unproven per CLAUDE.md's "sanity-check every suite against a known-bad input".
+**Scope:** `plugins/dx-hub/evals/` (new), `plugins/dx-core/evals/routing/` (README + one known-bad run), the fixture at `git show 1f7480c^:plugins/dx-automation/skills/auto-eval/fixtures/discover/04-llm-inference.json`.
+**Done-when:** `ls plugins/dx-hub/evals/*/eval.yaml` lists a discover tier-3 case, and `plugins/dx-core/evals/routing/README.md` records one run where a no-skill case failed on a prompt that does route.
+**Approach:** Billed (`claude plugin eval`), so run with `--runs 1 --max-cost-usd` after approval.

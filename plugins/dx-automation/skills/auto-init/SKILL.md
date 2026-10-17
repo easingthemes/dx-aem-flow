@@ -104,6 +104,7 @@ This is the same question from Phase 0 step 3. If already answered there, use th
 > 8. **DevAgent** — full autonomous development (cross-repo, Figma support)
 > 9. **DOCAgent** — wiki docs + AEM demo pages
 > 10. **Estimation** — auto-estimates story points
+> 11. **SimpleAgent** — small AEM changes from an `@kai-simple` comment (no Lambda)
 
 Resolve the chosen selection into a list of enabled agents. Save `automationProfile: "per-project"` in infra.json alongside the enabled agents list.
 
@@ -337,7 +338,7 @@ Run these skills in order to complete the setup:
 
 ### Verify anytime
 - `/auto-doctor` — Health check (files, ADO pipelines, Lambda functions)
-- `/auto-status` — DLQ depth, token budget, rate limits
+- `/auto-status` — DLQ depth, token budget, rate limits (**currently broken**, TODO #251: until it is fixed, check the DLQ with `aws sqs get-queue-attributes`, as in the runbook)
 ```
 
 

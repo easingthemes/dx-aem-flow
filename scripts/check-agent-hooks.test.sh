@@ -41,7 +41,7 @@ A="$TMP/r/plugins/dx-core/templates/agents"
 fresh; expect 0 "clean templates pass"
 fresh; node -e 'const f=process.argv[1],fs=require("fs");let s=fs.readFileSync(f,"utf8");s=s.replace(/\nhooks:\n[\s\S]*?\n---\n/,"\n---\n");fs.writeFileSync(f,s)' "$A/DxCommit.agent.md.template"
 expect 1 "shell agent (runCommands) without the guard"
-fresh; sed -i 's/main|master|develop|development/main|master/' "$A/DxPRFix.agent.md.template"; expect 1 "guard drifted from the canonical block"
+fresh; node -e 'const f=process.argv[1],fs=require("fs");fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace("main|master|develop|development","main|master"))' "$A/DxPRFix.agent.md.template"; expect 1 "guard drifted from the canonical block"
 fresh; node -e 'const f=process.argv[1],fs=require("fs");let s=fs.readFileSync(f,"utf8");s=s.replace(/\nhooks:\n[\s\S]*?\n---\n/,"\n---\n");fs.writeFileSync(f,s)' "$A/DxPlanExecutor.agent.md.template"
 expect 1 "agent with no tools: key (= every tool) without the guard"
 fresh; printf -- "---\nname: X\ndescription: x\ntools:\n  - read\n  - 'execute'\n---\nbody\n" > "$A/X.agent.md.template"; expect 1 "new agent granting 'execute' without the guard"
@@ -87,6 +87,18 @@ for r in "${runners[@]}"; do
   guard "$r" main Bash 'cd \"/repo\" && git commit -m x' deny "[$n] commit after a quoted cd denied"
   guard "$r" main Bash "git -C . commit -m x" deny "[$n] git -C . commit denied"
   guard "$r" main Bash "git status" allow "[$n] non-commit command on main allowed"
+  # Options and wrappers before `commit` (review of #222): each was allowed by the old matcher.
+  guard "$r" main Bash "git --no-pager commit -m x" deny "[$n] git --no-pager commit denied"
+  guard "$r" main Bash 'git -c \"user.name=A B\" commit -m x' deny "[$n] git -c with a quoted value denied"
+  guard "$r" main Bash 'git\tcommit -m x' deny "[$n] tab between git and commit denied"
+  guard "$r" main Bash "GIT_DIR=.git git commit -m x" deny "[$n] env assignment before git denied"
+  guard "$r" main Bash 'bash -c \"git commit -m x\"' deny "[$n] bash -c commit denied"
+  # Text that only mentions a commit (the old matcher denied these).
+  guard "$r" main Bash 'echo \"git commit\"' allow "[$n] echo of 'git commit' allowed"
+  guard "$r" main Bash 'grep -r \"git commit\" docs' allow "[$n] grep for 'git commit' allowed"
+  guard "$r" main Bash "git commit-tree abc" allow "[$n] git commit-tree allowed"
+  guard "$r" main Bash "legit commit" allow "[$n] legit commit allowed"
+  guard "$r" main Bash "GIT commit -m x" allow "[$n] both variants case-sensitive"
   guard "$r" main Edit "" allow "[$n] non-shell tool allowed"
 done
 
