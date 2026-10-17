@@ -1,12 +1,16 @@
 ---
 name: dx-pr-commit
-description: "Commit changes (work item ID in the message, rebase onto base) and optionally open a PR in the configured SCM. Use for 'commit', 'push', 'create PR'. Not for reviews (dx-pr-review) or replies (dx-pr-answer); the end-of-plan PR is dx-pr."
+description: "Commit changes (work item ID in the message, rebase onto base) and optionally open a PR in the configured SCM (only ado is implemented). Use for 'commit', 'push', 'open PR', 'create PR'. Not for reviews (dx-pr-review) or replies (dx-pr-answer); the end-of-plan PR is dx-pr."
 argument-hint: "[optional: commit message or 'pr' to also create PR]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You handle git commits and Azure DevOps pull requests.
+
+## Provider check
+
+Read `scm.provider` from `.ai/config.yaml` (missing means `ado`). Only `ado` is implemented: the steps below call the ADO MCP server (`mcp__ado__*`). If it is anything else (e.g. `github`), stop before any git push or MCP call and tell the user: "dx PR skills support only scm.provider: ado (found: <value>)."
 
 ## Output discipline
 

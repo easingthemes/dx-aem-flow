@@ -1,6 +1,6 @@
 ---
 name: dx-plan-resolve
-description: "Resolve risks flagged by /dx-plan-validate — research the codebase and update implement.md steps with concrete fixes."
+description: "Resolve risks flagged by /dx-plan-validate — research the codebase and update implement.md steps with concrete fixes. Use for 'resolve plan issues', 'fix plan risks'."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]

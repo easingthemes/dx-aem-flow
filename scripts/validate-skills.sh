@@ -129,9 +129,10 @@ DESC_AWK='
 # from the listing. TODO #238.
 LISTING_ENTRY_CAP=1536
 LISTING_BUDGET_200K=8000
-# Measured 2026-10-16 after the #238 trim: 57 model-invocable skills (was 36,795 / 73). Lower it when descriptions shrink;
-# raise it only for a deliberate addition (+2 on 2026-10-16: "/" before two dmi skill names, check 12).
-LISTING_BASELINE=${LISTING_BASELINE:-12131}
+# Measured 2026-10-17: 56 model-invocable skills (36,795 / 73 before #238). Lower it in the same PR that shrinks
+# the listing; raise it only for a deliberate addition. 11,670 after /auto-eval was removed, +303 on 2026-10-17:
+# trigger phrases the #238 trim dropped ('analyze ticket', 'validate plan', 'open PR', ...) and the scm.provider note.
+LISTING_BASELINE=${LISTING_BASELINE:-11973}
 LISTING_CHARS=0
 LISTING_SKILLS=0
 WTU_AWK="${DESC_AWK//description/when_to_use}"
