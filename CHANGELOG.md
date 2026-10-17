@@ -1,3 +1,10 @@
+## [3.10.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.0...v3.10.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **skills:** restore dropped trigger phrases; PR skills stop on a non-ado scm.provider ([#232](https://github.com/easingthemes/dx-aem-flow/issues/232)) ([0a777d4](https://github.com/easingthemes/dx-aem-flow/commit/0a777d4df984b261aeb260e5ac4a96643ba78ec8))
+
 # [3.10.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.9.1...v3.10.0) (2026-10-16)
 
 
