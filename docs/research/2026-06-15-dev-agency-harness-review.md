@@ -262,7 +262,7 @@ PR #173 closed 6 open TODOs (#34, #97, #98, #104, #105, #133). Changes verified 
 | TODO | Change | Verified |
 |------|--------|---------|
 | #34 | `validate-plugin-edit.sh` uses exit 2; removed `|| true` fallback in hooks.json | ✓ |
-| #97/#98 | `dx-init/SKILL.md` exports both `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` and `WORKSPACE_MCP=1` with idempotent `grep -q` guard | ✓ |
+| #97/#98 | `dx-init/SKILL.md` exports both `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=1` and `WORKSPACE_MCP=1` with idempotent `grep -q` guard | ✓ (superseded: `=1` never worked, the value must be `true` — TODO #249) |
 | #104 | `dx-req` and `dx-plan` check `orchestrating.flag` with 7200-second age gate | ✓ |
 | #105 | All 76 skills have `when_to_use:` frontmatter | ✓ |
 | #133 | `auto-init` is now per-project only (`automationProfile: "per-project"`); hub/consumer question removed | ✓ |

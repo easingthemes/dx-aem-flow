@@ -249,7 +249,7 @@ These are **informational warnings**, not blockers. The workaround still functio
 
 ### 6.5c. Copilot CLI v1.0.40+ prompt-mode env vars
 
-Skip if Copilot CLI is not installed (`which gh` fails or `gh copilot --version` errors).
+Skip if Copilot CLI is not installed (neither `command -v copilot` nor `gh copilot --version` succeeds).
 
 Check for the required env vars in the user's shell profile files (`~/.zshrc`, `~/.bashrc`, `~/.zprofile`):
 
@@ -263,8 +263,8 @@ Also check if they are currently set in the environment:
 ```bash
 [ "${GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS:-}" = true ] && HOOKS_ACTIVE=1 || HOOKS_ACTIVE=0
 [ "${GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP:-}" = true ] && MCP_ACTIVE=1 || MCP_ACTIVE=0
-WRONG_VALUE=$(grep -hE "^[[:space:]]*export GITHUB_COPILOT_PROMPT_MODE_(REPO_HOOKS|WORKSPACE_MCP)=" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null \
-  | tr -d '\r' | sed -E 's/[[:space:]]+#.*$//; s/[[:space:]]+$//' \
+WRONG_VALUE=$(grep -hE "^[[:space:]]*(export[[:space:]]+)?GITHUB_COPILOT_PROMPT_MODE_(REPO_HOOKS|WORKSPACE_MCP)=" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null \
+  | tr -d '\r' | sed -E 's/[[:space:]]+#.*$//; s/[[:space:]]*;[[:space:]]*$//; s/[[:space:]]+$//' \
   | grep -vE "=[\"']?true[\"']?$" | head -1)
 ```
 

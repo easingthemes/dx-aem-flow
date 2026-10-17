@@ -775,8 +775,11 @@ if [ -n "$SHELL_RC" ]; then
     # Rewrite every existing export (any of the files dx-doctor reads, indented too)
     for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
       [ -f "$rc" ] || continue
-      if grep -qE "^[[:space:]]*export $v=" "$rc"; then
-        sed -i.bak -E "s/^([[:space:]]*)export $v=.*/\\1export $v=true/" "$rc" && rm -f "$rc.bak"
+      if grep -qE "^[[:space:]]*(export[[:space:]]+)?$v=" "$rc"; then
+        # Write through `cat >` so a symlinked rc (dotfiles repo) keeps its link; `sed -i` would replace it.
+        sed -E "s/^([[:space:]]*)(export[[:space:]]+)?$v=.*/\\1export $v=true/" "$rc" > "$rc.dx-tmp" \
+          && cat "$rc.dx-tmp" > "$rc"
+        rm -f "$rc.dx-tmp"
         found=1
       fi
     done
@@ -786,7 +789,7 @@ if [ -n "$SHELL_RC" ]; then
 fi
 ```
 
-Only run this if Copilot CLI is installed (`which gh &>/dev/null && gh copilot --version &>/dev/null`). In `copilot -p` runs in an untrusted folder, without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` `.github/hooks/hooks.json` is silently ignored, and without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` project `.mcp.json` is silently ignored.
+Only run this if Copilot CLI is installed (`command -v copilot >/dev/null || gh copilot --version >/dev/null 2>&1` — the CLI ships as its own `copilot` binary; `gh copilot` is only a launcher). In `copilot -p` runs in an untrusted folder, without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` `.github/hooks/hooks.json` is silently ignored, and without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` project `.mcp.json` is silently ignored.
 
 ## 10. Confirm
 

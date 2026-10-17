@@ -153,7 +153,7 @@ belongs to which platform rather than offering one list for both. Found by the
 **Added:** 2026-10-15
 **Problem:** `plugins/dx-core/skills/dx-estimate/SKILL.md` sets `disable-model-invocation: true`, and its batch mode (several IDs) dispatches one subagent per ID with the prompt `Run /dx-estimate <id>`. Claude Code 2.1.301 refuses every Skill-tool call to a dmi skill from the model or a subagent: "cannot be used with Skill tool due to disable-model-invocation … Do not replicate this skill's workflow by other means". A subagent prompt that starts with `/dx-estimate` is not expanded either. Both cases were reproduced against a local stub model on 2026-10-15 (`docs/research/2026-10-15-skill-listing-budget.md` §3). So batch estimation cannot work. The single-ID path the Estimation pipeline uses (`-p "/dx-estimate <id>"`) does expand and works.
 **Scope:** `plugins/dx-core/skills/dx-estimate/SKILL.md` (batch section, frontmatter).
-**Done-when:** with a stub model, a batch run's subagents receive the per-ID procedure (no `disable-model-invocation` tool error in any tool result), and the single-ID `-p` path still expands.
+**Done-when:** `grep -c "There is no batch mode" plugins/dx-core/skills/dx-estimate/SKILL.md` → 1, and `grep -ci batch docs/reference/skill-catalog.md | grep dx-estimate` finds nothing. (Rewritten 2026-10-17: the original check assumed batch would be repaired; it was removed instead.)
 **Approach:** (a) drop `disable-model-invocation` and rely on the skill's own confirm-before-post step; or (b) move the per-ID procedure to `references/single.md` and have batch subagents `Read` it. (b) keeps the guard against unprompted estimation.
 
 **Done 2026-10-16 — batch mode removed.** Neither (a) nor (b): batch estimation is not needed for now.

@@ -72,7 +72,7 @@ Cost is real: agent runs are billed, `llm`/`baseline` graders add 3 judge calls 
 - **Sanity-check every suite against a known-bad input.** A green suite means either the skill is good or the grader is blind, and you can't tell which until something that should fail does. Each grader needs its own failing case; one scenario only exercises the graders it touches.
 - Run artifacts land in `plugins/*/evals/results/` and are gitignored.
 
-Current coverage is one suite (`dx-core/evals/plan-validate-finds-gap`) — see its README for a worked example, including a judge that passed a report its rubric said to fail.
+Current coverage is two suites in `dx-core/evals/`: `plan-validate-finds-gap` (see its README for a judge that passed a report its rubric said to fail) and `routing` (14 Skill-routing cases, `tool_used: Skill` graders; its no-skill grader has not yet been seen failing — TODO #252).
 
 ### Standalone CLI (`cli/`)
 
@@ -340,6 +340,7 @@ Full schema and compatibility matrix: see the docs site (`website/`) → "Plugin
 - Shell scripts are `chmod +x`
 - A new or longer model-invocable `description` grows the skill listing; `validate-skills.sh` check 11 fails past `LISTING_BASELINE`. Trim first. Raising the baseline is fine when the growth is deliberate — say why in the commit and the comment next to it. Do not reach for `disable-model-invocation` to make room unless nothing (skill, subagent, request) needs to reach that skill (TODO #238).
 - **Versioning is automated** — semantic-release bumps every version file on push to `main` based on conventional commit prefixes: all 4 plugin manifests (both `.claude-plugin` and `.cursor-plugin`), `gemini-extension.json`, `marketplace.json`, and the config template. The authoritative list lives in `scripts/bump-versions.sh` + `.releaserc`; `scripts/validate-structure.sh` enforces they stay in sync. Use `feat:` for minor, `fix:` for patch, `BREAKING CHANGE:` in body for major. `chore:`, `docs:`, `ci:` do not trigger releases. Do NOT manually edit version numbers.
+- In commit messages, write TODO numbers as `TODO-176`, never a bare `#176`: semantic-release links every `#N` in a commit as a GitHub issue in `CHANGELOG.md` (3.9.1 lists TODOs 176 and 249–251 as closed issues). `(#123)` PR suffixes added by the squash merge are fine.
 
 ### Superpowers Soft-Dependency Pattern
 

@@ -629,7 +629,7 @@ where `dx-automation` pipelines may run". #207 is Done, so nothing re-checks it.
 **Done-when:** `grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` hits a recommended settings block for pipeline hosts.
 **Approach:** Docs only; ship with #200.
 
-**Done 2026-10-15.** Shipped on its own, not with #200: it is a host setting, not a launcher change. `website/src/pages/costs.mdx` § "Pin Models and Effort on Pipeline Hosts" (`grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` → 6). Semantics are taken from the settings' descriptions in the v2.1.301 bundle. One trade-off is spelled out: with `exact`, a moved `opus` alias stops runs instead of switching silently. Not verified: a live Agent SDK run (`settingSources: ["user","project"]`) honouring the managed file; managed settings are documented to apply regardless.
+**Done 2026-10-15.** Shipped on its own, not with #200: it is a host setting, not a launcher change. `website/src/pages/costs.mdx` § "Pin Models and Effort on Pipeline Hosts" (`grep -rn "deniedModels\|availableModelsMatch\|allowedProviders" website/src` → 6). Semantics are taken from the settings' descriptions in the v2.1.301 bundle. Behaviour when the `opus` alias moves to an unlisted model (corrected 2026-10-17 from the v2.1.302 binary): a skill or agent alias steps down to the newest listed model in its family and the run continues; the Default option uses only a listed model, and Claude Code does not start if none can be used. Not verified: a live Agent SDK run (`settingSources: ["user","project"]`) honouring the managed file; managed settings are documented to apply regardless.
 
 ## `/doctor prompt-audit` for the concise-body audit
 

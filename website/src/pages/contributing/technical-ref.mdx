@@ -245,6 +245,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Files &amp; worktrees</td><td class="py-2 px-4"><code>FileChanged</code>, <code>WorktreeCreate</code>, <code>WorktreeRemove</code></td><td class="py-2 px-4">A file changes on disk, or a worktree is created/removed</td><td class="py-2 px-4">Re-index, workspace setup and teardown</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Context</td><td class="py-2 px-4"><code>PreCompact</code>, <code>PostCompact</code></td><td class="py-2 px-4">Immediately before and after compaction</td><td class="py-2 px-4">Preserve state across a compact</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Other</td><td class="py-2 px-4"><code>Elicitation</code>, <code>ElicitationResult</code>, <code>Notification</code></td><td class="py-2 px-4">Interactive elicitation, or a notification is raised</td><td class="py-2 px-4">Custom prompts, external alerting</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Model &amp; display</td><td class="py-2 px-4"><code>PreModelSwitch</code>, <code>PostModelSwitch</code>, <code>MessageDisplay</code></td><td class="py-2 px-4">Around a model switch (v2.1.251+); as assistant text is displayed</td><td class="py-2 px-4">Guard interactive model changes; transform or hide output</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Workspace</td><td class="py-2 px-4"><code>DirectoryAdded</code></td><td class="py-2 px-4">After <code>/add-dir</code> or SDK <code>register_repo_root</code></td><td class="py-2 px-4">Load per-repo setup</td></tr>
       </tbody>
     </table>
   </div>

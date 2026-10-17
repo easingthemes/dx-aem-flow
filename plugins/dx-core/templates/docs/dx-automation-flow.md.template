@@ -426,7 +426,7 @@ flowchart TD
 | Capability | Hub | Consumer |
 |-----------|-----|----------|
 | AWS resources (DynamoDB, SQS, S3, Lambda, API GW) | Creates and owns | Uses hub's |
-| Pipelines | 10 (all agents) | 5 (PR Review, PR Answer, DevAgent, BugFix, DoD-Fix) |
+| Pipelines | 12 (all agents + hub router) | 5 (PR Review, PR Answer, DevAgent, BugFix, DoD-Fix) |
 | WI service hooks | Creates (tag-filtered) | N/A (hub handles) |
 | PR Answer hook | Creates (repo-scoped) | Creates (points to hub's Lambda) |
 | PR Review policy | Creates | Creates |

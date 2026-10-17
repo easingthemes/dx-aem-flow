@@ -51,7 +51,8 @@ Present this warning and **wait for explicit confirmation**:
 ## ⚠ Eject Warning
 
 This will copy ALL assets from the following plugins into your repo:
-- dx-core (50 skills, 7 agents, 5 rules, shared files, data, templates)
+- dx-core (49 skills, 7 agents, 5 rules, shared files, data, templates)
+- dx-hub (5 skills, data, templates)
 - dx-aem (12 skills, 6 agents, shared files, templates)
 - dx-automation (10 skills, 1 rule, data files, templates)
 

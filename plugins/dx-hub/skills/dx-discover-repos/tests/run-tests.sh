@@ -6,7 +6,8 @@
 #   tier-0  parse-explicit-repos.sh   ("repos: a, b" after the @kai-<agent> tag)
 #   tier-1  route-targets.sh          (```simple``` block -> platform/brand/scope routing)
 #   tier-2  parse-crossrepo-table.sh  (## Cross-Repo Scope markdown table)
-# tier-3 (LLM) is covered by the dx-automation eval fixtures, not here.
+# tier-3 (LLM) has no automated coverage: its fixture went with /auto-eval
+# (git show 1f7480c^:plugins/dx-automation/skills/auto-eval/fixtures/discover/04-llm-inference.json); TODO #252.
 #
 # NOTE: -e is intentionally omitted — the run()/expect_exit() helpers capture
 # exit codes; with -e a failing test would abort the runner instead of being

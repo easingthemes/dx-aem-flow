@@ -225,11 +225,19 @@ import HighlightBox from '../components/HighlightBox.astro';
     into a <strong>self-hosted</strong> agent pool, or write it in a step before the agent step:
   </p>
   <pre class="mt-2 p-3 bg-gray-900 text-white rounded text-xs"><code>{`- bash: |
+    set -euo pipefail
+    # Fail the job instead of writing a broken file (an undefined variable stays as the literal text).
+    printf '%s' "$MANAGED_SETTINGS" | python3 -m json.tool >/dev/null
     sudo mkdir -p /etc/claude-code
-    echo "$MANAGED_SETTINGS" | sudo tee /etc/claude-code/managed-settings.json >/dev/null
+    printf '%s\\n' "$MANAGED_SETTINGS" | sudo tee /etc/claude-code/managed-settings.json >/dev/null
   displayName: Pin models (managed settings)
   env:
     MANAGED_SETTINGS: $(managedSettingsJson)`}</code></pre>
+  <p class="text-sm text-[#4a4a5a] mt-2">
+    Define <code>managedSettingsJson</code> as a pipeline (or variable-group) variable holding the JSON below
+    on one line. If it is missing, ADO passes the literal <code>$(managedSettingsJson)</code> and the
+    JSON check stops the job.
+  </p>
   <p class="text-sm text-[#4a4a5a] mt-2">Recommended content:</p>
   <pre class="mt-3 p-3 bg-gray-900 text-white rounded text-xs"><code>{`{
   "availableModels": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
@@ -241,10 +249,11 @@ import HighlightBox from '../components/HighlightBox.astro';
     <ContentCard icon="mdi:format-list-checks" iconColor="bg-brand-700" title="availableModels + availableModelsMatch">
       Allowlist of the model IDs the pool may use. With <code>"exact"</code> (v2.1.283+), an entry such as
       <code>claude-opus-5-5</code> no longer lets in a later release that extends the ID. A new model needs
-      a one-line change here, which is the point. If the <code>opus</code> alias moves to a model that is not
-      listed, the Default option falls back to a listed model and the run continues on it; Claude Code
-      refuses to start only when no listed model can be used. Haiku background/helper requests are not
-      restricted by this list. Bump the list when you upgrade.
+      a one-line change here, which is the point. A skill or agent with <code>model: opus</code> whose alias
+      now points at an unlisted model steps down to the newest <em>listed</em> model in that family, so the run
+      continues on a model you approved. The Default option uses only a listed model; if none can be used,
+      Claude Code does not start. Haiku background models and helper requests that pick their own model are
+      not restricted by this list (<code>deniedModels</code> covers them). Bump the list when you upgrade.
     </ContentCard>
     <ContentCard icon="mdi:cancel" iconColor="bg-red-500" title="deniedModels">
       Block a family alias (<code>"opus"</code>) or a version in every spelling, even when the allowlist

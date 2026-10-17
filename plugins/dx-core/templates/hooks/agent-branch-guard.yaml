@@ -2,7 +2,7 @@ hooks:
   PreToolUse:
     - type: command
       command: |
-        if cat | grep -Eq '"command" *: *"([^"\\]|\\.)*git( +-[cC] +[^ ]+)* +commit'; then
+        if cat | grep -Eq '"command" *: *"(([^"\\]|\\.)*([;&|(]|\\n|(ba|z)?sh( |\\t)+-c( |\\t)+\\"))?( |\\t)*((sudo|env|command|exec|nohup|time)( |\\t)+|[A-Za-z_][A-Za-z0-9_]*=[^ ;&|"\\]*( |\\t)+)*([^ ;&|"\\]*/)?git(( |\\t|\\\\\\n)+(-[cC]( |\\t)+(\\"([^"\\]|\\[^"])*\\"|[^ ;&|"\\]+)|--(git-dir|work-tree|namespace|exec-path|config-env)(=|( |\\t)+)(\\"([^"\\]|\\[^"])*\\"|[^ ;&|"\\]+)|-[A-Za-z]+|--[a-z-]+(=[^ ;&|"\\]*)?))*( |\\t|\\\\\\n)+commit( |\\|"|;|&|\||\))'; then
           B=$(git branch --show-current 2>/dev/null)
           case "$B" in main|master|develop|development)
             R="BLOCKED: Do not commit on $B. Create a feature/* or bugfix/* branch first."
@@ -12,7 +12,7 @@ hooks:
         exit 0
       windows: |
         $j = [Console]::In.ReadToEnd()
-        if ($j -match '"command"\s*:\s*"(?:[^"\\]|\\.)*git(?:\s+-[cC]\s+\S+)*\s+commit') {
+        if ($j -cmatch '"command" *: *"(([^"\\]|\\.)*([;&|(]|\\n|(ba|z)?sh( |\\t)+-c( |\\t)+\\"))?( |\\t)*((sudo|env|command|exec|nohup|time)( |\\t)+|[A-Za-z_][A-Za-z0-9_]*=[^ ;&|"\\]*( |\\t)+)*([^ ;&|"\\]*/)?git(( |\\t|\\\\\\n)+(-[cC]( |\\t)+(\\"([^"\\]|\\[^"])*\\"|[^ ;&|"\\]+)|--(git-dir|work-tree|namespace|exec-path|config-env)(=|( |\\t)+)(\\"([^"\\]|\\[^"])*\\"|[^ ;&|"\\]+)|-[A-Za-z]+|--[a-z-]+(=[^ ;&|"\\]*)?))*( |\\t|\\\\\\n)+commit( |\\|"|;|&|\||\))') {
           $b = git branch --show-current 2>$null
           if ($b -in 'main','master','develop','development') {
             $r = "BLOCKED: Do not commit on $b. Create a feature/* or bugfix/* branch first."

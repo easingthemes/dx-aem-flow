@@ -90,13 +90,15 @@ check_reasoning_echo() {
 # `bash x.sh`, so the guard never sees their `rm`. TODO #223.
 # Matches -rf/-fr/-r -f/--recursive, `--`, and a `$` anywhere in the target
 # (`./"$X"`, `.ai/specs/$ID`). A backtick counts only at the start of the
-# target, so markdown like `rm -rf state/<id>` is not a hit.
-RM_DYNAMIC='(^|[^[:alnum:]_.-])rm([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(["'"'"']?`|[^;&|[:space:]`]*\$)'
+# target, so markdown like `rm -rf state/<id>` is not a hit. Literal targets
+# may come first (`rm -rf a "$X"`). `git rm` only unstages/deletes tracked files
+# through git, which the guard does not prompt for.
+RM_DYNAMIC='(^|[^[:alnum:]_.-])rm([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(["'"'"']?`|([^;&|[:space:]`$]+[[:space:]]+)*[^;&|[:space:]`]*\$)'
 
 # check_rm_target <file> <rel-path> — one ERROR per offending line
 check_rm_target() {
   local hits
-  hits=$(grep -nE "$RM_DYNAMIC" "$1" || true)
+  hits=$(grep -nE "$RM_DYNAMIC" "$1" | grep -vE '^[0-9]+:.*git[[:space:]]+rm[[:space:]]' || true)
   [ -z "$hits" ] && return 0
   while IFS= read -r hit; do
     echo "ERROR: $2:${hit%%:*} — recursive rm on a variable/substitution target; name a literal path (stalls bypass-mode pipelines; see TODO #223)"
@@ -105,7 +107,8 @@ check_rm_target() {
 }
 
 # Extracts the full `description:` value from frontmatter — the line's own text
-# plus any indented continuation lines, block indicators dropped.
+# plus any indented continuation lines, block indicators dropped. A blank line
+# inside the block is a paragraph break ("\n"), not the end of the value.
 DESC_AWK='
   NR==1 && $0=="---" {fm=1; next}
   fm!=1 {next}
@@ -115,7 +118,8 @@ DESC_AWK='
     if (v ~ /^[|>][-+0-9]*$/) v=""
     out=v; c=1; next
   }
-  c && /^[ \t]/ { l=$0; sub(/^[ \t]+/, "", l); out=(out=="" ? l : out " " l); next }
+  c && /^[ \t]*$/ { gap=1; next }
+  c && /^[ \t]/ { l=$0; sub(/^[ \t]+/, "", l); out=(out=="" ? l : out (gap ? "\n" : " ") l); gap=0; next }
   c { exit }
   END { print out }
 '
@@ -205,7 +209,7 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   check_opus_effort "$skill_file" "$rel_path"
 
   # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)
-  if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -q '^disable-model-invocation:[[:space:]]*true'; then
+  if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)'; then
     listing_text=$(listing_value "$file_desc")
     file_wtu=$(awk "$WTU_AWK" "$skill_file")
     [ -n "$file_wtu" ] && listing_text="$listing_text - $(listing_value "$file_wtu")"
@@ -342,15 +346,15 @@ fi
 # as the user's slash command ("/dx-foo") instead. TODO #238.
 DMI_NAMES=""
 for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
-  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' \
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)' \
     && DMI_NAMES="$DMI_NAMES $(basename "$(dirname "$f")")"
 done
 for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
-  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -q '^disable-model-invocation:[[:space:]]*true' && continue
-  d=$(awk "$DESC_AWK" "$f")
+  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)' && continue
+  d="$(awk "$DESC_AWK" "$f") $(awk "$WTU_AWK" "$f")"
   for n in $DMI_NAMES; do
     if printf '%s' "$d" | grep -qE "(^|[^/[:alnum:]_-])$n([^[:alnum:]_-]|\$)"; then
-      echo "ERROR: ${f#"$REPO_ROOT"/} — description routes to $n, which has disable-model-invocation; write it as /$n (the user's command)"
+      echo "ERROR: ${f#"$REPO_ROOT"/} — description or when_to_use routes to $n, which has disable-model-invocation; write it as /$n (the user's command)"
       ERRORS=$((ERRORS + 1))
     fi
   done
@@ -364,6 +368,8 @@ if [ "$LISTING_CHARS" -gt "$LISTING_BASELINE" ]; then
   ERRORS=$((ERRORS + 1))
 elif [ "$LISTING_CHARS" -lt "$LISTING_BASELINE" ]; then
   echo "NOTE: skill listing is below the baseline — lower LISTING_BASELINE in scripts/validate-skills.sh to $LISTING_CHARS to lock the win in"
+  # Visible on the PR in CI: slack left here lets any description grow unnoticed.
+  [ -n "${GITHUB_ACTIONS:-}" ] && echo "::warning file=scripts/validate-skills.sh::Skill listing is $LISTING_CHARS chars, below LISTING_BASELINE $LISTING_BASELINE — lower the baseline in this PR"
 fi
 
 # Summary
