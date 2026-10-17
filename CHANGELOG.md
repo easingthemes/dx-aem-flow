@@ -1,3 +1,10 @@
+## [3.10.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.1...v3.10.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* post-merge review follow-ups for the Copilot guard, validators and docs ([#231](https://github.com/easingthemes/dx-aem-flow/issues/231)) ([fcd51e1](https://github.com/easingthemes/dx-aem-flow/commit/fcd51e1ee239a2e2c0585634e6403f1cfe54072a))
+
 ## [3.10.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.0...v3.10.1) (2026-10-17)
 
 
