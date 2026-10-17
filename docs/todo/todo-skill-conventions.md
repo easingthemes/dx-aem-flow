@@ -12,7 +12,7 @@ Each item is independent — adopt incrementally.
 
 ## 1. Adopt the dedicated `when_to_use` frontmatter field
 
-**Status: Superseded 2026-10-16 by § 18 (#238).** `when_to_use` was removed from every skill: Copilot ignores it, and it was 17.1k of the 36.8k-char listing. Its trigger phrases and negative clauses now live in `description`. Kept below for history.
+**Status: Superseded 2026-10-16 by § 18 (#238).** `when_to_use` was removed from the 56 model-invocable skills (the 20 `disable-model-invocation` skills still carry it, harmlessly — they are not in the listing): Copilot ignores it, and it was 17.1k of the 36.8k-char listing. Its trigger phrases and negative clauses now live in `description`. Kept below for history.
 
 **Added:** 2026-05-15
 **Problem:** Anthropic provides a dedicated `when_to_use` field separate from

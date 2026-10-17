@@ -6,6 +6,8 @@ argument-hint: ""
 disable-model-invocation: true
 ---
 
+> **Known broken (TODO #251):** the `node eval/*.js` scripts below were deleted in March 2026. Tell the user so, and for the DLQ run `aws sqs get-queue-attributes --queue-url "$(jq -r .storage.sqs.dlq.queueUrl .ai/automation/infra.json)" --attribute-names ApproximateNumberOfMessages` instead. Token and rate-limit numbers are unavailable until #251 lands.
+
 You display an operational dashboard showing current DLQ depth, token budget utilization, and rate limit usage. All commands are read-only — no mutations.
 
 ## 0. Prerequisites

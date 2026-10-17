@@ -46,7 +46,6 @@ if [ -n "$ALL_CHANGED" ]; then
       */stop-guard.sh|*/pre-review-checks.sh) continue ;;
       */runbook.md|*/pipeline-policy.yaml) continue ;;
       */auto-init/SKILL.md|*/auto-status/SKILL.md|*/auto-lambda-env/SKILL.md) continue ;;
-      */eval/cost-report.js|*/eval/process-dlq.js|*/eval/rate-limit-report.js) continue ;;
     esac
     # Check for common secret patterns
     if grep -qEi '(aws_secret_access_key|aws_access_key_id|PRIVATE.KEY|password\s*=\s*["\x27][^"\x27]+|api[_-]?key\s*=\s*["\x27][^"\x27]+|secret\s*=\s*["\x27][^"\x27]+|token\s*=\s*["\x27][a-zA-Z0-9]{20,})' "$file" 2>/dev/null; then
