@@ -1,11 +1,15 @@
 ---
 name: dx-pr
-description: "Create the PR when all plan steps are done — write the description from share-plan.md, push, open it in the configured SCM. Not for staging or committing (dx-pr-commit), reviews (dx-pr-review) or replies (dx-pr-answer)."
+description: "Create the PR when all plan steps are done — write the description from share-plan.md, push, open it in the configured SCM (only scm.provider ado is implemented). Not for staging or committing (dx-pr-commit), reviews (dx-pr-review) or replies (dx-pr-answer)."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*"]
 ---
 
 You create a pull request for the completed implementation.
+
+## Provider check
+
+Read `scm.provider` from `.ai/config.yaml` (missing means `ado`). Only `ado` is implemented: the steps below call the ADO MCP server (`mcp__ado__*`). If it is anything else (e.g. `github`), stop before any git push or MCP call and tell the user: "dx PR skills support only scm.provider: ado (found: <value>)."
 
 **Before anything else**, read these files:
 - `shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, PR creation, rebase)
