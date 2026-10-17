@@ -3,7 +3,7 @@
 ## Quick Health Check
 
 ```bash
-/auto-status     # DLQ depth, token budget, rate limit usage
+/auto-status     # DLQ depth, token budget, rate limit usage (broken until dx TODO #251 — use the DLQ command below)
 /auto-doctor     # Infrastructure health check
 ```
 
@@ -37,7 +37,7 @@
 
 ## Maintenance
 
-- **Weekly**: `/auto-status`, `/auto-doctor`
+- **Weekly**: `/auto-doctor`, and the DLQ check below (`/auto-status` is broken until dx TODO #251)
 - **Monthly**: Review token budget, check DLQ empty, rotate ADO PAT if expiring
 
 ## Full Details

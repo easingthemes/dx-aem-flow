@@ -94,5 +94,5 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
   ambient git config)
 - Structural checks cannot tell you a script works, and `node --check` / `bash -n` only parse syntax — run the
   relevant suite when changing anything under `data/lib/` or `skills/*/scripts/`
-- Behavioral evals live in `plugins/<plugin>/evals/` and run via `claude plugin eval` — one suite so far (`dx-plan-validate`); add one alongside non-trivial skill changes where practical
+- Behavioral evals live in `plugins/<plugin>/evals/` and run via `claude plugin eval` — two suites so far in `dx-core/evals/` (`plan-validate-finds-gap`, `routing`); add one alongside non-trivial skill changes where practical
 - See `CLAUDE.md` for the full contributor guide with architecture details

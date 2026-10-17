@@ -451,7 +451,7 @@ description: Does a thing. Not for the other thing (dx-hidden).
 SKILL
 out=$(run_validator env LISTING_BASELINE=99999); rc=$?
 check "description naming a dmi skill exits non-zero" "1" "$rc"
-check "dmi routing error names both skills" "1" "$(echo "$out" | grep -c 'dx-router/SKILL.md — description routes to dx-hidden')"
+check "dmi routing error names both skills" "1" "$(echo "$out" | grep -c 'dx-router/SKILL.md — description or when_to_use routes to dx-hidden')"
 write_skill "dx-router" <<'SKILL'
 ---
 name: dx-router
@@ -460,6 +460,57 @@ description: Does a thing. Not for the other thing (user runs /dx-hidden).
 SKILL
 out=$(run_validator env LISTING_BASELINE=99999); rc=$?
 check "naming a dmi skill as /command passes" "0" "$rc"
+
+# --- review follow-ups (2026-10-17): branches nothing exercised before ------
+# Entry cap: "- dx-test:dx-cap: " (18) + min(900 + 3 + 900, 1536) = 1554.
+reset_fixture
+a900=$(printf 'a%.0s' $(seq 1 900)); b900=$(printf 'b%.0s' $(seq 1 900))
+printf -- '---\nname: dx-cap\ndescription: %s\nwhen_to_use: %s\n---\n' "$a900" "$b900" | write_skill "dx-cap"
+out=$(run_validator env LISTING_BASELINE=99999)
+check "listing entry is capped at 1536 chars" "1" "$(echo "$out" | grep -c 'Skill listing: 1 model-invocable skills, 1554 chars')"
+
+# Escaped quotes count once: 'Say "hi".' is 9 chars; 18 + 9 = 27 (29 if the backslashes were kept).
+reset_fixture
+write_skill "dx-esc" <<'SKILL'
+---
+name: dx-esc
+description: "Say \"hi\"."
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999)
+check "escaped quotes are unescaped before counting" "1" "$(echo "$out" | grep -c 'Skill listing: 1 model-invocable skills, 27 chars')"
+
+# Check 12 matches whole skill names only, reads when_to_use, skips dmi skills,
+# accepts YAML True, and reads past a blank line inside a block description.
+reset_fixture
+printf -- '---\nname: dx-hid\ndescription: Hidden.\ndisable-model-invocation: True\n---\n' | write_skill "dx-hid"
+printf -- '---\nname: dx-a\ndescription: Not for dx-hidden-thing.\n---\n' | write_skill "dx-a"
+printf -- '---\nname: dx-b\ndescription: Hidden too, see dx-hid.\ndisable-model-invocation: true\n---\n' | write_skill "dx-b"
+out=$(run_validator env LISTING_BASELINE=99999); rc=$?
+check "a longer name that starts with a dmi name, and a dmi skill naming one, pass" "0" "$rc"
+printf -- '---\nname: dx-c\ndescription: Does c.\nwhen_to_use: Not for setup (dx-hid).\n---\n' | write_skill "dx-c"
+out=$(run_validator env LISTING_BASELINE=99999)
+check "when_to_use naming a dmi skill (True) is an error" "1" "$(echo "$out" | grep -c 'dx-c/SKILL.md — description or when_to_use routes to dx-hid')"
+reset_fixture
+printf -- '---\nname: dx-hid\ndescription: Hidden.\ndisable-model-invocation: true\n---\n' | write_skill "dx-hid"
+printf -- '---\nname: dx-d\ndescription: >\n  First paragraph.\n\n  Not for setup (dx-hid).\n---\n' | write_skill "dx-d"
+out=$(run_validator env LISTING_BASELINE=99999)
+check "text after a blank line in a block description is read" "1" "$(echo "$out" | grep -c 'dx-d/SKILL.md — description or when_to_use routes to dx-hid')"
+
+# Check 10: a literal target before the variable one; `git rm` is not flagged.
+reset_fixture
+write_skill "dx-rm3" <<'SKILL'
+---
+name: dx-rm3
+description: A short description.
+---
+
+rm -rf /tmp/a "$X"
+git rm -r --cached "$F"
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999)
+check "rm with a literal then a variable target is flagged" "1" "$(echo "$out" | grep -c 'dx-rm3/SKILL.md:6 — recursive rm')"
+check "git rm -r on a variable is not flagged" "0" "$(echo "$out" | grep -c 'dx-rm3/SKILL.md:7 — recursive rm')"
 
 # --- the real tree is still green --------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
