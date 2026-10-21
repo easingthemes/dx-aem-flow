@@ -445,6 +445,10 @@ test('parseCliArgs — happy + error paths', () => {
   assert.match(lib.parseCliArgs(['https://dev.azure.com/x', 'p', 'abc']).error, /positive integer/);
   assert.match(lib.parseCliArgs(['https://dev.azure.com/x', 'p', '-1']).error, /positive integer/);
 
+  // Empty project (bare `yaml-val project` resolved to the project: section header)
+  assert.match(lib.parseCliArgs(['https://dev.azure.com/x', '', '4242']).error, /<project> is empty/);
+  assert.match(lib.parseCliArgs(['https://dev.azure.com/x', '  ', '4242']).error, /<project> is empty/);
+
   // Bad org URL (parseOrg falls back to last path segment, so genuinely invalid input is hard
   // to construct — the parseOrg fallback is the safety net). Skip explicit org-error test.
 

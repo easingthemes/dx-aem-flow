@@ -965,6 +965,11 @@ function parseCliArgs(argv) {
     return { error: 'Usage: fetch-raw-story.js [--force] <org-url> <project> <work-item-id> [<spec-dir>]' };
   }
   const [orgUrl, project, idStr, specDirArg] = positional;
+  // An empty project makes the ADO MCP try to prompt for it, which the stdio
+  // client can't answer ("Client does not support form elicitation").
+  if (!project || !project.trim()) {
+    return { error: 'ERROR: <project> is empty. Read it with `yaml-val scm.project` (a bare `project` matches the top-level project: section)' };
+  }
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
     return { error: 'ERROR: work-item-id must be a positive integer' };

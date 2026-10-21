@@ -573,6 +573,8 @@ cat > "$CFG_YV" <<'YVEOF'
 project:
   name: "acme"
 scm:
+  org: "batdigital"
+  project: "Consumer Platforms"
   base-branch: "development"         # e.g., develop, development, main
 build:
   compile: mvn compile -pl core      # unquoted, trailing comment
@@ -604,6 +606,13 @@ run "yaml_val: dotted path reads a numeric scalar"         yv 'dx-simple.recover
 run "yaml_val: absent key yields empty"                    yv 'scm.nope' ''
 run "yaml_val: commented-out block does not match"         yv 'dx-bug-all.recovery.trigger-token' ''
 run "yaml_val: dotted path does not bleed into siblings"   yv 'scm.compile' ''
+
+# A bare key used to stop at the first match even when that was a section
+# header, so `yaml_val project` returned "" from the top-level project: block
+# and /dx-req handed fetch-raw-story.js an empty ADO project.
+run "yaml_val: dotted scm.project beside a project: section" yv 'scm.project' 'Consumer Platforms'
+run "yaml_val: bare key skips a section header"             yv 'project' 'Consumer Platforms'
+run "yaml_val: dotted path to a section header yields empty" yv 'dx-simple.recovery' ''
 
 # A dotted path names DIRECT children only. Before the depth guard, a segment that
 # failed to match at the child level kept scanning into that sibling's own subtree,

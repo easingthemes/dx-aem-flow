@@ -6,13 +6,13 @@
 # 1. As a CLI (from SKILL.md instructions):
 #    bash .ai/lib/dx-common.sh find-spec-dir 2416553
 #    bash .ai/lib/dx-common.sh slugify 2416553 "Enhance Card Layout Switcher"
-#    bash .ai/lib/dx-common.sh yaml-val compile
+#    bash .ai/lib/dx-common.sh yaml-val build.compile
 #
 # 2. As a library (from other scripts):
 #    source .ai/lib/dx-common.sh
 #    SPEC_DIR=$(find_spec_dir "2416553")
 #    SLUG=$(slugify "2416553" "Enhance Card Layout Switcher")
-#    CMD=$(yaml_val "compile")
+#    CMD=$(yaml_val "build.compile")
 
 set -euo pipefail
 
@@ -99,7 +99,8 @@ slugify() {
 
 # Read a scalar value from config.yaml.
 # Usage: yaml_val <key>
-#   <key> is either a bare key ("compile") — first match at any depth — or a
+#   <key> is either a bare key ("compile") — first scalar match at any depth,
+#   section headers skipped (prefer dotted paths: bare keys collide) — or a
 #   dotted path ("dx-simple.recovery.trigger-token") resolved segment by
 #   segment through the indentation tree, so it never bleeds into siblings.
 # Output: prints the value, with any inline `# comment` and surrounding
@@ -125,6 +126,7 @@ yaml_val() {
       k = rest; sub(/:.*$/, "", k)
       if (trim(k) != want) next
       v = rest; sub(/^[^:]*:/, "", v); v = trim(v)
+      if (n == 1 && (v == "" || v ~ /^#/)) next      # bare key: skip section headers, keep looking for a scalar
       if (depth == n) {
         if (substr(v, 1, 1) == "\"") {               # double-quoted: take up to the close
           v = substr(v, 2); i = index(v, "\""); if (i > 0) v = substr(v, 1, i - 1)

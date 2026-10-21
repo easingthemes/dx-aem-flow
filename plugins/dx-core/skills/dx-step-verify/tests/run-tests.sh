@@ -336,6 +336,22 @@ else
   no "unusable TMPDIR explains itself in issues" "$OUT"
 fi
 
+# ===== config keys are fully qualified =====
+# Bare keys took the first match at any depth, so a `test:` under an earlier
+# section won over build.test. frontend-dir still falls back to aem.frontend-dir,
+# which is where /aem-init writes it.
+R=$(mkrepo 'aem:
+  frontend-dir: "frontend"
+  test: "false"
+build:
+  compile: "true"
+  test: "echo ok"
+  lint-css: "true"
+')
+OUT=$(gate "$R")
+check "build.test wins over a test: key in another section" "True"   "$(echo "$OUT" | jqq "d['passed']")"
+check "aem.frontend-dir is used when build has none"        "passed" "$(echo "$OUT" | jqq "d['phases'][1]['status']")"
+
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
 [ "$FAIL" -eq 0 ]

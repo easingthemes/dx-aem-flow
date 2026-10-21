@@ -108,8 +108,9 @@ writes the deterministic output: `raw-workitem.json`, `raw-story.md`, and
 slim `raw-story.md` is read by later phases.
 
 ```bash
-ORG=$(bash .ai/lib/dx-common.sh yaml-val org)
-PROJ=$(bash .ai/lib/dx-common.sh yaml-val project)
+# Fully qualified keys: a bare `project` matches the top-level `project:` section first.
+ORG=$(bash .ai/lib/dx-common.sh yaml-val scm.org)
+PROJ=$(bash .ai/lib/dx-common.sh yaml-val scm.project)
 # Last stdout line is `SPEC_DIR=<path>` — capture it.
 SCRIPT_OUT=$(node .ai/lib/fetch-raw-story.js "$ORG" "$PROJ" <work-item-id>)
 echo "$SCRIPT_OUT"
