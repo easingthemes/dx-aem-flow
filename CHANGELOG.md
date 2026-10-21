@@ -1,3 +1,10 @@
+## [3.10.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.2...v3.10.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* **dx-core:** resolve scm.project in /dx-req instead of the project: section ([#233](https://github.com/easingthemes/dx-aem-flow/issues/233)) ([0d30648](https://github.com/easingthemes/dx-aem-flow/commit/0d306489434b92f0c773c90c99d5d14f287bc6f5))
+
 ## [3.10.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.1...v3.10.2) (2026-10-17)
 
 
