@@ -20,7 +20,9 @@
 #     test: "mvn test -pl core"
 #     lint-js: "cd frontend && npm run lint:js"
 #     lint-css: "cd frontend && npm run lint:css"
-#     frontend-dir: "frontend"
+#     frontend-dir: "frontend"     # falls back to aem.frontend-dir
+#   scm:
+#     base-branch: "develop"
 #
 # Without config, phases 1-3 are skipped (no commands configured).
 
@@ -38,7 +40,8 @@ CONFIG_FILE=".ai/config.yaml"
 
 # Read a scalar value from config.yaml.
 # Usage: yaml_val <key>
-#   <key> is either a bare key ("compile") — first match at any depth — or a
+#   <key> is either a bare key ("compile") — first scalar match at any depth,
+#   section headers skipped (prefer dotted paths: bare keys collide) — or a
 #   dotted path ("dx-simple.recovery.trigger-token") resolved segment by
 #   segment through the indentation tree, so it never bleeds into siblings.
 # Output: prints the value, with any inline `# comment` and surrounding
@@ -64,6 +67,7 @@ yaml_val() {
       k = rest; sub(/:.*$/, "", k)
       if (trim(k) != want) next
       v = rest; sub(/^[^:]*:/, "", v); v = trim(v)
+      if (n == 1 && (v == "" || v ~ /^#/)) next      # bare key: skip section headers, keep looking for a scalar
       if (depth == n) {
         if (substr(v, 1, 1) == "\"") {               # double-quoted: take up to the close
           v = substr(v, 2); i = index(v, "\""); if (i > 0) v = substr(v, 1, i - 1)
@@ -79,12 +83,15 @@ yaml_val() {
   ' "$CONFIG_FILE"
 }
 
-COMPILE_CMD=$(yaml_val "compile")
-TEST_CMD=$(yaml_val "test")
-LINT_JS_CMD=$(yaml_val "lint-js")
-LINT_CSS_CMD=$(yaml_val "lint-css")
-FE_DIR=$(yaml_val "frontend-dir")
-BASE_BRANCH=$(yaml_val "base-branch")
+# Fully qualified keys: a bare key takes the first match at any depth, so
+# `base-branch` could hit a `repos:` entry and `test` any section's child.
+COMPILE_CMD=$(yaml_val "build.compile")
+TEST_CMD=$(yaml_val "build.test")
+LINT_JS_CMD=$(yaml_val "build.lint-js")
+LINT_CSS_CMD=$(yaml_val "build.lint-css")
+FE_DIR=$(yaml_val "build.frontend-dir")
+[ -n "$FE_DIR" ] || FE_DIR=$(yaml_val "aem.frontend-dir")   # where /aem-init writes it
+BASE_BRANCH=$(yaml_val "scm.base-branch")
 
 # --- Command runner ---
 # Phase commands come from config and may print anything. Their stdout must not
