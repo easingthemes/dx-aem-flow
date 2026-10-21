@@ -41,7 +41,7 @@ No compilation step. Verification happens at four levels:
 | Level | What it checks | How |
 |-------|----------------|-----|
 | Structural | naming, frontmatter, manifest/version consistency, collisions, plus Claude Code's own manifest/hook schema (`claude plugin validate --json` via `scripts/check-plugin-schema.sh`; CI installs a pinned CLI) | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (11 today) |
+| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (13 today) |
 | JS units | deterministic JS in `plugins/dx-core/data/lib/`, the `dx-automation` Lambda routers, and `cli/` | any `*.test.js` under `plugins/` or `cli/` — **discovered** and run in CI on every PR via `node --test` |
 | Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
 
