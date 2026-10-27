@@ -42,7 +42,7 @@ summary() { # author publishedDate
 }
 
 # 101: never reviewed                         → queue
-# 102: reviewed after the last push            → skip (the 436737 loop)
+# 102: reviewed after the last push            → skip (the NoVote re-review loop)
 # 103: reviewed, then a new push               → queue
 # 104: "[AI Review]" text but from a human     → queue
 # 105: iterations endpoint fails               → queue (fail-open)
