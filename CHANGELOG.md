@@ -1,3 +1,10 @@
+## [3.10.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.3...v3.10.4) (2026-10-27)
+
+
+### Bug Fixes
+
+* **dx-core:** recover dx-pr-review vote for non-reviewers, stop sweep re-reviews ([#234](https://github.com/easingthemes/dx-aem-flow/issues/234)) ([c5cfdf0](https://github.com/easingthemes/dx-aem-flow/commit/c5cfdf0339f48aad393b06171079fe3d1c768050))
+
 ## [3.10.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.2...v3.10.3) (2026-10-21)
 
 
