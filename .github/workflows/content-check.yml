@@ -1,0 +1,45 @@
+name: Content check
+
+# This repo is public. Fails a PR whose diff, file paths, commit messages,
+# title or body contain an entry from the CUSTOMER_DENYLIST repository secret
+# (newline- or comma-separated extended regexes, case-insensitive). The list
+# lives in a secret because committing it would publish the names it guards.
+# Output names the location and entry number only, never the matched text.
+#
+# Separate from validate.yml because it must also re-run when the PR title or
+# body is edited (`edited`), which says nothing about the code.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  denylist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Scan diff, paths, commit messages, PR title and body
+        # PR text reaches the script through env, never ${{ }} inside `run`:
+        # expanding it into the script would execute whatever the body contains.
+        env:
+          CUSTOMER_DENYLIST: ${{ secrets.CUSTOMER_DENYLIST }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if [ -z "$CUSTOMER_DENYLIST" ]; then
+            # Fork PRs get no secrets; a repo without the secret has no list.
+            echo "::warning::CUSTOMER_DENYLIST is not available to this run - content check skipped"
+            exit 0
+          fi
+          rc=0
+          bash scripts/check-customer-data.sh diff "origin/$BASE_REF" || rc=1
+          printf '%s\n' "$PR_TITLE" | bash scripts/check-customer-data.sh text "PR title" || rc=1
+          printf '%s\n' "$PR_BODY"  | bash scripts/check-customer-data.sh text "PR body"  || rc=1
+          exit $rc
