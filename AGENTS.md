@@ -82,6 +82,10 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
 
 ## Contributing
 
+- **This repo is public — no consumer data anywhere** (files, file names, commit messages, PR/issue text):
+  no org/project/repo/customer names, work-item/PR/build IDs, GUIDs, URLs, people or emails. Use placeholders
+  (`my-org`, `12345`, `bot@example.com`); commit messages for such fixes stay generic. CI
+  (`content-check.yml`) and `scripts/check-customer-data.sh` enforce it against a denylist kept outside the repo
 - No hardcoded org URLs, project names, paths, build commands, or branch names
 - `scm.provider` supports `ado` only — repo/PR skills call `mcp__ado__*` directly; there is no GitHub,
   GitLab or Bitbucket code path. Work-item tracking is the one real choice (`tracker.provider: ado | jira`)

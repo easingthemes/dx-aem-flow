@@ -6,6 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **This repo is on GitHub** (`github.com/easingthemes/dx-aem-flow`), not Azure DevOps. For any git operation on this repo (branches, PRs, commits, checks), use `git` and `gh` CLI — **never** ADO MCP tools (`mcp__ado__repo_*`, `mcp__ado__pipelines_*`). The plugin *contents* describe ADO workflows for consumer projects; the repo itself is GitHub.
 
+## Public Repo — No Consumer Data
+
+**This repo is public.** Nothing from a consumer project may land in a file, file name, commit message, branch name, PR/issue title, body or comment: org, project, repo, brand or customer names; work-item, PR, build, pipeline or policy IDs; GUIDs; URLs; people's names or emails. Debugging a consumer's pipeline puts exactly these values in context (pasted issues, build logs, `.ai/config.yaml`), and they have leaked into test fixtures, commit messages and PR descriptions before. Use placeholders — `my-org`, `my-project`, `my-repo`, `12345`, `bot@example.com` — and describe evidence generically ("a consumer pipeline run", not its ID). The commit message for such a fix is generic too: say what changed in the code (`test: use placeholder values in fixtures`), not that data was removed.
+
+Enforced in two places by `scripts/check-customer-data.sh`, against a denylist that is never committed:
+- **CI** (`.github/workflows/content-check.yml`) — diff, paths, commit messages, PR title and body, from the `CUSTOMER_DENYLIST` repository secret. Re-runs when the PR text is edited. Fork PRs get no secret and skip with a warning.
+- **Locally** (`.claude/hooks/customer-data-guard.sh`, PreToolUse on Bash) — blocks `git commit`/`git push`/`gh pr|issue` writes before anything is published, from a gitignored `.customer-denylist` (one regex per line) or `$CUSTOMER_DENYLIST`. Inert without a list.
+
+The check reports location and entry number only, never the matched text, because CI logs of a public repo are public too. A hit means fix the text; never quote the term back in a commit or PR to explain it.
+
 ## What This Is
 
 Four Claude Code plugins for AI-assisted Azure DevOps development workflows. There is no build system — plugins are pure Markdown (skills, agents, rules, templates) with shell helper scripts.
@@ -41,7 +51,7 @@ No compilation step. Verification happens at four levels:
 | Level | What it checks | How |
 |-------|----------------|-----|
 | Structural | naming, frontmatter, manifest/version consistency, collisions, plus Claude Code's own manifest/hook schema (`claude plugin validate --json` via `scripts/check-plugin-schema.sh`; CI installs a pinned CLI) | `scripts/validate-*.sh` — runs in CI on every PR |
-| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (13 today) |
+| Helper scripts | deterministic bash in `skills/*/scripts/`, `data/lib/` and `scripts/` | any `run-tests.sh` or `*.test.sh` under `plugins/` or `scripts/` — **discovered** and run in CI on every PR (14 today) |
 | JS units | deterministic JS in `plugins/dx-core/data/lib/`, the `dx-automation` Lambda routers, and `cli/` | any `*.test.js` under `plugins/` or `cli/` — **discovered** and run in CI on every PR via `node --test` |
 | Behavioral (evals) | does the skill actually produce the right result | `claude plugin eval` against `plugins/<plugin>/evals/` — **not** wired to CI (billed agent runs) |
 
