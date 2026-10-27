@@ -7,6 +7,13 @@
 # Own PRs (authored by a REVIEWER_IDENTITIES identity) are excluded unless
 # DX_REVIEW_OWN_PRS=true. Diagnostics go to stderr.
 #
+# A PR is also skipped when a REVIEWER_IDENTITIES identity has posted an
+# "[AI Review]" comment since the PR's last push (newest iteration). Vote 0
+# alone does not mean "not reviewed": automation casts NoVote for a MUST-FIX
+# verdict, so without this check every sweep re-reviews the same commit. The
+# check lives on ADO, not in the workspace, because each run starts fresh.
+# If the threads or iterations can't be fetched, the PR is kept (fail-open).
+#
 # Usage:
 #   discover-review-queue.sh <orgUrl> <project> <repo>
 #
@@ -62,6 +69,31 @@ jq -r --argjson ids "$IDS_JSON" --arg own "$REVIEW_OWN" '
   | .pullRequestId
 ' <<<"$RESP" | while read -r PRID; do
   [ -n "$PRID" ] || continue
+  PR_API="${ORG_URL}/${PROJECT_ENC}/_apis/git/repositories/${REPO_ENC}/pullRequests/${PRID}"
+  if ITER=$(curl -fsS -u ":${ADO_PAT}" -H "Accept: application/json" "${PR_API}/iterations?api-version=7.1") \
+     && THREADS=$(curl -fsS -u ":${ADO_PAT}" -H "Accept: application/json" "${PR_API}/threads?api-version=7.1"); then
+    # Both timestamps in epoch seconds; ADO's fractional seconds vary in
+    # length, so string comparison of the raw ISO values is not safe.
+    # Piped, not --argjson: a busy PR's threads payload can exceed ARG_MAX.
+    REVIEWED=$(printf '%s\n%s\n' "$ITER" "$THREADS" | jq -rs --argjson ids "$IDS_JSON" '
+      def lc: (. // "") | ascii_downcase;
+      def epoch: sub("\\.[0-9]+"; "") | sub("Z$"; "") + "Z" | fromdateiso8601;
+      .[0] as $iter | .[1] as $threads
+      | ([ $iter.value[]?.createdDate | select(.) | epoch ] | max) as $push
+      | ([ $threads.value[]?.comments[]?
+           | select((.content // "") | contains("[AI Review]"))
+           | select((.author.uniqueName | lc) as $u | (.author.displayName | lc) as $d
+                    | ($ids | any(. == $u or . == $d)))
+           | .publishedDate | select(.) | epoch ] | max) as $review
+      | if $push != null and $review != null and $review >= $push then "yes" else "no" end
+    ') || REVIEWED="no"
+    if [ "$REVIEWED" = "yes" ]; then
+      echo "skip PR ${PRID}: already reviewed since its last push" >&2
+      continue
+    fi
+  else
+    echo "WARN: could not read iterations/threads for PR ${PRID}; queueing it" >&2
+  fi
   # Emit the web PR URL with the encoded project segment (it may contain
   # spaces); /dx-pr-review URL-decodes it back when it parses the PR URL.
   echo "${ORG_URL}/${PROJECT_ENC}/_git/${REPO}/pullrequest/${PRID}"
