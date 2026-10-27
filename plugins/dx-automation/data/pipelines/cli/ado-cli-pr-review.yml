@@ -5,8 +5,12 @@ pr: none
 # Two ways to run:
 #   1. Reviewer-queue sweep (scheduled / manual, no prUrl) — discovers every
 #      Active PR where a REVIEWER_IDENTITIES identity is an assigned reviewer
-#      with NO vote yet, and reviews each headless: post comments + inline fix
+#      with NO vote yet and no "[AI Review]" comment from that identity since
+#      the last push, and reviews each headless: post comments + inline fix
 #      patches, then auto-vote from the verdict. No human in the loop.
+#      The queue only sees PRs where that identity is an INDIVIDUAL reviewer
+#      (a group it belongs to does not count). Add it with an optional-reviewer
+#      branch policy, or the sweep finds nothing.
 #   2. Single PR (Branch Policy > Build Validation, or manual with prUrl) —
 #      reviews exactly that PR. Lower latency; covers the build-validation path.
 #

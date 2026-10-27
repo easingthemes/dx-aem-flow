@@ -46,7 +46,7 @@ mcp__ado__repo_repository
 
 ### Idempotency — skip threads you already posted
 
-**Before posting anything**, fetch the PR's existing threads so a re-run never double-posts. A re-run happens whenever the queue's `vote == 0` filter re-selects this PR: a prior run that posted threads but **crashed before casting the vote**, a manually cleared vote, or a verdict that mapped to `NoVote`.
+**Before posting anything**, fetch the PR's existing threads so a re-run never double-posts. A re-run happens on a manual or build-validation run of a PR already reviewed, or when the queue re-selects a PR that has had a new push since the last `[AI Review]` summary. (The queue skips a PR with no push since that summary, so a run that crashed before voting, or a `NoVote` verdict, is not retried on the same commit: re-run it with an explicit `prUrl`.)
 
 ```
 mcp__ado__repo_pull_request_thread
@@ -173,7 +173,7 @@ Determine vote from the verdict in the findings:
 | `rejected` *(explicit block)* | `Rejected` | -10 | **`NoVote` (0)** |
 | *(clear existing vote)* | `NoVote` | 0 | `NoVote` (0) |
 
-Cast the vote via MCP (the tool auto-adds the caller as a reviewer if not already one):
+Cast the vote via MCP:
 
 ```
 mcp__ado__repo_pull_request_write
@@ -182,6 +182,22 @@ mcp__ado__repo_pull_request_write
   pullRequestId: <PR ID>
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
+
+**If the vote fails with `A valid reviewer must be supplied`**, the caller is not yet an *individual* reviewer on this PR (being a member of a group reviewer does not count). The `vote` action takes no reviewer ID and does not reliably add the caller first (`@azure-devops/mcp` 2.10.0–2.11.0 `PUT .../reviewers/{self}` is rejected for a non-reviewer), so add yourself, then vote once more:
+
+1. **Your identity ID** is the `author.id` of the `**[AI Review]` summary comment — the one you posted in step 5, or the existing one found by the idempotency check in step 4. Do not guess it from `git config user.email`: in a pipeline that is the build agent, not the token owner.
+2. Add yourself as an optional reviewer:
+   ```
+   mcp__ado__repo_pull_request_write
+     action: "update_reviewers"
+     repositoryId: "<repo ID>"
+     pullRequestId: <PR ID>
+     reviewerIds: ["<your identity ID>"]
+     reviewerAction: "add"
+   ```
+3. Repeat the `vote` call above — once. If it fails again, stop retrying: report the vote as failed (`verdict: warn`) with the ADO error text.
+
+Only take this path on that specific error. Do not add yourself pre-emptively: `update_reviewers` on an identity that is already a reviewer is not needed, and a different error (permissions, PR not found) will not be fixed by it.
 
 Detect automation the same way the main skill does (do NOT rely on prompt keywords):
 

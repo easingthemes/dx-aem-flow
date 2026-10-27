@@ -726,7 +726,7 @@ mcp__ado__repo_pull_request_write
   vote: "<Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote>"
 ```
 
-The tool auto-adds the caller as a reviewer if not already one. If the user picks **Skip voting — comments only**, do not call the tool.
+If the vote fails with `A valid reviewer must be supplied`, you are not an individual reviewer yet: add yourself and vote once more, as described in `references/post-findings.md` step 6. If the user picks **Skip voting — comments only**, do not call the tool.
 
 Never auto-approve or auto-decline without explicit user confirmation.
 
