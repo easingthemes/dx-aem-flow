@@ -26,16 +26,16 @@ check() {  # check <name> <expected> <actual>
 # Consumer layout: .ai/lib/dx-common.sh + a config rendered from the dx-init template.
 mkdir -p "$TMP/.ai/lib"
 cp "$PLUGIN/data/lib/dx-common.sh" "$TMP/.ai/lib/"
-sed -e 's/{{PROJECT_NAME}}/quit-zone/' -e 's/{{SCM_ORG}}/batdigital/' \
-    -e 's/{{SCM_PROJECT}}/Consumer Platforms/' -e 's/{{[A-Z_]*}}/x/g' \
+sed -e 's/{{PROJECT_NAME}}/my-project/' -e 's/{{SCM_ORG}}/my-org/' \
+    -e 's/{{SCM_PROJECT}}/My Project/' -e 's/{{[A-Z_]*}}/x/g' \
     "$PLUGIN/templates/config.yaml.template" > "$TMP/.ai/config.yaml"
 
 LOOKUPS=$(grep -E '^(ORG|PROJ)=\$\(bash \.ai/lib/dx-common\.sh yaml-val ' "$SKILL")
 check "SKILL.md has the ORG and PROJ lookups" "2" "$(printf '%s\n' "$LOOKUPS" | grep -c .)"
 
 OUT=$(cd "$TMP" && eval "$LOOKUPS" && printf '%s|%s' "$ORG" "$PROJ")
-check "fetch step resolves org"     "batdigital"         "${OUT%%|*}"
-check "fetch step resolves project" "Consumer Platforms" "${OUT#*|}"
+check "fetch step resolves org"     "my-org"             "${OUT%%|*}"
+check "fetch step resolves project" "My Project"         "${OUT#*|}"
 
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
