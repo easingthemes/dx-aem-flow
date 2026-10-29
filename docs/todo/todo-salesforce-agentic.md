@@ -53,6 +53,8 @@ machine-readable file plus a human summary. Verify: running it over a directory 
 histograms so SimpleAgent thresholds can be tuned empirically. Pairs naturally with the
 token-footprint baseline work (#137).
 
+**Update 2026-10-29 (agentic-delivery intake, [todo-agentic-delivery.md](todo-agentic-delivery.md)):** add delivery-flow numbers next to the gate stats: cycle time per ticket (story Ready → PR opened → PR merged), runs per agent per night, and share of runs that reached the human gate without a block. Without these, a "3–5x" style claim can't be checked for our own installs. The morning digest (#254) is the first consumer of `metrics.json`.
+
 ## Positioning: "orchestration is the skill"
 
 **Added:** 2026-05-30

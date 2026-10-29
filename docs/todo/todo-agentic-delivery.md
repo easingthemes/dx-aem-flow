@@ -1,0 +1,21 @@
+# TODO: Agentic Delivery Operating Model
+
+Intake from McKinsey, "Rewiring software delivery for the agentic era" (2026-05-28), and two public critiques of it (Mneme HQ, NetworkGain). The article describes 24-hour delivery: agents run structured work overnight, humans review at defined gates by morning, and handoffs are machine-readable. Most of that already exists here (`.ai/specs/` handoffs, `dx-automation` agents, review gates). What follows is the part that does not.
+
+Already tracked elsewhere, not repeated here: metrics roll-up → #144 (updated with the throughput angle), Azure-native triggers for the remaining agents → #211, context graph → #189–#194 (done), evals on release tags → [todo-testing.md](todo-testing.md).
+
+## Deterministic architecture-rule enforcement
+
+**Added:** 2026-10-29
+**Problem:** Architecture and convention rules live as prose in `.ai/rules/*.md` and in `dx-step-verify` phase 5 ("file naming, package structure, convention checks"), so a model checks them. A model can be argued out of a rule, and pipeline agents (DevAgent, BugFix, SimpleAgent) write code with no human in the loop until PR review. The critique of the McKinsey model makes the same point: an operating model does not run at the moment an agent writes code, and only a deterministic check gives a binary verdict on the output. A rule that a model checks fails silently. A rule that a script checks fails loudly.
+**Scope:** `plugins/dx-core/skills/dx-step-verify/SKILL.md` (phase 5), `plugins/dx-core/skills/dx-scan/SKILL.md` (discovers conventions), `.ai/config.yaml` schema (new optional `verify.arch-command` or similar), `plugins/dx-core/templates/rules/`.
+**Done-when:** `grep -n 'arch-command\|architecture.command' plugins/dx-core/skills/dx-step-verify/SKILL.md` finds phase 5 running a configured command and failing on a non-zero exit before any model judgement, AND `docs/reference/` documents the config field, AND `/dx-scan` proposes such a command when it detects a known tool (e.g. ArchUnit, dependency-cruiser, eslint boundaries) in the project.
+**Approach:** Config-driven, as everything else: the plugin does not ship rule engines, it runs the consumer's own. Phase 5 order: configured command first (hard fail), then model review for what no tool covers. Do not convert `.ai/rules/` prose into regexes. Cross-ref #242 (verification layering): this adds a deterministic layer, so it should remove a model layer, not stack another one.
+
+## Overnight agent chain with a morning digest
+
+**Added:** 2026-10-29
+**Problem:** Each `dx-automation` agent runs on its own trigger (comment token, Service Hook, build policy). Nothing connects them into the flow the article describes: a story becomes Ready in the evening and in the morning it has an RE spec, a draft PR, a PR review and QA notes waiting at one human gate. Today a human has to start each next step, and nobody gets one summary of what agents did overnight and what waits for a decision.
+**Scope:** `plugins/dx-automation/data/pipelines/cli/ado-cli-hub.yml` (hub router), `plugins/dx-automation/data/pipelines/cli/*.yml`, `.ai/automation/registries/agents.json` (consumer agent registry), `plugins/dx-automation/skills/auto-status/SKILL.md`, cross-ref #15 (pause-and-resume), #154 (universal trigger), #211 (trigger parity).
+**Done-when:** a documented, opt-in chain config (e.g. `automation.chain:` in `.ai/config.yaml`) where a passing DoR verdict starts the RE agent and a finished RE spec starts DevAgent, each stopping at its existing gates, AND a scheduled digest step writes one summary per project (tickets touched, PRs opened, gates that stopped a run and why, items waiting for a human), verified by a hermetic `*.test.sh` that feeds recorded agent outputs and asserts the digest content.
+**Approach:** Chain through ADO state the agents already write (tags, comments, linked PRs), not a new orchestrator service, so it stays Azure-native. Every link is opt-in per project; default stays one agent per trigger. The digest reads `.ai/specs/*/` and pipeline results; it is the natural consumer of #144's `metrics.json`. Human gates stay human: the chain never merges and never re-runs a blocked step on its own (same rule as `dx-simple` recovery).
