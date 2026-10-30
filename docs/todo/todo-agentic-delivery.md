@@ -52,6 +52,7 @@ So the priority order for dx: quality and review capacity first, then measuremen
 **Scope:** `plugins/dx-core/skills/dx-doctor/SKILL.md`, `.ai/rules/`, `.ai/project/` seed data, cross-ref #143 (learning loop that would keep rules current).
 **Done-when:** `/dx-doctor` reports, per file in `.ai/rules/` and `.ai/project/`, the date it last changed in git and the number of commits to the code paths it describes since then, and flags a file as stale above a threshold (config, default e.g. 90 days and 200 commits), verified by a hermetic `*.test.sh` on a seeded repo with one fresh and one stale rule file.
 **Approach:** Only `git log` and counting, no model call. The fix for a stale file stays human or goes through `/dx-scan` and #143. This is the cheap detector; #143 is the expensive cure.
+**Done 2026-10-30:** `plugins/dx-core/skills/dx-doctor/scripts/rules-freshness.sh` (stale = older than `max-days` **and** more than `max-commits` commits outside `.ai/`/`.claude/` since; untracked files reported). Wired as `/dx-doctor` step 2c; thresholds under `doctor.rules-freshness.*`. Suite `scripts/__tests__/rules-freshness.test.sh` (14 checks) fails 3 checks on a mutant that drops the exclusion and ORs the thresholds.
 
 ## Overnight agent chain with a morning digest
 

@@ -302,6 +302,15 @@ Controls Phase 4 of `/dx-req` (codebase research). Mitigates the context blow-up
 | `agent-word-cap` | number | `800` | Hard cap on words per Explore-agent report. The orchestrator summarizes anything longer to ≤300 words before writing into research.md. |
 | `agent-file-cap` | number | `10` | Maximum files an Explore-agent may list in its inventory. |
 
+### `doctor`
+
+Thresholds for `/dx-doctor` step 2c (rules & seed data freshness). A file under `.ai/rules/` or `.ai/project/` is reported stale only when **both** limits are exceeded.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `rules-freshness.max-days` | number | `90` | Days since the file's last commit |
+| `rules-freshness.max-commits` | number | `200` | Commits outside `.ai/` and `.claude/` since the file's last commit |
+
 ### `dor`
 
 Controls `/dx-dor` wiki resolution + caching. Mitigates the wiki-tree blowup from issue #136.
