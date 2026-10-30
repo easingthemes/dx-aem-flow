@@ -352,6 +352,57 @@ OUT=$(gate "$R")
 check "build.test wins over a test: key in another section" "True"   "$(echo "$OUT" | jqq "d['passed']")"
 check "aem.frontend-dir is used when build has none"        "passed" "$(echo "$OUT" | jqq "d['phases'][1]['status']")"
 
+# ===== phase 5: configured architecture command =====
+# build.arch-command is the deterministic layer: its exit code decides, and a
+# failure is marked blocking so dx-step-verify cannot report PASS over it.
+
+R=$(mkrepo 'build:
+  arch-command: "echo scanning-modules; echo A.java_violates_layer_rule >&2; false"
+')
+OUT=$(gate_merged "$R")
+check "failing arch-command still emits parseable JSON" "ok"     "$(echo "$OUT" | jqq "'ok'")"
+check "failing arch-command fails phase 5"              "failed" "$(echo "$OUT" | jqq "d['phases'][4]['status']")"
+check "failing arch-command is blocking"                "True"   "$(echo "$OUT" | jqq "d['phases'][4].get('blocking')")"
+check "failing arch-command fails the gate"             "False"  "$(echo "$OUT" | jqq "d['passed']")"
+if echo "$OUT" | grep -q '| A.java_violates_layer_rule'; then
+  ok "arch-command output is surfaced in issues"
+else
+  no "arch-command output is surfaced in issues" "$OUT"
+fi
+if echo "$OUT" | grep -qx "scanning-modules"; then
+  no "arch-command stdout does not leak outside issues" "$OUT"
+else
+  ok "arch-command stdout does not leak outside issues"
+fi
+
+# The command sees the diff it should check. The probe lives outside the repo
+# so it is not itself a changed file.
+cat > "$TMP/arch-env.sh" <<'SH'
+[ -n "$DX_BASE_SHA" ] && printf '%s\n' "$DX_CHANGED_FILES" | grep -qx A.java
+SH
+R=$(mkrepo "build:
+  arch-command: \"sh $TMP/arch-env.sh\"
+")
+OUT=$(gate "$R")
+check "arch-command gets DX_BASE_SHA and DX_CHANGED_FILES" "passed" "$(echo "$OUT" | jqq "d['phases'][4]['status']")"
+
+# A built-in convention failure is not blocking — only the configured command is.
+R=$(mkrepo 'build:
+  arch-command: "true"
+')
+mkdir -p "$R/frontend" && echo '@import "x";' > "$R/frontend/a.scss"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm scss ) >/dev/null 2>&1
+OUT=$(gate "$R")
+check "built-in SCSS rule still fails phase 5"     "failed" "$(echo "$OUT" | jqq "d['phases'][4]['status']")"
+check "built-in rule failure is not blocking"      "None"   "$(echo "$OUT" | jqq "d['phases'][4].get('blocking')")"
+
+# Unset command: phase 5 behaves exactly as before.
+R=$(mkrepo 'build:
+  compile: "true"
+')
+OUT=$(gate "$R")
+check "no arch-command keeps phase 5 passing" "passed" "$(echo "$OUT" | jqq "d['phases'][4]['status']")"
+
 echo "---"
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
 [ "$FAIL" -eq 0 ]

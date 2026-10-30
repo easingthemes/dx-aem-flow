@@ -43,6 +43,7 @@ build:
   lint-scss: "npm run lint:scss"  # SCSS lint (optional)
   lint-css: "npm run lint:css"    # CSS lint (optional)
   lint-fix: "npm run lint:fix"    # Auto-fix lint issues (optional)
+  arch-command: "mvn -q test -Dtest=ArchitectureTest"  # Deterministic arch check, blocks /dx-step-verify (optional)
 
 toolchain:
   node: "18.0.0"                  # optional — runtime version (e.g., "18.0.0", "10.16.0")
@@ -213,6 +214,7 @@ roles:
 | `lint-scss` | string | no | SCSS lint command |
 | `lint-css` | string | no | CSS lint command |
 | `lint-fix` | string | no | Auto-fix lint issues command |
+| `arch-command` | string | no | Deterministic architecture check (ArchUnit, dependency-cruiser, ESLint boundaries, …). Run by `/dx-step-verify` phase 5 with `DX_BASE_SHA` and `DX_CHANGED_FILES` set; a non-zero exit is **blocking** — verify cannot pass while it fails. Proposed by `/dx-scan` 3f |
 
 ### `dx-simple`
 
