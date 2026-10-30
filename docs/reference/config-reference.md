@@ -43,6 +43,7 @@ build:
   lint-scss: "npm run lint:scss"  # SCSS lint (optional)
   lint-css: "npm run lint:css"    # CSS lint (optional)
   lint-fix: "npm run lint:fix"    # Auto-fix lint issues (optional)
+  arch-command: "mvn -q test -Dtest=ArchitectureTest"  # Deterministic arch check, blocks /dx-step-verify (optional)
 
 toolchain:
   node: "18.0.0"                  # optional — runtime version (e.g., "18.0.0", "10.16.0")
@@ -213,6 +214,7 @@ roles:
 | `lint-scss` | string | no | SCSS lint command |
 | `lint-css` | string | no | CSS lint command |
 | `lint-fix` | string | no | Auto-fix lint issues command |
+| `arch-command` | string | no | Deterministic architecture check (ArchUnit, dependency-cruiser, ESLint boundaries, …). Run by `/dx-step-verify` phase 5 with `DX_BASE_SHA` and `DX_CHANGED_FILES` set; a non-zero exit is **blocking** — verify cannot pass while it fails. Proposed by `/dx-scan` 3f |
 
 ### `dx-simple`
 
@@ -301,6 +303,15 @@ Controls Phase 4 of `/dx-req` (codebase research). Mitigates the context blow-up
 | `profile` | string | `auto` | `auto` \| `minimal` \| `frontend` \| `backend` \| `full`. `auto` picks the smallest profile that covers the story (see `plugins/dx-core/skills/dx-req/references/research-patterns.md`). Override per run via `DX_RESEARCH_PROFILE`. |
 | `agent-word-cap` | number | `800` | Hard cap on words per Explore-agent report. The orchestrator summarizes anything longer to ≤300 words before writing into research.md. |
 | `agent-file-cap` | number | `10` | Maximum files an Explore-agent may list in its inventory. |
+
+### `doctor`
+
+Thresholds for `/dx-doctor` step 2c (rules & seed data freshness). A file under `.ai/rules/` or `.ai/project/` is reported stale only when **both** limits are exceeded.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `rules-freshness.max-days` | number | `90` | Days since the file's last commit |
+| `rules-freshness.max-commits` | number | `200` | Commits outside `.ai/` and `.claude/` since the file's last commit |
 
 ### `dor`
 

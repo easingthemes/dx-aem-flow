@@ -53,6 +53,10 @@ machine-readable file plus a human summary. Verify: running it over a directory 
 histograms so SimpleAgent thresholds can be tuned empirically. Pairs naturally with the
 token-footprint baseline work (#137).
 
+**Update 2026-10-29 (agentic-delivery intake, [todo-agentic-delivery.md](todo-agentic-delivery.md)):** add delivery-flow numbers next to the gate stats: cycle time per ticket (story Ready → PR opened → PR merged), runs per agent per night, and share of runs that reached the human gate without a block. Without these, a "3–5x" style claim can't be checked for our own installs. The morning digest (#254) is the first consumer of `metrics.json`.
+
+**Update 2026-10-30 (evidence pass, [todo-agentic-delivery.md#evidence-check-2026-10-30](todo-agentic-delivery.md#evidence-check-2026-10-30)):** throughput alone misleads — DORA 2025 ties AI adoption to higher throughput **and** higher instability, and Faros 2026 sees bugs per dev +54%. Add for agent PRs vs human PRs: change-fail / revert rate, rework (follow-up fix PRs touching the same files within 14 days), review time and PR size. Without the instability side the roll-up can only show the good half.
+
 ## Positioning: "orchestration is the skill"
 
 **Added:** 2026-05-30

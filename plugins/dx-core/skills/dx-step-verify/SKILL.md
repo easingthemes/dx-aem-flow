@@ -22,6 +22,8 @@ digraph step_verify {
     "STOP: Remove credentials" [shape=doublecircle];
     "Other phases failed?" [shape=diamond];
     "Fix pre-review issues (max 2 attempts)" [shape=box];
+    "Blocking architecture check still failing?" [shape=diamond];
+    "Report FAIL (blocking architecture check)" [shape=doublecircle];
     "Load code-reviewer agent + project conventions" [shape=box];
     "Get full diff (base..HEAD)" [shape=box];
     "Dispatch code review subagent" [shape=box];
@@ -38,7 +40,9 @@ digraph step_verify {
     "Secrets found?" -> "Other phases failed?" [label="no"];
     "Other phases failed?" -> "Fix pre-review issues (max 2 attempts)" [label="yes"];
     "Other phases failed?" -> "Load code-reviewer agent + project conventions" [label="no"];
-    "Fix pre-review issues (max 2 attempts)" -> "Load code-reviewer agent + project conventions";
+    "Fix pre-review issues (max 2 attempts)" -> "Blocking architecture check still failing?";
+    "Blocking architecture check still failing?" -> "Report FAIL (blocking architecture check)" [label="yes"];
+    "Blocking architecture check still failing?" -> "Load code-reviewer agent + project conventions" [label="no"];
     "Load code-reviewer agent + project conventions" -> "Get full diff (base..HEAD)";
     "Get full diff (base..HEAD)" -> "Dispatch code review subagent";
     "Dispatch code review subagent" -> "Critical/Important issues found?";
@@ -82,7 +86,7 @@ This runs:
 2. **Lint** — lint with auto-fix (skipped if no lintable file changes)
 3. **Test** — run tests (skipped if no source changes or compilation failed)
 4. **Secret Scan** — grep for credential patterns in changed files
-5. **Architecture** — file naming, package structure, convention checks
+5. **Architecture** — the project's own check from `build.arch-command` (ArchUnit, dependency-cruiser, eslint boundaries, …) if configured, plus built-in convention checks. A failing `build.arch-command` is marked `"blocking": true` in the phase JSON
 
 Parse the JSON output. Print the phase results table:
 
@@ -120,7 +124,33 @@ Fix the failing phases yourself:
 - Test failures → read failure output, apply fix, re-run test
 - Architecture issues → fix naming/structure violations
 
-After fixing, re-run the pre-review checks to confirm. Max 2 fix attempts for pre-review phases. If still failing after 2 attempts, report which phases failed and continue to **Load code-reviewer agent + project conventions** (code review may catch the root cause).
+After fixing, re-run the pre-review checks to confirm. Max 2 fix attempts for pre-review phases. If still failing after 2 attempts, report which phases failed and continue to **Blocking architecture check still failing?**.
+
+Fix a `build.arch-command` failure in the code, never in the check: do not edit, skip or weaken the architecture test or its config to make it pass.
+
+### Blocking architecture check still failing?
+
+Read phase 5 from the last pre-review JSON. If it has `"status": "failed"` and `"blocking": true`, route to **Report FAIL (blocking architecture check)** — the project's deterministic rule decides, and no code review can override it. Otherwise route to **Load code-reviewer agent + project conventions** (code review may catch the root cause of other failures).
+
+### Report FAIL (blocking architecture check)
+
+Skip the code review — it would spend a review cycle on code the project's own check already rejected.
+
+**Output:**
+
+```markdown
+## Full Code Review: #<id>
+
+**Verdict:** ❌ FAILED (architecture check `build.arch-command` still fails after 2 fix attempts)
+
+### Pre-Review Verification (Phases 1-5)
+<phase table as above>
+
+### Architecture Check Output
+<issues from phase 5, as reported by the gate>
+```
+
+Return verdict so the pipeline STOPS, same as **Report FAIL (issues after 3 cycles)**.
 
 ### Load code-reviewer agent + project conventions
 

@@ -43,6 +43,7 @@ build:
   # lint-js: ""                         # JS-specific lint
   # lint-scss: ""                       # SCSS-specific lint
   # lint-fix: ""                        # auto-fix lint issues
+  # arch-command: ""                    # deterministic architecture check — blocks /dx-step-verify (see /dx-scan 3f)
 
 # Optional — SimpleAgent (/dx-simple) settings.
 # dx-simple:
