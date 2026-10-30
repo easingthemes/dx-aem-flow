@@ -14,7 +14,7 @@ You are a diagnostic tool for the dx workflow setup in a consumer project. You c
 - **File existence:** Use `Glob` with exact path patterns — never `[ -f ]`, `test -f`, or `ls` in Bash
 - **File content:** Use `Read` to read files — never `cat`, `head`, or `diff` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `git branch -a` (step 6a) — nothing else in this skill needs Bash
+- **Bash is ONLY for:** `git branch -a` (step 6a) and `scripts/rules-freshness.sh` (step 2c) — nothing else in this skill needs Bash
 - **Parallel checks:** Call multiple `Glob`/`Read` tools in a single response for efficiency — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Read Configuration & Detect Plugins
@@ -152,6 +152,25 @@ For each rule:
 2. Read both files and compare:
    - Identical (or template portion matches) → `✓ up to date`
    - Different → `⚠ stale (plugin template updated — run /dx-upgrade)`
+
+### 2c. Rules & Seed Data Freshness
+
+2a/2b compare rules with the plugin templates. This checks something else: whether the project's own rules and seed data still match a codebase that kept moving. Committed AI rules help, but most are written once and never updated, and agents follow a stale rule with full confidence.
+
+Read `doctor.rules-freshness.max-days` (default `90`) and `doctor.rules-freshness.max-commits` (default `200`) from `.ai/config.yaml`, then run:
+
+```bash
+bash ${CLAUDE_SKILL_DIR}/scripts/rules-freshness.sh --max-days <max-days> --max-commits <max-commits>
+```
+
+It prints one tab-separated line per file under `.ai/rules/` and `.ai/project/`: `status  file  last-change  age-days  code-commits-since`. A file is `stale` only when it is older than `max-days` **and** more than `max-commits` code commits (outside `.ai/` and `.claude/`) landed since its last change. Exit 2 means no git repo — report `— skipped (not a git repository)`.
+
+Report per file:
+- `fresh` → `✓ fresh (changed <last-change>)`
+- `stale` → `⚠ stale (<age-days> days, <code-commits-since> code commits since)` with remediation `Review against current code, or run /dx-scan to regenerate`
+- `untracked` → `⚠ not committed — agents in pipelines won't see it`
+
+List only stale and untracked files individually; summarize fresh ones as one line (`✓ <N> files fresh`).
 
 ## 3. MCP Configuration
 
@@ -438,6 +457,12 @@ dx Rule Files                                      Status
 .ai/rules/plan-format.md                           ✓ up to date
 .ai/rules/task-progress.md                         ✓ up to date
 .claude/rules/reuse-first.md                       ✓ up to date
+
+Rules & Seed Data Freshness (90 days / 200 commits) Status
+─────────────────────────────────────────────────────────
+Fresh                                              ✓ 9 files fresh
+.ai/project/architecture.md                        ⚠ stale (214 days, 512 code commits since)
+  Review against current code, or run /dx-scan to regenerate
 
 MCP Configuration                                  Status
 ─────────────────────────────────────────────────────────

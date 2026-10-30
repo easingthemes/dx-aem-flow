@@ -242,6 +242,18 @@ Check if `.ai/project/component-index.md` already exists (created by `/aem-init`
 
 Do NOT regenerate if it already exists.
 
+#### 3f. Architecture check command
+
+Rules in `.claude/rules/` and `.ai/rules/` are checked by a model, which can be argued out of them. If the project already has a deterministic architecture check, `/dx-step-verify` can run it as a blocking gate (phase 5). Skip if `build.arch-command` is already set.
+
+Look for:
+- **ArchUnit** — `archunit` in a `pom.xml` / `build.gradle`, or test classes importing `com.tngtech.archunit` → propose the command that runs only those tests (e.g. `mvn -q test -Dtest=<ArchTestClass>`)
+- **dependency-cruiser** — `.dependency-cruiser.js|cjs|json` → `npx depcruise <src-dir> --config <file>`
+- **ESLint boundaries** — `eslint-plugin-boundaries`, `import/no-restricted-paths` or `@nx/enforce-module-boundaries` in the ESLint config → the project's lint command, scoped to the rule if it has a script for that
+- **A package.json script** named like `arch`, `lint:arch`, `check:architecture` → `npm run <script>`
+
+Present the command and what it checks, ask to confirm, then write it as `build.arch-command` in `.ai/config.yaml`. If nothing is found, print `No architecture check found — /dx-step-verify phase 5 uses built-in conventions only.` Do not invent a check or add a tool to the project.
+
 ### Summary
 
 Print a summary of everything created/updated:

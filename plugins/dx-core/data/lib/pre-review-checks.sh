@@ -21,6 +21,7 @@
 #     lint-js: "cd frontend && npm run lint:js"
 #     lint-css: "cd frontend && npm run lint:css"
 #     frontend-dir: "frontend"     # falls back to aem.frontend-dir
+#     arch-command: "mvn -q test -Dtest=ArchitectureTest"  # optional, phase 5
 #   scm:
 #     base-branch: "develop"
 #
@@ -91,6 +92,7 @@ LINT_JS_CMD=$(yaml_val "build.lint-js")
 LINT_CSS_CMD=$(yaml_val "build.lint-css")
 FE_DIR=$(yaml_val "build.frontend-dir")
 [ -n "$FE_DIR" ] || FE_DIR=$(yaml_val "aem.frontend-dir")   # where /aem-init writes it
+ARCH_CMD=$(yaml_val "build.arch-command")
 BASE_BRANCH=$(yaml_val "scm.base-branch")
 
 # --- Command runner ---
@@ -254,7 +256,20 @@ else
 fi
 
 # --- Phase 5: Architecture Conventions ---
+# build.arch-command is the project's own deterministic check (ArchUnit,
+# dependency-cruiser, eslint boundaries, ...). A model reviewing prose rules can
+# be argued out of them; an exit code cannot. Its failure is marked
+# "blocking": dx-step-verify must not report PASS while it still fails.
+# DX_BASE_SHA and DX_CHANGED_FILES let the command scope itself to the diff.
 arch_issues=()
+arch_blocking=false
+if [ -n "$ARCH_CMD" ] && [ -n "$CHANGED_FILES" ]; then
+  if ! DX_BASE_SHA="$BASE_SHA" DX_CHANGED_FILES="$CHANGED_FILES" run_cmd arch.log "$ARCH_CMD"; then
+    arch_issues+=("Architecture check failed — run: $ARCH_CMD")
+    while IFS= read -r l; do arch_issues+=("$l"); done < <(log_lines arch.log)
+    arch_blocking=true
+  fi
+fi
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   [ ! -f "$file" ] && continue
@@ -271,7 +286,11 @@ done <<< "$CHANGED_FILES"
 if [ ${#arch_issues[@]} -eq 0 ]; then
   PHASES+=('{"phase": 5, "name": "Architecture", "status": "passed"}')
 else
-  PHASES+=('{"phase": 5, "name": "Architecture", "status": "failed"}')
+  if $arch_blocking; then
+    PHASES+=('{"phase": 5, "name": "Architecture", "status": "failed", "blocking": true}')
+  else
+    PHASES+=('{"phase": 5, "name": "Architecture", "status": "failed"}')
+  fi
   for ai in "${arch_issues[@]}"; do
     ISSUES+=("$ai")
   done
