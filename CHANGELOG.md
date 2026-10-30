@@ -1,3 +1,10 @@
+# [3.11.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.4...v3.11.0) (2026-10-30)
+
+
+### Features
+
+* **dx-core:** blocking architecture check + rules freshness in dx-doctor ([#237](https://github.com/easingthemes/dx-aem-flow/issues/237)) ([5a4b557](https://github.com/easingthemes/dx-aem-flow/commit/5a4b557d7b7f538f3448b06fea1d95c4ee4405b5))
+
 ## [3.10.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.3...v3.10.4) (2026-10-27)
 
 
