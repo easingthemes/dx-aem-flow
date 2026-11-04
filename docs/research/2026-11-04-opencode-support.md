@@ -258,6 +258,23 @@ has no OpenCode equivalent.
 3. **`context: fork` / `agent:` (16 + 6).** Lost. For the 6 AEM skills that delegate entirely
    to an agent, the CE/wshobson answer is a command stub with `agent: aem-inspector` +
    `subtask: true`, which runs the skill in that subagent. Model-invoked skills still run inline.
+   - **Subagents themselves work.** v1 has the `task` tool; v2 has `subagent` (`agent`, `prompt`,
+     `background`, `sessionID` for follow-ups) *(source: `tool/plugin/subagent.ts`)*. Several
+     calls in one turn run in parallel (per wshobson's matrix, not verified), `background: true` runs async, and `subagent_depth`
+     (config) allows nesting. So skills that spawn agents explicitly (dx-figma-prototype ×3,
+     dx-pr-review-all, dx-step-verify → dx-code-reviewer, the aem-* skills → aem-inspector)
+     keep working, given translated agents.
+   - **What is lost is the skill-level fork.** OpenCode's `skill` tool only returns content
+     into the caller's context. Coordinators chain forked skills (`dx-agent-all` → dx-req →
+     dx-plan → dx-step-all → dx-step …), and on OpenCode these all pile into one context,
+     relying on compaction.
+   - **No prior art handles `context: fork`.** CE ignores it; wshobson sets `subtask: true` only
+     on *commands* whose body mentions agents; harnesstap doesn't map it.
+   - **Possible fix: a generated wrapper.** For each fork skill, emit an OpenCode agent
+     (`mode: subagent`, `agents/dx-step.md`, body "Load the `dx-step` skill with the `skill` tool
+     and execute it for: <task>"). The coordinator calls `subagent(agent: "dx-step", …)`
+     instead of loading the skill, and a command stub with `subtask: true` covers the
+     user-typed `/dx-step`. Untested; needs a smoke test.
 4. **`ToolSearch` (22 files).** Dead instruction on OpenCode.
 5. **Model tiers.** Lost (subagents inherit). An explicit `provider/model-id` per agent is
    possible but pins a provider.
