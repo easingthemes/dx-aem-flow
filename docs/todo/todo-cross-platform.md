@@ -58,53 +58,52 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 
 ## OpenCode plugin support
 
-**Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md))
-**Problem:** dx ships as Claude Code / Copilot CLI plugins. In those tools a plugin is a *distribution unit*: it bundles skills, agents, hooks and MCP into one install, and its files live in the plugin cache, not in the project. OpenCode has no such unit. An OpenCode "plugin" is a JS/TS *runtime extension*: hooks on tool calls, shell env, sessions, custom tools. It is the counterpart of a Claude Code mod or hook, not of a Claude Code plugin. The same word names different things.
+**Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md): prior art, wiring map, target layout)
+**Problem:** dx-core and dx-aem have no OpenCode install path.
+- In Claude Code / Copilot CLI a plugin is a *distribution unit* that bundles skills, agents, hooks and MCP. OpenCode has no such unit. Its "plugins" are JS runtime extensions. So skills, agents, MCP and instructions must reach OpenCode as separate native files and `opencode.json` entries.
+- Projects that already ship Claude Code plugins to OpenCode (compound-engineering's converter, wshobson/agents) do this with a **generator** that writes native files.
+- Even with the files in place, our skills depend on Claude-only wiring (research §4–6):
+  - 61 `CLAUDE_PLUGIN_ROOT` / `CLAUDE_SKILL_DIR` refs and 87 bare `shared/…` refs have no anchor.
+  - 4 skill scripts need the `skills/` ↔ `shared/` relative layout.
+  - 16 `context: fork` and 6 `agent:` delegations are ignored.
+  - `subagent_type: dx-core:dx-figma-*` is plugin-namespaced.
+  - 22 files tell the model to use `ToolSearch`.
+  - MCP tools are named `<server>_<tool>` instead of `mcp__plugin_…__`.
+  - OpenCode drops `CLAUDE.md` when our generated `AGENTS.md` exists.
 
-Each part of dx therefore reaches OpenCode separately, as files and config:
-- **Skills:** read from `.opencode/skills/`, `.claude/skills/`, `.agents/skills/` (project or home). On v2 there is also a `skills: [...]` config array that takes paths or an **HTTP catalog** (`<base>/index.json` listing `name`, `version`, `files`). None of these sees the Claude Code plugin cache.
-- **Agents:** `.opencode/agents/*.md` or `~/.config/opencode/agents/`, with their own frontmatter.
-- **MCP and instructions:** `opencode.json` (`mcp`, `instructions`). `.mcp.json` is not read.
-- **Hooks:** only a JS runtime extension can do these.
-
-Today none of this is set up. On top of that, three things fail quietly:
-- 17 skill files call scripts through `$CLAUDE_PLUGIN_ROOT` / `${CLAUDE_SKILL_DIR}`. These are unset in OpenCode, so `dx-bug-all`, `dx-simple`, `dx-step`, `dx-figma-all` and `aem-init` break.
-- No MCP servers (AEM, Playwright, axe, Figma).
-- OpenCode loads `AGENTS.md` *instead of* `CLAUDE.md`. Our `/dx-init` and `dx-scaffold` always write `AGENTS.md`, so the consumer's `CLAUDE.md` is dropped.
-
-**Scope:**
-- `cli/lib/scaffold.js` and `cli/bin/dx-scaffold.js` (`--opencode`): the installer for OpenCode
-- New `.opencode/INSTALL.md` (sibling of `.codex/INSTALL.md`)
-- `scripts/validate-skills.sh`: OpenCode name/description rules
-- Skills using `CLAUDE_PLUGIN_ROOT`/`CLAUDE_SKILL_DIR`: `plugins/dx-core/skills/{dx-bug-all,dx-simple,dx-step,dx-figma-all}`, `plugins/dx-aem/skills/aem-init`; find the rest with `grep -rlE 'CLAUDE_(PLUGIN_ROOT|SKILL_DIR)' plugins/*/skills`
-- Optional: a skill catalog generator (`scripts/build-opencode-catalog.sh`) and a runtime extension `.opencode/plugins/dx-guard.js`
+**Scope:** dx-core + dx-aem only (dx-hub, dx-automation later).
+- `cli/lib/scaffold.js`, `cli/bin/dx-scaffold.js` (`--opencode`)
+- `.opencode/INSTALL.md`
+- `scripts/validate-skills.sh`
+- Skills with plugin-root / `shared/` refs: `grep -rlE 'CLAUDE_(PLUGIN_ROOT|SKILL_DIR)|[ \`(]shared/' plugins/dx-{core,aem}/skills`
+- `plugins/dx-core/skills/dx-figma-prototype` (namespaced `subagent_type`)
 - Website cross-platform page
+
 **Done-when:**
-- `test -f .opencode/INSTALL.md`
-- `validate-skills.sh` fails on a fixture skill whose `name` ≠ dir or whose description is >1024 chars
 - `node cli/bin/dx-scaffold.js /tmp/oc --all --opencode` writes:
-  - `/tmp/oc/opencode.json` with `mcp` and `instructions: ["CLAUDE.md"]`
-  - `/tmp/oc/.opencode/agents/dx-code-reviewer.md`
-  - the skills under a dir OpenCode scans (e.g. `/tmp/oc/.opencode/skills/dx-help/SKILL.md`)
-- In that project, `opencode run "use the skill tool to load dx-help, then say which config file it reads"` mentions `.ai/config.yaml`. Record the version (v1 or v2) used.
-**Approach:** phases, each shippable on its own:
-1. **Manual install doc + compat check.**
-   - `INSTALL.md`: clone the repo, then link or copy `plugins/<p>/skills/*` and translated agents into `~/.config/opencode/` (global) or `.opencode/` (project). On v2, `skills: ["~/.dx-aem-flow/plugins/dx-core/skills"]` replaces the skills symlinks.
-   - Sample `opencode.json` with an `mcp` block translated from our `.mcp.json` files and `"instructions": ["CLAUDE.md"]`.
-   - Degradation table: `model`/`effort`/`context: fork`/hooks are ignored.
-   - Add the name regex `^[a-z0-9]+(-[a-z0-9]+)*$`, the name = dir rule and the ≤1024-char description rule to `validate-skills.sh`. All 79 skills pass today; the check only keeps it that way.
-2. **Plugin-root portability.** Skills resolve their own script dir with a fallback when `CLAUDE_PLUGIN_ROOT` is unset. A runtime extension can't fix this with `shell.env`, because it is one variable and dx-core and dx-aem need different roots. Fix this together with TODO #86, because it also fixes Codex and Gemini. Run the `dx-bug-all` / `dx-simple` suites after the change.
-3. **`dx-scaffold --opencode` as the installer.** The scaffold already reads `plugins/` at runtime, so it fits.
-   - Copy the selected plugins' skills into `.opencode/skills/`, with their `scripts/`/`templates/` and exec bits.
-   - Emit `.opencode/agents/*.md` from `plugins/{dx-core,dx-aem}/agents/`, setting `mode: subagent` and mapping `tools` to `permission`. Omit `model` (no alias equivalent; a pinned id goes stale).
-   - Write `opencode.json` with `mcp`, `instructions` and `permission.skill: {"*": "allow"}`.
-   - Re-running it is the upgrade path. Add a `/dx-init` note too.
-4. **Optional runtime extension for hooks only.** `.opencode/plugins/dx-guard.js` with `tool.execute.before` blocks `git commit` on protected branches, mirroring the `PreToolUse` branch-guard. This is the only part that is a real OpenCode plugin. Target one OpenCode version.
-5. **Parked: v2 HTTP skill catalog.** Generate `index.json` from `plugins/*/skills` and serve it from the docs site, so users add one URL to `skills`. Blocked on two unknowns: whether downloaded scripts keep exec bits, and where the cache lives (scripts need a stable path). Revisit after phase 2.
+  - `opencode.json` with `mcp.AEM`, `mcp.playwright` and `instructions: ["CLAUDE.md"]`
+  - 13 files in `.opencode/agents/`, each with `mode: subagent` and no `model:`
+  - all 61 dx-core/dx-aem skills reachable under `.opencode/skills/`
+- `grep -rlE '\$\{?CLAUDE_(PLUGIN_ROOT|SKILL_DIR)' /tmp/oc/.opencode/` is empty
+- `validate-skills.sh` fails on a fixture whose `name` ≠ dir or whose description is >1024 chars
+- In that project, `opencode run "load the dx-help skill and say which config file it reads"` mentions `.ai/config.yaml`, and `aem-inspector` can call an `AEM_*` tool. Record the OpenCode version.
 
-**Not doing:** registering skill dirs from a runtime extension the way superpowers does: a `config` hook into the undocumented v1 `skills.paths`, and `ctx.skill.transform()` on v2. It works, but it uses the extension API as a package manager. It relies on an undocumented key and has to track two plugin APIs.
+**Approach:** follow the generator pattern (research §7 option A); `dx-scaffold` is already our generator.
+1. **Manual install doc + smoke test first.**
+   - Write `.opencode/INSTALL.md` from research §5: an intact plugin tree under `~/.config/opencode/dx/`, per-skill symlinks (v1) or a `skills` array (v2), translated agents, and `opencode.json`.
+   - Smoke-test the four open questions in research §8 before writing code, above all whether the model maps `mcp__plugin_dx-aem_AEM__x` → `AEM_x` without a rewrite.
+   - Add the name/length rules to `validate-skills.sh`.
+2. **Make skill bodies location-independent.** Adopt compound-engineering's `SKILL_DIR` convention: OpenCode's `skill` tool returns the skill directory. Alternatively the generator rewrites `$CLAUDE_PLUGIN_ROOT` / `shared/` to the absolute install path. Decide after the step 1 smoke test. Shared with TODO #86 (same hole on Copilot/Codex).
+3. **`dx-scaffold --opencode`.**
+   - Copy skills with the plugin-relative tree intact.
+   - Translate agents: `mode: subagent`, no `model`, `maxTurns` → `steps`, `tools` → `permission` with `<server>_*` globs.
+   - Flatten `dx-core:` agent refs.
+   - Write `opencode.json` (`mcp`, `instructions`, `permission.skill`).
+   - Optional command stubs (`agent:` + `subtask: true`) for the 6 AEM skills that delegate to an agent.
+   - Re-running it is the upgrade path.
+4. **Optional runtime extension for hooks** (branch-guard) in `.opencode/plugins/`, mirroring the TS hook plugin compound-engineering's converter generates.
 
-Open questions are in the research note (MCP tool-name format, `{env:}` in `command`, symlink support, an `AskUserQuestion` equivalent).
+**Not doing (for now):** a skill-registering runtime extension like superpowers or the compound-engineering plugin path. It covers skills only, not agents or MCP. Also not depending on third-party loaders (harnesstap, oh-my-opencode); smoke-test them only.
 
 ## SessionStart hook platform detection (shared script)
 

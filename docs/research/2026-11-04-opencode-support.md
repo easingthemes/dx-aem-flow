@@ -1,210 +1,281 @@
-# OpenCode support — research and brainstorm (2026-11-04)
+# OpenCode support — prior art, our wiring, target layout (2026-11-04)
 
-Input for [TODO #186](../todo/todo-cross-platform.md#opencode-plugin-support). The original
-plan (2026-04-04) copied the superpowers pattern of that time: a JS plugin
-`.opencode/plugins/dx-core.js` with an `experimental.chat.system.transform` hook to inject
-context and a `config` hook to register skills. OpenCode has moved since, and so has
-superpowers. This note records what OpenCode does today and what that means for us.
+Input for [TODO #186](../todo/todo-cross-platform.md#opencode-plugin-support). Scope:
+**dx-core and dx-aem only** (dx-hub, dx-automation out of scope for now).
 
-Sources: opencode.ai/docs (`skills`, `plugins`, `mcp-servers`, `rules`, `agents`,
-`commands`, `config`), opencode.ai/v2/docs (`skills`, `plugins`, `build/plugins`),
-superpowers `.opencode/INSTALL.md` (main, 2026-11-04).
+Method: read the official docs (opencode.ai/docs, /v2/docs), cloned and read the source of four
+projects that ship Claude Code plugins to OpenCode, read OpenCode's own source
+(`anomalyco/opencode` main, 2026-11-04) where the docs were silent, and grepped our
+plugins. Statements marked *(source)* were read in code, not docs.
 
-## 1. What OpenCode does natively
+## 1. Terminology — "plugin" means two things
 
-### Two live versions
-
-OpenCode 2 is out (2.0.x, Homebrew `opencode-v2`). OpenCode 1 is still installed by some
-package managers. The two differ where it matters for a plugin:
-
-| | OpenCode 1 | OpenCode 2 |
+| | Claude Code / Copilot CLI plugin | OpenCode plugin |
 |---|---|---|
-| Plugin config key | `plugin` (npm names) | `plugins` (npm, local dir, `file://`, `{package, options}`) |
-| Plugin shape | `async ({project, client, $, directory, worktree}) => hooks` | `Plugin.define({ id, setup(ctx) })` from `@opencode/plugin` |
-| Local plugin | single `.js`/`.ts` file in `.opencode/plugins/` | file **or** dir with `index`/`server` entry |
-| Extra skill dirs | none (no `skills` config key) | `skills: [ ... ]` array in `opencode.json` (paths or catalog URLs) |
-| Skill frontmatter honored | `name`, `description` (+ `license`, `compatibility`, `metadata`) | same + `disable-model-invocation`, `metadata.opencode/autoinvoke` |
-| Skill id | from `name`, must match dir | from **file path**; `name` is a label |
+| What it is | Distribution unit: bundles skills, agents, hooks, MCP | Runtime extension: JS/TS module with hooks, custom tools |
+| Install | `/plugin install x@marketplace` → plugin cache | `opencode.json` `plugin`/`plugins` entry, or file in `.opencode/plugins/` |
+| Claude equivalent | — | a mod / `hooks.json` |
 
-A JS plugin has to be written twice, or target one version only. That is the main reason
-not to start with a plugin.
+OpenCode has **no distribution unit** for skills + agents + commands + MCP. Each goes in
+separately as files and config. Every project below works around that.
 
-### Skills — free, no plugin needed
+## 2. Prior art — how others ship Claude Code plugins to OpenCode
 
-Both versions scan, project-level (walking up to the worktree root) and global:
+| Project | Approach | Skills | Agents | MCP | Hooks |
+|---|---|---|---|---|---|
+| **[EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin)** (very active; last commit 2026-11-04) | **Two paths.** (a) Runtime extension `.opencode/plugins/compound-engineering.js`, installed with a git spec in `opencode.json`. (b) Bun converter `bunx @every-env/compound-plugin install … --to opencode` (`src/converters/claude-to-opencode.ts`, `src/targets/opencode.ts`). | (a) v1 `config` hook → `skills.paths`; v2 `ctx.skill.transform`. Each skill also gets a slash command stub: "Load and execute the `X` skill. $ARGUMENTS". (b) Copies to `~/.config/opencode/skills/`. | (b) only → `~/.config/opencode/agents/*.md`, `mode: subagent`, **no `model` on subagents** (explicit ids caused `ProviderModelNotFoundError`), `tools` → `permission`. | (b) `command`+`args` → `{type: local, command: [...]}`, `url` → `{type: remote}` merged into `opencode.json`. | (b) generates a TS plugin: `PreToolUse`→`tool.execute.before`, `PostToolUse`→`tool.execute.after`, … |
+| **[wshobson/agents](https://github.com/wshobson/agents)** (multi-harness marketplace) | Python generator `tools/adapters/opencode.py`, `make install-opencode`. Writes `.opencode/` (gitignored) and symlinks it into `~/.config/opencode/`. | `.opencode/skills/<plugin>-<skill>/` (prefixed, validated against the name regex; collisions fail). Mirrors all files in the skill dir. | `.opencode/agents/<plugin>__<agent>.md`, `mode: subagent`, `tools` → `permission` block with `skill` + `task` always allowed, model alias → full `provider/model-id`. | not documented | "via TS plugins" in the matrix; not generated |
+| **[obra/superpowers](https://github.com/obra/superpowers)** | Runtime extension only (git spec). | Same as CE (a). Injects a v1/v2 tool-mapping prompt (`task`↔`subagent`, `bash`↔`shell`, `todowrite`, `skill`). | none | none | none |
+| **[harnesstap/opencode-agent-plugin-support](https://github.com/harnesstap/opencode-agent-plugin-support)** (young; 1★, v0.2.0, 2026-10-12) | Runtime extension that **loads Claude Code plugin trees in place** (`~/.agents/plugins`, symlink to `~/.claude/plugins`). v2 primary. | `ctx.skill.transform`; substitutes `${CLAUDE_SKILL_DIR}` and `${CLAUDE_PLUGIN_ROOT}` in skill text *(source: `src/skills.ts:152`)* — braced form only. | `ctx.agent.transform`, namespaced `plugin:agent` | `ctx.mcp.transform` from `.mcp.json`, expands plugin-root vars | Runs `hooks.json` command hooks, gives them `CLAUDE_*` env |
+| **oh-my-opencode** | Large opinionated extension with a "Claude Code compatibility layer". | `.claude/skills` | `~/.claude/agents` (marked "reserved") | `.mcp.json` | `.claude/settings.json` hooks; reads `installed_plugins.json` |
+| **alirezarezvani/claude-skills** | `install.sh --tool opencode` copies skills into `.opencode/skills/`. | copy | — | — | — |
 
-- `.opencode/skills/`, `~/.config/opencode/skills/`
-- `.claude/skills/`, `~/.claude/skills/` (Claude Code compat; off with `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1`)
-- `.agents/skills/`, `~/.agents/skills/`
+**Consensus:**
+- For full fidelity (agents + MCP + hooks), the mature projects **generate native OpenCode
+  files** from the Claude plugin source: CE's converter and wshobson's adapter. CE's spec
+  (`docs/specs/opencode.md`, verified 2026-04-19) says it plainly: *"Keep the custom
+  writer until OpenCode documents a native distribution path for packaged skills and
+  agents."*
+- For **skills only**, a small runtime extension that registers skill dirs is the common
+  shortcut (superpowers, CE path a).
+- **Recurring translations:**
+  - agents get `mode: subagent`
+  - `tools` → `permission`
+  - subagents get no model, or a full `provider/model-id`
+  - MCP becomes `local`/`remote`
+  - skills get slash command stubs
+  - plugin-namespaced agent refs are flattened (`plugin:agent` → `agent`; CE `transformSkillContentForOpenCode`)
+  - `.claude/` paths are rewritten
+- **Script paths:** CE's skills don't use a plugin-root variable. Each skill tells the model to
+  set `SKILL_DIR` to "the absolute directory you loaded this SKILL.md from" and runs
+  `bash "$SKILL_DIR/scripts/x"`. That works because OpenCode's `skill` tool returns the skill
+  `directory` with the content *(source: `packages/core/src/tool/plugin/skill.ts`)*.
 
-The model loads a skill through the native `skill` tool (v1 `{name}`, v2 `{id}`).
-`permission.skill` in `opencode.json` takes `allow | ask | deny` per name glob.
+## 3. OpenCode facts the design depends on
 
-**`.codex/INSTALL.md` already symlinks our skills into `.agents/skills/`.** A Codex-style
-install gives OpenCode every skill with no extra step.
+- **Skills discovery:** `.opencode/skills/`, `.claude/skills/`, `.agents/skills/` (project,
+  walking up to the worktree root) and the same under `~/.config/opencode`, `~/.claude`,
+  `~/.agents`.
+  - v2 adds a `skills: [...]` config array taking paths or an HTTP catalog.
+  - v1 has an undocumented `skills.paths`; CE and superpowers both use it, but CE's spec
+    warns not to depend on it untested.
+- **Skill name rules (v1):** `^[a-z0-9]+(-[a-z0-9]+)*$`, ≤64 chars, equal to the dir name;
+  description ≤1024 chars. v2 takes the id from the path.
+- **MCP tool names:** `<server>_<tool>`; any char outside `[a-zA-Z0-9_-]` becomes `_`
+  *(source: `packages/core/src/tool/runtime.ts:288-293`, `tool/mcp.ts:23-25`)*.
+  Server `AEM` + tool `getNodeContent` → **`AEM_getNodeContent`**.
+- **Built-in tools (v2):** `read`, `write`, `edit`, `patch`, `glob`, `grep`, `shell`,
+  `subagent`, `skill`, `question`, `todo`, `webfetch`, `websearch`
+  *(source: `packages/core/src/tool/plugin/`)*. v1 uses `bash`, `task`, `todowrite`,
+  `apply_patch` instead (per superpowers' and CE's maps).
+- **Agents:**
+  - read from `.opencode/agents/` and `~/.config/opencode/agents/`; **not** from `.claude/agents/`
+  - frontmatter: `description` (required), `mode`, `model` (`provider/id`), `permission`, `hidden`, `steps`
+  - no per-agent `mcpServers`; per-agent MCP access goes through `permission` globs on `<server>_*`
+- **Instructions:** `AGENTS.md`, falling back to `CLAUDE.md` only when no `AGENTS.md` exists;
+  `instructions: [...]` adds more files.
+- **MCP config:** the `mcp` key in `opencode.json`; `.mcp.json` is **not** read.
 
-Name rules (v1): `^[a-z0-9]+(-[a-z0-9]+)*$`, 1–64 chars, equal to the directory name;
-description 1–1024 chars. **Checked 2026-11-04: all 79 skills pass** (no name/dir
-mismatch, no description over 1024). Nothing enforces that today.
+## 4. How dx-core and dx-aem are wired (what must survive the move)
 
-### Instructions — a trap
+Counts from `plugins/dx-core` + `plugins/dx-aem`, 2026-11-04.
 
-Project: `AGENTS.md`, falling back to `CLAUDE.md` only if there is no `AGENTS.md`.
-Global: `~/.config/opencode/AGENTS.md`, falling back to `~/.claude/CLAUDE.md`.
-First match wins in each category; the extra `instructions: [...]` key adds files.
+### 4.1 Inventory
 
-`/dx-init` (step 5d-bis) and `dx-scaffold` (`cli/lib/scaffold.js:551`) **always** write a
-root `AGENTS.md` listing our agents. In a consumer that has a `CLAUDE.md`, that makes
-OpenCode drop the consumer's `CLAUDE.md` — the file that actually describes their
-codebase — and load only our agent table. Same issue exists for Codex. Fix:
-`"instructions": ["CLAUDE.md"]` in `opencode.json`.
-
-### MCP
-
-Configured under `mcp` in `opencode.json`: `{type: "local", command: [...], environment}`
-or `{type: "remote", url, headers, oauth}`; `{env:VAR}` substitution. **No `.mcp.json`
-compat.** Tools are exposed as `<server>_<tool>` (glob examples in the docs; exact format
-not spelled out). Our skills name `mcp__plugin_dx-aem_AEM__*` etc.; per CLAUDE.md the model
-maps these as prose hints, same as Copilot/Gemini — needs a smoke test, not code.
-
-Mapping of our servers:
-
-| Ours (`.mcp.json`) | OpenCode `mcp` entry |
-|---|---|
-| dx-aem `AEM` stdio `npx -y aem-mcp-server -t stdio -I ${AEM_INSTANCES}` | `local`, `command: ["npx","-y","aem-mcp-server","-t","stdio","-I","{env:AEM_INSTANCES}"]` — check `{env:}` works inside `command` |
-| dx-aem `playwright` stdio | `local`, same args |
-| dx-core `axe-mcp-server` docker | `local`, `environment: {AXE_API_KEY: "{env:AXE_API_KEY}"}` |
-| dx-core `figma` http `127.0.0.1:3845/mcp` | `remote`, `oauth: false` |
-| ADO / Atlassian (project-level) | consumer adds, like for Copilot |
-
-### Agents
-
-Markdown in `.opencode/agents/` or `~/.config/opencode/agents/` — **`.claude/agents` is not
-read**. Frontmatter: `description` (required), `mode: primary|subagent|all`, `model`
-(`provider/model-id`, e.g. `anthropic/claude-sonnet-5-5`), `permission` (`tools` is
-deprecated), `hidden`, `steps`. Called through the `task` tool or `@name`.
-
-Our 13 agents (`plugins/{dx-core,dx-aem}/agents/`) would need a translated copy. Their
-`model: sonnet` aliases have no OpenCode equivalent — either a pinned id (goes stale; we
-avoid that for Claude Code) or omit and inherit.
-
-### Commands
-
-`.opencode/commands/*.md`, `$ARGUMENTS`, `$1..`; frontmatter `description`, `agent`,
-`model`, `subtask`. `.claude/commands` not documented as read. Skills are not slash
-commands in v1; the user asks for them in prose or the model picks one by description.
-
-### Plugins (only for what config cannot do)
-
-v1 hooks: `tool.execute.before` / `after` (throw to block), `shell.env` (inject env vars
-into every shell call), `event` (`session.created`, `session.idle`, …),
-`experimental.session.compacting`. The `experimental.chat.system.transform` and `config`
-hooks the old plan relied on are **not in the current docs**. v2 hook names are on a
-separate page not covered here.
-
-## 2. What breaks in our skills
-
-| Issue | Where | Effect on OpenCode |
+| | dx-core | dx-aem |
 |---|---|---|
-| `$CLAUDE_PLUGIN_ROOT` / `${CLAUDE_SKILL_DIR}` | 17 files; heavy in `dx-bug-all`, `dx-simple`, also `dx-step`, `dx-figma-all`, `aem-init` | Unset → script calls fail. `dx-bug-all/scripts/preflight.sh` stops with "CLAUDE_PLUGIN_ROOT not set". Codex has the same hole. |
-| `model:` / `effort:` | Opus/Haiku tiers | Ignored; session model used |
-| `context: fork` + `agent:` | 16 skills | Ignored; skill runs inline in the main context |
-| Named subagents | 15 skills reference Agent/Task tool + our agents | Agents missing unless installed to `.opencode/agents/` |
-| `AskUserQuestion` | 8 skills | Not checked whether OpenCode has an equivalent; model falls back to asking in text |
-| Plugin hooks (`hooks.json`) | branch-guard, Stop guard, session-start, screenshot log | None run |
+| Skills | 49 | 12 |
+| Agents | 7 | 6 |
+| Skills with `scripts/` or `templates/` | 10 (dx-agent-all, dx-bug-all, dx-doctor, dx-eject, dx-figma-prototype, dx-init, dx-pr-review, dx-pr-reviews-report, dx-simple, dx-sync) | 0 |
+| Plugin-level dirs skills read | `shared/` (25 files), `data/`, `templates/`, `rules/` | `shared/` (2), `data/`, `templates/` |
 
-## 2b. Correction — our skills are not in the project
+### 4.2 Skill frontmatter
 
-Addendum, same day. Section 1 assumes skills sit in `.claude/skills/` or `.agents/skills/`.
-They don't. dx skills ship inside Claude Code / Copilot CLI plugins and live in the
-plugin cache (`~/.claude/plugins/cache/<marketplace>/<plugin>/<ver>/skills/`). OpenCode
-has **no support for Claude Code plugins or marketplaces**. Its "plugins" are JS/TS modules
-(`.opencode/plugins/`, or npm/git entries in `opencode.json`). Native discovery therefore
-only helps after a manual copy or symlink (the Codex route).
+| Field | Skills | On OpenCode |
+|---|---|---|
+| `name`, `description` | 61 | honored; all pass the v1 name/length rules |
+| `argument-hint` | 61 | ignored (CE carries it onto the command stub) |
+| `allowed-tools` | 60 — **Copilot names** (`read`, `edit`, `search`, `write`, `agent`, `ado/*`, `AEM/*`, …) | ignored |
+| `context: fork` | 16 | ignored → runs inline |
+| `agent:` | 6 (aem-doc-gen, aem-editorial-guide → aem-editorial-guide-capture; aem-fe-verify → aem-fe-verifier; aem-qa-handoff, aem-snapshot, aem-verify → aem-inspector) | ignored → the fork-into-agent is lost |
+| `model` / `effort` | 14 / 8 | ignored |
+| `disable-model-invocation` | 10 | honored on v2, ignored on v1 |
+| `hooks:` | 2 (dx-agent-all, dx-simple) | ignored |
 
-How superpowers solves it (read from `obra/superpowers` main, v7.0.2):
+### 4.3 Skill → skill calls
 
-- Repo-root `package.json` (`"main": ".opencode/plugins/superpowers.js"`) plus a root
-  `index.js` re-export for v2's directory-form install. Users add
-  `"plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]` (v1) or
-  `"plugins": [...]` (v2); OpenCode installs it with Bun.
-- **v1:** the named export returns a `config` hook that pushes the skills dir into
-  `config.skills.paths`. The key is undocumented but works on 1.18.x.
-- **v2:** the default export `{ id, server, setup }`; `setup(ctx)` calls
-  `ctx.skill.transform((draft) => draft.add(info))` per skill and injects a bootstrap
-  through `ctx.session.hook`.
-- It injects a version-specific tool mapping (v1: `todowrite`, `task`, `skill`, `bash`,
-  `apply_patch`; v2: `subagent`, `shell`, `patch`, no todo tool).
-- Zero dependencies, so it needs neither `@opencode-ai/plugin` nor `effect`.
+Coordinators call other skills by `/name` or the Skill tool. OpenCode's `skill` tool
+covers this, and bare kebab ids match ours.
 
-Third-party bridges exist: `opencode-agent-skills` scans `~/.claude/plugins/cache/` and
-`marketplaces/`, and the `opencode-plugin` CLI installs Claude marketplace plugins and
-links their skills into `~/.agents/skills`. Neither is vetted.
+- `dx-agent-all` → 19 skills (dx-req, dx-plan*, dx-step*, dx-pr*, dx-figma-all, aem-snapshot/verify/fe-verify/doc-gen, …)
+- `dx-bug-all` → dx-bug-triage, dx-bug-verify, dx-bug-fix, dx-pr-commit
+- `dx-step-all` → dx-step, dx-step-build, dx-step-fix
+- `dx-figma-all` → dx-figma-extract, dx-figma-prototype, dx-figma-verify
+- `dx-req` → dx-dor, dx-req-import, dx-ticket-analyze
+- `aem-init` ↔ `dx-init`, `aem-doc-gen` → aem-editorial-guide
 
-**Wording trap — "plugin" means two different things.** A Claude Code / Copilot CLI
-plugin is a *distribution unit* that bundles skills, agents, hooks and MCP. An OpenCode
-plugin is a *runtime extension* (hooks, custom tools, shell env) — closer to a Claude Code
-mod or `hooks.json` than to a Claude Code plugin. OpenCode has **no bundle unit** for
-skills + agents + commands + MCP. Each reaches it separately: skills as directories (or, on
-v2, an HTTP catalog), agents as `.opencode/agents/*.md`, MCP and instructions in
-`opencode.json`.
+**dx-aem skills call dx-core skills and the reverse** (dx-agent-all → aem-*; aem-qa →
+dx-pr-commit). Both plugins must be installed together.
 
-superpowers uses the runtime extension as a package manager (registering skill dirs from a
-hook). That works, but it leans on an undocumented v1 key and two plugin APIs. Our
-equivalent installer already exists: `dx-scaffold` reads `plugins/` at runtime, so
-`--opencode` can lay the files down. A runtime extension stays reserved for what only it
-can do: hooks such as the branch-guard.
+### 4.4 Skill → agent calls
 
-### v2 HTTP skill catalog
+| Agent (model) | Called by | Tools / MCP |
+|---|---|---|
+| dx-code-reviewer (opus) | dx-pr-review, dx-step-verify, dx-eject | all |
+| dx-pr-reviewer (sonnet) | dx-pr-review, dx-pr-review-all, dx-simple | Read, Glob, Grep, Bash |
+| dx-doc-searcher (haiku) | dx-help, dx-ticket-analyze | Glob, Grep, Read |
+| dx-figma-{components,markup,styles} (haiku) | dx-figma-prototype — as `subagent_type: dx-core:dx-figma-*` (**plugin-namespaced**) | Read, Glob, Grep |
+| dx-file-resolver (haiku) | no skill names it (Copilot agent templates only) | + `mcp__ado__search_code` |
+| aem-inspector (sonnet) | aem-snapshot, aem-verify, aem-qa-handoff, aem-doc-gen, aem-fe-verify, dx-simple | `mcpServers: [AEM]` + 15 `mcp__plugin_dx-aem_AEM__*` |
+| aem-fe-verifier (sonnet) | aem-fe-verify | AEM + playwright tools |
+| aem-editorial-guide-capture (sonnet) | aem-editorial-guide, aem-doc-gen | playwright tools |
+| aem-file-resolver / aem-page-finder (haiku) | aem-component, dx-ticket-analyze, dx-simple | `mcp__ado__search_code` / AEM search tools |
+| aem-bug-executor (sonnet) | no skill names it (description says dx-bug-verify uses it) | AEM + playwright |
 
-The v2 `skills` array accepts `http(s)` URLs. Each one is a base URL serving `index.json`:
+`subagent_type` values in skill bodies: `general-purpose` ×6 (→ OpenCode `general`),
+`dx-pr-reviewer` ×4, `dx-core:dx-figma-*` ×3 (namespace must be flattened, as CE does),
+`aem-*` ×3.
 
-```json
-{ "skills": [ { "name": "git-release", "version": "3",
-  "files": ["git-release.md", "references/release-policy.md"] } ] }
+### 4.5 MCP tool references
+
+| Our prefix | Refs | Distinct tools | Server in | OpenCode name (server key as below) |
+|---|---|---|---|---|
+| `mcp__ado__` | 146 | 16 | consumer project config | `ado_<tool>` |
+| `mcp__plugin_dx-aem_AEM__` | 117 | 16 | dx-aem `.mcp.json` | `AEM_<tool>` |
+| `mcp__plugin_dx-aem_playwright__` | 99 | 20 | dx-aem `.mcp.json` | `playwright_<tool>` |
+| `mcp__atlassian__` | 82 | 22 | consumer project config | `atlassian_<tool>` |
+| `mcp__plugin_dx-core_figma__` | 5 | 4 | dx-core `.mcp.json` | `figma_<tool>` |
+| `mcp__plugin_dx-core_axe-mcp-server__` | 0 (skills name the server generically) | — | dx-core `.mcp.json` | `axe-mcp-server_<tool>` |
+| `mcp__claude_ai_Figma__`, `mcp__plugin_dx-aem_chrome-devtools-mcp__` | 2, 1 | — | stale/alt refs | — |
+
+`ToolSearch` appears in 22 skill/agent files. OpenCode has no deferred-tool loader, so these
+instructions point at a tool that doesn't exist; the model has to skip them.
+
+### 4.6 Paths and Claude-only tools
+
+| Pattern | Refs | Resolves on OpenCode? |
+|---|---|---|
+| Bare `shared/<file>` ("Read `shared/provider-config.md`") | 87 | Only if the model finds the plugin root. No anchor. |
+| `plugins/dx-core/shared/…` | 17 | Only in this repo (dev layout). |
+| `$CLAUDE_PLUGIN_ROOT/…` (47 unbraced, 7 braced) + `${CLAUDE_SKILL_DIR}` (7) | 61 | **No** — unset. harnesstap substitutes only the braced form. |
+| Skill scripts using `$(dirname "${BASH_SOURCE[0]}")/../../../shared` | 4 files | Only if `skills/<s>/scripts` and `shared/` keep their relative layout. **Copying skills alone breaks it.** |
+| `.ai/lib/*.sh` / `.js` (dx-common 53, ensure-feature-branch 10, …) | ~100 | **Yes** — project files installed by `/dx-init` or `dx-scaffold`. |
+| `AskUserQuestion` | 7 files | → `question` (exists v1+v2) |
+| `TaskCreate` | 6 | → `todowrite` (v1) / `todo` (v2) |
+| Skill tool | 12 | → `skill` |
+| Agent/Task tool, `subagent_type` | 15 | → `task` (v1) / `subagent` (v2) |
+
+## 5. Target layout on OpenCode (manual install, no tooling)
+
+What a consumer machine needs, mirroring the CE/wshobson output shape. The
+plugin-relative tree is kept **intact** because of §4.6.
+
+```
+~/.config/opencode/
+├── opencode.json                 # mcp, permission, (v2) skills paths
+├── dx/                           # untouched copy/clone of the two plugins
+│   ├── dx-core/{skills,shared,data,templates,rules}/
+│   └── dx-aem/{skills,shared,data,templates}/
+├── skills/                       # v1 only: one symlink per skill
+│   ├── dx-req -> ../dx/dx-core/skills/dx-req
+│   └── aem-verify -> ../dx/dx-aem/skills/aem-verify   # 61 links
+├── agents/                       # 13 translated files (§5.2)
+│   ├── dx-code-reviewer.md
+│   └── aem-inspector.md …
+├── commands/                     # optional: stubs for user-invoked skills (CE pattern)
+│   └── dx-agent-all.md           # "Load and execute the `dx-agent-all` skill.\n\n$ARGUMENTS"
+└── plugins/                      # optional runtime extension: branch-guard only
+    └── dx-guard.js
+
+<project>/
+├── opencode.json                 # project MCP (ado, atlassian), instructions
+├── AGENTS.md / CLAUDE.md
+└── .ai/{config.yaml,lib/,rules/,…}   # from /dx-init or dx-scaffold — unchanged
 ```
 
-Files are fetched from `<base>/<name>/<file>`, same-origin, relative paths only. Bumping
-`version` refreshes the cache. This is OpenCode's closest thing to a skill distribution
-channel: we could generate `index.json` from `plugins/*/skills` and serve it from the docs
-site. Two unknowns block it for script-carrying skills: whether exec bits survive, and
-where the cache lives.
+On v2, the `skills/` symlinks are replaced by
+`"skills": ["~/.config/opencode/dx/dx-core/skills", "~/.config/opencode/dx/dx-aem/skills"]`.
 
-`shell.env` cannot fix `CLAUDE_PLUGIN_ROOT`: it is one global variable, but `dx-core`
-skills need the dx-core root and `aem-init` needs the dx-aem root. Phase 2 (skills resolve
-their own dir) is still required.
+### 5.1 `opencode.json` (global)
 
-## 3. Brainstorm — options
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "AEM":        { "type": "local", "command": ["npx","-y","aem-mcp-server","-t","stdio","-I","{env:AEM_INSTANCES}"] },
+    "playwright": { "type": "local", "command": ["npx","@playwright/mcp@0.0.83","--headless","--isolated",
+                    "--viewport-size=1440,900","--caps=storage","--no-webmcp","--output-dir=.ai/playwright/screenshots"] },
+    "axe-mcp-server": { "type": "local", "command": ["docker","run","--add-host=host.docker.internal:host-gateway",
+                    "-i","--rm","-e","AXE_API_KEY","dequesystems/axe-mcp-server:latest"],
+                    "environment": { "AXE_API_KEY": "{env:AXE_API_KEY}" } },
+    "figma":      { "type": "remote", "url": "http://127.0.0.1:3845/mcp", "oauth": false }
+  },
+  "permission": { "skill": { "dx-*": "allow", "aem-*": "allow" } }
+}
+```
 
-1. **Docs only.** `.opencode/INSTALL.md`: clone, reuse the `.agents/skills/` symlinks (v1) or
-   a `skills: [...]` array pointing at the clone (v2, no symlinks), an `opencode.json`
-   example with `mcp` + `instructions: ["CLAUDE.md"]`, and a degradation table.
-   Cheap, covers ~80% of skills.
-2. **Fix plugin-root portably.** Skills that call their own scripts resolve the dir
-   themselves instead of trusting `$CLAUDE_PLUGIN_ROOT`, e.g. fallback to the dir of the
-   loaded SKILL.md. This is TODO #86 / #29 and helps Codex and Gemini too. Alternative for
-   OpenCode only: a plugin with `shell.env` setting `CLAUDE_PLUGIN_ROOT`.
-3. **`dx-scaffold --opencode`.** Emit `opencode.json` (`mcp`, `instructions`,
-   `permission.skill`) and `.opencode/agents/*.md` translated from our agents. Same
-   template-reading pattern the scaffold already uses.
-4. **Guard plugin.** Tiny `.opencode/plugins/dx-guard` — `tool.execute.before` blocks
-   `git commit` on protected branches (mirror of the `PreToolUse` hook). Pick one OpenCode
-   version, v2 likely.
-5. **Full npm/git plugin** (superpowers today: `"plugins": ["superpowers@git+…"]`, plugin
-   registers skills + injects a tool-name mapping). Best UX, but two plugin APIs, a release
-   artifact, and Bun cache issues. Not worth it before 1–4 show demand.
-6. **Do nothing**, point to Codex install. Works partly by accident; the `AGENTS.md`
-   trap and `CLAUDE_PLUGIN_ROOT` failures would hit silently.
+Project `opencode.json`: `ado` and `atlassian` servers (named exactly so the tool prefixes
+in §4.5 line up), plus `"instructions": ["CLAUDE.md"]` whenever `/dx-init` wrote an
+`AGENTS.md` (otherwise the consumer's `CLAUDE.md` is dropped — §3).
 
-**Recommendation (revised after the addendum):** docs → plugin-root fix → `dx-scaffold --opencode` as installer → optional guard extension; v2 HTTP catalog parked; no skill-registering extension. See the TODO for phases and
-done-when checks.
+### 5.2 Agent translation (example)
 
-## 4. Open questions
+Source `plugins/dx-aem/agents/aem-inspector.md`:
+```yaml
+tools: Read, Write, Glob, Grep, ToolSearch, mcp__plugin_dx-aem_AEM__getNodeContent, …
+mcpServers: [AEM]
+model: sonnet
+memory: project
+maxTurns: 50
+```
+OpenCode `~/.config/opencode/agents/aem-inspector.md` (CE/wshobson rules):
+```yaml
+description: <same>
+mode: subagent
+# no model: subagents inherit the session model (CE: explicit ids broke providers)
+steps: 50                       # from maxTurns
+permission:
+  edit: allow
+  bash: deny                    # not in source tools
+  "AEM_*": allow
+  "playwright_*": deny
+  "ado_*": deny
+```
+Body unchanged, except `mcp__plugin_dx-aem_AEM__x` → `AEM_x` if we rewrite (optional;
+CLAUDE.md's position is that the model maps prefixed names itself). `memory: project`
+has no OpenCode equivalent.
 
-- Exact MCP tool name format in OpenCode (`server_tool`?) and whether the model maps
-  `mcp__plugin_dx-aem_AEM__getNodeContent` to it reliably.
+## 6. What still breaks, even with the layout above
+
+1. **Plugin-root variables (61 refs).** Unset. Fix patterns seen in prior art:
+   - CE: skill bodies set `SKILL_DIR` to the loaded skill's directory; OpenCode's `skill`
+     tool returns that directory.
+   - harnesstap: textual substitution at load time (braced form only).
+   - Generator: rewrite at copy time to the absolute install path.
+   Our TODO #86 is the same problem for Copilot/Codex.
+2. **Bare `shared/…` (87 refs).** No anchor without a plugin root. Same fix as 1 (prefix with
+   the resolved root), or the generator rewrites to an absolute path.
+3. **`context: fork` / `agent:` (16 + 6).** Lost. For the 6 AEM skills that delegate entirely
+   to an agent, the CE/wshobson answer is a command stub with `agent: aem-inspector` +
+   `subtask: true`, which runs the skill in that subagent. Model-invoked skills still run inline.
+4. **`ToolSearch` (22 files).** Dead instruction on OpenCode.
+5. **Model tiers.** Lost (subagents inherit). An explicit `provider/model-id` per agent is
+   possible but pins a provider.
+6. **Hooks.** Branch-guard / Stop guard / session-start don't run unless ported to a runtime
+   extension (CE generates one).
+
+## 7. Options seen in the wild, mapped to us
+
+| Option | Who does it | Fit for dx-core + dx-aem |
+|---|---|---|
+| A. Generator writes native files (skills, agents, commands, `opencode.json`) | CE converter, wshobson | Covers everything in §5. Natural home: `dx-scaffold` (already reads `plugins/` at runtime). Can rewrite §6.1/6.2 paths at write time. |
+| B. Runtime extension registers skill dirs in place | superpowers, CE plugin | Skills + command stubs only; no agents/MCP. Needs v1+v2 dual entry. |
+| C. Generic in-place loader of Claude plugin trees | harnesstap, oh-my-opencode | Third-party; would need our refs in braced form; young/opinionated. Worth a smoke test, not a dependency. |
+| D. Copy skills only | claude-skills | Breaks §4.6 relative scripts and agents. Not enough. |
+
+## 8. Open questions
+
+- Does OpenCode follow symlinked skill dirs on v1 and v2? (wshobson symlinks `.opencode/` as a whole — likely yes.)
 - Does `{env:VAR}` substitution work inside a local server's `command` array?
-- Does OpenCode follow symlinked skill dirs on both versions? (Claude Code now refuses
-  symlinked plugin component paths — TODO #181 — so don't assume.)
-- An `AskUserQuestion` equivalent (a `question` tool?) in v1/v2.
-- v2 hook names (`/v2/docs/build/plugins/server`).
+- How does a v2 HTTP-catalog skill expose its cache dir for scripts?
+- Does the model reliably map `mcp__plugin_dx-aem_AEM__getNodeContent` → `AEM_getNodeContent` without a rewrite? Smoke test before deciding.
