@@ -59,13 +59,14 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 ## OpenCode plugin support
 
 **Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md))
-**Problem:** We have no documented OpenCode path. OpenCode already reads our skills by accident: it scans `.claude/skills/` and `.agents/skills/`, and the Codex install symlinks there. But it fails quietly in three places:
+**Problem:** We have no OpenCode install path. Our skills ship inside Claude Code / Copilot CLI plugins and live in the plugin cache (`~/.claude/plugins/cache/…`), not in a project's `.claude/skills/`. OpenCode does not read Claude Code plugins or marketplaces. Its plugins are JS modules (`.opencode/plugins/`, or npm/git entries in `opencode.json`), so `/plugin install dx-core@dx-aem-flow` gives OpenCode nothing. Native discovery covers only `.claude/skills/`, `.agents/skills/` and `.opencode/skills/`, so today the only route is the Codex-style manual symlink. Even with skills reachable, OpenCode fails quietly in three places:
 - 17 skill files call scripts through `$CLAUDE_PLUGIN_ROOT` / `${CLAUDE_SKILL_DIR}`. These are unset in OpenCode, so `dx-bug-all`, `dx-simple`, `dx-step`, `dx-figma-all` and `aem-init` break.
 - OpenCode does not read `.mcp.json`, so AEM/Playwright/axe/Figma are missing.
 - OpenCode loads `AGENTS.md` *instead of* `CLAUDE.md`. Our `/dx-init` and `dx-scaffold` always write `AGENTS.md`, so the consumer's `CLAUDE.md` is dropped.
 
-The old plan (a JS plugin using `experimental.chat.system.transform` + `config` hooks) is obsolete. Native skill discovery made it unnecessary. Those hooks are no longer documented, and OpenCode 1 and 2 now have different plugin APIs.
+The way to "install" in OpenCode is a JS plugin that registers our skill dirs. That is what superpowers does today: it uses one `config` hook pushing into `skills.paths` on v1 and `ctx.skill.transform()` on v2.
 **Scope:**
+- New repo-root `package.json` + `index.js`, and `.opencode/plugins/dx-aem-flow.js` (v1 + v2 entry, registers `plugins/*/skills`)
 - New `.opencode/INSTALL.md` (sibling of `.codex/INSTALL.md`)
 - `scripts/validate-skills.sh`: OpenCode name/description rules
 - Skills using `CLAUDE_PLUGIN_ROOT`/`CLAUDE_SKILL_DIR`: `plugins/dx-core/skills/{dx-bug-all,dx-simple,dx-step,dx-figma-all}`, `plugins/dx-aem/skills/aem-init`; find the rest with `grep -rlE 'CLAUDE_(PLUGIN_ROOT|SKILL_DIR)' plugins/*/skills`
@@ -73,13 +74,18 @@ The old plan (a JS plugin using `experimental.chat.system.transform` + `config` 
 - Optional `.opencode/plugins/dx-guard/`
 - Website cross-platform page
 **Done-when:**
+- With `"plugin": ["dx-aem-flow@git+https://github.com/easingthemes/dx-aem-flow.git"]` (v1) or `"plugins": [...]` (v2) in a test project's `opencode.json`, and no symlinks, the `skill` tool lists `dx-help` on both versions
 - `test -f .opencode/INSTALL.md`
 - `validate-skills.sh` fails on a fixture skill whose `name` ≠ dir or whose description is >1024 chars
 - `node cli/bin/dx-scaffold.js /tmp/oc --all --opencode` writes `/tmp/oc/opencode.json` with `mcp` and `instructions: ["CLAUDE.md"]`, plus `/tmp/oc/.opencode/agents/dx-code-reviewer.md`
 - In that project, `opencode run "use the skill tool to load dx-help, then say which config file it reads"` mentions `.ai/config.yaml`. Record the version (v1 or v2) used.
 **Approach:** phases, each shippable on its own:
-1. **Docs + compat check.**
-   - `INSTALL.md` covers v1 (reuse the Codex `.agents/skills/` symlinks), v2 (a `skills: [...]` array pointing at the clone, no symlinks) and a sample `opencode.json`. The sample has an `mcp` block translated from our `.mcp.json` files and `"instructions": ["CLAUDE.md"]`.
+1. **Install plugin + docs + compat check.**
+   - Add a zero-dependency JS plugin, dual v1/v2, modelled on superpowers `.opencode/plugins/superpowers.js`. On v1 its `config` hook appends our skill dirs to `config.skills.paths`; this is undocumented but works on 1.18.x. On v2, `setup(ctx)` registers them with `ctx.skill.transform()`.
+   - Choose which plugins load through plugin options (v2 `{package, options}`), default `dx-core` (+ `dx-aem`). A root `package.json` `main` covers the git/npm install, and a root `index.js` covers v2's directory-form install.
+   - Optionally inject a short tool-mapping note (Skill → `skill`, Agent/Task → `task`/`subagent`, Bash → `bash`/`shell`) as superpowers does.
+   - `INSTALL.md` covers the `opencode.json` plugin entry (v1 `plugin`, v2 `plugins`) and keeps the manual `.agents/skills/` symlink as a fallback. It includes a sample `opencode.json` with an `mcp` block translated from our `.mcp.json` files and `"instructions": ["CLAUDE.md"]`.
+   - Interim with no code from us: the third-party `opencode-agent-skills` plugin scans `~/.claude/plugins/cache/` and serves skills already installed via Claude Code. It is unvetted; mention it, don't depend on it.
    - Add a degradation table: `model`/`effort`/`context: fork`/hooks are ignored.
    - Add the name regex `^[a-z0-9]+(-[a-z0-9]+)*$`, the name = dir rule and the ≤1024-char description rule to `validate-skills.sh`. All 79 skills pass today; the check only keeps it that way.
 2. **Plugin-root portability.** Skills resolve their own script dir with a fallback when `CLAUDE_PLUGIN_ROOT` is unset. Fix this together with TODO #86, because it also fixes Codex and Gemini. Run the `dx-bug-all` / `dx-simple` suites after the change.
@@ -87,8 +93,8 @@ The old plan (a JS plugin using `experimental.chat.system.transform` + `config` 
    - Emit `opencode.json` with `mcp`, `instructions` and `permission.skill: {"*": "allow"}`.
    - Emit `.opencode/agents/*.md` from `plugins/{dx-core,dx-aem}/agents/`, setting `mode: subagent` and mapping `tools` to `permission`. Omit `model` (no alias equivalent; a pinned id goes stale).
    - Add a `/dx-init` note too.
-4. **Optional guard plugin.** `tool.execute.before` blocks `git commit` on protected branches, mirroring the `PreToolUse` branch-guard. Target OpenCode 2 only.
-5. **Parked:** a full git/npm plugin like current superpowers (`"plugins": ["…@git+…"]`, registers skills + injects tool mapping). Revisit only if phases 1–3 show real use.
+4. **Guard hooks in the same plugin.** `tool.execute.before` blocks `git commit` on protected branches, mirroring the `PreToolUse` branch-guard.
+5. **Parked:** publish to npm (git spec is enough for now; Bun caches git deps, so document a cache clear for updates).
 
 Open questions are in the research note (MCP tool-name format, `{env:}` in `command`, symlink support, an `AskUserQuestion` equivalent).
 

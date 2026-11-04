@@ -113,6 +113,41 @@ separate page not covered here.
 | `AskUserQuestion` | 8 skills | Not checked whether OpenCode has an equivalent; model falls back to asking in text |
 | Plugin hooks (`hooks.json`) | branch-guard, Stop guard, session-start, screenshot log | None run |
 
+## 2b. Correction — our skills are not in the project
+
+Addendum, same day. Section 1 assumes skills sit in `.claude/skills/` or `.agents/skills/`.
+They don't. dx skills ship inside Claude Code / Copilot CLI plugins and live in the
+plugin cache (`~/.claude/plugins/cache/<marketplace>/<plugin>/<ver>/skills/`). OpenCode
+has **no support for Claude Code plugins or marketplaces**. Its "plugins" are JS/TS modules
+(`.opencode/plugins/`, or npm/git entries in `opencode.json`). Native discovery therefore
+only helps after a manual copy or symlink (the Codex route).
+
+How superpowers solves it (read from `obra/superpowers` main, v7.0.2):
+
+- Repo-root `package.json` (`"main": ".opencode/plugins/superpowers.js"`) plus a root
+  `index.js` re-export for v2's directory-form install. Users add
+  `"plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]` (v1) or
+  `"plugins": [...]` (v2); OpenCode installs it with Bun.
+- **v1:** the named export returns a `config` hook that pushes the skills dir into
+  `config.skills.paths`. The key is undocumented but works on 1.18.x.
+- **v2:** the default export `{ id, server, setup }`; `setup(ctx)` calls
+  `ctx.skill.transform((draft) => draft.add(info))` per skill and injects a bootstrap
+  through `ctx.session.hook`.
+- It injects a version-specific tool mapping (v1: `todowrite`, `task`, `skill`, `bash`,
+  `apply_patch`; v2: `subagent`, `shell`, `patch`, no todo tool).
+- Zero dependencies, so it needs neither `@opencode-ai/plugin` nor `effect`.
+
+Third-party bridges exist: `opencode-agent-skills` scans `~/.claude/plugins/cache/` and
+`marketplaces/`, and the `opencode-plugin` CLI installs Claude marketplace plugins and
+links their skills into `~/.agents/skills`. Neither is vetted.
+
+Consequence: a JS plugin **is** needed after all — as the install mechanism, not for
+discovery. It is a small one (register dirs + optional mapping + guard hooks).
+
+`shell.env` cannot fix `CLAUDE_PLUGIN_ROOT`: it is one global variable, but `dx-core`
+skills need the dx-core root and `aem-init` needs the dx-aem root. Phase 2 (skills resolve
+their own dir) is still required.
+
 ## 3. Brainstorm — options
 
 1. **Docs only.** `.opencode/INSTALL.md`: clone, reuse the `.agents/skills/` symlinks (v1) or
