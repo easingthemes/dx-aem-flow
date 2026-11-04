@@ -184,8 +184,9 @@ plugin-relative tree is kept **intact** because of §4.6.
 │   └── aem-inspector.md …
 ├── commands/                     # optional: stubs for user-invoked skills (CE pattern)
 │   └── dx-agent-all.md           # "Load and execute the `dx-agent-all` skill.\n\n$ARGUMENTS"
-└── plugins/                      # optional runtime extension: branch-guard only
-    └── dx-guard.js
+└── plugins/                      # runtime extensions (OpenCode-only JS)
+    ├── dx-env.js                 # Phase 1: sets CLAUDE_PLUGIN_ROOT for shell calls (§9)
+    └── dx-guard.js               # optional: branch-guard
 
 <project>/
 ├── opencode.json                 # project MCP (ado, atlassian), instructions
@@ -247,7 +248,7 @@ has no OpenCode equivalent.
 
 ## 6. What still breaks, even with the layout above
 
-1. **Plugin-root variables (61 refs).** Unset. Fix patterns seen in prior art:
+1. **Plugin-root variables (61 refs).** Unset. **Phase 1 fix: §9.** Fix patterns seen in prior art:
    - CE: skill bodies set `SKILL_DIR` to the loaded skill's directory; OpenCode's `skill`
      tool returns that directory.
    - harnesstap: textual substitution at load time (braced form only).
@@ -255,7 +256,7 @@ has no OpenCode equivalent.
    Our TODO #86 is the same problem for Copilot/Codex.
 2. **Bare `shared/…` (87 refs).** No anchor without a plugin root. Same fix as 1 (prefix with
    the resolved root), or the generator rewrites to an absolute path.
-3. **`context: fork` / `agent:` (16 + 6).** Lost. For the 6 AEM skills that delegate entirely
+3. **`context: fork` / `agent:` (16 + 6).** Lost. **Phase 2, full analysis: §10.** For the 6 AEM skills that delegate entirely
    to an agent, the CE/wshobson answer is a command stub with `agent: aem-inspector` +
    `subtask: true`, which runs the skill in that subagent. Model-invoked skills still run inline.
    - **Subagents themselves work.** v1 has the `task` tool; v2 has `subagent` (`agent`, `prompt`,
@@ -296,3 +297,153 @@ has no OpenCode equivalent.
 - Does `{env:VAR}` substitution work inside a local server's `command` array?
 - How does a v2 HTTP-catalog skill expose its cache dir for scripts?
 - Does the model reliably map `mcp__plugin_dx-aem_AEM__getNodeContent` → `AEM_getNodeContent` without a rewrite? Smoke test before deciding.
+
+## 9. Plugin root on OpenCode — `CLAUDE_PLUGIN_ROOT` / `CLAUDE_SKILL_DIR` (Phase 1)
+
+Claude Code stays primary, so skill text keeps the Claude variables. OpenCode only has to
+**provide** them. The question is what value and who sets it.
+
+### 9.1 What the references actually need
+
+| Variable | Refs | Files | Points into | Global value possible? |
+|---|---|---|---|---|
+| `$CLAUDE_PLUGIN_ROOT/skills/<s>/…` | 39 | dx-bug-all, dx-simple (+ their `scripts/`), dx-step, dx-step-all, dx-figma-all, dx-req, dx-req-dod, dx-agent-all, dx-init | **dx-core** | yes |
+| `$CLAUDE_PLUGIN_ROOT/shared/…` | 7 | same set | **dx-core** | yes |
+| `${CLAUDE_PLUGIN_ROOT}/data/lib/aem-playwright-auth.sh` | 1 | aem-init (line 388) | **dx-aem** | no — conflicts with the dx-core value |
+| `${CLAUDE_SKILL_DIR}/scripts/…` | 7 | dx-init (×4), dx-sync, dx-doctor, dx-eject | the skill's own dir | **no** — different value per skill |
+
+So 60 of 61 refs agree on one value, the **dx-core plugin root**. The aem-init ref and the 7
+`CLAUDE_SKILL_DIR` refs need a text change.
+
+### 9.2 The value
+
+With the layout from §5, `CLAUDE_PLUGIN_ROOT` must be the dx-core directory that contains
+`skills/` and `shared/`:
+
+```
+CLAUDE_PLUGIN_ROOT=$HOME/.config/opencode/dx/dx-core
+```
+
+It must be the intact plugin tree, not `~/.config/opencode/skills`. The 37 `…/skills/<s>/scripts`
+refs and the `scripts/../../../shared` lookups (§4.6) both assume
+`<root>/skills/<s>/scripts` and `<root>/shared` side by side.
+
+### 9.3 Text changes (small, Claude-Code-safe)
+
+- **`CLAUDE_SKILL_DIR` (7 refs)** → rewrite to `$CLAUDE_PLUGIN_ROOT/skills/<skill>/scripts/…`.
+  37 refs already use this form and work in Claude Code today (dx-bug-all, dx-simple), so
+  Claude Code behaviour does not change. After this, OpenCode needs only one variable.
+- **aem-init (1 ref)** → the instruction copies a file from the dx-aem plugin. Change it to
+  locate the file the same way dx-init already locates the AEM plugin (`$AEM_PLUGIN_DIR`, found
+  by glob for `**/skills/aem-init/SKILL.md`), or add a second variable `DX_AEM_PLUGIN_ROOT`.
+  Prefer the glob: no new variable.
+
+### 9.4 Who sets it — options
+
+| Option | Scope | Notes |
+|---|---|---|
+| a. `export CLAUDE_PLUGIN_ROOT=…` in `~/.zshrc` | **every** process, Claude Code included | Rejected: leaks into Claude Code sessions. Whether Claude Code overrides an inherited value for plugin skills is unverified, and a stale OpenCode copy could shadow the installed plugin. |
+| b. Launcher alias `alias opencode='CLAUDE_PLUGIN_ROOT=$HOME/.config/opencode/dx/dx-core opencode'` | OpenCode only | No code, works on v1 and v2. Easy to forget on another shell or in the desktop app. |
+| c. **Global runtime extension** `~/.config/opencode/plugins/dx-env.js` | OpenCode shell calls only | Sets the var on every shell call. v1 hook `"shell.env": (input, output) => { output.env.CLAUDE_PLUGIN_ROOT = … }` (docs). v2 hook `ctx.shell.hook("create.before", …)` with `env` on the input *(source: `packages/plugin/src/promise/shell.ts`)*. It derives the path from its own location (`path.resolve(__dirname, "../dx/dx-core")`), so **nothing is hardcoded and no config is needed**. |
+| d. `/dx-init` sets it | — | `/dx-init` is per **project** and writes committed files. The value is per **machine** (where dx was installed), and a skill cannot change the environment of the OpenCode process. dx-init can only *check* it. |
+
+**Recommendation:** (c) as the default, (b) documented as the no-code fallback.
+
+`/dx-init` and `/dx-doctor` get an OpenCode check: if it runs under OpenCode (detection method to be verified; no env marker confirmed yet) and
+`$CLAUDE_PLUGIN_ROOT/skills/dx-init/SKILL.md` does not exist, print the fix (install the
+extension or the alias). `dx-bug-all/scripts/preflight.sh` already fails loudly when the variable
+is missing (`CLAUDE_PLUGIN_ROOT not set in environment`). Reuse its message.
+
+### 9.5 Not covered by the variable
+
+- **87 bare `shared/<file>` refs** ("Read `shared/provider-config.md`"): these are read
+  instructions to the model, not shell paths. In Claude Code the model resolves them against the
+  plugin it loaded the skill from. On OpenCode the `skill` tool returns the skill `directory`, so
+  `<directory>/../../shared/<file>` resolves. Phase 1: one line in the OpenCode install note /
+  `AGENTS.md` telling the model this. Phase 2: decide whether to rewrite them to
+  `$CLAUDE_PLUGIN_ROOT/shared/…`.
+- **17 `plugins/dx-core/shared/…` refs**: repo-layout paths, wrong on every consumer platform.
+  Separate cleanup.
+
+## 10. Context isolation — `context: fork` and `agent:` (Phase 2)
+
+This matters: it decides whether long pipelines (`dx-agent-all`, `dx-bug-all`) survive on
+OpenCode at all. Phase 1 accepts the degraded behaviour below. Phase 2 fixes it.
+
+### 10.1 What `context: fork` does in Claude Code
+
+A skill with `context: fork` runs in a **fresh subagent context**. It does not see the caller's
+conversation. It works through its steps, and only its final message returns to the caller.
+With `agent: <name>` it runs as that named agent (its tools, model, MCP servers). This is what
+keeps a coordinator's context small: `dx-agent-all` sees ~10 short results, not the full
+transcripts of dx-req, dx-plan, every dx-step, build, verify and PR.
+
+### 10.2 The 16 forked skills and who chains them
+
+| Forked skill | `agent:` | Called by |
+|---|---|---|
+| dx-req | — | dx-agent-all, dx-bug-triage, dx-plan-validate, dx-step, aem-qa, aem-doc-gen, … |
+| dx-plan, dx-plan-validate, dx-plan-resolve | — | dx-agent-all; dx-plan ↔ dx-plan-validate ↔ dx-plan-resolve |
+| dx-step | — | dx-step-all, dx-agent-all, dx-bug-fix, dx-pr |
+| dx-step-all | — | dx-agent-all, dx-figma-all, dx-pr-review |
+| dx-step-build, dx-step-fix | — | dx-step-all, dx-agent-all, dx-bug-fix |
+| dx-step-verify | — (spawns dx-code-reviewer itself) | dx-agent-all, dx-pr, aem-fe-verify |
+| dx-pr-commit | — | dx-agent-all, dx-bug-all, dx-bug-fix, aem-qa, aem-fe-verify |
+| aem-snapshot, aem-verify, aem-qa-handoff | aem-inspector | dx-agent-all, aem-qa, dx-doc-gen |
+| aem-fe-verify | aem-fe-verifier | dx-agent-all, dx-doc-gen |
+| aem-editorial-guide, aem-doc-gen | aem-editorial-guide-capture | dx-agent-all, aem-doc-gen |
+
+Nesting depth in the worst path: `dx-agent-all` → `dx-step-all` → `dx-step` /
+`dx-step-fix` → (dx-step-verify → dx-code-reviewer). That is 3–4 levels of isolated context in
+Claude Code.
+
+### 10.3 What happens on OpenCode (Phase 1 behaviour)
+
+- The `skill` tool returns the skill's text **into the caller's context**. There is no isolation.
+  `context` and `agent` are unknown frontmatter keys and are dropped.
+- Every forked skill in a chain runs inline in the same conversation: dx-req's research, dx-plan's
+  reasoning, every dx-step's edits and test output accumulate. A full `dx-agent-all` run will hit
+  the context limit and rely on compaction, which can drop the plan state mid-run.
+  Mitigation that exists already: our skills checkpoint to files (`.ai/specs/<id>/…`,
+  `implement.md` status, `resume-state.json`), so the state survives compaction even if the
+  conversation does not.
+- The 6 `agent:` skills lose their agent's restrictions: they run with the caller's tools, and
+  the AEM MCP permission scoping from §5.2 does not apply.
+- **Subagents that skills spawn explicitly still work** (§6 item 3: `task` on v1, `subagent` on v2,
+  `background`, `sessionID`, `subagent_depth`). The fan-out in dx-figma-prototype,
+  dx-pr-review-all, dx-step-verify → dx-code-reviewer and aem-* → aem-inspector is unaffected.
+  Parallel calls in one turn are claimed by wshobson's matrix; unverified.
+- Each skill also triggers on its own. A user who runs one skill at a time (`dx-req`, then
+  `dx-plan`, then `dx-step`) sees no difference. The loss only shows in the coordinators.
+
+### 10.4 Prior art
+
+None. compound-engineering's converter ignores `context: fork`. wshobson sets `subtask: true`
+only on *commands* whose body mentions agents (`_SUBAGENT_KEYWORD_RE`). harnesstap has no
+mapping. superpowers' skills don't fork.
+
+### 10.5 Options for Phase 2
+
+| Option | How | Pros | Cons |
+|---|---|---|---|
+| A. **Wrapper agent per forked skill** | Generate `agents/<skill>.md`: `mode: subagent`, `hidden: true`, body "Load the `<skill>` skill with the `skill` tool and execute it. Arguments: from the prompt." For `agent:` skills, copy the target agent's `permission` block into the wrapper. | Restores isolation one-to-one. No change to Claude Code text. | The coordinator must call `subagent(agent: "dx-step")` instead of loading the skill. The model has to be told (see C). Up to 16 extra agents in the `@` list (mitigated by `hidden`). |
+| B. **Command stubs with `subtask: true`** | `commands/<skill>.md` with `agent: <wrapper or target>`, `subtask: true`. | User-typed `/dx-step` runs isolated. CE/wshobson already generate stubs. | Only covers user-typed commands, not a coordinator calling the skill. |
+| C. **Platform note in coordinators** | One block in dx-agent-all, dx-bug-all, dx-step-all, dx-figma-all, dx-bug-fix, dx-pr: "If the platform has no skill fork (OpenCode), run each forked phase via the subagent tool with agent `<skill>`." | Small, explicit, harmless in Claude Code. | Edits 6 coordinator bodies. Same pattern as the superpowers soft-dependency text. |
+| D. **Runtime extension** | Intercept the `skill` tool for forked ids and redirect to a subagent call. | Invisible to skill text. | Deep in both plugin APIs (v1/v2). Not attempted by anyone. Fragile. |
+| E. **Accept inline** | Document the limitation and lean on file checkpoints. | Zero work. | Long pipelines will degrade. |
+
+**Leaning:** A + B + C together. A gives the isolated runner, B covers typed commands, C tells
+coordinators to use it. All three are generatable, and C is a few lines.
+
+### 10.6 Phase 2 test plan
+
+1. Smoke: `subagent(agent: "dx-step")` wrapper loads the skill inside the child session and
+   returns only its final message to the parent. Check the parent's token count before and after.
+2. Nesting: `dx-step-all` (wrapper) → `dx-step` (wrapper) → `dx-code-reviewer` needs
+   `subagent_depth` ≥ 3. Find the default and set it in `opencode.json`.
+3. `agent:` skills: `aem-verify` wrapper with `aem-inspector`'s permission block can call `AEM_*`
+   and nothing outside its allowlist.
+4. End-to-end: `dx-agent-all` on a fixture story finishes without compaction losing
+   `implement.md` state. Compare against Phase 1 inline behaviour.
+5. Parallel: two `subagent` calls in one turn really run concurrently (closes the wshobson claim).
+
