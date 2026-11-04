@@ -141,8 +141,34 @@ Third-party bridges exist: `opencode-agent-skills` scans `~/.claude/plugins/cach
 `marketplaces/`, and the `opencode-plugin` CLI installs Claude marketplace plugins and
 links their skills into `~/.agents/skills`. Neither is vetted.
 
-Consequence: a JS plugin **is** needed after all — as the install mechanism, not for
-discovery. It is a small one (register dirs + optional mapping + guard hooks).
+**Wording trap — "plugin" means two different things.** A Claude Code / Copilot CLI
+plugin is a *distribution unit* that bundles skills, agents, hooks and MCP. An OpenCode
+plugin is a *runtime extension* (hooks, custom tools, shell env) — closer to a Claude Code
+mod or `hooks.json` than to a Claude Code plugin. OpenCode has **no bundle unit** for
+skills + agents + commands + MCP. Each reaches it separately: skills as directories (or, on
+v2, an HTTP catalog), agents as `.opencode/agents/*.md`, MCP and instructions in
+`opencode.json`.
+
+superpowers uses the runtime extension as a package manager (registering skill dirs from a
+hook). That works, but it leans on an undocumented v1 key and two plugin APIs. Our
+equivalent installer already exists: `dx-scaffold` reads `plugins/` at runtime, so
+`--opencode` can lay the files down. A runtime extension stays reserved for what only it
+can do: hooks such as the branch-guard.
+
+### v2 HTTP skill catalog
+
+The v2 `skills` array accepts `http(s)` URLs. Each one is a base URL serving `index.json`:
+
+```json
+{ "skills": [ { "name": "git-release", "version": "3",
+  "files": ["git-release.md", "references/release-policy.md"] } ] }
+```
+
+Files are fetched from `<base>/<name>/<file>`, same-origin, relative paths only. Bumping
+`version` refreshes the cache. This is OpenCode's closest thing to a skill distribution
+channel: we could generate `index.json` from `plugins/*/skills` and serve it from the docs
+site. Two unknowns block it for script-carrying skills: whether exec bits survive, and
+where the cache lives.
 
 `shell.env` cannot fix `CLAUDE_PLUGIN_ROOT`: it is one global variable, but `dx-core`
 skills need the dx-core root and `aem-init` needs the dx-aem root. Phase 2 (skills resolve
@@ -170,7 +196,7 @@ their own dir) is still required.
 6. **Do nothing**, point to Codex install. Works partly by accident; the `AGENTS.md`
    trap and `CLAUDE_PLUGIN_ROOT` failures would hit silently.
 
-**Recommendation:** 1 → 2 → 3, with 4 optional and 5 parked. See the TODO for phases and
+**Recommendation (revised after the addendum):** docs → plugin-root fix → `dx-scaffold --opencode` as installer → optional guard extension; v2 HTTP catalog parked; no skill-registering extension. See the TODO for phases and
 done-when checks.
 
 ## 4. Open questions
