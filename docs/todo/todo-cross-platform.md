@@ -58,11 +58,39 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 
 ## OpenCode plugin support
 
-**Added:** 2026-04-04
-**Problem:** OpenCode is a growing open-source AI coding tool that supports JS-based plugins. superpowers supports it via `.opencode/plugins/superpowers.js`. We don't have OpenCode support.
-**Scope:** New directory: `.opencode/` with plugin entry point.
-**Done-when:** `.opencode/plugins/dx-core.js` exists and bootstraps skill discovery for OpenCode.
-**Approach:** Low priority. Follow superpowers pattern — JS entry point with `experimental.chat.system.transform` hook to inject context and `config` hook to register skills directory.
+**Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md))
+**Problem:** We have no documented OpenCode path. OpenCode already reads our skills by accident: it scans `.claude/skills/` and `.agents/skills/`, and the Codex install symlinks there. But it fails quietly in three places:
+- 17 skill files call scripts through `$CLAUDE_PLUGIN_ROOT` / `${CLAUDE_SKILL_DIR}`. These are unset in OpenCode, so `dx-bug-all`, `dx-simple`, `dx-step`, `dx-figma-all` and `aem-init` break.
+- OpenCode does not read `.mcp.json`, so AEM/Playwright/axe/Figma are missing.
+- OpenCode loads `AGENTS.md` *instead of* `CLAUDE.md`. Our `/dx-init` and `dx-scaffold` always write `AGENTS.md`, so the consumer's `CLAUDE.md` is dropped.
+
+The old plan (a JS plugin using `experimental.chat.system.transform` + `config` hooks) is obsolete. Native skill discovery made it unnecessary. Those hooks are no longer documented, and OpenCode 1 and 2 now have different plugin APIs.
+**Scope:**
+- New `.opencode/INSTALL.md` (sibling of `.codex/INSTALL.md`)
+- `scripts/validate-skills.sh`: OpenCode name/description rules
+- Skills using `CLAUDE_PLUGIN_ROOT`/`CLAUDE_SKILL_DIR`: `plugins/dx-core/skills/{dx-bug-all,dx-simple,dx-step,dx-figma-all}`, `plugins/dx-aem/skills/aem-init`; find the rest with `grep -rlE 'CLAUDE_(PLUGIN_ROOT|SKILL_DIR)' plugins/*/skills`
+- `cli/lib/scaffold.js` and `cli/bin/dx-scaffold.js` (`--opencode`)
+- Optional `.opencode/plugins/dx-guard/`
+- Website cross-platform page
+**Done-when:**
+- `test -f .opencode/INSTALL.md`
+- `validate-skills.sh` fails on a fixture skill whose `name` ≠ dir or whose description is >1024 chars
+- `node cli/bin/dx-scaffold.js /tmp/oc --all --opencode` writes `/tmp/oc/opencode.json` with `mcp` and `instructions: ["CLAUDE.md"]`, plus `/tmp/oc/.opencode/agents/dx-code-reviewer.md`
+- In that project, `opencode run "use the skill tool to load dx-help, then say which config file it reads"` mentions `.ai/config.yaml`. Record the version (v1 or v2) used.
+**Approach:** phases, each shippable on its own:
+1. **Docs + compat check.**
+   - `INSTALL.md` covers v1 (reuse the Codex `.agents/skills/` symlinks), v2 (a `skills: [...]` array pointing at the clone, no symlinks) and a sample `opencode.json`. The sample has an `mcp` block translated from our `.mcp.json` files and `"instructions": ["CLAUDE.md"]`.
+   - Add a degradation table: `model`/`effort`/`context: fork`/hooks are ignored.
+   - Add the name regex `^[a-z0-9]+(-[a-z0-9]+)*$`, the name = dir rule and the ≤1024-char description rule to `validate-skills.sh`. All 79 skills pass today; the check only keeps it that way.
+2. **Plugin-root portability.** Skills resolve their own script dir with a fallback when `CLAUDE_PLUGIN_ROOT` is unset. Fix this together with TODO #86, because it also fixes Codex and Gemini. Run the `dx-bug-all` / `dx-simple` suites after the change.
+3. **`dx-scaffold --opencode`.**
+   - Emit `opencode.json` with `mcp`, `instructions` and `permission.skill: {"*": "allow"}`.
+   - Emit `.opencode/agents/*.md` from `plugins/{dx-core,dx-aem}/agents/`, setting `mode: subagent` and mapping `tools` to `permission`. Omit `model` (no alias equivalent; a pinned id goes stale).
+   - Add a `/dx-init` note too.
+4. **Optional guard plugin.** `tool.execute.before` blocks `git commit` on protected branches, mirroring the `PreToolUse` branch-guard. Target OpenCode 2 only.
+5. **Parked:** a full git/npm plugin like current superpowers (`"plugins": ["…@git+…"]`, registers skills + injects tool mapping). Revisit only if phases 1–3 show real use.
+
+Open questions are in the research note (MCP tool-name format, `{env:}` in `command`, symlink support, an `AskUserQuestion` equivalent).
 
 ## SessionStart hook platform detection (shared script)
 
