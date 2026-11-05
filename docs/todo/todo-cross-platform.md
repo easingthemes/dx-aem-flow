@@ -71,6 +71,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
   - MCP tools are named `<server>_<tool>` instead of `mcp__plugin_…__`.
   - OpenCode drops `CLAUDE.md` when our generated `AGENTS.md` exists.
 
+
 **Scope:** dx-core + dx-aem only (dx-hub, dx-automation later).
 - `cli/lib/scaffold.js`, `cli/bin/dx-scaffold.js` (`--opencode`)
 - `.opencode/INSTALL.md`
@@ -79,9 +80,10 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 - `plugins/dx-core/skills/dx-figma-prototype` (namespaced `subagent_type`)
 - Website cross-platform page
 
+
 **Done-when:**
 - **Phase 1:**
-  - `test -f .opencode/INSTALL.md && test -f .opencode/plugins/dx-env.js`
+  - `test -f .opencode/INSTALL.md && test -f .opencode/plugins/dx-env.js` (repo copy, installed to `~/.config/opencode/plugins/`)
   - `grep -rn 'CLAUDE_SKILL_DIR' plugins/dx-core/skills plugins/dx-aem/skills` is empty
   - `grep -rn 'CLAUDE_PLUGIN_ROOT' plugins/dx-aem/skills` is empty
   - `validate-skills.sh` fails on a fixture whose `name` ≠ dir or whose description is >1024 chars
@@ -96,6 +98,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
   - 13 agents + the wrapper agents in `.opencode/agents/`, all `mode: subagent` without `model:`
   - all 61 dx-core/dx-aem skills reachable
   - `plugins/dx-env.js`
+
 **Approach:** prior art (compound-engineering converter, wshobson/agents) generates native OpenCode files. We first make the main flow work by hand, then cover the details, then automate. Every limitation is documented in the [research note](../research/2026-11-04-opencode-support.md) even when it is deferred.
 
 **Phase 1 — main flow works (manual install).** Goal: single skills (`dx-req`, `dx-plan`, `dx-step`, `aem-verify`, …) run on OpenCode with MCP and agents.

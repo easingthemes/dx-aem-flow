@@ -71,7 +71,7 @@ separately as files and config. Every project below works around that.
 - **Agents:**
   - read from `.opencode/agents/` and `~/.config/opencode/agents/`; **not** from `.claude/agents/`
   - frontmatter: `description` (required), `mode`, `model` (`provider/id`), `permission`, `hidden`, `steps`
-  - no per-agent `mcpServers`; per-agent MCP access goes through `permission` globs on `<server>_*`
+  - no per-agent `mcpServers`; per-agent MCP access goes through `permission` (or deprecated `tools`) globs on `<server>_*` — glob form in `permission` to verify (§8)
 - **Instructions:** `AGENTS.md`, falling back to `CLAUDE.md` only when no `AGENTS.md` exists;
   `instructions: [...]` adds more files.
 - **MCP config:** the `mcp` key in `opencode.json`; `.mcp.json` is **not** read.
@@ -254,11 +254,11 @@ has no OpenCode equivalent.
    - harnesstap: textual substitution at load time (braced form only).
    - Generator: rewrite at copy time to the absolute install path.
    Our TODO #86 is the same problem for Copilot/Codex.
-2. **Bare `shared/…` (87 refs).** No anchor without a plugin root. Same fix as 1 (prefix with
-   the resolved root), or the generator rewrites to an absolute path.
-3. **`context: fork` / `agent:` (16 + 6).** Lost. **Phase 2, full analysis: §10.** For the 6 AEM skills that delegate entirely
-   to an agent, the CE/wshobson answer is a command stub with `agent: aem-inspector` +
-   `subtask: true`, which runs the skill in that subagent. Model-invoked skills still run inline.
+2. **Bare `shared/…` (87 refs).** Read instructions to the model, not shell paths. Phase 1: an
+   install-note hint; Phase 2: maybe rewrite to `$CLAUDE_PLUGIN_ROOT/shared/…` (§9.5).
+3. **`context: fork` / `agent:` (16 + 6).** Lost. **Phase 2, full analysis: §10.** Command stubs
+   with `agent:` + `subtask: true` (wshobson uses `subtask` on agent-orchestrating commands) can
+   run a *user-typed* skill in a subagent. Model-invoked skills still run inline.
    - **Subagents themselves work.** v1 has the `task` tool; v2 has `subagent` (`agent`, `prompt`,
      `background`, `sessionID` for follow-ups) *(source: `tool/plugin/subagent.ts`)*. Several
      calls in one turn run in parallel (per wshobson's matrix, not verified), `background: true` runs async, and `subagent_depth`
@@ -296,6 +296,7 @@ has no OpenCode equivalent.
 - Does OpenCode follow symlinked skill dirs on v1 and v2? (wshobson symlinks `.opencode/` as a whole — likely yes.)
 - Does `{env:VAR}` substitution work inside a local server's `command` array?
 - How does a v2 HTTP-catalog skill expose its cache dir for scripts?
+- Do agent `permission` blocks accept tool-name globs like `"AEM_*": allow`? (The MCP docs show globs under `tools`.)
 - Does the model reliably map `mcp__plugin_dx-aem_AEM__getNodeContent` → `AEM_getNodeContent` without a rewrite? Smoke test before deciding.
 
 ## 9. Plugin root on OpenCode — `CLAUDE_PLUGIN_ROOT` / `CLAUDE_SKILL_DIR` (Phase 1)
@@ -308,12 +309,13 @@ Claude Code stays primary, so skill text keeps the Claude variables. OpenCode on
 | Variable | Refs | Files | Points into | Global value possible? |
 |---|---|---|---|---|
 | `$CLAUDE_PLUGIN_ROOT/skills/<s>/…` | 39 | dx-bug-all, dx-simple (+ their `scripts/`), dx-step, dx-step-all, dx-figma-all, dx-req, dx-req-dod, dx-agent-all, dx-init | **dx-core** | yes |
+| `$CLAUDE_PLUGIN_ROOT` existence checks (no path suffix) | 7 | `dx-bug-all/scripts/preflight.sh`, `dx-simple/scripts/{preflight,resume-check}.sh` | **dx-core** | yes |
 | `$CLAUDE_PLUGIN_ROOT/shared/…` | 7 | same set | **dx-core** | yes |
 | `${CLAUDE_PLUGIN_ROOT}/data/lib/aem-playwright-auth.sh` | 1 | aem-init (line 388) | **dx-aem** | no — conflicts with the dx-core value |
 | `${CLAUDE_SKILL_DIR}/scripts/…` | 7 | dx-init (×4), dx-sync, dx-doctor, dx-eject | the skill's own dir | **no** — different value per skill |
 
-So 60 of 61 refs agree on one value, the **dx-core plugin root**. The aem-init ref and the 7
-`CLAUDE_SKILL_DIR` refs need a text change.
+So 53 of the 54 `CLAUDE_PLUGIN_ROOT` refs agree on one value, the **dx-core plugin root**. The aem-init ref and the 7
+`CLAUDE_SKILL_DIR` refs (61 total with these) need a text change.
 
 ### 9.2 The value
 
@@ -324,7 +326,7 @@ With the layout from §5, `CLAUDE_PLUGIN_ROOT` must be the dx-core directory tha
 CLAUDE_PLUGIN_ROOT=$HOME/.config/opencode/dx/dx-core
 ```
 
-It must be the intact plugin tree, not `~/.config/opencode/skills`. The 37 `…/skills/<s>/scripts`
+It must be the intact plugin tree, not `~/.config/opencode/skills`. The 39 `…/skills/<s>/…`
 refs and the `scripts/../../../shared` lookups (§4.6) both assume
 `<root>/skills/<s>/scripts` and `<root>/shared` side by side.
 
