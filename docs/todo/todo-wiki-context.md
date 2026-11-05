@@ -48,3 +48,18 @@ Classification order: inherit from the parent page → override by a keyword in 
 - A fresher signal than the wiki for "what do other markets do": recent PRs and commits by other teams on the same files/components. Possibly a separate item.
 
 **Out of scope for v1:** vector DB, rerankers, indexing work items or past specs, changes to code search.
+
+**Status (2026-11-05):** Ground truth only. No runtime code yet.
+
+Done:
+- Fictional fixture `plugins/dx-core/data/lib/fixtures/wiki-sample/` (33 pages, ADO wiki git layout), `expected-map.json` (two-axis tags, 3 override pages), `questions.json` (18 questions, 4 kinds, `must_not` distractors), proposed `config.json` shape. Not copied to consumers (`fixtures/` is excluded by scaffold and `dx-upgrade`).
+- `plugins/dx-core/data/lib/wiki-sample-fixture.test.js`: 8 hermetic checks keeping tree, map and questions consistent. Seen failing on a broken fixture (4/8 red), green on the real one.
+- Not tested against a real wiki: no ADO credentials in the session where this was written, and client data must not enter this repo.
+
+Next, in order (each step usable on its own):
+1. **Map step**: `.ai/lib` script reading a wiki clone dir + scope config → `wiki-map` file. Rules only (inherit + keyword override), LLM pass left for later. Test: Done-when 2.
+2. **Chunk + BM25 search**: `##`-chunks, plain JS BM25, platform scoping, three buckets. Test: recall@5 by `kind` + `must_not` check (Done-when 3, 4). Write the numbers here.
+3. **Query expansion**: skill-side (model writes extra EN/DE synonyms); measure the delta on the same questions with a fixed expansion list in the test, so it stays hermetic.
+4. **Real-wiki trial (local, by the maintainer)**: run the map step on a real client wiki clone, count auto-classified vs ambiguous pages. Report only counts here, never page names.
+5. **dx-req Phase 4 integration** behind `wiki.enabled`, then config template + docs. Done-when 1, 5.
+6. **Embeddings mode**: only if step 2–3 numbers leave a gap on `synonym`/`language` questions.
