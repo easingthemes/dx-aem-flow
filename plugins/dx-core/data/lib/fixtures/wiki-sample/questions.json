@@ -1,0 +1,23 @@
+{
+  "_comment": "Retrieval ground truth. relevant = pages a good answer must surface (recall@k counts a hit if ANY relevant page is in the top k; recall_all@k if all are). must_not = distractors that look relevant but are out of scope (other stack). kind tags why the case is hard.",
+  "questions": [
+    { "id": "q01", "kind": "synonym",      "q": "Where do business users test in UAT before go-live?",                  "relevant": ["Environments-Overview"] },
+    { "id": "q02", "kind": "cross-market", "q": "How is the age gate configured for our market and do others differ?","relevant": ["Borealis-Market-Wiki/Age-Gate-Configuration", "Alpinia-Market/Altersverifikation"], "must_not": ["Storefront-Wiki/Age-Verification-at-Checkout"] },
+    { "id": "q03", "kind": "cross-market", "q": "Has another market already built a contact form we can reuse?",      "relevant": ["Coralia-Market-Wiki/Contact-Form-Integration", "Alpinia-Market/Kontaktformular"], "must_not": ["CRM-Wiki/Contact-Sync"] },
+    { "id": "q04", "kind": "keyword",      "q": "French translations for component labels",                             "relevant": ["Borealis-Market-Wiki/Bilingual-Content-EN-FR"] },
+    { "id": "q05", "kind": "synonym",      "q": "Authors see old content after publishing, how is the cache invalidated?","relevant": ["AEM-Wiki/Dispatcher-and-Caching"] },
+    { "id": "q06", "kind": "keyword",      "q": "Maximum image size and renditions for uploaded assets",                "relevant": ["AEM-Wiki/DAM-Asset-Guidelines"] },
+    { "id": "q07", "kind": "synonym",      "q": "Who is allowed to activate pages and which roles exist?",              "relevant": ["AEM-Wiki/Authoring-Permissions"] },
+    { "id": "q08", "kind": "synonym",      "q": "Mandatory warning text in the page footer",                            "relevant": ["Borealis-Legal-Disclaimers"] },
+    { "id": "q09", "kind": "cross-market", "q": "Problems rolling out content from the master site to a market",       "relevant": ["Alpinia-Sync-History"] },
+    { "id": "q10", "kind": "synonym",      "q": "Frontend build fails with a node version error",                       "relevant": ["AEM-Wiki/Front-end-Build"] },
+    { "id": "q11", "kind": "keyword",      "q": "When is the code freeze for our market?",                              "relevant": ["Borealis-Market-Wiki/Borealis-Release-Calendar"] },
+    { "id": "q12", "kind": "synonym",      "q": "Store finder map shows retail partners",                               "relevant": ["Borealis-Market-Wiki/Store-Locator"] },
+    { "id": "q13", "kind": "keyword",      "q": "Newsletter double opt-in",                                             "relevant": ["Coralia-Market-Wiki/Newsletter-Signup"] },
+    { "id": "q14", "kind": "keyword",      "q": "Where do I find publish instance logs?",                               "relevant": ["Support-Links"] },
+    { "id": "q15", "kind": "language",     "q": "Zugang zur Testumgebung für Abnahmetests",                             "relevant": ["Alpinia-Market/Staging-Umgebung", "Environments-Overview"] },
+    { "id": "q16", "kind": "language",     "q": "Wie wird das Mindestalter konfiguriert?",                              "relevant": ["Borealis-Market-Wiki/Age-Gate-Configuration", "Alpinia-Market/Altersverifikation"], "must_not": ["Storefront-Wiki/Age-Verification-at-Checkout"] },
+    { "id": "q17", "kind": "cross-market", "q": "Lessons from migrating images into the DAM in other markets",          "relevant": ["AEM-Wiki/Coralia-DAM-Rollout"] },
+    { "id": "q18", "kind": "synonym",      "q": "Who approves a release candidate after regression testing?",          "relevant": ["QA-Vendor-Process"] }
+  ]
+}

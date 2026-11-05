@@ -1,0 +1,59 @@
+{
+  "_comment": "Scope config the fixture is classified against. Shape is a proposal (TODO-258), not a shipped schema.",
+  "platform": {
+    "ours": {
+      "paths": [
+        "AEM-Wiki"
+      ],
+      "keywords": [
+        "aem",
+        "dispatcher",
+        "clientlib",
+        "sling",
+        "dam"
+      ]
+    },
+    "other-stack": {
+      "paths": [
+        "Storefront-Wiki",
+        "CRM-Wiki"
+      ],
+      "keywords": [
+        "storefront",
+        "crm",
+        "checkout"
+      ]
+    }
+  },
+  "markets": {
+    "mine": {
+      "name": "borealis",
+      "paths": [
+        "Borealis-Market-Wiki"
+      ],
+      "keywords": [
+        "borealis"
+      ]
+    },
+    "others": [
+      {
+        "name": "alpinia",
+        "paths": [
+          "Alpinia-Market"
+        ],
+        "keywords": [
+          "alpinia"
+        ]
+      },
+      {
+        "name": "coralia",
+        "paths": [
+          "Coralia-Market-Wiki"
+        ],
+        "keywords": [
+          "coralia"
+        ]
+      }
+    ]
+  }
+}
