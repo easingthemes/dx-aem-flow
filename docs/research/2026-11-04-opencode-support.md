@@ -1,10 +1,10 @@
-# OpenCode support — prior art, our wiring, target layout (2026-11-04)
+# OpenCode support — existing solutions, our wiring, target layout (2026-11-04)
 
 Input for [TODO #186](../todo/todo-cross-platform.md#opencode-plugin-support). Scope:
 **dx-core and dx-aem only** (dx-hub, dx-automation out of scope for now).
 
-Method: read the official docs (opencode.ai/docs, /v2/docs), cloned and read the source of four
-projects that ship Claude Code plugins to OpenCode, read OpenCode's own source
+Method: read the official docs (opencode.ai/docs, /v2/docs), cloned and measured nine
+projects that claim to ship Claude Code plugins to OpenCode (filtered in §2.1), read OpenCode's own source
 (`anomalyco/opencode` main, 2026-11-04) where the docs were silent, and grepped our
 plugins. Statements marked *(source)* were read in code, not docs.
 
@@ -19,37 +19,65 @@ plugins. Statements marked *(source)* were read in code, not docs.
 OpenCode has **no distribution unit** for skills + agents + commands + MCP. Each goes in
 separately as files and config. Every project below works around that.
 
-## 2. Prior art — how others ship Claude Code plugins to OpenCode
+## 2. Existing solutions — how others ship Claude Code plugins to OpenCode
 
-| Project | Approach | Skills | Agents | MCP | Hooks |
+### 2.1 Value filter
+
+Stars are not a quality signal in this space. Several repos with 100k+ stars have no relevant
+code, and big multi-tool repos often have a thin OpenCode part. Each candidate was cloned
+(2026-11-05) and measured on its **OpenCode-specific** code only:
+
+- commits that touch OpenCode files, and how many distinct authors made them
+- OpenCode-specific test files
+- the date of the last change to that code
+- whether it covers more than skills (agents, MCP, hooks)
+
+| Project | ★ | OpenCode commits / authors | OpenCode tests | Last OpenCode change | Covers | Verdict |
+|---|---|---|---|---|---|---|
+| [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin) | 25.9k | 40 / 15 | 4 (converter, writer, plugin, commands) | 2026-10-28 | skills, agents, commands, MCP, hooks | **Reference #1.** Real converter with tests. A written OpenCode spec (`docs/specs/opencode.md`). Lessons from real bugs (`ProviderModelNotFoundError` on subagent models, parallel-hook crash guard). |
+| [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (was oh-my-opencode) | 70.7k | 843 / 54 (whole repo is OpenCode) | 42 in the Claude-Code compat layer | 2026-10-30 | Claude Code **marketplace plugins in place** (`installed_plugins.json`), skills, agents, commands, MCP, hooks | **Reference #2, for code only.** `packages/claude-code-compat-core/…/claude-code-plugin-loader` is a real, tested loader. But it is a large opinionated harness; using it means adopting all of it. |
+| [obra/superpowers](https://github.com/obra/superpowers) | 312k | 29 / 6 | 13 | 2026-11-03 | skills (+ tool-name mapping prompt) | **Reference for the plugin API.** Clean dual v1/v2 entry point, zero dependencies. Skills only. |
+| [wshobson/agents](https://github.com/wshobson/agents) | 42.2k | 8 / 2 | 1 | 2026-09-13 | skills, agents, commands | **Small but readable.** `tools/adapters/opencode.py` (265 lines) shows the agent translation rules. Thin otherwise. |
+| [harnesstap/opencode-agent-plugin-support](https://github.com/harnesstap/opencode-agent-plugin-support) | 1 | 18 / 3 | 99 | 2026-10-12 | skills, agents, commands, MCP, hooks, instructions (in place) | **Well engineered, unproven.** Many tests, but four weeks old and no users yet. Watch it, don't depend on it. |
+| [joshuadavidthomas/opencode-agent-skills](https://github.com/joshuadavidthomas/opencode-agent-skills) | 287 | 60 / 4 | 13 | 2026-07-24 (later: only dependency bumps) | skills from `~/.claude/plugins` cache | Skills only, maintenance mode. Not enough for us. |
+| [TokenRollAI/acplugin](https://github.com/TokenRollAI/acplugin) | 58 | 5 / 2 | 0 | 2026-08-24 | "convert Claude plugins to Codex/OpenCode/Cursor" | **Dropped:** no tests, two authors, mostly generated scaffolding. |
+| [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills) | 29.3k | — | 0 | — | copies skills via `scripts/convert.sh` | **Dropped:** a skill collection judged by count ("410 skills"); the OpenCode support is a copy step. |
+| oh-my-opencode-slim, MSApps "converted" plugins, other `*-opencode` ports | 0–10k | — | — | — | — | **Dropped:** forks, ports of one plugin, or tools unrelated to plugin delivery. |
+| Search hits with 100k+ ★ (e.g. ECC, ponytail, agency-agents) | — | — | — | — | — | **Dropped:** no OpenCode delivery code for plugins. |
+
+Only the first four (plus harnesstap as a watch item) are used in the rest of this note.
+
+### 2.2 What the kept solutions do
+
+| Solution | Approach | Skills | Agents | MCP | Hooks |
 |---|---|---|---|---|---|
-| **[EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin)** (very active; last commit 2026-11-04) | **Two paths.** (a) Runtime extension `.opencode/plugins/compound-engineering.js`, installed with a git spec in `opencode.json`. (b) Bun converter `bunx @every-env/compound-plugin install … --to opencode` (`src/converters/claude-to-opencode.ts`, `src/targets/opencode.ts`). | (a) v1 `config` hook → `skills.paths`; v2 `ctx.skill.transform`. Each skill also gets a slash command stub: "Load and execute the `X` skill. $ARGUMENTS". (b) Copies to `~/.config/opencode/skills/`. | (b) only → `~/.config/opencode/agents/*.md`, `mode: subagent`, **no `model` on subagents** (explicit ids caused `ProviderModelNotFoundError`), `tools` → `permission`. | (b) `command`+`args` → `{type: local, command: [...]}`, `url` → `{type: remote}` merged into `opencode.json`. | (b) generates a TS plugin: `PreToolUse`→`tool.execute.before`, `PostToolUse`→`tool.execute.after`, … |
-| **[wshobson/agents](https://github.com/wshobson/agents)** (multi-harness marketplace) | Python generator `tools/adapters/opencode.py`, `make install-opencode`. Writes `.opencode/` (gitignored) and symlinks it into `~/.config/opencode/`. | `.opencode/skills/<plugin>-<skill>/` (prefixed, validated against the name regex; collisions fail). Mirrors all files in the skill dir. | `.opencode/agents/<plugin>__<agent>.md`, `mode: subagent`, `tools` → `permission` block with `skill` + `task` always allowed, model alias → full `provider/model-id`. | not documented | "via TS plugins" in the matrix; not generated |
-| **[obra/superpowers](https://github.com/obra/superpowers)** | Runtime extension only (git spec). | Same as CE (a). Injects a v1/v2 tool-mapping prompt (`task`↔`subagent`, `bash`↔`shell`, `todowrite`, `skill`). | none | none | none |
-| **[harnesstap/opencode-agent-plugin-support](https://github.com/harnesstap/opencode-agent-plugin-support)** (young; 1★, v0.2.0, 2026-10-12) | Runtime extension that **loads Claude Code plugin trees in place** (`~/.agents/plugins`, symlink to `~/.claude/plugins`). v2 primary. | `ctx.skill.transform`; substitutes `${CLAUDE_SKILL_DIR}` and `${CLAUDE_PLUGIN_ROOT}` in skill text *(source: `src/skills.ts:152`)* — braced form only. | `ctx.agent.transform`, namespaced `plugin:agent` | `ctx.mcp.transform` from `.mcp.json`, expands plugin-root vars | Runs `hooks.json` command hooks, gives them `CLAUDE_*` env |
-| **oh-my-opencode** | Large opinionated extension with a "Claude Code compatibility layer". | `.claude/skills` | `~/.claude/agents` (marked "reserved") | `.mcp.json` | `.claude/settings.json` hooks; reads `installed_plugins.json` |
-| **alirezarezvani/claude-skills** | `install.sh --tool opencode` copies skills into `.opencode/skills/`. | copy | — | — | — |
+| **compound-engineering** (CE below) | (a) Runtime extension `.opencode/plugins/compound-engineering.js`, installed with a git spec in `opencode.json`. (b) Bun converter `bunx @every-env/compound-plugin install … --to opencode` (`src/converters/claude-to-opencode.ts`, `src/targets/opencode.ts`). | (a) v1 `config` hook → `skills.paths`; v2 `ctx.skill.transform`. Each skill also gets a slash command stub: "Load and execute the `X` skill. $ARGUMENTS". (b) Copies to `~/.config/opencode/skills/`. | (b) only → `~/.config/opencode/agents/*.md`, `mode: subagent`, **no `model` on subagents** (explicit ids caused `ProviderModelNotFoundError`), `tools` → `permission`. | (b) `command`+`args` → `{type: local, command: [...]}`, `url` → `{type: remote}` merged into `opencode.json`. | (b) generates a TS plugin: `PreToolUse`→`tool.execute.before`, `PostToolUse`→`tool.execute.after`, … |
+| **oh-my-openagent** | Runtime harness that reads Claude Code's `installed_plugins.json` and loads each plugin from its install path. | Loaded in place. The body is wrapped with "Base directory for this skill: <dir>", and **`${CLAUDE_PLUGIN_ROOT}` is replaced with the install path** *(source: `skill-loader.ts:47-49`, `plugin-path-resolver.ts` — braced form only)*. | Loaded (`agent-loader.ts`) | Loaded (`mcp-server-loader.ts`), plugin root expanded | Claude hooks run, with `CLAUDE_PLUGIN_ROOT` set on the hook process |
+| **superpowers** | Runtime extension only (git spec). | Same as compound-engineering (a). Injects a v1/v2 tool-mapping prompt (`task`↔`subagent`, `bash`↔`shell`, `todowrite`, `skill`). | none | none | none |
+| **wshobson/agents** | Python generator `tools/adapters/opencode.py`, `make install-opencode`. Writes `.opencode/` (gitignored) and symlinks it into `~/.config/opencode/`. | `.opencode/skills/<plugin>-<skill>/` (prefixed, validated against the name regex; collisions fail). Mirrors all files in the skill dir. | `.opencode/agents/<plugin>__<agent>.md`, `mode: subagent`, `tools` → `permission` block with `skill` + `task` always allowed, model alias → full `provider/model-id`. | not generated | not generated |
+| *harnesstap (watch)* | Runtime extension, loads Claude plugin trees in place, v2 primary. | `ctx.skill.transform`; substitutes `${CLAUDE_SKILL_DIR}` and `${CLAUDE_PLUGIN_ROOT}` (braced only, `src/skills.ts:152`). | `ctx.agent.transform` | `ctx.mcp.transform` | `hooks.json` command hooks |
 
-**Consensus:**
-- For full fidelity (agents + MCP + hooks), the mature projects **generate native OpenCode
-  files** from the Claude plugin source: CE's converter and wshobson's adapter. CE's spec
-  (`docs/specs/opencode.md`, verified 2026-04-19) says it plainly: *"Keep the custom
-  writer until OpenCode documents a native distribution path for packaged skills and
-  agents."*
+**What the kept solutions agree on:**
+- For full fidelity (agents + MCP + hooks), either **generate native OpenCode files**
+  (compound-engineering's converter, wshobson) or **load the Claude plugin in place** with a
+  substantial runtime layer (oh-my-openagent). compound-engineering's spec (verified
+  2026-04-19) says: *"Keep the custom writer until OpenCode documents a native distribution
+  path for packaged skills and agents."*
 - For **skills only**, a small runtime extension that registers skill dirs is the common
-  shortcut (superpowers, CE path a).
+  shortcut (superpowers, compound-engineering path a).
 - **Recurring translations:**
   - agents get `mode: subagent`
   - `tools` → `permission`
   - subagents get no model, or a full `provider/model-id`
   - MCP becomes `local`/`remote`
   - skills get slash command stubs
-  - plugin-namespaced agent refs are flattened (`plugin:agent` → `agent`; CE `transformSkillContentForOpenCode`)
+  - plugin-namespaced agent refs are flattened (`plugin:agent` → `agent`; compound-engineering `transformSkillContentForOpenCode`)
   - `.claude/` paths are rewritten
-- **Script paths:** CE's skills don't use a plugin-root variable. Each skill tells the model to
-  set `SKILL_DIR` to "the absolute directory you loaded this SKILL.md from" and runs
-  `bash "$SKILL_DIR/scripts/x"`. That works because OpenCode's `skill` tool returns the skill
-  `directory` with the content *(source: `packages/core/src/tool/plugin/skill.ts`)*.
+- **Script paths.** compound-engineering's skills tell the model to set `SKILL_DIR` to "the
+  absolute directory you loaded this SKILL.md from"; OpenCode's `skill` tool returns that
+  directory *(source: `packages/core/src/tool/plugin/skill.ts`)*. oh-my-openagent and harnesstap
+  instead replace the literal **`${CLAUDE_PLUGIN_ROOT}`** in skill text, braced form only.
+  Our 47 unbraced `$CLAUDE_PLUGIN_ROOT` refs would not be replaced (see §9.3).
 
 ## 3. OpenCode facts the design depends on
 
@@ -248,7 +276,7 @@ has no OpenCode equivalent.
 
 ## 6. What still breaks, even with the layout above
 
-1. **Plugin-root variables (61 refs).** Unset. **Phase 1 fix: §9.** Fix patterns seen in prior art:
+1. **Plugin-root variables (61 refs).** Unset. **Phase 1 fix: §9.** Fix patterns seen in existing solutions:
    - CE: skill bodies set `SKILL_DIR` to the loaded skill's directory; OpenCode's `skill`
      tool returns that directory.
    - harnesstap: textual substitution at load time (braced form only).
@@ -269,7 +297,7 @@ has no OpenCode equivalent.
      into the caller's context. Coordinators chain forked skills (`dx-agent-all` → dx-req →
      dx-plan → dx-step-all → dx-step …), and on OpenCode these all pile into one context,
      relying on compaction.
-   - **No prior art handles `context: fork`.** CE ignores it; wshobson sets `subtask: true` only
+   - **No existing solution handles `context: fork`.** CE ignores it; wshobson sets `subtask: true` only
      on *commands* whose body mentions agents; harnesstap doesn't map it.
    - **Possible fix: a generated wrapper.** For each fork skill, emit an OpenCode agent
      (`mode: subagent`, `agents/dx-step.md`, body "Load the `dx-step` skill with the `skill` tool
@@ -288,8 +316,8 @@ has no OpenCode equivalent.
 |---|---|---|
 | A. Generator writes native files (skills, agents, commands, `opencode.json`) | CE converter, wshobson | Covers everything in §5. Natural home: `dx-scaffold` (already reads `plugins/` at runtime). Can rewrite §6.1/6.2 paths at write time. |
 | B. Runtime extension registers skill dirs in place | superpowers, CE plugin | Skills + command stubs only; no agents/MCP. Needs v1+v2 dual entry. |
-| C. Generic in-place loader of Claude plugin trees | harnesstap, oh-my-opencode | Third-party; would need our refs in braced form; young/opinionated. Worth a smoke test, not a dependency. |
-| D. Copy skills only | claude-skills | Breaks §4.6 relative scripts and agents. Not enough. |
+| C. Generic in-place loader of Claude plugin trees | oh-my-openagent (mature, tested, but a whole harness), harnesstap (young) | Needs our refs in braced form (§9.3). A user who already runs oh-my-openagent may get dx almost for free; worth a smoke test, not a dependency. |
+| D. Copy skills only | (dropped projects) | Breaks §4.6 relative scripts and agents. Not enough. |
 
 ## 8. Open questions
 
@@ -339,6 +367,11 @@ refs and the `scripts/../../../shared` lookups (§4.6) both assume
   locate the file the same way dx-init already locates the AEM plugin (`$AEM_PLUGIN_DIR`, found
   by glob for `**/skills/aem-init/SKILL.md`), or add a second variable `DX_AEM_PLUGIN_ROOT`.
   Prefer the glob: no new variable.
+
+- **Unbraced → braced (47 refs, optional):** `$CLAUDE_PLUGIN_ROOT/…` → `${CLAUDE_PLUGIN_ROOT}/…`.
+  It means the same in a shell. But oh-my-openagent and harnesstap replace only the braced
+  literal in skill text, so this would make dx work under those loaders with no
+  `dx-env.js`. Low cost; do it with the `CLAUDE_SKILL_DIR` rewrite.
 
 ### 9.4 Who sets it — options
 
@@ -418,9 +451,9 @@ Claude Code.
 - Each skill also triggers on its own. A user who runs one skill at a time (`dx-req`, then
   `dx-plan`, then `dx-step`) sees no difference. The loss only shows in the coordinators.
 
-### 10.4 Prior art
+### 10.4 Existing solutions
 
-None. compound-engineering's converter ignores `context: fork`. wshobson sets `subtask: true`
+None handles it. compound-engineering's converter ignores `context: fork`. wshobson sets `subtask: true`
 only on *commands* whose body mentions agents (`_SUBAGENT_KEYWORD_RE`). harnesstap has no
 mapping. superpowers' skills don't fork.
 

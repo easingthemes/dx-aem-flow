@@ -58,7 +58,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 
 ## OpenCode plugin support
 
-**Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md): prior art, wiring map, target layout)
+**Added:** 2026-04-04 · **Re-planned:** 2026-11-04 ([research](../research/2026-11-04-opencode-support.md): existing solutions, wiring map, target layout)
 **Problem:** dx-core and dx-aem have no OpenCode install path.
 - In Claude Code / Copilot CLI a plugin is a *distribution unit* that bundles skills, agents, hooks and MCP. OpenCode has no such unit. Its "plugins" are JS runtime extensions. So skills, agents, MCP and instructions must reach OpenCode as separate native files and `opencode.json` entries.
 - Projects that already ship Claude Code plugins to OpenCode (compound-engineering's converter, wshobson/agents) do this with a **generator** that writes native files.
@@ -99,7 +99,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
   - all 61 dx-core/dx-aem skills reachable
   - `plugins/dx-env.js`
 
-**Approach:** prior art (compound-engineering converter, wshobson/agents) generates native OpenCode files. We first make the main flow work by hand, then cover the details, then automate. Every limitation is documented in the [research note](../research/2026-11-04-opencode-support.md) even when it is deferred.
+**Approach:** the existing solutions with real code behind them (compound-engineering's converter and wshobson/agents generate native OpenCode files; oh-my-openagent loads Claude plugins in place; see research §2.1 for the value filter). We first make the main flow work by hand, then cover the details, then automate. Every limitation is documented in the [research note](../research/2026-11-04-opencode-support.md) even when it is deferred.
 
 **Phase 1 — main flow works (manual install).** Goal: single skills (`dx-req`, `dx-plan`, `dx-step`, `aem-verify`, …) run on OpenCode with MCP and agents.
 - `.opencode/INSTALL.md` from research §5:
@@ -115,6 +115,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 - **Text fixes, Claude-Code-safe:**
   - Rewrite the 7 `${CLAUDE_SKILL_DIR}` refs (dx-init, dx-sync, dx-doctor, dx-eject) to `$CLAUDE_PLUGIN_ROOT/skills/<skill>/…`, the form 37 refs already use.
   - Make the one dx-aem ref in aem-init find the AEM plugin by glob, like dx-init does.
+  - Optional: brace the 47 unbraced `$CLAUDE_PLUGIN_ROOT` refs, so in-place loaders (oh-my-openagent, harnesstap) substitute them too (research §9.3).
   - Run the dx-init / dx-sync / dx-doctor / dx-eject suites after.
 - **Checks:**
   - `validate-skills.sh` gets the OpenCode name/description rules.
@@ -128,7 +129,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
   - command stubs with `subtask: true`
   - a platform note in the 6 coordinators: dx-agent-all, dx-bug-all, dx-step-all, dx-figma-all, dx-bug-fix, dx-pr
 
-  Run the §10.6 test plan: isolation, `subagent_depth` for 3–4 levels, `agent:` permission scoping, a full `dx-agent-all` run, parallel subagents. No prior art exists; this is new ground.
+  Run the §10.6 test plan: isolation, `subagent_depth` for 3–4 levels, `agent:` permission scoping, a full `dx-agent-all` run, parallel subagents. No existing solution handles this; this is new ground.
 - Decide on rewriting MCP names and bare `shared/` refs, based on the Phase 1 smoke test.
 - `ToolSearch` instructions: make them conditional or drop them on OpenCode.
 - Hooks: port branch-guard to `dx-guard.js`.
