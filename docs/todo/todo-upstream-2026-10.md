@@ -20,6 +20,7 @@ Claude Code v2.1.286–v2.1.301 and Copilot CLI v1.0.90–v1.0.98. Each item's
 **Problem:** Claude Code now negotiates MCP protocol `2026-07-28` by default for stdio servers (v2.1.292), connectors (v2.1.295) and as the general default (v2.1.299), and MCP requests no longer follow redirects (v2.1.299). Servers that ignore the new check are remembered for 7 days and connect the older way after a delay. Our AEM MCP server (`plugins/dx-aem/.mcp.json`, HTTP) has never been checked against the new version; an AEM author behind a redirect (login, dispatcher) would now fail.
 **Scope:** `plugins/dx-aem/.mcp.json`, `plugins/dx-aem/skills/aem-init/SKILL.md`, `plugins/dx-aem/skills/aem-doctor/SKILL.md`.
 **Done-when:** a dated note in this section records one connect + one tool call (e.g. `getNodeContent`) against a local AEM on Claude Code ≥ v2.1.299 with the result, AND if it fails, `grep -rn "MCP_PROTOCOL_NEGOTIATION" plugins/dx-aem` shows the documented workaround.
+**Note 2026-11-06:** v2.1.302 fixed servers that negotiate `2026-07-28` without `resultType`/`ttlMs`/`cacheScope` showing no tools; v2.1.307 stopped HTTP MCP calls being sent twice (only read-only/idempotent tools retry) — relevant to AEM write tools; v2.1.318 pins stdio servers that exit on the version probe to the legacy handshake for 7 days (ours is HTTP, so n/a). Test still not run.
 
 ## Copilot agent-scoped hooks for `.github/agents`
 
@@ -47,6 +48,7 @@ Claude Code v2.1.286–v2.1.301 and Copilot CLI v1.0.90–v1.0.98. Each item's
 **Problem:** v2.1.287 introduced mods: a plugin whose `hooks.json` has a `modules` key pointing to a JS/TS hooks module that runs inside Claude Code's process (events such as `tool.check`, `agent.spawn`, `turn.step`; later releases add more). It could replace some bash hooks with in-process logic, but Copilot CLI and the other platforms we support have no equivalent, so moving guards there would split our safety story by platform.
 **Scope:** `plugins/dx-core/hooks/`, `docs/research/`.
 **Done-when:** a decision (adopt for Claude-only extras, or not) is recorded in this section with the reason, OR Copilot ships an equivalent and this becomes a real item.
+**Note 2026-11-06:** still no Copilot equivalent through v1.0.106. Mods keep growing on the Claude side (`decider: "person"` and `e.isReadOnly` on `tool.check` v2.1.304, `settings.read` per layer v2.1.304, `effort` on `$.model.fork` v2.1.318). Agent Plugins 1.0 leaves hooks out of the portable core, so no cross-tool standard is coming for this either.
 
 ## Small v2.1.286–v2.1.301 notes for existing items
 
