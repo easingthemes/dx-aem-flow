@@ -13,7 +13,7 @@ Sources marked **(official)** are the vendor changelog/blog. Everything else is 
 | Claude Code | v2.1.301 | **v2.1.318** (2026-11-03/04) | `anthropics/claude-code` CHANGELOG.md (official, no dates in file; date from aggregators) |
 | Copilot CLI | v1.0.98 | **v1.0.106** (2026-11-05) | `github/copilot-cli` changelog.md (official) |
 
-Coverage note: Claude Code 2.1.302–2.1.318 read verbatim. Copilot 1.0.106 read verbatim;
+Coverage note: Claude Code 2.1.302–2.1.318 read in full. Copilot 1.0.106 read in full;
 1.0.100–1.0.105 only via a summarised read — items from those versions are marked *(unverified)*.
 
 ## Verdict
@@ -59,7 +59,7 @@ hook concurrency capped at 24 prompt/agent hooks per session (2.1.312).
 
 ## Copilot CLI v1.0.99–v1.0.106
 
-**1.0.106 (official, verbatim)**
+**1.0.106 (official, read in full)**
 
 - Skills: `--add-dir` folders load skills from `.agents/skills` **and `.claude/skills`**; `~/` in
   `skillDirectories` resolves; warning for top-level `SKILL.md`.
