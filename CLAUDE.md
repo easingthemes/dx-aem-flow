@@ -239,7 +239,7 @@ Plugin hooks and Copilot CLI hooks are **largely separate systems**, with one ov
 
 To give both platforms the same safety hooks, install to both locations. `/dx-init` step 9i handles branch-guard + Stop guard. **Event-name mapping:** Claude Code uses `Stop` / `SubagentStop`; Copilot CLI uses `agentStop` / `subagentStop`. See the docs site (`website/`) for full details.
 
-Latest upstream sweep: `docs/research/2026-10-15-upstream-sweep.md` (Claude Code to v2.1.301, Copilot CLI to v1.0.98; each sweep is a delta to the previous one). The last full platform-state snapshot is still `docs/research/2026-06-10-platform-state-update.md` — [TODO #171](docs/todo/TODO.md) tracks the overdue one.
+Latest upstream sweep: `docs/research/2026-11-06-claude-code-vs-copilot-cli.md` (Claude Code to v2.1.318, Copilot CLI to v1.0.106, plus a side-by-side comparison; each sweep is a delta to the previous one). The last full platform-state snapshot is still `docs/research/2026-06-10-platform-state-update.md` — [TODO #171](docs/todo/TODO.md) tracks the overdue one.
 
 **Copilot CLI v1.0.40+ shell exports** — when targeting Copilot, add these to `~/.zshrc` / `~/.bashrc`:
 

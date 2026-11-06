@@ -262,6 +262,8 @@ constants get committed.
 
 **Update 2026-10-15 (from #226/#247):** `CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH` (v2.1.280; default cap raised 2,048 → 4,096 chars in v2.1.296), `--agents <file>` with `-p` (v2.1.281), background Bash limit 30 min / 2 h max (v2.1.285), `CLAUDE_CODE_DISABLE_WEB_FETCH` (v2.1.285), `--bare` — only CLI-named MCP servers, no system reminders, no background tasks (v2.1.286), `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` (v2.1.296). Skill `allowed-tools`/`effort` were dropped in `-p` runs until v2.1.296 — a pipeline Bash denial before ~2026-10-09 may be that, not our code.
 
+**Update 2026-11-06 (from [2026-11-06 sweep](../research/2026-11-06-claude-code-vs-copilot-cli.md)):** `CLAUDE_CODE_SUBAGENT_EFFORT` — default effort for subagents (v2.1.316); `permissions.blockWritesOutsideWorkingDirectories` (v2.1.314); `claude -p` now exits 1 when startup fails or transcript writes are lost (v2.1.314 / v2.1.317) — pipelines that relied on exit 0 now fail loudly; `-p` JSON carries `credential_expires_at` + stderr warning 10 days before sign-in expiry (v2.1.318); fork subagents on by default in `-p`/SDK (v2.1.302, `CLAUDE_CODE_FORK_SUBAGENT=0` off). **Check:** on Bedrock/Vertex/Foundry the `-p`/SDK default permission mode is now `default` unless `--permission-mode auto` is passed (v2.1.302) — a pipeline on those providers that expected auto mode can now stop on a prompt.
+
 ## Managed MCP settings — org distribution and the `allowedMcpServers` semantic change
 
 **Added:** 2026-09-16
