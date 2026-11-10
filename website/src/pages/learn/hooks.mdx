@@ -101,6 +101,22 @@ import CommandBlock from '../../components/CommandBlock.astro';
     <code>.github/hooks/hooks.json</code>, which keeps <code>"version": 1</code> -- a different
     consumer with a different schema. Do not strip the key there.
   </HighlightBox>
+
+  <HighlightBox severity="warning" title="Repo hooks in .github/hooks must be self-contained">
+    Copilot sets <code>CLAUDE_PROJECT_DIR</code> for repo hooks but <strong>not</strong>
+    <code>PLUGIN_ROOT</code>, <code>COPILOT_PLUGIN_ROOT</code> or <code>CLAUDE_PLUGIN_ROOT</code>
+    (checked on Copilot CLI v1.0.109). A repo hook that runs
+    <code>bash "$&#123;PLUGIN_ROOT&#125;/hooks/scripts/x.sh"</code> becomes <code>bash /hooks/scripts/x.sh</code>
+    and exits 127. Copilot CLI already runs the plugin's own <code>hooks/hooks.json</code> -- from every
+    source, with no dedup -- so the repo file exists for the Copilot <strong>cloud coding agent</strong>,
+    which ignores plugins. <code>/dx-init</code> therefore installs only two entries there: the inline
+    branch guard (exit 2) and the Stop guard via <code>$&#123;CLAUDE_PROJECT_DIR:-$PWD&#125;</code>.
+    <br /><br />
+    Installs from before November 2026 also carried SessionStart and PostToolUse entries that need a
+    plugin root, and some a <code>Bash(git commit*)</code> matcher or <code>exit 1</code>.
+    <code>/dx-doctor</code> reports them; <code>/dx-upgrade</code> repairs dx's own entries and leaves
+    every other hook in the file alone.
+  </HighlightBox>
 </Section>
 
 <SectionHeading

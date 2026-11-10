@@ -736,25 +736,29 @@ If `AGENTS.md` already exists, compare and update silently if content has change
 
 ### 9i. Install hooks for Copilot CLI
 
-Deploy plugin hooks to `.github/hooks/` so Copilot CLI gets the same safety and convenience hooks as Claude Code.
+Install the branch guard and the Stop guard as repo hooks in `.github/hooks/`.
+
+**Who reads this file.** Copilot CLI already runs the plugin's own `hooks/hooks.json` (PascalCase `Stop` maps to `agentStop`) and runs hooks from every source with no dedup, so locally this copy makes the two guards run twice — harmless, both are idempotent checks. The consumer the repo copy is for is the **Copilot cloud coding agent**, which ignores plugins and reads only `.github/hooks/`.
+
+**Every command must be self-contained.** Copilot sets `CLAUDE_PROJECT_DIR` for repo hooks but not `PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT` or `CLAUDE_PLUGIN_ROOT` (checked on v1.0.109), so a command that resolves a plugin script runs `bash /hooks/scripts/…` and exits 127. Never add plugin-script hooks (session-start, next-step, validate-plugin-edit) here — they stay in the plugin's `hooks/hooks.json`.
 
 ```bash
 mkdir -p .github/hooks
 ```
 
-Copy `templates/hooks/branch-guard-hooks.json.template` to `.github/hooks/hooks.json`.
+If `.github/hooks/hooks.json` does not exist, copy `templates/hooks/branch-guard-hooks.json.template` to it. The template has exactly two entries:
+- **PreToolUse** (`Bash|bash|shell|execute`) — inline branch guard: reads the tool call from stdin, and on `git commit` while on main/master/develop/development prints a reason and exits **2** (the only exit code that blocks)
+- **agentStop** — runs `.claude/hooks/stop-guard.sh` via `${CLAUDE_PROJECT_DIR:-$PWD}` if it exists
 
-The template includes:
-- **SessionStart** — config validation + next-step suggestions
-- **PreToolUse** — branch guard (prevents commits on main/master/develop)
-- **agentStop** — completion checks via `.claude/hooks/stop-guard.sh` (Stop event in Claude Code, `agentStop` in Copilot CLI v1.0.x+, both closed 2026-04-07)
-- **PostToolUse Edit** — validates plugin file edits
+If it already exists, merge instead of overwriting — the audit script adds the missing guards, repairs entries an older dx-init wrote, and leaves every other hook untouched:
 
-Hook scripts use `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` so the same template works in both Claude Code (which sets `CLAUDE_PLUGIN_ROOT`) and Copilot CLI v1.0.26+ (which sets `PLUGIN_ROOT` and `COPILOT_PLUGIN_ROOT`).
+```bash
+bash <dx-plugin>/skills/dx-doctor/scripts/repo-hooks-audit.sh --fix .
+```
+
+It prints any remaining findings in hooks it does not own (permission-rule matchers, `exit 1` used to block, plugin-root commands); show them to the user as manual fixes.
 
 The shell-capable `.github/agents/` (DxCommit, DxPRFix, DxDebug, DxPlanExecutor, AEMCommit, AEMPRFix) also carry the branch guard in their own frontmatter `hooks:` block — Copilot CLI v1.0.97+ runs it while that agent is selected in a trusted folder, independent of this file.
-
-If `.github/hooks/hooks.json` already exists, merge new hooks into the existing file — do not overwrite hooks that are already present. Match by event type + matcher to detect duplicates.
 
 **Matcher compatibility note (Copilot CLI v1.0.36+):** As of v1.0.36, `preToolUse` matcher patterns are evaluated as full regex and now actually filter (previously some patterns were silently ignored). Audit any custom matchers added to merged hook configs:
 - Exact tool names (`Edit`, `Task`, `Write`) — work as-is in both runtimes.

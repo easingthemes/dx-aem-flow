@@ -171,7 +171,9 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code></pre>
     </ContentCard>
     <ContentCard icon="mdi:variable" iconColor="bg-brand-700" title="${PLUGIN_ROOT} env vars (v1.0.26)">
       <code>PLUGIN_ROOT</code>, <code>COPILOT_PLUGIN_ROOT</code>, and <code>CLAUDE_PLUGIN_ROOT</code> are
-      injected into plugin hook scripts — no more path-derivation hacks.
+      injected into <strong>plugin</strong> hook scripts — no more path-derivation hacks. Not into repo
+      hooks in <code>.github/hooks/</code>: there only <code>CLAUDE_PROJECT_DIR</code> is set (checked on
+      v1.0.109), so a repo hook that calls a plugin script exits 127.
     </ContentCard>
     <ContentCard icon="mdi:bell-outline" iconColor="bg-amber-500" title="Notification Hook (v1.0.18)">
       A new hook event with sub-types <code>agent_completion</code>, <code>permission_prompt</code>, and

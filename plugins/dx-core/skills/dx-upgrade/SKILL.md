@@ -13,7 +13,7 @@ You upgrade a consumer project's dx workflow files to match the latest installed
 - **File content reads:** Use `Read` — never `cat` or `head` in Bash
 - **File writes:** Use `Write` — never `echo >` or `cat <<EOF` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `chmod +x` on scripts, `bash` to run install scripts (steps 3e), and `git` commands
+- **Bash is ONLY for:** `chmod +x` on scripts, `bash` to run install/repair scripts (steps 3e, 3e-ii), and `git` commands
 - **Parallel operations:** Call multiple `Read`/`Write`/`Glob` tools in parallel when independent — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Run dx-doctor
@@ -45,6 +45,7 @@ Before applying any fixes, present a summary table for each category:
 | .ai/lib/audit.sh | stale | Update from plugin |
 | .ai/project/component-index.md | stale | Update from plugin data |
 | .github/agents/ | 4 new, 2 stale | Install new + update stale from templates |
+| .github/hooks/hooks.json | 3 dx entries need a plugin root | Repair with repo-hooks-audit.sh --fix |
 
 ### Needs confirmation
 | File | Issue | Action |
@@ -184,6 +185,23 @@ If `.github/agents/` exists (Copilot was enabled):
 bash <dx-plugin>/skills/dx-init/scripts/install-copilot-agents.sh --force <dx-plugin>
 ```
 The `--force` flag overwrites stale agents with latest templates.
+
+### 3e-ii. Copilot Repo Hooks (`.github/hooks/`)
+
+If dx-doctor step 6.5d reported any `dx:` finding, repair in place:
+
+```bash
+bash <dx-plugin>/skills/dx-doctor/scripts/repo-hooks-audit.sh --fix .
+```
+
+What `--fix` changes, in every `.github/hooks/*.json`, and nothing else:
+- removes the plugin-root entries older dx-init installs wrote (`session-start.sh`, `next-step.sh`, `validate-plugin-edit.sh`) and drops events left empty
+- replaces a stale dx branch guard (permission-rule matcher, `exit 1`, no `git commit` stdin filter) with the template's, matcher included
+- drops duplicate dx guards; adds the branch guard / agentStop guard to `hooks.json` if missing
+
+Hooks it does not recognise as dx entries are left byte-for-byte. It then re-runs the check and prints what is left — those rows are not dx entries: list each under **Manual Actions Required** with its detail. Exit 2 means a file is not valid JSON; it is left untouched — manual action.
+
+Report as `- .github/hooks/hooks.json ← repaired (<N> dx entries)` under **Updated**.
 
 ### 3f. Template-Generated Files
 

@@ -320,8 +320,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
 
     <ContentCard icon="mdi:shield" iconColor="bg-amber-500" title="PreToolUse">
-      Blocks commits on protected branches (main, master, development, develop). Branch guard
-      deployed to both plugin hooks and <code>.github/hooks/hooks.json</code>.
+      Blocks commits on protected branches (main, master, development, develop) with exit 2. Ships in the
+      plugin hooks and, for the Copilot cloud agent, in <code>.github/hooks/hooks.json</code>.
     </ContentCard>
 
     <ContentCard icon="mdi:stop-circle" iconColor="bg-cyan" title="Stop">
@@ -331,9 +331,11 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="info" title="Platform Separation">
-    Plugin <code>hooks/hooks.json</code> is active in Claude Code only. <code>.github/hooks/hooks.json</code>
-    is active in Copilot CLI only. Both use the same <code>version: 1</code> format with PascalCase events.
-    <code>/dx-init</code> deploys hooks to both locations.
+    Plugin <code>hooks/hooks.json</code> is read by Claude Code <strong>and</strong> Copilot CLI.
+    <code>.github/hooks/hooks.json</code> is read by Copilot CLI and by the Copilot cloud coding agent,
+    which ignores plugins. Copilot runs every source with no dedup, so <code>/dx-init</code> puts only
+    the self-contained branch guard and Stop guard in the repo file -- plugin-script hooks such as
+    SessionStart stay in the plugin, because Copilot does not set <code>PLUGIN_ROOT</code> for repo hooks.
   </HighlightBox>
 
   <HighlightBox severity="success" title="Hook Merging (Copilot CLI v1.0.11+)">

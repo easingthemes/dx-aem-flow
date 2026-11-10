@@ -75,7 +75,8 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 - Source: `plugins/dx-core/hooks/hooks.json` (all hooks defined here)
 - Target: `plugins/dx-core/templates/hooks/` or dx-init step that copies to `.github/hooks/`
 - Supported events in Copilot CLI v1.0.36: PreToolUse, PostToolUse, SessionStart, PreCompact, SubagentStart, **agentStop**, **subagentStop**, Notification, PermissionRequest, postToolUseFailure, **HTTP hooks** (v1.0.35)
-**Done-when:** `grep -c "SessionStart\|PostToolUse\|agentStop" .github/hooks/hooks.json` returns ≥4 (SessionStart + 2 Figma PostToolUse + Stop guard).
+**Done-when (rewritten 2026-11-10):** (a) `bash plugins/dx-core/skills/dx-doctor/scripts/__tests__/repo-hooks-audit.test.sh` exits 0 — template has no plugin-root reference, its guard blocks `git commit` on main with exit 2, and the audit flags/repairs old installs without touching foreign hooks; **and** (b) a Copilot cloud coding agent run in a test repo whose `.github/hooks/hooks.json` is the template shows the branch guard refusing a `git commit` on the default branch, recorded in this section. (a) passes; (b) not done.
+**Old Done-when (retired):** `grep -c "SessionStart\|PostToolUse\|agentStop" .github/hooks/hooks.json` ≥4 — it counted event names and could not tell a hook that runs from one that exits 127. The file it asked for was the broken one.
 **Approach:**
 1. Port SessionStart hook (config validation)
 2. Port Figma PostToolUse hooks
@@ -92,6 +93,12 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 Before marking this done: on Copilot, record whether `PLUGIN_ROOT` is set inside a `.github/hooks` command, and whether a plugin `Stop` hook fires as `agentStop`. If plugin hooks already cover Copilot, the `.github/hooks/` copy may only need the `-p` untrusted-folder case.
 
 **Docs check 2026-11-10** ([hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference)): Copilot CLI loads hooks from policy, then user (`~/.copilot/hooks/*.json`, `~/.copilot/settings.json`), then project (`.github/hooks/*.json`, `.github/copilot/settings(.local).json`, `.claude/settings(.local).json`), then plugins (`hooks.json` or `hooks/hooks.json`). "All hook entries from all sources are run" — there is no dedup. PascalCase event names (`Stop`, `PreToolUse`) are accepted, with Claude matcher semantics, and `Stop` is `agentStop`. So the plugin `hooks/hooks.json` alone already gives Copilot the branch guard and Stop guard, and the `.github/hooks/` copy makes them run twice (point 3 above is now documented, not inferred). `PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT`, `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR` are **not documented** for any hook source; only `COPILOT_PLUGIN_DATA` is. Point 2 still needs the live check.
+
+**Resolution 2026-11-10 (fix PR, not yet verified on the cloud agent):** the port is turned around. Copilot CLI already runs the plugin `hooks/hooks.json` (all sources, no dedup, `Stop` = `agentStop`), so nothing more needs porting for the CLI. The repo copy is kept only for the cloud coding agent and now holds only self-contained entries:
+- `templates/hooks/branch-guard-hooks.json.template` — inline branch guard (`Bash|bash|shell|execute`, stdin `git commit` filter, exit 2) and the `agentStop` guard via `${CLAUDE_PROJECT_DIR:-$PWD}`. SessionStart (`session-start.sh`, `next-step.sh`) and PostToolUse (`validate-plugin-edit.sh`) are gone; they stay plugin-only.
+- `skills/dx-doctor/scripts/repo-hooks-audit.sh` — dx-doctor 6.5d runs it read-only; dx-upgrade 3e-ii and dx-init 9i (merge into an existing file) run `--fix`. Flags plugin-root commands, permission-rule matchers, `exit 1` blocks, stale/missing/duplicate dx guards. `--fix` repairs only dx-installed entries; foreign hooks stay byte-identical (tested).
+- Figma PostToolUse hooks from the old Approach were never ported and are not: they need a plugin root too.
+Not verified: that the cloud agent runs `PreToolUse`/`agentStop` from this file and honours exit 2 — Done-when (b). Locally the two guards run twice (plugin + repo); harmless, not removed.
 
 ## Prompt-Mode Gates v1.0.40
 
