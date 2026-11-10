@@ -1,3 +1,10 @@
+## [3.12.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.2...v3.12.3) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** Copilot repo-hook template keeps only self-contained guards ([#249](https://github.com/easingthemes/dx-aem-flow/issues/249)) ([5f2d249](https://github.com/easingthemes/dx-aem-flow/commit/5f2d249461ef176d0dc7ae5ffca970a174ecdae4))
+
 ## [3.12.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.1...v3.12.2) (2026-11-10)
 
 
