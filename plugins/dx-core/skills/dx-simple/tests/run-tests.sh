@@ -177,15 +177,37 @@ run "progress: file now has 2 phase rows" \
 TMPCONC="$TMP/8888888-conc"
 mkdir -p "$TMPCONC"
 run "progress: 25 concurrent writers keep every row" bash -c '
+  errs="'"$TMP"'/conc-writers.err"
   for i in $(seq 1 25); do
-    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC"'" "Phase $i" done "n$i" >/dev/null 2>&1 &
+    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC"'" "Phase $i" done "n$i" >/dev/null 2>>"$errs" &
   done
   wait
   f="'"$TMPCONC"'/simple-progress.md"
   rows=$(grep -cE "^\| Phase [0-9]+ \| done \|" "$f")
   hdr=$(grep -cE "^\| Phase \| Status \| Note \|" "$f")
   torn=$(grep -vcE "^(\||#|$)" "$f")
-  [ "$rows" = 25 ] && [ "$hdr" = 1 ] && [ "$torn" = 0 ]
+  [ "$rows" = 25 ] && [ "$hdr" = 1 ] && [ "$torn" = 0 ] && exit 0
+  # Evidence for a CI-only failure (seen on ubuntu-26.04 only): counts, the file,
+  # what the writers said, and which mkdir/mv/find answered.
+  echo "rows=$rows hdr=$hdr torn=$torn"; cat "$f"
+  grep -v "^OK:" "$errs" | sort | uniq -c
+  for t in mkdir mv find; do $t --version 2>&1 | head -1; done
+  exit 1
+'
+rm -f "$TMP/conc-writers.err"
+
+# Same race with a mkdir that "succeeds" on an existing dir, as uutils mkdir 0.10
+# did on ubuntu-26.04 (TODO-267). The lock must not rest on mkdir's exit code.
+FAKEBIN="$TMP/fake-mkdir-bin"; mkdir -p "$FAKEBIN"
+printf '#!/usr/bin/env bash\nexec "%s" -p "$@"\n' "$(command -v mkdir)" > "$FAKEBIN/mkdir"; chmod +x "$FAKEBIN/mkdir"
+TMPCONC2="$TMP/8888889-conc"; mkdir -p "$TMPCONC2"
+run "progress: 25 writers keep every row even if mkdir never fails" bash -c '
+  for i in $(seq 1 25); do
+    PATH="'"$FAKEBIN"':$PATH" "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC2"'" "Phase $i" done "n$i" >/dev/null 2>&1 &
+  done
+  wait
+  rows=$(grep -cE "^\| Phase [0-9]+ \| done \|" "'"$TMPCONC2"'/simple-progress.md")
+  [ "$rows" = 25 ] || { echo "rows=$rows"; exit 1; }
 '
 
 run "progress: concurrent run leaves no lock or temp files behind" \
