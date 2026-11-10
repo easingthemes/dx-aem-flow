@@ -13,17 +13,23 @@ set -euo pipefail
 
 INPUT=$(cat)
 
-# Prevent infinite loops — if we already blocked once, let Claude stop
-STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
+# Prevent infinite loops — if we already blocked once, let Claude stop.
+# Claude Code sends stop_hook_active; Copilot CLI (agentStop) does not, and only
+# overrides a blocking Stop hook after 8 consecutive blocks. The repeat check in
+# the Report section below covers Copilot: the same findings never block twice.
+STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo false)
 if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
   exit 0
 fi
 
-CWD=$(echo "$INPUT" | jq -r '.cwd // "."')
+CWD=$(echo "$INPUT" | jq -r '.cwd // "."' 2>/dev/null || echo .)
 cd "$CWD" || exit 0
 
 # Only check if we're in a git repo
-git rev-parse --git-dir > /dev/null 2>&1 || exit 0
+GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null) || exit 0
+# Last block: "<checksum of reason> <epoch>". Lives in the git dir, never tracked.
+STATE_FILE="$GIT_DIR/dx-stop-guard.last"
+REPEAT_WINDOW=600
 
 ISSUES=()
 
@@ -87,15 +93,6 @@ if git diff --name-only 2>/dev/null | grep -q '.ai/config.yaml'; then
   ISSUES+=("Uncommitted changes to .ai/config.yaml — commit or revert before stopping")
 fi
 
-# --- Check 6: Steps still in-progress ---
-LATEST_IMPL=$(find .ai/specs -name 'implement.md' -maxdepth 3 2>/dev/null | head -1)
-if [ -n "$LATEST_IMPL" ]; then
-  IN_PROGRESS=$(grep -c '\*\*Status:\*\* in-progress' "$LATEST_IMPL" 2>/dev/null || echo 0)
-  if [ "$IN_PROGRESS" -gt 0 ]; then
-    ISSUES+=("$IN_PROGRESS steps still marked in-progress in $LATEST_IMPL — should be done or blocked")
-  fi
-fi
-
 # --- Report ---
 if [ ${#ISSUES[@]} -gt 0 ]; then
   REASON="Anti-rationalization check before stopping:\\n"
@@ -103,6 +100,18 @@ if [ ${#ISSUES[@]} -gt 0 ]; then
     REASON+="- $issue\\n"
   done
   REASON+="\\nAddress these items or explain why they can be skipped."
+
+  # Same findings already blocked recently → the agent has seen them; let it stop.
+  SIG=$(printf '%s' "$REASON" | cksum | cut -d' ' -f1)
+  NOW=$(date +%s)
+  if [ -f "$STATE_FILE" ]; then
+    read -r LAST_SIG LAST_TS < "$STATE_FILE" || true
+    if [ "${LAST_SIG:-}" = "$SIG" ] && [ $((NOW - ${LAST_TS:-0})) -lt "$REPEAT_WINDOW" ]; then
+      rm -f "$STATE_FILE"
+      exit 0
+    fi
+  fi
+  echo "$SIG $NOW" > "$STATE_FILE" 2>/dev/null || true
 
   cat <<EOF
 {
@@ -114,4 +123,5 @@ EOF
 fi
 
 # All clear
+rm -f "$STATE_FILE"
 exit 0
