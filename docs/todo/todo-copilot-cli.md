@@ -163,6 +163,8 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 4. Test whether the same bug affects `PreToolUse`. **2026-10-16:** the branch-guard matcher `Bash(git commit*)` never misfired because it never fired at all — as a regex it matches no tool name, in Claude Code too. Now `Bash|bash|shell|execute` with an inline `git commit` stdin check (`plugins/dx-core/hooks/branch-guard-hook.test.sh`); whether Copilot honours a PreToolUse matcher is still untested.
 5. After upstream fix lands, audit our guards — they're defense-in-depth and harmless to keep, but the redundancy noise in `hooks.json` commands could be removed.
 
+**Closed 2026-11-10:** upstream fix confirmed on v1.0.108 (re-test below). The `CLAUDE_TOOL_NAME` Done-when items are obsolete after TODO-263; no upstream issue needed.
+
 **Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.
 
 **Re-test 2026-11-10 on v1.0.108 (TODO-263):** matcher `Edit|Write` is honored — on a prompt asking for file creation, a shell command, and a file edit, the matching plugin hook fired only for the two successful file operations, both reported as `tool_name: "Edit"`; it did not fire for the shell call. Copilot does **not set `CLAUDE_TOOL_NAME`**; plugin `PostToolUse` stdin carries `tool_name` and `tool_input`. (A separate repo-level `preToolUse` capture used camel-case `toolName`/`toolArgs`.) The stdin fallback lets `compaction-reminder.sh` count the observed `Edit` calls; `screenshot-log.sh` did not log them. Regression coverage is in `plugins/dx-core/hooks/hook-tool-name.test.sh`. The inline `CLAUDE_TOOL_NAME` guards in `plugins/dx-core/hooks/hooks.json` (Figma, Task, validate-plugin-edit) had the same blind spot — on Claude Code too, which never sets that variable either (v2.1.322 probe). Fixed under TODO-263.
@@ -212,6 +214,7 @@ hook capabilities we neither use nor document:
 returns the new hook-source row, AND `grep -rn '"ask"' plugins/*/hooks/hooks.json
 plugins/dx-core/skills/dx-init/SKILL.md` returns either an adopted `ask` decision
 or an explicit written decision not to adopt it.
+**Done 2026-11-10:** (1) `~/.copilot/hooks` row added to `CLAUDE.md` hook-source table and a line on `website/src/pages/learn/hooks.mdx`; (2) `ask` not adopted — decision written in `dx-init` step 9i; (3) OTel deferred to #100/#160.
 **Approach:** Document all three first — the personal-hooks row is a correctness
 fix to a table we ship, and costs nothing. `ask` is the only one worth adopting
 immediately, and only for advisory guards; branch-guard must stay a hard block.
@@ -324,7 +327,13 @@ So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instr
 
 ### Fix 2026-11-10 — Stop guard on Copilot (item c)
 
-`stop-guard.sh` only stopped re-blocking on `stop_hook_active`, which Copilot's `agentStop` input does not send — so on Copilot it blocked until the 8-block cap. It now writes `<checksum of reason> <epoch>` to `$GIT_DIR/dx-stop-guard.last` and lets the agent stop when the same findings come back within 10 minutes (one block per finding set, both harnesses). Also fixed: in a repo with no `.ai/specs/`, a duplicate in-progress check (`find` under `pipefail`) made the script exit 1, a non-blocking error, so the guard never blocked there. Covered by `plugins/dx-core/data/hooks/stop-guard.test.sh` (fails on the old script). Items (a) and (c) are on the website hook page; (b) moved to TODO-265; (d) open as TODO-264. Remaining for this item: confirm on Copilot that `agentStop` stdin has no `stop_hook_active` and does carry `cwd` (one probe).
+`stop-guard.sh` only stopped re-blocking on `stop_hook_active`, which we assumed Copilot's `agentStop` input does not send (wrong — see the probe below). It now writes `<checksum of reason> <epoch>` to `$GIT_DIR/dx-stop-guard.last` and lets the agent stop when the same findings come back within 10 minutes (one block per finding set, both harnesses). Also fixed: in a repo with no `.ai/specs/`, a duplicate in-progress check (`find` under `pipefail`) made the script exit 1, a non-blocking error, so the guard never blocked there. Covered by `plugins/dx-core/data/hooks/stop-guard.test.sh` (fails on the old script). Items (a) and (c) are on the website hook page; (b) moved to TODO-265; (d) open as TODO-264. Remaining for this item: confirm on Copilot that `agentStop` stdin has no `stop_hook_active` and does carry `cwd` (one probe).
+
+**Probe 2026-11-10, Copilot CLI v1.0.109, interactive** (`copilot` in a VS Code terminal, prompt typed in the TUI — not `-p`; this is how developers use it, so Copilot re-tests run this way from now on). A repo hook in `.github/hooks/` logged each `agentStop` stdin; a consumer project with a tracked `.js` file made dirty, so the dx stop guard (plugin `Stop` hook) had a finding.
+- stdin keys: `sessionId`, `timestamp`, `cwd` (the project root), `transcriptPath`, `stopReason` (`end_turn`), `stop_hook_active`.
+- Calls: `{"stop_hook_active":false}` → guard blocked once, agent answered → `{"stop_hook_active":true}` → guard allowed, turn ended. 2 calls, no loop.
+- **Verdict:** Copilot sends `stop_hook_active` exactly like Claude Code. The 9-call result in row C came from a probe hook that ignored the field. The repeat check stays as a backup; comments corrected. **TODO-262 closed.**
+- Side finding: the consumer project still had the pre-#250 `stop-guard.sh` — `/dx-upgrade` brings the new one.
 
 ### Validated 2026-11-10 on Copilot CLI v1.0.108 (TODO-182 batch)
 

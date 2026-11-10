@@ -222,8 +222,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <HighlightBox severity="warning" title="Guards are best-effort, not a security boundary">
     <ul class="mt-2 list-none p-0 text-sm space-y-1">
+      <li><strong>A fourth hook source.</strong> Copilot CLI (v1.0.83+) also runs personal hooks from <code>~/.copilot/hooks/</code>, alongside plugin, <code>.github/hooks</code> and agent hooks, with no dedup. dx ships nothing there.</li>
       <li><strong>Timeouts fail open.</strong> A hook that exceeds its <code>timeoutSec</code> is killed and the tool call is <em>allowed</em>. Keep guards fast and offline (no network calls).</li>
-      <li><strong>Stop hooks are capped.</strong> An <code>agentStop</code> hook that blocks is overridden after 8 consecutive blocks; persistence can get past a Stop hook. Copilot also sends no <code>stop_hook_active</code>, so the dx <code>stop-guard.sh</code> keeps its own record: it never blocks the same findings twice in a row (one block per finding set, on both harnesses).</li>
+      <li><strong>Stop hooks are capped.</strong> An <code>agentStop</code> hook that blocks is overridden after 8 consecutive blocks; persistence can get past a Stop hook. The dx <code>stop-guard.sh</code> is not affected: Copilot sends <code>stop_hook_active: true</code> on the call after a block, as Claude Code does, and the guard then lets the agent stop (verified on v1.0.109, interactive). As a backup it never blocks the same findings twice in a row.</li>
       <li><strong>Tool name arrives on stdin.</strong> Copilot (and Claude Code) do not set <code>CLAUDE_TOOL_NAME</code>; plugin <code>PostToolUse</code> input provides <code>tool_name</code>. In v1.0.108, file creation and editing both arrived as <code>Edit</code>.</li>
       <li><strong>VS Code Chat (Local agent) ignores <code>matcher</code>.</strong> The agent-scoped branch guard therefore filters on the tool input itself rather than relying on the matcher (from upstream research; not re-run in VS Code).</li>
     </ul>
