@@ -15,14 +15,8 @@
     ],
     "agentStop": [
       {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -f \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" ] && bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" || true",
-            "statusMessage": "Running completion checks..."
-          }
-        ]
+        "type": "command",
+        "bash": "[ -f \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" ] && bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh\" || true"
       }
     ]
   }

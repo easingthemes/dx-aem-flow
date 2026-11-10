@@ -84,7 +84,9 @@ if [ "$DIRTY_SOURCE" -gt 0 ]; then
 fi
 
 # --- Check 4: Merge conflict markers ---
-CONFLICT_FILES=$(git diff --name-only 2>/dev/null | xargs grep -l '<<<<<<<' 2>/dev/null || true)
+# Real markers start the line followed by a space ("<<<<<<< HEAD"). Anchoring keeps
+# this file — whose own pattern contains the marker text — from flagging itself.
+CONFLICT_FILES=$(git diff --name-only 2>/dev/null | xargs grep -lE '^(<{7}|>{7}) ' 2>/dev/null || true)
 if [ -n "$CONFLICT_FILES" ]; then
   ISSUES+=("Unresolved merge conflicts in: $CONFLICT_FILES")
 fi

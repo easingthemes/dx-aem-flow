@@ -72,13 +72,17 @@ try { template = JSON.parse(fs.readFileSync(templatePath, "utf8")); }
 catch (e) { console.error(`cannot parse template: ${e.message}`); process.exit(2); }
 const tGuardGroup = template.hooks.PreToolUse.find(g => g.hooks.some(h => GUARD.test(cmdOf(h))));
 const tGuard = tGuardGroup.hooks.find(h => GUARD.test(cmdOf(h)));
-const tStopGroup = template.hooks.agentStop.find(g => g.hooks.some(h => STOP_GUARD.test(cmdOf(h))));
 
 // Normalise an event's array into groups: Claude-style {matcher, hooks:[…]} or
 // Copilot-native flat handlers {type, bash, …} (one handler, no matcher).
 const groupsOf = arr => (Array.isArray(arr) ? arr : []).map(item =>
   Array.isArray(item?.hooks) ? { item, flat: false, handlers: item.hooks }
                              : { item, flat: true, handlers: [item] });
+
+// The stop guard is a Copilot-native flat handler ({type, bash}) under agentStop:
+// VS Code's hooks schema rejects the Claude-style {matcher, hooks:[…]} nesting
+// there ("Missing property bash/type"), though the CLI runs both.
+const tStopItem = groupsOf(template.hooks.agentStop).find(g => g.handlers.some(h => STOP_GUARD.test(cmdOf(h)))).item;
 
 const files = fs.readdirSync(hooksDir).filter(f => f.endsWith(".json")).sort();
 const findings = [];
@@ -92,7 +96,7 @@ for (const f of files) {
   catch (e) { findings.push(["error", rel, "-", "parse", `invalid JSON: ${e.message}`]); parseError = true; continue; }
   const hooks = doc && typeof doc.hooks === "object" && doc.hooks ? doc.hooks : {};
   let changed = false;
-  let guards = 0, stopGuards = 0;
+  let guards = 0, stopGuards = 0, stopFlat = null;
 
   for (const event of Object.keys(hooks)) {
     const out = [];
@@ -135,6 +139,10 @@ for (const f of files) {
             findings.push(["warn", rel, event, "duplicate", "dx: stop guard appears more than once"]);
             if (FIX) { changed = true; continue; }
           }
+          if (event === "agentStop" && !g.flat) {
+            findings.push(["warn", rel, event, "stale-stop-guard", "dx: stop guard uses the nested {matcher, hooks} form — VS Code's schema expects a flat {type, bash} handler under agentStop"]);
+            if (FIX) { (stopFlat ||= []).push(JSON.parse(JSON.stringify(tStopItem))); changed = true; continue; }
+          }
         }
         if (!dxGuard && /\bexit 1\b/.test(cmd) && />&2/.test(cmd)) {
           findings.push(["warn", rel, event, "exit-1", "command exits 1 after writing to stderr — exit 1 does not block; use exit 2 if it should"]);
@@ -156,6 +164,8 @@ for (const f of files) {
       if (out.length) hooks[event] = out; else { delete hooks[event]; changed = true; }
     }
   }
+
+  if (FIX && stopFlat) (hooks.agentStop ||= []).push(...stopFlat);
 
   // A guard filed under the wrong event (e.g. a flat handler) is re-homed by the
   // stale-guard replacement above only within its event; move it to PreToolUse.
@@ -179,7 +189,7 @@ for (const f of files) {
     }
     if (stopGuards === 0) {
       findings.push(["warn", rel, "agentStop", "missing-stop-guard", "dx: no agentStop guard"]);
-      if (FIX) { (hooks.agentStop ||= []).push(JSON.parse(JSON.stringify(tStopGroup))); changed = true; }
+      if (FIX) { (hooks.agentStop ||= []).push(JSON.parse(JSON.stringify(tStopItem))); changed = true; }
     }
   }
 

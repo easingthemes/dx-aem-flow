@@ -120,7 +120,7 @@ echo '{"version":1,"hooks":{"sessionStart":[{"type":"command","bash":"bash \"$PL
 BEFORE_FOREIGN="$(foreign "$F")"; BEFORE_TEAM="$(cat "$P/.github/hooks/team.json")"
 OUT="$(bash "$AUDIT" --template "$TEMPLATE" "$P")"; rc=$?
 check "old install → exit 3" 3 "$rc"
-check "old install → finding codes" "exit-1 permission-matcher plugin-root plugin-root plugin-root plugin-root stale-guard" "$(codes <<<"$OUT")"
+check "old install → finding codes" "exit-1 permission-matcher plugin-root plugin-root plugin-root plugin-root stale-guard stale-stop-guard" "$(codes <<<"$OUT")"
 check "stale guard names the permission-rule matcher" 1 "$(grep -c 'stale-guard.*permission-rule syntax' <<<"$OUT")"
 check "stale guard names the missing stdin filter" 1 "$(grep -c 'stale-guard.*no git-commit filter' <<<"$OUT")"
 check "check mode is read-only" "$(old_install "Bash(git commit*)" "$(json_escape "$OLD_GUARD")")" "$(cat "$F")"
@@ -136,6 +136,8 @@ check "after fix → PostToolUse event emptied and removed" 0 "$(grep -c PostToo
 check "after fix → guard blocks git commit on main (exit 2)" 2 "$(guard_exit "$F" main 'git commit -m x')"
 check "after fix → guard allows ls on main" 0 "$(guard_exit "$F" main 'ls')"
 check "after fix → one stop guard" 2 "$(grep -o 'stop-guard.sh' "$F" | wc -l | tr -d ' ')"   # 2 mentions in one command
+check "after fix → stop guard is a flat {type, bash} handler" "command bash" \
+  "$(node -e 'const h=require(process.argv[1]).hooks.agentStop; const s=h.find(x=>/stop-guard/.test(x.bash||"")); process.stdout.write(s && !s.hooks ? s.type+" bash" : "nested")' "$F")"
 SUM="$(cksum < "$F")"; bash "$AUDIT" --fix --template "$TEMPLATE" "$P" >/dev/null
 check "second --fix is a no-op" "$SUM" "$(cksum < "$F")"
 
