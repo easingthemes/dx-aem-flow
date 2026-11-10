@@ -81,6 +81,18 @@ git -C "$r4" checkout -q -- app.js
 check "cleaned: allows" allow "$(run "$r4")"
 check "cleaned: state removed" no "$([ -f "$r4/.git/dx-stop-guard.last" ] && echo yes || echo no)"
 
+# 6b. Conflict check: only real markers (line start + space) count. A changed
+#     file that merely contains the marker text — stop-guard.sh itself, whose
+#     own grep pattern holds it — must not be reported as a conflict.
+reason() { printf '{"cwd":"%s"}' "$1" | bash "$GUARD" 2>/dev/null | jq -r '.reason // ""'; }
+r5="$(repo)"
+printf 'x\n' > "$r5/guard.sh"; git -C "$r5" add guard.sh; git -C "$r5" commit -q -m g
+printf "x | xargs grep -l '<<<<<<<'\n" > "$r5/guard.sh"
+check "marker text mid-line is not a conflict" no "$(reason "$r5" | grep -q 'merge conflicts' && echo yes || echo no)"
+r6="$(repo)"
+printf '<<<<<<< HEAD\na\n=======\nb\n>>>>>>> other\n' > "$r6/app.js"
+check "real conflict markers are reported" yes "$(reason "$r6" | grep -q 'merge conflicts' && echo yes || echo no)"
+
 # 7. Garbage input / not a repo → allow, exit 0
 check "non-JSON input allows" allow "$(printf 'not json' | (cd "$TMP" && bash "$GUARD") >/dev/null 2>&1 && echo allow || echo fail)"
 check "not a git repo allows" allow "$(run "$TMP")"

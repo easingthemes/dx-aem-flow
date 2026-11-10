@@ -243,6 +243,8 @@ For each `*.agent.md.template` in the plugin:
    - Identical → `✓ up to date`
    - Different → `⚠ stale (plugin template updated — run /dx-upgrade)`
 
+   Ignore an `allowed-tools:` line in the installed file that the template lacks: `install-copilot-agents.sh` adds it to every agent, so it is never a difference. E.g. `diff <(grep -v '^allowed-tools:' "$installed") <(grep -v '^allowed-tools:' "$template")`.
+
 Report count: `Copilot agents (<N> present, <M> stale, <K> missing out of <T> templates)`
 
 ### 6.5b. Stale Copilot CLI MCP workaround
@@ -256,7 +258,7 @@ Warn if the user still has either:
 [ -f .mcp-copilot.json ] && echo "FOUND .mcp-copilot.json"
 
 # Check 2: --additional-mcp-config flag in shell aliases or rc files
-grep -l "additional-mcp-config" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null
+grep -l "additional-mcp-config" ~/.zshrc ~/.bashrc ~/.bash_profile ~/.zprofile 2>/dev/null
 ```
 
 Reporting:
@@ -270,11 +272,11 @@ These are **informational warnings**, not blockers. The workaround still functio
 
 Skip if Copilot CLI is not installed (neither `command -v copilot` nor `gh copilot --version` succeeds).
 
-Check for the required env vars in the user's shell profile files (`~/.zshrc`, `~/.bashrc`, `~/.zprofile`):
+Check for the required env vars in the user's shell profile files (`~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, `~/.zprofile`):
 
 ```bash
-REPOS_HOOKS=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null | head -1)
-WORKSPACE_MCP=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null | head -1)
+REPOS_HOOKS=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS" ~/.zshrc ~/.bashrc ~/.bash_profile ~/.zprofile 2>/dev/null | head -1)
+WORKSPACE_MCP=$(grep -rl "GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP" ~/.zshrc ~/.bashrc ~/.bash_profile ~/.zprofile 2>/dev/null | head -1)
 ```
 
 Also check if they are currently set in the environment:
@@ -282,7 +284,7 @@ Also check if they are currently set in the environment:
 ```bash
 [ "${GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS:-}" = true ] && HOOKS_ACTIVE=1 || HOOKS_ACTIVE=0
 [ "${GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP:-}" = true ] && MCP_ACTIVE=1 || MCP_ACTIVE=0
-WRONG_VALUE=$(grep -hE "^[[:space:]]*(export[[:space:]]+)?GITHUB_COPILOT_PROMPT_MODE_(REPO_HOOKS|WORKSPACE_MCP)=" ~/.zshrc ~/.bashrc ~/.zprofile 2>/dev/null \
+WRONG_VALUE=$(grep -hE "^[[:space:]]*(export[[:space:]]+)?GITHUB_COPILOT_PROMPT_MODE_(REPO_HOOKS|WORKSPACE_MCP)=" ~/.zshrc ~/.bashrc ~/.bash_profile ~/.zprofile 2>/dev/null \
   | tr -d '\r' | sed -E 's/[[:space:]]+#.*$//; s/[[:space:]]*;[[:space:]]*$//; s/[[:space:]]+$//' \
   | grep -vE "=[\"']?true[\"']?$" | head -1)
 ```
@@ -303,6 +305,7 @@ CP_DX=$(ls -d "${COPILOT_HOME:-$HOME/.copilot}"/installed-plugins/*/dx-core 2>/d
 ```
 - `CP_DX` empty → skip (dx-core not installed in Copilot).
 - `ROOT_OK=1` → `✓ CLAUDE_PLUGIN_ROOT points to the dx-core plugin`
+- Also list every existing profile among `~/.zshrc`, `~/.bashrc`, `~/.bash_profile` that lacks the `CLAUDE_PLUGIN_ROOT=` line → `⚠ <file> has no CLAUDE_PLUGIN_ROOT — copilot started from a terminal using that shell won't run dx skill scripts. Run /dx-init.`
 - otherwise → `✗ CLAUDE_PLUGIN_ROOT not set to the dx-core plugin — skill scripts (progress, preflight, resume) fail on Copilot CLI. Run /dx-init, or add: export CLAUDE_PLUGIN_ROOT="<CP_DX>"`
 
 ### 6.5d. Copilot repo hooks (`.github/hooks/`)
