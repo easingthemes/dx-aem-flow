@@ -195,3 +195,12 @@ belongs to which platform rather than offering one list for both. Found by the
 **Done-when:** `dx-eject` either does not write Claude-format agents where Copilot reads them, or its docs state the Copilot limitation (`grep -n "Copilot" plugins/dx-core/skills/dx-eject/SKILL.md` shows it).
 **Approach:** document first; decide whether ejecting agents to `.claude/agents/` should warn on Copilot projects.
 **Done 2026-11-10:** documented in `dx-eject` SKILL.md (Troubleshooting entry + "What Still Works" line). No code change: `.github/agents/` wins a name clash and `DxCodeReview` is the Copilot reviewer; a `tools:` allowlist on `dx-code-reviewer` would drop Bash/MCP on Claude Code for a Copilot-only gain.
+
+## Concurrent progress writers lose a row on ubuntu-26.04
+
+**Added:** 2026-11-10
+**Problem:** `plugins/dx-core/skills/dx-simple/tests/run-tests.sh` "progress: 25 concurrent writers keep every row" failed on about half the `validate` runs on 2026-11-10, all on the `ubuntu-26.04` runner image (Rust coreutils by default). Never locally: 0/400 on Ubuntu 24.04 + GNU coreutils, also under CPU load. A failing run takes ~1.1s, so it is not the ~10s lock-wait timeout. uutils `mkdir` without `-p` is a single mkdir(2) call, so the mutex itself is not the cause. Suspect: the stale-lock reclaim `find "$LOCK" -maxdepth 0 -mmin +1` in `plugins/dx-core/shared/update-progress.sh` matching a fresh lock, which lets two writers into the critical section. If so, consumers on a uutils system can lose progress rows too.
+**Scope:** `plugins/dx-core/shared/update-progress.sh`, `plugins/dx-core/skills/dx-simple/tests/run-tests.sh`, `.github/workflows/validate.yml` (`runs-on` pin).
+**Done-when:** `grep -n "runs-on: ubuntu-latest" .github/workflows/validate.yml` matches again AND the test passes on 5 consecutive `validate` runs on ubuntu-26.04.
+**Approach:** the test now prints counts, file, writers' stderr and `mkdir`/`mv`/`find` versions on failure. Run it on 26.04 (temporary `runs-on: ubuntu-26.04` in a branch) until it fails, read the evidence, fix the reclaim check (e.g. age from `stat` + `date +%s`, or no `find`), then unpin.
+

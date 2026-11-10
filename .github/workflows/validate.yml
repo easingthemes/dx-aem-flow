@@ -20,7 +20,10 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: on ubuntu-26.04 the dx-simple "25 concurrent
+    # writers" test loses a row on about half the runs and never on 24.04
+    # (TODO-267). Unpin once that is understood.
+    runs-on: ubuntu-24.04
     # The structural checks either pass or die fast, but the suites include a
     # 25-writer concurrency test with a bounded lock wait and mkdir retry loops.
     # Without this, a wedged run sits on the 6h default. Real runtime is ~14s.
