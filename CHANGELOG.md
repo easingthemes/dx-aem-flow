@@ -1,3 +1,10 @@
+## [3.13.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.2...v3.13.3) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** Copilot setup fixes from a consumer upgrade (shell profiles, flat stop guard, false alarms) ([#259](https://github.com/easingthemes/dx-aem-flow/issues/259)) ([7bf4062](https://github.com/easingthemes/dx-aem-flow/commit/7bf40628efe7050fd55070c21fd935718f5ae623))
+
 ## [3.13.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.1...v3.13.2) (2026-11-10)
 
 
