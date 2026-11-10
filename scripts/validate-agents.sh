@@ -2,13 +2,18 @@
 # validate-agents.sh — Verify agent definitions across all plugins
 #
 # Checks:
-# 1. Required frontmatter: name, description, tools, model
+# 1. Required frontmatter: name, description, tools (or disallowedTools), model
 # 2. Model is a valid tier (opus, sonnet, haiku)
 # 3. No name collisions across plugins
+# 4. No frontmatter that Claude Code ignores on plugin-shipped agents:
+#    hooks, mcpServers, permissionMode ("for security reasons… not supported",
+#    code.claude.com/docs/en/plugins-reference). The agent loads fine and the
+#    field silently does nothing — e.g. `permissionMode: plan` never made a
+#    reviewer read-only. Use tools/disallowedTools instead.
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 ERRORS=0
 TOTAL=0
 
@@ -43,9 +48,17 @@ for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
     ERRORS=$((ERRORS + 1))
   fi
 
-  agent_perm=$(grep "^permissionMode:" "$agent_file" | head -1 | sed 's/^permissionMode: *//' || true)
-  if [ -z "$agent_tools" ] && [ -z "$agent_perm" ]; then
-    echo "ERROR: $rel_path — missing tools: or permissionMode: field"
+  agent_disallowed=$(grep "^disallowedTools:" "$agent_file" | head -1 | sed 's/^disallowedTools: *//' || true)
+  if [ -z "$agent_tools" ] && [ -z "$agent_disallowed" ]; then
+    echo "ERROR: $rel_path — missing tools: or disallowedTools: field"
+    ERRORS=$((ERRORS + 1))
+  fi
+
+  # Fields Claude Code ignores on plugin agents (check 4). Frontmatter only.
+  ignored=$(awk 'NR==1 && $0=="---" {fm=1; next} fm && $0=="---" {exit} fm' "$agent_file" \
+    | grep -oE '^(hooks|mcpServers|permissionMode):' | tr -d ':' | tr '\n' ' ' || true)
+  if [ -n "$ignored" ]; then
+    echo "ERROR: $rel_path — ${ignored% }: ignored on plugin agents by Claude Code (use tools/disallowedTools)"
     ERRORS=$((ERRORS + 1))
   fi
 
