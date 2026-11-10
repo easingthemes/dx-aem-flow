@@ -1,3 +1,10 @@
+## [3.12.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.3...v3.12.4) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** stop-guard blocks the same findings once on Copilot CLI ([#250](https://github.com/easingthemes/dx-aem-flow/issues/250)) ([a1784b2](https://github.com/easingthemes/dx-aem-flow/commit/a1784b2d4c0adff0c09a2d66aef20c5602ff0300))
+
 ## [3.12.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.2...v3.12.3) (2026-11-10)
 
 
