@@ -243,14 +243,37 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code></pre>
         </tr>
       </thead>
       <tbody>
-        <tr class="border-t border-gray-200"><td class="p-3">Skills</td><td class="p-3">{stats.totalSkills} skills, same commands</td><td class="p-3"></td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Skills</td><td class="p-3">{stats.totalSkills} skills, same names</td><td class="p-3">Copilot slash command needs the plugin prefix (<code>/dx-core:dx-pr-review</code>); autocomplete inserts it</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">Marketplace</td><td class="p-3">Same git URL</td><td class="p-3"></td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">Rules</td><td class="p-3">Same .claude/rules/ files</td><td class="p-3">Dual frontmatter (paths: + applyTo:)</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">Agents</td><td class="p-3"></td><td class="p-3">Claude: {stats.claudeAgents} subagents | Copilot: {stats.copilotAgents} @Agents</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">Env Vars</td><td class="p-3"></td><td class="p-3">Claude: shell + settings.local.json | Copilot: shell only</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">MCP Config</td><td class="p-3">Same servers</td><td class="p-3">Claude: .mcp.json | Copilot: ~/.copilot/mcp-config.json</td></tr>
         <tr class="border-t border-gray-200"><td class="p-3">Permissions</td><td class="p-3"></td><td class="p-3">Claude: prompt | Copilot: allowed-tools allowlist</td></tr>
+        <tr class="border-t border-gray-200"><td class="p-3">Subagent isolation</td><td class="p-3"></td><td class="p-3">Claude: <code>context: fork</code> runs the skill in its own context | Copilot: runs inline (see below)</td></tr>
       </tbody>
     </table>
   </div>
+</Section>
+
+<SectionHeading
+  badge="Limits"
+  badgeColor="warning"
+  title="Frontmatter Copilot CLI Ignores"
+  subtitle="Verified on Copilot CLI v1.0.108–v1.0.109. The skill still runs; only the isolation or routing is lost."
+  bg="alt"
+/>
+<Section>
+  <HighlightBox severity="warning" title="Skills and agents run, but without isolation">
+    <ul class="mt-2 list-none p-0 text-sm space-y-1">
+      <li><strong><code>context: fork</code> (skills).</strong> Ignored. The skill runs inline in the main session: it sees the conversation before it, and its full instructions stay in the parent context afterwards. In Claude Code the same skill runs in a fork and returns only a summary. Long coordinator runs (<code>/dx-agent-all</code>, <code>/dx-step-all</code>) therefore fill the context faster on Copilot.</li>
+      <li><strong><code>agent:</code> (skills).</strong> Has no effect, because it only picks the subagent type for a fork. The model may still delegate to the named agent on its own, but the frontmatter does not route it.</li>
+      <li><strong><code>model:</code> on subagents.</strong> Not applied: a plugin subagent with <code>model: haiku</code> runs on the session model. Expect higher cost on lookup agents.</li>
+      <li><strong><code>handoffs:</code> (<code>.github/agents</code>).</strong> Reported as an unknown field and not parsed. Handoff buttons do nothing in Copilot CLI; ask for the next agent in plain words.</li>
+      <li><strong>Claude-only agent fields in <code>.claude/agents/</code>.</strong> Copilot also reads that folder (for example after <code>/dx-eject</code>) and drops <code>effort</code>, <code>memory</code>, <code>maxTurns</code>, <code>disallowedTools</code> and <code>isolation</code> with a warning. Without <code>disallowedTools</code> an agent is not read-only; use the <code>.github/agents</code> version (<code>@DxCodeReview</code>) on Copilot.</li>
+    </ul>
+  </HighlightBox>
+  <HighlightBox severity="success" title="What does work">
+    <p class="text-sm mt-2">A subagent can call a plugin skill through the skill tool, nested at least 2 levels deep. Custom agents in <code>.github/agents</code> honour <code>model</code> (fallback list) and <code>reasoning-effort</code> (v1.0.88+). Hook limits are on the <a href={`${import.meta.env.BASE_URL}/learn/hooks/`}>Hooks</a> page.</p>
+  </HighlightBox>
 </Section>

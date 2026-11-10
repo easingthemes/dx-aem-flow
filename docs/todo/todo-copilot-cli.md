@@ -75,7 +75,7 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 - Source: `plugins/dx-core/hooks/hooks.json` (all hooks defined here)
 - Target: `plugins/dx-core/templates/hooks/` or dx-init step that copies to `.github/hooks/`
 - Supported events in Copilot CLI v1.0.36: PreToolUse, PostToolUse, SessionStart, PreCompact, SubagentStart, **agentStop**, **subagentStop**, Notification, PermissionRequest, postToolUseFailure, **HTTP hooks** (v1.0.35)
-**Done-when (rewritten 2026-11-10):** (a) `bash plugins/dx-core/skills/dx-doctor/scripts/__tests__/repo-hooks-audit.test.sh` exits 0 — template has no plugin-root reference, its guard blocks `git commit` on main with exit 2, and the audit flags/repairs old installs without touching foreign hooks; **and** (b) a Copilot cloud coding agent run in a test repo whose `.github/hooks/hooks.json` is the template shows the branch guard refusing a `git commit` on the default branch, recorded in this section. (a) passes; (b) not done.
+**Done-when (rewritten 2026-11-10):** (a) `bash plugins/dx-core/skills/dx-doctor/scripts/__tests__/repo-hooks-audit.test.sh` exits 0 — template has no plugin-root reference, its guard blocks `git commit` on main with exit 2, and the audit flags/repairs old installs without touching foreign hooks; **and** (b) a Copilot cloud coding agent run in a test repo whose `.github/hooks/hooks.json` is the template shows the branch guard refusing a `git commit` on the default branch, recorded in this section. (a) passes; (b) **out of scope (2026-11-10)** — the Copilot cloud coding agent works only on GitHub-hosted repos, and dx consumers use ADO Repos (`scm.provider: ado` is the only implemented value). Re-open if a GitHub provider is ever added.
 **Old Done-when (retired):** `grep -c "SessionStart\|PostToolUse\|agentStop" .github/hooks/hooks.json` ≥4 — it counted event names and could not tell a hook that runs from one that exits 127. The file it asked for was the broken one.
 **Approach:**
 1. Port SessionStart hook (config validation)
@@ -369,6 +369,8 @@ Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same 
 **Approach:** if both harnesses accept `/<plugin>:<skill>`, print that everywhere user-facing (one form, no per-harness branch). Otherwise document both forms on the Copilot page. Decide together with TODO-12.
 
 **Priority note (2026-11-10): Medium → Low.** Typing a partial name (`/dx-pr-rev`) lists the matching skills in autocomplete on both Copilot CLI and Claude Code, and arrow + Enter inserts the prefixed form, which works. Only a bare command copy-pasted from docs or a hook hint, or typed in full without picking from the list, fails. Do it with TODO-12: a rename changes every `/dx-…` reference anyway, so touch the ~30 files once.
+
+**Website (2026-11-10):** `website/src/pages/setup/copilot-cli.mdx` § "Frontmatter Copilot CLI Ignores" now states the `context: fork`, `agent:`, subagent `model:`, `handoffs:` and `.claude/agents` results above, and the Differences table shows the prefixed slash form.
 
 ### Re-reading row H (2026-11-10) — not enough to close issues #19, #20, #22
 
