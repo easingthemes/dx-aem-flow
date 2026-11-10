@@ -243,6 +243,8 @@ For each `*.agent.md.template` in the plugin:
    - Identical → `✓ up to date`
    - Different → `⚠ stale (plugin template updated — run /dx-upgrade)`
 
+   Ignore an `allowed-tools:` line in the installed file that the template lacks: `install-copilot-agents.sh` adds it to every agent, so it is never a difference. E.g. `diff <(grep -v '^allowed-tools:' "$installed") <(grep -v '^allowed-tools:' "$template")`.
+
 Report count: `Copilot agents (<N> present, <M> stale, <K> missing out of <T> templates)`
 
 ### 6.5b. Stale Copilot CLI MCP workaround
