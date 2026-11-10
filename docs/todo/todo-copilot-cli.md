@@ -327,7 +327,13 @@ So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instr
 
 ### Fix 2026-11-10 — Stop guard on Copilot (item c)
 
-`stop-guard.sh` only stopped re-blocking on `stop_hook_active`, which Copilot's `agentStop` input does not send — so on Copilot it blocked until the 8-block cap. It now writes `<checksum of reason> <epoch>` to `$GIT_DIR/dx-stop-guard.last` and lets the agent stop when the same findings come back within 10 minutes (one block per finding set, both harnesses). Also fixed: in a repo with no `.ai/specs/`, a duplicate in-progress check (`find` under `pipefail`) made the script exit 1, a non-blocking error, so the guard never blocked there. Covered by `plugins/dx-core/data/hooks/stop-guard.test.sh` (fails on the old script). Items (a) and (c) are on the website hook page; (b) moved to TODO-265; (d) open as TODO-264. Remaining for this item: confirm on Copilot that `agentStop` stdin has no `stop_hook_active` and does carry `cwd` (one probe).
+`stop-guard.sh` only stopped re-blocking on `stop_hook_active`, which we assumed Copilot's `agentStop` input does not send (wrong — see the probe below). It now writes `<checksum of reason> <epoch>` to `$GIT_DIR/dx-stop-guard.last` and lets the agent stop when the same findings come back within 10 minutes (one block per finding set, both harnesses). Also fixed: in a repo with no `.ai/specs/`, a duplicate in-progress check (`find` under `pipefail`) made the script exit 1, a non-blocking error, so the guard never blocked there. Covered by `plugins/dx-core/data/hooks/stop-guard.test.sh` (fails on the old script). Items (a) and (c) are on the website hook page; (b) moved to TODO-265; (d) open as TODO-264. Remaining for this item: confirm on Copilot that `agentStop` stdin has no `stop_hook_active` and does carry `cwd` (one probe).
+
+**Probe 2026-11-10, Copilot CLI v1.0.109, interactive** (`copilot` in a VS Code terminal, prompt typed in the TUI — not `-p`; this is how developers use it, so Copilot re-tests run this way from now on). A repo hook in `.github/hooks/` logged each `agentStop` stdin; a consumer project with a tracked `.js` file made dirty, so the dx stop guard (plugin `Stop` hook) had a finding.
+- stdin keys: `sessionId`, `timestamp`, `cwd` (the project root), `transcriptPath`, `stopReason` (`end_turn`), `stop_hook_active`.
+- Calls: `{"stop_hook_active":false}` → guard blocked once, agent answered → `{"stop_hook_active":true}` → guard allowed, turn ended. 2 calls, no loop.
+- **Verdict:** Copilot sends `stop_hook_active` exactly like Claude Code. The 9-call result in row C came from a probe hook that ignored the field. The repeat check stays as a backup; comments corrected. **TODO-262 closed.**
+- Side finding: the consumer project still had the pre-#250 `stop-guard.sh` — `/dx-upgrade` brings the new one.
 
 ### Validated 2026-11-10 on Copilot CLI v1.0.108 (TODO-182 batch)
 
