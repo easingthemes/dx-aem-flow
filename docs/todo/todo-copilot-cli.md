@@ -163,6 +163,8 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 4. Test whether the same bug affects `PreToolUse`. **2026-10-16:** the branch-guard matcher `Bash(git commit*)` never misfired because it never fired at all — as a regex it matches no tool name, in Claude Code too. Now `Bash|bash|shell|execute` with an inline `git commit` stdin check (`plugins/dx-core/hooks/branch-guard-hook.test.sh`); whether Copilot honours a PreToolUse matcher is still untested.
 5. After upstream fix lands, audit our guards — they're defense-in-depth and harmless to keep, but the redundancy noise in `hooks.json` commands could be removed.
 
+**Closed 2026-11-10:** upstream fix confirmed on v1.0.108 (re-test below). The `CLAUDE_TOOL_NAME` Done-when items are obsolete after TODO-263; no upstream issue needed.
+
 **Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.
 
 **Re-test 2026-11-10 on v1.0.108 (TODO-263):** matcher `Edit|Write` is honored — on a prompt asking for file creation, a shell command, and a file edit, the matching plugin hook fired only for the two successful file operations, both reported as `tool_name: "Edit"`; it did not fire for the shell call. Copilot does **not set `CLAUDE_TOOL_NAME`**; plugin `PostToolUse` stdin carries `tool_name` and `tool_input`. (A separate repo-level `preToolUse` capture used camel-case `toolName`/`toolArgs`.) The stdin fallback lets `compaction-reminder.sh` count the observed `Edit` calls; `screenshot-log.sh` did not log them. Regression coverage is in `plugins/dx-core/hooks/hook-tool-name.test.sh`. The inline `CLAUDE_TOOL_NAME` guards in `plugins/dx-core/hooks/hooks.json` (Figma, Task, validate-plugin-edit) had the same blind spot — on Claude Code too, which never sets that variable either (v2.1.322 probe). Fixed under TODO-263.
@@ -212,6 +214,7 @@ hook capabilities we neither use nor document:
 returns the new hook-source row, AND `grep -rn '"ask"' plugins/*/hooks/hooks.json
 plugins/dx-core/skills/dx-init/SKILL.md` returns either an adopted `ask` decision
 or an explicit written decision not to adopt it.
+**Done 2026-11-10:** (1) `~/.copilot/hooks` row added to `CLAUDE.md` hook-source table and a line on `website/src/pages/learn/hooks.mdx`; (2) `ask` not adopted — decision written in `dx-init` step 9i; (3) OTel deferred to #100/#160.
 **Approach:** Document all three first — the personal-hooks row is a correctness
 fix to a table we ship, and costs nothing. `ask` is the only one worth adopting
 immediately, and only for advisory guards; branch-guard must stay a hard block.
