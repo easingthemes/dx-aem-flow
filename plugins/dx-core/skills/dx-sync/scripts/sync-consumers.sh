@@ -251,6 +251,25 @@ sync_template() {
   sync_file "$src" "$dst"
 }
 
+# Sync a shared rule but keep the sections dx-aem appended to it. aem-init adds
+# "## AEM/Sling Patterns" (and "## Frontend Patterns") to pr-review.md and
+# pr-answer.md; a plain copy of the dx template would delete them. Same rule as
+# /dx-upgrade: replace only what comes before the first "## AEM" or "## Sling"
+# heading, keep everything from that heading on.
+sync_rule_keep_aem() {
+  local src="$1" dst="$2" tail=""
+  [ -f "$dst" ] && tail=$(awk 'f || /^## (AEM|Sling)/ { f = 1; print }' "$dst")
+  if [ -z "$tail" ]; then
+    sync_template "$src" "$dst"
+    return
+  fi
+  local tmp
+  tmp=$(mktemp)
+  { cat "$src"; printf '\n%s\n' "$tail"; } > "$tmp"
+  sync_file "$tmp" "$dst"
+  rm -f "$tmp"
+}
+
 # Diff a template against target, return 0 if different
 diff_template() {
   local src="$1" dst="$2"
@@ -473,7 +492,10 @@ step_7_ai_rules() {
     base=$(basename "$f" .template)
     # Skip universal rules (handled in step 6)
     [[ "$base" == universal-* ]] && continue
-    sync_template "$f" "$repo_path/.ai/rules/$base"
+    case "$base" in
+      pr-review.md|pr-answer.md) sync_rule_keep_aem "$f" "$repo_path/.ai/rules/$base" ;;
+      *) sync_template "$f" "$repo_path/.ai/rules/$base" ;;
+    esac
   done
 
   log_info "  ai rules synced"
