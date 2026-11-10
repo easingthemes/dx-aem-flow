@@ -1,6 +1,7 @@
 ---
 name: aem-editorial-guide-capture
 description: Captures AEM component editorial guide via Playwright — opens editor, triggers dialog, screenshots, and writes editor-friendly docs. Use for post-development documentation.
+include-custom-instructions: true
 tools: Read, Write, Glob, Bash, ToolSearch, mcp__plugin_dx-aem_playwright__browser_tabs, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for
 model: sonnet
 memory: project

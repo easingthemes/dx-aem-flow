@@ -1,6 +1,7 @@
 ---
 name: DxBugAll
 description: Full bug fix workflow — triage, verify, and fix — all in one command. Fetches the bug from ADO, analyzes root cause, generates and executes a fix, and creates a PR.
+include-custom-instructions: true
 argument-hint: "<ADO Bug Work Item ID or URL>"
 tools:
   - read

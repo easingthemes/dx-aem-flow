@@ -1,6 +1,7 @@
 ---
 name: AEMAfter
 description: Verify a component on AEM after deployment — walk dialog fields, create a test page with the component configured, and save verification docs. Compares against baseline if available. Use after building and deploying changes to AEM.
+include-custom-instructions: true
 argument-hint: "<component-name> (e.g., hero, banner, card)"
 tools:
   - read

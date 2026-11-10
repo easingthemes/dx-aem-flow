@@ -229,6 +229,8 @@ nowhere to go.
 **Done-when:** Each feature is individually actionable — check `/experimental` in Copilot CLI for GA status.
 **Upstream check (2026-07-01, v1.0.67):** `MULTI_TURN_AGENTS` confirmed real (referenced since v1.0.35). `SUBAGENT_COMPACTION` **could not be confirmed** from primary sources — treat as unverified until visible in `/experimental`. Subagent config knobs (model/effort/context tier, nested concurrency) shipped v1.0.62; parent-tool-restriction inheritance v1.0.67 — but skills-from-subagents / `/fleet` skill support still missing (GH #20).
 
+**Status 2026-11-10 (from the Copilot CLI 1.0.109 bundle and its embedded changelog):** MULTI_TURN_AGENTS is gone as a flag — "Multi-turn subagents are always enabled" (v1.0.72). SUBAGENT_COMPACTION no longer exists in the code. ASK_USER_ELICITATION is still present as a flag name; its default stage can't be read from the binary. `/experimental on|off` is deprecated for `/settings experimental` (v1.0.108).
+
 ### MULTI_TURN_AGENTS — Persistent subagents with write_agent
 
 **Impact: High.** Currently coordinators invoke skills via Skill tool for each step, losing context. Multi-turn agents stay alive — coordinator sends follow-ups via `write_agent`.

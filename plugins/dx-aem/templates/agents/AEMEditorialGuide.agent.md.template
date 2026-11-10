@@ -1,6 +1,7 @@
 ---
 name: AEMEditorialGuide
 description: Capture editorial guide for a component dialog in AEM — open the editor, screenshot the dialog, and write an editor-friendly authoring guide. Use after development to document how to use the component.
+include-custom-instructions: true
 argument-hint: "<component-name> (e.g., hero, banner, card)"
 tools:
   - read

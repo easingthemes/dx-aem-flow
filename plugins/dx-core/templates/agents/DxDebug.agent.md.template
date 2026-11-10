@@ -1,6 +1,7 @@
 ---
 name: DxDebug
 description: Systematic error diagnosis for compilation errors, test failures, and runtime issues. Read-only analysis — identifies root cause and suggests fixes without modifying code. Use when something breaks during development.
+include-custom-instructions: true
 tools:
   - read
   - codebase

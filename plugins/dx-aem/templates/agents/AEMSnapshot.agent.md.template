@@ -1,6 +1,7 @@
 ---
 name: AEMSnapshot
 description: Inspect an AEM component — capture dialog fields, find pages, examine JCR properties. General-purpose component inspection without before/after context. Use for ad-hoc component research.
+include-custom-instructions: true
 argument-hint: "<component-name> (e.g., hero, banner, card)"
 tools:
   - read

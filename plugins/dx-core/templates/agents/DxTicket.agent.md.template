@@ -1,6 +1,7 @@
 ---
 name: DxTicket
 description: Research an ADO ticket and find all relevant source files and assets. Use when a developer pastes an ADO URL or mentions a work item ID and wants to know what files are involved.
+include-custom-instructions: true
 argument-hint: "<ADO URL or work item ID>"
 tools:
   - read

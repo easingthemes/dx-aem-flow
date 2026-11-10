@@ -1,6 +1,7 @@
 ---
 name: dx-file-resolver
 description: Resolves all source files for a component or module across project repos. Returns file paths as clickable ADO URLs. Used by dx-ticket-analyze and component lookup skills.
+include-custom-instructions: true
 tools: Glob, Grep, Read, mcp__ado__search_code
 model: haiku
 user-invocable: false

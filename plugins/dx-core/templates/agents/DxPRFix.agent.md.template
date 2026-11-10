@@ -1,6 +1,7 @@
 ---
 name: DxPRFix
 description: Apply code fixes from agree-will-fix PR review comments. Reads session data, applies fixes, lints, commits, pushes, and replies to threads. Use after @DxPRAnswer has identified fixes needed.
+include-custom-instructions: true
 argument-hint: "<PR URL | PR ID | empty (latest session)>"
 tools:
   - read

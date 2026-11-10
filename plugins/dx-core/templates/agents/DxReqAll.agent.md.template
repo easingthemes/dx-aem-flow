@@ -1,6 +1,7 @@
 ---
 name: DxReqAll
 description: Full requirements workflow — fetch ADO story, explain, research codebase, share plan, and generate checklist. Use to gather all requirements documents at once for a new story.
+include-custom-instructions: true
 argument-hint: "<ADO Work Item ID or URL>"
 tools:
   - read

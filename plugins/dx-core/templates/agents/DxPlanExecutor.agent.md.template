@@ -1,6 +1,7 @@
 ---
 name: DxPlanExecutor
 description: Execute implementation plans step-by-step. Reads implement.md, implements each pending step, verifies compilation, and commits per step. Use when you have a plan ready in specs/.
+include-custom-instructions: true
 handoffs:
   - label: "Review the changes"
     agent: DxCodeReview

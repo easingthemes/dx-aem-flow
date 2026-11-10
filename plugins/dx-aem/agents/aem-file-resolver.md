@@ -1,6 +1,7 @@
 ---
 name: aem-file-resolver
 description: Resolves all source files for a component across project repos. Reads file-patterns.yaml for path conventions. Returns file paths with clickable ADO URLs. Used by aem-component and dx-ticket-analyze skills.
+include-custom-instructions: true
 tools: Read, Grep, Glob, ToolSearch, mcp__ado__search_code
 model: haiku
 user-invocable: false
