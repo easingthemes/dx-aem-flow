@@ -14,7 +14,7 @@ You are a diagnostic tool for the dx workflow setup in a consumer project. You c
 - **File existence:** Use `Glob` with exact path patterns — never `[ -f ]`, `test -f`, or `ls` in Bash
 - **File content:** Use `Read` to read files — never `cat`, `head`, or `diff` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `git branch -a` (step 6a) and `scripts/rules-freshness.sh` (step 2c) — nothing else in this skill needs Bash
+- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c) and `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) — nothing else in this skill needs Bash
 - **Parallel checks:** Call multiple `Glob`/`Read` tools in a single response for efficiency — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Read Configuration & Detect Plugins
@@ -228,7 +228,7 @@ Check that the build tool referenced in `build.command` has its config file:
 
 ## 6.5. Copilot Files (conditional)
 
-Skip if `.github/agents/` doesn't exist — Copilot was never enabled.
+Skip 6.5a–6.5c if `.github/agents/` doesn't exist — Copilot was never enabled. 6.5d has its own condition.
 
 If it exists, check:
 
@@ -294,6 +294,31 @@ Reporting:
 - Both exported in current env → `✓ Copilot CLI v1.0.40+ prompt-mode env vars set (repo hooks + workspace MCP enabled)`
 - Missing from current env but found in shell rc → `⚠ Copilot CLI prompt-mode env vars in shell rc but not active — restart shell or run: source ~/.zshrc`
 - Missing entirely → `✗ MISSING: Copilot CLI v1.0.40+ requires GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true and GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true in your shell profile. Without them, `copilot -p` runs in an untrusted folder silently skip repo hooks and workspace MCP. Run /dx-init to add them.`
+
+### 6.5d. Copilot repo hooks (`.github/hooks/`)
+
+Runs whether or not `.github/agents/` exists — skip only if `.github/hooks/` does not exist. Older `/dx-init` installs wrote entries that fail on Copilot, and nothing else looks at this directory:
+
+```bash
+bash <dx-plugin>/skills/dx-doctor/scripts/repo-hooks-audit.sh .
+```
+
+Read-only (no `--fix`). One TSV row per finding: `severity  file  event  code  detail`. Exit 0 = clean, 3 = findings, 2 = a file is not valid JSON.
+
+| code | Meaning |
+|------|---------|
+| `plugin-root` | Command uses `PLUGIN_ROOT` / `COPILOT_PLUGIN_ROOT` / `CLAUDE_PLUGIN_ROOT`. Copilot sets none of them for repo hooks (only `CLAUDE_PROJECT_DIR`), so it runs `bash /hooks/…` and exits 127 |
+| `permission-matcher` | `matcher` holds permission-rule syntax like `Bash(git commit*)` — read as a regex against the tool name, it matches nothing |
+| `exit-1` | Command writes to stderr and exits 1 — exit 1 does not block; 2 does |
+| `stale-guard` | The dx branch guard differs from the current template (old matcher, `exit 1`, or no `git commit` filter on stdin — that last one blocks every shell call on main) |
+| `missing-guard` / `missing-stop-guard` | `hooks.json` lacks the dx branch guard / agentStop guard |
+| `duplicate` | A dx guard appears more than once |
+
+Reporting:
+- Exit 0 → `✓ .github/hooks (self-contained, current)`
+- Each row whose detail starts with `dx:` → `✗` (error) or `⚠` (warn) with the detail, remediation `run /dx-upgrade` — these are entries dx-init wrote
+- Any other row → same symbol, remediation `manual — not a dx entry, dx-upgrade will not change it`
+- Exit 2 → `✗ <file> is not valid JSON` (manual)
 
 ## 7. AEM Plugin (conditional)
 
@@ -488,6 +513,8 @@ Copilot Files                                      Status
 Copilot agents (14 templates)                      ✓ 14 present, 0 stale
 Copilot skills (31 templates)                      ✓ 31 present, 0 stale
 Shared files (7 files)                             ✓ 7 present, 0 stale
+.github/hooks                                      ✗ 3 dx entries broken on Copilot
+  SessionStart session-start.sh: plugin root unset for repo hooks (exit 127) — run /dx-upgrade
 
 AEM Plugin                                         Status
 ─────────────────────────────────────────────────────────
