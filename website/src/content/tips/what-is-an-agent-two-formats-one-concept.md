@@ -16,7 +16,7 @@ keyPoints:
   - |
     Claude Code plugin agents (`agents/*.md`) — deep platform integration
     - `model:` — explicit tier (Opus/Sonnet/Haiku)
-    - `permissionMode:` — plan (read-only) or acceptEdits
+    - `disallowedTools:` — block tools (e.g. Write, Edit) while inheriting the rest; `permissionMode`, `hooks` and `mcpServers` are ignored in plugin agents
     - `isolation: worktree` — agent gets its own repo copy
     - `memory:` — persistent across sessions
     - `maxTurns:` — safety cap

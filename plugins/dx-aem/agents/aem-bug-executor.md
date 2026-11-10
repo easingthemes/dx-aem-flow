@@ -2,7 +2,6 @@
 name: aem-bug-executor
 description: Executes AEM-specific bug verification steps — navigates to AEM pages, reproduces bugs visually via Playwright, captures screenshots, and returns verification evidence. Used by dx-bug-verify skill when the bug involves AEM components.
 tools: Read, Write, Glob, Grep, Bash, ToolSearch, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_type, mcp__plugin_dx-aem_playwright__browser_fill_form, mcp__plugin_dx-aem_playwright__browser_press_key, mcp__plugin_dx-aem_playwright__browser_hover, mcp__plugin_dx-aem_playwright__browser_drag, mcp__plugin_dx-aem_playwright__browser_file_upload, mcp__plugin_dx-aem_playwright__browser_handle_dialog, mcp__plugin_dx-aem_playwright__browser_console_messages, mcp__plugin_dx-aem_playwright__browser_network_requests, mcp__plugin_dx-aem_playwright__browser_network_request, mcp__plugin_dx-aem_playwright__browser_tabs, mcp__plugin_dx-aem_playwright__browser_resize, Edit, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__getPageProperties
-mcpServers: [AEM, playwright]
 model: sonnet
 memory: project
 maxTurns: 50

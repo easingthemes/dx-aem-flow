@@ -225,7 +225,7 @@ Skill/agent files use the Claude Code prefix shown above. On other platforms the
 | Codex CLI | TOML-configured `[mcp_servers.<server>]`; **no dotted tool-name prefix** — tool names constrained to `^[a-zA-Z0-9_-]+$` (dots disallowed). Plugins (`.codex-plugin/`, Mar 2026) bundle skills/hooks/MCP/apps, not agents. | `getNodeContent` |
 | Gemini CLI | `mcp_<server>_<tool>` (single underscore). Server name **must not contain `_`**; on cross-server tool-name collision Gemini promotes to `serverAlias__tool` (double underscore). | `mcp_aem_getnodecontent` |
 
-When adding a new MCP server, no per-platform action is needed — the LLM resolves names from the `tools:` and `mcpServers:` declarations in agent frontmatter.
+When adding a new MCP server, no per-platform action is needed — the LLM resolves names from the `tools:` declaration in agent frontmatter (list the full `mcp__plugin_…` names; `mcpServers:` is ignored on plugin agents, see § Agent Structure).
 
 ### Hook System — Platform Separation
 
@@ -334,6 +334,7 @@ model: sonnet
 ```
 
 - Agents go in `plugins/{dx-core,dx-aem}/agents/<name>.md`
+- **Claude Code ignores `hooks`, `mcpServers` and `permissionMode` on plugin-shipped agents** (security rule in the [plugins reference](https://code.claude.com/docs/en/plugins-reference)). The agent loads and the field does nothing — `permissionMode: plan` never made our reviewers read-only. Restrict access with `tools:` or `disallowedTools:` instead; `validate-agents.sh` rejects the three fields (TODO-261).
 - Naming: plugin prefix + descriptive role (`dx-code-reviewer`, `aem-inspector`)
 
 ### Plugin Manifest (Dual-Platform)

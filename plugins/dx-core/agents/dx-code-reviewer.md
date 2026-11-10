@@ -5,7 +5,7 @@ model: opus
 effort: high
 memory: project
 maxTurns: 50
-permissionMode: plan
+disallowedTools: Write, Edit, NotebookEdit
 isolation: worktree
 ---
 
