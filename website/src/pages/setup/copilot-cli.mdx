@@ -205,6 +205,26 @@ export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true</code></pre>
 {/* ════════════════════════════════════════════════════════════════════════ */}
 
 <SectionHeading
+  badge="VS Code"
+  badgeColor="info"
+  title="Running Copilot CLI in VS Code"
+  subtitle="Same CLI, same behaviour — plus editor integration through /ide."
+/>
+<Section>
+  <HighlightBox severity="info" title="Recommended: connect the CLI to VS Code with /ide">
+    <p class="text-sm">Copilot CLI behaves the same in a VS Code integrated terminal and in any other terminal: hooks, plugins, agents and skills load from the project and <code>~/.copilot</code>, not from the editor (verified on v1.0.108). Running it inside VS Code fixes none of the <a href={`${import.meta.env.BASE_URL}/learn/hooks/`}>hook limits</a>.</p>
+    <p class="text-sm mt-2">What VS Code adds is convenience. In an interactive session, <code>/ide</code> connects the CLI to an open VS Code window (from the built-in or an external terminal):</p>
+    <ul class="mt-2 list-none p-0 text-sm space-y-1">
+      <li><strong>Selection as context</strong> — the current editor selection is sent with your prompt, so "debug this" is enough.</li>
+      <li><strong>Diff review</strong> — proposed edits open as VS Code diffs with accept/reject. A useful human checkpoint before a file changes.</li>
+    </ul>
+    <p class="text-sm mt-2">Limits: the workspace must be open in trusted mode; with <code>--allow-all</code> / <code>--yolo</code> edits are applied directly and no diff is shown. See <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/connecting-vs-code">GitHub docs</a>.</p>
+  </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
   badge="Diff"
   badgeColor="secondary"
   title="Differences from Claude Code"
