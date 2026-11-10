@@ -1,3 +1,10 @@
+## [3.13.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.1...v3.13.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** skill scripts resolve the plugin root on both harnesses (TODO-268) ([#258](https://github.com/easingthemes/dx-aem-flow/issues/258)) ([a6ad0a0](https://github.com/easingthemes/dx-aem-flow/commit/a6ad0a095126381e7676f18889d601000f2c697b))
+
 ## [3.13.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.0...v3.13.1) (2026-11-10)
 
 
