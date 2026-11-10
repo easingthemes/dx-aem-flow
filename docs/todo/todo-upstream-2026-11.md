@@ -12,6 +12,8 @@ went into #200, #244 and #246. Each item's **Done-when** is checkable in this re
 **Done-when:** a dated note in this section lists, per template, the stderr output of one `copilot -p --agent <name> "noop"` run on Copilot ≥ v1.0.106 in a scaffolded project, and every reported key is either removed from the template or explained in `todo-copilot-cli.md`.
 **Approach:** manual run first; only script it if keys turn up. Needs a live Copilot login, so it can not be a CI suite (hermetic rule).
 
+**Run 2026-11-10 on Copilot CLI v1.0.108** (25 templates, scaffolded project, `copilot -p "noop" --agent <name> --trust-folder 2>err.txt`): stderr warns only about `argument-hint`, `agents` and `handoffs` (`AEMEditorialGuide`: `argument-hint` only; `DxCodeReview`/`DxDebug`/`DxPlanExecutor`: `handoffs` only; coordinators: all three). Per-template list and decision (keep — VS Code Chat uses them) in [todo-copilot-cli.md](todo-copilot-cli.md#re-test-2026-11-10-on-copilot-cli-v10108-todo-182-batch). `model`, `reasoning-effort`, `tools`, `hooks` produced no warning. Not scripted: needs a live login.
+
 ## Agent Plugins 1.0 — watch Claude Code adoption
 
 **Added:** 2026-11-06

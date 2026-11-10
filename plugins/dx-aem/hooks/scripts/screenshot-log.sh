@@ -4,11 +4,14 @@
 
 set -euo pipefail
 
-# Guard: Copilot CLI (v1.0.40+) fires plugin PostToolUse hooks after every model
-# turn regardless of the matcher field, so this script can be invoked when no
-# screenshot tool was actually called. Only proceed when the tool name confirms
-# a real screenshot/snapshot — otherwise exit silently.
+# Guard: only log real screenshot/snapshot calls. Hook matchers are honored by
+# Claude Code and Copilot CLI v1.0.63+; this is defense-in-depth for older
+# builds. Copilot CLI never sets CLAUDE_TOOL_NAME (verified v1.0.108), so fall
+# back to the `tool_name` field of the hook's stdin JSON.
 TOOL_NAME="${CLAUDE_TOOL_NAME:-}"
+if [ -z "$TOOL_NAME" ] && [ ! -t 0 ]; then
+    TOOL_NAME="$(sed -n 's/.*"tool_name" *: *"\([^"]*\)".*/\1/p' | head -1 || true)"
+fi
 case "$TOOL_NAME" in
     *take_screenshot|*take_snapshot) ;;
     *) exit 0 ;;

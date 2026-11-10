@@ -150,6 +150,8 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 
 **Evidence:** [`docs/research/2026-05-16-copilot-cli-hook-matcher-bug.md`](../research/2026-05-16-copilot-cli-hook-matcher-bug.md), Copilot CLI session log `~/.copilot/logs/process-1778960080353-20620.log` lines 95–104.
 
+**Re-test 2026-11-10 on v1.0.108 (TODO-263):** matcher `Edit|Write` is honored — a plugin `PostToolUse` hook fired only for the `Write` call, not for the shell/skill calls in the same run. But Copilot does **not set `CLAUDE_TOOL_NAME`** (hook env has `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PROJECT_DIR`, `COPILOT_*` only); the tool name is `tool_name` in the stdin JSON. So the env-var guards in `compaction-reminder.sh` and `screenshot-log.sh` exited early on Copilot — fixed with a stdin fallback plus `plugins/dx-core/hooks/hook-tool-name.test.sh`. The inline `CLAUDE_TOOL_NAME` guards in `plugins/dx-core/hooks/hooks.json` (figma, Task, validate-plugin-edit) have the same blind spot; tracked as TODO-263.
+
 ## Project MCP Discovery — CLOSED 2026-04-07
 
 **Added:** 2026-03-22
@@ -160,6 +162,8 @@ Empirical evidence: typing "hi" in a clean Copilot CLI session in `/Users/715466
 - [ ] Remove `--additional-mcp-config` workaround from `website/src/pages/setup/copilot-cli.mdx`.
 - [ ] Verify in workflows that previously needed `--additional-mcp-config`.
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 1; release notes for v1.0.12.
+
+**Re-test 2026-11-10 on v1.0.108:** STILL OPEN. A plugin skill (`--plugin-dir`) that says "Read `shared/marker.md`" resolved to `<plugin>/skills/<skill>/shared/` and `<plugin>/skills/shared/`, never `<plugin>/shared/`. Keep inlining critical logic.
 
 ## Copilot CLI v1.0.83 hook capabilities
 
@@ -302,3 +306,26 @@ So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instr
 **Scope:** `plugins/dx-core/templates/hooks/`, `scripts/check-agent-hooks.sh`, `plugins/*/templates/agents/*.agent.md.template`, `plugins/dx-core/skills/dx-eject/SKILL.md`, `.codex/INSTALL.md`, website hook pages.
 **Done-when:** the #182 batch re-test runs on Copilot CLI ≥ v1.0.108 and its dated note records a result for: (a) a `preToolUse` hook that sleeps past its timeout — allowed or denied; (b) the branch guard in a `.agent.md` under VS Code Local with a non-matching tool; (c) a Stop hook that blocks 9 times; (d) agent listing after `dx-eject` in a scaffolded project. Each (a)–(d) is either fixed in code or documented on the website hook page.
 **Approach:** re-anchor the #182 batch re-test from v1.0.98 to v1.0.108 when it is run. For (a), if timeouts fail open, keep the guard fast (no network) and say so in the hook docs.
+
+### Re-test 2026-11-10 on Copilot CLI v1.0.108 (TODO-182 batch)
+
+Setup: `node cli/bin/dx-scaffold.js <dir> --all` + `git init` on `main`; `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true`, `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true`; every run used `copilot -p "<prompt>" ... --trust-folder`; probe plugins via `--plugin-dir`. Copilot `1.0.108`.
+
+| # | Test | Command (abridged) | Result | Verdict |
+|---|------|--------------------|--------|---------|
+| A | 262(a) hook timeout | `.github/hooks/hooks.json` `preToolUse` `{"bash":"sleep 8","timeoutSec":2}`; `copilot -p "Run: echo X > f" --allow-all-tools` | hook started, was cut off, tool call ran, file written | **fails open** (confirmed) — keep guards fast, no network |
+| B | 262(b) VS Code Local matcher | not run in VS Code Chat (no GUI). Static: fed the agent-scoped guard command from `agent-branch-guard.yaml` tool inputs on `main` | `view` allow, `bash ls` allow, `edit` containing "git commit" allow, `bash git commit` deny | guard filters on tool input itself, so matcher-less execution is safe; **VS Code half still unverified** |
+| C | 262(c) Stop cap | `agentStop` hook always printing `{"decision":"block",...}`; `copilot -p "Reply with the single word: hi"` | hook ran **9** times (1 + 8 forced continuations), then the turn ended | **cap confirmed** |
+| D | 262(d) eject duplicates | copied `plugins/*/agents/*.md` to `.claude/agents/` beside `.github/agents/`, plus a colliding `DxHelp` in both | `--agent DxHelp` loaded the `.github/agents` one; `--agent dx-code-reviewer` loaded from `.claude/agents` with `unknown fields ignored: effort, memory, maxTurns, disallowedTools, isolation` and `model "opus" not available` | `.github` wins on collision; `.claude/agents` cross-read confirmed (TODO-264). Interactive agent list not inspected |
+| E | 259 ignored keys | `copilot -p "noop" --agent <Name> --trust-folder 2>err.txt` for all 25 templates | below | explained, nothing removed |
+| F | TODO-20 `shared/` | probe skill "Read `shared/marker.md`" | tried `skills/<skill>/shared/` and `skills/shared/`, not `<plugin>/shared/` | **still broken** |
+| G | TODO-124 matcher | probe plugin `PostToolUse` matcher `Edit\|Write` | fired only for `Write`; `CLAUDE_TOOL_NAME` unset | matcher fixed; env guard gap → TODO-263 |
+| H | issues 19–22 | below | | |
+
+**E — ignored keys (stderr).** Only `argument-hint`, `agents` and `handoffs` are ever reported. `AEMEditorialGuide` → `argument-hint`; `DxCodeReview`, `DxDebug`, `DxPlanExecutor` → `handoffs`; every other template → `argument-hint, handoffs`, plus `agents` for the coordinators (AEMComponent, AEMTicket, DxAgentAll, DxBugAll, DxComponent, DxHelp, DxReqAll, DxStepAll, DxTicket). `model`, `reasoning-effort`, `tools` and agent-scoped `hooks` produce no warning. Decision: keep all three keys — they are VS Code Chat features; the CLI warning is expected noise.
+
+**H — issues 19–22 (probe plugin):**
+- #19 `handoffs:` — still reported as ignored → **still broken in CLI**.
+- #20 skills from subagents — a `general-purpose` subagent invoked a plugin skill via the `skill` tool and returned its output → simple case **works**; the coordinator `-all` flow was not reproduced, so the issue stays open.
+- #21 `context: fork` — skill ran inline (no isolation) → **still ignored**.
+- #22 `agent:` — skill with `agent: probe-agent` ran without the agent's mandatory output token → **still ignored**.

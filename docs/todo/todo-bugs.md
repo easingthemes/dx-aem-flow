@@ -178,3 +178,19 @@ belongs to which platform rather than offering one list for both. Found by the
 **Scope:** `plugins/*/agents/*.md`, `scripts/validate-agents.sh`, `scripts/validate-agents.test.sh`, `docs/reference/agent-catalog.md`, `CLAUDE.md` § Agent Structure, website authoring/technical-ref pages and tip #22.
 **Done-when:** `grep -lE "^(hooks|mcpServers|permissionMode):" plugins/*/agents/*.md` returns nothing, AND `bash scripts/validate-agents.test.sh` passes (it includes cases that must fail on each field).
 **Approach (done 2026-11-10):** removed the fields. `dx-code-reviewer` now has `disallowedTools: Write, Edit, NotebookEdit` — keeps Bash (git diff) and MCP; Bash can still write, `isolation: worktree` bounds that. `mcpServers:` was redundant: every `aem-*` agent already lists the full `mcp__plugin_dx-aem_*` names in `tools:`, and the plugin `.mcp.json` starts the servers. Validator check 4 rejects the three fields in frontmatter; `tools:` or `disallowedTools:` is now required. Note: the fields still work in a consumer's `.claude/agents/` — so `dx-eject` output could use them, but we keep one source.
+
+## Copilot sets no `CLAUDE_TOOL_NAME` — inline env guards never act on Copilot
+
+**Added:** 2026-11-10
+**Problem:** Copilot CLI v1.0.108 passes the tool name only as `tool_name` in the hook's stdin JSON; `CLAUDE_TOOL_NAME` is unset. `compaction-reminder.sh` and `screenshot-log.sh` exited at their guard on Copilot (fixed 2026-11-10 with a stdin fallback and `hook-tool-name.test.sh`). The inline commands in `plugins/dx-core/hooks/hooks.json` (`[ "${CLAUDE_TOOL_NAME:-}" = "..." ] && ...` for Figma screenshot/design-context, Task, validate-plugin-edit) have the same blind spot, so those hooks are silent no-ops on Copilot even though the matcher fired.
+**Scope:** `plugins/dx-core/hooks/hooks.json` PostToolUse entries; `plugins/dx-core/hooks/scripts/`.
+**Done-when:** `bash plugins/dx-core/hooks/hook-tool-name.test.sh </dev/null` passes and `grep -c 'CLAUDE_TOOL_NAME' plugins/dx-core/hooks/hooks.json` is 0 (inline guards moved into scripts that read env or stdin), or the Copilot-side no-op is documented as accepted.
+**Approach:** move each inline guard into a small script sharing a tool-name helper; matchers now work on both platforms, so the guards are only defense-in-depth.
+
+## Copilot warns on `.claude/agents` after `dx-eject` (ignored fields, unavailable model)
+
+**Added:** 2026-11-10
+**Problem:** Copilot CLI cross-reads `.claude/agents/` (v1.0.108 verified). An ejected `dx-code-reviewer` there loads on Copilot with `unknown fields ignored: effort, memory, maxTurns, disallowedTools, isolation` and falls back from `model: opus` to the picker model. `disallowedTools` is dropped, so the read-only guarantee from TODO-261 does not hold on Copilot for ejected agents.
+**Scope:** `plugins/dx-core/skills/dx-eject/SKILL.md`, `plugins/*/agents/*.md`.
+**Done-when:** `dx-eject` either does not write Claude-format agents where Copilot reads them, or its docs state the Copilot limitation (`grep -n "Copilot" plugins/dx-core/skills/dx-eject/SKILL.md` shows it).
+**Approach:** document first; decide whether ejecting agents to `.claude/agents/` should warn on Copilot projects.
