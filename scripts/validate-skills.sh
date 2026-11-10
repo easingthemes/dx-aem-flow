@@ -14,6 +14,7 @@
 # 10. No recursive rm whose target is a variable or substitution in skills/agents — ERROR
 # 11. Skill-listing size (model-invocable descriptions) — ratcheted
 # 12. A model-invocable description names a dmi skill only as a /command — ERROR
+# 13. Frontmatter plain scalars parse under strict YAML (Copilot CLI) — ERROR
 
 set -euo pipefail
 
@@ -102,6 +103,31 @@ check_rm_target() {
   [ -z "$hits" ] && return 0
   while IFS= read -r hit; do
     echo "ERROR: $2:${hit%%:*} — recursive rm on a variable/substitution target; name a literal path (stalls bypass-mode pipelines; see TODO #223)"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$hits"
+}
+
+# Claude Code reads frontmatter leniently; Copilot CLI uses a strict YAML parser
+# and drops the whole skill with "mapping values are not allowed in this context"
+# when an unquoted value holds `: ` (seen on dx-estimate's description in 3.4.2).
+# A plain (unquoted) top-level value must not contain `: `, end in `:`, or start
+# with a character YAML reserves — each is a parse error. ` #` parses, but starts
+# a comment and silently cuts the value short. Quote the value instead.
+# check_yaml_plain <file> <rel-path> — one ERROR per offending line
+check_yaml_plain() {
+  local hits
+  hits=$(awk -v q="'" '
+    NR==1 && $0=="---" {fm=1; next}
+    fm!=1 {exit}
+    $0=="---" {exit}
+    /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+[^ \t]/ {
+      v=$0; sub(/^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
+      if (index("\"" q "[{|>&*!#", substr(v, 1, 1))) next
+      if (v ~ /: / || v ~ /:$/ || v ~ /[ \t]#/ || v ~ /^[@`%]/ || v ~ /^- /) print NR
+    }' "$1")
+  [ -z "$hits" ] && return 0
+  while IFS= read -r ln; do
+    echo "ERROR: $2:$ln — unquoted frontmatter value is a strict-YAML parse error (Copilot CLI drops the file) or is cut at ' #'; wrap it in double quotes"
     ERRORS=$((ERRORS + 1))
   done <<< "$hits"
 }
@@ -207,6 +233,7 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   check_opus_effort "$skill_file" "$rel_path"
+  check_yaml_plain "$skill_file" "$rel_path/SKILL.md"
 
   # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)
   if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)'; then
@@ -271,6 +298,13 @@ for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
   check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
   check_rm_target "$agent_file" "${agent_file#"$REPO_ROOT"/}"
   check_opus_effort "$agent_file" "${agent_file#"$REPO_ROOT"/}"
+  check_yaml_plain "$agent_file" "${agent_file#"$REPO_ROOT"/}"
+done
+
+# Copilot agent templates are parsed by the same strict YAML
+for tpl in "$REPO_ROOT"/plugins/*/templates/agents/*.agent.md.template; do
+  [ -f "$tpl" ] || continue
+  check_yaml_plain "$tpl" "${tpl#"$REPO_ROOT"/}"
 done
 
 # Inline chains. Invocation forms used in skills: `Skill(/x)`, `Invoke /x`,
