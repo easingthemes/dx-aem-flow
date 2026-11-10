@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # stop-guard.test.sh — Watch the Stop guard block, and let go.
 #
-# Claude Code sends stop_hook_active=true on the retry after a block, so the
-# guard lets the agent stop. Copilot CLI's agentStop input has no such field and
-# only overrides a blocking hook after 8 consecutive blocks (TODO-262). The
-# guard therefore remembers its last block in the git dir and never blocks the
-# same findings twice in a row.
+# Claude Code and Copilot CLI send stop_hook_active=true on the call after a
+# block, so the guard lets the agent stop. As a backup for a host that omits the
+# field (Copilot overrides a blocking hook only after 8 blocks, TODO-262), the
+# guard remembers its last block in the git dir and never blocks the same
+# findings twice in a row.
 # Hermetic: throwaway git repos, no global git config, no network.
 
 set -uo pipefail
@@ -36,7 +36,7 @@ run() { # run <repo> [stop_hook_active] → "block" | "allow" | "exit<N>"
   if [ -n "${2:-}" ]; then
     input="{\"cwd\":\"$1\",\"stop_hook_active\":$2}"
   else
-    input="{\"cwd\":\"$1\"}"   # Copilot agentStop shape: no stop_hook_active
+    input="{\"cwd\":\"$1\"}"   # host that omits stop_hook_active
   fi
   out="$(printf '%s' "$input" | bash "$GUARD" 2>/dev/null)"; rc=$?
   [ "$rc" -ne 0 ] && { echo "exit$rc"; return; }

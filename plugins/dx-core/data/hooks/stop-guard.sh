@@ -13,10 +13,11 @@ set -euo pipefail
 
 INPUT=$(cat)
 
-# Prevent infinite loops — if we already blocked once, let Claude stop.
-# Claude Code sends stop_hook_active; Copilot CLI (agentStop) does not, and only
-# overrides a blocking Stop hook after 8 consecutive blocks. The repeat check in
-# the Report section below covers Copilot: the same findings never block twice.
+# Prevent infinite loops — if we already blocked once, let the agent stop.
+# Claude Code and Copilot CLI (agentStop, verified v1.0.109 interactive) both send
+# stop_hook_active=true on the call after a block. The repeat check in the Report
+# section below is a backup for a host that omits the field: the same findings
+# never block twice in a row.
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo false)
 if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
   exit 0
