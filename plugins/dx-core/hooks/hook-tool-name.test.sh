@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # hook-tool-name.test.sh — PostToolUse scripts must learn the tool name on Copilot CLI.
 #
-# Claude Code-style `CLAUDE_TOOL_NAME` is not set by Copilot CLI (verified v1.0.108):
-# the tool name only arrives as `tool_name` in the hook's stdin JSON. The tool-name
-# guards in compaction-reminder.sh and screenshot-log.sh must accept either source,
-# otherwise they silently never act on Copilot.
+# Claude Code-style `CLAUDE_TOOL_NAME` is not set by Copilot CLI plugin PostToolUse
+# (verified v1.0.108): the tool name arrives as `tool_name` in stdin JSON. The
+# guards in compaction-reminder.sh and screenshot-log.sh must accept either source.
 # Hermetic: temp dirs only, no network.
 
 set -uo pipefail
@@ -28,7 +27,7 @@ compact() { # compact <env tool name or ""> <stdin json> → output
 fired() { [ -n "$1" ] && echo yes || echo no; }
 
 check "compaction: env Edit"            yes "$(fired "$(compact Edit '')")"
-check "compaction: stdin Write (Copilot)" yes "$(fired "$(compact '' '{"hook_event_name":"PostToolUse","tool_name":"Write","tool_input":{}}')")"
+check "compaction: stdin Edit (Copilot)" yes "$(fired "$(compact '' '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{}}')")"
 check "compaction: stdin Bash ignored"  no  "$(fired "$(compact '' '{"tool_name":"Bash"}')")"
 check "compaction: no tool name"        no  "$(fired "$(compact '' '{}')")"
 
@@ -40,6 +39,7 @@ shot() { # shot <env tool name or ""> <stdin json> → yes if the log was writte
 
 check "screenshot: env tool"            yes "$(shot mcp__plugin_dx-aem_playwright__browser_take_screenshot '')"
 check "screenshot: stdin tool (Copilot)" yes "$(shot '' '{"tool_name":"playwright-browser_take_snapshot"}')"
+check "screenshot: stdin Edit ignored"  no  "$(shot '' '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{}}')"
 check "screenshot: stdin other tool"    no  "$(shot '' '{"tool_name":"Write"}')"
 check "screenshot: no tool name"        no  "$(shot '' '')"
 
