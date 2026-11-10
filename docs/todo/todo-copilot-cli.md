@@ -130,7 +130,7 @@ Without these, Copilot CLI silently ignores both. This breaks our entire Copilot
 3. Update auto-init for similar handling in CI environments.
 
 **Evidence:** Copilot CLI v1.0.40 release notes (2026-05-01); [2026-05-01 platform state update](../research/2026-05-01-platform-state-update.md).
-**Upstream check (2026-07-01):** ADO auto-disable of the GitHub MCP server is CONFIRMED PRESENT through v1.0.67 (introduced v1.0.46, reinforced ~v1.0.62). The `mcp__github__` audit for `dx-automation` (TODO #102) is still warranted — those calls silently no-op on detected ADO repos.
+**Upstream check (2026-07-01):** ADO auto-disable of the GitHub MCP server is CONFIRMED PRESENT through v1.0.67 (introduced v1.0.46, reinforced ~v1.0.62). The `mcp__github__` audit for `dx-automation` (TODO #102) is still warranted — those calls silently no-op on detected ADO repos. **Audit done 2026-11-10 (TODO-102):** `grep -rn "mcp__github__" plugins cli .github` → 0; nothing to no-op.
 
 ## PostToolUse `matcher` Ignored on Plugin Hooks
 

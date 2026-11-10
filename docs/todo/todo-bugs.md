@@ -194,3 +194,4 @@ belongs to which platform rather than offering one list for both. Found by the
 **Scope:** `plugins/dx-core/skills/dx-eject/SKILL.md`, `plugins/*/agents/*.md`.
 **Done-when:** `dx-eject` either does not write Claude-format agents where Copilot reads them, or its docs state the Copilot limitation (`grep -n "Copilot" plugins/dx-core/skills/dx-eject/SKILL.md` shows it).
 **Approach:** document first; decide whether ejecting agents to `.claude/agents/` should warn on Copilot projects.
+**Done 2026-11-10:** documented in `dx-eject` SKILL.md (Troubleshooting entry + "What Still Works" line). No code change: `.github/agents/` wins a name clash and `DxCodeReview` is the Copilot reviewer; a `tools:` allowlist on `dx-code-reviewer` would drop Bash/MCP on Claude Code for a Copilot-only gain.
