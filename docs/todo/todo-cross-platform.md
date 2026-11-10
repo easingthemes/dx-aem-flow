@@ -155,3 +155,11 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 **Scope:** Root `AGENTS.md` and `CLAUDE.md`.
 **Done-when:** N/A — ongoing maintenance task. Check periodically that key sections (plugin table, conventions, skill format) match.
 **Approach:** When updating CLAUDE.md architecture sections, check if AGENTS.md needs corresponding updates. AGENTS.md should remain a concise subset, not a full copy.
+
+## VS Code Chat: agent-scoped branch guard with a non-matching tool
+
+**Added:** 2026-11-10
+**Problem:** VS Code Chat (Local agent) reportedly ignores hook `matcher` (external research, Nov 2026), so the agent-scoped branch guard in our `.agent.md` templates runs on every tool call. The guard filters on tool input itself; the 2026-11-10 Copilot CLI re-test checked that only statically (it allows `view`/`ls`/`edit` and denies `git commit` when fed captured input). Nobody has run it inside VS Code Chat. Split from TODO-262(b), which was a Copilot CLI re-test and had no GUI.
+**Scope:** `plugins/dx-core/templates/hooks/agent-branch-guard.yaml`, `plugins/*/templates/agents/*.agent.md.template`, `scripts/check-agent-hooks.sh`, `website/src/pages/learn/hooks.mdx` (the VS Code bullet in "Hook Limits on Copilot CLI").
+**Done-when:** a dated note here records, from a VS Code Chat Local-agent session on `main` with a scaffolded `.agent.md`: one read-only tool call (e.g. file view) — allowed, and one `git commit` — denied; and the website VS Code bullet drops "not re-run in VS Code".
+**Approach:** manual GUI run; cannot be a CI suite (needs VS Code and a Copilot login).

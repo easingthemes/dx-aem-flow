@@ -64,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"mcp__plugin_dx-core_figma__get_screenshot\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
             "statusMessage": "Saving Figma screenshot..."
           }
         ]
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"mcp__plugin_dx-core_figma__get_design_context\" ] && [ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
             "statusMessage": "Saving Figma design context..."
           }
         ]
@@ -85,7 +85,7 @@
           {
             "type": "command",
             "if": "Edit(**/.claude-plugin/**)",
-            "command": "if [ \"${CLAUDE_TOOL_NAME:-}\" = \"Edit\" ] && [ -n \"${CLAUDE_TOOL_ARG_file_path:-}\" ]; then bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$CLAUDE_TOOL_ARG_file_path\"; fi",
+            "command": "f=\"$(sed -n 's/.*\"file_path\" *: *\"\\([^\"]*\\)\".*/\\1/p' | head -1)\"; if [ -n \"$f\" ]; then bash \"${CLAUDE_PLUGIN_ROOT}/data/lib/validate-plugin-edit.sh\" \"$f\"; fi",
             "statusMessage": "Validating plugin edit..."
           }
         ]
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"${CLAUDE_TOOL_NAME:-}\" = \"Task\" ] && mkdir -p \"$CLAUDE_PROJECT_DIR/.claude\" && echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\" || true",
+            "command": "mkdir -p \"$CLAUDE_PROJECT_DIR/.claude\" && echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\" || true",
             "async": true
           }
         ]
