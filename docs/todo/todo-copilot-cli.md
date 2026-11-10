@@ -18,7 +18,7 @@ Background: Copilot CLI (GA Feb 2026) reads plugins from `.claude-plugin/`. Full
 - v1.0.39: `ctrl+x → b` background tasks; ACP slash commands `/compact`, `/context`, `/usage`, `/env`.
 - v1.0.40: **`GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP` opt-in env-var gates** (BREAKING — see section below); MCP OAuth `client_credentials`; ADO auto-detect with GitHub MCP auto-disable; subagents respect own model; `/research` uses orchestrator/subagent model; autopilot capped at 5 continuations.
 
-**Claude Code-only hook fields (silently ignored by Copilot CLI):** `if`, `async`, `statusMessage`, prompt/agent hook types. *(Compiled against v1.0.40 — re-verify against v1.0.83 as part of the batch re-test, TODO #182.)* Safe to use in plugin hooks — Copilot CLI ignores unknown JSON fields. **Note:** HTTP hook type now supported as of v1.0.35.
+**Hook fields on Copilot CLI (verified 2026-11-10, v1.0.109, interactive TUI, repo hook file — TODO-40):** `if` ignored (hook runs on every `matcher` hit); `async` ignored (runs synchronously, and hooks for one event run one after another, so each adds latency); `timeout` honoured (seconds); `onFailure` has no effect on `preToolUse` — an erroring hook (exit 1) denies with or without it; `statusMessage` not checked. Unknown fields are ignored, so these stay safe in plugin hooks. Prompt/agent hook types not tested. HTTP hook type supported since v1.0.35.
 
 **`agentStop` / `subagentStop` events now exist** (Stop guard portable as of v1.0.x — see [#1157](https://github.com/github/copilot-cli/issues/1157), [#2253](https://github.com/github/copilot-cli/issues/2253), both closed 2026-04-07).
 
