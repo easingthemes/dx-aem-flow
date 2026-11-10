@@ -767,50 +767,39 @@ The shell-capable `.github/agents/` (DxCommit, DxPRFix, DxDebug, DxPlanExecutor,
 - Claude-style permission rules like `Bash(git commit*)` — **never** put them in `matcher`. Both runtimes read such a matcher as a regex against the tool name, and it matches nothing. The tool name goes in `matcher` (this template uses `Bash|bash|shell|execute`), and the inline command does its own `git commit` check on stdin.
 - If you add a custom matcher and it stops firing after upgrading Copilot CLI, broaden the matcher to a tool name and add an inline check in the command.
 
-**Copilot CLI v1.0.40+ prompt-mode env vars:** in non-interactive runs (`copilot -p`), Copilot CLI loads repo hooks and workspace MCP only when the folder is trusted or these are exported. The value must be the string `true` — Copilot compares `=== "true"` (checked in the v1.0.40 and v1.0.98 bundles), so `=1` does nothing. Earlier dx-init versions wrote `=1`; the snippet rewrites those lines. Add them to the user's shell profile idempotently:
+**Copilot CLI shell variables.** Copilot CLI reads no settings file for environment variables; its shell commands inherit them from the terminal `copilot` was started in. Three are needed:
+- `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` — in non-interactive runs (`copilot -p`) outside a trusted folder, Copilot loads repo hooks and workspace MCP only with these. The value must be the string `true` (Copilot compares `=== "true"`); earlier dx-init versions wrote `=1`, which does nothing.
+- `CLAUDE_PLUGIN_ROOT` — skills run plugin scripts as `bash "${CLAUDE_PLUGIN_ROOT}/…"`. Claude Code substitutes that path into the skill text; Copilot substitutes nothing and leaves the variable empty in its shell. Copilot installs plugins at a path with no version in it, so one export of the dx-core root covers every update.
 
-```bash
-SHELL_RC=""
-if [ -f "$HOME/.zshrc" ]; then SHELL_RC="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then SHELL_RC="$HOME/.bashrc"
-fi
-
-if [ -n "$SHELL_RC" ]; then
-  for v in GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP; do
-    found=0
-    # Rewrite every existing export (any of the files dx-doctor reads, indented too)
-    for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
-      [ -f "$rc" ] || continue
-      if grep -qE "^[[:space:]]*(export[[:space:]]+)?$v=" "$rc"; then
-        # Write through `cat >` so a symlinked rc (dotfiles repo) keeps its link; `sed -i` would replace it.
-        sed -E "s/^([[:space:]]*)(export[[:space:]]+)?$v=.*/\\1export $v=true/" "$rc" > "$rc.dx-tmp" \
-          && cat "$rc.dx-tmp" > "$rc"
-        rm -f "$rc.dx-tmp"
-        found=1
-      fi
-    done
-    [ "$found" = 1 ] || echo "export $v=true" >> "$SHELL_RC"
-  done
-  echo "Copilot CLI v1.0.40+ env vars set to true — restart your shell or run: source $SHELL_RC"
-fi
-```
-
-**`CLAUDE_PLUGIN_ROOT` for Copilot CLI.** Skills run plugin scripts as `bash "${CLAUDE_PLUGIN_ROOT}/…"`. Claude Code substitutes that path into the skill text; Copilot CLI substitutes nothing and does not set the variable in its shell, so the commands fail there unless the user's shell exports it. Copilot installs plugins at a path with no version in it, so one export of the dx-core root covers every update. Add it idempotently when Copilot has dx-core installed:
+Write them to **every** shell profile that exists — not just the first: a developer whose login shell is zsh may run bash in the VS Code terminal, and bash on macOS starts as a login shell that reads `~/.bash_profile`, not `~/.bashrc`. If none exists, create the one for `$SHELL`. Each run removes earlier lines for the same variable first, so re-running is safe:
 
 ```bash
 CP_DX=$(ls -d "${COPILOT_HOME:-$HOME/.copilot}"/installed-plugins/*/dx-core 2>/dev/null | head -1)
-if [ -n "$SHELL_RC" ] && [ -n "$CP_DX" ]; then
-  for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
-    [ -f "$rc" ] || continue
-    if grep -qE "^[[:space:]]*(export[[:space:]]+)?CLAUDE_PLUGIN_ROOT=" "$rc"; then
-      grep -vE "^[[:space:]]*(export[[:space:]]+)?CLAUDE_PLUGIN_ROOT=" "$rc" > "$rc.dx-tmp" && cat "$rc.dx-tmp" > "$rc"
-      rm -f "$rc.dx-tmp"
-    fi
-  done
-  echo "export CLAUDE_PLUGIN_ROOT=\"$CP_DX\"" >> "$SHELL_RC"
-  echo "CLAUDE_PLUGIN_ROOT set to $CP_DX for Copilot CLI — restart your shell or run: source $SHELL_RC"
+RC_FILES=""
+for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do [ -f "$rc" ] && RC_FILES="$RC_FILES $rc"; done
+if [ -z "$RC_FILES" ]; then
+  case "$(basename "${SHELL:-bash}")" in zsh) RC_FILES="$HOME/.zshrc" ;; *) RC_FILES="$HOME/.bash_profile" ;; esac
+  touch $RC_FILES
 fi
+VARS="GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP"
+[ -n "$CP_DX" ] && VARS="$VARS CLAUDE_PLUGIN_ROOT"
+for rc in $RC_FILES "$HOME/.zprofile"; do
+  [ -f "$rc" ] || continue
+  for v in $VARS; do
+    # Write through `cat >` so a symlinked rc (dotfiles repo) keeps its link.
+    { grep -vE "^[[:space:]]*(export[[:space:]]+)?$v=" "$rc" || true; } > "$rc.dx-tmp" && cat "$rc.dx-tmp" > "$rc"
+    rm -f "$rc.dx-tmp"
+  done
+done
+for rc in $RC_FILES; do
+  echo "export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true" >> "$rc"
+  echo "export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true" >> "$rc"
+  [ -n "$CP_DX" ] && echo "export CLAUDE_PLUGIN_ROOT=\"$CP_DX\"" >> "$rc"
+done
+echo "Copilot CLI variables written to:$RC_FILES — open a new terminal before starting copilot"
 ```
+
+`CLAUDE_PLUGIN_ROOT` is skipped when Copilot has no dx-core installed. Old lines in `~/.zprofile` are removed so they cannot override the new ones.
 
 It does not affect Claude Code: Claude substitutes `${CLAUDE_PLUGIN_ROOT}` in skill text before a command runs, and sets the variable itself for hooks.
 

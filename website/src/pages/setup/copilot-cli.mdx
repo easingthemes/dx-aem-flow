@@ -52,7 +52,7 @@ import { stats } from '../../config/stats';
     does not, and leaves the variable empty in its shell. Point it at the dx-core plugin once — Copilot's install path
     has no version in it, so it survives updates:
     <pre class="mt-2 text-xs">export CLAUDE_PLUGIN_ROOT="$HOME/.copilot/installed-plugins/&lt;marketplace&gt;/dx-core"</pre>
-    <code>/dx-init</code> adds this line for you when it finds dx-core installed in Copilot, and <code>/dx-doctor</code> checks it.
+    <code>/dx-init</code> adds this line for you when it finds dx-core installed in Copilot — to every shell profile that exists (<code>{"~"}/.zshrc</code>, <code>{"~"}/.bashrc</code>, <code>{"~"}/.bash_profile</code>), because the VS Code terminal may run a different shell than your login shell — and <code>/dx-doctor</code> checks it. Open a new terminal before starting <code>copilot</code>.
   </HighlightBox>
 </Section>
 
