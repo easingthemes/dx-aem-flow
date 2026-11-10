@@ -73,7 +73,7 @@ digraph pr_reviews {
 
 ### Parse input
 
-Read `shared/ado-config.md` for how to look up ADO project from `.ai/config.yaml`.
+Read `../../shared/ado-config.md` for how to look up ADO project from `.ai/config.yaml`.
 
 - **Organization:** read from `.ai/config.yaml` `scm.org` — NEVER hardcode
 - **Project:** read from `.ai/config.yaml` `scm.project`

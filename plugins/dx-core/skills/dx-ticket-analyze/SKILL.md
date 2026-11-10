@@ -9,7 +9,7 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and tool mapping.
+Read `../../shared/provider-config.md` for provider detection and tool mapping.
 
 Read `.ai/config.yaml`:
 - `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`
@@ -61,7 +61,7 @@ mcp__atlassian__jira_get_issue
   issue_key: "<issue key>"
 ```
 
-Map Jira fields (see `shared/provider-config.md` Field Mapping):
+Map Jira fields (see `../../shared/provider-config.md` Field Mapping):
 - **Title** — `fields.summary`
 - **State** — `fields.status.name`
 - **Assigned To** — `fields.assignee.displayName`

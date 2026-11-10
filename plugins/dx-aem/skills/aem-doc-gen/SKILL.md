@@ -104,7 +104,7 @@ Save findings to $SPEC_DIR/demo/page-structure.md
 
 ## 9. Select or Create Demo Page
 
-Read `shared/demo-page-setup.md` for the **Page Selection Rule**.
+Read `../../shared/demo-page-setup.md` for the **Page Selection Rule**.
 
 **Key rule:** New pages are ONLY for new components. For updates to existing components (enhancements, a11y fixes), find the best representative existing page with the component and reuse it. Only create a new page if the component is truly new and not on any existing page.
 

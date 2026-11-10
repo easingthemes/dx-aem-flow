@@ -17,8 +17,8 @@ Read `.ai/automation/agents/roles/re-agent.yaml` for your role definition. Key r
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and tool mapping.
-Read `shared/ado-config.md` for ADO-specific details.
+Read `../../shared/provider-config.md` for provider detection and tool mapping.
+Read `../../shared/ado-config.md` for ADO-specific details.
 
 Read `.ai/config.yaml`:
 - `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`
@@ -34,7 +34,7 @@ Read `.ai/config.yaml`:
 
 ## Hub Mode Check
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `.ai/config.yaml` → `repos:` list
@@ -72,7 +72,7 @@ mcp__atlassian__jira_get_issue
   issue_key: "<issue key>"
 ```
 
-Map Jira fields (see `shared/provider-config.md` Field Mapping):
+Map Jira fields (see `../../shared/provider-config.md` Field Mapping):
 - **Title** — `fields.summary`
 - **Description** — `fields.description` (plain text or wiki markup — use as-is)
 - **Acceptance Criteria** — `fields.<jira.custom-fields.acceptance-criteria>` (read field name from config)

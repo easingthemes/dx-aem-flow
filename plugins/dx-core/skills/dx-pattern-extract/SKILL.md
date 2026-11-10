@@ -23,7 +23,7 @@ Scan for structured decision YAML files:
 find .ai/graph/nodes/decisions/ -name "*.yaml" -type f 2>/dev/null
 ```
 
-Read `shared/decision-schema.md` for the schema definition. For each decision YAML file, extract:
+Read `../../shared/decision-schema.md` for the schema definition. For each decision YAML file, extract:
 - `ticket` — the work item ID
 - `chosen` — what was chosen
 - `tags` — for grouping by similarity
@@ -84,7 +84,7 @@ For each existing pattern:
 
 ## 4. Write Pattern Nodes
 
-Read `shared/pattern-schema.md` for the YAML schema.
+Read `../../shared/pattern-schema.md` for the YAML schema.
 
 Create the directory if it doesn't exist:
 

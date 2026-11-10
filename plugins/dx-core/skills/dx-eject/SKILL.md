@@ -151,11 +151,12 @@ Check if the AEM MCP entries already exist in `.mcp.json`. If not, merge them. I
 
 ## 4. Update Shared File References in Skills
 
-Some ejected skills reference files via plugin-relative paths (e.g., `shared/git-rules.md`, `shared/ado-config.md`). After ejecting, these files live at `.ai/ejected/shared/`.
+Some ejected skills reference files via plugin-relative paths (e.g., `../../shared/git-rules.md`, `shared/ado-config.md`). After ejecting, these files live at `.ai/ejected/shared/`.
 
 **Claude Code handles this automatically** — skills in `.claude/skills/` are loaded as local overrides, and shared files are resolved relative to the skill's plugin origin. Since the plugin will be uninstalled, we need to update any skill that reads shared files.
 
-Scan all ejected skills in `.claude/skills/*/SKILL.md` for references to paths like:
+Scan all ejected skills in `.claude/skills/*/SKILL.md` for references to paths like (in this order):
+- `../../shared/` → replace with `.ai/ejected/shared/` (skills reference shared files relative to their own directory, which resolves to the plugin root on Claude Code and Copilot CLI alike; after ejecting, that relation no longer holds)
 - `shared/` → replace with `.ai/ejected/shared/`
 - `<plugin-dir>/shared/` → replace with `.ai/ejected/shared/`
 

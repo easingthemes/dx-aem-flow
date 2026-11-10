@@ -52,7 +52,7 @@ If `research.md` doesn't exist, warn the user: "No research.md found — run `/d
 
 ### Provenance Check on Inputs
 
-Read `shared/provenance-schema.md` for the schema definition.
+Read `../../shared/provenance-schema.md` for the schema definition.
 
 After reading each input file, parse its YAML frontmatter `provenance:` block (if present). Evaluate input quality:
 
@@ -85,7 +85,7 @@ If prototype files exist, the plan MUST reference them. Implementation steps sho
 
 ## Hub Mode Check
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `research.md` → `## Cross-Repo Scope` for per-repo scope
@@ -144,7 +144,7 @@ Check if `.ai/graph/nodes/patterns/` exists and contains YAML files:
 find .ai/graph/nodes/patterns/ -name "*.yaml" -type f 2>/dev/null
 ```
 
-If pattern files exist, read `shared/pattern-schema.md` for the schema, then read each pattern file. Match patterns against the current ticket by:
+If pattern files exist, read `../../shared/pattern-schema.md` for the schema, then read each pattern file. Match patterns against the current ticket by:
 
 1. **Tag matching** — compare pattern `tags` against component names, file types, and architectural concepts from `research.md`
 2. **File matching** — compare pattern `files` against files listed in `research.md`'s `## Files Inventory` or `## Key Findings`
@@ -241,7 +241,7 @@ Read `.ai/templates/spec/implement.md.template` and follow that structure exactl
 
 If `implement.md` contains a `## Key Decisions` section (i.e., non-trivial decisions were made), externalize each decision as a structured YAML file.
 
-Read `shared/decision-schema.md` for the schema definition.
+Read `../../shared/decision-schema.md` for the schema definition.
 
 ### When to write
 
@@ -273,7 +273,7 @@ The YAML files contain the **same information** as the markdown Key Decisions se
 
 ### Write edges
 
-After writing decision nodes, write (or update) the per-ticket edge file. Read `shared/edge-schema.md` for the schema.
+After writing decision nodes, write (or update) the per-ticket edge file. Read `../../shared/edge-schema.md` for the schema.
 
 ```bash
 mkdir -p .ai/graph/edges
