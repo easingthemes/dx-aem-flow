@@ -103,11 +103,15 @@ description: What it does
 model: sonnet              # sonnet | opus | haiku | inherit
 tools: Read, Write, Bash   # OMIT to inherit ALL tools (recommended for MCP)
 disallowedTools: Write     # Block specific tools while inheriting rest
-permissionMode: default    # default | acceptEdits | bypassPermissions
+permissionMode: default    # .claude/agents only — IGNORED in plugin agents
 maxTurns: 30
 memory: project            # user | project | local
 isolation: worktree        # Isolated git worktree
 ---`}</CommandBlock>
+
+  <HighlightBox severity="warning" title="Ignored in plugin agents">
+    Claude Code drops <code>hooks</code>, <code>mcpServers</code> and <code>permissionMode</code> from agents shipped in a plugin, without a warning. They still work in a project&#39;s <code>.claude/agents/</code>. In plugin agents, restrict access with <code>tools:</code> or <code>disallowedTools:</code>; <code>scripts/validate-agents.sh</code> fails on the three fields.
+  </HighlightBox>
 
   <HighlightBox severity="error" title="The #1 Gotcha: Tool Inheritance">
     If you specify <code>tools:</code>, the agent can ONLY use those listed tools. MCP tools are BLOCKED unless explicitly listed. Either <strong>omit tools: entirely</strong> to inherit everything (recommended for MCP-dependent agents), or use <code>disallowedTools:</code> to block specific tools while keeping everything else.

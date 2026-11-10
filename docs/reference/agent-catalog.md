@@ -9,8 +9,7 @@
 | **Model** | Opus |
 | **File** | `plugins/dx-core/agents/dx-code-reviewer.md` |
 | **Used by** | `/dx-step-verify` |
-| **Tools** | All (unrestricted — no explicit tools list) |
-| **Permission mode** | `plan` (read-only by default) |
+| **Tools** | All except `Write`, `Edit`, `NotebookEdit` (`disallowedTools`) — keeps Bash and MCP |
 | **Isolation** | `worktree` (runs in isolated git worktree) |
 
 Deep code review with confidence-based filtering. Only reports issues at confidence ≥80. Uses the project's `.ai/rules/` and CLAUDE.md for conventions. Outputs structured findings with severity levels (Critical, Important, Minor) and file:line references.
@@ -30,8 +29,7 @@ Deep code review with confidence-based filtering. Only reports issues at confide
 | **Model** | Sonnet |
 | **File** | `plugins/dx-core/agents/dx-pr-reviewer.md` |
 | **Used by** | `/dx-pr-review`, `/dx-pr-review-all`, `/dx-simple` (Phase 5.5: single-pass diff review on code path) |
-| **Tools** | Read, Glob, Grep, Bash |
-| **Permission mode** | `plan` (read-only by default) |
+| **Tools** | Read, Glob, Grep, Bash (no Write/Edit) |
 
 PR diff analysis with structured findings. Fetches PR diff, loads project conventions, analyzes code changes, returns findings with severity (MUST-FIX, QUESTION) and line-level comments. Does NOT post to ADO directly — returns findings for user approval.
 

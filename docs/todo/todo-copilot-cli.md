@@ -283,3 +283,22 @@ So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instr
 **Done-when:** `grep -c "v1.0.83" docs/todo/TODO.md` drops to the historical mentions only, with the re-test anchor at v1.0.89.
 
 **Update 2026-10-15:** anchor moved straight to **v1.0.98** (2026-10-14) — 9 more releases since v1.0.89. What the #182 re-test must add: agent-scoped declarative hooks for custom agents (v1.0.97, → #245); `--plugin-dir` skills/agents now reach invocation and plugin hooks survive `--resume` (v1.0.97); autopilot denies a preToolUse `ask` instead of stalling (v1.0.97); MCP config applies between turns (v1.0.93); retired models removed (v1.0.92). Nothing on `.claude/rules` or AGENTS.md (#227 open). Remaining `v1.0.83` mentions in `TODO.md` are historical (#182's own title and the September intake line).
+
+## External harness research + v1.0.107–v1.0.108 notes
+
+**Added:** 2026-11-10
+**Problem:** An external cross-harness capability snapshot (dated 2026-09-29, ~Copilot CLI v1.0.89) and the v1.0.107 (2026-11-06) / v1.0.108 (2026-11-09) changelogs carry Copilot behaviours our notes do not record. Each one can make a guard we ship weaker than we think:
+- **Hook timeouts fail open on every event, `preToolUse` included.** Only a hook *error* denies (TODO-243 records that half). A slow `branch-guard.sh` on Copilot lets the commit through.
+- **VS Code Local ignores hook `matcher` values** — every hook for the event runs. Our agent-frontmatter branch guard (TODO-245) must filter by tool itself, not rely on the matcher.
+- **Copilot CLI overrides a Stop/`agentStop` hook after 8 consecutive block continuations.** Our Stop guard can be bypassed by persistence (#22).
+- **Copilot CLI reads hooks from `.claude/settings(.local).json`.** Safe today: `templates/claude-code/settings.json.template` has no `hooks`. If one is added there, Copilot runs it in addition to `.github/hooks/` → double firing.
+- **Copilot reads `.claude/agents/`;** `.github/agents` wins at the same level. `dx-eject` writes both → possible duplicate agent listings on Copilot.
+- **Cloud coding agent ignores symlinks**, user scope and plugins — the `.codex/INSTALL.md` symlink approach is invisible to it.
+- **`${CLAUDE_PLUGIN_ROOT}` expansion inside skill bodies on Copilot is unverified** — same unknown as #20 and #86.
+- **Snapshot gaps (not ours to fix):** its `.agent.md` field list misses `reasoning-effort` (v1.0.88) and agent-scoped `hooks` (v1.0.97).
+- **v1.0.107:** an unreadable/invalid `.github/hooks` file is now reported, not skipped (helps #40); plugin rules with `alwaysApply: false` stay out of the prompt until enabled; `COPILOT_SESSION_CWD` for MCP/LSP configs.
+- **v1.0.108:** a `preToolUse` `ask` on parallel calls asks per call again (#182); `.github/mcp.json` is **ignored** when `.mcp.json` exists in the same directory (not merged); interactive sessions pass local MCP `env` values literally — host vars need `${NAME}` (our plugin `.mcp.json` files set no `env`); `copilot help config` names `.claude/rules` and `.claude/settings.json` (confirms TODO-227); a selected agent with missing skills now warns; `disabledSkills` matches any case.
+- Issues #19–#22: nothing in the 1.0.107/1.0.108 changelogs addresses them.
+**Scope:** `plugins/dx-core/templates/hooks/`, `scripts/check-agent-hooks.sh`, `plugins/*/templates/agents/*.agent.md.template`, `plugins/dx-core/skills/dx-eject/SKILL.md`, `.codex/INSTALL.md`, website hook pages.
+**Done-when:** the #182 batch re-test runs on Copilot CLI ≥ v1.0.108 and its dated note records a result for: (a) a `preToolUse` hook that sleeps past its timeout — allowed or denied; (b) the branch guard in a `.agent.md` under VS Code Local with a non-matching tool; (c) a Stop hook that blocks 9 times; (d) agent listing after `dx-eject` in a scaffolded project. Each (a)–(d) is either fixed in code or documented on the website hook page.
+**Approach:** re-anchor the #182 batch re-test from v1.0.98 to v1.0.108 when it is run. For (a), if timeouts fail open, keep the guard fast (no network) and say so in the hook docs.

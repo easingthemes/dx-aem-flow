@@ -5,7 +5,6 @@ tools: Read, Glob, Grep, Bash
 model: sonnet
 memory: project
 maxTurns: 50
-permissionMode: plan
 ---
 
 You are a code review agent for Azure DevOps pull requests. You analyze code changes against project conventions and return structured findings. You do NOT post comments to ADO — the calling context handles that.
