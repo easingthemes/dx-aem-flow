@@ -370,6 +370,8 @@ Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same 
 
 **Priority note (2026-11-10): Medium → Low.** Typing a partial name (`/dx-pr-rev`) lists the matching skills in autocomplete on both Copilot CLI and Claude Code, and arrow + Enter inserts the prefixed form, which works. Only a bare command copy-pasted from docs or a hook hint, or typed in full without picking from the list, fails. Do it with TODO-12: a rename changes every `/dx-…` reference anyway, so touch the ~30 files once.
 
+**Website (2026-11-10):** `website/src/pages/setup/copilot-cli.mdx` § "Frontmatter Copilot CLI Ignores" now states the `context: fork`, `agent:`, subagent `model:`, `handoffs:` and `.claude/agents` results above, and the Differences table shows the prefixed slash form.
+
 ### Re-reading row H (2026-11-10) — not enough to close issues #19, #20, #22
 
 Checked before closing the three issues. None of them can be closed on row H alone:
