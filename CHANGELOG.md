@@ -1,3 +1,10 @@
+## [3.12.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.4...v3.12.5) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** progress lock survives a mkdir that returns 0 twice (TODO-267) ([#254](https://github.com/easingthemes/dx-aem-flow/issues/254)) ([fe39daa](https://github.com/easingthemes/dx-aem-flow/commit/fe39daa37a73adec0624c9f03e1ee6811e255f2f))
+
 ## [3.12.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.3...v3.12.4) (2026-11-10)
 
 
