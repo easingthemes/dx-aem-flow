@@ -80,8 +80,13 @@ cleanup() {
 trap cleanup EXIT
 
 for _ in $(seq 1 200); do
-  # Stamp the lock on acquire so the release above can tell ours from a successor's.
-  if mkdir "$LOCK" 2>/dev/null; then echo $$ > "$LOCK/owner"; LOCKED=1; break; fi
+  # The lock is held by whoever creates $LOCK/owner, not by whoever's mkdir
+  # returned 0: uutils mkdir 0.10 (ubuntu-26.04) let two concurrent writers both
+  # "create" the dir and a row was lost. The owner file is opened O_EXCL by bash
+  # itself (noclobber), so exactly one writer wins whatever mkdir binary runs.
+  # The stamp also lets the release above tell ours from a successor's.
+  mkdir "$LOCK" 2>/dev/null || true
+  if (set -C; echo $$ > "$LOCK/owner") 2>/dev/null; then LOCKED=1; break; fi
   # Reclaim an abandoned lock, but only on positive evidence of age: -mmin +1
   # prints the path only once the lock is over a minute old, and prints nothing
   # for a lock that is fresh OR that just vanished as its owner released it.

@@ -196,6 +196,20 @@ run "progress: 25 concurrent writers keep every row" bash -c '
 '
 rm -f "$TMP/conc-writers.err"
 
+# Same race with a mkdir that "succeeds" on an existing dir, as uutils mkdir 0.10
+# did on ubuntu-26.04 (TODO-267). The lock must not rest on mkdir's exit code.
+FAKEBIN="$TMP/fake-mkdir-bin"; mkdir -p "$FAKEBIN"
+printf '#!/usr/bin/env bash\nexec "%s" -p "$@"\n' "$(command -v mkdir)" > "$FAKEBIN/mkdir"; chmod +x "$FAKEBIN/mkdir"
+TMPCONC2="$TMP/8888889-conc"; mkdir -p "$TMPCONC2"
+run "progress: 25 writers keep every row even if mkdir never fails" bash -c '
+  for i in $(seq 1 25); do
+    PATH="'"$FAKEBIN"':$PATH" "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC2"'" "Phase $i" done "n$i" >/dev/null 2>&1 &
+  done
+  wait
+  rows=$(grep -cE "^\| Phase [0-9]+ \| done \|" "'"$TMPCONC2"'/simple-progress.md")
+  [ "$rows" = 25 ] || { echo "rows=$rows"; exit 1; }
+'
+
 run "progress: concurrent run leaves no lock or temp files behind" \
   bash -c "test \$(ls -a $TMPCONC | grep -vE '^\.\.?$|^simple-progress\.md$' | wc -l) -eq 0"
 
