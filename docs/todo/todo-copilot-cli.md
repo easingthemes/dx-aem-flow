@@ -325,3 +325,26 @@ Setup: `copilot --version` → `GitHub Copilot CLI 1.0.108`; fresh `node cli/bin
 The version, hook environment gates, scaffold, and prompt-mode `--trust-folder` setup apply to every prompt command above. The initial sequential E run included one extra collision fixture; the 25-template result above is from a clean rerun excluding that fixture. Stderr was isolated per template, not combined through `xargs`.
 
 **Fix regression check:** `bash plugins/dx-core/hooks/hook-tool-name.test.sh </dev/null` passes on the current scripts. Running the suite against the two scripts from the parent revision in a temporary fixture (including `hook-profile.sh`) yields the two Copilot-stdin failures: compaction stdin tool name and screenshot stdin tool name.
+
+### Validated 2026-11-10 on Copilot CLI v1.0.109 — issue #21 (`context: fork`), interactive
+
+Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same prompt, and `--resume` rejects `--trust-folder`). This run used an interactive `copilot` session in a consumer project with dx plugins installed from the marketplace — no `--plugin-dir`, no probe plugin. Real skill: `dx-step-build` (`context: fork`), with its build-command argument pointed at a probe script outside the repo that prints `pwd`, `git rev-parse --show-toplevel`, `git worktree list` and writes one file.
+
+| Turn | Prompt | Result |
+|------|--------|--------|
+| 1 | `Session rule: whenever you run any build in this session, run "echo PARENT_MARKER_K7Q" right after it. Reply only OK.` | OK |
+| 2 | `/dx-core:dx-step-build sh /tmp/probe-build.sh` | Shell calls shown inline in the main session, no subagent/task block. The build call was `sh /tmp/probe-build.sh …; echo PARENT_MARKER_K7Q` — the turn-1 rule was applied **inside** the skill. Ran in the main worktree. |
+| 3 | `Without using tools or reading files: quote the first sentence of the dx-step-build skill instructions (the body, not the description). If the body is not in your context, answer exactly UNKNOWN.` | Quoted the body's first sentence verbatim — the skill body is in the parent context. |
+| 4 | `Run git status --short and git worktree list` | Probe file in the main worktree; no worktree created by this run (one stale `.claude/worktrees/agent-*` from an earlier Claude Code session). |
+
+**Verdict: CONFIRMED — `context: fork` is ignored on Copilot CLI v1.0.109.** The skill runs inline: it sees parent context (turn 2) and leaks its body into the parent (turn 3). Neither harness creates a worktree for `context: fork` — the issue #21 title's "worktree isolation" is wrong; the loss is *context* isolation. Claude Code baseline (same 4 turns; expected: no marker in turn 2, `UNKNOWN` in turn 3) not yet recorded.
+
+**Also found:** Copilot registers plugin skills **only** with the plugin prefix — `/dx-step-build` → `Unknown command`; `/dx-core:dx-step-build` works. See TODO-266.
+
+## Copilot slash commands need the plugin prefix
+
+**Added:** 2026-11-10
+**Problem:** On Copilot CLI v1.0.109 (interactive, plugins installed from the marketplace) a dx skill is reachable as a slash command only with its plugin prefix: `/dx-step-build` → `Unknown command`, `/dx-core:dx-step-build` works. Our docs, templates and next-step hook hints print the bare form, so a Copilot user who copies them gets `Unknown command`. Calling the skill by name in plain words still works. Copilot added namespaced custom skills in v1.0.88; related to TODO-12 (names now read `dx-core:dx-*`).
+**Scope:** `website/src/`, `plugins/*/templates/` (Copilot instructions, `.github/agents`), `plugins/dx-core/hooks/scripts/next-step.sh` and other hook hints, skill bodies that tell the user "run `/dx-…`" — 30 files under `website/src`, `plugins/*/templates` and hook scripts contain a bare `` `/dx-`` reference today.
+**Done-when:** this section records whether Claude Code also accepts `/dx-core:dx-*` (one interactive check), AND the Copilot install/usage page on the website states the prefixed form, AND `next-step.sh` hints print a form that works on both harnesses.
+**Approach:** if both harnesses accept `/<plugin>:<skill>`, print that everywhere user-facing (one form, no per-harness branch). Otherwise document both forms on the Copilot page. Decide together with TODO-12.
