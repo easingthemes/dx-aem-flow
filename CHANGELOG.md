@@ -1,3 +1,10 @@
+## [3.13.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.0...v3.13.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dx-core:** skills find shared/ files on Copilot CLI ([#257](https://github.com/easingthemes/dx-aem-flow/issues/257)) ([a8fad24](https://github.com/easingthemes/dx-aem-flow/commit/a8fad24f2528164de8dbdac3768320fc586328d9))
+
 # [3.13.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.5...v3.13.0) (2026-11-10)
 
 
