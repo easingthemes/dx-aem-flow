@@ -234,8 +234,7 @@ On v2, the `skills/` symlinks are replaced by
     "AEM":        { "type": "local", "command": ["npx","-y","aem-mcp-server","-t","stdio","-I","{env:AEM_INSTANCES}"] },
     "playwright": { "type": "local", "command": ["npx","@playwright/mcp@0.0.83","--headless","--isolated",
                     "--viewport-size=1440,900","--caps=storage","--no-webmcp","--output-dir=.ai/playwright/screenshots"] },
-    "axe-mcp-server": { "type": "local", "command": ["docker","run","--add-host=host.docker.internal:host-gateway",
-                    "-i","--rm","-e","AXE_API_KEY","dequesystems/axe-mcp-server:latest"],
+    "axe-mcp-server": { "type": "local", "command": ["npx","-y","axe-mcp-server"],
                     "environment": { "AXE_API_KEY": "{env:AXE_API_KEY}" } },
     "figma":      { "type": "remote", "url": "http://127.0.0.1:3845/mcp", "oauth": false }
   },
