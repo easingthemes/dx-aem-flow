@@ -1,3 +1,10 @@
+## [3.12.2](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.1...v3.12.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* Copilot CLI v1.0.108 batch re-test (TODO-182) + hook tool name from stdin (TODO-263) ([#246](https://github.com/easingthemes/dx-aem-flow/issues/246)) ([baefa49](https://github.com/easingthemes/dx-aem-flow/commit/baefa49b6da91f3a5d23054504982f48dc9fc42d))
+
 ## [3.12.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.0...v3.12.1) (2026-11-10)
 
 
