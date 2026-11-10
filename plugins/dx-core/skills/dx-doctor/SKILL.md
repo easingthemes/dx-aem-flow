@@ -295,6 +295,16 @@ Reporting:
 - Missing from current env but found in shell rc → `⚠ Copilot CLI prompt-mode env vars in shell rc but not active — restart shell or run: source ~/.zshrc`
 - Missing entirely → `✗ MISSING: Copilot CLI v1.0.40+ requires GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true and GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true in your shell profile. Without them, `copilot -p` runs in an untrusted folder silently skip repo hooks and workspace MCP. Run /dx-init to add them.`
 
+**`CLAUDE_PLUGIN_ROOT` for Copilot CLI** (same skip condition). Skills run `bash "${CLAUDE_PLUGIN_ROOT}/…"`; Copilot does not substitute or set it, so the shell must:
+
+```bash
+CP_DX=$(ls -d "${COPILOT_HOME:-$HOME/.copilot}"/installed-plugins/*/dx-core 2>/dev/null | head -1)
+[ -n "$CP_DX" ] && [ -f "${CLAUDE_PLUGIN_ROOT:-/nonexistent}/shared/update-progress.sh" ] && ROOT_OK=1 || ROOT_OK=0
+```
+- `CP_DX` empty → skip (dx-core not installed in Copilot).
+- `ROOT_OK=1` → `✓ CLAUDE_PLUGIN_ROOT points to the dx-core plugin`
+- otherwise → `✗ CLAUDE_PLUGIN_ROOT not set to the dx-core plugin — skill scripts (progress, preflight, resume) fail on Copilot CLI. Run /dx-init, or add: export CLAUDE_PLUGIN_ROOT="<CP_DX>"`
+
 ### 6.5d. Copilot repo hooks (`.github/hooks/`)
 
 Runs whether or not `.github/agents/` exists — skip only if `.github/hooks/` does not exist. Older `/dx-init` installs wrote entries that fail on Copilot, and nothing else looks at this directory:

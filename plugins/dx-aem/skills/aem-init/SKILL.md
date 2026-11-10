@@ -385,7 +385,7 @@ If the file doesn't exist, skip this step (it means `/dx-init` didn't generate C
 
 Copy the reusable auth helper so browser agents can authenticate to AEM without the password ever entering the model's context.
 
-1. Copy `${CLAUDE_PLUGIN_ROOT}/data/lib/aem-playwright-auth.sh` → `.ai/lib/aem-playwright-auth.sh` (create `.ai/lib/` if missing; `chmod +x`). On re-run, overwrite silently if the plugin version changed.
+1. Copy `../../data/lib/aem-playwright-auth.sh` (relative to this skill's directory — the dx-aem plugin's `data/lib/`) → `.ai/lib/aem-playwright-auth.sh` (create `.ai/lib/` if missing; `chmod +x`). On re-run, overwrite silently if the plugin version changed.
 2. Ensure the consumer `.gitignore` contains `.ai/playwright/` (the helper writes the session cookie + Basic Auth creds there — must never be committed). Append it under the runtime-output block if absent.
 3. **Install the Playwright browser** (one-time): the dx-aem `playwright` MCP server drives a real Chromium that is NOT bundled — without it, every browser skill (`/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run:
    ```bash

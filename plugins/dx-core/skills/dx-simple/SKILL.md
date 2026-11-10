@@ -32,7 +32,7 @@ MCP calls below. If no id, ask once; if still none in pipeline mode, exit non-ze
 ## Pre-flight (HARD GATE — runs before anything else)
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/preflight.sh
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/preflight.sh
 ```
 
 If it exits non-zero, **STOP**. Post the stderr to ADO as a comment:
@@ -96,11 +96,11 @@ state. Phase 0 emits `SPEC_DIR=…` / `BRANCH=…`; capture those values.
 Progress follows `.ai/rules/task-progress.md` — `simple-progress.md` is the source of truth, written at every phase/gate transition. Task tools, if this session has them, are an optional mirror; never block a transition on one.
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh "$SPEC_DIR" "Preflight" "done"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/update-progress.sh "$SPEC_DIR" "Preflight" "done"
 echo '{"gates":{}}' > "$SPEC_DIR/confidence.json"
 # resume-state.json — the durable status the next run dispatches on.
 sed "s/{TICKET}/$TICKET_ID/" \
-    "$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/resume-state.json.tmpl" \
+    "${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/templates/resume-state.json.tmpl" \
     > "$SPEC_DIR/resume-state.json"
 # authoring-diff.json is created lazily by Phase 3a when the first write happens
 ```
@@ -289,7 +289,7 @@ branch is the durable state store, so a crashed/blocked prior run is recoverable
 ```bash
 # Capture the key=value lines, then read each value (values like "Phase 2" contain
 # spaces, so DON'T `eval` the block — read fields explicitly).
-RC=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/resume-check.sh "$TICKET_ID")
+RC=$(bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/resume-check.sh "$TICKET_ID")
 val() { sed -n "s/^$1=//p" <<<"$RC" | head -1; }
 DISPATCH=$(val DISPATCH); BRANCH=$(val BRANCH); SPEC_DIR=$(val SPEC_DIR)
 STATUS=$(val STATUS); RE_ENTER_PHASE=$(val RE_ENTER_PHASE)
@@ -360,7 +360,7 @@ would). Refuse to reopen on a stale or already-consumed comment.
        | .["run-history"] += [{"event":"reopen","comment":$c}]' \
       "$SPEC_DIR/resume-state.json" > "$SPEC_DIR/.rs.tmp" \
       && mv "$SPEC_DIR/.rs.tmp" "$SPEC_DIR/resume-state.json"
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
    ```
    (Exit 3 = `BRANCH-ADVANCED` → a concurrent resume is in flight; stop.)
 5. **Re-enter the edit phase** exactly as a `resume-forward` would: with
@@ -427,7 +427,7 @@ re-applies the work-plan as part of its normal flow.
 
 2. Parse the `simple` block (recommended but not required):
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/parse-simple-block.sh \
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/parse-simple-block.sh \
         "$SPEC_DIR/raw-story.md" "$SPEC_DIR/simple-block.yaml"
    ```
    - Exit 0 (parsed) → continue to step 2a (fill in inferred fields if any are missing).
@@ -452,7 +452,7 @@ re-applies the work-plan as part of its normal flow.
     - `page-url` (REQUIRED): find the QA author URL in the story. If
       multiple, prefer the one nearest the change description; if still
       ambiguous, post the template at
-      `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/simple-block.md.tmpl`
+      `${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/templates/simple-block.md.tmpl`
       as an ADO comment and STOP.
     - `element`: derive from the story's element references
       (visible text, dialog title, JCR path).
@@ -506,9 +506,9 @@ re-applies the work-plan as part of its normal flow.
 
 6. Update progress + **checkpoint** (commit + push recovery state to the branch):
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/update-progress.sh \
         "$SPEC_DIR" "Phase 1: Extract + locate" "done" "G1 passed"
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 1"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 1"
    ```
    If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is
    in flight (H2); do not force-push.
@@ -519,7 +519,7 @@ Runs once, right after `parse-simple-block.sh` writes `simple-block.yaml`, befor
 Confirms this repo is a legitimate target for the ticket and records authoring ownership.
 
 ```bash
-GUARD_OUT=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/repo-guard.sh \
+GUARD_OUT=$(bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/repo-guard.sh \
   "$SPEC_DIR/simple-block.yaml" ".ai/config.yaml") || GUARD_RC=$?
 eval "$GUARD_OUT"   # sets DECISION, REASON?, AUTHORING_OWNER?
 ```
@@ -562,7 +562,7 @@ Dispatch THREE subagents in a single message (parallel):
 Synthesize the three returns into `$SPEC_DIR/dialog-map.json` and `$SPEC_DIR/file-list.json`. Then build a **baseline** work-plan with the deterministic heuristic:
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/classify-work.sh \
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/classify-work.sh \
      "$SPEC_DIR/simple-block.yaml" \
      "$SPEC_DIR/dialog-map.json" \
      "$SPEC_DIR/file-list.json" \
@@ -599,9 +599,9 @@ remove them. Once `work-plan.json` reflects the model's final plan, set
 
 Update progress + **checkpoint**:
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/update-progress.sh \
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/update-progress.sh \
      "$SPEC_DIR" "Phase 2: Classify" "done" "G3=<level>, authoring=<n>, code=<n>"
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 2"
 ```
 
 ### Phase 3a: Apply authoring writes
@@ -665,7 +665,7 @@ For each item in `work-plan.authoring[]`:
    the writes live on AEM but the diff uncommitted, and resume's before-check
    (now idempotent, step 1) would have no record of them:
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3a"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3a"
    ```
 
 If ANY write fails partway through:
@@ -704,7 +704,7 @@ For each item in `work-plan.code[]`:
 
 4. **G4 — Per-file edit confidence (HARD GATE):**
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/check-g4.sh "$SPEC_DIR/work-plan.json" 0.85
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/check-g4.sh "$SPEC_DIR/work-plan.json" 0.85
    ```
    Exit 4 → rollback authoring + exit non-zero. Record `G4` status in `confidence.json`.
 
@@ -715,14 +715,14 @@ For each item in `work-plan.code[]`:
 
 6. After all code items applied: run scope-check:
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/scope-check.sh "$SPEC_DIR/work-plan.json"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/scope-check.sh "$SPEC_DIR/work-plan.json"
    ```
    Exit 4 → ABORT (scope exceeded is `hard`).
 
 Update progress + **checkpoint** (commits the filled `work-plan.json` so a later
 resume can replay the code edits — C2; the edits themselves stay uncommitted):
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3b"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 3b"
 ```
 
 ### Phase 4: Compile (≤3 retries)
@@ -748,7 +748,7 @@ for ATTEMPT in 1 2 3; do
   $COMPILE > "$SPEC_DIR/compile.log" 2>&1 && break
   if [[ "$ATTEMPT" -eq 3 ]]; then
     # Rollback + exit
-    bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
+    bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
     exit 1
   fi
   # Read the last 50 lines of compile.log, identify the error, edit the file, retry.
@@ -788,7 +788,7 @@ If running:
 3. Run visual-diff:
    ```bash
    BBOX=$(cat $SPEC_DIR/locator-bbox.json | jq -r '"\(.x),\(.y),\(.w),\(.h)"')
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/visual-diff.sh \
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/visual-diff.sh \
         "$SPEC_DIR/before.png" "$SPEC_DIR/after.png" "$BBOX" \
         > "$SPEC_DIR/visual-diff.json"
    ```
@@ -835,7 +835,7 @@ Write the review to `$SPEC_DIR/diff-review.md`.
    - **Checkpoint `last-completed = Phase 6` BEFORE the create** so a crash during
      create resumes back into Phase 6 (not past it):
      ```bash
-     bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 6"
+     bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 6"
      ```
    - **Detect an existing open PR** for this branch first
      (`mcp__ado__repo_pull_request` with `action: "list"`,
@@ -856,7 +856,7 @@ Write the review to `$SPEC_DIR/diff-review.md`.
 
 ### Phase 7: Write report + ADO comment
 
-Render `$CLAUDE_PLUGIN_ROOT/skills/dx-simple/templates/report.md.tmpl` into `$SPEC_DIR/report.md`, substituting all `{PLACEHOLDER}` tokens from `confidence.json`, `work-plan.json`, `authoring-diff.json`. Also substitute `{PLUGIN_ROOT}` with the literal value of `$CLAUDE_PLUGIN_ROOT` (so the printed revert command is copy-pasteable) and `{SPEC_DIR}` with the absolute spec directory.
+Render `${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/templates/report.md.tmpl` into `$SPEC_DIR/report.md`, substituting all `{PLACEHOLDER}` tokens from `confidence.json`, `work-plan.json`, `authoring-diff.json`. Also substitute `{PLUGIN_ROOT}` with the literal value of `${CLAUDE_PLUGIN_ROOT}` (so the printed revert command is copy-pasteable) and `{SPEC_DIR}` with the absolute spec directory.
 
 Post a truncated version to ADO:
 ```
@@ -873,7 +873,7 @@ Update final progress row to `done`, mark recovery state terminal, and checkpoin
 so a stray re-trigger short-circuits to the `done` no-op:
 ```bash
 jq '.status = "done"' "$SPEC_DIR/resume-state.json" > "$SPEC_DIR/.rs.tmp" && mv "$SPEC_DIR/.rs.tmp" "$SPEC_DIR/resume-state.json"
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 7"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "Phase 7"
 ```
 
 Clean up (leave `ado-comment-posted.flag` in place — the pipeline inspects it):
@@ -920,7 +920,7 @@ fixes).
    blocker is terminal** (`hard`, or final fail):
    ```bash
    # terminal only:
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/rollback-authoring.sh "$SPEC_DIR/authoring-diff.json"
    ```
    On a **recoverable** block (`needs-input` / `transient`), **leave the authoring
    writes in place** — they are recorded in the committed `authoring-diff.json`, and
@@ -933,7 +933,7 @@ fixes).
 
 4. **Persist state — commit + push** (the report + resume-state + authoring-diff):
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "<blocked-phase>"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-simple/scripts/save-state.sh "$SPEC_DIR" "<blocked-phase>"
    ```
    (Exit 3 = `BRANCH-ADVANCED` → a concurrent resume is in flight; stop.)
 

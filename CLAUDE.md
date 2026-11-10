@@ -247,7 +247,10 @@ Latest upstream sweep: `docs/research/2026-11-06-claude-code-vs-copilot-cli.md` 
 ```bash
 export GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true
 export GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true
+export CLAUDE_PLUGIN_ROOT="$HOME/.copilot/installed-plugins/<marketplace>/dx-core"
 ```
+
+`CLAUDE_PLUGIN_ROOT`: skills run plugin scripts as `bash "${CLAUDE_PLUGIN_ROOT}/…"` — always braced, because Claude Code substitutes only the braced form into skill/agent text and never exports it to the Bash tool. Copilot CLI substitutes nothing, so the shell must provide it (`/dx-init` 9i writes it, `dx-doctor` 6.5c checks it; TODO-268). For a file of another plugin (dx-aem), reference it relative to the skill directory instead (`../../data/lib/…`), since one variable holds one plugin root.
 
 Without `WORKSPACE_MCP`, project-root `.mcp.json` is also silently ignored. **The value must be `true`** — Copilot compares `=== "true"` (v1.0.40 and v1.0.98 bundles; `=1` seen doing nothing on 1.0.98, TODO #249). The gates apply to `copilot -p` only; a trusted folder loads both without them.
 

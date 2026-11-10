@@ -182,7 +182,7 @@ Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). 
 
 ```bash
 DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
-  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
 ```
 
 A phase skipped at runtime gets a `skipped` row, not a deleted one — the file is the run record.

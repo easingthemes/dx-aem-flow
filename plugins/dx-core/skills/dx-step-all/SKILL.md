@@ -38,7 +38,7 @@ The orchestrator reads this file after this skill returns and prints a one-line 
 
 ```bash
 DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
-  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "1: <title>" "in_progress"
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "1: <title>" "in_progress"
 ```
 
 **Format** — one row per step:
