@@ -1,3 +1,10 @@
+# [3.13.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.5...v3.13.0) (2026-11-10)
+
+
+### Features
+
+* dx agents get the project's instructions on Copilot CLI subagents (TODO-202) ([#256](https://github.com/easingthemes/dx-aem-flow/issues/256)) ([525475e](https://github.com/easingthemes/dx-aem-flow/commit/525475e684c21eca4f0112fe4cee452fb9c4365a))
+
 ## [3.12.5](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.4...v3.12.5) (2026-11-10)
 
 
