@@ -31,7 +31,7 @@ fi
 Per-step progress lines during the run are allowed in both paths.
 
 **Before anything else**, read these two files:
-- `shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, commit format, staging, rebase, PRs)
+- `../../shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, commit format, staging, rebase, PRs)
 - `.ai/config.yaml` — project config, preferences (Auto-Commit, Auto-PR)
 
 Follow every rule in `git-rules.md`. The steps below assume you have read it.

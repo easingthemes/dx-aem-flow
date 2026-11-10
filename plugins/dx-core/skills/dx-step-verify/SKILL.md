@@ -171,7 +171,7 @@ Include these conventions in the reviewer subagent prompt (in **Dispatch code re
 
 ### Get full diff (base..HEAD)
 
-Determine the base branch from `.ai/config.yaml` `scm.base-branch`, or auto-discover per `shared/git-rules.md`.
+Determine the base branch from `.ai/config.yaml` `scm.base-branch`, or auto-discover per `../../shared/git-rules.md`.
 
 Determine the git range — all changes since branching from the base:
 
@@ -278,7 +278,7 @@ Loop back to **Dispatch code review subagent** with the updated diff.
 
 **Provenance update:** If `implement.md` has a provenance frontmatter block, update `verified: false` to `verified: true`. If it has no provenance frontmatter (pre-migration file), skip this update.
 
-**Edge update:** If `.ai/graph/edges/<ticket>.yaml` exists (written by dx-plan), append `verified-by` edges. Read `shared/edge-schema.md` for the schema.
+**Edge update:** If `.ai/graph/edges/<ticket>.yaml` exists (written by dx-plan), append `verified-by` edges. Read `../../shared/edge-schema.md` for the schema.
 
 1. Read the existing edge file
 2. Find all active decision nodes for this ticket: `find .ai/graph/nodes/decisions/<ticket>-*.yaml`

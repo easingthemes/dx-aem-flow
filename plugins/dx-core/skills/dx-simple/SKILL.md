@@ -300,7 +300,7 @@ LAST_COMPLETED_PHASE=$(val LAST_COMPLETED_PHASE); BLOCKED_AT_PHASE=$(val BLOCKED
 `resume-check.sh` owns anchored discovery (`feature/<id>-*` / `bugfix/<id>-*` —
 never a bare `*<id>*` substring, so `123` can't match `1234`), the 0 / 1 / >1
 branch decision, and the reverse branch→spec-dir mapping. It delegates **only the
-create-fresh path** to `shared/ensure-feature-branch.sh` (M2 — the shared helper's
+create-fresh path** to `../../shared/ensure-feature-branch.sh` (M2 — the shared helper's
 contract is unchanged for its other consumers). It is **read-only** w.r.t.
 `resume-state.json` (never bumps `answer-attempts` — a crash must not burn the
 needs-input cap, M4).

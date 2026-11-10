@@ -75,7 +75,7 @@ Read `implement.md` from `$SPEC_DIR`. Find the step that needs fixing:
 
 ### Classify error
 
-Before attempting any fix, classify the error using `shared/error-handling.md`:
+Before attempting any fix, classify the error using `../../shared/error-handling.md`:
 - If **PERMANENT** → go to "PERMANENT: Mark blocked, report"
 - If **TRANSIENT** → go to "TRANSIENT: Suggest retry"
 - If **VALIDATION** → proceed to "Gather error context"
