@@ -85,6 +85,14 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6; release notes for v1.0.18, v1.0.35, v1.0.36.
 **Status update 2026-07-01:** Still not ported — `.github/hooks/hooks.json` does not exist, so Copilot CLI users get zero harness safety (no branch guard, next-step hints, or workflow-state tracking). Single biggest driver of the Copilot CLI score (6.5/10) in the July re-rating. Env-var precondition (#97/#98) already satisfied, so this is now the top unblocked Copilot fix. See [2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
 
+**Re-check 2026-11-10 (static, not on Copilot):** the Done-when grep counts event names; it cannot tell whether the hooks run. Three problems:
+1. `dx-scaffold.js` does not write `.github/hooks/` at all. Only `/dx-init` step 9i copies `templates/hooks/branch-guard-hooks.json.template`, so the Done-when has no file to check in a scaffolded project.
+2. The template's SessionStart (`session-start.sh`, `next-step.sh`) and PostToolUse (`validate-plugin-edit.sh`) commands resolve their scripts through `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}`. Copilot sets those variables for **plugin** hooks (v1.0.26). Nothing we have says it sets them for **repo** hooks in `.github/hooks/`. With all three unset, the command is `bash "/hooks/scripts/session-start.sh"` → exit 127 (reproduced locally). Likely broken on Copilot; one interactive check settles it.
+3. Copilot already reads the plugin's own `hooks/hooks.json` (CLAUDE.md § Hook System). The branch guard and Stop guard in the `.github/hooks/` copy therefore probably fire twice. That is harmless for a guard, but it doubles the work and noise of every non-guard hook.
+Before marking this done: on Copilot, record whether `PLUGIN_ROOT` is set inside a `.github/hooks` command, and whether a plugin `Stop` hook fires as `agentStop`. If plugin hooks already cover Copilot, the `.github/hooks/` copy may only need the `-p` untrusted-folder case.
+
+**Docs check 2026-11-10** ([hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference)): Copilot CLI loads hooks from policy, then user (`~/.copilot/hooks/*.json`, `~/.copilot/settings.json`), then project (`.github/hooks/*.json`, `.github/copilot/settings(.local).json`, `.claude/settings(.local).json`), then plugins (`hooks.json` or `hooks/hooks.json`). "All hook entries from all sources are run" — there is no dedup. PascalCase event names (`Stop`, `PreToolUse`) are accepted, with Claude matcher semantics, and `Stop` is `agentStop`. So the plugin `hooks/hooks.json` alone already gives Copilot the branch guard and Stop guard, and the `.github/hooks/` copy makes them run twice (point 3 above is now documented, not inferred). `PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT`, `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR` are **not documented** for any hook source; only `COPILOT_PLUGIN_DATA` is. Point 2 still needs the live check.
+
 ## Prompt-Mode Gates v1.0.40
 
 **Added:** 2026-05-01
@@ -325,3 +333,45 @@ Setup: `copilot --version` → `GitHub Copilot CLI 1.0.108`; fresh `node cli/bin
 The version, hook environment gates, scaffold, and prompt-mode `--trust-folder` setup apply to every prompt command above. The initial sequential E run included one extra collision fixture; the 25-template result above is from a clean rerun excluding that fixture. Stderr was isolated per template, not combined through `xargs`.
 
 **Fix regression check:** `bash plugins/dx-core/hooks/hook-tool-name.test.sh </dev/null` passes on the current scripts. Running the suite against the two scripts from the parent revision in a temporary fixture (including `hook-profile.sh`) yields the two Copilot-stdin failures: compaction stdin tool name and screenshot stdin tool name.
+
+### Validated 2026-11-10 on Copilot CLI v1.0.109 — issue #21 (`context: fork`), interactive
+
+Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same prompt, and `--resume` rejects `--trust-folder`). This run used an interactive `copilot` session in a consumer project with dx plugins installed from the marketplace — no `--plugin-dir`, no probe plugin. Real skill: `dx-step-build` (`context: fork`), with its build-command argument pointed at a probe script outside the repo that prints `pwd`, `git rev-parse --show-toplevel`, `git worktree list` and writes one file.
+
+| Turn | Prompt | Result |
+|------|--------|--------|
+| 1 | `Session rule: whenever you run any build in this session, run "echo PARENT_MARKER_K7Q" right after it. Reply only OK.` | OK |
+| 2 | `/dx-core:dx-step-build sh /tmp/probe-build.sh` | Shell calls shown inline in the main session, no subagent/task block. The build call was `sh /tmp/probe-build.sh …; echo PARENT_MARKER_K7Q` — the turn-1 rule was applied **inside** the skill. Ran in the main worktree. |
+| 3 | `Without using tools or reading files: quote the first sentence of the dx-step-build skill instructions (the body, not the description). If the body is not in your context, answer exactly UNKNOWN.` | Quoted the body's first sentence verbatim — the skill body is in the parent context. |
+| 4 | `Run git status --short and git worktree list` | Probe file in the main worktree; no worktree created by this run (one stale `.claude/worktrees/agent-*` from an earlier Claude Code session). |
+
+**Verdict: CONFIRMED — `context: fork` is ignored on Copilot CLI v1.0.109.** The skill runs inline: it sees parent context (turn 2) and leaks its body into the parent (turn 3). Neither harness creates a worktree for `context: fork` — the issue #21 title's "worktree isolation" is wrong; the loss is *context* isolation. **Claude Code baseline (same day, cloud session):** with the same marker rule in the conversation, `Skill(dx-core:dx-step-build, "sh <probe>")` returned `completed (forked execution)` and only the fork's summary. The build ran **without** the marker echo (the fork did not see the parent rule), in the main checkout, and created no worktree. Turn 3 was not used there: that session had already read the SKILL.md, so the quote oracle could not tell anything. The marker oracle discriminates: Claude Code forks, Copilot does not.
+
+**Also found:** Copilot registers plugin skills **only** with the plugin prefix — `/dx-step-build` → `Unknown command`; `/dx-core:dx-step-build` works. See TODO-266.
+
+## Copilot slash commands need the plugin prefix
+
+**Added:** 2026-11-10
+**Problem:** On Copilot CLI v1.0.109 (interactive, plugins installed from the marketplace) a dx skill is reachable as a slash command only with its plugin prefix: `/dx-step-build` → `Unknown command`, `/dx-core:dx-step-build` works. Our docs, templates and next-step hook hints print the bare form, so a Copilot user who copies them gets `Unknown command`. Calling the skill by name in plain words still works. Copilot added namespaced custom skills in v1.0.88; related to TODO-12 (names now read `dx-core:dx-*`).
+**Scope:** `website/src/`, `plugins/*/templates/` (Copilot instructions, `.github/agents`), `plugins/dx-core/hooks/scripts/next-step.sh` and other hook hints, skill bodies that tell the user "run `/dx-…`" — 30 files under `website/src`, `plugins/*/templates` and hook scripts contain a bare `` `/dx-`` reference today.
+**Done-when:** this section records whether Claude Code also accepts `/dx-core:dx-*` (one interactive check), AND the Copilot install/usage page on the website states the prefixed form, AND `next-step.sh` hints print a form that works on both harnesses.
+**Approach:** if both harnesses accept `/<plugin>:<skill>`, print that everywhere user-facing (one form, no per-harness branch). Otherwise document both forms on the Copilot page. Decide together with TODO-12.
+
+### Re-reading row H (2026-11-10) — not enough to close issues #19, #20, #22
+
+Checked before closing the three issues. None of them can be closed on row H alone:
+- **#19 `handoffs:`** — row E has Copilot warn that `handoffs` is an *unknown field*, and the H/19 run printed that warning too. The worker token came back because the model delegated on its own, as the prompt told it to; the field did nothing. The issue is worse than its title: the field is not parsed at all.
+- **#22 `agent:`** — every skill that sets `agent:` (6, all in dx-aem) also sets `context: fork`. In Claude Code `agent:` only picks the subagent type of the fork. Since `context: fork` is ignored on v1.0.109 (above), the harness cannot route to the agent. The H/22 token proves the model reached the agent, not that the frontmatter did. Model tier and tool allowlist were not checked.
+- **#20 subagent → skill** — the most likely to be fixed, but H/20 did not tell a real skill invocation from the subagent reading `SKILL.md` as a file. That file read is the failure the issue describes. Needs one run that shows the tool the subagent called.
+
+### Issue #20 re-test 2026-11-10, Copilot CLI v1.0.109 interactive
+
+Prompt: `Use a subagent (task tool) for this. The subagent must invoke the dx-core:dx-help skill with the question "what is the spec directory convention?" and return its answer. Do not read SKILL.md files.` UI tree: `General-purpose` subagent → `skill(dx-core:dx-help)` → nested `dx-core:dx-doc-searcher` subagent. **#20 passes:** a subagent invokes a plugin skill through the skill tool (not a file read), and the nesting goes 2 levels deep (the issue says 1 max). **Side finding for #22:** `dx-doc-searcher` sets `model: haiku`, yet the UI shows it running on the session's Opus model. The agent's model tier did not apply.
+
+### Repo-hook env re-test 2026-11-10, Copilot CLI v1.0.109 interactive
+
+A `sessionStart` probe in `.github/hooks/zz-probe.json` ran `env | grep -iE "plugin_root|claude_project_dir|copilot_plugin"`. Output: only `CLAUDE_PROJECT_DIR=<project root>`. **`PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT` and `CLAUDE_PLUGIN_ROOT` are not set for repo hooks.** In `templates/hooks/branch-guard-hooks.json.template`:
+- `session-start.sh`, `next-step.sh` (SessionStart) and `validate-plugin-edit.sh` (PostToolUse) run as `bash "/hooks/scripts/…"` and fail with exit 127 in every project where `/dx-init` 9i installed the file;
+- the inline branch guard and the `agentStop` guard (it uses `${CLAUDE_PROJECT_DIR:-$PWD}`) work, but they duplicate the plugin's own hooks.
+
+The Copilot **cloud coding agent** ignores plugins and reads only `.github/hooks/`. That is the one consumer the repo copy is still for, and every command in it has to be self-contained (no plugin path).
