@@ -322,6 +322,10 @@ So the env var never loaded our rules — it only picks `AGENTS.md` and `*.instr
 **Done-when:** the #182 batch re-test runs on Copilot CLI ≥ v1.0.108 and its dated note records a result for: (a) a `preToolUse` hook that sleeps past its timeout — allowed or denied; (b) the branch guard in a `.agent.md` under VS Code Local with a non-matching tool (moved to TODO-265 on 2026-11-10 — VS Code Chat, not Copilot CLI); (c) a Stop hook that blocks 9 times; (d) agent listing after `dx-eject` in a scaffolded project. Each (a)–(d) is either fixed in code or documented on the website hook page.
 **Approach:** re-anchor the #182 batch re-test from v1.0.98 to v1.0.108 when it is run. For (a), if timeouts fail open, keep the guard fast (no network) and say so in the hook docs.
 
+### Fix 2026-11-10 — Stop guard on Copilot (item c)
+
+`stop-guard.sh` only stopped re-blocking on `stop_hook_active`, which Copilot's `agentStop` input does not send — so on Copilot it blocked until the 8-block cap. It now writes `<checksum of reason> <epoch>` to `$GIT_DIR/dx-stop-guard.last` and lets the agent stop when the same findings come back within 10 minutes (one block per finding set, both harnesses). Also fixed: in a repo with no `.ai/specs/`, a duplicate in-progress check (`find` under `pipefail`) made the script exit 1, a non-blocking error, so the guard never blocked there. Covered by `plugins/dx-core/data/hooks/stop-guard.test.sh` (fails on the old script). Items (a) and (c) are on the website hook page; (b) moved to TODO-265; (d) open as TODO-264. Remaining for this item: confirm on Copilot that `agentStop` stdin has no `stop_hook_active` and does carry `cwd` (one probe).
+
 ### Validated 2026-11-10 on Copilot CLI v1.0.108 (TODO-182 batch)
 
 Setup: `copilot --version` → `GitHub Copilot CLI 1.0.108`; fresh `node cli/bin/dx-scaffold.js /tmp/cp-v --all`, `git init -b main`, one initial commit. Prompt-mode probes used `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true`, `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true`, `--trust-folder`, and `--allow-all-tools`. No live ADO/AEM calls. The session ran in a VS Code integrated terminal; that does not change the results: Copilot CLI loads hooks, plugins, agents and `shared/` from the project and `~/.copilot`, and `-p` prompt mode uses nothing from the editor (the `/ide` connection is interactive-only). The results hold for Copilot CLI in any terminal. Interactive mode was not covered (see D). Commands below omit those two environment assignments only where the cell already names the test.
@@ -363,6 +367,8 @@ Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same 
 **Scope:** `website/src/`, `plugins/*/templates/` (Copilot instructions, `.github/agents`), `plugins/dx-core/hooks/scripts/next-step.sh` and other hook hints, skill bodies that tell the user "run `/dx-…`" — 30 files under `website/src`, `plugins/*/templates` and hook scripts contain a bare `` `/dx-`` reference today.
 **Done-when:** this section records whether Claude Code also accepts `/dx-core:dx-*` (one interactive check), AND the Copilot install/usage page on the website states the prefixed form, AND `next-step.sh` hints print a form that works on both harnesses.
 **Approach:** if both harnesses accept `/<plugin>:<skill>`, print that everywhere user-facing (one form, no per-harness branch). Otherwise document both forms on the Copilot page. Decide together with TODO-12.
+
+**Priority note (2026-11-10): Medium → Low.** Typing a partial name (`/dx-pr-rev`) lists the matching skills in autocomplete on both Copilot CLI and Claude Code, and arrow + Enter inserts the prefixed form, which works. Only a bare command copy-pasted from docs or a hook hint, or typed in full without picking from the list, fails. Do it with TODO-12: a rename changes every `/dx-…` reference anyway, so touch the ~30 files once.
 
 ### Re-reading row H (2026-11-10) — not enough to close issues #19, #20, #22
 
