@@ -256,7 +256,7 @@ Read each ejected plugin manifest from `.ai/ejected/manifests/` to get the versi
 
 ### What Still Works
 - All `/dx-*`, `/aem-*`, `/auto-*` skills — loaded from `.claude/skills/`
-- All Copilot skills and agents — loaded from `.github/`
+- All Copilot skills and agents — loaded from `.github/` (Copilot also reads `.claude/agents/` but ignores Claude-only fields — see Troubleshooting)
 - `.ai/config.yaml`, `.ai/rules/`, `.claude/rules/` — unchanged
 - `.ai/lib/`, `.ai/templates/` — unchanged
 ```
@@ -282,6 +282,10 @@ Read each ejected plugin manifest from `.ai/ejected/manifests/` to get the versi
 - **"dx-doctor fails after eject"**
   **Cause:** Expected — dx-doctor looks for plugin directories which no longer exist.
   **Fix:** Edit `.claude/skills/dx-doctor/SKILL.md` to check `.ai/ejected/` instead of plugin directories. Or remove the dx-doctor skill if not needed.
+
+- **"Copilot CLI warns `unknown fields ignored` for `.claude/agents/*.md`"**
+  **Cause:** Copilot CLI also reads `.claude/agents/` (v1.0.108+). It drops Claude-only fields (`effort`, `memory`, `maxTurns`, `disallowedTools`, `isolation`) and falls back from `model: opus` to the picker model. Dropping `disallowedTools` means the ejected `dx-code-reviewer` is **not read-only on Copilot**. On a name clash `.github/agents/` wins.
+  **Fix:** Expected — on Copilot use the `.github/agents/` agents (`DxCodeReview` for reviews). If the team uses only Copilot, `.claude/agents/` can be deleted.
 
 - **"Want to go back to plugins"**
   **Cause:** Ejecting is one-way, but you can reverse it manually.
