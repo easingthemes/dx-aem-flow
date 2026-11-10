@@ -44,7 +44,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Setup"
   badgeColor="secondary"
   title="Prerequisites"
-  subtitle="Docker, an API key, and the dx-core plugin."
+  subtitle="Node.js, an API key, a pinned Chromium, and the dx-core plugin."
   bg="primary"
 />
 <Section>
@@ -57,7 +57,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
         </tr>
       </thead>
       <tbody>
-        <tr class="border-b border-gray-100"><td class="py-2 px-4">Docker running</td><td class="py-2 px-4">axe MCP Server runs as a Docker container</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Node.js 22.19.0+</td><td class="py-2 px-4">axe MCP Server runs on the host via <code>npx -y axe-mcp-server</code> — nothing to start beforehand</td></tr>
+        <tr class="border-b border-gray-100"><td class="py-2 px-4">Chromium (pinned)</td><td class="py-2 px-4">The server drives a Playwright Chromium matching its own Playwright version</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">Axe DevTools API key</td><td class="py-2 px-4">Required by the axe MCP Server for analysis</td></tr>
         <tr class="border-b border-gray-100"><td class="py-2 px-4">dx-core plugin</td><td class="py-2 px-4">The skill and MCP config live in this plugin</td></tr>
       </tbody>
@@ -65,9 +66,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <h3 class="text-base font-semibold text-brand-900 mt-6 mb-3">Step-by-Step Setup</h3>
-  <CommandBlock label="1. Pull the Docker image (one-time)">docker pull dequesystems/axe-mcp-server:latest</CommandBlock>
+  <CommandBlock label="1. Install the pinned Chromium (one-time, re-run after axe-mcp-server upgrades)">npx playwright@$(npm view axe-mcp-server dependencies.playwright) install chromium</CommandBlock>
 
-  <CommandBlock label="2. Get an API key">{"# Go to https://axe.deque.com/settings\n# Copy your API key"}</CommandBlock>
+  <CommandBlock label="2. Get an API key">{"# Axe Account Portal → API Keys → product \"Axe MCP Server\"\n# Copy your API key"}</CommandBlock>
 
   <CommandBlock label="3. Export the API key (add to ~/.zshrc or ~/.bashrc)">export AXE_API_KEY="your-key-here"</CommandBlock>
 
@@ -122,7 +123,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-3 gap-4">
     <ContentCard icon="mdi:laptop" iconColor="bg-brand-700" title="Local AEM">
-      Embed admin credentials in the URL. The Docker container uses <code>--add-host</code> to reach your host machine.
+      Embed admin credentials in the URL. The server runs on your machine, so <code>localhost</code> works as-is.
       <CommandBlock>{`/dx-axe http://admin:admin@localhost:4502/content/mysite/en/home.html?wcmmode=disabled`}</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:cloud" iconColor="bg-cyan" title="QA / Stage">
@@ -135,8 +136,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </ContentCard>
   </div>
 
-  <HighlightBox severity="warning" title="Docker Networking">
-    Inside Docker, <code>localhost</code> refers to the container, not your host. If <code>localhost</code> does not resolve, use <code>host.docker.internal:4502</code> instead. The plugin's <code>--add-host</code> flag enables this. Add <code>?wcmmode=disabled</code> to test published rendering.
+  <HighlightBox severity="info" title="Published rendering">
+    Add <code>?wcmmode=disabled</code> to test published rendering instead of the authoring UI.
   </HighlightBox>
 </Section>
 
@@ -174,27 +175,22 @@ import CommandBlock from '../../components/CommandBlock.astro';
   badge="Config"
   badgeColor="info"
   title="MCP Server Configuration"
-  subtitle="The plugin handles Docker startup automatically."
+  subtitle="The plugin starts the server on demand via npx."
   bg="primary"
 />
 <Section>
   <CommandBlock label="Plugin .mcp.json (auto-configured)">{`{
   "mcpServers": {
     "axe-mcp-server": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--add-host=host.docker.internal:host-gateway",
-        "-i", "--rm",
-        "-e", "AXE_API_KEY",
-        "dequesystems/axe-mcp-server:latest"
-      ]
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "axe-mcp-server"]
     }
   }
 }`}</CommandBlock>
 
   <HighlightBox severity="info" title="How It Works">
-    Docker's <code>-e AXE_API_KEY</code> passes the env var from your shell into the container via normal environment inheritance -- no <code>"env"</code> block needed in <code>.mcp.json</code>. The <code>--add-host</code> flag lets the container reach <code>localhost</code> services on your host machine.
+    <code>npx</code> downloads and runs the latest <code>axe-mcp-server</code> when the agent starts. The server inherits your shell environment, so an exported <code>AXE_API_KEY</code> reaches it with no <code>"env"</code> block in <code>.mcp.json</code>. It runs on your machine, so <code>localhost</code> URLs need no rewriting. Optional settings (<code>AXE_SERVER_URL</code> for EU/private instances, <code>AXE_CHROME_PATH</code>, proxy variables) are read from the environment the same way.
   </HighlightBox>
 </Section>
 
@@ -208,10 +204,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
 <Section>
   <div class="grid md:grid-cols-2 gap-4">
     <HighlightBox severity="error" title='"axe MCP Server setup" message'>
-      Docker is not running, the image is not pulled, or <code>AXE_API_KEY</code> is not exported. Follow the setup steps and verify with <code>docker run --rm -e AXE_API_KEY dequesystems/axe-mcp-server:latest --help</code>.
+      Node.js is older than 22.19.0 or <code>AXE_API_KEY</code> is not exported. Check <code>node -v</code>, then restart the agent from a shell where the key is set.
     </HighlightBox>
-    <HighlightBox severity="warning" title="Docker cannot reach localhost:4502">
-      Inside Docker, <code>localhost</code> is the container. Use <code>host.docker.internal:4502</code> instead.
+    <HighlightBox severity="warning" title='"Chromium is not installed"'>
+      The server needs the Chromium build matching its Playwright version. Run <code>npx playwright@$(npm view axe-mcp-server dependencies.playwright) install chromium</code>. A bare <code>npx playwright install chromium</code> can fetch an unsupported revision.
     </HighlightBox>
     <HighlightBox severity="warning" title="QA URL returns 401">
       Environment requires Basic Auth. Embed credentials in the URL or configure in <code>.ai/config.yaml</code> under <code>aem.qa-basic-auth</code>.

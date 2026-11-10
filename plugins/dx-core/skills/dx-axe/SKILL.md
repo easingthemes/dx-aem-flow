@@ -28,28 +28,24 @@ Look for tools matching `axe_mcp_server__analyze` and `axe_mcp_server__remediate
 
 If not found, tell the user:
 
-> **axe MCP Server not available.** See setup guide: `docs/dx-axe.md` in the plugin repo.
-> Quick checklist: Docker running? `AXE_API_KEY` exported? Image pulled (`docker pull dequesystems/axe-mcp-server:latest`)? Plugin reinstalled after setup?
+> **axe MCP Server not available.** Quick checklist:
+> - Node.js 22.19.0+ (`node -v`) — the server runs via `npx -y axe-mcp-server`
+> - `AXE_API_KEY` exported in the shell that started the agent
+> - Pinned Chromium installed: `npx playwright@$(npm view axe-mcp-server dependencies.playwright) install chromium`
+> - Plugin reinstalled / session restarted after setup
 
-Then STOP.
+Then STOP. If `analyze` later returns `Chromium is not installed`, give the user the Chromium command above and STOP.
 
 ## 3. Resolve URL for axe
 
-The axe MCP Server runs inside Docker. URLs must be reachable from the container.
+The axe MCP Server runs on the same machine as the agent, so pass `localhost` URLs unchanged — never rewrite the host.
 
 ### Local AEM (`localhost`)
-
-Replace `localhost` with `host.docker.internal` in the URL passed to axe — inside Docker, `localhost` is the container itself:
-
-| User provides | Pass to axe |
-|---------------|-------------|
-| `http://localhost:4502/...` | `http://host.docker.internal:4502/...` |
-| `http://admin:admin@localhost:4502/...` | `http://admin:admin@host.docker.internal:4502/...` |
 
 If the URL has no credentials and the host is `localhost:4502`, embed `admin:admin` (AEM default local credentials):
 
 ```
-http://admin:admin@host.docker.internal:4502/content/...?wcmmode=disabled
+http://admin:admin@localhost:4502/content/...?wcmmode=disabled
 ```
 
 ### Remote AEM (QA / Stage)
@@ -77,7 +73,7 @@ Many AEM pages render content client-side (Handlebars templates, lazy-loaded com
 **Before running axe analyze**, use Playwright MCP to check if the page has rendered:
 
 1. Try calling Playwright MCP tools directly first (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing
-2. Navigate to the URL (use the original URL with `localhost`, not the Docker-rewritten one)
+2. Navigate to the URL
 3. Wait up to 15s for meaningful content:
    ```
    mcp__plugin_dx-aem_playwright__browser_evaluate
@@ -94,7 +90,7 @@ Many AEM pages render content client-side (Handlebars templates, lazy-loaded com
 
 ## 5. Analysis Phase
 
-Run the `analyze` tool with the resolved URL (Docker-safe):
+Run the `analyze` tool with the resolved URL:
 
 ```
 axe_mcp_server__analyze
@@ -125,16 +121,19 @@ If zero violations → print "No accessibility violations found." and STOP.
 
 ## 6. Remediation Phase
 
-For **each violation** found in the analysis, call the `remediate` tool:
+Send every analyze issue to `remediate` in a single request, listed under `issues` (max 25 per request — split larger sets). Map each analyze issue's fields:
 
 ```
 axe_mcp_server__remediate
-  ruleId: "<rule-id>"
-  element: "<affected HTML element or selector>"
-  description: "<issue description>"
+  issues:
+    - id: "<rule>-<n>"            # unique within the call, e.g. "color-contrast-0"
+      rule: "<issue.rule>"
+      elementHtml: "<issue.source>"
+      remediation: "<issue.summary> — <issue.description>. <issue.helpText>"
+      pageUrl: "<pageUrl from the analyze response>"
 ```
 
-Collect the remediation guidance for each violation. Print the guidance:
+Results come back per `id` with `status: ok | error`. Remediation consumes Deque AI credits; if an issue returns `error`, report it and continue with the rest. Print the guidance:
 
 ```markdown
 ### Remediation Guidance
@@ -227,5 +226,5 @@ If `$SPEC_DIR` exists, save the report as `$SPEC_DIR/a11y-report.md` with:
 - **NEVER** manually guess accessibility fixes without consulting the remediate tool
 - **ALWAYS** use `analyze` → `remediate` → fix → `analyze` workflow
 - **ALWAYS** re-run analysis after fixes to verify
-- **ALWAYS** rewrite `localhost` → `host.docker.internal` for URLs passed to axe
+- **NEVER** call the deprecated `igt` tool — use `analyze` with `igtTools` if guided tests are needed
 - If axe MCP Server is unavailable, do NOT fall back to manual a11y checking — inform the user and stop
