@@ -795,6 +795,25 @@ if [ -n "$SHELL_RC" ]; then
 fi
 ```
 
+**`CLAUDE_PLUGIN_ROOT` for Copilot CLI.** Skills run plugin scripts as `bash "${CLAUDE_PLUGIN_ROOT}/…"`. Claude Code substitutes that path into the skill text; Copilot CLI substitutes nothing and does not set the variable in its shell, so the commands fail there unless the user's shell exports it. Copilot installs plugins at a path with no version in it, so one export of the dx-core root covers every update. Add it idempotently when Copilot has dx-core installed:
+
+```bash
+CP_DX=$(ls -d "${COPILOT_HOME:-$HOME/.copilot}"/installed-plugins/*/dx-core 2>/dev/null | head -1)
+if [ -n "$SHELL_RC" ] && [ -n "$CP_DX" ]; then
+  for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zprofile"; do
+    [ -f "$rc" ] || continue
+    if grep -qE "^[[:space:]]*(export[[:space:]]+)?CLAUDE_PLUGIN_ROOT=" "$rc"; then
+      grep -vE "^[[:space:]]*(export[[:space:]]+)?CLAUDE_PLUGIN_ROOT=" "$rc" > "$rc.dx-tmp" && cat "$rc.dx-tmp" > "$rc"
+      rm -f "$rc.dx-tmp"
+    fi
+  done
+  echo "export CLAUDE_PLUGIN_ROOT=\"$CP_DX\"" >> "$SHELL_RC"
+  echo "CLAUDE_PLUGIN_ROOT set to $CP_DX for Copilot CLI — restart your shell or run: source $SHELL_RC"
+fi
+```
+
+It does not affect Claude Code: Claude substitutes `${CLAUDE_PLUGIN_ROOT}` in skill text before a command runs, and sets the variable itself for hooks.
+
 Only run this if Copilot CLI is installed (`command -v copilot >/dev/null || gh copilot --version >/dev/null 2>&1` — the CLI ships as its own `copilot` binary; `gh copilot` is only a launcher). In `copilot -p` runs in an untrusted folder, without `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS=true` `.github/hooks/hooks.json` is silently ignored, and without `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP=true` project `.mcp.json` is silently ignored.
 
 ## 10. Confirm

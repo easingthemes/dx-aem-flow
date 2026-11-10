@@ -45,6 +45,15 @@ import { stats } from '../../config/stats';
     All env vars from the <a href={`${import.meta.env.BASE_URL}/setup/`}>Setup page</a> must be in your shell profile.
     If you previously set them in <code>.claude/settings.local.json</code>, add them to your shell profile too.
   </p>
+
+  <HighlightBox severity="warning" title="Export CLAUDE_PLUGIN_ROOT for dx skill scripts">
+    dx skills run plugin scripts as <code>{'bash "${CLAUDE_PLUGIN_ROOT}/…"'}</code> (progress tracking, the preflight and
+    resume steps of <code>/dx-bug-all</code> and <code>/dx-simple</code>). Claude Code fills in that path itself; Copilot CLI
+    does not, and leaves the variable empty in its shell. Point it at the dx-core plugin once — Copilot's install path
+    has no version in it, so it survives updates:
+    <pre class="mt-2 text-xs">export CLAUDE_PLUGIN_ROOT="$HOME/.copilot/installed-plugins/&lt;marketplace&gt;/dx-core"</pre>
+    <code>/dx-init</code> adds this line for you when it finds dx-core installed in Copilot, and <code>/dx-doctor</code> checks it.
+  </HighlightBox>
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}

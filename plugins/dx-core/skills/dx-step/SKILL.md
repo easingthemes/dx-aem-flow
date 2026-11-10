@@ -30,7 +30,7 @@ Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). 
 
 ```bash
 DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="Pipeline Progress" \
-  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<n>: <title>" "<status>"
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<n>: <title>" "<status>"
 ```
 
 The row key is `<n>: <title>` — the step number and title exactly as they appear

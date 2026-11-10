@@ -27,7 +27,7 @@ crashed run.
 - **Write it with the shared script**, so every skill produces the same table:
   ```bash
   DX_PROGRESS_FILE="dev-all-progress.md" DX_PROGRESS_TITLE="/dx-agent-all Progress" \
-    bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
+    bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "Planning" "in_progress"
   ```
   Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` ·
   `blocked`. One row per phase, updated in place — never append a second row
