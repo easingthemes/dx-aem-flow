@@ -25,7 +25,7 @@ If `PIPELINE_MODE` is `true`, follow **Pipeline mode** below and ignore the Loca
 Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). `bug-progress.md` is the source of truth — write a row at every step transition for (1) Triage bug, (2) Verify reproduction, (3) Fix bug:
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/update-progress.sh "$SPEC_DIR" "triage" "in_progress"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/update-progress.sh "$SPEC_DIR" "triage" "in_progress"
 ```
 
 If `TaskCreate` is in this session's tool list, mirror the same three steps into tasks for a live checklist (`TaskList` first to cancel stale tasks from an interrupted run). If it is absent (the default on Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 and newer), skip that silently and rely on the file. Never block a step transition on a task tool being present.
@@ -118,7 +118,7 @@ MAX_ATTEMPTS=$(bash .ai/lib/dx-common.sh yaml-val 'dx-bug-all.recovery.max-attem
 ## Pre-flight (HARD GATE)
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/preflight.sh
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/preflight.sh
 ```
 
 If it exits non-zero, **STOP**: post the stderr to ADO (`mcp__ado__wit_work_item_comment_write`, `action: "add"`, stderr as `text`), touch `.ai/run-context/ado-comment-posted.flag`, exit non-zero. No other action.
@@ -212,7 +212,7 @@ digraph bug_all_pipeline {
 ### Phase 0: resume-check dispatch
 
 ```bash
-RC=$(bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/resume-check.sh "$TICKET_ID")
+RC=$(bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/resume-check.sh "$TICKET_ID")
 val() { sed -n "s/^$1=//p" <<<"$RC" | head -1; }
 DISPATCH=$(val DISPATCH); BRANCH=$(val BRANCH); SPEC_DIR=$(val SPEC_DIR)
 STATUS=$(val STATUS); RE_ENTER_STEP=$(val RE_ENTER_STEP)
@@ -238,7 +238,7 @@ MAX_ATTEMPTS=$(val MAX_ATTEMPTS)
 ```bash
 SPEC_DIR=$(ls -d .ai/specs/${TICKET_ID}-*/ 2>/dev/null | head -1); SPEC_DIR="${SPEC_DIR%/}"
 sed "s/{TICKET}/$TICKET_ID/" \
-    "$CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/templates/resume-state.json.tmpl" \
+    "${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/templates/resume-state.json.tmpl" \
     > "$SPEC_DIR/resume-state.json"
 ```
 (`orchestrating.flag` was already touched in Pre-flight.) On a resume dispatch `resume-state.json` already exists on the branch — read it, do not re-init.
@@ -250,8 +250,8 @@ sed "s/{TICKET}/$TICKET_ID/" \
 ### Checkpoint triage
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/update-progress.sh "$SPEC_DIR" "triage" "done" "<component>"
-bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "triage"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/update-progress.sh "$SPEC_DIR" "triage" "done" "<component>"
+bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "triage"
 ```
 If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is in flight; do not force-push.
 
@@ -274,7 +274,7 @@ If `save-state.sh` exits 3 (`BRANCH-ADVANCED`), STOP — a concurrent resume is 
 4. Mark terminal + final checkpoint:
    ```bash
    jq '.status="done"' "$SPEC_DIR/resume-state.json" > "$SPEC_DIR/.rs.tmp" && mv "$SPEC_DIR/.rs.tmp" "$SPEC_DIR/resume-state.json"
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "finalize"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "finalize"
    rm -f .ai/run-context/orchestrating.flag
    ```
 
@@ -297,7 +297,7 @@ To reopen: record `USER_INPUT` verbatim in `followup.md`; seed `status="in-progr
 2. **Write the failure `report.md`** (`verified: false`, failing step marked, Recovery section using `@<keyword>`).
 3. **Persist state — commit + push:**
    ```bash
-   bash $CLAUDE_PLUGIN_ROOT/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "$BLOCKED_AT_STEP"
+   bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-bug-all/scripts/save-state.sh "$SPEC_DIR" "$BLOCKED_AT_STEP"
    ```
    (Exit 3 = `BRANCH-ADVANCED` → concurrent resume; stop.)
 4. **Discard uncommitted source edits** (spec files are committed and survive; the fix re-runs on resume):

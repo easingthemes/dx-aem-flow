@@ -33,7 +33,7 @@ Follow `.ai/rules/task-progress.md` (plugin default: `rules/task-progress.md`). 
 
 ```bash
 DX_PROGRESS_FILE="figma-progress.md" DX_PROGRESS_TITLE="/dx-figma-all Progress" \
-  bash "$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh" "$SPEC_DIR" "<item>" "<status>"
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<item>" "<status>"
 ```
 
 Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` · `blocked`. One row per item, updated in place.
