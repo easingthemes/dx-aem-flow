@@ -1,3 +1,10 @@
+## [3.12.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.12.0...v3.12.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* drop agent frontmatter Claude Code ignores on plugin agents ([#245](https://github.com/easingthemes/dx-aem-flow/issues/245)) ([0a1b393](https://github.com/easingthemes/dx-aem-flow/commit/0a1b3934b162fed02a3614c994348614a6e4809d))
+
 # [3.12.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.11.0...v3.12.0) (2026-11-10)
 
 
