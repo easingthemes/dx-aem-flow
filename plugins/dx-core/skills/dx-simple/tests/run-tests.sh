@@ -177,16 +177,24 @@ run "progress: file now has 2 phase rows" \
 TMPCONC="$TMP/8888888-conc"
 mkdir -p "$TMPCONC"
 run "progress: 25 concurrent writers keep every row" bash -c '
+  errs="'"$TMP"'/conc-writers.err"
   for i in $(seq 1 25); do
-    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC"'" "Phase $i" done "n$i" >/dev/null 2>&1 &
+    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPCONC"'" "Phase $i" done "n$i" >/dev/null 2>>"$errs" &
   done
   wait
   f="'"$TMPCONC"'/simple-progress.md"
   rows=$(grep -cE "^\| Phase [0-9]+ \| done \|" "$f")
   hdr=$(grep -cE "^\| Phase \| Status \| Note \|" "$f")
   torn=$(grep -vcE "^(\||#|$)" "$f")
-  [ "$rows" = 25 ] && [ "$hdr" = 1 ] && [ "$torn" = 0 ]
+  [ "$rows" = 25 ] && [ "$hdr" = 1 ] && [ "$torn" = 0 ] && exit 0
+  # Evidence for a CI-only failure (seen on ubuntu-26.04 only): counts, the file,
+  # what the writers said, and which mkdir/mv/find answered.
+  echo "rows=$rows hdr=$hdr torn=$torn"; cat "$f"
+  grep -v "^OK:" "$errs" | sort | uniq -c
+  for t in mkdir mv find; do $t --version 2>&1 | head -1; done
+  exit 1
 '
+rm -f "$TMP/conc-writers.err"
 
 run "progress: concurrent run leaves no lock or temp files behind" \
   bash -c "test \$(ls -a $TMPCONC | grep -vE '^\.\.?$|^simple-progress\.md$' | wc -l) -eq 0"
