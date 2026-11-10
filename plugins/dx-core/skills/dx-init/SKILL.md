@@ -748,7 +748,7 @@ mkdir -p .github/hooks
 
 If `.github/hooks/hooks.json` does not exist, copy `templates/hooks/branch-guard-hooks.json.template` to it. The template has exactly two entries:
 - **PreToolUse** (`Bash|bash|shell|execute`) — inline branch guard: reads the tool call from stdin, and on `git commit` while on main/master/develop/development prints a reason and exits **2** (the only exit code that blocks)
-- **agentStop** — runs `.claude/hooks/stop-guard.sh` via `${CLAUDE_PROJECT_DIR:-$PWD}` if it exists
+- **agentStop** — runs `.claude/hooks/stop-guard.sh` via `${CLAUDE_PROJECT_DIR:-$PWD}` if it exists — written as a flat Copilot handler (`{"type": "command", "bash": …}`), the form VS Code's hooks schema expects for this Copilot-native event
 
 **No `"ask"` decision.** Copilot `preToolUse` hooks can return `"ask"` (v1.0.83+) to request confirmation instead of blocking. Not adopted: the branch guard must stay a hard block, and dx has no advisory pre-tool guard that would use it. A personal `~/.copilot/hooks/` layer may also exist on the developer's machine; it runs alongside these and the plugin's hooks.
 
