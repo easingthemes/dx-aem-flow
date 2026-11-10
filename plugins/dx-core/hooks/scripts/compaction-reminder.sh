@@ -7,8 +7,8 @@
 
 # Guard: only count real Edit/Write tool calls. Claude Code and Copilot CLI
 # (v1.0.63+) honor the hook matcher; this is defense-in-depth for older Copilot
-# builds. Copilot CLI never sets CLAUDE_TOOL_NAME (verified v1.0.108), so fall
-# back to the `tool_name` field of the hook's stdin JSON.
+# builds. Neither Claude Code (v2.1.322) nor Copilot CLI (v1.0.108) sets
+# CLAUDE_TOOL_NAME; read the `tool_name` field of the hook's stdin JSON.
 TOOL_NAME="${CLAUDE_TOOL_NAME:-}"
 if [ -z "$TOOL_NAME" ] && [ ! -t 0 ]; then
     TOOL_NAME="$(sed -n 's/.*"tool_name" *: *"\([^"]*\)".*/\1/p' | head -1 || true)"

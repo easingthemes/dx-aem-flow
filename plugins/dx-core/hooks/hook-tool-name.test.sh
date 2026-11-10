@@ -43,5 +43,24 @@ check "screenshot: stdin Edit ignored"  no  "$(shot '' '{"hook_event_name":"Post
 check "screenshot: stdin other tool"    no  "$(shot '' '{"tool_name":"Write"}')"
 check "screenshot: no tool name"        no  "$(shot '' '')"
 
+# Inline hooks.json commands: neither platform sets CLAUDE_TOOL_NAME or
+# CLAUDE_TOOL_ARG_* (Claude Code v2.1.322, Copilot v1.0.108), so they must not depend on them.
+HOOKS="$HERE/hooks.json"
+check "hooks.json: no CLAUDE_TOOL_* env" 0 "$(grep -c 'CLAUDE_TOOL_' "$HOOKS")"
+
+# validate-plugin-edit hook reads file_path from stdin and blocks (exit 2) on broken JSON.
+VCMD="$(python3 -c 'import json,sys
+for e in json.load(open(sys.argv[1]))["hooks"]["PostToolUse"]:
+    for h in e["hooks"]:
+        if "validate-plugin-edit" in h["command"]: print(h["command"])' "$HOOKS")"
+vedit() { # vedit <file content> → exit code of the hook
+  local d="$TMP/v-$RANDOM"; mkdir -p "$d/.claude-plugin"; printf '%s' "$1" > "$d/.claude-plugin/plugin.json"
+  printf '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{"file_path":"%s"}}' "$d/.claude-plugin/plugin.json" \
+    | env -u CLAUDE_TOOL_NAME -u CLAUDE_TOOL_ARG_file_path CLAUDE_PLUGIN_ROOT="$REPO/plugins/dx-core" bash -c "$VCMD" >/dev/null 2>&1
+  echo $?
+}
+check "validate-plugin-edit: broken JSON blocks" 2 "$(vedit '{"name": "p",}')"
+check "validate-plugin-edit: valid JSON passes"  0 "$(vedit '{"name": "p"}')"
+
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
