@@ -1,6 +1,7 @@
 ---
 name: dx-figma-components
 description: Analyzes Figma extraction to identify UI building blocks (buttons, images, cards, forms, etc.) and searches the codebase for existing components that can be reused. Used by dx-figma-prototype.
+include-custom-instructions: true
 tools: Read, Glob, Grep
 model: haiku
 user-invocable: false

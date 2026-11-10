@@ -1,6 +1,7 @@
 ---
 name: DxPRReview
 description: Review Azure DevOps pull requests — fetch PR details, analyze code changes, post file-level comments, and approve or request changes. Use when reviewing an ADO PR, checking active PRs for a repo, or batch-reviewing team pull requests.
+include-custom-instructions: true
 argument-hint: "<PR URL | Repo URL | PR ID> [count]"
 tools:
   - read

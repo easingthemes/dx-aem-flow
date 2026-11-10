@@ -1,6 +1,7 @@
 ---
 name: dx-doc-searcher
 description: Searches .ai/ index and reference files to look up components, architecture patterns, and feature context. Avoids expensive MCP calls. Used by dx-help, dx-ticket-analyze, and component lookup skills.
+include-custom-instructions: true
 tools: Glob, Grep, Read
 model: haiku
 user-invocable: false

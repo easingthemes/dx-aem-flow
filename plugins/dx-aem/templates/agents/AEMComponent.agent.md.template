@@ -1,6 +1,7 @@
 ---
 name: AEMComponent
 description: Find all source files, AEM pages, and dialog fields for an AEM component. Use when asking "where is component X?", "what files for hero?", or any component lookup question.
+include-custom-instructions: true
 argument-hint: "<component name (e.g., hero, banner, accordion)>"
 tools:
   - read

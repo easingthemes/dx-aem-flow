@@ -1,6 +1,7 @@
 ---
 name: dx-pr-reviewer
 description: Reviews a single ADO pull request — fetches diff, loads project conventions, analyzes code changes, and returns structured findings with severity and line-level comments. Does NOT post to ADO — returns findings for user approval. Used by review and reviews skills.
+include-custom-instructions: true
 tools: Read, Glob, Grep, Bash
 model: sonnet
 memory: project

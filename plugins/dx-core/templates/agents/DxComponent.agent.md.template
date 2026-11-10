@@ -1,6 +1,7 @@
 ---
 name: DxComponent
 description: Find all source files for a component or module across the project. Returns file paths grouped by category. Use when asking "where is component X?", "what files for hero?", or any component lookup question.
+include-custom-instructions: true
 argument-hint: "<component name>"
 tools:
   - read
