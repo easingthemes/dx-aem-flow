@@ -1,3 +1,10 @@
+# [3.12.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.11.0...v3.12.0) (2026-11-10)
+
+
+### Features
+
+* **dx-core:** run axe MCP server via npx instead of Docker ([#244](https://github.com/easingthemes/dx-aem-flow/issues/244)) ([1b26845](https://github.com/easingthemes/dx-aem-flow/commit/1b268454c11697fae14b40e1699941b27ecd6d46))
+
 # [3.11.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.10.4...v3.11.0) (2026-10-30)
 
 
