@@ -348,3 +348,10 @@ Closes the gap left by row H/21 above (one-shot `-p` put the marker in the same 
 **Scope:** `website/src/`, `plugins/*/templates/` (Copilot instructions, `.github/agents`), `plugins/dx-core/hooks/scripts/next-step.sh` and other hook hints, skill bodies that tell the user "run `/dx-…`" — 30 files under `website/src`, `plugins/*/templates` and hook scripts contain a bare `` `/dx-`` reference today.
 **Done-when:** this section records whether Claude Code also accepts `/dx-core:dx-*` (one interactive check), AND the Copilot install/usage page on the website states the prefixed form, AND `next-step.sh` hints print a form that works on both harnesses.
 **Approach:** if both harnesses accept `/<plugin>:<skill>`, print that everywhere user-facing (one form, no per-harness branch). Otherwise document both forms on the Copilot page. Decide together with TODO-12.
+
+### Re-reading row H (2026-11-10) — not enough to close issues #19, #20, #22
+
+Checked before closing the three issues. None of them can be closed on row H alone:
+- **#19 `handoffs:`** — row E has Copilot warn that `handoffs` is an *unknown field*, and the H/19 run printed that warning too. The worker token came back because the model delegated on its own, as the prompt told it to; the field did nothing. The issue is worse than its title: the field is not parsed at all.
+- **#22 `agent:`** — every skill that sets `agent:` (6, all in dx-aem) also sets `context: fork`. In Claude Code `agent:` only picks the subagent type of the fork. Since `context: fork` is ignored on v1.0.109 (above), the harness cannot route to the agent. The H/22 token proves the model reached the agent, not that the frontmatter did. Model tier and tool allowlist were not checked.
+- **#20 subagent → skill** — the most likely to be fixed, but H/20 did not tell a real skill invocation from the subagent reading `SKILL.md` as a file. That file read is the failure the issue describes. Needs one run that shows the tool the subagent called.
