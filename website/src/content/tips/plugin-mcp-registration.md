@@ -20,7 +20,7 @@ keyPoints:
     - AEM (stdio) — JCR content queries and component inspection
     - Playwright (stdio) — browser automation and screenshots
     - Figma (HTTP) — design extraction and token mapping
-    - axe (Docker) — accessibility testing and compliance
+    - axe (stdio, npx) — accessibility testing and compliance
 actionItems:
   - |
     **Always use the full prefix in skills and agents**

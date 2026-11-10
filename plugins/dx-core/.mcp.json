@@ -1,16 +1,9 @@
 {
   "mcpServers": {
     "axe-mcp-server": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--add-host=host.docker.internal:host-gateway",
-        "-i",
-        "--rm",
-        "-e",
-        "AXE_API_KEY",
-        "dequesystems/axe-mcp-server:latest"
-      ]
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "axe-mcp-server"]
     },
     "figma": {
       "type": "http",
