@@ -518,7 +518,7 @@ reset_fixture
 write_skill "dx-colon" <<'SKILL'
 ---
 name: dx-colon
-description: Produce an estimate. Batch mode: space-separated IDs.
+description: Produce an estimate. Bulk mode: space-separated IDs.
 argument-hint: "<id> — quoted: fine"
 ---
 SKILL
