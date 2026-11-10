@@ -1,6 +1,7 @@
 ---
 name: DxPRAnswer
 description: Answer open comments on your ADO pull requests. Researches codebase context, drafts replies, categorizes each thread (agree-will-fix, question, disagree, skip), and posts approved answers. Use when you want to respond to PR review feedback.
+include-custom-instructions: true
 argument-hint: "<PR URL | count | PR ID>"
 tools:
   - read

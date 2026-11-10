@@ -1,6 +1,7 @@
 ---
 name: AEMBefore
 description: Snapshot a component's AEM state before development — dialog fields, properties, and pages where it's used. Saves baseline to specs for later comparison. Use before starting implementation on a component.
+include-custom-instructions: true
 argument-hint: "<component-name> (e.g., hero, banner, card)"
 tools:
   - read

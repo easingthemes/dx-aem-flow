@@ -1,6 +1,7 @@
 ---
 name: DxHelp
 description: Answer developer questions about project architecture, components, patterns, and workflows. Searches .ai/ index files and project docs. Use for general project questions.
+include-custom-instructions: true
 argument-hint: "<question>"
 tools:
   - read

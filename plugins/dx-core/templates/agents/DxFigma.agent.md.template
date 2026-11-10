@@ -1,6 +1,7 @@
 ---
 name: DxFigma
 description: Figma design-to-code workflow — extract design context and tokens, generate HTML/CSS prototype, and verify against Figma reference. Use when a story has a Figma URL and you want to turn a design into a verified prototype before planning.
+include-custom-instructions: true
 argument-hint: "<ADO Work Item ID or Figma URL>"
 tools:
   - read

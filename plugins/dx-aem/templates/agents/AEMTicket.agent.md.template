@@ -1,6 +1,7 @@
 ---
 name: AEMTicket
 description: Research an ADO ticket with AEM project enrichment — find source files across repos, AEM pages, market scope, and design assets. Use when a developer pastes an ADO URL or mentions a work item ID.
+include-custom-instructions: true
 argument-hint: "<ADO URL or work item ID>"
 tools:
   - read

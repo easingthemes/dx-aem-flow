@@ -1,6 +1,7 @@
 ---
 name: AEMVerify
 description: Verify a bug on AEM — navigate to pages, reproduce the issue via Playwright, capture screenshot evidence. Use when verifying AEM-related bugs before fixing.
+include-custom-instructions: true
 argument-hint: "<component-name or repro URL>"
 tools:
   - read
