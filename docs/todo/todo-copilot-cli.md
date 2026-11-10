@@ -85,6 +85,12 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Evidence:** `internal/learnings/2026-03-22-cross-platform-gap-tracker.md` GAP 6; release notes for v1.0.18, v1.0.35, v1.0.36.
 **Status update 2026-07-01:** Still not ported — `.github/hooks/hooks.json` does not exist, so Copilot CLI users get zero harness safety (no branch guard, next-step hints, or workflow-state tracking). Single biggest driver of the Copilot CLI score (6.5/10) in the July re-rating. Env-var precondition (#97/#98) already satisfied, so this is now the top unblocked Copilot fix. See [2026-07-01-plugin-eval-claude-copilot.md](../research/2026-07-01-plugin-eval-claude-copilot.md).
 
+**Re-check 2026-11-10 (static, not on Copilot):** the Done-when grep counts event names; it cannot tell whether the hooks run. Three problems:
+1. `dx-scaffold.js` does not write `.github/hooks/` at all. Only `/dx-init` step 9i copies `templates/hooks/branch-guard-hooks.json.template`, so the Done-when has no file to check in a scaffolded project.
+2. The template's SessionStart (`session-start.sh`, `next-step.sh`) and PostToolUse (`validate-plugin-edit.sh`) commands resolve their scripts through `${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}`. Copilot sets those variables for **plugin** hooks (v1.0.26). Nothing we have says it sets them for **repo** hooks in `.github/hooks/`. With all three unset, the command is `bash "/hooks/scripts/session-start.sh"` → exit 127 (reproduced locally). Likely broken on Copilot; one interactive check settles it.
+3. Copilot already reads the plugin's own `hooks/hooks.json` (CLAUDE.md § Hook System). The branch guard and Stop guard in the `.github/hooks/` copy therefore probably fire twice. That is harmless for a guard, but it doubles the work and noise of every non-guard hook.
+Before marking this done: on Copilot, record whether `PLUGIN_ROOT` is set inside a `.github/hooks` command, and whether a plugin `Stop` hook fires as `agentStop`. If plugin hooks already cover Copilot, the `.github/hooks/` copy may only need the `-p` untrusted-folder case.
+
 ## Prompt-Mode Gates v1.0.40
 
 **Added:** 2026-05-01
