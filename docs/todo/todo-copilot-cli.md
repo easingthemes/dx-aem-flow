@@ -367,3 +367,11 @@ Checked before closing the three issues. None of them can be closed on row H alo
 ### Issue #20 re-test 2026-11-10, Copilot CLI v1.0.109 interactive
 
 Prompt: `Use a subagent (task tool) for this. The subagent must invoke the dx-core:dx-help skill with the question "what is the spec directory convention?" and return its answer. Do not read SKILL.md files.` UI tree: `General-purpose` subagent → `skill(dx-core:dx-help)` → nested `dx-core:dx-doc-searcher` subagent. **#20 passes:** a subagent invokes a plugin skill through the skill tool (not a file read), and the nesting goes 2 levels deep (the issue says 1 max). **Side finding for #22:** `dx-doc-searcher` sets `model: haiku`, yet the UI shows it running on the session's Opus model. The agent's model tier did not apply.
+
+### Repo-hook env re-test 2026-11-10, Copilot CLI v1.0.109 interactive
+
+A `sessionStart` probe in `.github/hooks/zz-probe.json` ran `env | grep -iE "plugin_root|claude_project_dir|copilot_plugin"`. Output: only `CLAUDE_PROJECT_DIR=<project root>`. **`PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT` and `CLAUDE_PLUGIN_ROOT` are not set for repo hooks.** In `templates/hooks/branch-guard-hooks.json.template`:
+- `session-start.sh`, `next-step.sh` (SessionStart) and `validate-plugin-edit.sh` (PostToolUse) run as `bash "/hooks/scripts/…"` and fail with exit 127 in every project where `/dx-init` 9i installed the file;
+- the inline branch guard and the `agentStop` guard (it uses `${CLAUDE_PROJECT_DIR:-$PWD}`) work, but they duplicate the plugin's own hooks.
+
+The Copilot **cloud coding agent** ignores plugins and reads only `.github/hooks/`. That is the one consumer the repo copy is still for, and every command in it has to be self-contained (no plugin path).
