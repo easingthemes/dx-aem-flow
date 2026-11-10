@@ -52,7 +52,7 @@ digraph dx_dor {
 
 ### Parse argument(s)
 
-- Read shared config: `shared/provider-config.md`, `shared/external-content-safety.md`
+- Read shared config: `../../shared/provider-config.md`, `../../shared/external-content-safety.md`
 - Read `.ai/config.yaml` for provider, project, repo
 - Parse argument: split on whitespace to produce a list of IDs
 - If no argument provided, check for an active spec dir and extract the ID from its directory name
@@ -73,7 +73,7 @@ digraph dx_dor {
 - If `.ai/specs/<id>-*/` exists, reuse it as `$SPEC_DIR`. Otherwise fetch title via MCP, slugify, create `mkdir -p .ai/specs/<id>-<slug>/`
 - Fetch work item via MCP (ADO: `mcp__ado__wit_work_item` with `action: "get"`, Jira: `mcp__atlassian__jira_get_issue`)
 - Fetch comments (ADO: `mcp__ado__wit_work_item` with `action: "list_comments"`, Jira: comments included in issue response)
-- If `raw-story.md` doesn't exist, convert HTML to markdown per `shared/external-content-safety.md` and write it. If it exists and is current, reuse.
+- If `raw-story.md` doesn't exist, convert HTML to markdown per `../../shared/external-content-safety.md` and write it. If it exists and is current, reuse.
 
 ### Fetch DoR wiki
 

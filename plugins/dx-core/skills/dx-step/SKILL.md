@@ -118,7 +118,7 @@ Read `implement.md` from `$SPEC_DIR`.
 
 ### Hub mode check
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Determine which repo owns this step:
@@ -211,7 +211,7 @@ Implement the changes:
 
 If the step has a `Test:` line and `superpowers:test-driven-development` is available, invoke it to guide the RED-GREEN-REFACTOR cycle.
 
-**Fallback (if superpowers not installed):** Follow the Red-Green-Refactor cycle from `shared/testing-patterns.md`:
+**Fallback (if superpowers not installed):** Follow the Red-Green-Refactor cycle from `../../shared/testing-patterns.md`:
 1. **RED:** Write/locate the test first. Run it — confirm it fails (proves the test validates something).
 2. **GREEN:** Write the minimal implementation to pass the test. No extras (YAGNI).
 3. **REFACTOR:** Clean up only after green — duplication, naming, structure — while staying green.
@@ -233,7 +233,7 @@ Otherwise: use whatever compile/typecheck command is configured.
 
 ### Classify error
 
-Classify the error against the taxonomy in `shared/error-handling.md`:
+Classify the error against the taxonomy in `../../shared/error-handling.md`:
 - **TRANSIENT** → go to "TRANSIENT: Retry"
 - **VALIDATION** → go to "VALIDATION: Auto-fix"
 - **PERMANENT** → go to "Mark blocked + present summary"
@@ -293,7 +293,7 @@ Verdict: APPROVED, APPROVED WITH NOTES, or CHANGES REQUESTED.
 
 ### Stage and commit
 
-**Before anything else**, read `shared/git-rules.md` — all git/SCM conventions.
+**Before anything else**, read `../../shared/git-rules.md` — all git/SCM conventions.
 
 **Branch check:** Verify on `feature/*` or `bugfix/*` branch. If not, run `bash .ai/lib/ensure-feature-branch.sh $SPEC_DIR`.
 
@@ -464,7 +464,7 @@ Common excuses for cutting corners during step execution — and why they're wro
 - **Tests are mandatory** — never mark a step done without running tests.
 - **Review is mandatory** — never mark a step done without reviewing against the plan.
 - **Commit is mandatory** — never mark a step done without committing changes.
-- **Follow git-rules.md** — read `shared/git-rules.md` before committing. Stage specifically, never `git add -A`.
+- **Follow git-rules.md** — read `../../shared/git-rules.md` before committing. Stage specifically, never `git add -A`.
 - **No empty commits** — if nothing to stage, report and mark blocked.
 
 ## Return

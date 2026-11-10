@@ -17,7 +17,7 @@ Read `.ai/automation/agents/roles/dev-agent.yaml` for your role definition. Key 
 
 ## Hub Mode Check
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `.ai/config.yaml` → `repos:` list

@@ -186,7 +186,7 @@ Do not proceed to any further sections. The user must fix the other repo first.
 
 ### Execute step cycle (step - test - review - fix)
 
-For each pending step in implement.md, run the step-test-review-fix cycle. Before the first step, mark the step loop active, so the workers drop their "run X next" hints addressed to a human (`shared/orchestration-check.md` § Step-loop marker). Remove it at "All steps done?" → yes and at "STOP: Human intervention needed":
+For each pending step in implement.md, run the step-test-review-fix cycle. Before the first step, mark the step loop active, so the workers drop their "run X next" hints addressed to a human (`../../shared/orchestration-check.md` § Step-loop marker). Remove it at "All steps done?" → yes and at "STOP: Human intervention needed":
 
 ```bash
 mkdir -p .ai/run-context && echo "$SPEC_DIR" > .ai/run-context/step-loop.flag   # rm -f on exit

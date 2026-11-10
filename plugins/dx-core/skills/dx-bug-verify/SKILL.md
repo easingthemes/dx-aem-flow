@@ -7,7 +7,7 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and tool mapping.
+Read `../../shared/provider-config.md` for provider detection and tool mapping.
 
 Read `.ai/config.yaml`:
 - `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`
@@ -482,7 +482,7 @@ Save to `$OUTPUT_FILE` (`verification.md` for `before`, `verification-local.md` 
 
 ### Post comment
 
-Read `shared/ado-config.md` for ADO project (or `shared/provider-config.md` for Jira).
+Read `../../shared/ado-config.md` for ADO project (or `../../shared/provider-config.md` for Jira).
 
 Use `mcp__ado__wit_work_item_comment_write` with `action: "add"` to post the result (comment body goes in `text`). **Always pass `format: "Markdown"`** so ADO renders the comment correctly.
 

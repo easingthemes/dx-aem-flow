@@ -151,7 +151,7 @@ All phases in order (max 15):
 
 At the start, determine which optional phases will run and calculate the total. Update the total if a phase gets skipped mid-run (e.g., build failure skips review, commit, PR).
 
-**Progress file:** `.ai/specs/<id>-<slug>/dev-all-progress.md`, written via `shared/update-progress.sh` (see Progress Tracking). The script creates it on the first call. Shape:
+**Progress file:** `.ai/specs/<id>-<slug>/dev-all-progress.md`, written via `../../shared/update-progress.sh` (see Progress Tracking). The script creates it on the first call. Shape:
 
 ```markdown
 # Pipeline Progress — #<id>
@@ -350,11 +350,11 @@ This phase's only job is to **document** cross-repo scope so the hub's
 Do NOT write `delegate.json` or queue any pipeline — continue normally with the
 local implementation. If `DX_PIPELINE_MODE` is not set: skip this phase.
 
-Read `shared/repo-discovery.md` for the detection contract and the hub flow.
+Read `../../shared/repo-discovery.md` for the detection contract and the hub flow.
 
 ### Phase 1.5b: Hub Dispatch
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 **Skip this phase if:**
 - `DX_PIPELINE_MODE` is set (pipeline mode took precedence in Phase 1.5a)

@@ -7,7 +7,7 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and tool mapping.
+Read `../../shared/provider-config.md` for provider detection and tool mapping.
 
 Read `.ai/config.yaml`:
 - `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`
@@ -242,7 +242,7 @@ If `DX_PIPELINE_MODE` is set:
    repo aliases the work touches (the hub's `dx-discover-repos` tier 2 reads it).
 2. Do NOT write `delegate.json` or queue a pipeline — continue with local fixes.
 
-If `DX_PIPELINE_MODE` is not set: skip (local mode). See `shared/repo-discovery.md`.
+If `DX_PIPELINE_MODE` is not set: skip (local mode). See `../../shared/repo-discovery.md`.
 
 ### 8b. Categorize Failures
 

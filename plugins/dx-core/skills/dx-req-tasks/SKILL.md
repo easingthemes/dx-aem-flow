@@ -9,7 +9,7 @@ You create child Task work items under a parent User Story in Azure DevOps or Ji
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and field mapping.
+Read `../../shared/provider-config.md` for provider detection and field mapping.
 
 1. Read `.ai/config.yaml`
 2. Check `tracker.provider` (preferred) or `scm.provider` (legacy fallback):
@@ -37,7 +37,7 @@ If the user provides a URL, extract the ID/key from it. Supported formats:
 - ADO: `https://{org}.visualstudio.com/{project}/_workitems/edit/{id}`
 - Jira: `https://{instance}/browse/{KEY-123}`
 
-Input detection (see `shared/provider-config.md`):
+Input detection (see `../../shared/provider-config.md`):
 - Matches `/^[A-Z]+-\d+$/` → Jira issue key
 - Matches `/^\d+$/` → numeric ID; check `tracker.provider`
 - Contains `dev.azure.com` or `visualstudio.com` → ADO

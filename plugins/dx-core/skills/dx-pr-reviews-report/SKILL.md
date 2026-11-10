@@ -18,7 +18,7 @@ You generate review reports for multiple pull requests. By default, lists PRs wh
 
 ## Defaults
 
-Read `shared/ado-config.md` and `shared/provider-config.md` for how to look up project config from `.ai/config.yaml`.
+Read `../../shared/ado-config.md` and `../../shared/provider-config.md` for how to look up project config from `.ai/config.yaml`.
 
 - **Provider:** read from `.ai/config.yaml` `tracker.provider` — `ado` (default) or `jira`
 - **Organization:** read from `.ai/config.yaml` `scm.org` — NEVER hardcode

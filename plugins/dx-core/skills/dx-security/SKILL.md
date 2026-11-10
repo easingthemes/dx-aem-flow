@@ -25,7 +25,7 @@ git diff --name-only $BASE..HEAD
 find . -type f \( -name '*.js' -o -name '*.ts' -o -name '*.java' -o -name '*.py' -o -name '*.jsx' -o -name '*.tsx' -o -name '*.xml' -o -name '*.yaml' -o -name '*.yml' -o -name '*.json' \) | grep -v node_modules | grep -v target
 ```
 
-Read `shared/security-checklist.md` for the full checklist reference.
+Read `../../shared/security-checklist.md` for the full checklist reference.
 
 ## 2. Three-Tier Boundary System
 

@@ -71,7 +71,7 @@ The argument is the ADO work item ID — a numeric value (e.g., `2453532`). If t
 
 ### Hub dispatch?
 
-Read `shared/hub-dispatch.md`. Hub mode is active when: `DX_PIPELINE_MODE` is NOT set, `.ai/config.yaml` has `hub.enabled: true`, and the cwd is a `.hub/` directory. If active: print `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to repo terminals.` and STOP. Otherwise proceed to triage.
+Read `../../shared/hub-dispatch.md`. Hub mode is active when: `DX_PIPELINE_MODE` is NOT set, `.ai/config.yaml` has `hub.enabled: true`, and the cwd is a `.hub/` directory. If active: print `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to repo terminals.` and STOP. Otherwise proceed to triage.
 
 ### Dispatch triage / verify / fix
 

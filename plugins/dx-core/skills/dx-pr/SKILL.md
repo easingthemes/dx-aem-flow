@@ -12,14 +12,14 @@ You create a pull request for the completed implementation.
 Read `scm.provider` from `.ai/config.yaml` (missing means `ado`). Only `ado` is implemented: the steps below call the ADO MCP server (`mcp__ado__*`). If it is anything else (e.g. `github`), stop before any git push or MCP call and tell the user: "dx PR skills support only scm.provider: ado (found: <value>)."
 
 **Before anything else**, read these files:
-- `shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, PR creation, rebase)
+- `../../shared/git-rules.md` — all git/ADO conventions (base branch discovery, repo ID discovery, PR creation, rebase)
 - `.ai/config.yaml` — project config, SCM settings
 
 Follow every rule in `git-rules.md`. The steps below assume you have read it.
 
 ## Hub Mode Check
 
-Read `shared/hub-dispatch.md` for hub detection logic.
+Read `../../shared/hub-dispatch.md` for hub detection logic.
 
 If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
 1. Read `.ai/config.yaml` → `repos:` list
@@ -186,7 +186,7 @@ If `.ai/me.md` exists, uses the persona to shape the PR description text while m
 
 ## Rules
 
-- **Follow git-rules.md** — read `shared/git-rules.md` and follow all conventions.
+- **Follow git-rules.md** — read `../../shared/git-rules.md` and follow all conventions.
 - **All steps must be done** — never create a PR with incomplete steps
 - **ADO MCP only** — use `mcp__ado__repo_pull_request_write` (`action: "create"`), never `gh` CLI
 - **Auto-discover base branch and repo ID** — per git-rules.md, never hardcode

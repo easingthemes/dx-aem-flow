@@ -9,7 +9,7 @@ allowed-tools: ["read", "edit", "search", "write", "agent", "ado/*", "atlassian/
 
 ## Defaults
 
-Read `shared/provider-config.md` for provider detection and tool mapping.
+Read `../../shared/provider-config.md` for provider detection and tool mapping.
 
 Read `.ai/config.yaml`:
 - `tracker.provider` (or `scm.provider` for backward compat) — `ado` (default) or `jira`

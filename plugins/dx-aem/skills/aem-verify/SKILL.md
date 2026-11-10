@@ -163,7 +163,7 @@ Also examine the **container chain** — what's between `jcr:content/root` and t
 
 ### Discover proper test page placement
 
-Read `shared/demo-page-setup.md` for the **Page Selection Rule** — it applies to this skill.
+Read `../../shared/demo-page-setup.md` for the **Page Selection Rule** — it applies to this skill.
 
 **Key rule:** New pages are ONLY for new components. For updates to existing components (enhancements, a11y fixes, bug fixes), find the best representative existing page with the component and reuse it for screenshots and QA URLs. Do NOT modify production pages — just use them as-is. Only fall back to creating a new page if no existing page has the component.
 
@@ -189,7 +189,7 @@ Discover component placement:
 
 ### Create or reuse demo page
 
-Follow the demo page workflow from `shared/demo-page-setup.md`:
+Follow the demo page workflow from `../../shared/demo-page-setup.md`:
 
 a. Read `aem.demo-parent-path` from `.ai/config.yaml` (e.g., `/content/brand-a/ca/en/ca/en/demo`). If not set, fall back to `<language-root>/demo`.
 b. Ensure the parent path exists (create folder page if missing, using same template as sibling pages)

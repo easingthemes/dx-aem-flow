@@ -223,7 +223,7 @@ Read the `verdict` of dx-step's `## Return` block, and confirm it against the st
 - **`pass`** (step `done`) → proceed to "Log progress + track fix patterns"
 - **`fail`** (step `blocked`) → classify the error (see **Error Classification** below), then proceed to "Fix attempt"
 
-**Error Classification:** Before triggering healing, classify the failure using `shared/error-handling.md`:
+**Error Classification:** Before triggering healing, classify the failure using `../../shared/error-handling.md`:
 - **TRANSIENT** → Retry the step (counts toward consecutive failure limit)
 - **VALIDATION** → Let dx-step-fix attempt repair (counts as healing cycle)
 - **PERMANENT** → Skip healing entirely. Mark step blocked. Report to user immediately. Proceed to "STOP: Human intervention needed".

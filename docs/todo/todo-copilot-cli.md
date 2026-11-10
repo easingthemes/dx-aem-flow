@@ -55,6 +55,8 @@ Also: `plugins/dx-core/shared/*.md` reference files, `docs/reference/agent-catal
 **Evidence:** `internal/learnings/2026-03-22-skill-simplification-refactor.md` bug #2
 **Upstream check (2026-07-01):** STILL OPEN. Confirmed upstream at [#1090](https://github.com/github/copilot-cli/issues/1090) (Open; shared skills libraries / symlinks / scripts not resolving); no fix after v1.0.36 through v1.0.67. Related discovery issues [#2390](https://github.com/github/copilot-cli/issues/2390), [#1080](https://github.com/github/copilot-cli/issues/1080) also open. Keep inlining critical logic / use canonical paths (TODO #20, #90).
 
+**Fixed 2026-11-10:** both Copilot CLI (1.0.109 bundle: "Base directory for this skill: …" plus a listing of the skill's own files) and Claude Code tell the model the skill's directory, so 71 references in 31 `SKILL.md` files now read `../../shared/<file>` — the plugin root in both installed layouts (`…/dx-core/<version>/skills/<skill>` on Claude Code, `…/installed-plugins/<mkt>/dx-core/skills/<skill>` on Copilot). Live test on v1.0.109 (TUI) with the installed `dx-bug-triage`: with `shared/external-content-safety.md` the model tried `skills/dx-bug-triage/shared/` and `skills/shared/` before finding it by search; with `../../shared/…` it resolved "base dir + ../../shared/…" and read it directly. Kept as is: cross-plugin references (`provenance-schema.md`, `provider-config.md` from dx-aem/dx-hub, `aem-dom-rules.md` from dx-core) and `$CLAUDE_PLUGIN_ROOT/shared/…` in bash (TODO-268). `dx-eject` rewrites `../../shared/` to `.ai/ejected/shared/`.
+
 ## Attachment Download
 
 **Added:** 2026-03-22
@@ -401,3 +403,12 @@ A `sessionStart` probe in `.github/hooks/zz-probe.json` ran `env | grep -iE "plu
 - the inline branch guard and the `agentStop` guard (it uses `${CLAUDE_PROJECT_DIR:-$PWD}`) work, but they duplicate the plugin's own hooks.
 
 The Copilot **cloud coding agent** ignores plugins and reads only `.github/hooks/`. That is the one consumer the repo copy is still for, and every command in it has to be self-contained (no plugin path).
+
+## Skill bash commands use `$CLAUDE_PLUGIN_ROOT`, empty on Copilot CLI
+
+**Added:** 2026-11-10
+**Problem:** About 25 bash commands in skill bodies run plugin scripts as `bash $CLAUDE_PLUGIN_ROOT/skills/<skill>/scripts/x.sh` or `"$CLAUDE_PLUGIN_ROOT/shared/update-progress.sh"`. In a Copilot CLI v1.0.109 session `echo "[$CLAUDE_PLUGIN_ROOT]"` prints `[]`, and the 1.0.109 bundle sets `PLUGIN_ROOT` / `CLAUDE_PLUGIN_ROOT` only for plugin hooks and MCP/LSP configs — never expands it in skill bodies. So on Copilot these commands run `/skills/…/x.sh` and fail: progress tracking in the coordinators and the whole preflight/resume path of `dx-bug-all` and `dx-simple`. How Claude Code resolves the unbraced `$CLAUDE_PLUGIN_ROOT` in a skill body is not verified either (the shell of a normal session has it empty too), and these skills also run in `dx-automation` pipelines.
+**Scope:** `plugins/dx-core/skills/{dx-bug-all,dx-simple,dx-req,dx-req-dod,dx-agent-all,dx-figma-all}/SKILL.md`, `plugins/dx-aem/skills/aem-init/SKILL.md` (`grep -rn 'CLAUDE_PLUGIN_ROOT' plugins/*/skills/*/SKILL.md`).
+**Done-when:** `grep -rn '\$CLAUDE_PLUGIN_ROOT\|\${CLAUDE_PLUGIN_ROOT}' plugins/*/skills/*/SKILL.md` returns only `hooks:` frontmatter lines, AND one coordinator's progress write is seen working in a Copilot TUI run and in a Claude Code run.
+**Approach:** Check first how Claude Code expands it (one skill run that echoes the path). Then use a form both harnesses resolve — e.g. a path from the skill's base directory as in TODO-20 (`<skill dir>/scripts/x.sh`, `<skill dir>/../../shared/update-progress.sh`), spelled so the model substitutes it — and keep the pipeline path working.
+
