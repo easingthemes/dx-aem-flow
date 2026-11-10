@@ -1,6 +1,7 @@
 ---
 name: dx-figma-markup
 description: Discovers HTML and accessibility conventions from the consumer project — semantic patterns, component structure, ARIA usage, keyboard handling. Used by dx-figma-prototype.
+include-custom-instructions: true
 tools: Read, Glob, Grep
 model: haiku
 user-invocable: false

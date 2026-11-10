@@ -1,6 +1,7 @@
 ---
 name: aem-fe-verifier
 description: Verifies AEM component frontend rendering — creates/reuses demo pages, screenshots components in wcmmode=disabled via Playwright, compares against Figma reference or requirements using multimodal vision. Used by aem-fe-verify skill.
+include-custom-instructions: true
 tools: Read, Write, Glob, Grep, Edit, ToolSearch, Bash, mcp__plugin_dx-aem_AEM__getNodeContent, mcp__plugin_dx-aem_AEM__listChildren, mcp__plugin_dx-aem_AEM__fetchSites, mcp__plugin_dx-aem_AEM__fetchLanguageMasters, mcp__plugin_dx-aem_AEM__getPageProperties, mcp__plugin_dx-aem_AEM__createPage, mcp__plugin_dx-aem_AEM__addComponent, mcp__plugin_dx-aem_AEM__updateComponent, mcp__plugin_dx-aem_AEM__getComponents, mcp__plugin_dx-aem_AEM__scanPageComponents, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__activatePage, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_resize, mcp__plugin_dx-aem_playwright__browser_tabs
 model: sonnet
 memory: project

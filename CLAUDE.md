@@ -336,6 +336,7 @@ model: sonnet
 
 - Agents go in `plugins/{dx-core,dx-aem}/agents/<name>.md`
 - **Claude Code ignores `hooks`, `mcpServers` and `permissionMode` on plugin-shipped agents** (security rule in the [plugins reference](https://code.claude.com/docs/en/plugins-reference)). The agent loads and the field does nothing — `permissionMode: plan` never made our reviewers read-only. Restrict access with `tools:` or `disallowedTools:` instead; `validate-agents.sh` rejects the three fields (TODO-261).
+- Every plugin agent sets `include-custom-instructions: true`. Claude Code ignores the field; Copilot CLI (v1.0.86+) needs it to give a **subagent** the project's `AGENTS.md` / `CLAUDE.md` / `copilot-instructions.md` (verified on v1.0.109 with `dx-doc-searcher`: `UNKNOWN` without, the project instructions with). Keep it on new agents (TODO #202).
 - Naming: plugin prefix + descriptive role (`dx-code-reviewer`, `aem-inspector`)
 
 ### Plugin Manifest (Dual-Platform)

@@ -1,6 +1,7 @@
 ---
 name: dx-figma-styles
 description: Discovers CSS/SCSS conventions from the consumer project — variables, breakpoints, typography, spacing, theming, naming patterns. Used by dx-figma-prototype.
+include-custom-instructions: true
 tools: Read, Glob, Grep
 model: haiku
 user-invocable: false
