@@ -512,6 +512,65 @@ out=$(run_validator env LISTING_BASELINE=99999)
 check "rm with a literal then a variable target is flagged" "1" "$(echo "$out" | grep -c 'dx-rm3/SKILL.md:6 — recursive rm')"
 check "git rm -r on a variable is not flagged" "0" "$(echo "$out" | grep -c 'dx-rm3/SKILL.md:7 — recursive rm')"
 
+# --- 13. frontmatter must parse under strict YAML (Copilot CLI) -------------
+# The shape that broke Copilot in 3.4.2: an unquoted description holding `: `.
+reset_fixture
+write_skill "dx-colon" <<'SKILL'
+---
+name: dx-colon
+description: Produce an estimate. Bulk mode: space-separated IDs.
+argument-hint: "<id> — quoted: fine"
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999); rc=$?
+check "unquoted value with ': ' exits non-zero" "1" "$rc"
+check "unquoted value with ': ' names the line" "1" \
+  "$(echo "$out" | grep -c 'dx-colon/SKILL.md:3 — unquoted frontmatter value')"
+check "quoted value with ': ' is not flagged" "0" \
+  "$(echo "$out" | grep -c 'dx-colon/SKILL.md:4 — unquoted')"
+
+# Each other plain-scalar trap is flagged on its own line.
+reset_fixture
+write_skill "dx-traps" <<'SKILL'
+---
+name: dx-traps
+description: Trailing comment marker # here
+argument-hint: ends in a colon:
+when_to_use: `ticks` start a value
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999)
+for ln in 3 4 5; do
+  check "plain-scalar trap on line $ln is flagged" "1" \
+    "$(echo "$out" | grep -c "dx-traps/SKILL.md:$ln — unquoted frontmatter value")"
+done
+
+# Legal shapes stay quiet: URLs, C#, flow lists, block scalars whose
+# continuation lines hold ': ', single-quoted values.
+reset_fixture
+write_skill "dx-legal" <<'SKILL'
+---
+name: dx-legal
+description: >-
+  Folded text: with a colon is legal inside a block scalar.
+argument-hint: see https://example.com/a#b for C# notes
+allowed-tools: ["read", "ado/*"]
+when_to_use: 'single: quoted'
+---
+SKILL
+out=$(run_validator env LISTING_BASELINE=99999); rc=$?
+check "legal frontmatter shapes pass" "0" "$rc"
+
+# Agents and Copilot agent templates are checked too.
+reset_fixture
+make_skill "dx-ok" "A short description." 1
+mkdir -p "$FIXTURE_ROOT/plugins/dx-test/agents" "$FIXTURE_ROOT/plugins/dx-test/templates/agents"
+printf -- '---\nname: dx-a\ndescription: Reviews code: carefully\n---\n' > "$FIXTURE_ROOT/plugins/dx-test/agents/dx-a.md"
+printf -- '---\ndescription: Runs: things\n---\n' > "$FIXTURE_ROOT/plugins/dx-test/templates/agents/dx-a.agent.md.template"
+out=$(run_validator env LISTING_BASELINE=99999)
+check "agent with unquoted ': ' is flagged" "1" "$(echo "$out" | grep -c 'agents/dx-a.md:3 — unquoted')"
+check "agent template with unquoted ': ' is flagged" "1" "$(echo "$out" | grep -c 'dx-a.agent.md.template:2 — unquoted')"
+
 # --- the real tree is still green --------------------------------------------
 if bash "$VALIDATOR" > /dev/null 2>&1; then
   echo "PASS: real plugin tree still validates"
