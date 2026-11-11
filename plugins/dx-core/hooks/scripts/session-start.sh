@@ -7,7 +7,7 @@ source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
 dx_progress_on_exit "Environment checked"
 
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+PROJECT_DIR="$(dx_project_dir)"
 
 # Only run in dx-initialized projects
 [ ! -d "$PROJECT_DIR/.ai" ] && exit 0

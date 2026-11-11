@@ -97,5 +97,11 @@ check "real conflict markers are reported" yes "$(reason "$r6" | grep -q 'merge 
 check "non-JSON input allows" allow "$(printf 'not json' | (cd "$TMP" && bash "$GUARD") >/dev/null 2>&1 && echo allow || echo fail)"
 check "not a git repo allows" allow "$(run "$TMP")"
 
+# Session cwd is a subdirectory (Codex CLI) → still sees conflicts in tracked files
+r5="$(repo)"; mkdir -p "$r5/sub"; echo ok > "$r5/sub/a.txt"
+git -C "$r5" add sub/a.txt && git -C "$r5" commit -q -m sub
+printf '<<<<<<< HEAD\nx\n=======\ny\n>>>>>>> b\n' > "$r5/sub/a.txt"
+check "subdir cwd: conflict blocks" block "$(run "$r5/sub")"
+
 echo "stop-guard: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

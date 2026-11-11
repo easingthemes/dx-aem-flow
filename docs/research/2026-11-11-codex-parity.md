@@ -121,6 +121,7 @@ The last ~15 PRs adapted dx for Copilot CLI. Each fix maps to a Codex question:
 - The `if: "Bash(git commit*)"` field is Claude-only; the guard already re-checks with `grep -q "git commit"` on stdin, so it still works if `if` is ignored.
 - `statusMessage`, `onFailure` probably ignored — harmless.
 - Stop guard and PostToolUse use **`$CLAUDE_PROJECT_DIR`**. Codex docs mention no such var → would resolve to `/.claude/hooks/...` and silently skip. Fix: `${CLAUDE_PROJECT_DIR:-$PWD}` (same trick the Copilot repo template uses).
+  **Fixed 2026-11-11:** project-file hooks go through `hooks/scripts/project-hook.sh` (resolves `CLAUDE_PROJECT_DIR` → stdin `cwd` git root → `$PWD` git root → `$PWD`, exports it, passes stdin/stdout through, always exits 0); SessionStart scripts use `dx_project_dir` from `hook-profile.sh`. `stop-guard.sh` also `cd`s to the git root — from a subdirectory it missed every conflict, because `git diff` paths are root-relative. Suite: `plugins/dx-core/hooks/project-hook.test.sh`. Still untested in a live Codex session.
 - PostToolUse matchers use Claude names `mcp__plugin_dx-core_figma__*` — will not match Codex MCP tool names.
 
 ## 6. Plan to make dx work on Codex like on Claude Code

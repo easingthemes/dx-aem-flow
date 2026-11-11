@@ -7,7 +7,7 @@ source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
 dx_progress_on_exit "Workflow state checked"
 
-SPEC_BASE=".ai/specs"
+SPEC_BASE="$(dx_project_dir)/.ai/specs"
 if [ ! -d "$SPEC_BASE" ]; then exit 0; fi
 
 # Find most recent spec directory

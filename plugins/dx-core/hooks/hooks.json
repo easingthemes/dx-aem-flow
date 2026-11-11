@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-guard.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-guard.sh\" || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/project-hook.sh\" .claude/hooks/stop-guard.sh",
             "statusMessage": "Running completion checks..."
           }
         ]
@@ -64,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/project-hook.sh\" .ai/lib/figma-screenshot-hook.sh",
             "statusMessage": "Saving Figma screenshot..."
           }
         ]
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.ai/lib/figma-screenshot-hook.sh\" || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/project-hook.sh\" .ai/lib/figma-screenshot-hook.sh",
             "statusMessage": "Saving Figma design context..."
           }
         ]
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mkdir -p \"$CLAUDE_PROJECT_DIR/.claude\" && echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$CLAUDE_PROJECT_DIR/.claude/subagent-log.txt\" || true",
+            "command": "D=\"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; mkdir -p \"$D/.claude\" && echo \"[$(date '+%H:%M:%S')] Subagent completed\" >> \"$D/.claude/subagent-log.txt\" || true",
             "async": true
           }
         ]

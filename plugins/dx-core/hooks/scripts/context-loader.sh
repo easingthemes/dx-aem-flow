@@ -11,7 +11,7 @@ source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
 dx_progress_on_exit "Ticket context loaded"
 
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+PROJECT_DIR="$(dx_project_dir)"
 SPEC_BASE="$PROJECT_DIR/.ai/specs"
 
 # Only run in dx-initialized projects with specs
