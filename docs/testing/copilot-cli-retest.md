@@ -67,30 +67,16 @@ Restart `copilot`, type `Run exactly: git status`, then `Run exactly: echo "LS $
 
 Clean up: `rm .github/hooks/zz-fields-probe.json /tmp/fields.log`.
 
-## 3. Bundle check (optional, no Copilot account needed)
+## 3. Bundle check (automated)
 
-Reads the shipped code instead of the docs. Downloads only; nothing is run.
+Reads the shipped code instead of the docs: downloads the Copilot CLI package
+from npm (nothing is installed or run), decompresses the embedded JS and checks
+that the strings behind the behaviour above are still there.
 
-```bash
-V=$(npm view @github/copilot version); D=$(mktemp -d); cd "$D" && npm pack "@github/copilot-darwin-arm64@$V" --silent && tar -xzf ./*.tgz && echo "$D $V"
-```
-```bash
-python3 -I - "$D/package/copilot" <<'PY'
-import re, sys, zlib
-d = open(sys.argv[1], 'rb').read()
-for m in re.finditer(b'\x1f\x8b\x08', d):
-    try: b = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(d[m.start():m.start() + 80_000_000])
-    except Exception: continue
-    if len(b) < 10_000_000: continue
-    for k in [b'include-custom-instructions', b'Preferred agent definition models are unavailable',
-              b'GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS==="true"', b'COPILOT_HOOK_DIR',
-              b'Base directory for this skill', b'Denied by preToolUse hook (hook errored)',
-              b'timed out; allowing the tool call to proceed', b'stop_hook_active']:
-        print('found  ' if k in b else 'MISSING', k.decode())
-    break
-PY
-```
-Every line should say `found`. A `MISSING` line means behaviour we rely on may have changed — re-run the matching interactive check. (Use the `linux-x64` package name on Linux.)
+- **Weekly in CI:** `.github/workflows/copilot-bundle-check.yml` (Mondays, or *Run workflow* with an optional version). A red run means Copilot may have changed something we rely on.
+- **By hand:** `bash scripts/copilot-bundle-check.sh [version]` — e.g. a prerelease (`npm view @github/copilot time` lists them).
+
+Every line should say `found`; the second column says which check above to re-run for a `MISSING` one. When a check here changes, update the key list in the script too.
 
 ## When a result changes
 
