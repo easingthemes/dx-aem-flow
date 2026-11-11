@@ -1,3 +1,10 @@
+## [3.14.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.14.0...v3.14.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **ci:** require conventional PR titles so every merge can release ([#263](https://github.com/easingthemes/dx-aem-flow/issues/263)) ([d6199a6](https://github.com/easingthemes/dx-aem-flow/commit/d6199a619dc77b328812d2c0bda8135a8b075f73))
+
 # [3.14.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.4...v3.14.0) (2026-11-11)
 
 
