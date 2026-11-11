@@ -91,6 +91,7 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility), AEM,
   GitLab or Bitbucket code path. Work-item tracking is the one real choice (`tracker.provider: ado | jira`)
 - Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-verify`, `auto-deploy`)
 - Versioning is automated via semantic-release on push to `main`
+- PR titles must be conventional (`fix(scope): …`, `feat: …`) — PRs are squash-merged and the title is the commit semantic-release reads; CI checks it (`scripts/check-pr-title.sh`)
 - Structural validation (`scripts/validate-*.sh`) runs in CI on every PR, as do all test suites — CI
   discovers every `*.test.js` under `plugins/` and `cli/`, and every `run-tests.sh` / `*.test.sh`
   under `plugins/` and `scripts/`, rather than listing them,
