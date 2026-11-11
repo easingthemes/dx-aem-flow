@@ -137,6 +137,31 @@ Ordered by value / cost. Each step is testable on its own.
 8. **Testing:** `docs/testing/codex-cli-retest.md`, a source-check script against `openai/codex`, and a Codex column in the compat references.
 9. **Later:** `dx-automation` pipelines on `codex exec` (`--json`, `--output-schema`) as an alternative runner — separate TODO, needs `CODEX_API_KEY`.
 
+## 6a. Live check, Codex CLI 0.167.1 (2026-11-11)
+
+Run against this repo with a throwaway `CODEX_HOME`, no login needed:
+
+```bash
+codex plugin marketplace add /path/to/dx-aem-flow   # or easingthemes/dx-aem-flow
+codex plugin add dx-core@dx-aem-flow
+codex mcp list
+codex debug prompt-input "hi"                       # renders the model-visible skill list
+```
+
+| Check | Result |
+|---|---|
+| `.claude-plugin/marketplace.json` read | **Yes** — all 4 plugins listed, `dx-core` installed and enabled |
+| Manifest lookup order (binary strings) | `plugin.json` → `.codex-plugin/plugin.json` → `.claude-plugin/plugin.json` → `.cursor-plugin/plugin.json` |
+| Skills | **All 49 dx-core skills** in the prompt, named `dx-core:dx-req` etc. — same qualified names as Claude Code, so skill-to-skill calls match |
+| MCP | **Plugin `.mcp.json` loaded** — `axe-mcp-server` (stdio) and `figma` (http) both listed by `codex mcp list` |
+| Install layout | Cache copies the whole plugin dir (`skills/`, `shared/`, `hooks/`, `data/`…) → `../../shared/<file>` resolves as on Claude Code |
+| Hooks env | Binary sets `CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA` for hooks; **no `CLAUDE_PROJECT_DIR` string at all** → confirms the Stop-guard / PostToolUse risk in § 5 |
+| `features list` | `hooks`, `plugins`, `multi_agent` stable+on; `plugin_hooks` flag is `removed` (folded in or dropped — not settled, needs a session run) |
+
+**Decision on step 2 (`.codex-plugin/plugin.json`): not doing it.** Codex already reads our `.claude-plugin/plugin.json`, so a Codex manifest would be a fifth version file to keep in sync (`bump-versions.sh`, `.releaserc`, `validate-structure.sh`) with zero gain. Add one only when we need a Codex-only field (`interface`, apps) — then the portable root `plugin.json` with `extensions["com.openai"]` is the better target. The `.codex/INSTALL.md` symlink recipe is superseded by the marketplace install.
+
+Remaining work is the rest of § 6 (hooks env, agents → TOML, init/doctor/upgrade, re-test list), not manifests.
+
 ## 7. Open questions (need a live Codex run)
 
 - Does the CLI (not desktop) load plugin `hooks/hooks.json`?
