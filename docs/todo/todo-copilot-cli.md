@@ -438,4 +438,5 @@ Checklist: [`docs/testing/copilot-cli-retest.md`](../testing/copilot-cli-retest.
 | Date | Copilot | dx | Changed |
 |------|---------|----|---------|
 | 2026-11-10/11 | 1.0.109 | 3.12.3 → 3.13.x | Baseline for every check (results in the sections above) |
+| 2026-11-11 | 1.0.109 | after #261 | Checks 6 (fork isolation, paragraph from the plugin) and 9 (hook status) pass — TODO-269 and TODO-270 confirmed |
 
