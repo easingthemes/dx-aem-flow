@@ -5,6 +5,7 @@
 # Profile gate — informational hook, skip in minimal mode
 source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
+dx_progress "Checking workflow state..."
 
 SPEC_BASE=".ai/specs"
 if [ ! -d "$SPEC_BASE" ]; then exit 0; fi
