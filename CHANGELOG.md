@@ -1,3 +1,10 @@
+## [3.13.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.3...v3.13.4) (2026-11-11)
+
+
+### Bug Fixes
+
+* **dx-core:** /dx-sync keeps the AEM sections of the PR rules ([#260](https://github.com/easingthemes/dx-aem-flow/issues/260)) ([69570bf](https://github.com/easingthemes/dx-aem-flow/commit/69570bf17223a0e8d1d76b375fb898e33457e85d))
+
 ## [3.13.3](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.2...v3.13.3) (2026-11-10)
 
 
