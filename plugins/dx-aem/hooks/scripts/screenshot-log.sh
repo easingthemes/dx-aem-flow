@@ -17,7 +17,8 @@ case "$TOOL_NAME" in
     *) exit 0 ;;
 esac
 
-LOG_DIR="${CLAUDE_PROJECT_DIR:-.}/.ai/screenshots"
+# Codex CLI does not set CLAUDE_PROJECT_DIR — fall back to the git root.
+LOG_DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/.ai/screenshots"
 LOG_FILE="${LOG_DIR}/screenshot-log.txt"
 
 mkdir -p "$LOG_DIR"

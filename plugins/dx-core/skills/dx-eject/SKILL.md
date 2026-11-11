@@ -136,7 +136,7 @@ Check if `.claude/hooks.json` already exists:
 - **If it exists:** Read it, check if the Stop hook is already present. If not, merge the hook entry.
 - **If it doesn't exist:** Create it with the hook from the plugin.
 
-**Important:** The hook command references `$CLAUDE_PROJECT_DIR/.claude/hooks/stop-guard.sh` — this path is already correct for an ejected project since `stop-guard.sh` was installed by dx-init to `.claude/hooks/`.
+**Important:** In the plugin the Stop hook runs `bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/project-hook.sh" .claude/hooks/stop-guard.sh`. An ejected project has no plugin root, so write the command self-contained instead: `[ -f "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh" ] && bash "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/stop-guard.sh" || true` (`stop-guard.sh` was installed by dx-init to `.claude/hooks/`).
 
 ## 3. Merge MCP Configuration
 

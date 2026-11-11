@@ -29,6 +29,9 @@ cd "$CWD" || exit 0
 
 # Only check if we're in a git repo
 GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null) || exit 0
+# git diff lists paths from the repo root; a session started in a subdirectory
+# (common on Codex CLI) would make every later file check miss. Work from the root.
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 # Last block: "<checksum of reason> <epoch>". Lives in the git dir, never tracked.
 STATE_FILE="$GIT_DIR/dx-stop-guard.last"
 REPEAT_WINDOW=600

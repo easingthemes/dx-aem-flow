@@ -54,3 +54,11 @@ dx_progress_on_exit() {
   trap 'dx_progress "$DX_PROGRESS_DONE"' EXIT
 }
 
+
+# Project root for hook scripts. Claude Code and Copilot CLI set
+# CLAUDE_PROJECT_DIR; Codex CLI does not, and may start in a subdirectory, so
+# fall back to the git root, then the current dir.
+dx_project_dir() {
+  if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then printf '%s\n' "$CLAUDE_PROJECT_DIR"; return; fi
+  git rev-parse --show-toplevel 2>/dev/null || pwd
+}

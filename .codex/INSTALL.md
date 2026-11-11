@@ -1,44 +1,50 @@
-# Installing dx-aem-flow Skills for Codex
+# Installing dx-aem-flow for Codex
 
-Codex discovers skills from `.agents/skills/` directories. To use dx-aem-flow skills with Codex, symlink the plugin skill directories.
+Codex CLI reads this repo's Claude Code marketplace (`.claude-plugin/marketplace.json`) and plugin manifests (`.claude-plugin/plugin.json`) directly — no Codex-specific manifest and no symlinks needed. Checked on Codex CLI 0.167.1.
 
-## Quick Setup
+## Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/easingthemes/dx-aem-flow.git ~/.dx-aem-flow
+codex plugin marketplace add easingthemes/dx-aem-flow
 
-# Create the Codex skills directory
-mkdir -p .agents/skills
+# dx-core (all projects)
+codex plugin add dx-core@dx-aem-flow
 
-# Symlink dx-core skills (recommended for all projects)
-for skill in ~/.dx-aem-flow/plugins/dx-core/skills/*/; do
-  ln -sf "$skill" ".agents/skills/$(basename "$skill")"
-done
-
-# Symlink dx-aem skills (AEM projects only)
-for skill in ~/.dx-aem-flow/plugins/dx-aem/skills/*/; do
-  ln -sf "$skill" ".agents/skills/$(basename "$skill")"
-done
+# dx-aem (AEM projects only)
+codex plugin add dx-aem@dx-aem-flow
 ```
 
-## What You Get
+Check it:
 
-- **dx-core:** Requirements, planning, execution, review, and PR workflows
-- **dx-aem:** AEM component verification, QA, and demo capture
-- **dx-hub:** Multi-repo orchestration
-- **dx-automation:** Autonomous pipeline agents
+```bash
+codex plugin list
+codex mcp list
+```
+
+Update later with `codex plugin marketplace upgrade`.
+
+## What you get
+
+- **Skills** — same names as on Claude Code (`dx-core:dx-req`, `dx-core:dx-plan`, …). Invoke with `$dx-req` or let Codex pick by description.
+- **MCP servers** from each plugin's `.mcp.json` (axe, Figma; AEM, Playwright for dx-aem).
+- ADO and Atlassian MCP are project-level — add them to `~/.codex/config.toml` or a trusted project's `.codex/config.toml` under `[mcp_servers.*]`.
+
+## Not yet supported on Codex
+
+- **Agents** — Codex agents are TOML files in `.codex/agents/`; dx agents are not converted yet.
+- **Hooks** — dx hooks use `$CLAUDE_PROJECT_DIR`, which Codex does not set; the stop guard does not run.
+- Frontmatter beyond `name`/`description` (`model`, `effort`, `context: fork`, `allowed-tools`) is ignored.
+
+Status and plan: [`docs/research/2026-11-11-codex-parity.md`](../docs/research/2026-11-11-codex-parity.md).
 
 ## Prerequisites
 
-Skills read project config from `.ai/config.yaml`. Generate it with the standalone CLI:
+Skills read project config from `.ai/config.yaml`. Generate it with `$dx-init`, or with the standalone CLI:
 
 ```bash
 node ~/.dx-aem-flow/cli/bin/dx-scaffold.js . --all
 ```
 
-## Notes
+The project must be **trusted** in Codex (`projects.<path>.trust_level = "trusted"`), otherwise project `.codex/` config, hooks and MCP are skipped.
 
-- Skills use the [Agent Skills](https://agentskills.io/specification) open standard (SKILL.md format)
-- MCP servers (ADO, Figma, AEM, etc.) need separate configuration in your project
-- See `AGENTS.md` in the repo root for full conventions
+Codex reads `AGENTS.md`, not `CLAUDE.md`. If your project only has `CLAUDE.md`, set `project_doc_fallback_filenames = ["CLAUDE.md"]` in `~/.codex/config.toml`.
