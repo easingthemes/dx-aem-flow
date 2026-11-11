@@ -388,7 +388,7 @@ docs/todo/
 ```
 
 **Rules:**
-- `TODO.md` is the single index — every item gets a numbered row with priority, status, date, and link to a detail file
+- `TODO.md` is the single index — every item gets a numbered row with priority, status, date, and link to a detail file. Status values are listed at the top of `TODO.md`; use **Deferred** (with the reason in the row) for a valid item that isn't planned for now, instead of closing it
 - Detail files are grouped by topic (`todo-<topic>.md`), not by date or conversation
 - When adding a TODO: add a row to `TODO.md` AND add/update the relevant detail file
 - Multiple items can link to different sections of the same detail file
