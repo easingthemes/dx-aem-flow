@@ -9,7 +9,7 @@
 # Profile gate — informational hook, skip in minimal mode
 source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
-dx_progress "Loading ticket context..."
+dx_progress_on_exit "Ticket context loaded"
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 SPEC_BASE="$PROJECT_DIR/.ai/specs"

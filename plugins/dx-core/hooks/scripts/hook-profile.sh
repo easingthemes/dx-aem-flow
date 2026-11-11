@@ -45,3 +45,12 @@ dx_progress() {
   printf '{"type":"progress","message":"%s","temporary":true}\n' "$1"
 }
 
+# Copilot keeps a hook's progress line in the transcript, so a "Doing X..." line
+# printed at the start still reads as running after the hook is done. Print a
+# past-tense line when the script exits instead (whatever path it exits by).
+dx_progress_on_exit() {
+  [ -n "${COPILOT_HOOK_DIR:-}" ] || return 0
+  DX_PROGRESS_DONE="$1"
+  trap 'dx_progress "$DX_PROGRESS_DONE"' EXIT
+}
+
