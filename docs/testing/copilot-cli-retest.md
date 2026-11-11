@@ -85,7 +85,7 @@ for m in re.finditer(b'\x1f\x8b\x08', d):
     for k in [b'include-custom-instructions', b'Preferred agent definition models are unavailable',
               b'GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS==="true"', b'COPILOT_HOOK_DIR',
               b'Base directory for this skill', b'Denied by preToolUse hook (hook errored)',
-              b'timed out; allowing the tool call to proceed', b'stop_hook_active']:
+              b'timed out; allowing the tool call to proceed', b'stop_hook_active', b'hook.progress']:
         print('found  ' if k in b else 'MISSING', k.decode())
     break
 PY
