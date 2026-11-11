@@ -441,3 +441,27 @@ Checklist: [`docs/testing/copilot-cli-retest.md`](../testing/copilot-cli-retest.
 | 2026-11-11 | 1.0.109 | after #261 | Checks 6 (fork isolation, paragraph from the plugin) and 9 (hook status) pass — TODO-269 and TODO-270 confirmed |
 | 2026-11-11 | 1.0.110-1 (prerelease) | 3.14.1 | Bundle check only (part 3): every string found; changelog (~90 entries) has nothing affecting dx. Stable is still 1.0.109, so the TUI checks were not re-run |
 
+## Better fork isolation on Copilot CLI
+
+**Added:** 2026-11-11
+**Problem:** TODO-269's Isolation check makes a `context: fork` skill hand its work to one subagent when Copilot runs it inline, and that keeps the work out of the main context (verified on v1.0.109). It is weaker than a real fork in three ways: (1) the skill's own text is loaded into the main context once, before the handoff; (2) nothing enforces it — it depends on the model following the paragraph (it did in every test); (3) the subagent is a general-purpose one, so a skill's `agent:` (the subagent type, e.g. the dx-aem skills that name a specific agent) and that agent's tools and model are not used.
+**Scope:** the 16 `context: fork` skills (`grep -l '^context: fork' plugins/*/skills/*/SKILL.md`), especially those with `agent:`.
+**Done-when:** a Copilot TUI run of a fork skill shows neither its body in the main context nor a general-purpose subagent where `agent:` names one — or this section records that Copilot added native fork-like skill execution and the paragraph was removed.
+**Approach:** watch the Copilot changelog / weekly bundle check for fork-like skill execution or a skill field that picks the subagent; meanwhile a variant of the paragraph could name the agent from `agent:` as the subagent type (Copilot lets the task tool pick a custom agent) — test on one dx-aem skill first.
+
+## Plugin agents' model aliases fall back on Copilot CLI
+
+**Added:** 2026-11-11
+**Problem:** Plugin agents use Claude Code aliases (`model: haiku`, `model: sonnet`). Copilot CLI applies an agent's `model`, but when it is "unavailable or ineligible" it uses the session model (v1.0.109 bundle). The alias `haiku` lands there: `dx-core:dx-doc-searcher` ran on the session's Opus model in the TODO-202 test. The work is the same; the lookup agents just cost more on Copilot.
+**Scope:** `plugins/*/agents/*.md` with `model: haiku` or `model: sonnet`.
+**Done-when:** a Copilot TUI subagent run of `dx-doc-searcher` shows a Haiku-class model, or this section records why the plugin agents keep the alias (Claude Code needs it; it must not become a pinned id or a display-name list there).
+**Approach:** check whether Copilot resolves any form Claude Code also accepts (a full model id both know?), and whether the session setting that maps `haiku`/`sonnet` aliases (v1.0.64) applies to agent frontmatter too. The `.github/agents` templates already use display-name lists, which resolve.
+
+## What skill `allowed-tools` grants or prompts on Copilot CLI
+
+**Added:** 2026-11-11
+**Problem:** Copilot CLI treats a local skill's `allowed-tools` as permission grants (v1.0.109 bundle; MCP skills only as metadata), and since v1.0.100 "unscoped rules prompt instead of being granted" where a list is ambiguous. Our skills set lists like `["read", "edit", "search", "write", "agent"]` — Copilot-style names. Nobody checked what that does on Copilot: grants (the developer may not expect a skill to unlock `write`), extra prompts, or nothing. Claude Code's side is TODO-213.
+**Scope:** `plugins/*/skills/*/SKILL.md` with `allowed-tools:` (`grep -l '^allowed-tools:' plugins/*/skills/*/SKILL.md`).
+**Done-when:** this section records, for one skill on Copilot v1.0.109+ (TUI, without "Allow All"), which tool calls ran without a prompt because of the skill's list and which still prompted — and the lists are kept, narrowed or removed accordingly, together with TODO-213.
+**Approach:** pick a skill whose list includes `write` but whose work rarely writes; run it with default permissions and watch the prompts; repeat with the list removed in the installed copy.
+
