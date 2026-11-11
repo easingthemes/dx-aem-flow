@@ -1,3 +1,10 @@
+# [3.14.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.4...v3.14.0) (2026-11-11)
+
+
+### Features
+
+* **dx-core:** Copilot CLI parity — fork skills isolate themselves, hook status lines (TODO-269, TODO-270) ([#261](https://github.com/easingthemes/dx-aem-flow/issues/261)) ([ef1ccd5](https://github.com/easingthemes/dx-aem-flow/commit/ef1ccd5ef7f1f1014d98f0187cd83fc76f46db6f))
+
 ## [3.13.4](https://github.com/easingthemes/dx-aem-flow/compare/v3.13.3...v3.13.4) (2026-11-11)
 
 
