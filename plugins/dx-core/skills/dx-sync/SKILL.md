@@ -60,7 +60,7 @@ The script handles:
 4. Generate Copilot agents (with dual tool names for Copilot CLI + VS Code Chat)
 5. Config migration (runs versioned migrations on the consumer's `.ai/config.yaml`; updates `dx.version` to match the plugin version)
 6. Sync Claude rules (`.claude/rules/`)
-7. Sync AI rules (`.ai/rules/`)
+7. Sync AI rules (`.ai/rules/`) — `pr-review.md` / `pr-answer.md` keep the AEM sections `aem-init` appended (only the part before the first `## AEM` / `## Sling` heading is replaced)
 8. Sync instructions (`.github/instructions/`)
 9. Sync VS Code MCP config (`.vscode/mcp.json` — mirrors ADO/Atlassian from root `.mcp.json`)
 10. Sync VS Code Chat settings (`.vscode/settings.json` — `chat.instructionsFilesLocations`, `chat.agentSkillsLocations`)
