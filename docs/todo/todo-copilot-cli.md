@@ -431,3 +431,11 @@ The Copilot **cloud coding agent** ignores plugins and reads only `.github/hooks
 **Fix 2026-11-11:** `dx_progress "<text>"` in `plugins/dx-core/hooks/scripts/hook-profile.sh` prints `{"type":"progress","message":"<text>","temporary":true}` only when `COPILOT_HOOK_DIR` is set — Copilot sets it in every command hook (v1.0.109 help text), Claude Code never does, so Claude's SessionStart context and Stop decision stay clean. Called by `session-start.sh`, `context-loader.sh`, `next-step.sh` (same texts as their `statusMessage`) and inline in `data/hooks/stop-guard.sh`. Test: `plugins/dx-core/hooks/hook-progress.test.sh` (fails 4/9 on the old scripts). Pending: see the text in a Copilot TUI session.
 **Approach:** a script hook can print one progress line before its work — but stdout is also the decision channel (one final JSON object after progress lines are stripped), so only for hooks whose output is otherwise empty or JSON-only; test that Claude Code ignores the extra line.
 
+## Re-test log
+
+Checklist: [`docs/testing/copilot-cli-retest.md`](../testing/copilot-cli-retest.md). One line per run.
+
+| Date | Copilot | dx | Changed |
+|------|---------|----|---------|
+| 2026-11-10/11 | 1.0.109 | 3.12.3 → 3.13.x | Baseline for every check (results in the sections above) |
+
