@@ -272,7 +272,7 @@ Set in your shell: `export DX_HOOK_PROFILE=minimal` to suppress informational ho
 |-------|---------|---------|
 | `matcher` | Which tool events to listen for | `"Bash"`, `"Edit"`, `"mcp__*figma*"` |
 | `if` | Fine-grained permission rule filter (evaluated before spawning) | `"Bash(git commit*)"`, `"Edit(**/.claude-plugin/**)"` |
-| `statusMessage` | Spinner text while hook runs. **Claude Code only** — Copilot CLI shows a stdout line `{"type":"progress","message":"…"}` instead; script hooks print it via `dx_progress` (`hook-profile.sh`), gated on `COPILOT_HOOK_DIR` so Claude never sees it (TODO-270) | `"Checking branch protection..."` |
+| `statusMessage` | Spinner text while hook runs. **Claude Code only** — Copilot CLI shows a stdout line `{"type":"progress","message":"…"}` instead; script hooks print it via `dx_progress_on_exit` (`hook-profile.sh`) — in the past tense, at exit, because Copilot keeps the line in the transcript — gated on `COPILOT_HOOK_DIR` so Claude never sees it (TODO-270) | `"Checking branch protection..."` |
 | `async` | Non-blocking background execution | `true` for observational hooks |
 | `asyncRewake` | Background execution that wakes Claude on exit-code-2 | `true` for long checks that must signal failure |
 | `timeout` | Seconds before canceling | `30` for quick checks |

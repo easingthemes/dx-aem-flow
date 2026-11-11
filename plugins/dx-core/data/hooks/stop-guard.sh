@@ -13,9 +13,6 @@ set -euo pipefail
 
 INPUT=$(cat)
 
-# Copilot CLI shows hook status from this stdout line (it has no statusMessage);
-# COPILOT_HOOK_DIR is set only there, so Claude Code never sees it.
-[ -n "${COPILOT_HOOK_DIR:-}" ] && printf '{"type":"progress","message":"Running completion checks...","temporary":true}\n'
 
 # Prevent infinite loops — if we already blocked once, let the agent stop.
 # Claude Code and Copilot CLI (agentStop, verified v1.0.109 interactive) both send
@@ -131,4 +128,8 @@ fi
 
 # All clear
 rm -f "$STATE_FILE"
+# Copilot CLI shows hook status from this stdout line (it has no statusMessage)
+# and keeps it in the transcript, so say what happened, after the fact. Only on
+# a pass: a block shows its own message. COPILOT_HOOK_DIR is set only by Copilot.
+[ -n "${COPILOT_HOOK_DIR:-}" ] && printf '{"type":"progress","message":"Completion checks passed","temporary":true}\n'
 exit 0

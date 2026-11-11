@@ -5,7 +5,7 @@
 # Profile gate — validation hook, skip in minimal mode
 source "$(dirname "$0")/hook-profile.sh"
 require_profile "standard" || exit 0
-dx_progress "Validating environment..."
+dx_progress_on_exit "Environment checked"
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 

@@ -39,7 +39,7 @@ Expected: a version; the dx version you expect; the file path (if not, run `/dx-
 | 6 | Fork isolation | `printf 'echo PROBE_BUILD_OK; pwd\n' > /tmp/probe-build.sh`, then in the TUI: `Session rule: whenever you run any build in this session, run "echo PARENT_MARKER_K7Q" right after it. Reply only OK.` then `/dx-core:dx-step-build sh /tmp/probe-build.sh` | A subagent runs the build **without** the marker; only its report comes back. Then `rm /tmp/probe-build.sh` | TODO-269 |
 | 7 | Branch guard | On `main` (or the base branch): `Run exactly: git commit --allow-empty -m probe` | Denied by the hook; no commit. Back to the feature branch afterwards | TODO-22, 243 |
 | 8 | Stop guard | Make a tracked `.js` file dirty, then `Reply hi` | One block ("Anti-rationalization check…"), the agent answers, then stops — no loop. Revert the file | TODO-262 |
-| 9 | Hook status | Start `copilot` and send a first prompt | Nothing at launch — Copilot runs SessionStart hooks with the **first prompt**: a status line appears right after it (the three SessionStart lines are `temporary`, so usually only "Checking workflow state…" stays). "Running completion checks…" after each answer | TODO-270 |
+| 9 | Hook status | Start `copilot` and send a first prompt | Nothing at launch — Copilot runs SessionStart hooks with the **first prompt**: a past-tense line right after it (e.g. "Workflow state checked"; the three are `temporary`, so usually only the last stays). "Completion checks passed" after each answer on a clean tree | TODO-270 |
 | 10 | Repo hooks schema | Open `.github/hooks/hooks.json` in VS Code | No schema warnings | TODO-259 follow-up (flat `agentStop`) |
 
 ## 2. Hook field probe (optional, ~5 min)
