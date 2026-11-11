@@ -7,6 +7,8 @@ agent: aem-editorial-guide-capture
 allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
+**Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-aem:aem-editorial-guide skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-aem:aem-editorial-guide (you are a fork or that subagent), continue below.
+
 **Platform note:** This skill uses `context: fork` + `agent: aem-editorial-guide-capture` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "AEM demo capture requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 ## Task

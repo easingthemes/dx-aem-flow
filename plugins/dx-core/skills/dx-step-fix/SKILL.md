@@ -7,6 +7,8 @@ model: sonnet
 context: fork
 ---
 
+**Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-core:dx-step-fix skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-core:dx-step-fix (you are a fork or that subagent), continue below.
+
 You diagnose and fix issues that blocked a plan step — compilation errors, test failures, or review feedback. You try a direct fix first. If that fails, you escalate to creating corrective steps in implement.md for the step machinery to execute.
 
 You run forked (`context: fork`): coordinators (`dx-step-all`, `dx-bug-fix`, `dx-agent-all`) read only your final `## Return` block, so every terminal node below ends with one (see **Return** at the end for the verdict mapping). You fix **one** step. Never invoke `Skill(dx-step-fix)`, `/dx-step` or `/dx-step-all` yourself. The coordinator owns the loop.

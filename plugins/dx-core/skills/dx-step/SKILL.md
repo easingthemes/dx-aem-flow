@@ -7,6 +7,8 @@ context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent", "AEM/*"]
 ---
 
+**Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-core:dx-step skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-core:dx-step (you are a fork or that subagent), continue below.
+
 You execute the next pending step from implement.md — implement the changes, verify compilation, run tests, review against plan and conventions, commit, and mark the step done.
 
 You run forked (`context: fork`): coordinators (`dx-step-all`, `dx-bug-fix`) call you once per step and read only your final `## Return` block. Before printing anything user-facing, check whether a step loop is driving you (see `plugins/dx-core/shared/orchestration-check.md` § Step-loop marker):

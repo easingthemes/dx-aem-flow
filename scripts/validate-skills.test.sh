@@ -74,6 +74,36 @@ out=$(run_validator); rc=$?
 check "clean fixture exits 0" "0" "$rc"
 check "clean fixture warns 0 times" "0" "$(echo "$out" | grep -c '^WARN:')"
 
+# --- 14. context: fork needs the Isolation check paragraph ------------------
+reset_fixture
+write_skill "dx-fork-bare" <<'SKILL'
+---
+name: dx-fork-bare
+description: fork skill without the paragraph
+context: fork
+---
+
+Do the work.
+SKILL
+out=$(run_validator); rc=$?
+check "fork skill without Isolation check exits non-zero" "1" "$rc"
+check "fork skill without Isolation check is named" "1" "$(echo "$out" | grep -c 'dx-fork-bare — context: fork without')"
+
+reset_fixture
+write_skill "dx-fork-ok" <<'SKILL'
+---
+name: dx-fork-ok
+description: fork skill with the paragraph
+context: fork
+---
+
+**Isolation check.** Delegate when inline.
+
+Do the work.
+SKILL
+out=$(run_validator); rc=$?
+check "fork skill with Isolation check passes" "0" "$rc"
+
 # --- 2. description over 1024 chars is an ERROR -------------------------------
 reset_fixture
 long_desc=$(printf 'x%.0s' $(seq 1 1025))
@@ -258,6 +288,7 @@ chain_skill() {
     echo "---"; echo "name: $1"; echo "description: A short description."
     [ -n "$fork_line" ] && echo "$fork_line"
     echo "---"; echo
+    [ -n "$fork_line" ] && { echo "**Isolation check.** Delegate when inline."; echo; }
     echo "$3"
     for ((i = 0; i < 20; i++)); do echo "padding line $i for size"; done
   } | write_skill "$1"

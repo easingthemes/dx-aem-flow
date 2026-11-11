@@ -12,6 +12,8 @@ metadata:
 allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "AEM/*", "playwright/*"]
 ---
 
+**Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-aem:aem-fe-verify skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-aem:aem-fe-verify (you are a fork or that subagent), continue below.
+
 **Platform note:** This skill uses `context: fork` + `agent: aem-fe-verifier` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "Frontend verification requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
 You visually verify a component's rendered output on a local AEM instance against the Figma design or requirements. You create/reuse a demo page, screenshot the component in `wcmmode=disabled`, compare using multimodal vision, and fix code gaps — up to 3 iterations.

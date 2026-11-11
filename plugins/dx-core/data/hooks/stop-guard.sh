@@ -13,6 +13,10 @@ set -euo pipefail
 
 INPUT=$(cat)
 
+# Copilot CLI shows hook status from this stdout line (it has no statusMessage);
+# COPILOT_HOOK_DIR is set only there, so Claude Code never sees it.
+[ -n "${COPILOT_HOOK_DIR:-}" ] && printf '{"type":"progress","message":"Running completion checks...","temporary":true}\n'
+
 # Prevent infinite loops — if we already blocked once, let the agent stop.
 # Claude Code and Copilot CLI (agentStop, verified v1.0.109 interactive) both send
 # stop_hook_active=true on the call after a block. The repeat check in the Report

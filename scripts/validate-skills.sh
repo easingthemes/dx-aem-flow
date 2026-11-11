@@ -15,6 +15,7 @@
 # 11. Skill-listing size (model-invocable descriptions) — ratcheted
 # 12. A model-invocable description names a dmi skill only as a /command — ERROR
 # 13. Frontmatter plain scalars parse under strict YAML (Copilot CLI) — ERROR
+# 14. A context: fork skill carries the Isolation check paragraph (Copilot CLI) — ERROR
 
 set -euo pipefail
 
@@ -67,6 +68,20 @@ check_opus_effort() {
   if echo "$fm" | grep -qE '^model:[[:space:]]*opus[[:space:]]*$' \
      && ! echo "$fm" | grep -qE '^effort:[[:space:]]*[a-z]+'; then
     echo "ERROR: $2 — model: opus without effort: (Opus 5.5 defaults to medium; set effort: high or another level explicitly, TODO #222)"
+    ERRORS=$((ERRORS + 1))
+  fi
+}
+
+# Copilot CLI ignores `context: fork`, so a fork skill must isolate itself: an
+# "Isolation check" paragraph tells an inline run to delegate to one subagent
+# (TODO-269). Verified on Copilot CLI 1.0.109 with dx-step-build.
+# check_fork_isolation <file> <rel-path>
+check_fork_isolation() {
+  local fm
+  fm=$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$1")
+  if echo "$fm" | grep -qE '^context:[[:space:]]*fork[[:space:]]*$' \
+     && ! grep -q '^\*\*Isolation check\.\*\*' "$1"; then
+    echo "ERROR: $2 — context: fork without an **Isolation check.** paragraph (Copilot CLI runs it inline; copy the paragraph from another fork skill, TODO-269)"
     ERRORS=$((ERRORS + 1))
   fi
 }
@@ -233,6 +248,7 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   check_opus_effort "$skill_file" "$rel_path"
+  check_fork_isolation "$skill_file" "$rel_path"
   check_yaml_plain "$skill_file" "$rel_path/SKILL.md"
 
   # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)

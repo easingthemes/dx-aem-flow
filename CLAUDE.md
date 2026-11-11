@@ -272,7 +272,7 @@ Set in your shell: `export DX_HOOK_PROFILE=minimal` to suppress informational ho
 |-------|---------|---------|
 | `matcher` | Which tool events to listen for | `"Bash"`, `"Edit"`, `"mcp__*figma*"` |
 | `if` | Fine-grained permission rule filter (evaluated before spawning) | `"Bash(git commit*)"`, `"Edit(**/.claude-plugin/**)"` |
-| `statusMessage` | Spinner text while hook runs | `"Checking branch protection..."` |
+| `statusMessage` | Spinner text while hook runs. **Claude Code only** — Copilot CLI shows a stdout line `{"type":"progress","message":"…"}` instead; script hooks print it via `dx_progress` (`hook-profile.sh`), gated on `COPILOT_HOOK_DIR` so Claude never sees it (TODO-270) | `"Checking branch protection..."` |
 | `async` | Non-blocking background execution | `true` for observational hooks |
 | `asyncRewake` | Background execution that wakes Claude on exit-code-2 | `true` for long checks that must signal failure |
 | `timeout` | Seconds before canceling | `30` for quick checks |
@@ -296,13 +296,14 @@ description: One-line with trigger phrases
 argument-hint: "<what user passes>"
 model: sonnet          # optional — opus | sonnet | haiku
 effort: medium         # optional — low | medium | high | xhigh | max
-context: fork          # optional — run in isolated subagent
+context: fork          # optional — run in isolated subagent (needs the Isolation check paragraph, see below)
 agent: agent-name      # optional — subagent type for context: fork
 paths: ["**/*.ts"]     # optional — limit auto-activation to file patterns
 ---
 ```
 
 - Skills go in `plugins/{dx-core,dx-hub,dx-aem,dx-automation}/skills/<name>/SKILL.md`
+- A `context: fork` skill starts its body with the **Isolation check** paragraph (copy it from any fork skill, change the skill name). Copilot CLI ignores `context: fork` and runs the skill inline; the paragraph makes an inline run delegate itself to one subagent, while a Claude Code fork (which sees no earlier user messages) carries on. `validate-skills.sh` check 14 enforces it (TODO-269).
 - Helper scripts go in `skills/<name>/scripts/*.sh`
 - Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-agent-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
 
@@ -388,7 +389,7 @@ docs/todo/
 ```
 
 **Rules:**
-- `TODO.md` is the single index — every item gets a numbered row with priority, status, date, and link to a detail file
+- `TODO.md` is the single index — every item gets a numbered row with priority, status, date, and link to a detail file. Status values are listed at the top of `TODO.md`; use **Deferred** (with the reason in the row) for a valid item that isn't planned for now, instead of closing it
 - Detail files are grouped by topic (`todo-<topic>.md`), not by date or conversation
 - When adding a TODO: add a row to `TODO.md` AND add/update the relevant detail file
 - Multiple items can link to different sections of the same detail file

@@ -34,3 +34,14 @@ require_profile() {
   local required_level=$(_dx_profile_level "$required")
   [ "$current_level" -ge "$required_level" ]
 }
+
+# Copilot CLI has no hook `statusMessage`; it shows a hook's status from a stdout
+# line {"type":"progress","message":"…"} ("temporary": true replaces the previous
+# one). Print it only under Copilot: COPILOT_HOOK_DIR is set in Copilot command
+# hooks and never by Claude Code, where hook stdout reaches the model
+# (SessionStart) or the decision parser. Claude shows `statusMessage` instead.
+dx_progress() {
+  [ -n "${COPILOT_HOOK_DIR:-}" ] || return 0
+  printf '{"type":"progress","message":"%s","temporary":true}\n' "$1"
+}
+
