@@ -372,7 +372,7 @@ For each: missing → `✗ MISSING`, content matches → `✓ up to date`, diffe
 
 Read `.ai/rules/pr-review.md` and `.ai/rules/pr-answer.md`. Check each contains an AEM-related section (grep for `## AEM` or `## Sling`):
 - Found → `✓ AEM sections present`
-- Not found → `⚠ AEM sections missing from <file> (run /dx-upgrade)`
+- Not found → `⚠ AEM sections missing from <file> (run /aem-init — its step 7 re-appends them; or restore a project-specific version from git history)`. Older `/dx-sync` runs overwrote these files with the plain dx template and dropped the sections.
 
 ### 7d. Delegation
 
