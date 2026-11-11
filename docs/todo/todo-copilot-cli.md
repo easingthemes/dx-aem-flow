@@ -441,3 +441,11 @@ Checklist: [`docs/testing/copilot-cli-retest.md`](../testing/copilot-cli-retest.
 | 2026-11-11 | 1.0.109 | after #261 | Checks 6 (fork isolation, paragraph from the plugin) and 9 (hook status) pass — TODO-269 and TODO-270 confirmed |
 | 2026-11-11 | 1.0.110-1 (prerelease) | 3.14.1 | Bundle check only (part 3): every string found; changelog (~90 entries) has nothing affecting dx. Stable is still 1.0.109, so the TUI checks were not re-run |
 
+## Better fork isolation on Copilot CLI
+
+**Added:** 2026-11-11
+**Problem:** TODO-269's Isolation check makes a `context: fork` skill hand its work to one subagent when Copilot runs it inline, and that keeps the work out of the main context (verified on v1.0.109). It is weaker than a real fork in three ways: (1) the skill's own text is loaded into the main context once, before the handoff; (2) nothing enforces it — it depends on the model following the paragraph (it did in every test); (3) the subagent is a general-purpose one, so a skill's `agent:` (the subagent type, e.g. the dx-aem skills that name a specific agent) and that agent's tools and model are not used.
+**Scope:** the 16 `context: fork` skills (`grep -l '^context: fork' plugins/*/skills/*/SKILL.md`), especially those with `agent:`.
+**Done-when:** a Copilot TUI run of a fork skill shows neither its body in the main context nor a general-purpose subagent where `agent:` names one — or this section records that Copilot added native fork-like skill execution and the paragraph was removed.
+**Approach:** watch the Copilot changelog / weekly bundle check for fork-like skill execution or a skill field that picks the subagent; meanwhile a variant of the paragraph could name the agent from `agent:` as the subagent type (Copilot lets the task tool pick a custom agent) — test on one dx-aem skill first.
+
