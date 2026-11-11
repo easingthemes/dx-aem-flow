@@ -17,6 +17,18 @@ permissions:
   contents: read
 
 jobs:
+  pr-title:
+    # PRs are squash-merged; the title becomes the commit semantic-release reads.
+    # A non-conventional title ships the change but makes no release.
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v6
+      - name: PR title is a conventional commit
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: bash scripts/check-pr-title.sh "$PR_TITLE"
+
   denylist:
     runs-on: ubuntu-latest
     timeout-minutes: 5
