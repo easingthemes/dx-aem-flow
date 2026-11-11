@@ -8,6 +8,8 @@ context: fork
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
+**Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-core:dx-step-verify skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-core:dx-step-verify (you are a fork or that subagent), continue below.
+
 You perform a 6-phase verification of ALL changes: compile, lint, test, secret scan, architecture check, then code review with auto-fix. You only pass when all phases are clean.
 
 Use ultrathink for this skill — code review benefits from deep reasoning about correctness.

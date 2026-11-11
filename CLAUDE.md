@@ -296,13 +296,14 @@ description: One-line with trigger phrases
 argument-hint: "<what user passes>"
 model: sonnet          # optional — opus | sonnet | haiku
 effort: medium         # optional — low | medium | high | xhigh | max
-context: fork          # optional — run in isolated subagent
+context: fork          # optional — run in isolated subagent (needs the Isolation check paragraph, see below)
 agent: agent-name      # optional — subagent type for context: fork
 paths: ["**/*.ts"]     # optional — limit auto-activation to file patterns
 ---
 ```
 
 - Skills go in `plugins/{dx-core,dx-hub,dx-aem,dx-automation}/skills/<name>/SKILL.md`
+- A `context: fork` skill starts its body with the **Isolation check** paragraph (copy it from any fork skill, change the skill name). Copilot CLI ignores `context: fork` and runs the skill inline; the paragraph makes an inline run delegate itself to one subagent, while a Claude Code fork (which sees no earlier user messages) carries on. `validate-skills.sh` check 14 enforces it (TODO-269).
 - Helper scripts go in `skills/<name>/scripts/*.sh`
 - Naming: kebab-case, plugin prefix required. Format: `{plugin}-{name}` (e.g., `dx-agent-all`, `aem-init`). Group prefixes within dx: `dx-req-*`, `dx-plan-*`, `dx-step-*`, `dx-pr-*`, `dx-bug-*`, `dx-agent-*`. Coordinators use `-all` suffix.
 
