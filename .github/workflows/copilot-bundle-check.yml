@@ -1,0 +1,30 @@
+name: Copilot bundle check
+
+# dx relies on Copilot CLI behaviour that GitHub does not document and that we
+# verified by hand (docs/testing/copilot-cli-retest.md). This job downloads the
+# latest Copilot CLI package from npm each week and checks that the strings
+# behind that behaviour are still in its code. A failure means Copilot may have
+# changed something we rely on: re-run the interactive checks named in the log.
+# Needs no Copilot account or API key; nothing is installed or run.
+on:
+  schedule:
+    - cron: '23 6 * * 1'   # Mondays 06:23 UTC
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Copilot CLI version (default: latest on npm)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check the Copilot CLI bundle
+        env:
+          VERSION: ${{ inputs.version }}
+        run: bash scripts/copilot-bundle-check.sh ${VERSION:+"$VERSION"}
