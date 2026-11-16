@@ -70,10 +70,16 @@ Test AEM connectivity:
 curl -sf -o /dev/null -w "%{http_code}" "$AUTHOR_URL/libs/granite/core/content/login.html" || echo "unreachable"
 ```
 
-The **author** instance has no HTTP Basic Auth — the login page above is reachable directly (it returns the AEM login form, which is filled later with the `AEM_INSTANCES` creds). Basic Auth (`BASIC_AUTH_SITES`, see the `basic-auth` rule) applies only to the QA/Stage **publisher** — use it if/when probing a published-site URL:
+The **author** instance has no HTTP Basic Auth — the login page above is reachable directly (it returns the AEM login form, which is filled later with the `AEM_INSTANCES` creds). Basic Auth (`BASIC_AUTH_SITES`, see the `basic-auth` rule) applies only to the QA/Stage **publisher** — use it if/when probing a published-site URL. `curl-basic-auth` only exists in a current `.ai/lib/dx-common.sh`; on an older copy fall back to plain `curl`:
 ```bash
-bash .ai/lib/dx-common.sh curl-basic-auth "$PUBLISH_URL/<published-page>.html" -sf -o /dev/null -w "%{http_code}" || echo "unreachable"
+if grep -q 'curl-basic-auth)' .ai/lib/dx-common.sh 2>/dev/null; then
+  bash .ai/lib/dx-common.sh curl-basic-auth "$PUBLISH_URL/<published-page>.html" -s -o /dev/null -w "%{http_code}"
+else
+  echo "NOTE: .ai/lib/dx-common.sh predates curl-basic-auth (run /dx-upgrade) — publisher Basic Auth not applied" >&2
+  curl -s -o /dev/null -w "%{http_code}" "$PUBLISH_URL/<published-page>.html"
+fi
 ```
+`000` means unreachable. A `401` means the publisher needs Basic Auth that was not applied: report `<origin> needs an entry in BASIC_AUTH_SITES` (or the `/dx-upgrade` note above), not "unreachable".
 
 If unreachable:
 - Print: `AEM instance at <url> is not available — generating text-only guide (no screenshots).`
@@ -153,14 +159,25 @@ Publish the page at <docs-page-path> using mcp__plugin_dx-aem_AEM__activatePage.
 Poll the publisher URL for a 200 response, up to 60s timeout:
 
 ```bash
+if grep -q 'curl-basic-auth)' .ai/lib/dx-common.sh 2>/dev/null; then
+  PCURL="bash .ai/lib/dx-common.sh curl-basic-auth"
+else
+  PCURL=""; echo "NOTE: .ai/lib/dx-common.sh predates curl-basic-auth (run /dx-upgrade)" >&2
+fi
 for i in $(seq 1 12); do
-  STATUS=$(bash .ai/lib/dx-common.sh curl-basic-auth "$PUBLISH_URL<docs-page-path>.html" -sf -o /dev/null -w "%{http_code}" 2>/dev/null)
+  if [ -n "$PCURL" ]; then
+    STATUS=$($PCURL "$PUBLISH_URL<docs-page-path>.html" -s -o /dev/null -w "%{http_code}" 2>/dev/null)
+  else
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PUBLISH_URL<docs-page-path>.html")
+  fi
   [ "$STATUS" = "200" ] && break
+  [ "$STATUS" = "401" ] && break
   sleep 5
 done
+echo "publisher status: $STATUS"
 ```
 
-If still not available after 60s, skip website screenshot and note in guide.
+If the last status is `401`, skip the website screenshot and note in the guide that the publisher origin needs an entry in `BASIC_AUTH_SITES` (or `/dx-upgrade`, if the NOTE above printed). If it is anything else after 60s, skip the website screenshot and note that the page was not available.
 
 ### 11c. Capture rendered component
 
