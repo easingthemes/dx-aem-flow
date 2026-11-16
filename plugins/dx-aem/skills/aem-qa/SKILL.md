@@ -81,7 +81,7 @@ digraph aem_qa {
 
 ### Load context
 
-Find the spec directory: `.ai/specs/<id>-*/` when a work item ID is given, otherwise the most recently modified `.ai/specs/*/`. Read from it:
+Find the spec directory: `.ai/specs/<id>-*/` when a work item ID is given, otherwise the most recently modified `.ai/specs/*/`. Call it `$SPEC_DIR` — every later node reads and writes there (`$SPEC_DIR/qa.json`, `$SPEC_DIR/screenshots/`), so QA output stays with the ticket and a re-run sees earlier findings. Create `$SPEC_DIR/screenshots/` if missing. Read from it:
 1. `explain.md` — requirements and acceptance criteria (from `/dx-req`)
 2. `implement.md` — planned steps and the files each one touches (from `/dx-plan`), if present
 
@@ -236,7 +236,7 @@ mcp__plugin_dx-aem_playwright__browser_wait_for
 mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
-Save to `.ai/run-context/screenshots/page-<name>-preview.png`.
+Save to `$SPEC_DIR/screenshots/page-<name>-preview.png`.
 
 **Check Expected Behavior** — compare what you see against the acceptance criteria in `explain.md`:
 - Does the component render correctly?
@@ -260,7 +260,7 @@ Open the component dialog:
 mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
-Save to `.ai/run-context/screenshots/dialog-<component>-editor.png`.
+Save to `$SPEC_DIR/screenshots/dialog-<component>-editor.png`.
 
 Check dialog fields match the spec:
 - Are all expected fields present?
@@ -304,7 +304,7 @@ mcp__plugin_dx-aem_playwright__browser_wait_for
 mcp__plugin_dx-aem_playwright__browser_take_screenshot
 ```
 
-Save to `.ai/run-context/screenshots/page-<name>-publisher.png`.
+Save to `$SPEC_DIR/screenshots/page-<name>-publisher.png`.
 
 **Check Publisher-Specific Behavior:**
 - Does the page render correctly without author chrome?
@@ -401,7 +401,7 @@ mcp__ado__wit_work_item_link_write
 
 ### Save QA output
 
-Write `.ai/run-context/qa.json`:
+Write `$SPEC_DIR/qa.json` (the same file the duplicate check reads). On a re-run, merge: keep earlier findings and append new ones. `screenshots` paths are relative to `$SPEC_DIR`.
 
 ```json
 {
