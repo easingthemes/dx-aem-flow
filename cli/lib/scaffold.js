@@ -322,7 +322,9 @@ class Scaffold {
 
   updateGitignore() {
     const gitignorePath = path.join(this.targetDir, '.gitignore');
-    const entries = ['.ai/specs/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md'];
+    // .ai/playwright/ — dx-core's playwright MCP server writes screenshots and
+    // browser session state (cookies, Basic Auth config) there.
+    const entries = ['.ai/specs/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
     let content = '';
     if (fs.existsSync(gitignorePath)) {
       content = fs.readFileSync(gitignorePath, 'utf8');

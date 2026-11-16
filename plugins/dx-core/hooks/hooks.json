@@ -60,6 +60,28 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "mcp__plugin_dx-core_playwright__browser_take_screenshot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\"",
+            "async": true,
+            "statusMessage": "Logging screenshot..."
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__plugin_dx-core_playwright__browser_snapshot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/screenshot-log.sh\"",
+            "async": true,
+            "statusMessage": "Logging snapshot..."
+          }
+        ]
+      },
+      {
         "matcher": "mcp__plugin_dx-core_figma__get_screenshot",
         "hooks": [
           {

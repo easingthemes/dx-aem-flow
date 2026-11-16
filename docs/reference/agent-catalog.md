@@ -148,7 +148,7 @@ AEM component inspector. Queries the AEM author instance via MCP tools for dialo
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-fe-verifier.md` |
 | **Used by** | `/aem-fe-verify` |
-| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-aem_playwright__*` tools |
+| **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-core_playwright__*` tools |
 
 Frontend visual verification agent. Creates/reuses demo pages on local AEM, screenshots components in `wcmmode=disabled` via Playwright, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines AEM MCP (page creation, component config) with Playwright MCP (navigation, screenshots).
 
@@ -170,7 +170,7 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-editorial-guide-capture.md` |
 | **Used by** | `/aem-editorial-guide`, `/aem-doc-gen` |
-| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-aem_playwright__*` tools |
+| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-core_playwright__*` tools |
 
 Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
 

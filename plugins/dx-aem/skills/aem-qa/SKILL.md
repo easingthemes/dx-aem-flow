@@ -102,15 +102,15 @@ Print:
 
 Use Playwright MCP to check AEM availability.
 
-**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
+**Try calling a tool directly first** (e.g., `mcp__plugin_dx-core_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
 
 Navigate to `<author-url>/crx/de`:
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "<author-url>/crx/de"
 ```
 
-Handle AEM login. **Preferred:** `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` then `mcp__plugin_dx-aem_playwright__browser_set_storage_state` with `.ai/playwright/aem-author-state.json`, then navigate (no password in context). **Fallback:** if a navigation lands on the login form, fill credentials resolved from `AEM_INSTANCES` (localhost `admin/admin` default).
+Handle AEM login. **Preferred:** `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` then `mcp__plugin_dx-core_playwright__browser_set_storage_state` with `.ai/playwright/aem-author-state.json`, then navigate (no password in context). **Fallback:** if a navigation lands on the login form, fill credentials resolved from `AEM_INSTANCES` (localhost `admin/admin` default).
 
 ### AEM reachable?
 
@@ -220,20 +220,20 @@ For each page to verify:
 
 **Navigate to Page (Preview Mode):**
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "<author-url>/content/<path>.html?wcmmode=disabled"
 ```
 
 Wait for page load:
 ```
-mcp__plugin_dx-aem_playwright__browser_wait_for
+mcp__plugin_dx-core_playwright__browser_wait_for
   text: "<expected element or text>"
   timeout: 15000
 ```
 
 **Take Screenshot:**
 ```
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_take_screenshot
 ```
 
 Save to `$SPEC_DIR/screenshots/page-<name>-preview.png`.
@@ -247,7 +247,7 @@ Save to `$SPEC_DIR/screenshots/page-<name>-preview.png`.
 
 Navigate to editor mode:
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "<author-url>/editor.html/content/<path>.html"
 ```
 
@@ -257,7 +257,7 @@ Open the component dialog:
 - Take screenshot of dialog
 
 ```
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_take_screenshot
 ```
 
 Save to `$SPEC_DIR/screenshots/dialog-<component>-editor.png`.
@@ -283,13 +283,13 @@ For each page to verify on publisher:
 
 **Navigate to Page (Publisher)** — no `wcmmode` param needed, publisher IS the production rendering:
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "<publish-url-with-creds-for-first-nav>/content/<path>.html"
 ```
 
 Wait for page load:
 ```
-mcp__plugin_dx-aem_playwright__browser_wait_for
+mcp__plugin_dx-core_playwright__browser_wait_for
   text: "<expected element or text>"
   timeout: 15000
 ```
@@ -301,7 +301,7 @@ mcp__plugin_dx-aem_playwright__browser_wait_for
 
 **Take Screenshot:**
 ```
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_take_screenshot
 ```
 
 Save to `$SPEC_DIR/screenshots/page-<name>-publisher.png`.

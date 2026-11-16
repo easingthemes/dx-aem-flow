@@ -337,15 +337,15 @@ steps:
         mcp__plugin_dx-aem_AEM__scanPageComponents,
         mcp__plugin_dx-aem_AEM__getPageProperties,
         mcp__plugin_dx-aem_AEM__listChildren,
-        mcp__plugin_dx-aem_playwright__browser_navigate,
-        mcp__plugin_dx-aem_playwright__browser_take_screenshot,
-        mcp__plugin_dx-aem_playwright__browser_snapshot,
-        mcp__plugin_dx-aem_playwright__browser_click,
-        mcp__plugin_dx-aem_playwright__browser_evaluate,
-        mcp__plugin_dx-aem_playwright__browser_wait_for,
-        mcp__plugin_dx-aem_playwright__browser_console_messages,
-        mcp__plugin_dx-aem_playwright__browser_network_requests,
-        mcp__plugin_dx-aem_playwright__browser_tabs
+        mcp__plugin_dx-core_playwright__browser_navigate,
+        mcp__plugin_dx-core_playwright__browser_take_screenshot,
+        mcp__plugin_dx-core_playwright__browser_snapshot,
+        mcp__plugin_dx-core_playwright__browser_click,
+        mcp__plugin_dx-core_playwright__browser_evaluate,
+        mcp__plugin_dx-core_playwright__browser_wait_for,
+        mcp__plugin_dx-core_playwright__browser_console_messages,
+        mcp__plugin_dx-core_playwright__browser_network_requests,
+        mcp__plugin_dx-core_playwright__browser_tabs
     # /dx-bug-all is a 3-skill chain; give the Azure step generous wall-clock so it
     # can actually reach MAX_TURNS rather than being killed at the step boundary. Keep
     # this ABOVE the wrapper's TIMEOUT_MINUTES (default 60) so the wrapper's own

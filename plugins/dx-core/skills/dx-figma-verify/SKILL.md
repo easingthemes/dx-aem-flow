@@ -56,11 +56,11 @@ The prototype screenshot MUST match the Figma reference width exactly — otherw
 
 3. **Via browser_evaluate** — load the image in a blank page (before navigating to prototype):
    ```
-   mcp__plugin_dx-aem_playwright__browser_navigate
+   mcp__plugin_dx-core_playwright__browser_navigate
      url: "about:blank"
    ```
    ```
-   mcp__plugin_dx-aem_playwright__browser_evaluate
+   mcp__plugin_dx-core_playwright__browser_evaluate
      expression: |
        (() => {
          return new Promise((resolve) => {
@@ -76,14 +76,14 @@ If none of these methods return a width, fall back to **1440x900**.
 
 **Step 3b.** Resize Chrome to match the Figma reference width:
 ```
-mcp__plugin_dx-aem_playwright__browser_resize
+mcp__plugin_dx-core_playwright__browser_resize
   width: <figma-reference-width>
   height: <figma-reference-height or 900>
 ```
 
 **Step 3c.** Verify the resize took effect:
 ```
-mcp__plugin_dx-aem_playwright__browser_evaluate
+mcp__plugin_dx-core_playwright__browser_evaluate
   expression: "(() => ({ width: window.innerWidth, height: window.innerHeight }))()"
 ```
 
@@ -95,20 +95,20 @@ If `window.innerWidth` does not match the target width, retry the resize once. I
 
 Navigate to the prototype HTML file:
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "file://<absolute-path-to-SPEC_DIR>/prototype/index.html"
 ```
 
 Wait for the page to load:
 ```
-mcp__plugin_dx-aem_playwright__browser_wait_for
+mcp__plugin_dx-core_playwright__browser_wait_for
   text: "</html>"
   timeout: 10000
 ```
 
 If the prototype has a side-by-side comparison container (Figma reference panel), hide it so only the component renders:
 ```
-mcp__plugin_dx-aem_playwright__browser_evaluate
+mcp__plugin_dx-core_playwright__browser_evaluate
   expression: |
     (() => {
       // Hide any Figma reference comparison panel
@@ -123,7 +123,7 @@ mcp__plugin_dx-aem_playwright__browser_evaluate
 ## 5. Take Prototype Screenshot
 
 ```
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_take_screenshot
 ```
 
 Save the screenshot with viewport-aware naming:
@@ -178,7 +178,7 @@ Make targeted, surgical edits — do not regenerate the entire file. Fix one gap
 
 Reload the page in Chrome:
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "file://<absolute-path-to-SPEC_DIR>/prototype/index.html"
 ```
 
