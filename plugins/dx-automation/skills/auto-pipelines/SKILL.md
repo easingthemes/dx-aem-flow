@@ -172,6 +172,25 @@ az_pipelines_variable create \
 
 Set: `AEM_AUTHOR_URL`, `AEM_PUBLISH_URL`, `AEM_USER`, `AEM_PASS` (secret).
 
+### Basic Auth sites (QA, BugFix, SimpleAgent, DOCAgent — optional)
+
+These four pipelines pass `BASIC_AUTH_SITES` to the agent so the browser and `curl-basic-auth` can open sites behind HTTP Basic Auth (QA/Stage publishers). Ask:
+
+> **Do any sites the agents open need HTTP Basic Auth?** If yes: `name:url:user:pass` entries joined by `,` (only `pass` may contain `:`, written `%3A`; `,` and `%` are `%2C`, `%25`).
+
+Set it as a **secret** on each of those pipelines that the user enabled:
+
+```bash
+az_pipelines_variable create \
+  --name "BASIC_AUTH_SITES" \
+  --value "<entries>" --secret true \
+  --pipeline-name "<pipeline-name>" \
+  --project "<adoProject>" \
+  --organization "<adoOrg>"
+```
+
+If no site needs it, skip it: ADO then passes the literal `$(BASIC_AUTH_SITES)`, which the parsers treat as unset. Never echo the value back.
+
 ### ADO org URL (ALL CLI pipelines)
 
 Set this on ALL CLI pipelines (DoR, PR Review, PR Answer, DoD, DoD-Fix, BugFix, QA, DevAgent, DOCAgent, Estimation). The pipelines fetch the dx-aem-flow plugins by cloning the **public** GitHub repo (`https://github.com/easingthemes/dx-aem-flow.git`, hardcoded in each pipeline YAML) — no marketplace URL variable is needed. `ADO_ORG_URL` is used by the agents to reach the ADO REST API.
