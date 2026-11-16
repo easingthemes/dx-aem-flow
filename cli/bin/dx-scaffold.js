@@ -209,10 +209,11 @@ console.log(`\nDone! ${stats.installed} files installed, ${stats.skipped} skippe
 console.log('');
 console.log('Next steps:');
 console.log('  1. Edit .ai/config.yaml — set your actual SCM org, build commands, URLs');
+console.log('  2. Run `npx playwright install chromium` once — the dx-core playwright MCP server needs it');
 if (flags.aem) {
-  console.log('  2. Edit .ai/config.yaml aem: section — set author/publish URLs, credentials');
-  console.log('  3. Populate .ai/project/component-index.md with your components');
-  console.log('  4. Fill in .ai/project/architecture.md and features.md');
+  console.log('  3. Edit .ai/config.yaml aem: section — set author/publish URLs, credentials');
+  console.log('  4. Populate .ai/project/component-index.md with your components');
+  console.log('  5. Fill in .ai/project/architecture.md and features.md');
 }
 console.log('');
 console.log('Works with:');

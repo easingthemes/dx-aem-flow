@@ -17,10 +17,10 @@ keyPoints:
   - "**Why it matters** — Two plugins could both register a server named 'api'. Without prefixing they'd collide. With prefixing they coexist: `mcp__plugin_pluginA_api__call` vs `mcp__plugin_pluginB_api__call`."
   - |
     **Our plugin MCP servers**
-    - AEM (stdio) — JCR content queries and component inspection
-    - Playwright (stdio) — browser automation and screenshots
-    - Figma (HTTP) — design extraction and token mapping
-    - axe (stdio, npx) — accessibility testing and compliance
+    - Playwright (stdio, dx-core) — browser automation and screenshots
+    - Figma (HTTP, dx-core) — design extraction and token mapping
+    - axe (stdio, npx, dx-core) — accessibility testing and compliance
+    - AEM (stdio, dx-aem) — JCR content queries and component inspection
 actionItems:
   - |
     **Always use the full prefix in skills and agents**

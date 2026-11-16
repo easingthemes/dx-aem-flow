@@ -2,7 +2,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "mcp__plugin_dx-aem_playwright__browser_take_screenshot",
+        "matcher": "mcp__plugin_dx-core_playwright__browser_take_screenshot",
         "hooks": [
           {
             "type": "command",
@@ -13,7 +13,7 @@
         ]
       },
       {
-        "matcher": "mcp__plugin_dx-aem_playwright__browser_snapshot",
+        "matcher": "mcp__plugin_dx-core_playwright__browser_snapshot",
         "hooks": [
           {
             "type": "command",

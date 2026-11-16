@@ -4,7 +4,7 @@
 
 ## What v3 changes for consumers
 
-- The browser MCP server in `plugins/dx-aem/.mcp.json` is now **`playwright`** (`@playwright/mcp@0.0.75`), tool prefix `mcp__plugin_dx-aem_playwright__browser_*`.
+- The browser MCP server in `plugins/dx-aem/.mcp.json` is now **`playwright`** (`@playwright/mcp@0.0.75`). In v3 its tools carried the dx-aem plugin prefix; the server has since moved to `plugins/dx-core/.mcp.json`, so the prefix today is `mcp__plugin_dx-core_playwright__browser_*` (`/dx-upgrade` rewrites the old names).
 - **Action required after upgrade:** enable the `playwright` server, and run `npx playwright install chromium` (Playwright drives a real Chromium; chrome-devtools bundled its own).
 - New reusable auth: `.ai/lib/aem-playwright-auth.sh` (installed by `/aem-init`) → author login via `storageState`, publisher Basic Auth via opt-in config.
 - `dx-perf` removed (see [TODO #147](todo/todo-perf.md)).

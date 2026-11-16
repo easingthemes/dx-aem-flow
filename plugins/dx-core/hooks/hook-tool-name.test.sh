@@ -37,7 +37,7 @@ shot() { # shot <env tool name or ""> <stdin json> → yes if the log was writte
   [ -s "$d/.ai/screenshots/screenshot-log.txt" ] && echo yes || echo no
 }
 
-check "screenshot: env tool"            yes "$(shot mcp__plugin_dx-aem_playwright__browser_take_screenshot '')"
+check "screenshot: env tool"            yes "$(shot mcp__plugin_dx-core_playwright__browser_take_screenshot '')"
 check "screenshot: stdin tool (Copilot)" yes "$(shot '' '{"tool_name":"playwright-browser_take_snapshot"}')"
 check "screenshot: stdin Edit ignored"  no  "$(shot '' '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{}}')"
 check "screenshot: stdin other tool"    no  "$(shot '' '{"tool_name":"Write"}')"

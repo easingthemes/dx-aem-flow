@@ -143,11 +143,11 @@ Check if `.claude/hooks.json` already exists:
 Read the project's existing `.mcp.json`.
 
 For each ejected plugin that has MCP servers:
-- **dx-core:** Empty mcpServers (ADO MCP configured separately) — no merge needed
-- **dx-aem:** Has `AEM` (HTTP) and `playwright` (stdio) servers
+- **dx-core:** Has the `axe-mcp-server`, `figma` and `playwright` servers (ADO MCP is configured separately, in the project `.mcp.json`)
+- **dx-aem:** Has the `AEM` (stdio) server
 - **dx-automation:** No .mcp.json
 
-Check if the AEM MCP entries already exist in `.mcp.json`. If not, merge them. If they already exist (because dx-init/aem-init already configured them), skip.
+Check if each ejected server entry already exists in `.mcp.json`. If not, merge them. If they already exist (because dx-init/aem-init already configured them), skip.
 
 ## 4. Update Shared File References in Skills
 

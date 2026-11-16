@@ -95,7 +95,7 @@ Some sites have duplicated country/lang segments: `/content/brand/ca/en/ca/en/..
 bash .ai/lib/aem-playwright-auth.sh author <local|qa>   # writes .ai/playwright/aem-author-state.json
 ```
 ```
-mcp__plugin_dx-aem_playwright__browser_set_storage_state
+mcp__plugin_dx-core_playwright__browser_set_storage_state
   path: ".ai/playwright/aem-author-state.json"
 ```
 Then navigate — already logged in.

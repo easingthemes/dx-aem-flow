@@ -123,6 +123,16 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 
 Model tiering is also applied at the skill level via `model:` frontmatter (e.g., Opus for dx-plan, dx-step-verify, dx-pr-review; Haiku for dx-ticket-analyze, dx-help).
 
+## MCP Servers
+
+Bundled in the plugin's `.mcp.json`, available without project config:
+
+- **Playwright MCP** (`@playwright/mcp`) — headless browser for bug reproduction, prototype and visual verification, SimpleAgent before/after screenshots. Tools: `mcp__plugin_dx-core_playwright__*`. Needs Chromium once: `npx playwright install chromium` (`/dx-init` runs it).
+- **axe MCP** — accessibility testing (`/dx-axe`).
+- **Figma MCP** — design extraction (local Figma desktop server).
+
+ADO and Atlassian MCP are configured per project by `/dx-init`.
+
 ## Configuration
 
 `/dx-init` generates `.ai/config.yaml` in your project root:

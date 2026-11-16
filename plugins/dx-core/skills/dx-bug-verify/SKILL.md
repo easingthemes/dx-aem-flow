@@ -167,9 +167,9 @@ Print: `$OUTPUT_FILE already up to date — skipping` and STOP.
 
 ### Ensure Playwright MCP
 
-Playwright MCP tools have the full name `mcp__plugin_dx-aem_playwright__<tool>`.
+Playwright MCP tools have the full name `mcp__plugin_dx-core_playwright__<tool>`.
 
-**Try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_playwright__browser_tabs`). If it works, tools are pre-loaded — continue using them directly.
+**Try calling a tool directly first** (e.g., `mcp__plugin_dx-core_playwright__browser_tabs`). If it works, tools are pre-loaded — continue using them directly.
 
 If you get a "tool not found" error, **fall back to ToolSearch**:
 ```
@@ -194,14 +194,14 @@ Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` a
 1. **Check for basic auth rule:** Read `.claude/rules/qa-basic-auth.md` — if it exists, QA sites require HTTP Basic Auth.
 2. **First navigation:** Embed credentials in the URL for browser-native Basic Auth:
    ```
-   mcp__plugin_dx-aem_playwright__browser_navigate
+   mcp__plugin_dx-core_playwright__browser_navigate
      url: "https://<user>:<pass>@<host>/<path>"
    ```
    Use the primary credentials from the rule. This sets a session cookie for subsequent requests.
 3. **Verify page loaded:** Take a snapshot and check for actual page content (not a 401 or blank page).
 4. **If page didn't load (401/empty):** Fall back to `browser_evaluate` with `fetch()` + Authorization header:
    ```
-   mcp__plugin_dx-aem_playwright__browser_evaluate
+   mcp__plugin_dx-core_playwright__browser_evaluate
      function: |
        async () => {
          const creds = btoa('<user>:<pass>');
@@ -216,18 +216,18 @@ Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` a
    If primary credentials fail, try fallback credentials from the rule.
 5. **Subsequent navigations:** Use clean URLs without credentials — the cookie persists for the session.
 6. If no basic auth rule exists, navigate directly without credentials.
-- Wait for page load via `mcp__plugin_dx-aem_playwright__browser_wait_for`
+- Wait for page load via `mcp__plugin_dx-core_playwright__browser_wait_for`
 
 **Local dev server** (e.g., `http://localhost:...`):
 - Navigate to URL
 - Check for login/auth page:
   ```
-  mcp__plugin_dx-aem_playwright__browser_evaluate
+  mcp__plugin_dx-core_playwright__browser_evaluate
     expression: "document.querySelector('input[type=password]') !== null"
   ```
 - If login page detected, fill credentials using `browser_evaluate`:
   ```
-  mcp__plugin_dx-aem_playwright__browser_evaluate
+  mcp__plugin_dx-core_playwright__browser_evaluate
     expression: |
       // Find and fill login form fields — adapt selectors to the app
       const userInput = document.querySelector('input[name=username], input[type=email], #username');
@@ -238,7 +238,7 @@ Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` a
   ```
 - Wait for app to load:
   ```
-  mcp__plugin_dx-aem_playwright__browser_wait_for
+  mcp__plugin_dx-core_playwright__browser_wait_for
     text: "<expected text after login>"
     timeout: 15000
   ```
@@ -261,7 +261,7 @@ Set `SS_PREFIX` based on mode:
 
 After page loads (Playwright's `browser_take_screenshot` takes a `filename` basename and saves under the MCP `--output-dir`, `.ai/playwright/screenshots/` — copy it into the spec dir):
 ```
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_take_screenshot
   filename: "<SS_PREFIX>0-initial.png"
 cp .ai/playwright/screenshots/<SS_PREFIX>0-initial.png <SPEC_DIR>/screenshots/<SS_PREFIX>0-initial.png
 ```
@@ -293,7 +293,7 @@ For each step in the repro instructions:
 **Element discovery pattern:** Before clicking/filling, find the target element:
 
 ```
-mcp__plugin_dx-aem_playwright__browser_snapshot
+mcp__plugin_dx-core_playwright__browser_snapshot
 ```
 
 This returns an accessibility tree with UIDs. Search the tree for the target element by:
@@ -303,7 +303,7 @@ This returns an accessibility tree with UIDs. Search the tree for the target ele
 
 Then use the UID in the action:
 ```
-mcp__plugin_dx-aem_playwright__browser_click
+mcp__plugin_dx-core_playwright__browser_click
   uid: "<found-uid>"
 ```
 
@@ -311,14 +311,14 @@ mcp__plugin_dx-aem_playwright__browser_click
 
 1. **Screenshot:**
    ```
-   mcp__plugin_dx-aem_playwright__browser_take_screenshot
+   mcp__plugin_dx-core_playwright__browser_take_screenshot
      filename: "<SS_PREFIX><N>-<action>.png"
    cp .ai/playwright/screenshots/<SS_PREFIX><N>-<action>.png <SPEC_DIR>/screenshots/<SS_PREFIX><N>-<action>.png
    ```
 
 2. **Console errors (check periodically, not after every step):**
    ```
-   mcp__plugin_dx-aem_playwright__browser_console_messages
+   mcp__plugin_dx-core_playwright__browser_console_messages
      type: "error"
    ```
 
@@ -331,7 +331,7 @@ After completing all repro steps:
 1. **Visual check:** Take a final screenshot of the current state
 2. **DOM state check:** Use `browser_evaluate` to programmatically verify:
    ```
-   mcp__plugin_dx-aem_playwright__browser_evaluate
+   mcp__plugin_dx-core_playwright__browser_evaluate
      expression: |
        // Adapt to the specific bug — check relevant DOM state
        const targetEl = document.querySelector('<relevant-selector>');
@@ -378,12 +378,12 @@ After completing all repro steps:
 ### Collect diagnostics
 
 ```
-mcp__plugin_dx-aem_playwright__browser_console_messages
+mcp__plugin_dx-core_playwright__browser_console_messages
   type: "error"
 ```
 
 ```
-mcp__plugin_dx-aem_playwright__browser_network_requests
+mcp__plugin_dx-core_playwright__browser_network_requests
   resourceType: "xhr,fetch"
 ```
 

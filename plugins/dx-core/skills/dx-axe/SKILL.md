@@ -72,11 +72,11 @@ Many AEM pages render content client-side (Handlebars templates, lazy-loaded com
 
 **Before running axe analyze**, use Playwright MCP to check if the page has rendered:
 
-1. Try calling Playwright MCP tools directly first (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing
+1. Try calling Playwright MCP tools directly first (e.g., `mcp__plugin_dx-core_playwright__browser_navigate`). If "tool not found", fall back to `ToolSearch query: "+playwright browser_navigate"`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing
 2. Navigate to the URL
 3. Wait up to 15s for meaningful content:
    ```
-   mcp__plugin_dx-aem_playwright__browser_evaluate
+   mcp__plugin_dx-core_playwright__browser_evaluate
      function: |
        () => {
          const text = document.body?.innerText?.trim();

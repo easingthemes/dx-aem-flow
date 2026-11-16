@@ -553,7 +553,7 @@
           ],
           codeTitle: 'example MCP server — playwright (browser automation)',
           code: [
-            '// registered as mcp__plugin_dx-aem_playwright__<tool_name>',
+            '// registered as mcp__plugin_dx-core_playwright__<tool_name>',
             'browser_navigate           — Open a URL in the controlled tab',
             'browser_snapshot           — Accessibility-tree snapshot of the page',
             'browser_take_screenshot    — Capture a screenshot (to file)',
