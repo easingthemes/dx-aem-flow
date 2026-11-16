@@ -1,7 +1,7 @@
 ---
 name: aem-qa
 description: "QA a story on AEM — check component rendering and dialogs on pages, capture screenshots, create Bug tickets for issues. Use after deploying, for 'qa this', 'verify on AEM'. Not for one component's dialog (aem-verify) or visual-only checks (aem-fe-verify)."
-argument-hint: "[Work Item ID (optional — reads from run-context)]"
+argument-hint: "[Work Item ID (optional — uses the most recent .ai/specs/ folder)]"
 allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---
 
@@ -81,10 +81,13 @@ digraph aem_qa {
 
 ### Load context
 
-Find the story context in order:
-1. `.ai/run-context/re.json` — RE spec (requirements, expected behavior)
-2. `.ai/run-context/dev.json` — Dev output (files changed, tasks completed)
-3. `.ai/specs/<id>-*/explain.md` — requirements from `/dx-req` (Phase 3)
+Find the spec directory: `.ai/specs/<id>-*/` when a work item ID is given, otherwise the most recently modified `.ai/specs/*/`. Read from it:
+1. `explain.md` — requirements and acceptance criteria (from `/dx-req`)
+2. `implement.md` — planned steps and the files each one touches (from `/dx-plan`), if present
+
+Files changed: `git diff --name-only <scm.base-branch>...HEAD` (base branch from `.ai/config.yaml`).
+
+If no spec directory exists: "No spec found. Run `/dx-req <id>` first." STOP.
 
 If an argument (work item ID) is provided, also fetch the Story from ADO for acceptance criteria.
 
@@ -125,8 +128,8 @@ STOP.
 
 From the context, identify AEM pages to check:
 
-1. **From RE spec** — `tasks[].files` may reference component paths, map to AEM content pages
-2. **From dev output** — `filesChanged`, identify affected components
+1. **From the plan** — files listed in `implement.md` steps may reference component paths, map to AEM content pages
+2. **From changed files** — the git diff above, identify affected components
 3. **From component index** — read `.ai/project/component-index.md` (or `.ai/component-index.md`) to find pages using affected components
 4. **Fallback** — search AEM for pages using the affected component resource types:
    ```
@@ -148,7 +151,7 @@ Wait for response before proceeding.
 
 Before running checks, decide WHERE to test based on the change type. Author and publisher are always different instances with different behavior.
 
-Analyze the files changed (from dev output) and the RE spec to classify:
+Analyze the changed files and `explain.md` to classify:
 
 | Change Type | Author | Publisher | Rationale |
 |-------------|--------|-----------|-----------|
@@ -192,7 +195,7 @@ mcp__plugin_dx-aem_AEM__getNodeContent
 ```
 
 Verify:
-- Expected dialog fields are present (from RE spec)
+- Expected dialog fields are present (from `explain.md`)
 - Field types match (textfield, pathbrowser, select, etc.)
 - Required fields are marked
 - Component `sling:resourceSuperType` is correct
@@ -235,7 +238,7 @@ mcp__plugin_dx-aem_playwright__browser_take_screenshot
 
 Save to `.ai/run-context/screenshots/page-<name>-preview.png`.
 
-**Check Expected Behavior** — compare what you see against the acceptance criteria from the RE spec:
+**Check Expected Behavior** — compare what you see against the acceptance criteria in `explain.md`:
 - Does the component render correctly?
 - Are the expected elements visible?
 - Does the layout match expectations?
@@ -453,13 +456,13 @@ Verdict: `"pass"` if no bugs, `"fail"` if any bugs created.
 
 ### Next steps:
 - **If PASS:** `/dx-pr-commit pr` — create pull request
-- **If FAIL:** `/dx-agent-dev` — Dev Agent fixes bugs, then redeploy and rerun `/aem-qa`
+- **If FAIL:** `/dx-bug-all <bug-id>` for each Bug created, then redeploy and rerun `/aem-qa`
 ```
 
 ## QA to Dev Repair Cycle
 
 If bugs are created, the developer can:
-1. Run `/dx-agent-dev` to fix the bugs (Dev reads Bug tickets)
+1. Run `/dx-bug-all <bug-id>` for each Bug ticket created
 2. Redeploy using the project's build + deploy command
 3. Rerun `/aem-qa` to verify fixes
 
@@ -468,7 +471,7 @@ If bugs are created, the developer can:
 ## Pre-Presentation Validation
 
 Before creating bug tickets:
-1. Re-read explain.md or RE spec acceptance criteria
+1. Re-read the acceptance criteria in `explain.md`
 2. Verify each finding is a genuine deviation from spec
 3. Cross-check: is this component in the spec? If not, skip (out of scope)
 4. Duplicate check: does qa.json already have this finding?

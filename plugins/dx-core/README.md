@@ -92,8 +92,6 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 
 | Skill | Description |
 |-------|-------------|
-| `/dx-agent-re` | RE Agent — analyze story, produce structured requirements spec |
-| `/dx-agent-dev` | Dev Agent — implement from spec, self-check, commit |
 | `/dx-agent-all` | Full pipeline: requirements → development with checkpoints |
 
 ### Documentation
