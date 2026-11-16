@@ -19,7 +19,8 @@ PASS=0; FAIL=0
 check() { if [ "$2" = "$3" ]; then echo "PASS $1"; PASS=$((PASS + 1)); else echo "FAIL $1 (want $2, got $3)"; FAIL=$((FAIL + 1)); fi; }
 is_progress() { jq -e 'select(.type == "progress" and (.message | length) > 0 and (.message | test("\\.\\.\\.$") | not))' >/dev/null 2>&1 && echo yes || echo no; }   # no trailing "..." — Copilot keeps the line
 
-mkdir -p "$TMP/proj/.ai"
+mkdir -p "$TMP/proj/.ai/lib"
+touch "$TMP/proj/.ai/lib/playwright-basic-auth.cjs"   # else session-start warns even at minimal
 for s in session-start context-loader next-step; do
   out_claude=$(cd "$TMP/proj" && CLAUDE_PROJECT_DIR="$TMP/proj" bash "$PLUGIN/hooks/scripts/$s.sh" </dev/null 2>/dev/null | grep -c '"type":"progress"')
   check "$s: no progress line on Claude Code" 0 "$out_claude"
