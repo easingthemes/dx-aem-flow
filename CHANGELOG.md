@@ -1,3 +1,17 @@
+# [4.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.14.1...v4.0.0) (2026-11-16)
+
+
+* feat(dx-core)!: remove dx-agent-re and dx-agent-dev skills ([#267](https://github.com/easingthemes/dx-aem-flow/issues/267)) ([5bff693](https://github.com/easingthemes/dx-aem-flow/commit/5bff6936f73af749a9841e431af17f8920f6697a))
+
+
+### BREAKING CHANGES
+
+* /dx-agent-re and /dx-agent-dev are removed. Use
+/dx-req <id> (plus /dx-req-tasks for child tasks) for requirements and
+/dx-agent-all <id> (or /dx-plan + /dx-step-all) for implementation.
+
+Co-authored-by: Claude <noreply@anthropic.com>
+
 ## [3.14.1](https://github.com/easingthemes/dx-aem-flow/compare/v3.14.0...v3.14.1) (2026-11-11)
 
 
