@@ -40,7 +40,7 @@ Basic Auth and the AEM login form are independent gates that live on **different
 | Layer | Where it applies | Credentials | Handled in |
 |-------|------------------|-------------|------------|
 | **AEM form login** | the **whole author instance** — any console or page (page editor `editor.html`, `/sites.html`, `/assets.html`, `/aem/start.html`, …). Unauthenticated requests to *any* of them redirect to the constant login path `/libs/granite/core/content/login.html` | the `AEM_INSTANCES` user/pass | "AEM Login Handling" below |
-| **HTTP Basic Auth** | the **publisher / published website** on QA/Stage (reverse-proxy gate in front of publish) | `QA_BASIC_AUTH_*` / `aem.qa-basic-auth` | "Publisher View Capture" / "QA/Stage Authentication" below |
+| **HTTP Basic Auth** | the **publisher / published website** on QA/Stage (reverse-proxy gate in front of publish) | `BASIC_AUTH_SITES` (`basic-auth` rule) | "Publisher View Capture" / "QA/Stage Authentication" below |
 
 The **author has no Basic Auth** — navigating to an author URL (editor) goes straight to the AEM login form. The **published site has no AEM login form** — it's published content sitting behind the proxy's Basic Auth. The two credential sets are not interchangeable.
 
@@ -168,45 +168,7 @@ Keep it concise — editors don't need code details, just authoring guidance.
 
 ## QA/Stage Authentication (HTTP Basic Auth — the published-website gate)
 
-This is the reverse-proxy protection in front of the QA/Stage **publisher**, **separate from the AEM author login form** (the author has no Basic Auth). Apply this only when navigating to a **published-site (publisher)** URL. When such a URL is NOT localhost, check if `.claude/rules/qa-basic-auth.md` exists. If it does, read the credentials from it (primary and fallback). If it doesn't exist, check `.ai/config.yaml` under `aem.qa-basic-auth` for username/password. If neither is configured and the URL returns 401, report that QA Basic Auth is required but not configured.
-
-### First navigation to a QA/Stage URL
-
-Embed Basic Auth credentials directly in the URL:
-```
-https://<username>:<password>@<qa-hostname>/path/to/page.html
-```
-
-This triggers the browser's built-in Basic Auth mechanism and sets the session cookie. (Published pages serve directly — they do **not** redirect to the AEM login form; that form only appears on the author instance.)
-
-### Subsequent navigations
-
-Use clean URLs without credentials — the cookie persists for the session.
-
-### Fallback: If embedded credentials don't work
-
-If embedded credentials result in 401 or a blank page, use `browser_evaluate` to pre-authenticate via fetch, then reload:
-
-```js
-async () => {
-  const creds = btoa('<username>:<password>');
-  const resp = await fetch(window.location.href, {
-    headers: { 'Authorization': 'Basic ' + creds },
-    credentials: 'include'
-  });
-  if (resp.ok) { location.reload(); return { authenticated: true }; }
-  // Try fallback credentials
-  const creds2 = btoa('<fallback-username>:<fallback-password>');
-  const resp2 = await fetch(window.location.href, {
-    headers: { 'Authorization': 'Basic ' + creds2 },
-    credentials: 'include'
-  });
-  if (resp2.ok) { location.reload(); return { authenticated: true, fallback: true }; }
-  return { authenticated: false };
-}
-```
-
-Read credentials from `.claude/rules/qa-basic-auth.md` or `.ai/config.yaml` `aem.qa-basic-auth`. See the project's qa-basic-auth rule for the full reference.
+This is the reverse-proxy protection in front of the QA/Stage **publisher**, **separate from the AEM author login form** (the author has no Basic Auth). Follow the `basic-auth` rule: navigate to publisher URLs with the plain URL; the browser applies `BASIC_AUTH_SITES`. On a 401 or an auth error page, report `<origin> needs an entry in BASIC_AUTH_SITES` and stop that path. (Published pages serve directly — they do **not** redirect to the AEM login form.)
 
 ## Publisher View Capture
 
@@ -215,7 +177,7 @@ Publisher URLs are accessed directly (no `/editor.html` prefix). There is no Gra
 To capture a component on the publisher:
 
 1. Navigate to `<publish-url><page-path>.html`
-2. Handle QA Basic Auth if the URL is non-localhost (see above)
+2. Basic Auth is applied by the browser for listed origins (see above)
 3. Use `browser_evaluate` to locate the component by CSS class or custom element tag. Read the component prefix from `.ai/config.yaml` `aem.component-prefix` (e.g., `bat-`, `cmp-`):
    ```js
    () => {

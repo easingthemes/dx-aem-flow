@@ -70,9 +70,9 @@ Test AEM connectivity:
 curl -sf -o /dev/null -w "%{http_code}" "$AUTHOR_URL/libs/granite/core/content/login.html" || echo "unreachable"
 ```
 
-The **author** instance has no HTTP Basic Auth — the login page above is reachable directly (it returns the AEM login form, which is filled later with the `AEM_INSTANCES` creds). Basic Auth (`.claude/rules/qa-basic-auth.md` / `.ai/config.yaml` `aem.qa-basic-auth`) applies only to the QA/Stage **publisher** — use it if/when probing a published-site URL:
+The **author** instance has no HTTP Basic Auth — the login page above is reachable directly (it returns the AEM login form, which is filled later with the `AEM_INSTANCES` creds). Basic Auth (`BASIC_AUTH_SITES`, see the `basic-auth` rule) applies only to the QA/Stage **publisher** — use it if/when probing a published-site URL:
 ```bash
-curl -sf -o /dev/null -w "%{http_code}" -u "$QA_USER:$QA_PASS" "$PUBLISH_URL/<published-page>.html" || echo "unreachable"
+bash .ai/lib/dx-common.sh curl-basic-auth "$PUBLISH_URL/<published-page>.html" -sf -o /dev/null -w "%{http_code}" || echo "unreachable"
 ```
 
 If unreachable:
@@ -131,7 +131,7 @@ If the page already exists, reuse it (idempotent). Same JCR path works on both l
 Use the aem-editorial-guide-capture agent:
 
 1. Navigate to `$AUTHOR_URL/editor.html<docs-page-path>.html`
-2. QA Basic Auth handled by agent if URL is non-localhost
+2. Basic Auth is applied by the browser (`BASIC_AUTH_SITES`); open plain URLs
 3. Handle AEM login redirect if needed
 4. Open the component dialog via Granite API
 5. Screenshot the dialog → save as `$SPEC_DIR/demo/dialog-<component>.png`
@@ -154,7 +154,7 @@ Poll the publisher URL for a 200 response, up to 60s timeout:
 
 ```bash
 for i in $(seq 1 12); do
-  STATUS=$(curl -sf -o /dev/null -w "%{http_code}" -u "$QA_USER:$QA_PASS" "$PUBLISH_URL<docs-page-path>.html" 2>/dev/null)
+  STATUS=$(bash .ai/lib/dx-common.sh curl-basic-auth "$PUBLISH_URL<docs-page-path>.html" -sf -o /dev/null -w "%{http_code}" 2>/dev/null)
   [ "$STATUS" = "200" ] && break
   sleep 5
 done
@@ -167,7 +167,7 @@ If still not available after 60s, skip website screenshot and note in guide.
 Use the aem-editorial-guide-capture agent in publisher view mode:
 
 1. Navigate to `$PUBLISH_URL<docs-page-path>.html`
-2. QA Basic Auth handled by agent if URL is non-localhost
+2. Basic Auth is applied by the browser (`BASIC_AUTH_SITES`); open plain URLs
 3. Locate the component by CSS class/custom element tag
 4. Scroll to component
 5. Screenshot → save as `$SPEC_DIR/demo/rendered-<component>.png`
