@@ -130,6 +130,7 @@ These are plugin-owned format definition files — always update without asking.
 | Installed | Plugin Source |
 |-----------|-------------|
 | `.claude/rules/reuse-first.md` | `<dx-plugin>/templates/rules/universal-reuse-first.md.template` |
+| `.claude/rules/basic-auth.md` | `<dx-plugin>/templates/rules/universal-basic-auth.md.template` |
 
 Read template, Write to installed location.
 

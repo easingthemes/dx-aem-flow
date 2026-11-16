@@ -14,7 +14,7 @@ You are a diagnostic tool for the dx workflow setup in a consumer project. You c
 - **File existence:** Use `Glob` with exact path patterns — never `[ -f ]`, `test -f`, or `ls` in Bash
 - **File content:** Use `Read` to read files — never `cat`, `head`, or `diff` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c), `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) and `scripts/playwright-owner-audit.sh` (step 6.6, without `--fix`), and the one value-free env check in step 4a, `[ -n "${QA_BASIC_AUTH_USER:-}${QA_BASIC_AUTH_PASS:-}" ] && echo set` — nothing else in this skill needs Bash
+- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c), `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) and `scripts/playwright-owner-audit.sh` (step 6.6, without `--fix`), and the one value-free env check in step 4a, `[ -n "${QA_BASIC_AUTH_USER:-}${QA_BASIC_AUTH_PASS:-}" ] && echo set || true` — nothing else in this skill needs Bash
 - **Parallel checks:** Call multiple `Glob`/`Read` tools in a single response for efficiency — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Read Configuration & Detect Plugins
@@ -210,8 +210,9 @@ For each, test presence only (`[ -n "${VAR:-}" ]`), never print the value:
 
 **Basic Auth leftovers (value-free).** `BASIC_AUTH_SITES` itself is not checked. The old `QA_BASIC_AUTH_*` variables are no longer read by anything; report leftovers without ever printing a value:
 - `.claude/rules/qa-basic-auth.md` present → `⚠ STALE: replaced by basic-auth.md — run /dx-upgrade`
-- `aem.qa-basic-auth` present in `.ai/config.yaml` → `✗ SECRET: no longer read; move to BASIC_AUTH_SITES, delete the block, rotate if pushed`
+- `qa-basic-auth:` present in `.ai/config.yaml` — detect with `Grep` (`output_mode: files_with_matches` or `count`) on that key only; never Read, quote or echo the block → `✗ SECRET: no longer read; move to BASIC_AUTH_SITES, delete the block, rotate if pushed`
 - Run the exact Bash check from "Bash is ONLY for"; it prints `set` when either variable is exported → `⚠ QA_BASIC_AUTH_* is no longer read — move to BASIC_AUTH_SITES (format in the basic-auth rule)`.
+- `.claude/settings.local.json` — use `Grep -l 'QA_BASIC_AUTH_'` (`files_with_matches`); do not Read this file, it holds secret values. Match → `⚠ QA_BASIC_AUTH_* keys in settings.local.json are no longer read; delete them, move values to BASIC_AUTH_SITES`
 
 Pipeline-only variables (`ANTHROPIC_API_KEY`, `ADO_PAT`, AWS keys) are not checked here — `/auto-doctor` covers them.
 
