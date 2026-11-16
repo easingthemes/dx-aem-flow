@@ -172,7 +172,7 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 | **Used by** | `/aem-editorial-guide`, `/aem-doc-gen` |
 | **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-core_playwright__*` tools |
 
-Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and QA Basic Auth, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
+Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and Basic Auth for protected sites listed in `BASIC_AUTH_SITES`, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
 
 **Key capabilities:**
 - AEM login handling (detect redirect, fill credentials, submit)
