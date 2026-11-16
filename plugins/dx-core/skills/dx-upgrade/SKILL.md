@@ -138,7 +138,7 @@ Read template, Write to installed location.
 
 `QA_BASIC_AUTH_*` is replaced by one `BASIC_AUTH_SITES` variable. Nothing reads the old names any more. There is **no automatic migration** of values.
 
-1. **Install** `.ai/lib/playwright-basic-auth.cjs` (from 3a — without it the `playwright` MCP server exits at startup with "Init page file does not exist", so every browser tool is unavailable) and `.claude/rules/basic-auth.md` (3b).
+1. **Install** `.claude/rules/basic-auth.md` (3b). The browser side needs nothing in the project: the `playwright` MCP server loads `${CLAUDE_PLUGIN_ROOT}/data/lib/playwright-basic-auth.cjs` from the plugin. If an earlier version left `.ai/lib/playwright-basic-auth.cjs`, delete it (unused).
 2. **Old rule:** if `.claude/rules/qa-basic-auth.md` exists, Read and show it, then ask whether to delete it. Delete only on a clear yes; otherwise list it under **Manual Actions Required**.
 3. **Never print a credential.** Do not read or echo `QA_BASIC_AUTH_*` values or any `aem.qa-basic-auth` block content. If dx-doctor reported `aem.qa-basic-auth` in `.ai/config.yaml`, list it under **Manual Actions Required**: delete the block, rotate the password if the file was ever pushed.
 4. **Print the format** and remind the user to move values by hand:

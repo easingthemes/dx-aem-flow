@@ -68,19 +68,16 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     After upgrading, run <code>/dx-upgrade</code> to sync project files to the new plugin version.
   </HighlightBox>
 
-  <HighlightBox severity="warning" title="Upgrading: Basic Auth init page (required)">
-    The dx-core <code>playwright</code> MCP server loads <code>.ai/lib/playwright-basic-auth.cjs</code> at startup.
-    After updating the plugins, run <code>/dx-upgrade</code> — it installs that file and the
-    <code>.claude/rules/basic-auth.md</code> rule (<code>/dx-init</code> installs both on a new project).
-    <br /><br />
-    <strong>Symptom when the file is missing:</strong> the <code>playwright</code> MCP server fails to start, so every
-    browser tool is unavailable ("tool not found"). The dx-core session-start hook warns about it.
-    ADO pipelines (SimpleAgent, BugFix, QA) copy the file into the target checkout automatically.
-    <br /><br />
+  <HighlightBox severity="warning" title="Upgrading: Basic Auth (BASIC_AUTH_SITES)">
     The old QA-only Basic Auth environment variables and the matching block under <code>aem:</code> in
     <code>.ai/config.yaml</code> are no longer read (<code>/dx-doctor</code> lists any leftovers). Set <code>BASIC_AUTH_SITES</code> instead (format below and in the <code>basic-auth</code> rule):
     <code>name:url:user:pass</code> entries joined by commas. Only <code>pass</code> may contain a colon,
     written as <code>%3A</code>; <code>user</code> must not contain one.
+    <br /><br />
+    Run <code>/dx-upgrade</code> after updating the plugins: it installs the <code>.claude/rules/basic-auth.md</code> rule
+    and refreshes <code>.ai/lib/dx-common.sh</code> (which adds <code>curl-basic-auth</code>). The browser side needs no
+    project file: the <code>playwright</code> MCP server loads its init page from the dx-core plugin. On Copilot CLI that
+    path comes from the exported <code>CLAUDE_PLUGIN_ROOT</code>.
   </HighlightBox>
 </Section>
 

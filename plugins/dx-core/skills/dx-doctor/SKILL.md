@@ -104,7 +104,7 @@ For each:
    - Different only in **comment lines** (lines starting with `#` for shell, `//` or `/* */` for JS) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
    - Different in **functional code** (non-comment lines) → `⚠ STALE (plugin version updated — run /dx-upgrade)`
 
-**Basic Auth init-page:** if `.ai/lib/playwright-basic-auth.cjs` is missing, report `✗ MISSING (the playwright MCP server cannot start — browser tools unavailable; run /dx-upgrade)` instead of the generic line — the `playwright` MCP server loads it with `--init-page` and exits at startup when the file does not exist.
+**Basic Auth init page:** the `playwright` MCP server loads it from the plugin (`${CLAUDE_PLUGIN_ROOT}/data/lib/playwright-basic-auth.cjs`), not from the project. A leftover `.ai/lib/playwright-basic-auth.cjs` (installed by an earlier version) is unused: report `ℹ unused (loaded from the plugin now — safe to delete)`.
 
 ### 1e. (Removed — .ai/docs/ no longer managed by plugins)
 

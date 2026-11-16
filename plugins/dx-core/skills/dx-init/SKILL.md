@@ -166,8 +166,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/scaffold.sh
 This creates:
 - `.ai/specs`, `.ai/rules`, `.ai/research`, `.ai/lib`, `.ai/templates`
 - `.claude/rules`, `.claude/hooks`
-- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, parse-wi-images.sh, ensure-feature-branch.sh, queue-pipeline.sh, update-progress.sh, playwright-basic-auth.cjs) with chmod +x
-- **`.ai/lib/playwright-basic-auth.cjs` is mandatory.** The Playwright MCP server in `.mcp.json` loads it via `--init-page`; if the file is missing, the server exits at startup ("Init page file does not exist") and every browser tool is unavailable. Never skip or delete it. (`.cjs`, not `.js`, so it loads in projects whose `package.json` sets `"type": "module"`.)
+- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, parse-wi-images.sh, ensure-feature-branch.sh, queue-pipeline.sh, update-progress.sh) with chmod +x
 - Copies `stop-guard.sh` to `.claude/hooks/` with chmod +x
 - Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/)
 - Copies shared rule templates to `.ai/rules/`

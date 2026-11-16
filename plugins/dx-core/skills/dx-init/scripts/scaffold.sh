@@ -16,8 +16,6 @@
 #
 # Installs/validates:
 #   .ai/lib/audit.sh          ← from data/lib/audit.sh
-#   .ai/lib/playwright-basic-auth.cjs ← from data/lib/playwright-basic-auth.cjs (Playwright MCP --init-page;
-#                                        mandatory — without it the playwright MCP server exits at startup)
 #   .claude/hooks/stop-guard.sh ← from data/hooks/stop-guard.sh
 #   .ai/rules/*.md            ← from templates/rules/*.template (non-universal)
 #   .claude/rules/*.md        ← from templates/rules/universal-*.template
@@ -95,7 +93,6 @@ install_utility "$PLUGIN_DIR/data/lib/gather-context.sh" ".ai/lib/gather-context
 install_utility "$PLUGIN_DIR/data/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh"
 install_utility "$PLUGIN_DIR/data/lib/validate-image.sh" ".ai/lib/validate-image.sh" ".ai/lib/validate-image.sh"
 install_utility "$PLUGIN_DIR/data/lib/fetch-raw-story.js" ".ai/lib/fetch-raw-story.js" ".ai/lib/fetch-raw-story.js"
-install_utility "$PLUGIN_DIR/data/lib/playwright-basic-auth.cjs" ".ai/lib/playwright-basic-auth.cjs" ".ai/lib/playwright-basic-auth.cjs"
 install_utility "$PLUGIN_DIR/data/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh"
 
 # --- Install/validate output templates ---

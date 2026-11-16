@@ -30,11 +30,12 @@ A port stays in the URL: `qa:https://qa.example.com:8443:user:pass`.
 
 ## How it is applied
 
-- **Browser:** Playwright MCP loads `.ai/lib/playwright-basic-auth.cjs` (`--init-page`, installed by `/dx-init` and `/dx-upgrade`; mandatory — without it the `playwright` MCP server exits at startup and no browser tool is available; run `/dx-upgrade`). It adds the login to requests for listed origins automatically. **Open plain URLs** — never put credentials in a URL.
+- **Browser:** the Playwright MCP server loads `playwright-basic-auth.cjs` from the dx-core plugin (`--init-page ${CLAUDE_PLUGIN_ROOT}/data/lib/…`; Copilot CLI needs `CLAUDE_PLUGIN_ROOT` exported, see `/dx-init`). It adds the login to requests for listed origins automatically. **Open plain URLs** — never put credentials in a URL.
   - A cross-origin redirect never carries the login.
   - Responses from listed sites are buffered (no streaming), so large downloads, SSE and Range requests are affected.
   - If the site cannot be reached, the request is aborted.
-- **Shell:** use `bash .ai/lib/dx-common.sh curl-basic-auth <url> [curl-args...]`. It adds `-u` only for listed origins, never prints credentials, and returns curl's exit code.
+- **Shell:** use `bash .ai/lib/dx-common.sh curl-basic-auth <url> [curl-args...]`. It adds `-u` only for listed origins, never prints credentials, and returns curl's exit code. An older `.ai/lib/dx-common.sh` lacks the command (`/dx-upgrade` refreshes it).
+- A `user`/`pass` containing a line break (raw, `%0A` or `%0D`) skips that entry. An unexpanded `$(BASIC_AUTH_SITES)` (an undefined ADO variable) counts as unset.
 
 ## When it fails
 
