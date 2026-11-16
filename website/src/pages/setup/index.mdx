@@ -67,6 +67,21 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <code>/plugin marketplace update dx-aem-flow</code> updates all installed plugins to the latest version.
     After upgrading, run <code>/dx-upgrade</code> to sync project files to the new plugin version.
   </HighlightBox>
+
+  <HighlightBox severity="warning" title="Upgrading: Basic Auth init page (required)">
+    The dx-core <code>playwright</code> MCP server loads <code>.ai/lib/playwright-basic-auth.cjs</code> at startup.
+    After updating the plugins, run <code>/dx-upgrade</code> — it installs that file and the
+    <code>.claude/rules/basic-auth.md</code> rule (<code>/dx-init</code> installs both on a new project).
+    <br /><br />
+    <strong>Symptom when the file is missing:</strong> the <code>playwright</code> MCP server fails to start, so every
+    browser tool is unavailable ("tool not found"). The dx-core session-start hook warns about it.
+    ADO pipelines (SimpleAgent, BugFix, QA) copy the file into the target checkout automatically.
+    <br /><br />
+    The old QA-only Basic Auth environment variables and the matching block under <code>aem:</code> in
+    <code>.ai/config.yaml</code> are no longer read (<code>/dx-doctor</code> lists any leftovers). Set <code>BASIC_AUTH_SITES</code> instead (format below and in the <code>basic-auth</code> rule):
+    <code>name:url:user:pass</code> entries joined by commas. Only <code>pass</code> may contain a colon,
+    written as <code>%3A</code>; <code>user</code> must not contain one.
+  </HighlightBox>
 </Section>
 
 {/* ════════════════════════════════════════════════════════════════════════ */}
@@ -95,7 +110,7 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 # export AXE_API_KEY="your-axe-api-key"
 
 # Optional: HTTP Basic Auth for protected QA/Stage sites (single quotes keep $ and ! literal)
-# Format: name:url:user:pass — comma-separated; a port stays in the URL
+# Format: name:url:user:pass — comma-separated; a port stays in the URL; a ':' in pass is written %3A
 # export BASIC_AUTH_SITES='qa:https://qa.example.com:user:pass,uat:https://uat.example.com:8443:user:pass'`}</CommandBlock>
     Restart your terminal or run <code>{"source ~/.zshrc"}</code> after adding these.
     These env vars work in both Claude Code and Copilot CLI.
