@@ -292,7 +292,7 @@ Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai
 .ai/playwright/
 ```
 
-`.ai/playwright/` is where the dx-core `playwright` MCP server writes screenshots, and where browser session state lands (for AEM, the author `storageState` cookie and Basic Auth config from `aem-playwright-auth.sh`) — it must never be committed, so recommend it even when `.ai/` is otherwise tracked.
+`.ai/playwright/` is where the dx-core `playwright` MCP server writes screenshots, and where browser session state lands (for AEM, the author `storageState` cookie from `aem-playwright-auth.sh`) — it must never be committed, so recommend it even when `.ai/` is otherwise tracked.
 
 Do NOT auto-modify `.gitignore` — ask the user first.
 

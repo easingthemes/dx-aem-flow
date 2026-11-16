@@ -386,13 +386,12 @@ If the file doesn't exist, skip this step (it means `/dx-init` didn't generate C
 Copy the reusable auth helper so browser agents can authenticate to AEM without the password ever entering the model's context.
 
 1. Copy `../../data/lib/aem-playwright-auth.sh` (relative to this skill's directory — the dx-aem plugin's `data/lib/`) → `.ai/lib/aem-playwright-auth.sh` (create `.ai/lib/` if missing; `chmod +x`). On re-run, overwrite silently if the plugin version changed.
-2. The helper writes into `.ai/playwright/` (session cookie, Basic Auth config). `/dx-init` adds that path to `.gitignore` and installs the Chromium browser (`npx playwright install chromium`), because the `playwright` MCP server belongs to **dx-core**. If `.gitignore` lacks `.ai/playwright/` (an older dx-init), append it and tell the user to run `/dx-upgrade`.
+2. The helper writes into `.ai/playwright/` (the author session cookie). `/dx-init` adds that path to `.gitignore` and installs the Chromium browser (`npx playwright install chromium`), because the `playwright` MCP server belongs to **dx-core**. If `.gitignore` lacks `.ai/playwright/` (an older dx-init), append it and tell the user to run `/dx-upgrade`.
 
 **Dependency:** the author flow below loads the cookie with `browser_set_storage_state`, a tool of dx-core's `playwright` server (`mcp__plugin_dx-core_playwright__*`). dx-aem has no browser server of its own — dx-core must be installed (it already is a dx-aem prerequisite).
 
-**What it provides** (two independent auth layers — see the `qa-basic-auth` rule):
+**What it provides** (AEM author login only — QA/stage Basic Auth is handled by dx-core's `basic-auth` rule and `BASIC_AUTH_SITES`):
 - **AEM author login** → `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` writes `.ai/playwright/aem-author-state.json` (a Playwright `storageState` with the `login-token` cookie). Browser agents load it via `browser_set_storage_state` before navigating to the author — no form-fill, no password in context.
-- **Publisher Basic Auth** (opt-in) → `bash .ai/lib/aem-playwright-auth.sh config` writes `.ai/playwright/config.json` with `httpCredentials` from `QA_BASIC_AUTH_*`. To use it browser-natively, add `"--config", ".ai/playwright/config.json"` to the `playwright` server args in `.mcp.json`. (Default skills use URL-embedded Basic Auth, which needs no config.)
 
 ### 8h. Report results
 
@@ -508,9 +507,8 @@ If `aem:` section already has project config (`active-brands`, `active-markets`)
 Copy rule templates from the plugin `templates/rules/` directory to `.claude/rules/`:
 
 - `audit.md.template` → `.claude/rules/audit.md` (remote change audit rules)
-- `qa-basic-auth.md.template` → `.claude/rules/qa-basic-auth.md` (QA/stage auth credentials)
 
-For `qa-basic-auth`: the rule now reads credentials from env vars first (`QA_BASIC_AUTH_USER` etc.), with `.ai/config.yaml` as legacy fallback. If `project.yaml` defines `defaults.qa-basic-auth`, still substitute into the rule template for backward compatibility.
+QA/stage Basic Auth is not configured here: dx-core's `basic-auth` rule (installed by `/dx-init`) and the `BASIC_AUTH_SITES` env var cover it.
 
 **On re-run:** Compare existing file against template. If identical: skip. If template changed and user hasn't customized: update silently. If user customized: show diff, ask.
 
@@ -547,10 +545,7 @@ echo "$AEM_INSTANCES"
    ```json
    {
      "env": {
-       "QA_BASIC_AUTH_USER": "",
-       "QA_BASIC_AUTH_PASS": "",
-       "QA_BASIC_AUTH_FALLBACK_USER": "",
-       "QA_BASIC_AUTH_FALLBACK_PASS": "",
+       "BASIC_AUTH_SITES": "",
        "AXE_API_KEY": "",
        "AEM_INSTANCES": "local:http://localhost:4502:admin:admin"
      }
