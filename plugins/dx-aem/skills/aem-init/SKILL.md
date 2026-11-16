@@ -545,7 +545,6 @@ echo "$AEM_INSTANCES"
    ```json
    {
      "env": {
-       "BASIC_AUTH_SITES": "",
        "AXE_API_KEY": "",
        "AEM_INSTANCES": "local:http://localhost:4502:admin:admin"
      }
@@ -553,6 +552,8 @@ echo "$AEM_INSTANCES"
    ```
 
    Report: "Updated `.claude/settings.local.json` with AEM_INSTANCES. Preferred: set in shell profile for both Claude Code and Copilot CLI."
+
+   Basic Auth sites: set `BASIC_AUTH_SITES='name:url:user:pass,...'` in your shell profile (see dx-core `basic-auth` rule); in ADO, a secret pipeline variable.
 
 **Note (runs whether or not `AEM_INSTANCES` is set):** if `aem.author-url-qa` or `aem.author-url` has a hostname ending in `.adobeaemcloud.com` (AEM as a Cloud Service), also mention: Adobe hosts its own MCP server at `https://mcp.adobeaemcloud.com/adobe/mcp/aem`. It is Cloud Service only, OAuth with the user's Adobe ID, runs with that user's AEM permissions, and Content/Cloud Manager can be read-only. The user may add it next to the bundled server for ad-hoc work. It does **not** replace the bundled `AEM` server: dx-aem skills call that server's tools by name, and the Adobe server needs an interactive sign-in a pipeline cannot do.
 
