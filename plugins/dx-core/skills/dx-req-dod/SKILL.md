@@ -226,7 +226,7 @@ mcp__atlassian__jira_add_comment
   comment: "<condensed dod results>"
 ```
 
-Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure.
+Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text).
 
 ## 8. Auto-Fix Gaps (if any FAIL criteria)
 
@@ -272,7 +272,8 @@ Track results: `{criterion, action, result: fixed|failed|skipped}`.
 
 ### 8d. Create Task Work Items for Remaining Failures
 
-For each needs-human failure, create a child Task work item:
+For each needs-human failure, create a child Task work item — unless one already exists. First list the story's child Tasks (from its relations; for Jira, JQL `parent = <issue key>`) and skip any failure whose `[DoD] <criterion description>` title matches an open child Task. A re-run then updates the DoD comment but does not add the same tasks again. This check is what lets non-interactive runs create these tasks without asking (`../../shared/interaction-mode.md`).
+
 
 **If provider = ado:**
 - Title: `[DoD] <criterion description>`

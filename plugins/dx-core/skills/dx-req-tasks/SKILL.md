@@ -100,7 +100,7 @@ Map fields:
 - **Assigned To** — `fields.assignee.displayName`
 - **Existing children** — fetch via JQL: `mcp__atlassian__jira_search` with `parent = <issue_key> AND issuetype = Sub-task`
 
-If Story Points is missing or 0, ask the user: "Story has no Story Points set. How many SP should I use for budget?"
+If Story Points is missing or 0, ask the user: "Story has no Story Points set. How many SP should I use for budget?" In a non-interactive run (`../../shared/interaction-mode.md`) don't guess a budget: create nothing and report "Story has no Story Points — tasks not created".
 
 Calculate **total budget hours** = Story Points × 8.
 
@@ -180,7 +180,7 @@ Tasks with `(inferred)` hours will have their estimates set in ADO after user co
 
 - If `remaining_budget > 0` → plan new tasks for the remaining hours
 - If `remaining_budget = 0` → print "Budget fully allocated. No new tasks needed." and stop (unless user requests specific additions)
-- If `remaining_budget < 0` → warn: "Existing tasks exceed budget by Xh. Proceed with planning additional tasks anyway?" Wait for confirmation.
+- If `remaining_budget < 0` → warn: "Existing tasks exceed budget by Xh. Proceed with planning additional tasks anyway?" Wait for confirmation. Non-interactive: create nothing and report the overrun.
 
 ### Avoid duplicates
 
@@ -364,6 +364,8 @@ If the user requests changes:
 5. Ask for confirmation again
 
 Repeat until the user says "go", "create", "yes", "looks good", or similar affirmation.
+
+**Non-interactive run** (`../../shared/interaction-mode.md`): print the table and go straight to step 8 — the duplicate check in step 4 already keeps a re-run from creating the same tasks twice.
 
 ## 8. Create Tasks in ADO
 

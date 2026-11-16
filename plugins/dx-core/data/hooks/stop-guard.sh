@@ -3,7 +3,8 @@
 #
 # Checks for skipped processes before allowing Claude to exit:
 # 1. Secrets in changed files
-# 2. Abandoned plan steps (pending/blocked in implement.md)
+# 2. Abandoned plan steps in the active ticket's implement.md (in-progress, or
+#    blocked with no reason written)
 # 3. Uncommitted code changes without explanation
 #
 # Exit: 0 with JSON {"decision":"block","reason":"..."} to block
@@ -62,19 +63,38 @@ if [ -n "$ALL_CHANGED" ]; then
   done <<< "$ALL_CHANGED"
 fi
 
-# --- Check 2: Abandoned plan steps ---
-# Find the most recent implement.md
-IMPL_FILE=$(ls -t .ai/specs/*/implement.md 2>/dev/null | head -1 || true)
-if [ -n "$IMPL_FILE" ] && [ -f "$IMPL_FILE" ]; then
-  PENDING=$(grep -c '\*\*Status:\*\* pending' "$IMPL_FILE" 2>/dev/null) || PENDING=0
-  BLOCKED=$(grep -c '\*\*Status:\*\* blocked' "$IMPL_FILE" 2>/dev/null) || BLOCKED=0
-  IN_PROGRESS=$(grep -c '\*\*Status:\*\* in-progress' "$IMPL_FILE" 2>/dev/null) || IN_PROGRESS=0
-
-  if [ "$IN_PROGRESS" -gt 0 ]; then
-    ISSUES+=("$IN_PROGRESS step(s) still in-progress in $(basename "$(dirname "$IMPL_FILE")")/implement.md")
+# --- Check 2: Abandoned plan steps (active ticket only) ---
+# Only the plan of the ticket being worked on counts — another story's plan in
+# .ai/specs/ is not this session's business. The active plan is the one for the
+# ticket in the branch name (feature/<id>-*, bugfix/<id>-*); off a ticket branch,
+# the one implement.md changed in the working tree, if exactly one is.
+IMPL_FILE=""
+BRANCH=$(git branch --show-current 2>/dev/null || true)
+TICKET=$(printf '%s' "$BRANCH" | sed -nE 's#^(feature|bugfix)/([0-9]+)([-_/].*)?$#\2#p')
+if [ -n "$TICKET" ]; then
+  for f in .ai/specs/"$TICKET"-*/implement.md; do [ -f "$f" ] && { IMPL_FILE="$f"; break; }; done
+else
+  CHANGED_IMPL=$(git status --porcelain -- '.ai/specs/*/implement.md' 2>/dev/null | awk '{print $NF}' || true)
+  if [ -n "$CHANGED_IMPL" ] && [ "$(printf '%s\n' "$CHANGED_IMPL" | wc -l | tr -d ' ')" -eq 1 ]; then
+    IMPL_FILE="$CHANGED_IMPL"
   fi
-  if [ "$BLOCKED" -gt 0 ]; then
-    ISSUES+=("$BLOCKED step(s) blocked in $(basename "$(dirname "$IMPL_FILE")")/implement.md — were they intentionally skipped?")
+fi
+if [ -n "$IMPL_FILE" ] && [ -f "$IMPL_FILE" ]; then
+  # Per step: in-progress always counts; blocked counts only when no reason is
+  # written in the step (**Blocked:** or **Reason:** with text) — a documented
+  # block is known, not abandoned.
+  read -r IN_PROGRESS BLOCKED < <(awk '
+    function flush() { if (st == "in-progress") ip++; if (st == "blocked" && !why) bl++ }
+    /^##+ Step / { flush(); st = ""; why = 0; next }
+    /\*\*Status:\*\*/ { v = $0; sub(/.*\*\*Status:\*\*[ \t]*/, "", v); split(v, w, /[ \t]/); st = w[1] }
+    /\*\*(Blocked|Reason):\*\*[ \t]*[^ \t]/ { why = 1 }
+    END { flush(); print ip + 0, bl + 0 }' "$IMPL_FILE" 2>/dev/null || echo "0 0")
+  PLAN="$(basename "$(dirname "$IMPL_FILE")")/implement.md"
+  if [ "${IN_PROGRESS:-0}" -gt 0 ]; then
+    ISSUES+=("$IN_PROGRESS step(s) still in-progress in $PLAN")
+  fi
+  if [ "${BLOCKED:-0}" -gt 0 ]; then
+    ISSUES+=("$BLOCKED step(s) blocked in $PLAN with no reason written — fix them, or add a **Blocked:** note saying why")
   fi
 fi
 

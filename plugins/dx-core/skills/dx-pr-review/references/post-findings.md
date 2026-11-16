@@ -163,6 +163,8 @@ git apply pr-fixes.patch
 
 ## 6. Set Vote
 
+Skip this step in a **local** non-interactive run (autopilot, headless — `DX_PIPELINE_MODE` not `true`): there the vote would be cast under the developer's own identity. Report the verdict in the summary instead. Pipelines vote as their service account and keep this step.
+
 Determine vote from the verdict in the findings:
 
 | Verdict | Interactive `vote` | ADO int | Automation `vote` (clamped — never positive on a blocking issue, never hard-blocking) |
