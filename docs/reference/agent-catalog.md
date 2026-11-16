@@ -176,7 +176,7 @@ Browser automation agent for AEM editor interaction. Opens AEM author/publisher 
 
 **Key capabilities:**
 - AEM login handling (detect redirect, fill credentials, submit)
-- QA/Stage Basic Auth (embed in URL, fallback to fetch + Authorization header)
+- QA/Stage Basic Auth (open plain URLs; logins come from `BASIC_AUTH_SITES` via the Playwright init-page module)
 - Component dialog opening via `Granite.author.editables` API
 - Publisher view capture (locate component by CSS class, scroll, screenshot)
 - Screenshot capture with deduplication

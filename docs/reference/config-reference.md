@@ -127,9 +127,6 @@ aem:
   active-markets:                 # Active markets (scopes searches by brand + country)
     - brand: brand-a
       countries: [gb, de, fr]
-  qa-basic-auth:                  # QA/Stage environment auth (read by aem-editorial-guide-capture, aem-doc-gen)
-    username: "myuser"            # HTTP Basic Auth username
-    password: "mypassword"        # HTTP Basic Auth password
   # repos: — REMOVED. Cross-repo config is now in the top-level repos: section.
   # /aem-init enriches the top-level repos: entries with platform and ado-project fields.
 
@@ -260,7 +257,6 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `platform` | string | no | Opaque, project-defined platform identifier (e.g. `alpha`, `beta`) — declared in project.yaml |
 | `active-brands` | list | no | Active brands for this repo (scopes component and page searches) |
 | `active-markets` | list | no | Active markets with brand + countries (scopes searches by market) |
-| `qa-basic-auth` | object | no | QA/Stage HTTP Basic Auth credentials (`username`, `password`). Used by `aem-editorial-guide-capture` and `aem-doc-gen` for authenticated QA environments. Also install `.claude/rules/qa-basic-auth.md` via `/aem-init` for the full auth handling pattern. |
 | `repos` | list | no | Cross-repo awareness — sibling repos with name, role, platform, path, ado-project, base-branch |
 
 ### `repos[]` entries

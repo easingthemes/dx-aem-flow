@@ -19,7 +19,7 @@ Skills that need credentials should resolve them in this order:
 
 | Variable | Purpose | Used By |
 |----------|---------|---------|
-| `BASIC_AUTH_SITES` | HTTP Basic Auth logins for protected sites (QA/Stage publishers, staging). Format: `name:url:user:pass` entries joined by `,`; `user`/`pass` percent-encoded when they contain `:` `,` `%`. Example: `qa:https://qa.example.com:user:pass,uat:https://uat.example.com:user:pass`. Set it in the **shell profile with single quotes** (`export BASIC_AUTH_SITES='...'`) so Claude Code and Copilot CLI both see it; in ADO pipelines it is a **secret pipeline variable**. Separate from the AEM author login (`AEM_INSTANCES`). | basic-auth rule, `.ai/lib/playwright-basic-auth.js`, `dx-common.sh curl-basic-auth` |
+| `BASIC_AUTH_SITES` | HTTP Basic Auth logins for protected sites (QA/Stage publishers, staging). Format: `name:url:user:pass` entries joined by `,`; `user`/`pass` percent-encoded when they contain `:` `,` `%`. Example: `qa:https://qa.example.com:user:pass,uat:https://uat.example.com:user:pass`; a port stays in the URL (`qa:https://qa.example.com:8443:user:pass`). Set it in the **shell profile with single quotes** (`export BASIC_AUTH_SITES='...'`) so Claude Code and Copilot CLI both see it; in ADO pipelines it is a **secret pipeline variable**. Separate from the AEM author login (`AEM_INSTANCES`). | basic-auth rule, `.ai/lib/playwright-basic-auth.js`, `dx-common.sh curl-basic-auth` |
 | `AXE_API_KEY` | Deque axe API key for accessibility testing | dx-axe, axe MCP server |
 
 ### AEM (dx-aem)

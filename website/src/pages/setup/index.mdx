@@ -91,10 +91,12 @@ export AEM_INSTANCES="local:http://localhost:4502:admin:admin"
 # Multi-instance example (local + QA):
 # export AEM_INSTANCES="local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
 
-# Optional: accessibility testing + QA Basic Auth
+# Optional: accessibility testing
 # export AXE_API_KEY="your-axe-api-key"
-# export QA_BASIC_AUTH_USER="your-qa-username"
-# export QA_BASIC_AUTH_PASS="your-qa-password"`}</CommandBlock>
+
+# Optional: HTTP Basic Auth for protected QA/Stage sites (single quotes keep $ and ! literal)
+# Format: name:url:user:pass — comma-separated; a port stays in the URL
+# export BASIC_AUTH_SITES='qa:https://qa.example.com:user:pass,uat:https://uat.example.com:8443:user:pass'`}</CommandBlock>
     Restart your terminal or run <code>{"source ~/.zshrc"}</code> after adding these.
     These env vars work in both Claude Code and Copilot CLI.
   </HighlightBox>

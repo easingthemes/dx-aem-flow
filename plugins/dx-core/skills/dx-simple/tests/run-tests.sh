@@ -640,7 +640,7 @@ run "yaml_val: dotted path to a section header yields empty" yv 'dx-simple.recov
 # failed to match at the child level kept scanning into that sibling's own subtree,
 # so 2-segment paths silently resolved to a grandchild's value — e.g.
 # 'dx-simple.max-attempts' returned 3 from dx-simple.recovery.max-attempts, and
-# 'aem.username' returned the value under aem.qa-basic-auth.username. Wrong data,
+# 'aem.username' returned the value under aem.author.username. Wrong data,
 # no error. The list case matters too: 'repos.path' reached into a list item.
 run "yaml_val: 2-segment path does not reach a grandchild"  yv 'dx-simple.max-attempts' ''
 run "yaml_val: grandchild token is not matched by parent"   yv 'dx-simple.trigger-token' ''

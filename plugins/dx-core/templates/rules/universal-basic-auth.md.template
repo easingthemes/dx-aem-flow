@@ -14,6 +14,8 @@ Protected sites (QA/Stage publishers, staging) are configured in one env var, `B
 qa:https://qa.example.com:user:pass,uat:https://uat.example.com:user:pass
 ```
 
+A port stays in the URL: `qa:https://qa.example.com:8443:user:pass`.
+
 - `name` is everything before the first `:`; `pass` is everything after the last `:`; `user` is before that; `url` is the middle (it may contain `:`).
 - `user` and `pass` are percent-decoded: write `%3A` for `:`, `%2C` for `,`, `%25` for `%`. Values without `%` are used as-is.
 - Matching is by origin (scheme + host + port). The path in the entry is ignored.
