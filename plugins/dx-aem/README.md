@@ -82,14 +82,11 @@ aem:
   brands: [brand-a, brand-b, brand-c]
   author-url-qa: "https://qa-author.example.com"
   publish-url-qa: "https://qa-publish.example.com"
-  qa-basic-auth:
-    username: "myuser"
-    password: "mypassword"
 ```
 
 ### QA Basic Auth
 
-QA/Stage environments often require HTTP Basic Auth. Configure credentials in `aem.qa-basic-auth` above. `/aem-init` also installs `.claude/rules/qa-basic-auth.md` — a convention rule that agents (`aem-editorial-guide-capture`, `aem-doc-gen`, `dx-bug-verify`) read at runtime for auth handling patterns (URL embedding, fetch fallback, QA URL detection).
+QA/Stage sites that require HTTP Basic Auth are configured with the `BASIC_AUTH_SITES` environment variable (`name:url:user:pass,...`), not in `.ai/config.yaml`. See the dx-core `basic-auth` rule (`.claude/rules/basic-auth.md`, installed by `/dx-init`).
 
 The `aem.component-prefix` config is used by agents to construct CSS selectors when locating components on rendered pages.
 

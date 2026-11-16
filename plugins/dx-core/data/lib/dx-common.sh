@@ -242,6 +242,106 @@ aem_instance() {
   return 1
 }
 
+# --- Basic Auth for curl, from BASIC_AUTH_SITES ---
+#
+# BASIC_AUTH_SITES="name:url:user:pass,name2:url2:user2:pass2" — the same
+# variable and rules as playwright-basic-auth.cjs (browser side), so the two
+# never disagree: name = before first ':', pass = after last ':', user = before
+# that, url = the middle (may contain ':'). user/pass accept %3A %2C %25
+# escapes. Matching is by origin (scheme+host+port; default port, case and
+# path ignored). Malformed entries are skipped, reported by index only, and so
+# is an entry whose user/pass holds CR/LF (raw or %0A/%0D): `$(...)` would strip
+# it here while the browser side kept it. An unexpanded ADO macro such as
+# "$(BASIC_AUTH_SITES)" (an undefined pipeline variable) counts as unset.
+
+# Prints the normalised origin of an http(s) URL, or returns 1.
+_basic_auth_origin() {
+  local url="$1" scheme rest auth
+  case "$url" in
+    [Hh][Tt][Tt][Pp][Ss]://*) scheme=https; rest="${url:8}" ;;
+    [Hh][Tt][Tt][Pp]://*)     scheme=http;  rest="${url:7}" ;;
+    *) return 1 ;;
+  esac
+  auth="${rest%%[/?#]*}"
+  auth="${auth##*@}"
+  auth="$(printf '%s' "$auth" | tr 'A-Z' 'a-z')"
+  auth="${auth%:}"
+  [ -n "$auth" ] || return 1
+  case "$scheme:$auth" in
+    https:*:443) auth="${auth%:443}" ;;
+    http:*:80)   auth="${auth%:80}" ;;
+  esac
+  printf '%s://%s' "$scheme" "$auth"
+}
+
+# Percent-decodes $1; returns 1 on a malformed escape. No % means used as-is.
+_basic_auth_decode() {
+  local s="$1" out="" hex
+  case "$s" in *$'\n'*|*$'\r'*) return 1 ;; esac
+  case "$s" in *%*) ;; *) printf '%s' "$s"; return 0 ;; esac
+  while [ -n "$s" ]; do
+    case "$s" in
+      %*)
+        hex="${s:1:2}"
+        case "$hex" in
+          0[AaDd]) return 1 ;;  # CR/LF: see header
+          [0-9A-Fa-f][0-9A-Fa-f]) ;;
+          *) return 1 ;;
+        esac
+        out="$out$(printf "\\x$hex")"
+        s="${s:3}" ;;
+      *) out="$out${s:0:1}"; s="${s:1}" ;;
+    esac
+  done
+  printf '%s' "$out"
+}
+
+# Usage: curl_basic_auth <url> [curl-args...]
+# Runs: curl [curl-args...] [-u user:pass] <url>   (-u only for a listed origin)
+# Credentials are never printed. Exit code is curl's.
+curl_basic_auth() {
+  local url="${1:?curl_basic_auth: url required}"
+  shift
+  local want entry i=0 first last name pass rest mid eurl user eorigin
+  local cred=""
+  want="$(_basic_auth_origin "$url")" || want=""
+  local sites="${BASIC_AUTH_SITES:-}"
+  case "$sites" in '$('*')') sites="" ;; esac  # undefined ADO variable
+  if [ -n "$sites" ]; then
+    local IFS=',' had_noglob=0
+    case $- in *f*) had_noglob=1 ;; esac
+    set -f  # unquoted split below must not glob-expand a '*' or '?' in a value
+    for entry in $sites; do
+      first="${entry%%:*}"; rest="${entry#*:}"
+      if [ "$first" = "$entry" ] || [ "${rest%:*}" = "$rest" ]; then
+        echo "BASIC_AUTH_SITES: entry $i skipped (expected name:url:user:pass)" >&2; i=$((i+1)); continue
+      fi
+      name="$first"; pass="${rest##*:}"; rest="${rest%:*}"
+      if [ "${rest%:*}" = "$rest" ]; then
+        echo "BASIC_AUTH_SITES: entry $i skipped (expected name:url:user:pass)" >&2; i=$((i+1)); continue
+      fi
+      eurl="${rest%:*}"; user="${rest##*:}"
+      if [ -z "$name" ] || ! eorigin="$(_basic_auth_origin "$eurl")" \
+         || ! user="$(_basic_auth_decode "$user")" || ! pass="$(_basic_auth_decode "$pass")"; then
+        echo "BASIC_AUTH_SITES: entry $i skipped (expected name:url:user:pass)" >&2; i=$((i+1)); continue
+      fi
+      if [ -z "$cred" ] && [ -n "$want" ] && [ "$eorigin" = "$want" ]; then
+        cred="$user:$pass"
+      fi
+      i=$((i+1))
+    done
+    [ "$had_noglob" = 1 ] || set +f
+  fi
+  if [ -n "$cred" ]; then
+    # -u in argv is briefly visible in `ps` on this host. Accepted: `-K -`
+    # (config on stdin) would break callers that pipe a body to curl. curl
+    # does not forward -u to a different host on redirect.
+    curl "$@" -u "$cred" "$url"
+  else
+    curl "$@" "$url"
+  fi
+}
+
 # --- CLI dispatch (when run directly, not sourced) ---
 
 # Detect if script is being sourced or executed
@@ -274,6 +374,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     aem-instance)
       aem_instance "$@"
       ;;
+    curl-basic-auth)
+      curl_basic_auth "$@"
+      exit $?
+      ;;
     *)
       echo "Usage: dx-common.sh <command> [args...]" >&2
       echo "" >&2
@@ -284,6 +388,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       echo "  require-file <path> [label]   Assert file exists" >&2
       echo "  require-dir <path> [label]    Assert directory exists" >&2
       echo "  aem-instance <name> [field]   Resolve url/user/pass from AEM_INSTANCES" >&2
+      echo "  curl-basic-auth <url> [curl-args...]  curl with -u from BASIC_AUTH_SITES when url's origin is listed" >&2
       exit 1
       ;;
   esac

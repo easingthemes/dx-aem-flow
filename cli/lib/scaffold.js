@@ -227,10 +227,6 @@ class Scaffold {
 
   getRequiredEnvVars() {
     const vars = [
-      'QA_BASIC_AUTH_USER',
-      'QA_BASIC_AUTH_PASS',
-      'QA_BASIC_AUTH_FALLBACK_USER',
-      'QA_BASIC_AUTH_FALLBACK_PASS',
       'AXE_API_KEY',
     ];
     // Add AEM vars if aem mode is enabled
@@ -247,8 +243,10 @@ class Scaffold {
     if (!fs.existsSync(libDir)) return;
     for (const file of fs.readdirSync(libDir)) {
       // .sh helpers + .js helpers; exclude tests and fixtures (dev-only artifacts).
+      // playwright-basic-auth.cjs is not copied: the Playwright MCP server
+      // loads it from the plugin (${CLAUDE_PLUGIN_ROOT}/data/lib).
       if (!/\.(sh|js)$/.test(file)) continue;
-      if (file.endsWith('.test.js')) continue;
+      if (/\.test\.(c?js|sh)$/.test(file)) continue;
       this.copyFile(path.join(libDir, file), `.ai/lib/${file}`, { executable: true });
     }
   }
@@ -323,7 +321,7 @@ class Scaffold {
   updateGitignore() {
     const gitignorePath = path.join(this.targetDir, '.gitignore');
     // .ai/playwright/ — dx-core's playwright MCP server writes screenshots and
-    // browser session state (cookies, Basic Auth config) there.
+    // browser session state (cookies) there.
     const entries = ['.ai/specs/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
     let content = '';
     if (fs.existsSync(gitignorePath)) {
@@ -420,9 +418,6 @@ aem:
     - ${brand}
   active-markets:
     - ${brand}-us
-  # qa-basic-auth:
-  #   username: "TODO"
-  #   password: "TODO"
 `;
 
     let content = fs.readFileSync(configPath, 'utf8');

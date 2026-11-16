@@ -472,12 +472,8 @@ re-applies the work-plan as part of its normal flow.
 
 3. Semantic validation (Safeguard #1):
    - Read `simple-block.yaml`; extract `page-url`, `element`, `what`.
-   - **QA Basic Auth (first navigation only):** follow the `qa-basic-auth` rule. Resolve credentials in priority order:
-     1. Env vars: `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS`
-     2. `.ai/config.yaml` keys `aem.qa-basic-auth.username` / `aem.qa-basic-auth.password`
-     If credentials are found AND `page-url` is not a localhost URL, embed them in the URL for this navigation: `https://<user>:<pass>@<host>/path`. Subsequent navigations (Phase 5) use the clean URL — the session cookie persists. Never log or echo the URL with embedded credentials.
-     If no credentials are found and the URL is non-localhost: post ADO comment explaining that `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS` env vars are not set (see `qa-basic-auth` rule) and exit non-zero.
-   - Navigate Chrome to the page URL (credential-embedded for first QA visit):
+   - **Basic Auth:** follow the `basic-auth` rule — navigate with the plain URL; the browser applies `BASIC_AUTH_SITES`. On a 401 or an auth error page, post an ADO comment `<origin> needs an entry in BASIC_AUTH_SITES` and exit non-zero.
+   - Navigate Chrome to the page URL:
      ```
      mcp__plugin_dx-core_playwright__browser_navigate with url=<page-url>
      ```
@@ -957,7 +953,7 @@ fixes).
 
 | class | examples | recovery |
 |-------|----------|----------|
-| `needs-user-input` | G1 ambiguous/no match, missing `page-url`, missing QA Basic Auth credentials, G3 low classification, authoring value drifted, `ambiguous-branch` (M1) | human replies `@<keyword> <answer>` → resume at blocked phase |
+| `needs-user-input` | G1 ambiguous/no match, missing `page-url`, origin missing from `BASIC_AUTH_SITES`, G3 low classification, authoring value drifted, `ambiguous-branch` (M1) | human replies `@<keyword> <answer>` → resume at blocked phase |
 | `transient` | MAX_TURNS / step timeout / MCP unreachable / network blip — **infra only** | re-trigger (any `@<keyword>` reply, or re-run) → resume forward from `last-completed-phase` (replaying code edits if past 3b) |
 | `hard` | scope-check exceeded (>5 files / >50 lines / >10 writes), G7 real review blocker, **any compile failure surviving Phase 4's in-run 3× retry (M3)**, `answer-attempts` cap reached | not recoverable here → recommend re-tag `KAI-DEV-AUTOMATION` (DevAgent) |
 | `wrong-target` | Phase 0.5 repo identity guard aborted — ticket's platform/brand/scope does not match this repo's identity | terminal — not recoverable here → human must re-trigger in the correct repo |
@@ -1011,7 +1007,7 @@ as `@<keyword>` (placeholder) so the example line cannot self-trigger the hook.
 
 ## Troubleshooting
 
-- **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA?), `element` (matches visible element?), QA content sync (component exists on QA?). If the QA site requires HTTP Basic Auth, ensure `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS` env vars are set (see `qa-basic-auth` rule) — the skill embeds them in the first navigation URL automatically.
+- **"Component not found on page"** — Locator did not match anything in Chrome snapshot. Check `page-url` (loads on QA?), `element` (matches visible element?), QA content sync (component exists on QA?). If the QA site requires HTTP Basic Auth, ensure its origin has an entry in `BASIC_AUTH_SITES` (see `basic-auth` rule) — the browser applies it automatically.
 
 - **"Ambiguous locator"** — Multiple DOM matches. Use `jcr-path=...` form for unambiguous targeting, or describe the element more specifically (e.g. add the surrounding section name).
 

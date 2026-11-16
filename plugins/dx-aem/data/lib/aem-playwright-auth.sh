@@ -8,23 +8,17 @@
 # sees the secret. This is the Playwright analog of how the AEM MCP server
 # receives `-I ${AEM_INSTANCES}` and authenticates server-side.
 #
-# Two independent auth layers (do not conflate — see qa-basic-auth rule):
-#   author    -> AEM form login (login-token cookie)  -> storageState JSON
-#   publisher -> HTTP Basic Auth                       -> Playwright httpCredentials config
+# Scope: AEM author login only (login-token cookie -> storageState JSON). Basic Auth
+# on QA/stage sites is a separate layer handled by dx-core: BASIC_AUTH_SITES and
+# the `basic-auth` rule (applied inside the browser by the playwright init-page).
 #
 # Usage:
 #   aem-playwright-auth.sh author <local|qa>   # AEM author login  -> .ai/playwright/aem-author-state.json
-#   aem-playwright-auth.sh config              # publisher Basic Auth -> .ai/playwright/config.json (opt-in)
-#   aem-playwright-auth.sh all <local|qa>      # both
 #
 # Author flow (runtime, decoupled from MCP launch):
 #   1) bash .ai/lib/aem-playwright-auth.sh author qa
 #   2) browser_set_storage_state  path: ".ai/playwright/aem-author-state.json"   (needs --caps=storage)
 #   3) browser_navigate  url: "<author-url>..."   -> already authenticated
-#
-# Publisher flow (opt-in): run `config`, then add to .mcp.json playwright args:
-#   "--config", ".ai/playwright/config.json"
-# (Default skills use URL-embedded Basic Auth, which needs no config.)
 #
 # Exit: 0 ok, 1 usage/cred error, 2 login failed.
 
@@ -32,7 +26,6 @@ set -euo pipefail
 
 OUT_DIR=".ai/playwright"
 STATE_FILE="$OUT_DIR/aem-author-state.json"
-CONFIG_FILE="$OUT_DIR/config.json"
 
 # jq is used to emit valid JSON regardless of special chars in tokens/passwords.
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required (brew install jq / apt-get install jq)" >&2; exit 1; }
@@ -88,21 +81,8 @@ aem_author_login() {
   echo "wrote $STATE_FILE  (author=$instance host=$host)"
 }
 
-publisher_config() {
-  : "${QA_BASIC_AUTH_USER:?set QA_BASIC_AUTH_USER (publisher Basic Auth)}"
-  : "${QA_BASIC_AUTH_PASS:?set QA_BASIC_AUTH_PASS (publisher Basic Auth)}"
-  mkdir -p "$OUT_DIR"
-  # jq encodes the credentials safely — passwords often contain " \ or other JSON-breaking chars.
-  jq -n --arg u "$QA_BASIC_AUTH_USER" --arg p "$QA_BASIC_AUTH_PASS" \
-    '{browser:{contextOptions:{httpCredentials:{username:$u,password:$p},viewport:{width:1440,height:900},ignoreHTTPSErrors:true}}}' \
-    > "$CONFIG_FILE"
-  echo "wrote $CONFIG_FILE  (publisher Basic Auth — opt in via \"--config\" in .mcp.json)"
-}
-
 cmd="${1:-}"; [ $# -gt 0 ] && shift || true
 case "$cmd" in
   author) aem_author_login "${1:-local}" ;;
-  config) publisher_config ;;
-  all)    aem_author_login "${1:-local}"; publisher_config ;;
-  *) echo "Usage: aem-playwright-auth.sh {author <local|qa> | config | all <local|qa>}" >&2; exit 1 ;;
+  *) echo "Usage: aem-playwright-auth.sh author <local|qa>" >&2; exit 1 ;;
 esac

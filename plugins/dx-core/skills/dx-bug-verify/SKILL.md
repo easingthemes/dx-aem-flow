@@ -191,31 +191,7 @@ Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` a
 
 **QA/Stage URL** (e.g., `https://qa.example.com/...`):
 
-1. **Check for basic auth rule:** Read `.claude/rules/qa-basic-auth.md` — if it exists, QA sites require HTTP Basic Auth.
-2. **First navigation:** Embed credentials in the URL for browser-native Basic Auth:
-   ```
-   mcp__plugin_dx-core_playwright__browser_navigate
-     url: "https://<user>:<pass>@<host>/<path>"
-   ```
-   Use the primary credentials from the rule. This sets a session cookie for subsequent requests.
-3. **Verify page loaded:** Take a snapshot and check for actual page content (not a 401 or blank page).
-4. **If page didn't load (401/empty):** Fall back to `browser_evaluate` with `fetch()` + Authorization header:
-   ```
-   mcp__plugin_dx-core_playwright__browser_evaluate
-     function: |
-       async () => {
-         const creds = btoa('<user>:<pass>');
-         const resp = await fetch(window.location.href, {
-           headers: { 'Authorization': 'Basic ' + creds },
-           credentials: 'include'
-         });
-         if (resp.ok) { location.reload(); return { authenticated: true }; }
-         return { authenticated: false, status: resp.status };
-       }
-   ```
-   If primary credentials fail, try fallback credentials from the rule.
-5. **Subsequent navigations:** Use clean URLs without credentials — the cookie persists for the session.
-6. If no basic auth rule exists, navigate directly without credentials.
+Follow the `basic-auth` rule: navigate with the plain URL (`mcp__plugin_dx-core_playwright__browser_navigate`); the browser applies `BASIC_AUTH_SITES`. Take a snapshot and check for actual page content. On a 401 or an auth error page, report `<origin> needs an entry in BASIC_AUTH_SITES` and stop.
 - Wait for page load via `mcp__plugin_dx-core_playwright__browser_wait_for`
 
 **Local dev server** (e.g., `http://localhost:...`):

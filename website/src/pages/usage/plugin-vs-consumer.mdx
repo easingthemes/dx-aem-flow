@@ -103,9 +103,9 @@ import HighlightBox from '../../components/HighlightBox.astro';
         <td class="p-3">Define which checks are <code>mandatory</code> for your team</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3">AEM QA credentials</td>
-        <td class="p-3">Env vars (<code>QA_BASIC_AUTH_USER</code>, <code>QA_BASIC_AUTH_PASS</code>)</td>
-        <td class="p-3">Required for AEM MCP queries on QA instance</td>
+        <td class="p-3">Basic Auth for protected sites (QA/Stage)</td>
+        <td class="p-3">Env var (<code>BASIC_AUTH_SITES</code>)</td>
+        <td class="p-3">Applied automatically to listed origins by the Playwright browser; never put credentials in URLs</td>
       </tr>
     </tbody>
   </table>

@@ -273,18 +273,14 @@ Check the verification plan from "Determine verification environment". If Publis
 
 ### Verify on publisher (Playwright)
 
-**QA Basic Auth (first navigation only):** follow the `qa-basic-auth` rule. Resolve credentials in priority order:
-1. Env vars: `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS`
-2. `.ai/config.yaml` keys `aem.qa-basic-auth.username` / `aem.qa-basic-auth.password`
-
-If credentials found and publish-url is non-localhost, embed in the URL for the first navigation — session cookie persists for subsequent navigations. If not found on a non-localhost URL, warn and skip publisher verification.
+**Basic Auth:** follow the `basic-auth` rule — navigate with the plain URL; the browser applies `BASIC_AUTH_SITES`. On a 401 or an auth error page, report `<origin> needs an entry in BASIC_AUTH_SITES` and skip publisher verification.
 
 For each page to verify on publisher:
 
 **Navigate to Page (Publisher)** — no `wcmmode` param needed, publisher IS the production rendering:
 ```
 mcp__plugin_dx-core_playwright__browser_navigate
-  url: "<publish-url-with-creds-for-first-nav>/content/<path>.html"
+  url: "<publish-url>/content/<path>.html"
 ```
 
 Wait for page load:
