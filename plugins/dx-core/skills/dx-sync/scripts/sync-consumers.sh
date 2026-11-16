@@ -360,7 +360,7 @@ step_1_lib_scripts() {
   local repo_path="$1"
   log "  Step 1: Utility scripts (.ai/lib/)"
   local count=0
-  for f in audit.sh dx-common.sh gather-context.sh plan-metadata.sh pre-review-checks.sh; do
+  for f in audit.sh dx-common.sh gather-context.sh plan-metadata.sh pre-review-checks.sh playwright-basic-auth.js; do
     if sync_file "$DX_PLUGIN/data/lib/$f" "$repo_path/.ai/lib/$f"; then
       ((count++)) || true
     fi
@@ -450,9 +450,10 @@ step_6_claude_rules() {
 
   # Always synced — universal rules
   sync_template "$DX_PLUGIN/templates/rules/universal-reuse-first.md.template" "$repo_path/.claude/rules/reuse-first.md"
+  sync_template "$DX_PLUGIN/templates/rules/universal-basic-auth.md.template" "$repo_path/.claude/rules/basic-auth.md"
 
   # Always synced — general AEM rules
-  for name in audit.md qa-basic-auth.md; do
+  for name in audit.md; do
     local src="$AEM_PLUGIN/templates/rules/${name}.template"
     [ -f "$src" ] && sync_template "$src" "$repo_path/.claude/rules/$name"
   done
