@@ -100,22 +100,29 @@ BASE_BRANCH=$(yaml_val "scm.base-branch")
 # reach ours: this script's only output is the JSON the caller parses, so a
 # chatty build tool would corrupt it. Capture both streams to a log instead of
 # discarding them — a failed phase can then report why it failed.
-# A missing or unwritable TMPDIR must not surface as a phase failure. With no
-# log dir, every run_cmd redirect fails, so phases report "failed" without ever
-# running the command — and mktemp's own error goes to stderr, which the caller
-# merges into the JSON it parses (dx-step-verify/SKILL.md). Bail out with valid
-# JSON and exit 0, the way a missing base SHA does below.
+# A missing or unwritable TMPDIR must not surface as a phase failure, and it
+# must not skip the gate either. Without a log dir the commands still run, with
+# output discarded: phases keep their real pass/fail, only the diagnostics are
+# lost, and the secret scan (which needs no log) runs as always. mktemp's own
+# error is silenced — the caller merges stderr into the JSON it parses
+# (dx-step-verify/SKILL.md).
 RUN_LOG_DIR=$(mktemp -d "${TMPDIR:-/tmp}/dx-pre-review.XXXXXX" 2>/dev/null) || RUN_LOG_DIR=""
-if [ -z "$RUN_LOG_DIR" ] || [ ! -d "$RUN_LOG_DIR" ]; then
-  echo '{"passed": true, "phases": [], "issues": ["Could not create log dir — skipping pre-review checks"]}'
-  exit 0
+if [ -n "$RUN_LOG_DIR" ] && [ -d "$RUN_LOG_DIR" ]; then
+  trap 'rm -rf "$RUN_LOG_DIR"' EXIT
+else
+  RUN_LOG_DIR=""
+  ISSUES+=("Could not create log dir — checks ran without failure diagnostics")
 fi
-trap 'rm -rf "$RUN_LOG_DIR"' EXIT
 
 # run_cmd <log-name> <command-string>  -> exit status of the command
 run_cmd() {
-  local log="$RUN_LOG_DIR/$1"; shift
-  eval "$*" >"$log" 2>&1
+  if [ -n "$RUN_LOG_DIR" ]; then
+    local log="$RUN_LOG_DIR/$1"; shift
+    eval "$*" >"$log" 2>&1
+  else
+    shift
+    eval "$*" >/dev/null 2>&1
+  fi
 }
 
 # log_lines <log-name> [max]  -> up to N diagnostic lines, one ISSUES entry each
@@ -127,13 +134,21 @@ run_cmd() {
 # a window (not just the matching lines) preserves follow-on context such as
 # javac's "symbol:"/"location:" or a stack trace. Falls back to the tail when
 # nothing looks like an error, so unrecognised output is still reported.
+#
+# Errors outrank warnings: Maven prints its [WARNING] block before [ERROR], so
+# anchoring on the first of either spent the budget on warnings. A line that
+# starts as a warning never anchors as an error, even if it says "failed". The
+# first warning is the anchor only when nothing error-shaped exists.
 log_lines() {
+  [ -n "$RUN_LOG_DIR" ] || return 0
   local log="$RUN_LOG_DIR/$1" max="${2:-10}"
   [ -s "$log" ] || return 0
   sed 's/\r$//' "$log" | grep -v '^[[:space:]]*$' | awk -v max="$max" '
-    { line[NR] = $0 }
-    !start && tolower($0) ~ /error|fail|warning/ { start = NR }
+    { line[NR] = $0; l = tolower($0) }
+    !err  && l ~ /error|fail/ && l !~ /^[[:space:]]*\[?warn/ { err = NR }
+    !warn && l ~ /warning/ { warn = NR }
     END {
+      start = err ? err : warn
       if (!start) start = (NR > max ? NR - max + 1 : 1)
       for (i = start; i < start + max && i <= NR; i++) print "  | " line[i]
     }
@@ -239,8 +254,10 @@ while IFS= read -r file; do
   # bare keyword match flags any file that merely *mentions* a credential name
   # — security docs, .gitleaks configs, and this script itself, whose own
   # pattern literal contains "aws_secret_access_key". That fired on every sync
-  # PR that touched this file.
-  if grep -qEi '((aws_secret_access_key|aws_access_key_id)\s*[=:]\s*\S{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password\s*=\s*"[^"]{8,}|api[_-]?key\s*=\s*"[^"]{8,}|secret\s*=\s*"[^"]{8,}|token\s*=\s*"[a-zA-Z0-9]{20,})' "$file" 2>/dev/null; then
+  # PR that touched this file. The optional quote after the key name lets a
+  # quoted JSON/YAML key reach its separator; a literal like this one, where
+  # the name is followed by neither a quote nor a separator, still can't match.
+  if grep -qEi '((aws_secret_access_key|aws_access_key_id)["'\'']?\s*[=:]\s*\S{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password\s*=\s*"[^"]{8,}|api[_-]?key\s*=\s*"[^"]{8,}|secret\s*=\s*"[^"]{8,}|token\s*=\s*"[a-zA-Z0-9]{20,})' "$file" 2>/dev/null; then
     secret_files+=("$file")
   fi
 done <<< "$CHANGED_FILES"

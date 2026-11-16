@@ -204,6 +204,52 @@ else
   no "unrecognised output falls back to the tail" "$OUT"
 fi
 
+# Maven prints its [WARNING] block before [ERROR]. Anchoring on the first
+# warning spent the whole budget on warnings and cut off the compile errors.
+R=$(mkrepo 'build:
+  compile: "./warnmvn.sh"
+')
+cat > "$R/warnmvn.sh" <<'MEOF'
+#!/usr/bin/env bash
+echo "[INFO] Scanning for projects..."
+for i in 01 02 03 04 05 06 07 08 09 10 11 12; do
+  echo "[WARNING] WARN-LINE-$i Using platform encoding, build is platform dependent"
+done
+echo "[WARNING] WARN-FAILED some optional plugin check failed"
+echo "[ERROR] REAL-ERROR /src/A.java:[5,9] cannot find symbol"
+echo "[ERROR]   symbol:   variable foo"
+exit 1
+MEOF
+chmod +x "$R/warnmvn.sh"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm warn ) >/dev/null 2>&1
+OUT=$(gate "$R")
+if echo "$OUT" | grep -q "| \[ERROR\] REAL-ERROR"; then
+  ok "errors win the window over earlier warnings"
+else
+  no "errors win the window over earlier warnings" "$OUT"
+fi
+if echo "$OUT" | grep -q "WARN-LINE-01"; then
+  no "warnings before the error are not the anchor" "$OUT"
+else
+  ok "warnings before the error are not the anchor"
+fi
+if echo "$OUT" | grep -q "WARN-FAILED"; then
+  no "a [WARNING] line saying failed does not anchor" "$OUT"
+else
+  ok "a [WARNING] line saying failed does not anchor"
+fi
+
+# With no error at all, the first warning is still a better anchor than the tail.
+R=$(mkrepo 'build:
+  compile: "echo preamble; echo WARNING-ONLY-LINE; for i in 1 2 3 4 5 6 7 8 9 10 11 12; do echo filler-$i; done; false"
+')
+OUT=$(gate "$R")
+if echo "$OUT" | grep -q "| WARNING-ONLY-LINE"; then
+  ok "warning anchors when nothing is error-shaped"
+else
+  no "warning anchors when nothing is error-shaped" "$OUT"
+fi
+
 # ===== phase 3 failure diagnostics =====
 # No fixture made the test phase fail, so the Phase 3 log_lines call and the
 # per-phase log naming (compile.log vs test.log) were both uncovered.
@@ -255,13 +301,18 @@ cat > "$R/conf/creds.env" <<'SEOF'
 AWS_SECRET_ACCESS_KEY=NOT-A-REAL-SECRET-0000000000000000000000
 SEOF
 printf -- '-----BEGIN RSA PRIVATE KEY-----\nNOT-A-REAL-KEY\n' > "$R/conf/id_rsa.pem"
+# Quoted keys (JSON / YAML): the closing quote used to stop `\s*[=:]` short.
+printf '{\n  "aws_secret_access_key": "NOT-A-REAL-SECRET-00000000"\n}\n' > "$R/conf/creds.json"
+printf "'aws_access_key_id': 'NOT-A-REAL-KEY-0000000'\n" > "$R/conf/creds.yaml"
+# Unlimited padding before the separator stays detected.
+printf 'aws_secret_access_key      = NOT-A-REAL-SECRET-00000000\n' > "$R/conf/padded.ini"
 cat > "$R/conf/app.properties" <<'SEOF'
 password = "not-a-real-password"
 SEOF
 ( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm secrets ) >/dev/null 2>&1
 OUT=$(gate "$R")
 check "secret scan flags planted credentials" "failed" "$(echo "$OUT" | jqq "d['phases'][3]['status']")"
-for f in creds.env id_rsa.pem app.properties; do
+for f in creds.env id_rsa.pem app.properties creds.json creds.yaml padded.ini; do
   if echo "$OUT" | grep -q "Possible secret in: conf/$f"; then
     ok "secret scan reports conf/$f"
   else
@@ -279,10 +330,12 @@ mkdir -p "$R/docs"
 cat > "$R/docs/security.md" <<'SEOF'
 Never commit an aws_secret_access_key or aws_access_key_id to the repo.
 Keep the private key outside version control. BEGIN RSA is a PEM marker.
+Set "aws_secret_access_key" in your vault, never in 'aws_access_key_id' files.
 SEOF
 cat > "$R/docs/sample.yaml" <<'SEOF'
 aws_access_key_id: ${env:AWS_KEY}
 password = ""
+"aws_secret_access_key": ""
 SEOF
 # The gate script itself, as a changed file — the real-world sync-PR case.
 # This copies the *live* script, so the assertion tracks the real pattern:
@@ -318,23 +371,49 @@ else
   ok "temp log dir removed on exit"
 fi
 
-# ===== an unusable TMPDIR skips the gate instead of failing phases =====
-# With no log dir every run_cmd redirect fails, which used to report phases as
-# "failed" without running them and push mktemp's error onto stderr — the stream
-# the skill merges into the JSON it parses.
+# ===== an unusable TMPDIR still runs every phase =====
+# With no log dir every run_cmd redirect used to fail, reporting phases as
+# "failed" without running them. The first fix bailed out with passed: true
+# before any phase ran — which skipped the secret scan too, so a security gate
+# passed because it could not set up its diagnostics. Now the commands run
+# with output discarded and each phase keeps its real result.
+NOLOG="$TMP/no-such-dir-xyz"
 R=$(mkrepo 'build:
   compile: "echo hi"
   test: "echo t"
 ')
-OUT=$( cd "$R" && TMPDIR="$TMP/no-such-dir-xyz" bash .ai/lib/pre-review-checks.sh 2>&1 )
+OUT=$( cd "$R" && TMPDIR="$NOLOG" bash .ai/lib/pre-review-checks.sh 2>&1 )
 check "unusable TMPDIR still emits parseable JSON" "ok"   "$(echo "$OUT" | jqq "'ok'")"
-check "unusable TMPDIR does not fail the gate"     "True" "$(echo "$OUT" | jqq "d['passed']")"
-check "unusable TMPDIR reports no phases"          "0"    "$(echo "$OUT" | jqq "len(d['phases'])")"
+check "unusable TMPDIR still runs all five phases" "5"    "$(echo "$OUT" | jqq "len(d['phases'])")"
+check "unusable TMPDIR passes a clean change"      "True" "$(echo "$OUT" | jqq "d['passed']")"
+check "unusable TMPDIR: compile actually ran"      "passed" "$(echo "$OUT" | jqq "d['phases'][0]['status']")"
 if echo "$OUT" | grep -q "Could not create log dir"; then
   ok "unusable TMPDIR explains itself in issues"
 else
   no "unusable TMPDIR explains itself in issues" "$OUT"
 fi
+if echo "$OUT" | grep -qx "hi"; then
+  no "unusable TMPDIR: command output does not leak" "$OUT"
+else
+  ok "unusable TMPDIR: command output does not leak"
+fi
+
+# The security-relevant case: a planted credential must still fail the gate.
+R=$(mkrepo 'build: {}
+')
+printf 'AWS_SECRET_ACCESS_KEY=NOT-A-REAL-SECRET-0000000000000000000000\n' > "$R/creds.env"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm secret ) >/dev/null 2>&1
+OUT=$( cd "$R" && TMPDIR="$NOLOG" bash .ai/lib/pre-review-checks.sh 2>&1 )
+check "unusable TMPDIR still runs the secret scan" "failed" "$(echo "$OUT" | jqq "d['phases'][3]['status']")"
+check "unusable TMPDIR + secret fails the gate"    "False"  "$(echo "$OUT" | jqq "d['passed']")"
+
+# A failing command still fails its phase, just without diagnostics.
+R=$(mkrepo 'build:
+  compile: "echo boom >&2; false"
+')
+OUT=$( cd "$R" && TMPDIR="$NOLOG" bash .ai/lib/pre-review-checks.sh 2>&1 )
+check "unusable TMPDIR: failing compile fails phase 1" "failed" "$(echo "$OUT" | jqq "d['phases'][0]['status']")"
+check "unusable TMPDIR: failing compile fails the gate" "False" "$(echo "$OUT" | jqq "d['passed']")"
 
 # ===== config keys are fully qualified =====
 # Bare keys took the first match at any depth, so a `test:` under an earlier
