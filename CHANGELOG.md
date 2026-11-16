@@ -1,3 +1,93 @@
+# [6.1.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.0.0...v6.1.0) (2026-11-16)
+
+
+### Features
+
+* **dx-core:** interaction-mode rule, visible comment signatures, ticket-scoped stop guard ([#270](https://github.com/easingthemes/dx-aem-flow/issues/270)) ([0c54e1b](https://github.com/easingthemes/dx-aem-flow/commit/0c54e1b5c5de9f886b0240cb439654c0c08c004d))
+
+
+### BREAKING CHANGES
+
+* **dx-core:** /dx-agent-re and /dx-agent-dev are removed. Use
+/dx-req <id> (plus /dx-req-tasks for child tasks) for requirements and
+/dx-agent-all <id> (or /dx-plan + /dx-step-all) for implementation.
+
+* fix: remove orphan aem-bug-executor agent and stale skill references
+
+- remove the aem-bug-executor agent: dx-bug-verify runs Playwright
+  itself and never dispatched it; AEMVerify template now names
+  dx-bug-verify as its source
+- dx-ticket-analyze dispatches dx-file-resolver per component when there
+  is no project.yaml (it was only reachable from Copilot templates)
+- dx-step-all loads promoted learned-fix rules instead of
+  .ai/learning/fixes.md, which nothing writes since dx-learn was removed
+- dx-figma-all usage line names /dx-figma-all
+- website: learning page describes what is built (raw jsonl logs + fix
+  promotion); drop /dx-learn, /dx-retro, /dx-pr-apply, /dx-step-next and
+  the aem-bug-executor rows; stats and catalogs updated
+
+* fix: remove unread reference files and wire the useful ones
+
+- delete launch-checklist, accessibility-checklist and subagent-contract
+  from dx-core/shared and the pr-review-summary ADO comment template:
+  no skill reads them, and subagent-contract (Result block first)
+  contradicted skill-return-contract (Return block last)
+- move the pre-dispatch context hygiene rules into skill-return-contract
+  and repoint the open subagent TODOs at it
+- perf-checklist stays as the rubric for the dx-perf rebuild (TODO-147);
+  its header no longer claims a skill reads it
+- format-registry: mark as contributor reference, fix the pr-review
+  findings path
+- env-vars: drop an unused variable; dx-doctor 4a checks the credential
+  variables for features the project uses (presence only)
+- ado-service-hooks rule: read by auto-webhooks and auto-pipelines
+  (plugins never load rules/ on their own); Lambda described as optional
+
+* fix: visible comment signatures and a stop guard scoped to the active ticket
+
+Comment signatures:
+- dx-estimate signs its comment with an [Estimation] heading instead of a
+  hidden <!-- ai:role:estimation-agent --> marker, which ADO Markdown
+  escapes and shows as text; it still matches the legacy marker so old
+  comments get updated, not duplicated
+- provider-config lists the visible signatures every skill really uses and
+  says never to post HTML comments; skills that fill an ado-comments
+  template drop its <!-- --> guidance lines before posting
+
+Stop guard:
+- check only the active ticket's implement.md (from the feature/bugfix
+  branch, or the one plan changed in the working tree), not the most
+  recently modified plan of any story
+- a blocked step with a written **Blocked:**/**Reason:** note is known,
+  not abandoned, and no longer blocks the stop
+- new tests fail against the old guard
+
+Plan format:
+- rules/plan-format.md and its template described [pending] badges on
+  "## Step" headings, while dx-step, dx-step-fix, the implement template
+  and the stop guard read "### Step N:" + **Status:** lines; the rule now
+  matches what the executors parse
+
+* feat(dx-core): one interaction-mode rule for posting and creating work items
+
+shared/interaction-mode.md defines when a run is non-interactive
+(pipeline, orchestrator flag, an autonomous/autopilot prompt, or a host
+with no way to ask) and what to do then: post or update comments
+without asking when the skill dedupes by signature, create work items
+without asking only when it checks existing ones first, never wait on
+AskUserQuestion, honour config that requires a human.
+
+- dx-pr-answer and dx-pr-review treat autopilot/headless runs as
+  AUTOMATION=1; a local run of dx-pr-review posts threads but skips the
+  vote, which would otherwise be cast under the developer's identity
+- dx-req-tasks creates tasks without the approval loop when
+  non-interactive (its duplicate check already exists); missing story
+  points or a budget overrun create nothing and say so
+- dx-req-dod checks existing [DoD] child tasks before creating new ones,
+  so re-runs no longer duplicate them
+- aem-qa lists Bugs instead of creating them when nobody can confirm and
+  bugPolicy.requiresHumanConfirmation is true (the default)
+
 # [6.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v5.0.0...v6.0.0) (2026-11-16)
 
 
