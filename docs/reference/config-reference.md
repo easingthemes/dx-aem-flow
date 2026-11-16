@@ -136,9 +136,6 @@ aem:
 # ─── Agent roles (optional) ────────────────────────────
 
 roles:
-  re-agent:
-    enabled: true
-    output-format: json           # json | markdown
   qa-agent:
     enabled: true
     canModifyCode: false

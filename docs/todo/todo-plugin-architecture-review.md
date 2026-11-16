@@ -42,7 +42,7 @@ Plus: 25 Copilot agents, 10 automation agents, 6 MCP servers, cross-platform fil
 | PR | dx-pr, dx-pr-commit, dx-pr-review, dx-pr-review-all, dx-pr-review-report, dx-pr-reviews-report, dx-pr-answer | 7 |
 | Bug | dx-bug-all, dx-bug-triage, dx-bug-fix, dx-bug-verify | 4 |
 | Figma | dx-figma-all, dx-figma-extract, dx-figma-prototype, dx-figma-verify | 4 |
-| Agent Coordination | dx-agent-all, dx-agent-dev, dx-agent-re | 3 |
+| Agent Coordination | dx-agent-all | 1 |
 | Documentation | dx-doc-gen, dx-doc-retro | 2 |
 | Quality | dx-axe, dx-security, dx-perf, dx-pattern-extract | 4 |
 | Decision | dx-council | 1 |

@@ -134,18 +134,6 @@ pipelines:
 # Agent role capabilities (used by orchestrator and local skills).
 # Defines what each role can do — fail-closed for unlisted capabilities.
 roles:
-  re-agent:
-    capabilities:
-      - readWorkItem
-      - readWiki
-      - readCode
-      - postComment
-      - updateWorkItem
-      - createChildWorkItems
-    canModifyCode: false
-    adoActions: [updateStory, createTasks]
-    runtimes: [pipeline, local]
-
   dev-agent:
     capabilities:
       - readCode

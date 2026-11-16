@@ -290,8 +290,6 @@ import { stats } from '../../config/stats';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-agent-all</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Full pipeline: RE, plan, develop, review, PR with checkpoints. Optionally invokes <code>superpowers:executing-plans</code>.</td><td class="p-3">End-to-end delivery</td></tr>
-        <tr><td class="p-3"><code>/dx-agent-re</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">RE Agent -- analyze story, produce structured requirements spec, post ADO/Jira comment.</td><td class="p-3"><code>re.json</code></td></tr>
-        <tr><td class="p-3"><code>/dx-agent-dev</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Dev Agent -- implement from RE spec, self-check (build/test/lint), commit.</td><td class="p-3">Code changes</td></tr>
       </tbody>
     </table>
   </div>
@@ -582,7 +580,7 @@ import { stats } from '../../config/stats';
 
   <ContentCard icon="mdi:source-branch" iconColor="bg-cyan-dark" title="dx-agent-all chain" class="mt-4">
     <code class="text-xs block mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">{`dx-agent-all
-  ├─ dx-agent-re
+  ├─ dx-req
   ├─ dx-plan → dx-plan-validate → dx-plan-resolve
   ├─ dx-step-all
   │    ├─ dx-step (includes test, review, commit)

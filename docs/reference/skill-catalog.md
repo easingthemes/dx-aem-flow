@@ -94,13 +94,11 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 | dx-bug-verify | `/dx-bug-verify` | `<bug-id> [before\|after\|qa]` | Reproduce bug via Playwright. `before`: confirm bug exists. `after`: verify fix locally. `qa`: verify fix on QA post-merge. | `verification.md` / `-local.md` / `-qa.md` |
 | dx-bug-fix | `/dx-bug-fix` | `<bug-id>` (optional) | Generate fix plan from triage, execute, create PR | `implement.md` + PR |
 
-### Agent Roles (`dx-agent-*`) — 3 skills
+### Agent Roles (`dx-agent-*`) — 1 skill
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-agent-all | `/dx-agent-all` | `<work-item-id>` | Full pipeline: RE → plan → develop → review → PR with checkpoints. Optionally invokes `superpowers:executing-plans` for execution discipline. | End-to-end delivery |
-| dx-agent-re | `/dx-agent-re` | `<work-item-id>` | RE Agent — analyze story, produce structured requirements spec, post ADO/Jira comment | `re.json` |
-| dx-agent-dev | `/dx-agent-dev` | `<work-item-id>` | Dev Agent — implement from RE spec, self-check (build/test/lint), commit | Code changes |
+| dx-agent-all | `/dx-agent-all` | `<work-item-id>` | Full pipeline: requirements → plan → develop → review → PR with checkpoints. Optionally invokes `superpowers:executing-plans` for execution discipline. | End-to-end delivery |
 
 ### Documentation — 2 skills
 
@@ -174,7 +172,7 @@ dx-req (5 phases: fetch → dor → explain → research → share)
        ↓ GATE: blocks if DoR has blocking questions
        ↻ BA checks items in ADO → re-run reads checkbox state → re-validates
 
-dx-agent-all ─┬─ dx-agent-re
+dx-agent-all ─┬─ dx-req
               ├─ dx-plan (needs explain + research from dx-req)
               ├─ dx-plan-validate (needs dx-plan)
               ├─ dx-plan-resolve (needs dx-plan-validate)

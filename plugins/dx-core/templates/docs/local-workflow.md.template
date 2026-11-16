@@ -96,8 +96,6 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 | Command | What it does |
 |---------|-------------|
 | `/dx-agent-all <ID>` | Full autonomous pipeline: requirements → plan → execute → PR |
-| `/dx-agent-re <ID>` | RE Agent: fetch, analyze, produce structured spec |
-| `/dx-agent-dev <ID>` | Dev Agent: implement from spec, self-check, commit |
 
 ## Workflow Recipes
 
