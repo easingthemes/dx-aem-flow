@@ -139,11 +139,11 @@ Read `.ai/config.yaml` to get the ADO project name (`ado.project` or `scm.ado-pr
 
 **Check for existing estimation comment:**
 
-Use `mcp__ado__wit_work_item` with `action: "list_comments"` to list existing comments on the work item. Search for one containing the signature `<!-- ai:role:estimation-agent -->`.
+Use `mcp__ado__wit_work_item` with `action: "list_comments"` to list existing comments on the work item. Search for one whose text contains the signature `[Estimation]`. Also treat a comment containing `ai:role:estimation-agent` as a match — older runs used that hidden marker, and ADO shows it escaped (`&lt;!-- ai:role:estimation-agent --&gt;`).
 
 ### If provider = jira
 
-Comments are included in the `jira_get_issue` response. Fetch the issue and search `fields.comment.comments[].body` for `<!-- ai:role:estimation-agent -->`:
+Comments are included in the `jira_get_issue` response. Fetch the issue and search `fields.comment.comments[].body` for `[Estimation]` (or the legacy `ai:role:estimation-agent`):
 ```
 mcp__atlassian__jira_get_issue
   issue_key: "<issue key>"
@@ -157,7 +157,7 @@ mcp__atlassian__jira_get_issue
 **Comment format:**
 
 ```markdown
-## Estimation: <Title> (#<id>)
+## [Estimation] <Title> (#<id>)
 
 ### Understanding
 <2-3 sentences>
@@ -184,9 +184,9 @@ mcp__atlassian__jira_get_issue
 
 ---
 *AI-generated estimate based on codebase analysis. Validate with the team.*
-
-<!-- ai:role:estimation-agent -->
 ```
+
+Do not add an HTML-comment marker: ADO Markdown comments escape `<!-- -->` and show it as text. The `[Estimation]` heading is the signature.
 
 Post the comment:
 ```
@@ -253,7 +253,7 @@ Use Bash to append — `echo '<json>' >> .ai/learning/raw/runs.jsonl`
 
 ## Examples
 
-1. `/dx-estimate 2416553` — Fetches the story, distills requirements, researches the codebase, then synthesizes an estimation: BE 16h + FE 12h + Authoring 4h = 32h total, suggested SP: 8 (Fibonacci). Posts the estimation as an ADO comment with the `<!-- ai:role:estimation-agent -->` signature.
+1. `/dx-estimate 2416553` — Fetches the story, distills requirements, researches the codebase, then synthesizes an estimation: BE 16h + FE 12h + Authoring 4h = 32h total, suggested SP: 8 (Fibonacci). Posts the estimation as an ADO comment headed `[Estimation]`, updating the earlier one if it exists.
 
 2. `/dx-estimate 2416553 dry run` — Runs the same analysis but prints the estimation to stdout without posting to ADO. Useful for reviewing the estimate before committing it to the work item.
 

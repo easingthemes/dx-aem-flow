@@ -3,7 +3,8 @@
 ## Step Format
 
 ```markdown
-## Step N: <Title> [pending]
+### Step N: <Title>
+**Status:** pending
 
 **Files:**
 - Modify: `path/to/file`
@@ -17,13 +18,15 @@
 <How to verify>
 ```
 
-## Status Badges
+## Status Values
 
-- `[pending]` — not started
-- `[in-progress]` — currently executing
-- `[done]` — completed
-- `[blocked]` — failed, needs fix
-- `[skipped]` — intentionally skipped
+Keep the `### Step N:` heading and the `**Status:**` line in this shape — `/dx-step`, `/dx-step-fix` and the Stop guard parse them.
+
+- `pending` — not started
+- `in-progress` — currently executing
+- `done` — completed
+- `blocked` — failed or cannot proceed; add `**Blocked:** <why>`
+- `skipped` — intentionally skipped; add `**Reason:** <why>`
 
 ## Rules
 

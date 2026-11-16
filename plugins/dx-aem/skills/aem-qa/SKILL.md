@@ -18,7 +18,7 @@ Read `.ai/config.yaml` for `roles.qa-agent` (if defined). Key rules:
 - **canModifyCode: false** — you NEVER modify source code. You report issues.
 - **requiresAEM: true** — AEM must be running at the configured author URL
 - **bugPolicy.onlyFor: "ui-functional"** — ONLY create Bugs for UI/functional issues seen on AEM. NEVER for build, test, or lint failures.
-- **bugPolicy.requiresHumanConfirmation: true** — ALWAYS ask before creating Bug tickets
+- **bugPolicy.requiresHumanConfirmation: true** (the default) — ALWAYS ask before creating Bug tickets. In a non-interactive run (`../../../dx-core/shared/interaction-mode.md`) nobody can confirm, so Bugs are listed, not created
 - **capabilities:** readCode, readDiff, captureScreenshots, navigateAEM, verifyDialogFields, verifyJcrProperties, readWorkItem, createWorkItem
 
 ## Defaults
@@ -369,6 +369,10 @@ Create Bug ticket? (y/n)
 ```
 
 Wait for user confirmation on each issue before proceeding.
+
+**Non-interactive run** (pipeline, orchestrator, autopilot — no one to answer; see dx-core `shared/interaction-mode.md`). Do not ask:
+- `bugPolicy.requiresHumanConfirmation` is `true` or unset → confirm none. Record each issue in `qa.json` with `"status": "proposed"` and list them in the summary as "Bugs to create (needs confirmation)".
+- `bugPolicy.requiresHumanConfirmation: false` → treat every issue that is not already in `qa.json` as confirmed (the duplicate check above prevents a second Bug on a re-run).
 
 ### Create bug tickets (confirmed)
 

@@ -48,7 +48,7 @@ If no checkboxes changed and report was not regenerated — Mode C (skip).
 
 **Mode A — First post (no existing `[DoRAgent]` comment):**
 
-Post the full DoR checklist. Read `.ai/templates/ado-comments/dor-check.md.template` and follow that structure exactly. Use checkboxes (`- [x]` for passing, `- [ ]` for failing/warning) instead of tables. The checklist dynamically reflects whatever wiki-parsed sections are defined — there is no fixed number.
+Post the full DoR checklist. Read `.ai/templates/ado-comments/dor-check.md.template` and follow that structure exactly. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text). Use checkboxes (`- [x]` for passing, `- [ ]` for failing/warning) instead of tables. The checklist dynamically reflects whatever wiki-parsed sections are defined — there is no fixed number.
 
 ```
 mcp__ado__wit_work_item_comment_write

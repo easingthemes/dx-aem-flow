@@ -149,7 +149,7 @@ BLOCKED: Cannot reach QA AEM instance.
 
 ### Build handoff comment
 
-Read the template from `.ai/templates/ado-comments/qa-handoff.md.template`.
+Read the template from `.ai/templates/ado-comments/qa-handoff.md.template`. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text).
 
 Fill in:
 - `<story-title>` — from ADO work item

@@ -85,6 +85,8 @@ REVIEW_OWN_PRS=0
 echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS"
 ```
 
+Also treat the run as `AUTOMATION=1` when the prompt says `autonomous`/`autopilot`/`non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot autopilot, no `AskUserQuestion`) — see `../../shared/interaction-mode.md`. In such a **local** run (`DX_PIPELINE_MODE` not `true`) post the threads but **skip the vote**: the pipeline votes as its service account, while a local run would vote as you.
+
 **When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict (clamped both ways — never a blocking vote, and never a positive vote when a MUST-FIX exists; `changes-requested`/`rejected` → `NoVote`; see `references/post-findings.md` step 6)** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
 
 **When `AUTOMATION=0`** — the interactive flow below is unchanged.

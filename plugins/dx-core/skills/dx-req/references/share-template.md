@@ -139,7 +139,7 @@ mcp__atlassian__jira_add_comment
 
 Comments support wiki markup on Jira Server/DC. No `format` parameter needed.
 
-Read `.ai/templates/ado-comments/share-plan.md.template` and follow that structure. Fill in from the generated `share-plan.md`.
+Read `.ai/templates/ado-comments/share-plan.md.template` and follow that structure. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text). Fill in from the generated `share-plan.md`.
 
 If posting fails, print a warning but do NOT fail — the local `share-plan.md` is the primary output.
 
