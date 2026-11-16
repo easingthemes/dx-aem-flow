@@ -39,6 +39,17 @@ test('parseSites skips malformed entries', () => {
   assert.deepStrictEqual(r.skipped, [0, 2]);
 });
 
+test('parseSites treats an unexpanded ADO macro as unset', () => {
+  assert.deepStrictEqual(parseSites('$(BASIC_AUTH_SITES)'), { sites: [], skipped: [] });
+  assert.deepStrictEqual(parseSites(' $(BASIC_AUTH_SITES) '), { sites: [], skipped: [] });
+});
+
+test('parseSites skips CR/LF in user or pass (raw or escaped)', () => {
+  const r = parseSites('a:https://a.example.com:u:p%0Ax,b:https://b.example.com:u%0D:p,c:https://c.example.com:u:p\nx,d:https://d.example.com:u:ok');
+  assert.deepStrictEqual(r.skipped, [0, 1, 2]);
+  assert.strictEqual(r.sites.length, 1);
+});
+
 test('headerFor normalises origin', () => {
   const { sites } = parseSites('qa:https://QA.example.com:443/content/:u:p');
   assert.strictEqual(headerFor(sites, 'https://qa.example.com/a?b'), b64('u:p'));
@@ -161,19 +172,27 @@ test('e2e (opt-in browser tests)', { skip: !E2E && 'set DX_BROWSER_TESTS=1', tim
     });
   });
 
-  await t.test('e2e: relative .cjs init page loads in a "type": "module" project', async () => {
-    const proj = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-basic-auth-esm-'));
+  await t.test('e2e: plugin-path init page loads; project has no copy and is "type": "module"', async () => {
+    // The server loads ${CLAUDE_PLUGIN_ROOT}/data/lib/playwright-basic-auth.cjs
+    // by absolute path. Worst case: both the plugin dir and the project sit
+    // under "type": "module" packages, and the project has no .ai/lib at all.
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-basic-auth-esm-'));
     try {
+      const plugin = path.join(tmp, 'plugin');
+      const proj = path.join(tmp, 'proj');
+      fs.mkdirSync(path.join(plugin, 'data', 'lib'), { recursive: true });
+      fs.mkdirSync(proj);
+      fs.writeFileSync(path.join(plugin, 'package.json'), '{"type":"module"}\n');
       fs.writeFileSync(path.join(proj, 'package.json'), '{"type":"module"}\n');
-      fs.mkdirSync(path.join(proj, '.ai', 'lib'), { recursive: true });
-      fs.copyFileSync(SCRIPT, path.join(proj, '.ai', 'lib', 'playwright-basic-auth.cjs'));
+      const initPage = path.join(plugin, 'data', 'lib', 'playwright-basic-auth.cjs');
+      fs.copyFileSync(SCRIPT, initPage);
       await withMcp({ BASIC_AUTH_SITES: sites }, async (nav) => {
         const out = await nav(`${urlA}/`);
         assert.doesNotMatch(out, /Failed to load init page/);
         assert.match(out, /Page Title: A OK/);
-      }, { cwd: proj, initPage: '.ai/lib/playwright-basic-auth.cjs' });
+      }, { cwd: proj, initPage });
     } finally {
-      fs.rmSync(proj, { recursive: true, force: true });
+      fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
 

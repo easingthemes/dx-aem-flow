@@ -56,6 +56,15 @@ run "bad,nocolon:x,qa:https://qa.example.com:user:pass,web:ftp://qa.example.com:
 check "skips malformed, still matches" "-u${nl}user:pass${nl}https://qa.example.com/" "$ARGV"
 check "malformed warning names index" "BASIC_AUTH_SITES: entry 0 skipped (expected name:url:user:pass)${nl}BASIC_AUTH_SITES: entry 1 skipped (expected name:url:user:pass)${nl}BASIC_AUTH_SITES: entry 3 skipped (expected name:url:user:pass)" "$ERR"
 
+run '$(BASIC_AUTH_SITES)' https://qa.example.com/p -s
+check "unexpanded ADO macro counts as unset" "-s${nl}https://qa.example.com/p" "$ARGV"
+check "unexpanded ADO macro: no warning" "" "$ERR"
+run "qa:https://qa.example.com:user:pa%0Ass,ok:https://ok.example.com:u:p" https://qa.example.com/
+check "%0A in pass skips the entry" "https://qa.example.com/" "$ARGV"
+check "%0A warning names index" "BASIC_AUTH_SITES: entry 0 skipped (expected name:url:user:pass)" "$ERR"
+run "qa:https://qa.example.com:us%0Der:pass" https://qa.example.com/
+check "%0D in user skips the entry" "https://qa.example.com/" "$ARGV"
+
 run "qa:HTTPS://QA.Example.com:443/ignored/path:user:pass" https://qa.example.com/x
 check "origin normalises :443, case, path" "-u${nl}user:pass${nl}https://qa.example.com/x" "$ARGV"
 run "qa:http://qa.example.com:user:pass" http://QA.example.com:80/x

@@ -5,8 +5,13 @@
 // user/pass may use %3A (:), %2C (,) and %25 (%) escapes. Only pass may contain
 // ':' — Basic Auth splits user:pass at the first colon (RFC 7617), so a user
 // with ':' can never authenticate. Never logs values.
+// %0A/%0D (or a raw CR/LF) in a value skips the entry: the shell side
+// (dx-common.sh curl-basic-auth) cannot carry one, and the two must agree.
+// An unexpanded ADO macro ("$(BASIC_AUTH_SITES)", what ADO passes when the
+// pipeline variable is not defined) counts as unset.
 // .cjs (not .js): @playwright/mcp require()s this file, and a .js would be
 // treated as ESM in projects whose package.json sets "type": "module".
+// Loaded from the plugin (${CLAUDE_PLUGIN_ROOT}/data/lib), not the project.
 
 function decode(s) {
   return s.includes('%') ? decodeURIComponent(s) : s;
@@ -25,13 +30,16 @@ function parseEntry(entry) {
   const user = rest.slice(mid + 1);
   const u = new URL(url); // throws on invalid
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
-  return { name, origin: u.origin, user: decode(user), pass: decode(pass) };
+  const du = decode(user);
+  const dp = decode(pass);
+  if (/[\r\n]/.test(du) || /[\r\n]/.test(dp)) return null;
+  return { name, origin: u.origin, user: du, pass: dp };
 }
 
 function parseSites(raw) {
   const sites = [];
   const skipped = [];
-  if (!raw) return { sites, skipped };
+  if (!raw || /^\$\([^)]*\)$/.test(raw.trim())) return { sites, skipped };
   raw.split(',').forEach((entry, i) => {
     let site = null;
     try { site = parseEntry(entry); } catch { /* malformed */ }
@@ -48,12 +56,16 @@ function headerFor(sites, url) {
 }
 
 const registered = new WeakSet();
+let parsed = null; // env is fixed for the server's life: parse and warn once
 
 async function initPage({ page }) {
-  const { sites, skipped } = parseSites(process.env.BASIC_AUTH_SITES);
-  for (const i of skipped) {
-    console.error(`BASIC_AUTH_SITES: entry ${i} skipped (expected name:url:user:pass)`);
+  if (!parsed) {
+    parsed = parseSites(process.env.BASIC_AUTH_SITES);
+    for (const i of parsed.skipped) {
+      console.error(`BASIC_AUTH_SITES: entry ${i} skipped (expected name:url:user:pass)`);
+    }
   }
+  const { sites } = parsed;
   if (!sites.length) return;
   const context = page.context();
   if (registered.has(context)) return; // script runs once per tab

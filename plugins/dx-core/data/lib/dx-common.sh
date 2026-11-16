@@ -249,7 +249,10 @@ aem_instance() {
 # never disagree: name = before first ':', pass = after last ':', user = before
 # that, url = the middle (may contain ':'). user/pass accept %3A %2C %25
 # escapes. Matching is by origin (scheme+host+port; default port, case and
-# path ignored). Malformed entries are skipped, reported by index only.
+# path ignored). Malformed entries are skipped, reported by index only, and so
+# is an entry whose user/pass holds CR/LF (raw or %0A/%0D): `$(...)` would strip
+# it here while the browser side kept it. An unexpanded ADO macro such as
+# "$(BASIC_AUTH_SITES)" (an undefined pipeline variable) counts as unset.
 
 # Prints the normalised origin of an http(s) URL, or returns 1.
 _basic_auth_origin() {
@@ -274,12 +277,14 @@ _basic_auth_origin() {
 # Percent-decodes $1; returns 1 on a malformed escape. No % means used as-is.
 _basic_auth_decode() {
   local s="$1" out="" hex
+  case "$s" in *$'\n'*|*$'\r'*) return 1 ;; esac
   case "$s" in *%*) ;; *) printf '%s' "$s"; return 0 ;; esac
   while [ -n "$s" ]; do
     case "$s" in
       %*)
         hex="${s:1:2}"
         case "$hex" in
+          0[AaDd]) return 1 ;;  # CR/LF: see header
           [0-9A-Fa-f][0-9A-Fa-f]) ;;
           *) return 1 ;;
         esac
@@ -300,11 +305,13 @@ curl_basic_auth() {
   local want entry i=0 first last name pass rest mid eurl user eorigin
   local cred=""
   want="$(_basic_auth_origin "$url")" || want=""
-  if [ -n "${BASIC_AUTH_SITES:-}" ]; then
+  local sites="${BASIC_AUTH_SITES:-}"
+  case "$sites" in '$('*')') sites="" ;; esac  # undefined ADO variable
+  if [ -n "$sites" ]; then
     local IFS=',' had_noglob=0
     case $- in *f*) had_noglob=1 ;; esac
     set -f  # unquoted split below must not glob-expand a '*' or '?' in a value
-    for entry in $BASIC_AUTH_SITES; do
+    for entry in $sites; do
       first="${entry%%:*}"; rest="${entry#*:}"
       if [ "$first" = "$entry" ] || [ "${rest%:*}" = "$rest" ]; then
         echo "BASIC_AUTH_SITES: entry $i skipped (expected name:url:user:pass)" >&2; i=$((i+1)); continue
