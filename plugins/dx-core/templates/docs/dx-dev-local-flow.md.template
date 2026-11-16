@@ -331,7 +331,7 @@ flowchart TD
         QA_SKILL["/aem-qa<br/>Automated QA: verify dialog,<br/>rendering, interactions"]
         BE["BE: dialog fields,<br/>JCR properties<br/>via AEM MCP"]
         FE["FE: page rendering,<br/>layout, interactions<br/>via Playwright"]
-        QA_OUT["qa.json + Bug tickets<br/>if issues found"]
+        QA_OUT["specs/&lt;id&gt;/qa.json + screenshots/<br/>Bug tickets if issues found"]
         QA_SKILL --> BE
         QA_SKILL --> FE
         BE --> QA_OUT

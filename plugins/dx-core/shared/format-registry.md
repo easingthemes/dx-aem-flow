@@ -14,7 +14,7 @@ All Markdown spec files include provenance frontmatter — see `shared/provenanc
 | share-plan.md | 1.1 | dx-req (Phase 5) | Provenance, Summary, Approach, Scope | Non-technical language |
 | triage.md | 1.0 | dx-bug-triage | Component, Scope, Root Cause Hypothesis | Component identified |
 | figma-extract.md | 1.0 | dx-figma-extract | Design Tokens, Component Mapping | ≥1 screenshot, tokens present |
-| qa.json | 1.0 | aem-qa | JSON array: component, description, severity, screenshot | No duplicates |
+| qa.json | 1.1 | aem-qa | `$SPEC_DIR/qa.json` object: storyId, verificationPlan, pagesVerified, screenshots (relative to spec dir), findings[], bugsCreated, verdict, timestamp | No duplicate findings (component + description) |
 | aem-before.md | 1.1 | aem-snapshot | Provenance, Dialog Fields, Pages Using Component | ≥1 field documented |
 | aem-after.md | 1.1 | aem-verify | Provenance, Dialog Fields, Pages, Comparison, Regressions | ≥1 field documented |
 | `.ai/pr-reviews/pr-<id>-findings.md` | 1.0 | dx-pr-review | Provenance, Metadata, Issues, Summary | ≥1 issue or clean verdict |

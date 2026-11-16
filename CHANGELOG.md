@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.0...v4.0.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **dx-aem:** keep aem-qa output in the ticket spec dir ([#268](https://github.com/easingthemes/dx-aem-flow/issues/268)) ([b326c28](https://github.com/easingthemes/dx-aem-flow/commit/b326c280ef75fa0a501024fed916872ca8006cdb))
+
 # [4.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v3.14.1...v4.0.0) (2026-11-16)
 
 
