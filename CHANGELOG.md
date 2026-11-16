@@ -1,3 +1,13 @@
+# [6.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v5.0.0...v6.0.0) (2026-11-16)
+
+
+* feat(dx-core)!: BASIC_AUTH_SITES for Playwright Basic Auth ([#273](https://github.com/easingthemes/dx-aem-flow/issues/273)) ([b6b76e4](https://github.com/easingthemes/dx-aem-flow/commit/b6b76e41e056edf374775a3b40060bffc4c37b3c))
+
+
+### BREAKING CHANGES
+
+* QA_BASIC_AUTH_* and aem.qa-basic-auth are no longer read. Set BASIC_AUTH_SITES="name:url:user:pass,..." in the shell profile (and as an ADO secret pipeline variable where needed), then run /dx-upgrade to install the basic-auth rule and refresh .ai/lib/dx-common.sh.
+
 # [5.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.3...v5.0.0) (2026-11-16)
 
 
