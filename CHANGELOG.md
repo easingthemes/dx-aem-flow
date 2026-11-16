@@ -1,3 +1,10 @@
+## [4.0.3](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.2...v4.0.3) (2026-11-16)
+
+
+### Bug Fixes
+
+* **dx-core:** pre-review gate no longer fails open ([#271](https://github.com/easingthemes/dx-aem-flow/issues/271)) ([b4266c0](https://github.com/easingthemes/dx-aem-flow/commit/b4266c079bfd153a87e2ee3ec3ffb139431c351b))
+
 ## [4.0.2](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.1...v4.0.2) (2026-11-16)
 
 
