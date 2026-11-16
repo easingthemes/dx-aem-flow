@@ -71,6 +71,30 @@ steps:
       ADO_PAT: $(ADO_PAT)
 
   - bash: |
+      set -e
+      # dx-core's playwright MCP server loads .ai/lib/playwright-basic-auth.cjs
+      # (--init-page) relative to the agent's cwd and exits at startup when it
+      # is missing. The target repo may predate it, so copy it from the plugin
+      # clone and keep it out of agent commits via .git/info/exclude.
+      SRC="$(Pipeline.Workspace)/dx-aem-flow/plugins/dx-core/data/lib/playwright-basic-auth.cjs"
+      DEST="$(TARGET_DIR)/.ai/lib/playwright-basic-auth.cjs"
+      if [ -f "$DEST" ]; then
+        echo "OK: $DEST present"
+      else
+        mkdir -p "$(dirname "$DEST")"
+        cp "$SRC" "$DEST"
+        EXCLUDE="$(git -C "$(TARGET_DIR)" rev-parse --git-path info/exclude 2>/dev/null || true)"
+        if [ -n "$EXCLUDE" ]; then
+          case "$EXCLUDE" in /*) ;; *) EXCLUDE="$(TARGET_DIR)/$EXCLUDE" ;; esac
+          mkdir -p "$(dirname "$EXCLUDE")"
+          grep -qxF '.ai/lib/playwright-basic-auth.cjs' "$EXCLUDE" 2>/dev/null \
+            || echo '.ai/lib/playwright-basic-auth.cjs' >> "$EXCLUDE"
+        fi
+        echo "Installed $DEST from the plugin clone (git-excluded)"
+      fi
+    displayName: "Install Playwright basic-auth init page (if missing)"
+
+  - bash: |
       npm install -g @anthropic-ai/claude-code
       npm install --no-save @anthropic-ai/claude-agent-sdk
     displayName: "Install Claude Code + Agent SDK"
