@@ -1,3 +1,26 @@
+# [5.0.0](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.3...v5.0.0) (2026-11-16)
+
+
+* feat(dx-core)!: move Playwright MCP server from dx-aem to dx-core ([#272](https://github.com/easingthemes/dx-aem-flow/issues/272)) ([7933aa7](https://github.com/easingthemes/dx-aem-flow/commit/7933aa73b280eb4cf54ca987d3dbfc3c432c934f))
+
+
+### BREAKING CHANGES
+
+* Playwright MCP tool names changed from
+mcp__plugin_dx-aem_playwright__* to mcp__plugin_dx-core_playwright__*.
+Run /dx-upgrade to rewrite permission allowlists and Copilot agents, and run
+`npx playwright install chromium` if you only had dx-aem's copy of the server.
+
+* fix(dx-core): address review on Playwright move
+
+- move the screenshot-log hook and script from dx-aem to dx-core, so
+  dx-core-only projects log browser screenshots too; dx-aem ships no hooks now
+- playwright-owner-audit.sh: match the old server only as a whole name
+  (a ..._playwright_beta server is left alone), and report a failed rewrite
+  on stderr with exit 3 instead of claiming it fixed; tests for both
+- dx-init 5j: run the chromium install without asking
+- dx-core README: note the per-session startup cost of the playwright server
+
 ## [4.0.3](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.2...v4.0.3) (2026-11-16)
 
 
