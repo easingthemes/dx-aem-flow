@@ -191,13 +191,6 @@ import { stats } from '../../config/stats';
           <td class="p-3">Grep, Read, ToolSearch, AEM MCP search tools</td>
           <td class="p-3">Finds all AEM pages using a given component. Searches configured content paths and Experience Fragments. Returns clickable author URLs.</td>
         </tr>
-        <tr>
-          <td class="p-3 font-mono text-xs"><code>aem-bug-executor</code></td>
-          <td class="p-3"><span class="inline-block px-2 py-0.5 border rounded text-xs font-mono font-semibold border-amber-500 text-amber-600">Sonnet</span></td>
-          <td class="p-3"><code>/dx-bug-verify</code></td>
-          <td class="p-3">Read, Write, Glob, Grep, ToolSearch, Playwright MCP, AEM MCP</td>
-          <td class="p-3">AEM-specific bug verification. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, optionally checks JCR state.</td>
-        </tr>
       </tbody>
     </table>
   </div>
@@ -270,7 +263,7 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>@AEMSnapshot</code></td><td class="p-3">aem-inspector</td><td class="p-3">General-purpose component inspection. Dialog fields, pages, JCR properties.</td><td class="p-3">AEMBefore, DxComponent</td></tr>
         <tr><td class="p-3"><code>@AEMEditorialGuide</code></td><td class="p-3">aem-editorial-guide-capture</td><td class="p-3">Captures dialog screenshots, writes editor-friendly authoring guide.</td><td class="p-3">--</td></tr>
         <tr><td class="p-3"><code>@AEMComponent</code></td><td class="p-3">aem-file-resolver + aem-page-finder</td><td class="p-3">Multi-platform component lookup. Source files, AEM pages, dialog fields. Data-driven via project.yaml.</td><td class="p-3">AEMTicket, AEMBefore, DxComponent</td></tr>
-        <tr><td class="p-3"><code>@AEMVerify</code></td><td class="p-3">aem-bug-executor</td><td class="p-3">Bug verification on a running AEM instance.</td><td class="p-3">DxDebug, DxComponent</td></tr>
+        <tr><td class="p-3"><code>@AEMVerify</code></td><td class="p-3">/dx-bug-verify</td><td class="p-3">Bug verification on a running AEM instance.</td><td class="p-3">DxDebug, DxComponent</td></tr>
         <tr><td class="p-3"><code>@AEMTicket</code></td><td class="p-3">/dx-ticket-analyze + enrichment</td><td class="p-3">ADO ticket research with AEM project enrichment -- 4-signal market detection, parallel agents.</td><td class="p-3">AEMComponent, DxHelp, DxReqAll</td></tr>
         <tr><td class="p-3"><code>@AEMPRAnswer</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Answers PR review comments with session persistence. Bot detection, thread categorization.</td><td class="p-3">AEMPRFix, DxPRReview</td></tr>
         <tr><td class="p-3"><code>@AEMPRFix</code></td><td class="p-3">/dx-pr-answer</td><td class="p-3">Applies agree-will-fix PR review changes. Session-first resolution, minimal fixes.</td><td class="p-3">AEMPRAnswer, AEMCommit</td></tr>

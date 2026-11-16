@@ -549,26 +549,16 @@ import CommandBlock from '../../components/CommandBlock.astro';
     Coordinator skills automatically create this directory to store run metrics and patterns. Promoted patterns are written to <code>.claude/rules/learned-fix-&#42;.md</code> -- auto-loaded on every future run. No config is needed -- the directory is created on first coordinator run.
   </ContentCard>
   <CommandBlock label="Directory structure">
-{`.ai/learning/
-├── fixes.md                    # Aggregated fix patterns
-├── review-issues.md            # Aggregated review findings
-├── patterns.md                 # Build error catalog
-├── conventions-discovered.md   # Discovered conventions
-├── metrics.md                  # Execution metrics summary
-├── retro/
-│   └── YYYY-WNN-summary.md    # Weekly retrospective
-└── raw/                        # .gitignored
-    ├── runs.jsonl              # Run records from coordinators
-    ├── fixes.jsonl             # Fix patterns from dx-step-all
-    ├── bugs.jsonl              # Bug patterns from dx-bug-all
-    └── review-issues.jsonl     # Review findings from dx-step-verify`}
+{`.ai/learning/raw/
+├── runs.jsonl              # Run records from dx-step-all, dx-bug-all, dx-estimate
+├── fixes.jsonl             # Fix attempts from dx-step-all
+└── bugs.jsonl              # Bug patterns from dx-bug-all`}
   </CommandBlock>
 
   <HighlightBox severity="info" title="Promotion Flow">
     Raw signals in <code>.ai/learning/raw/&#42;.jsonl</code> accumulate over runs. When a fix pattern reaches
-    3+ successes with 0 failures, it is promoted to <code>.claude/rules/learned-fix-&#42;.md</code> -- auto-loaded
-    on every future Claude run. Convention patterns require 5+ occurrences and developer confirmation before promotion.
-    Security patterns are promoted immediately with no threshold.
+    3+ successes with 0 failures, <code>dx-step-all</code> promotes it to <code>.claude/rules/learned-fix-&#42;.md</code> --
+    auto-loaded on every future Claude run.
   </HighlightBox>
 </Section>
 

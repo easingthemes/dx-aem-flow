@@ -420,9 +420,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
     </table>
   </div>
 
-  <HighlightBox severity="success" title="Addressed by Self-Learning">
-    These gaps are the motivation for the self-learning architecture. The <code>.ai/learning/</code> directory,
-    <code>/dx-learn</code>, and <code>/dx-retro</code> skills address gaps 1-6 by persisting fix patterns,
-    aggregating success rates, and enabling cross-story knowledge transfer. See the Learning and Feedback page.
+  <HighlightBox severity="info" title="Partly addressed">
+    <code>dx-step-all</code> now logs fix attempts to <code>.ai/learning/raw/fixes.jsonl</code> and promotes a fix that
+    worked 3+ times with no failures to <code>.claude/rules/learned-fix-&#42;.md</code>, so fix patterns carry over
+    between stories. Review issues are still not tracked. See the Learning and Feedback page.
   </HighlightBox>
 </Section>

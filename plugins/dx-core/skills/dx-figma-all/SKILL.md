@@ -14,7 +14,7 @@ You are a coordinator. You do NOT implement anything yourself. You delegate each
 
 ## 0. Input Validation
 
-1. **Figma URL required** — if no Figma URL is provided in the arguments or spec files, STOP immediately: "A Figma URL is required. Usage: `/dx-figma <figma-url> [component-name]`"
+1. **Figma URL required** — if no Figma URL is provided in the arguments or spec files, STOP immediately: "A Figma URL is required. Usage: `/dx-figma-all <figma-url> [component-name]`"
 2. **Figma MCP health** — run `bash .ai/lib/mcp-health-check.sh figma`. If Figma Desktop is not responding on port 3845, STOP: "Figma Desktop not detected. Open Figma and enable Dev Mode MCP."
 3. **AEM MCP health** — run `bash .ai/lib/mcp-health-check.sh aem`. If AEM is not responding, WARN: "AEM author not responding — verification step may be skipped."
 

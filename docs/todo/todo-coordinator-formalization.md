@@ -41,7 +41,7 @@ dx-agent-all (top orchestrator)
 
 dx-bug-all (bug orchestrator)
 ├── dx-bug-triage
-├── dx-bug-verify → [aem-bug-executor]
+├── dx-bug-verify
 └── dx-bug-fix → dx-step, dx-step-build, dx-pr-commit
 
 dx-hub-dispatch (multi-repo orchestrator)
@@ -70,7 +70,6 @@ dx-hub-dispatch (multi-repo orchestrator)
 | `plugins/dx-core/skills/dx-figma-prototype/SKILL.md` | `[dx-figma-styles, dx-figma-markup]` |
 | `plugins/dx-core/skills/dx-step-verify/SKILL.md` | `[dx-code-reviewer]` |
 | `plugins/dx-aem/skills/aem-component/SKILL.md` | `[aem-file-resolver, aem-page-finder]` |
-| `plugins/dx-core/skills/dx-bug-verify/SKILL.md` | `[aem-bug-executor]` |
 
 Note: 6 skills already have `agent:` frontmatter (aem-snapshot, aem-verify, aem-qa-handoff, aem-doc-gen, aem-editorial-guide, aem-fe-verify) — no changes needed, graph generator treats `agent:` as implicit delegation.
 
@@ -84,7 +83,6 @@ Note: 6 skills already have `agent:` frontmatter (aem-snapshot, aem-verify, aem-
 | `plugins/dx-core/agents/dx-figma-styles.md` | `[dx-figma-prototype]` |
 | `plugins/dx-core/agents/dx-figma-markup.md` | `[dx-figma-prototype]` |
 | `plugins/dx-core/agents/dx-pr-reviewer.md` | `[dx-pr-review, dx-pr-review-all]` |
-| `plugins/dx-aem/agents/aem-bug-executor.md` | `[dx-bug-verify]` |
 | `plugins/dx-aem/agents/aem-inspector.md` | `[aem-snapshot, aem-verify, aem-qa-handoff]` |
 | `plugins/dx-aem/agents/aem-fe-verifier.md` | `[aem-fe-verify]` |
 | `plugins/dx-aem/agents/aem-editorial-guide-capture.md` | `[aem-editorial-guide, aem-doc-gen]` |
