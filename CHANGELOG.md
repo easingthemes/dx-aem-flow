@@ -1,3 +1,10 @@
+## [4.0.2](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.1...v4.0.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* remove orphan agent, stale skill references and unread reference files ([#269](https://github.com/easingthemes/dx-aem-flow/issues/269)) ([2f9f9d5](https://github.com/easingthemes/dx-aem-flow/commit/2f9f9d53242db91fba99ae4aa0b136977b8ef1f2))
+
 ## [4.0.1](https://github.com/easingthemes/dx-aem-flow/compare/v4.0.0...v4.0.1) (2026-11-16)
 
 
