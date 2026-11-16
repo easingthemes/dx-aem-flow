@@ -19,10 +19,7 @@ Skills that need credentials should resolve them in this order:
 
 | Variable | Purpose | Used By |
 |----------|---------|---------|
-| `QA_BASIC_AUTH_USER` | QA/Stage **publisher** HTTP Basic Auth username — the published-website proxy gate, separate from the AEM author login (which uses `AEM_INSTANCES`; author has no Basic Auth) | qa-basic-auth rule, Playwright skills |
-| `QA_BASIC_AUTH_PASS` | QA/Stage **publisher** HTTP Basic Auth password — published-website proxy gate | qa-basic-auth rule, Playwright skills |
-| `QA_BASIC_AUTH_FALLBACK_USER` | Fallback QA username (optional) | qa-basic-auth rule |
-| `QA_BASIC_AUTH_FALLBACK_PASS` | Fallback QA password (optional) | qa-basic-auth rule |
+| `BASIC_AUTH_SITES` | HTTP Basic Auth logins for protected sites (QA/Stage publishers, staging). Format: `name:url:user:pass` entries joined by `,`; `user`/`pass` percent-encoded when they contain `:` `,` `%`. Example: `qa:https://qa.example.com:user:pass,uat:https://uat.example.com:user:pass`. Set it in the **shell profile with single quotes** (`export BASIC_AUTH_SITES='...'`) so Claude Code and Copilot CLI both see it; in ADO pipelines it is a **secret pipeline variable**. Separate from the AEM author login (`AEM_INSTANCES`). | basic-auth rule, `.ai/lib/playwright-basic-auth.js`, `dx-common.sh curl-basic-auth` |
 | `AXE_API_KEY` | Deque axe API key for accessibility testing | dx-axe, axe MCP server |
 
 ### AEM (dx-aem)
@@ -50,10 +47,6 @@ These are set as ADO pipeline variables or AWS Lambda env vars, NOT in `settings
 ```json
 {
   "env": {
-    "QA_BASIC_AUTH_USER": "",
-    "QA_BASIC_AUTH_PASS": "",
-    "QA_BASIC_AUTH_FALLBACK_USER": "",
-    "QA_BASIC_AUTH_FALLBACK_PASS": "",
     "AXE_API_KEY": "",
     "AEM_INSTANCES": "local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS"
   }

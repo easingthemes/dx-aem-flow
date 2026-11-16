@@ -166,7 +166,8 @@ bash ${CLAUDE_SKILL_DIR}/scripts/scaffold.sh
 This creates:
 - `.ai/specs`, `.ai/rules`, `.ai/research`, `.ai/lib`, `.ai/templates`
 - `.claude/rules`, `.claude/hooks`
-- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, parse-wi-images.sh, ensure-feature-branch.sh, queue-pipeline.sh, update-progress.sh) with chmod +x
+- Copies utility scripts to `.ai/lib/` (audit.sh, dx-common.sh, pre-review-checks.sh, plan-metadata.sh, gather-context.sh, parse-wi-images.sh, ensure-feature-branch.sh, queue-pipeline.sh, update-progress.sh, playwright-basic-auth.js) with chmod +x
+- **`.ai/lib/playwright-basic-auth.js` is mandatory.** The Playwright MCP server in `.mcp.json` loads it via `--init-page`; if the file is missing, every Playwright navigation fails with "Failed to load init page". Never skip or delete it.
 - Copies `stop-guard.sh` to `.claude/hooks/` with chmod +x
 - Copies output templates to `.ai/templates/` (spec/, wiki/, ado-comments/)
 - Copies shared rule templates to `.ai/rules/`
@@ -456,10 +457,6 @@ Check if `.claude/settings.local.json` exists (use Glob tool).
 ```json
 {
   "env": {
-    "QA_BASIC_AUTH_USER": "",
-    "QA_BASIC_AUTH_PASS": "",
-    "QA_BASIC_AUTH_FALLBACK_USER": "",
-    "QA_BASIC_AUTH_FALLBACK_PASS": "",
     "AXE_API_KEY": ""
   }
 }

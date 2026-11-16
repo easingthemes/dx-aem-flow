@@ -1,0 +1,43 @@
+---
+description: HTTP Basic Auth for protected sites — configured once in BASIC_AUTH_SITES, applied automatically
+---
+
+# Basic Auth for Protected Sites
+
+Protected sites (QA/Stage publishers, staging) are configured in one env var, `BASIC_AUTH_SITES`.
+
+## Format
+
+`name:url:user:pass` entries joined by `,`:
+
+```
+qa:https://qa.example.com:user:pass,uat:https://uat.example.com:user:pass
+```
+
+- `name` is everything before the first `:`; `pass` is everything after the last `:`; `user` is before that; `url` is the middle (it may contain `:`).
+- `user` and `pass` are percent-decoded: write `%3A` for `:`, `%2C` for `,`, `%25` for `%`. Values without `%` are used as-is.
+- Matching is by origin (scheme + host + port). The path in the entry is ignored.
+- Unset or empty means no Basic Auth is applied.
+
+## Setup
+
+- **Shell (Claude Code and Copilot CLI):** add to your shell profile, using single quotes so `$` and `!` stay literal:
+  `export BASIC_AUTH_SITES='qa:https://qa.example.com:user:pass'`
+- **ADO pipelines:** define `BASIC_AUTH_SITES` as a secret pipeline variable.
+
+## How it is applied
+
+- **Browser:** Playwright MCP loads `.ai/lib/playwright-basic-auth.js` (`--init-page`, installed by `/dx-init`; mandatory — without it every navigation fails). It adds the login to requests for listed origins automatically. **Open plain URLs** — never put credentials in a URL.
+  - A cross-origin redirect never carries the login.
+  - Responses from listed sites are buffered (no streaming), so large downloads, SSE and Range requests are affected.
+  - If the site cannot be reached, the request is aborted.
+- **Shell:** use `bash .ai/lib/dx-common.sh curl-basic-auth <url> [curl-args...]`. It adds `-u` only for listed origins, never prints credentials, and returns curl's exit code.
+
+## When it fails
+
+- A **401** means the origin is not in `BASIC_AUTH_SITES` (or its credentials are wrong). Tell the user which origin (scheme + host + port) needs an entry. Do not guess credentials.
+- Never ask the user for a password and never print, log or echo `BASIC_AUTH_SITES` or any credential.
+
+## Not covered here
+
+The AEM **author** login is separate: it comes from `AEM_INSTANCES`, not `BASIC_AUTH_SITES`.

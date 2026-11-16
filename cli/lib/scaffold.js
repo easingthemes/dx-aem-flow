@@ -227,10 +227,6 @@ class Scaffold {
 
   getRequiredEnvVars() {
     const vars = [
-      'QA_BASIC_AUTH_USER',
-      'QA_BASIC_AUTH_PASS',
-      'QA_BASIC_AUTH_FALLBACK_USER',
-      'QA_BASIC_AUTH_FALLBACK_PASS',
       'AXE_API_KEY',
     ];
     // Add AEM vars if aem mode is enabled
@@ -420,9 +416,6 @@ aem:
     - ${brand}
   active-markets:
     - ${brand}-us
-  # qa-basic-auth:
-  #   username: "TODO"
-  #   password: "TODO"
 `;
 
     let content = fs.readFileSync(configPath, 'utf8');
