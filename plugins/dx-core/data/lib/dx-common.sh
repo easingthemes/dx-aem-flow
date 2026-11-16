@@ -245,7 +245,7 @@ aem_instance() {
 # --- Basic Auth for curl, from BASIC_AUTH_SITES ---
 #
 # BASIC_AUTH_SITES="name:url:user:pass,name2:url2:user2:pass2" — the same
-# variable and rules as playwright-basic-auth.js (browser side), so the two
+# variable and rules as playwright-basic-auth.cjs (browser side), so the two
 # never disagree: name = before first ':', pass = after last ':', user = before
 # that, url = the middle (may contain ':'). user/pass accept %3A %2C %25
 # escapes. Matching is by origin (scheme+host+port; default port, case and
@@ -301,7 +301,9 @@ curl_basic_auth() {
   local cred=""
   want="$(_basic_auth_origin "$url")" || want=""
   if [ -n "${BASIC_AUTH_SITES:-}" ]; then
-    local IFS=','
+    local IFS=',' had_noglob=0
+    case $- in *f*) had_noglob=1 ;; esac
+    set -f  # unquoted split below must not glob-expand a '*' or '?' in a value
     for entry in $BASIC_AUTH_SITES; do
       first="${entry%%:*}"; rest="${entry#*:}"
       if [ "$first" = "$entry" ] || [ "${rest%:*}" = "$rest" ]; then
@@ -321,8 +323,12 @@ curl_basic_auth() {
       fi
       i=$((i+1))
     done
+    [ "$had_noglob" = 1 ] || set +f
   fi
   if [ -n "$cred" ]; then
+    # -u in argv is briefly visible in `ps` on this host. Accepted: `-K -`
+    # (config on stdin) would break callers that pipe a body to curl. curl
+    # does not forward -u to a different host on redirect.
     curl "$@" -u "$cred" "$url"
   else
     curl "$@" "$url"

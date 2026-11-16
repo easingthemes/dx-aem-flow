@@ -42,8 +42,15 @@ check "adds nothing when unset" "-s${nl}https://qa.example.com/p" "$ARGV"
 run "" https://qa.example.com/p -s
 check "adds nothing when empty" "-s${nl}https://qa.example.com/p" "$ARGV"
 
-run "qa:https://qa.example.com:us%3Aer:p%2Cw%25d" https://qa.example.com/
-check "decodes escapes" "-u${nl}us:er:p,w%d${nl}https://qa.example.com/" "$ARGV"
+# Only pass may hold ':' (Basic Auth splits user:pass at the first colon).
+run "qa:https://qa.example.com:us%2Cer:p%3Aw%25d" https://qa.example.com/
+check "decodes escapes" "-u${nl}us,er:p:w%d${nl}https://qa.example.com/" "$ARGV"
+
+# A '*' in a value must not glob-expand against the working directory.
+# The fixture path makes the whole entry, read as a glob, match a real file.
+mkdir -p "$TMP/qa:https:/qa.example.com:user:hit"
+( cd "$TMP" && run "qa:https://qa.example.com:user:*" https://qa.example.com/ && printf '%s' "$ARGV" > "$TMP/glob-argv" )
+check "no glob expansion of values" "-u${nl}user:*${nl}https://qa.example.com/" "$(cat "$TMP/glob-argv")"
 
 run "bad,nocolon:x,qa:https://qa.example.com:user:pass,web:ftp://qa.example.com:u:p" https://qa.example.com/
 check "skips malformed, still matches" "-u${nl}user:pass${nl}https://qa.example.com/" "$ARGV"
