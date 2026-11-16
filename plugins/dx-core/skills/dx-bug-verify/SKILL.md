@@ -192,7 +192,6 @@ Save verification.md with `**Result:** Blocked — Playwright MCP unavailable` a
 **QA/Stage URL** (e.g., `https://qa.example.com/...`):
 
 Follow the `basic-auth` rule: navigate with the plain URL (`mcp__plugin_dx-core_playwright__browser_navigate`); the browser applies `BASIC_AUTH_SITES`. Take a snapshot and check for actual page content. On a 401 or an auth error page, report `<origin> needs an entry in BASIC_AUTH_SITES` and stop.
-
 - Wait for page load via `mcp__plugin_dx-core_playwright__browser_wait_for`
 
 **Local dev server** (e.g., `http://localhost:...`):

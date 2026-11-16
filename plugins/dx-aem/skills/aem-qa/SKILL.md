@@ -280,7 +280,7 @@ For each page to verify on publisher:
 **Navigate to Page (Publisher)** — no `wcmmode` param needed, publisher IS the production rendering:
 ```
 mcp__plugin_dx-core_playwright__browser_navigate
-  url: "<publish-url-with-creds-for-first-nav>/content/<path>.html"
+  url: "<publish-url>/content/<path>.html"
 ```
 
 Wait for page load:
