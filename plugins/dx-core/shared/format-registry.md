@@ -1,6 +1,6 @@
 # Output Format Registry
 
-Central reference for spec output file formats. When a format changes, bump its version.
+Contributor reference for the files skills write and read by convention (no skill loads this file). Spec files live in `.ai/specs/<id>-<slug>/` unless a path is given. Versions are informational — nothing checks them.
 
 All Markdown spec files include provenance frontmatter — see `shared/provenance-schema.md`.
 
@@ -17,4 +17,4 @@ All Markdown spec files include provenance frontmatter — see `shared/provenanc
 | qa.json | 1.1 | aem-qa | `$SPEC_DIR/qa.json` object: storyId, verificationPlan, pagesVerified, screenshots (relative to spec dir), findings[], bugsCreated, verdict, timestamp | No duplicate findings (component + description) |
 | aem-before.md | 1.1 | aem-snapshot | Provenance, Dialog Fields, Pages Using Component | ≥1 field documented |
 | aem-after.md | 1.1 | aem-verify | Provenance, Dialog Fields, Pages, Comparison, Regressions | ≥1 field documented |
-| pr-findings.md | 1.0 | dx-pr-review | Provenance, Metadata, Issues, Summary | ≥1 issue or clean verdict |
+| `.ai/pr-reviews/pr-<id>-findings.md` | 1.0 | dx-pr-review | Provenance, Metadata, Issues, Summary | ≥1 issue or clean verdict |

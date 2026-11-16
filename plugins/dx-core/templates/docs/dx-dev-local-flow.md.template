@@ -458,10 +458,9 @@ flowchart TD
 
     subgraph S2["Step 2: Verify"]
         VERIFY_BUG["/dx-bug-verify<br/>Reproduce bug in browser"]
-        AEM_BUG["aem-bug-executor agent<br/>Navigate AEM, follow<br/>repro steps"]
         CHROME["Playwright<br/>Screenshot evidence"]
         VERIFY_OUT["verification.md<br/>+ screenshots"]
-        VERIFY_BUG --> AEM_BUG --> CHROME --> VERIFY_OUT
+        VERIFY_BUG --> CHROME --> VERIFY_OUT
     end
 
     subgraph S3["Step 3: Fix"]
@@ -575,7 +574,6 @@ flowchart LR
 | `aem-page-finder` | Haiku | /aem-component, /aem-page-search | Find pages using a component via AEM MCP |
 | `aem-editorial-guide-capture` | Sonnet | /aem-editorial-guide, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
 | `aem-file-resolver` | Haiku | /aem-component, /dx-ticket-analyze | Resolve component files using file-patterns.yaml |
-| `aem-bug-executor` | Sonnet | /dx-bug-verify | Reproduce bugs on AEM via Playwright |
 
 ---
 

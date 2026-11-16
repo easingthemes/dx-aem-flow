@@ -37,6 +37,8 @@ For each enabled pipeline (in order), import the YAML into ADO.
 
 All pipelines use Claude Code CLI (single-step skill invocation): `.ai/automation/pipelines/cli/ado-cli-<agent>.yml`.
 
+Pipeline names follow `../../rules/ado-service-hooks.md` § Pipeline Naming — hub `KAI-*`, consumer `KAI-<RepoShortName>-*` — so build-policy dropdowns can tell repos apart.
+
 ### 1a. Check if pipeline already exists
 
 Before creating, check if a pipeline with this name already exists in the project:

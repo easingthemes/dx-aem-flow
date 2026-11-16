@@ -542,9 +542,9 @@ export const base = import.meta.env.BASE_URL;
       When reviewers leave comments on your PR, AI reads them, applies fixes, and posts replies --
       resolving feedback in minutes instead of days.
     </ContentCard>
-    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Applying Patches" tags={[{label: "/dx-pr-apply", color: "warning"}]}>
-      Review comments include ready-to-apply code patches. Run <code>/dx-pr-apply</code> to apply
-      all suggested patches from a PR review, build, verify, and commit in one step.
+    <ContentCard icon="mdi:wrench" iconColor="bg-amber-500" title="Applying Patches" tags={[{label: "/dx-pr-answer", color: "warning"}]}>
+      Review comments can include ready-to-apply code patches. <code>/dx-pr-answer</code> detects them, offers to
+      apply them, runs the lint + compile gate, and commits -- no separate command needed.
     </ContentCard>
     <ContentCard icon="mdi:chart-multiple" iconColor="bg-cyan-dark" title="Batch Review & Reports" tags={[{label: "/dx-pr-review-all", color: "info"}, {label: "/dx-pr-review-report", color: "info"}]}>
       <code>/dx-pr-review-all</code> reviews multiple PRs in batch. <code>/dx-pr-review-report</code> generates

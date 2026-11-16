@@ -20,12 +20,12 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 ## Error classification in Result envelope
 
 **Added:** 2026-03-27
-**Problem:** When a `context: fork` subagent fails, the Result envelope says `failure` with a text error, but the coordinator can't distinguish error types. An AEM MCP timeout (transient — retry might work) looks the same as a missing config field (permanent — tell user to fix). Claude Code's background agents get automatic retry for transient failures; our coordinators should do the same.
-**Scope:** `plugins/dx-core/shared/subagent-contract.md`, all `context: fork` AEM skills (6 total), `plugins/dx-core/skills/dx-agent-all/SKILL.md`.
-**Done-when:** Result envelope includes `- **Error-Class:** transient | permanent | config`. `dx-agent-all` retries `transient` failures once before reporting failure. Each AEM skill classifies MCP connection errors as `transient`, missing config as `config`, logic errors as `permanent`.
+**Problem:** When a `context: fork` subagent fails, the `## Return` block says `verdict: fail` with a text error, but the coordinator can't distinguish error types. An AEM MCP timeout (transient — retry might work) looks the same as a missing config field (permanent — tell user to fix). Claude Code's background agents get automatic retry for transient failures; our coordinators should do the same.
+**Scope:** `plugins/dx-core/shared/skill-return-contract.md`, all `context: fork` AEM skills (6 total), `plugins/dx-core/skills/dx-agent-all/SKILL.md`.
+**Done-when:** the `## Return` block includes `error_class: transient | permanent | config`. `dx-agent-all` retries `transient` failures once before reporting failure. Each AEM skill classifies MCP connection errors as `transient`, missing config as `config`, logic errors as `permanent`.
 
 **Approach:**
-- Extend the Result envelope in `subagent-contract.md` with `Error-Class` field
+- Extend the `## Return` block in `skill-return-contract.md` with an `error_class` field
 - Classification rules:
   - `transient`: MCP timeout, connection refused, HTTP 5xx, "tool not found" (server starting) — retry once
   - `permanent`: logic error, missing prerequisite file, assertion failure — no retry
@@ -36,9 +36,9 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 ## Subagent context budget — worked examples
 
 **Added:** 2026-03-27
-**Problem:** `subagent-contract.md` says "summarize inputs >5KB before passing to fork" but provides no worked examples. Skills don't consistently follow this. `explain.md` can be 10-20KB; passing it raw to a `context: fork` skill wastes context window and reduces the subagent's working memory for actual tool calls.
-**Scope:** `plugins/dx-core/shared/subagent-contract.md`, all 10 `context: fork` skills.
-**Done-when:** `subagent-contract.md` has 2-3 worked examples showing: (a) what a >5KB input looks like, (b) what the summary should contain, (c) how to pass `summary + file path`. At least 3 high-traffic fork skills (`dx-step-verify`, `dx-step-build`, `aem-verify`) have explicit "Context Budget" sections.
+**Problem:** `skill-return-contract.md` (Pre-Dispatch Context Hygiene) says "summarize inputs >5KB before passing to fork" but provides no worked examples. Skills don't consistently follow this. `explain.md` can be 10-20KB; passing it raw to a `context: fork` skill wastes context window and reduces the subagent's working memory for actual tool calls.
+**Scope:** `plugins/dx-core/shared/skill-return-contract.md`, all 10 `context: fork` skills.
+**Done-when:** `skill-return-contract.md` has 2-3 worked examples showing: (a) what a >5KB input looks like, (b) what the summary should contain, (c) how to pass `summary + file path`. At least 3 high-traffic fork skills (`dx-step-verify`, `dx-step-build`, `aem-verify`) have explicit "Context Budget" sections.
 
 **Approach:**
 - Add worked examples to the contract:
@@ -64,10 +64,10 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 **Added:** 2026-03-27
 **Problem:** Coordinators sometimes echo the full Result envelope or write verbose phase summaries to the conversation. On Claude Code mobile app, Tasks render as a compact progress list — much cleaner than text walls. Claude Code's own background agents report via task-notifications, not conversation text. Coordinators should follow the same principle: use Task status as the primary progress channel.
 **Scope:** All 5 coordinator skills: `dx-agent-all`, `dx-step-all`, `dx-bug-all`, `dx-figma-all`, `dx-pr-review-all`.
-**Done-when:** Each coordinator has explicit instructions: "After a skill returns, update the Task (completed/failed + key metric). Only output conversation text for: (a) errors needing user input, (b) interactive mode checkpoints, (c) final pipeline summary." No coordinator echoes the Result envelope.
+**Done-when:** Each coordinator has explicit instructions: "After a skill returns, update the Task (completed/failed + key metric). Only output conversation text for: (a) errors needing user input, (b) interactive mode checkpoints, (c) final pipeline summary." No coordinator echoes the `## Return` block.
 
 **Approach:**
-- Add "Coordinator Output Rules" section to `subagent-contract.md`
+- Add "Coordinator Output Rules" section to `skill-return-contract.md`
 - Rule: Task updates are the progress channel. Text output is for decisions only.
 - Task subject pattern: `Phase N: <name>` → on completion update to `Phase N: <name> — PASS (key metric)` or `— FAIL (error)`
 - `dx-agent-all` already uses TaskCreate (line 115) — ensure all coordinators follow the same pattern consistently
@@ -89,8 +89,8 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 
 **Added:** 2026-04-27
 **Problem:** TODO #84 covers the `CLAUDE_CODE_FORK_SUBAGENT=1` env var (session-wide fork mode), but Claude Code v2.1.117+ also exposes a `/fork` slash command for per-invocation forking. The env var is all-or-nothing; the slash command lets a coordinator fork only the subagents that actually need parent context (e.g., a verifier reading the plan) while keeping read-heavy ones (`dx-file-resolver`, `dx-doc-searcher`) on a clean blank context.
-**Scope:** `docs/research/2026-04-25-platform-state-update.md` (current entry mentions only the env var), `plugins/dx-core/shared/subagent-contract.md` (forking guidance section).
-**Done-when:** Platform-state doc lists both `CLAUDE_CODE_FORK_SUBAGENT=1` (session-wide) and `/fork` (per-invocation) with a one-line "when to use which". `subagent-contract.md` references `/fork` as the preferred surgical option for coordinators that mix context-heavy verifiers with stateless searchers.
+**Scope:** `docs/research/2026-04-25-platform-state-update.md` (current entry mentions only the env var), `plugins/dx-core/shared/skill-return-contract.md` (forking guidance section).
+**Done-when:** Platform-state doc lists both `CLAUDE_CODE_FORK_SUBAGENT=1` (session-wide) and `/fork` (per-invocation) with a one-line "when to use which". `skill-return-contract.md` references `/fork` as the preferred surgical option for coordinators that mix context-heavy verifiers with stateless searchers.
 **Approach:**
 - Short addition to platform-state doc capturing the trade-off (env var = blanket session inheritance; `/fork` = surgical per-call inheritance, prompt cache shared with parent).
 - When piloting #84, prefer `/fork` for `dx-step-verify` (which needs plan + research context) over the env-var approach.

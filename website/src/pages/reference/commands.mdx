@@ -554,21 +554,17 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Written By</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>.ai/learning/raw/runs.jsonl</code></td><td class="p-3">Run records -- timestamp, ticket, flow, step statuses, fix/heal counts</td><td class="p-3">All three coordinators</td></tr>
+        <tr><td class="p-3"><code>.ai/learning/raw/runs.jsonl</code></td><td class="p-3">Run records -- timestamp, ticket, flow, step statuses, fix/heal counts</td><td class="p-3"><code>dx-step-all</code>, <code>dx-bug-all</code>, <code>dx-estimate</code></td></tr>
         <tr><td class="p-3"><code>.ai/learning/raw/fixes.jsonl</code></td><td class="p-3">Fix patterns -- error type, fix description, success/failure</td><td class="p-3"><code>dx-step-all</code></td></tr>
         <tr><td class="p-3"><code>.ai/learning/raw/bugs.jsonl</code></td><td class="p-3">Bug patterns -- component, root cause, files changed</td><td class="p-3"><code>dx-bug-all</code></td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="grid md:grid-cols-2 gap-4 mt-6">
+  <div class="mt-6">
     <HighlightBox severity="success" title="Pattern Promotion">
       When <code>dx-step-all</code> detects a fix pattern with 3+ successes and 0 failures, it promotes it to
       <code>.claude/rules/learned-fix-&#42;.md</code> -- auto-loaded by Claude on every future run.
-    </HighlightBox>
-    <HighlightBox severity="info" title="Aggregation Skills">
-      Run <code>/dx-learn</code> to aggregate raw JSONL data into readable markdown summaries.
-      Run <code>/dx-retro</code> for weekly retrospective with success rates, trends, and suggested actions.
     </HighlightBox>
   </div>
 

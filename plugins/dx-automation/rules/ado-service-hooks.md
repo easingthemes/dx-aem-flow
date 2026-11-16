@@ -3,6 +3,8 @@ description: ADO service hook scoping rules — hooks are per-project, not per-o
 globs: ["**/*.sh", "**/auto-*/**", "**/infra.json"]
 ---
 
+<!-- Read by /auto-webhooks and /auto-pipelines. Plugins do not auto-load rules/, so this file only takes effect through those skills. -->
+
 # ADO Service Hooks — Per-Project Scoping
 
 ## Key Constraint
@@ -53,7 +55,7 @@ Read the ADO project layout from `.ai/config.yaml` (`scm.project`) and `.ai/auto
 ADO Service Hooks natively filter on **tag**, **comment text** (contains), **work-item type**, **state/field change**, and **PR events**. So any event-driven agent *can* be triggered the Azure-native way (Service Hook → Incoming WebHook service connection → pipeline `resources.webhooks`), one hook + connection per agent.
 
 - **Azure-native** (SimpleAgent + BugFix model): no AWS infra, nothing to deploy. But you lose the Lambda's dedupe (ADO retry storms), per-agent rate limiting, monthly token-budget gating, and central tag-classification; any loop-prevention must live in the pipeline (both SimpleAgent and BugFix do this via in-skill resumable recovery + the bot never emitting its own trigger token). Best for **human-initiated, low-volume** agents (a `@kai-...` comment keyword). SimpleAgent (`@kai-simple`) and BugFix (`@kai-bugfix`, Bug-type filtered) both run this way. PR Answer is the next natural candidate.
-- **Lambda router** (default for the remaining WI agents): keep the high-volume autonomous WI agents (DoD, QA, DevAgent, DOCAgent, Estimation) here so they retain dedupe, rate-limiting, the token budget, and one-hook-fans-out-to-many routing. **DoR has been migrated off** to a `@kai-dor` comment hook (joining SimpleAgent + BugFix as Azure-native). PR Review stays a build validation policy (already Lambda-free). DoD-Fixer is chained, not event-triggered.
+- **Lambda router** (optional): Azure-native, the remaining WI agents (DoD, QA, DevAgent, DOCAgent, Estimation) run through the `ado-cli-hub.yml` router. Teams that want central dedupe, rate-limiting, the monthly token budget and one-hook-fans-out-to-many routing can send them through the Lambda instead. **DoR has been migrated off** to a `@kai-dor` comment hook (joining SimpleAgent + BugFix as Azure-native). PR Review stays a build validation policy (already Lambda-free). DoD-Fixer is chained, not event-triggered.
 
 ## Pipeline Naming
 

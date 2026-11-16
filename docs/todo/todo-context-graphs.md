@@ -107,7 +107,7 @@ Our plugins already implement early forms of structured context sharing:
 
 3. **Three-layer override system** — `.ai/rules/ > config.yaml overrides > plugin defaults` is a precedence graph for configuration knowledge.
 
-4. **Subagent return envelope** — `shared/subagent-contract.md` defines a structured protocol for agents to report Status, Summary, Files, Next, Error — a lightweight provenance format.
+4. **Subagent return envelope** — `shared/skill-return-contract.md` defines a structured `## Return` block (verdict, summary, artifacts, next_action) — a lightweight provenance format.
 
 5. **Learning directory** — `.ai/learning/raw/runs.jsonl`, `fixes.jsonl`, `bugs.jsonl` accumulate knowledge across sessions. Promoted patterns become `.claude/rules/learned-fix-*.md`.
 

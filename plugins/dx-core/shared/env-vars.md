@@ -42,7 +42,6 @@ These are set as ADO pipeline variables or AWS Lambda env vars, NOT in `settings
 | `FIGMA_PERSONAL_ACCESS_TOKEN` | Figma API token (DevAgent pipeline) |
 | `AWS_ACCESS_KEY_ID` | AWS credentials for DynamoDB/SQS/S3 |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret key |
-| `AZURE_CONTENT_SAFETY_KEY` | Azure Content Safety API key |
 | `BASIC_USER` / `BASIC_PASS` | Lambda webhook Basic Auth |
 | `WEBHOOK_SECRET` | Lambda webhook shared secret |
 
