@@ -83,9 +83,11 @@ async function withMcp(env, fn) {
   const p = spawn(
     'npx',
     ['-y', '@playwright/mcp@0.0.83', '--headless', '--isolated', '--init-page', SCRIPT],
-    { env: { ...process.env, BASIC_AUTH_SITES: '', ...env }, stdio: ['pipe', 'pipe', 'ignore'], detached: true }
+    { env: { ...process.env, BASIC_AUTH_SITES: '', ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true }
   );
   let buf = '';
+  let stderr = '';
+  p.stderr.on('data', (d) => { stderr += d; });
   let id = 0;
   const pending = {};
   p.stdout.on('data', (d) => {
@@ -114,7 +116,7 @@ async function withMcp(env, fn) {
       const r = await rpc('tools/call', { name: 'browser_navigate', arguments: { url } });
       return (r.result?.content || []).map((c) => c.text || '').join('\n') + (r.error ? JSON.stringify(r.error) : '');
     };
-    return await fn(navigate);
+    return await fn(navigate, () => stderr);
   } finally {
     try { process.kill(-p.pid, 'SIGKILL'); } catch { /* gone */ }
   }
@@ -173,6 +175,24 @@ test('e2e (opt-in browser tests)', { skip: !E2E && 'set DX_BROWSER_TESTS=1', tim
       assert.doesNotMatch(out, /Failed to load init page/);
     });
     assert.deepStrictEqual(A.seen, []);
+  });
+
+  await t.test('e2e: fetch failure aborts promptly and leaks nothing', async () => {
+    const closed = await new Promise((res) => {
+      const s = http.createServer();
+      s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
+    });
+    const dead = `http://127.0.0.1:${closed}`;
+    const start = Date.now();
+    await withMcp({ BASIC_AUTH_SITES: `d:${dead}:ud:secret%3Apw` }, async (nav, getStderr) => {
+      const out = await nav(`${dead}/`);
+      assert.doesNotMatch(out, /Page Title: /);
+      const all = out + getStderr();
+      for (const needle of ['secret:pw', 'secret%3Apw', Buffer.from('ud:secret:pw').toString('base64')]) {
+        assert.ok(!all.includes(needle), 'credential leaked');
+      }
+    });
+    assert.ok(Date.now() - start < 25000, 'navigation failed fast (no 30s hang)');
   });
 
   await t.test('e2e: password not in tool result', async () => {

@@ -62,12 +62,17 @@ async function initPage({ page }) {
   await context.route(
     (url) => headerFor(sites, url.toString()) !== null,
     async (route) => {
-      const req = route.request();
-      const response = await route.fetch({
-        headers: { ...req.headers(), authorization: headerFor(sites, req.url()) },
-        maxRedirects: 0,
-      });
-      await route.fulfill({ response });
+      try {
+        const req = route.request();
+        const response = await route.fetch({
+          headers: { ...req.headers(), authorization: headerFor(sites, req.url()) },
+          maxRedirects: 0,
+        });
+        await route.fulfill({ response });
+      } catch {
+        // Never log the error: its call log can include request headers.
+        await route.abort().catch(() => {});
+      }
     }
   );
 }
