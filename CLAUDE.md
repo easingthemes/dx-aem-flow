@@ -195,8 +195,8 @@ Write `model: opus | sonnet | haiku` in frontmatter, never a version-pinned mode
 - **dx:** Atlassian MCP — Jira issues, Confluence pages
 - **dx:** Figma MCP — design extraction, screenshots, tokens
 - **dx:** axe MCP — accessibility testing
+- **dx:** Playwright MCP (`@playwright/mcp`) — browser automation. Shipped by dx-core so non-AEM projects get a browser; dx-aem's browser skills use it too (dx-core is a dx-aem prerequisite)
 - **aem:** AEM MCP (HTTP) — JCR content, components, dialogs
-- **aem:** Playwright MCP (`@playwright/mcp`) — browser automation
 
 ### Plugin MCP Tool Naming — CRITICAL
 
@@ -209,7 +209,7 @@ MCP servers in a plugin's `.mcp.json` get a prefixed tool name: `mcp__plugin_<pl
 | Figma | dx-core | `mcp__plugin_dx-core_figma__` | `mcp__figma__` |
 | axe | dx-core | `mcp__plugin_dx-core_axe-mcp-server__` | `mcp__axe-mcp-server__` |
 | AEM | dx-aem | `mcp__plugin_dx-aem_AEM__` | `mcp__AEM__` |
-| Playwright | dx-aem | `mcp__plugin_dx-aem_playwright__` | `mcp__playwright__` |
+| Playwright | dx-core | `mcp__plugin_dx-core_playwright__` | `mcp__playwright__` |
 
 **Why:** Subagents resolve tools by exact name or ToolSearch. The shorthand doesn't match the actual registered tool names, causing "tool not found" failures.
 

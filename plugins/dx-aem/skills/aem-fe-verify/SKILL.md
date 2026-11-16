@@ -90,7 +90,7 @@ digraph aem_fe_verify {
 
 1. Read `aem.author-url` from `.ai/config.yaml` — it MUST contain `localhost` or `127.0.0.1`
 2. Call `mcp__plugin_dx-aem_AEM__getNodeContent` with path `/content` and depth 1 to confirm AEM MCP responds
-3. Call `mcp__plugin_dx-aem_playwright__browser_tabs` to confirm Playwright is available
+3. Call `mcp__plugin_dx-core_playwright__browser_tabs` to confirm Playwright is available
 
 ### Gate passed?
 
@@ -145,7 +145,7 @@ Before attempting browser verification, determine what MCP tools are available.
 
 ### Playwright available?
 
-Try calling `mcp__plugin_dx-aem_playwright__browser_navigate` to the target URL. If successful, take the "yes" path. If unavailable, take the "no" path.
+Try calling `mcp__plugin_dx-core_playwright__browser_navigate` to the target URL. If successful, take the "yes" path. If unavailable, take the "no" path.
 
 ### AEM MCP available?
 
@@ -176,11 +176,11 @@ Report: "MCP verification unavailable. Code review verification only — manual 
 **For each viewport** (single if no multi-viewport Figma, otherwise iterate):
 
 **Resize Chrome (if multi-viewport):**
-Match Figma reference dimensions via `mcp__plugin_dx-aem_playwright__browser_resize`.
+Match Figma reference dimensions via `mcp__plugin_dx-core_playwright__browser_resize`.
 
 **Navigate to demo page:**
 ```
-mcp__plugin_dx-aem_playwright__browser_navigate
+mcp__plugin_dx-core_playwright__browser_navigate
   url: "<author-url><page-path>.html?wcmmode=disabled"
 ```
 
@@ -204,8 +204,8 @@ Save with viewport-aware naming:
 
 Use Playwright `browser_resize` before each capture:
 ```
-mcp__plugin_dx-aem_playwright__browser_resize width=375 height=667
-mcp__plugin_dx-aem_playwright__browser_take_screenshot
+mcp__plugin_dx-core_playwright__browser_resize width=375 height=667
+mcp__plugin_dx-core_playwright__browser_take_screenshot
 ```
 
 Name screenshots with viewport suffix: `component-mobile.png`, `component-tablet.png`, `component-desktop.png`.

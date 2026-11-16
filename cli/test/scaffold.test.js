@@ -189,6 +189,8 @@ test('adds .ai entries to .gitignore without dropping existing ones', () => {
     assert.match(ignore, /node_modules\//);
     assert.match(ignore, /target\//);
     assert.match(ignore, /\.ai\//);
+    // dx-core's playwright MCP server writes screenshots and session cookies here.
+    assert.match(ignore, /^\.ai\/playwright\/$/m);
   } finally {
     rm(root);
   }

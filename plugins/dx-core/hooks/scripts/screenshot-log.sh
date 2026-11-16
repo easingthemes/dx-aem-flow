@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Playwright screenshot hook — logs screenshots taken during AEM sessions.
+# Playwright screenshot hook — logs screenshots taken by dx-core's playwright MCP server.
 # Triggered by PostToolUse on playwright browser_take_screenshot/browser_snapshot.
 
 set -euo pipefail

@@ -479,11 +479,11 @@ re-applies the work-plan as part of its normal flow.
      If no credentials are found and the URL is non-localhost: post ADO comment explaining that `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS` env vars are not set (see `qa-basic-auth` rule) and exit non-zero.
    - Navigate Chrome to the page URL (credential-embedded for first QA visit):
      ```
-     mcp__plugin_dx-aem_playwright__browser_navigate with url=<page-url>
+     mcp__plugin_dx-core_playwright__browser_navigate with url=<page-url>
      ```
    - Take a snapshot:
      ```
-     mcp__plugin_dx-aem_playwright__browser_snapshot
+     mcp__plugin_dx-core_playwright__browser_snapshot
      ```
    - Match the locator. The locator is one of:
      - `heading-text="..."` / `button-text="..."` / `link-text="..."` → look for elements with that exact visible text
@@ -493,7 +493,7 @@ re-applies the work-plan as part of its normal flow.
 
 4. **Take BEFORE screenshot** (Safeguard #6): capture, then move into the spec dir as `before.png`:
    ```
-   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filename=before.png
+   mcp__plugin_dx-core_playwright__browser_take_screenshot with filename=before.png
    cp .ai/playwright/screenshots/before.png $SPEC_DIR/before.png
    ```
    (`browser_take_screenshot` takes a `filename` basename and saves under the MCP `--output-dir`, `.ai/playwright/screenshots/` — it does not honor an arbitrary path.)
@@ -776,12 +776,12 @@ If running:
 
 1. Navigate Chrome to the page (note: same QA author URL, NOT publish, so authoring writes are visible):
    ```
-   mcp__plugin_dx-aem_playwright__browser_navigate with url=<page-url>
+   mcp__plugin_dx-core_playwright__browser_navigate with url=<page-url>
    ```
 
 2. Take AFTER screenshot:
    ```
-   mcp__plugin_dx-aem_playwright__browser_take_screenshot with filename=after.png
+   mcp__plugin_dx-core_playwright__browser_take_screenshot with filename=after.png
    cp .ai/playwright/screenshots/after.png $SPEC_DIR/after.png
    ```
 

@@ -95,10 +95,11 @@ The `aem.component-prefix` config is used by agents to construct CSS selectors w
 
 ## MCP Servers
 
-This plugin bundles two MCP servers (configured automatically via `.mcp.json`):
+This plugin bundles one MCP server (configured automatically via `.mcp.json`):
 
 - **[AEM MCP](https://www.npmjs.com/package/aem-mcp-server)** (`aem-mcp-server`) — JCR content, component dialogs, page management, node queries. Supports multi-instance configurations (local + QA). Included with the plugin — no separate install needed.
-- **Playwright MCP** — browser automation for screenshots, navigation, and dialog interaction
+
+Browser automation (screenshots, navigation, dialog interaction) uses the **Playwright MCP** server that ships with **dx-core** (`mcp__plugin_dx-core_playwright__*`). The AEM author login helper `.ai/lib/aem-playwright-auth.sh` (installed by `/aem-init`) writes a session that dx-core's server loads — so the browser skills need dx-core installed, which dx-aem requires anyway. `/dx-init` installs the Chromium browser (`npx playwright install chromium`).
 
 ## Full Workflow
 

@@ -2,7 +2,7 @@
 name: aem-editorial-guide-capture
 description: Captures AEM component editorial guide via Playwright — opens editor, triggers dialog, screenshots, and writes editor-friendly docs. Use for post-development documentation.
 include-custom-instructions: true
-tools: Read, Write, Glob, Bash, ToolSearch, mcp__plugin_dx-aem_playwright__browser_tabs, mcp__plugin_dx-aem_playwright__browser_set_storage_state, mcp__plugin_dx-aem_playwright__browser_navigate, mcp__plugin_dx-aem_playwright__browser_snapshot, mcp__plugin_dx-aem_playwright__browser_take_screenshot, mcp__plugin_dx-aem_playwright__browser_click, mcp__plugin_dx-aem_playwright__browser_evaluate, mcp__plugin_dx-aem_playwright__browser_wait_for
+tools: Read, Write, Glob, Bash, ToolSearch, mcp__plugin_dx-core_playwright__browser_tabs, mcp__plugin_dx-core_playwright__browser_set_storage_state, mcp__plugin_dx-core_playwright__browser_navigate, mcp__plugin_dx-core_playwright__browser_snapshot, mcp__plugin_dx-core_playwright__browser_take_screenshot, mcp__plugin_dx-core_playwright__browser_click, mcp__plugin_dx-core_playwright__browser_evaluate, mcp__plugin_dx-core_playwright__browser_wait_for
 model: sonnet
 memory: project
 maxTurns: 40
@@ -10,7 +10,7 @@ maxTurns: 40
 
 You are an AEM editorial guide capture agent. You use Playwright MCP tools to open AEM author pages, interact with component dialogs, capture screenshots, and write editor-friendly documentation.
 
-Playwright MCP tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first** (e.g., `mcp__plugin_dx-aem_playwright__browser_navigate`). If you get "tool not found", fall back to `ToolSearch("+playwright")`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
+Playwright MCP tools may be pre-loaded (in agent's `tools:` field) or deferred. **Always try calling a tool directly first** (e.g., `mcp__plugin_dx-core_playwright__browser_navigate`). If you get "tool not found", fall back to `ToolSearch("+playwright")`. Do NOT start with ToolSearch — if tools are pre-loaded, ToolSearch returns nothing.
 
 ## Configuration
 
@@ -25,13 +25,13 @@ When the caller specifies QA mode (or the target URL is non-localhost), prefer Q
 
 ## Playwright MCP Tools
 
-- `mcp__plugin_dx-aem_playwright__browser_tabs` — list / select / open / close browser tabs (action via param)
-- `mcp__plugin_dx-aem_playwright__browser_navigate` — navigate to URL (`url` only — no `type`)
-- `mcp__plugin_dx-aem_playwright__browser_snapshot` — get page accessibility tree with element **refs**
-- `mcp__plugin_dx-aem_playwright__browser_take_screenshot` — capture screenshot (`filename` basename; saved under the MCP `--output-dir`, `.ai/playwright/screenshots/`)
-- `mcp__plugin_dx-aem_playwright__browser_click` — click element by **ref**
-- `mcp__plugin_dx-aem_playwright__browser_evaluate` — run JavaScript in page context
-- `mcp__plugin_dx-aem_playwright__browser_wait_for` — wait for text to appear
+- `mcp__plugin_dx-core_playwright__browser_tabs` — list / select / open / close browser tabs (action via param)
+- `mcp__plugin_dx-core_playwright__browser_navigate` — navigate to URL (`url` only — no `type`)
+- `mcp__plugin_dx-core_playwright__browser_snapshot` — get page accessibility tree with element **refs**
+- `mcp__plugin_dx-core_playwright__browser_take_screenshot` — capture screenshot (`filename` basename; saved under the MCP `--output-dir`, `.ai/playwright/screenshots/`)
+- `mcp__plugin_dx-core_playwright__browser_click` — click element by **ref**
+- `mcp__plugin_dx-core_playwright__browser_evaluate` — run JavaScript in page context
+- `mcp__plugin_dx-core_playwright__browser_wait_for` — wait for text to appear
 
 ## Two distinct auth layers — different hosts, never chained
 
@@ -56,7 +56,7 @@ bash .ai/lib/aem-playwright-auth.sh author "$INSTANCE"   # writes .ai/playwright
 Load that session into the browser (needs `--caps=storage`, already enabled on the `playwright` server):
 
 ```
-mcp__plugin_dx-aem_playwright__browser_set_storage_state
+mcp__plugin_dx-core_playwright__browser_set_storage_state
   path: ".ai/playwright/aem-author-state.json"
 ```
 

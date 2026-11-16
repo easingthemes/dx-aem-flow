@@ -46,6 +46,7 @@ Before applying any fixes, present a summary table for each category:
 | .ai/project/component-index.md | stale | Update from plugin data |
 | .github/agents/ | 4 new, 2 stale | Install new + update stale from templates |
 | .github/hooks/hooks.json | 3 dx entries need a plugin root | Repair with repo-hooks-audit.sh --fix |
+| .claude/settings.json | 2 Playwright tool names under dx-aem | Rewrite with playwright-owner-audit.sh --fix |
 
 ### Needs confirmation
 | File | Issue | Action |
@@ -168,13 +169,27 @@ For each `.md.template` file found:
 
 **Breaking change in dx-aem v3.0.0:** AEM browser automation moved from `chrome-devtools-mcp` to `@playwright/mcp` (server `playwright`). If upgrading **from a v2.x** dx-aem:
 
-1. **Install the Playwright browser** (the server is bundled with the plugin but its Chromium is not):
+1. **Install the auth helper** if missing: copy `<aem-plugin>/data/lib/aem-playwright-auth.sh` → `.ai/lib/` (`chmod +x`).
+2. **Report as manual-action:** `dx-perf` was removed in v3 (no replacement yet). Any local `.claude/skills/dx-perf/` shadow or scripts referencing chrome-devtools tool names (`mcp__plugin_dx-aem_chrome-devtools-mcp__*`) must be updated to `mcp__plugin_dx-core_playwright__browser_*`.
+
+The browser install and `.gitignore` entry are now dx-core's — see 3d-iii.
+
+### 3d-iii. Playwright server moved to dx-core (always)
+
+**Breaking change:** the `playwright` MCP server now ships with **dx-core**, not dx-aem. Its tools are `mcp__plugin_dx-core_playwright__*`; the old dx-aem-prefixed names match nothing. Projects that use dx-core alone get a browser now, too.
+
+1. **Rewrite old tool names** in permission allowlists and Copilot agents:
+   ```bash
+   bash <dx-plugin>/skills/dx-doctor/scripts/playwright-owner-audit.sh --fix .
+   ```
+   It edits only `.claude/settings.json`, `.claude/settings.local.json` and `.github/agents/*.agent.md`, replacing the dx-aem owner with dx-core in Playwright tool names (`mcp__plugin_dx-aem_` + `playwright…` → `mcp__plugin_dx-core_playwright…`); nothing else in those files changes. It prints `fixed<TAB><file><TAB><count>` per changed file. Report each under **Updated** as `- <file> ← <count> Playwright tool name(s) moved to dx-core`.
+   Local skill/agent shadows under `.claude/skills/` or `.claude/agents/` are not rewritten — grep them for the old prefix and list hits under **Manual Actions Required**.
+2. **`.gitignore`:** if it lacks `.ai/playwright/` (screenshots, author session cookie, Basic Auth config), list it under **Manual Actions Required** — `.gitignore` is not auto-modified (dx-init 5f).
+3. **Install the Playwright browser** if it is missing (one-time, idempotent; the server is bundled, its Chromium is not):
    ```bash
    npx playwright install chromium
    ```
-   Without it, `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, and `/aem-editorial-guide` fail at first navigation.
-2. **Install the auth helper** if missing: copy `<aem-plugin>/data/lib/aem-playwright-auth.sh` → `.ai/lib/` (`chmod +x`) and ensure `.gitignore` has `.ai/playwright/`.
-3. **Report as manual-action:** `dx-perf` was removed in v3 (no replacement yet). Any local `.claude/skills/dx-perf/` shadow or scripts referencing chrome-devtools tool names (`mcp__plugin_dx-aem_chrome-devtools-mcp__*`) must be updated to `mcp__plugin_dx-aem_playwright__browser_*`.
+   Needed by `/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe` and, with dx-aem, `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`. If it fails (offline), list it under **Manual Actions Required**.
 
 ### 3e. Copilot Agents and Skills
 

@@ -386,12 +386,9 @@ If the file doesn't exist, skip this step (it means `/dx-init` didn't generate C
 Copy the reusable auth helper so browser agents can authenticate to AEM without the password ever entering the model's context.
 
 1. Copy `../../data/lib/aem-playwright-auth.sh` (relative to this skill's directory — the dx-aem plugin's `data/lib/`) → `.ai/lib/aem-playwright-auth.sh` (create `.ai/lib/` if missing; `chmod +x`). On re-run, overwrite silently if the plugin version changed.
-2. Ensure the consumer `.gitignore` contains `.ai/playwright/` (the helper writes the session cookie + Basic Auth creds there — must never be committed). Append it under the runtime-output block if absent.
-3. **Install the Playwright browser** (one-time): the dx-aem `playwright` MCP server drives a real Chromium that is NOT bundled — without it, every browser skill (`/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run:
-   ```bash
-   npx playwright install chromium
-   ```
-   It's idempotent (no-op if already present). If it fails (offline/restricted), tell the user to run it manually before any browser verification.
+2. The helper writes into `.ai/playwright/` (session cookie, Basic Auth config). `/dx-init` adds that path to `.gitignore` and installs the Chromium browser (`npx playwright install chromium`), because the `playwright` MCP server belongs to **dx-core**. If `.gitignore` lacks `.ai/playwright/` (an older dx-init), append it and tell the user to run `/dx-upgrade`.
+
+**Dependency:** the author flow below loads the cookie with `browser_set_storage_state`, a tool of dx-core's `playwright` server (`mcp__plugin_dx-core_playwright__*`). dx-aem has no browser server of its own — dx-core must be installed (it already is a dx-aem prerequisite).
 
 **What it provides** (two independent auth layers — see the `qa-basic-auth` rule):
 - **AEM author login** → `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` writes `.ai/playwright/aem-author-state.json` (a Playwright `storageState` with the `login-token` cookie). Browser agents load it via `browser_set_storage_state` before navigating to the author — no form-fill, no password in context.

@@ -11,7 +11,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 COMPACT="$HERE/scripts/compaction-reminder.sh"
-SHOT="$REPO/plugins/dx-aem/hooks/scripts/screenshot-log.sh"
+SHOT="$HERE/scripts/screenshot-log.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -37,7 +37,7 @@ shot() { # shot <env tool name or ""> <stdin json> → yes if the log was writte
   [ -s "$d/.ai/screenshots/screenshot-log.txt" ] && echo yes || echo no
 }
 
-check "screenshot: env tool"            yes "$(shot mcp__plugin_dx-aem_playwright__browser_take_screenshot '')"
+check "screenshot: env tool"            yes "$(shot mcp__plugin_dx-core_playwright__browser_take_screenshot '')"
 check "screenshot: stdin tool (Copilot)" yes "$(shot '' '{"tool_name":"playwright-browser_take_snapshot"}')"
 check "screenshot: stdin Edit ignored"  no  "$(shot '' '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{}}')"
 check "screenshot: stdin other tool"    no  "$(shot '' '{"tool_name":"Write"}')"

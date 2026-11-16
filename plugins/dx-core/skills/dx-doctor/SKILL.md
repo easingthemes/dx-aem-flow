@@ -14,7 +14,7 @@ You are a diagnostic tool for the dx workflow setup in a consumer project. You c
 - **File existence:** Use `Glob` with exact path patterns — never `[ -f ]`, `test -f`, or `ls` in Bash
 - **File content:** Use `Read` to read files — never `cat`, `head`, or `diff` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c) and `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) — nothing else in this skill needs Bash
+- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c), `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) and `scripts/playwright-owner-audit.sh` (step 6.6, without `--fix`) — nothing else in this skill needs Bash
 - **Parallel checks:** Call multiple `Glob`/`Read` tools in a single response for efficiency — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Read Configuration & Detect Plugins
@@ -214,6 +214,7 @@ Read `.gitignore` (if it exists). Check for these entries (exact or parent-cover
 - `.ai/specs/` → `✓` or `⚠ NOT in .gitignore`
 - `.ai/run-context/` → `✓` or `⚠ NOT in .gitignore`
 - `.ai/research/` → `✓` or `⚠ NOT in .gitignore`
+- `.ai/playwright/` → `✓` or `⚠ NOT in .gitignore` (browser screenshots and session cookies from the `playwright` MCP server — must never be committed)
 
 If `.gitignore` does not exist → `⚠ no .gitignore found`
 
@@ -346,6 +347,22 @@ Reporting:
 - Each row whose detail starts with `dx:` → `✗` (error) or `⚠` (warn) with the detail, remediation `run /dx-upgrade` — these are entries dx-init wrote
 - Any other row → same symbol, remediation `manual — not a dx entry, dx-upgrade will not change it`
 - Exit 2 → `✗ <file> is not valid JSON` (manual)
+
+## 6.6. Playwright tool names (server owner)
+
+The `playwright` MCP server ships with **dx-core** (it used to ship with dx-aem), so its tools are `mcp__plugin_dx-core_playwright__*`. Permission allowlists and Copilot agents written before the move still name the dx-aem prefix and match nothing. Check:
+
+```bash
+bash <dx-plugin>/skills/dx-doctor/scripts/playwright-owner-audit.sh .
+```
+
+Read-only (no `--fix`). It looks in `.claude/settings.json`, `.claude/settings.local.json` and `.github/agents/*.agent.md`, and prints `file<TAB>count` per file that still has the old owner. Exit 0 = clean, 3 = old names found.
+
+Reporting:
+- Exit 0 → `✓ Playwright tool names use dx-core`
+- Each row → `⚠ <file>: <count> Playwright tool name(s) still under dx-aem` — remediation `run /dx-upgrade`
+
+The Chromium the server drives is a separate download this step does not check. If a browser skill failed with a missing-executable error, remind: `npx playwright install chromium` (one-time, idempotent).
 
 ## 7. AEM Plugin (conditional)
 
@@ -529,6 +546,7 @@ Settings                                           Status
 .ai/specs/                                         ✓ in .gitignore
 .ai/run-context/                                   ⚠ NOT in .gitignore
 .ai/research/                                      ✓ in .gitignore
+.ai/playwright/                                    ✓ in .gitignore
 
 References                                         Status
 ─────────────────────────────────────────────────────────
@@ -542,6 +560,10 @@ Copilot skills (31 templates)                      ✓ 31 present, 0 stale
 Shared files (7 files)                             ✓ 7 present, 0 stale
 .github/hooks                                      ✗ 3 dx entries broken on Copilot
   SessionStart session-start.sh: plugin root unset for repo hooks (exit 127) — run /dx-upgrade
+
+Playwright tool names                              Status
+─────────────────────────────────────────────────────────
+.claude/settings.json                              ⚠ 2 tool name(s) still under dx-aem — run /dx-upgrade
 
 AEM Plugin                                         Status
 ─────────────────────────────────────────────────────────

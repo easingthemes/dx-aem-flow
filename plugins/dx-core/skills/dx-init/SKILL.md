@@ -288,7 +288,10 @@ Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai
 .ai/run-context/
 .ai/research/
 .ai/me.md
+.ai/playwright/
 ```
+
+`.ai/playwright/` is where the dx-core `playwright` MCP server writes screenshots, and where browser session state lands (for AEM, the author `storageState` cookie and Basic Auth config from `aem-playwright-auth.sh`) — it must never be committed, so recommend it even when `.ai/` is otherwise tracked.
 
 Do NOT auto-modify `.gitignore` — ask the user first.
 
@@ -487,6 +490,16 @@ Recommendation: use shell exports for machine-wide vars, settings.local.json for
 > **Note:** AEM-specific env vars (`AEM_INSTANCES`) are added by `/aem-init` if the project is AEM.
 
 **On re-run:** If the file exists, check for missing env var keys from the template above. If new keys were added by a plugin update, merge them in (empty string value) without overwriting existing values.
+
+### 5j. Install the Playwright browser
+
+dx-core ships the `playwright` MCP server (`@playwright/mcp`, see the plugin's `.mcp.json`). It drives a real Chromium that is **not** bundled — without it every browser skill (`/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe`, and dx-aem's `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run it without asking — it only downloads a browser, writes nothing to the project, and is idempotent:
+
+```bash
+npx playwright install chromium
+```
+
+If it fails (offline/restricted network), do not stop init: report it and tell the user to run it manually before any browser verification.
 
 ## 6. Detect Project Profile
 
