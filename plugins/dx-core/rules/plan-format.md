@@ -19,10 +19,11 @@ Plans are saved to `<spec-dir>/implement.md` and track step-by-step execution st
 
 ## Step Format
 
-Each step has a status badge, title, files involved, and description.
+Each step has a title, a `**Status:**` line, files involved, and description. `/dx-step`, `/dx-step-fix` and the Stop guard find steps by the `### Step N:` heading and read the `**Status:**` line — keep both exactly in this shape.
 
 ```markdown
-## Step 1: <Title> [pending]
+### Step 1: <Title>
+**Status:** pending
 
 **Files:**
 - Modify: `path/to/file.java`
@@ -37,13 +38,13 @@ with no context can execute it.>
 <How to verify this step worked — test command, expected output, manual check>
 ```
 
-## Status Badges
+## Status Values
 
-- `[pending]` — not started
-- `[in-progress]` — currently executing
-- `[done]` — completed and verified
-- `[blocked]` — failed, needs fix (see error below)
-- `[skipped]` — intentionally skipped (with reason)
+- `pending` — not started
+- `in-progress` — currently executing
+- `done` — completed and verified
+- `blocked` — failed or cannot proceed; add a `**Blocked:** <why>` line under it
+- `skipped` — intentionally skipped; add a `**Reason:** <why>` line under it
 
 ## Rules
 
@@ -58,14 +59,15 @@ with no context can execute it.>
 ## Status Updates
 
 Skills update step status in-place:
-- `/dx-step` changes `[pending]` → `[in-progress]` → `[done]` or `[blocked]`
-- `/dx-step-fix` changes `[blocked]` → `[pending]` (with fix applied)
-- `/dx-step-fix` adds corrective steps after `[blocked]` steps
+- `/dx-step` changes `pending` → `in-progress` → `done` or `blocked`
+- `/dx-step-fix` changes `blocked` → `pending` (with fix applied)
+- `/dx-step-fix` adds corrective steps after `blocked` steps
 
 ## Example
 
 ```markdown
-## Step 1: Add subtitle field to Hero model [done]
+### Step 1: Add subtitle field to Hero model
+**Status:** done
 
 **Files:**
 - Modify: `core/src/main/java/com/example/models/HeroImpl.java`

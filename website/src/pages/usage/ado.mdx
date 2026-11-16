@@ -107,9 +107,9 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       icon="mdi:timer"
       iconColor="bg-amber-500"
       title="/dx-estimate"
-      tags={[{ label: 'ai:role:estimation-agent', color: 'warning' }]}
+      tags={[{ label: '[Estimation]', color: 'warning' }]}
     >
-      Estimation results: hours per task, story points, affected AEM pages, and complexity breakdown. Uses an HTML comment signature for machine-readable detection.
+      Estimation results: hours per task, story points, affected AEM pages, and complexity breakdown. Starts with an <code>[Estimation]</code> heading, which the skill uses to find and update its earlier comment.
     </ContentCard>
 
     <ContentCard
@@ -185,8 +185,8 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-estimate</code></td>
-        <td class="p-3"><code class="text-xs">&lt;!-- ai:role:estimation-agent --&gt;</code></td>
-        <td class="p-3 text-xs">A: full post</td>
+        <td class="p-3"><code class="text-xs">[Estimation] &lt;Title&gt;</code></td>
+        <td class="p-3 text-xs">A: full post | B: update</td>
         <td class="p-3 text-xs text-gray-500">inline</td>
       </tr>
       <tr class="border-t border-gray-200">

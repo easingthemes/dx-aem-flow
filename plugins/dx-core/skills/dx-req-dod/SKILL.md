@@ -226,7 +226,7 @@ mcp__atlassian__jira_add_comment
   comment: "<condensed dod results>"
 ```
 
-Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure.
+Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text).
 
 ## 8. Auto-Fix Gaps (if any FAIL criteria)
 

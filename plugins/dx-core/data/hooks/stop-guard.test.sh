@@ -93,6 +93,31 @@ r6="$(repo)"
 printf '<<<<<<< HEAD\na\n=======\nb\n>>>>>>> other\n' > "$r6/app.js"
 check "real conflict markers are reported" yes "$(reason "$r6" | grep -q 'merge conflicts' && echo yes || echo no)"
 
+# 8. Plan check: only the active ticket's plan counts, and a written reason
+#    acknowledges a blocked step.
+plan() { # plan <repo> <dir> <status> [reason] → writes .ai/specs/<dir>/implement.md
+  mkdir -p "$1/.ai/specs/$2"
+  { printf '# Implementation Plan: x\n\n**Status:** In Progress\n\n### Step 1: a\n**Status:** done\n\n### Step 2: b\n**Status:** %s\n' "$3"
+    [ -n "${4:-}" ] && printf '**Blocked:** %s\n' "$4"; true; } > "$1/.ai/specs/$2/implement.md"
+}
+says() { rm -f "$1/.git/dx-stop-guard.last"; reason "$1" | grep -q "$2" && echo yes || echo no; }   # fresh state: no repeat-suppression
+r7="$(repo)"; git -C "$r7" checkout -q -b feature/111-mine
+plan "$r7" 111-mine done
+plan "$r7" 222-other blocked; touch "$r7/.ai/specs/222-other/implement.md"   # newest file, other story
+git -C "$r7" add -A && git -C "$r7" commit -q -m plans
+check "plan: other story's blocked step ignored" no "$(says "$r7" blocked)"
+plan "$r7" 111-mine blocked
+check "plan: own blocked step, no reason, reported" yes "$(says "$r7" '111-mine/implement.md with no reason')"
+plan "$r7" 111-mine blocked "manual QA on stage, waiting for content"
+check "plan: own blocked step with reason accepted" no "$(says "$r7" blocked)"
+plan "$r7" 111-mine in-progress
+check "plan: own in-progress step reported" yes "$(says "$r7" 'in-progress in 111-mine')"
+r8="$(repo)"   # main branch: only a changed plan counts
+plan "$r8" 333-x blocked; git -C "$r8" add -A && git -C "$r8" commit -q -m p
+check "plan: off-ticket, unchanged plan ignored" no "$(says "$r8" blocked)"
+printf '\n' >> "$r8/.ai/specs/333-x/implement.md"
+check "plan: off-ticket, changed plan checked" yes "$(says "$r8" '333-x/implement.md')"
+
 # 7. Garbage input / not a repo → allow, exit 0
 check "non-JSON input allows" allow "$(printf 'not json' | (cd "$TMP" && bash "$GUARD") >/dev/null 2>&1 && echo allow || echo fail)"
 check "not a git repo allows" allow "$(run "$TMP")"

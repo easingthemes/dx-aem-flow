@@ -225,15 +225,16 @@ repos:
 
 ## Comment Signature Conventions
 
-Both ADO and Jira comments use HTML/markdown signatures to detect duplicates:
+Each skill that posts a work-item comment starts it with a **visible text signature**, and finds its earlier comment by that text (to update it instead of posting a duplicate):
 
-| Signature | Used By | ADO Format | Jira Format |
-|-----------|---------|------------|-------------|
-| `<!-- ai:role:share-plan -->` | dx-req (Phase 5) | HTML comment in markdown | Same (HTML comments work in Jira wiki markup) |
-| `[DevPlan] Development Plan` | dx-req (Phase 5) | Visible text | Same |
-| `<!-- ai:role:dor-agent -->` | dx-req (Phase 2) | HTML comment | Same |
-| `<!-- ai:role:estimation-agent -->` | dx-estimate | HTML comment | Same |
-| `<!-- ai:role:triage-agent -->` | dx-bug-triage | HTML comment | Same |
-| `<!-- ai:role:verification-agent -->` | dx-bug-verify | HTML comment | Same |
+| Signature | Used By |
+|-----------|---------|
+| `[DevPlan]` | dx-req (Phase 5, share plan) |
+| `[DoRAgent]` | dx-dor / dx-req (Phase 2) |
+| `DoD Check:` + story title | dx-req-dod |
+| `[Estimation]` | dx-estimate |
+| `[BugTriage]` | dx-bug-triage |
+| `[BugVerify]`, `[BugVerifyLocal]`, `[BugVerifyQA]` | dx-bug-verify |
+| `[QAHandoff]` | aem-qa-handoff |
 
-HTML comments are preserved in both ADO markdown and Jira wiki markup — signature detection works identically.
+**Never use an HTML comment (`<!-- … -->`) as a signature or anywhere in posted text.** ADO Markdown comments escape it, so readers see `<!-- … -->` as literal text. The `<!-- … -->` lines in `.ai/templates/ado-comments/*.template` are instructions for you: follow them, then leave them out of the comment you post.
