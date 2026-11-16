@@ -104,15 +104,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     </ContentCard>
 
     <ContentCard
-      icon="mdi:file-document"
-      iconColor="bg-cyan"
-      title="/dx-agent-re"
-      tags={[{ label: '[RE Agent]', color: 'secondary' }, { label: 're-summary.md.template', color: 'default' }]}
-    >
-      Requirements Engineering summary. Structured requirements spec with task breakdown, identified risks, and effort estimates. Posted after the RE agent analyzes the story.
-    </ContentCard>
-
-    <ContentCard
       icon="mdi:timer"
       iconColor="bg-amber-500"
       title="/dx-estimate"
@@ -193,12 +184,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3"><code class="text-xs">dod-summary.md.template</code></td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-agent-re</code></td>
-        <td class="p-3"><code class="text-xs">[RE Agent] Requirements Analysis Complete</code></td>
-        <td class="p-3 text-xs">A: full post</td>
-        <td class="p-3"><code class="text-xs">re-summary.md.template</code></td>
-      </tr>
-      <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-estimate</code></td>
         <td class="p-3"><code class="text-xs">&lt;!-- ai:role:estimation-agent --&gt;</code></td>
         <td class="p-3 text-xs">A: full post</td>
@@ -248,17 +233,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     </ContentCard>
 
     <ContentCard
-      icon="mdi:clipboard-check"
-      iconColor="bg-emerald-600"
-      title="/dx-agent-re"
-      tags={[{ label: 'Task', color: 'success' }, { label: 'child items', color: 'success' }]}
-    >
-      The Requirements Engineering agent creates child Task work items under the parent story.
-      Each task has a title, description, type classification (FE/BE/Authoring), and is linked
-      as a child of the story.
-    </ContentCard>
-
-    <ContentCard
       icon="mdi:pencil"
       iconColor="bg-cyan"
       title="/dx-req-tasks"
@@ -295,12 +269,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3"><span class="text-red-600 font-semibold">Bug</span></td>
         <td class="p-3"><code class="text-xs">wit_work_item_write (create)</code></td>
         <td class="p-3"><code class="text-xs">[AI-QA] &lt;description&gt;</code></td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3"><code>/dx-agent-re</code></td>
-        <td class="p-3"><span class="text-emerald-600 font-semibold">Task</span></td>
-        <td class="p-3"><code class="text-xs">wit_work_item_write (add_child)</code></td>
-        <td class="p-3"><code class="text-xs">&lt;task title&gt;</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>/dx-req-tasks</code></td>
@@ -426,7 +394,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     steps={[
       { title: 'DoR Check', subtitle: 'Comment', command: '/dx-req (DoR phase)', color: '#f59e0b' },
       { title: 'Dev Plan', subtitle: 'Comment', command: '/dx-req', color: '#0891b2' },
-      { title: 'RE Agent', subtitle: 'Comment + Tasks', command: '/dx-agent-re', color: '#8b5cf6' },
       { title: 'Estimation', subtitle: 'Comment + Updates', command: '/dx-estimate', color: '#d97706' },
       { title: 'Task Split', subtitle: 'Tasks + Estimates', command: '/dx-req-tasks', color: '#059669' },
       { title: 'DoD Check', subtitle: 'Comment', command: '/dx-req-dod', color: '#10b981' },
@@ -458,12 +425,6 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
         <td class="p-3">Requirements</td>
         <td class="p-3"><code>/dx-req</code> (share)</td>
         <td class="p-3">Comment</td>
-        <td class="p-3">Story</td>
-      </tr>
-      <tr class="border-t border-gray-200">
-        <td class="p-3">Requirements</td>
-        <td class="p-3"><code>/dx-agent-re</code></td>
-        <td class="p-3">Comment + Tasks</td>
         <td class="p-3">Story</td>
       </tr>
       <tr class="border-t border-gray-200">

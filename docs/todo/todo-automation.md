@@ -31,7 +31,7 @@
 
 **Added:** 2026-05-28
 **Problem:** `build.command` in `.ai/config.yaml` is typically `mvn clean install -PautoInstallPackage` which DEPLOYS to localhost AEM. Pipelines that invoke `/dx-step-build` use this command and fail because localhost AEM isn't reachable from the pipeline VM. Skills should honor `DX_PIPELINE_MODE=true` and prefer `build.compile` (e.g., `mvn compile`) — no deploy.
-**Scope:** `plugins/dx-core/skills/dx-step-build/SKILL.md`, `plugins/dx-core/skills/dx-agent-dev/SKILL.md`, `plugins/dx-core/skills/dx-agent-all/SKILL.md`.
+**Scope:** `plugins/dx-core/skills/dx-step-build/SKILL.md`, `plugins/dx-core/skills/dx-agent-all/SKILL.md`.
 **Done-when:** `grep -n 'build.compile' plugins/dx-core/skills/dx-step-build/SKILL.md` finds an explicit branch on `DX_PIPELINE_MODE` that prefers compile over `build.command`. `grep -n 'autoInstallPackage' plugins/dx-automation/data/pipelines/` finds no matches in active pipeline YAMLs.
 **Approach:** Add `is_pipeline_mode` check at the top of dx-step-build. Read `build.compile-fast` → `build.compile` → fallback. Never `build.command` in pipeline mode.
 
@@ -332,7 +332,7 @@ today describes SimpleAgent and nothing else.
 caps + the gate taxonomy), referenced from `.ai/rules/` via the existing three-layer
 override; `dx-simple/SKILL.md` re-pointed at it rather than carrying its own copy;
 per-agent caps declared in `.ai/config.yaml` (`<agent>.caps.*`); `confidence.json` emitted
-by `dx-bug-all`, `dx-agent-dev` and the DoD fixer.
+by `dx-bug-all`, `dx-agent-all` and the DoD fixer.
 **Done-when:** `grep -rl 'confidence.json' plugins/ | wc -l` ≥ 4, every writing agent has
 a caps block in the config reference (`docs/reference/config-reference.md`), and a run of
 any writing agent leaves a `confidence.json` in its spec dir. Then #144's parser has more
