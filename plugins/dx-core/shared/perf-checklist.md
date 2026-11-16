@@ -1,6 +1,6 @@
 # Performance Checklist
 
-Reference checklist used by `/dx-perf` and `/dx-step-verify`. Skills reference this — do not delete.
+Rubric kept for the planned `dx-perf` rebuild (TODO-147, `docs/todo/todo-perf.md`). No skill reads it yet.
 
 ## Core Web Vitals Targets
 

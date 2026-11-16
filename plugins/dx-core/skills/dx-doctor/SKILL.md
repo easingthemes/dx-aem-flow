@@ -194,6 +194,20 @@ Check `.claude/settings.json`:
    - Missing attribution → `⚠ attribution settings missing (run /dx-upgrade)`
 2. File missing → `⚠ .claude/settings.json missing`
 
+### 4a. Credential environment variables
+
+Read `../../shared/env-vars.md` — the list of local variables and what needs each one. Check only the variables for features this project uses:
+- `aem:` section in config → `AEM_INSTANCES`
+- `aem.qa-basic-auth` (or a `qa-basic-auth` rule) → `QA_BASIC_AUTH_USER`, `QA_BASIC_AUTH_PASS`
+- axe MCP server in `.mcp.json` → `AXE_API_KEY`
+
+For each, test presence only (`[ -n "${VAR:-}" ]`), never print the value:
+- Set → `✓ <VAR> set`
+- Not set in the shell but present in `.claude/settings.local.json` `env` → `✓ <VAR> in settings.local.json (Claude Code only — Copilot CLI needs it exported in the shell)`
+- Neither → `⚠ <VAR> not set — see shared/env-vars.md for format`
+
+Pipeline-only variables (`ANTHROPIC_API_KEY`, `ADO_PAT`, AWS keys) are not checked here — `/auto-doctor` covers them.
+
 ## 5. .gitignore Coverage
 
 Read `.gitignore` (if it exists). Check for these entries (exact or parent-covering pattern):

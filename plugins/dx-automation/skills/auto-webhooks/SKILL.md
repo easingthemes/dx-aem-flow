@@ -10,6 +10,8 @@ You configure ADO service hooks and the PR Review build validation policy. ADO h
 
 ## 0. Prerequisites
 
+Read `../../rules/ado-service-hooks.md` first — which ADO project each hook belongs in (work items and code can live in different projects), why PR Answer hooks must be per-repo, and the common mistakes.
+
 Read `.ai/automation/infra.json`. Extract `automationProfile`.
 
 ```bash

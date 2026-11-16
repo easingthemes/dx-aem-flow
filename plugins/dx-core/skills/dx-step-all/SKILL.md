@@ -181,9 +181,9 @@ Print: `Branch: <BRANCH> (<BRANCH_ACTION>)`
 
 Before entering the execution loop, check if the project has accumulated fix knowledge from previous runs.
 
-If `.ai/learning/fixes.md` exists:
-- Read it
-- Include a note when dispatching skills: append to the prompt: `Known fix patterns for this project: <summary of fixes.md content>`
+If promoted fix patterns exist (`.claude/rules/learned-fix-*.md`, written by the promotion step below):
+- Read them (Claude Code also auto-loads them as rules; Copilot CLI does not, so read explicitly)
+- Include a note when dispatching skills: append to the prompt: `Known fix patterns for this project: <one line per pattern: error type → fix>`
 - Print: `Learning: Loaded <N> known fix patterns from previous runs.`
 
 If it does not exist, skip silently.

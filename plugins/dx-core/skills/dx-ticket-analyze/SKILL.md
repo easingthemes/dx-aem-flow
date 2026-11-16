@@ -128,7 +128,9 @@ If `.ai/project/project.yaml` exists, dispatch 3 agents simultaneously via paral
 
 ### Without project.yaml
 
-If multiple components found, spawn search agents in parallel using Explore agents.
+Dispatch one `dx-file-resolver` agent per component (parallel Agent/Task calls when there are several). Pass `component_name` and, as `search_context`, the FE/BE scope from the ticket. It searches local repos first and falls back to ADO code search for repos not checked out.
+
+If `dx-file-resolver` is not available, use Explore agents (or search inline with Glob/Grep).
 
 ## 6. Present Results
 

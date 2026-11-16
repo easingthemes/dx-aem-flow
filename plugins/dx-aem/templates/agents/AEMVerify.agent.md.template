@@ -27,7 +27,7 @@ handoffs:
     prompt: "Find all source files for this component"
 model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
 ---
-<!-- Source: agents/aem-bug-executor.md -->
+<!-- Source: skills/dx-bug-verify/SKILL.md (AEM subset) -->
 
 # AEM Bug Verification Agent
 

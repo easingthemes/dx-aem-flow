@@ -104,7 +104,7 @@ Analyzes Figma extraction to identify UI building blocks (buttons, images, cards
 
 ---
 
-## aem plugin — 6 agents
+## aem plugin — 5 agents
 
 ### aem-file-resolver
 
@@ -194,19 +194,6 @@ Browser automation agent for AEM editor interaction. Opens AEM author/publisher 
 | **Tools** | Grep, Read, ToolSearch, mcp__plugin_dx-aem_AEM__searchContent, mcp__plugin_dx-aem_AEM__enhancedPageSearch, mcp__plugin_dx-aem_AEM__scanPageComponents |
 
 Finds all AEM pages using a given component. Searches configured content paths and Experience Fragments. Returns clickable author URLs using the QA author URL from config.
-
----
-
-### aem-bug-executor
-
-| Property | Value |
-|----------|-------|
-| **Model** | Sonnet |
-| **File** | `plugins/dx-aem/agents/aem-bug-executor.md` |
-| **Used by** | `/dx-bug-verify` (for AEM bugs) |
-| **Tools** | Read, Write, Glob, Grep, Edit, ToolSearch, all `mcp__plugin_dx-aem_playwright__*` tools, `mcp__plugin_dx-aem_AEM__getNodeContent`, `mcp__plugin_dx-aem_AEM__scanPageComponents`, `mcp__plugin_dx-aem_AEM__searchContent`, `mcp__plugin_dx-aem_AEM__getPageProperties` |
-
-AEM bug verification agent. Navigates to affected AEM pages, follows reproduction steps, captures screenshot evidence, and optionally checks JCR state. Returns structured verification result with evidence table.
 
 ---
 
@@ -505,7 +492,7 @@ Multi-platform component lookup — finds source files (via file-patterns.yaml),
 | Property | Value |
 |----------|-------|
 | **Template** | `plugins/dx-aem/templates/agents/AEMVerify.agent.md.template` |
-| **Claude equivalent** | aem-bug-executor |
+| **Claude equivalent** | `/dx-bug-verify` skill |
 | **Invoke** | `@AEMVerify <component or URL>` |
 
 Bug verification on a running AEM instance. Navigates pages, reproduces issues, captures screenshot evidence.

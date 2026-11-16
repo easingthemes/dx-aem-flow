@@ -45,6 +45,13 @@ artifacts:
 next_action: run /dx-plan-resolve
 ```
 
+## Pre-Dispatch Context Hygiene
+
+When an orchestrator passes context to a forked skill or subagent:
+- If the input (spec file, research output, etc.) exceeds **5KB**, extract a structured summary first. Pass the summary + file path, not the raw content.
+- Always include: ticket ID, spec directory path, current phase number.
+- Never pass: raw tool results from previous phases, full conversation history, unfiltered file contents.
+
 ## Anti-patterns (do not do these)
 
 - Putting tables, ASCII art, or multi-line content in `summary`. The orchestrator will quote it and pollute main context.
