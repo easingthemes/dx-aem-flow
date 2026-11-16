@@ -242,3 +242,24 @@ test('a missing template degrades to an empty file instead of throwing', () => {
     rm(emptyPlugins);
   }
 });
+
+// --- Basic Auth ------------------------------------------------------------
+
+test('scaffold installs the basic-auth rule, not the plugin-loaded init page', () => {
+  const root = tmpDir();
+  try {
+    scaffold(root, { aem: true }).run();
+    assert.ok(!exists(root, '.ai/lib/playwright-basic-auth.cjs'));
+    const libTests = fs.readdirSync(path.join(root, '.ai/lib')).filter((f) => /\.test\./.test(f));
+    assert.deepEqual(libTests, [], 'test files are not installed');
+    assert.ok(exists(root, '.claude/rules/basic-auth.md'));
+    assert.ok(!exists(root, '.claude/rules/qa-basic-auth.md'));
+    const offenders = generatedFiles(root).filter((rel) => {
+      const c = fs.readFileSync(path.join(root, rel), 'utf8');
+      return c.includes('QA_BASIC_AUTH') || c.includes('qa-basic-auth:');
+    });
+    assert.deepEqual(offenders, []);
+  } finally {
+    rm(root);
+  }
+});

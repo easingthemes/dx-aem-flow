@@ -14,7 +14,7 @@ You are a diagnostic tool for the dx workflow setup in a consumer project. You c
 - **File existence:** Use `Glob` with exact path patterns — never `[ -f ]`, `test -f`, or `ls` in Bash
 - **File content:** Use `Read` to read files — never `cat`, `head`, or `diff` in Bash
 - **Content comparison:** Read both files with `Read`, compare in-context — never shell `diff`
-- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c), `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) and `scripts/playwright-owner-audit.sh` (step 6.6, without `--fix`) — nothing else in this skill needs Bash
+- **Bash is ONLY for:** `git branch -a` (step 6a), `scripts/rules-freshness.sh` (step 2c), `scripts/repo-hooks-audit.sh` (step 6.5d, without `--fix`) and `scripts/playwright-owner-audit.sh` (step 6.6, without `--fix`), and the one value-free env check in step 4a, `[ -n "${QA_BASIC_AUTH_USER:-}${QA_BASIC_AUTH_PASS:-}" ] && echo set || true` — nothing else in this skill needs Bash
 - **Parallel checks:** Call multiple `Glob`/`Read` tools in a single response for efficiency — do not serialize into one Bash command with `&&`/`||`
 
 ## 0. Read Configuration & Detect Plugins
@@ -87,8 +87,8 @@ Glob: "**/skills/dx-doctor/SKILL.md"
 ```
 Navigate up 3 levels from the skill directory to get the dx plugin root.
 
-**Discovery (do NOT hardcode the file list — every new utility script in `<dx-plugin>/data/lib/` must be picked up automatically).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`. From the result set, exclude:
-- Test files: `*.test.sh`, `*.test.js`
+**Discovery (do NOT hardcode the file list — every new utility script in `<dx-plugin>/data/lib/` must be picked up automatically).** Glob `<dx-plugin>/data/lib/*.sh`, `<dx-plugin>/data/lib/*.js` and `<dx-plugin>/data/lib/*.cjs`. From the result set, exclude:
+- Test files: `*.test.sh`, `*.test.js`, `*.test.cjs`
 - Anything under `<dx-plugin>/data/lib/fixtures/`
 
 The remaining files form the utility manifest — each is expected to live at `.ai/lib/<basename>`.
@@ -103,6 +103,8 @@ For each:
    - Identical → `✓ up to date`
    - Different only in **comment lines** (lines starting with `#` for shell, `//` or `/* */` for JS) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
    - Different in **functional code** (non-comment lines) → `⚠ STALE (plugin version updated — run /dx-upgrade)`
+
+**Basic Auth init page:** the `playwright` MCP server loads it from the plugin (`${CLAUDE_PLUGIN_ROOT}/data/lib/playwright-basic-auth.cjs`), not from the project. A leftover `.ai/lib/playwright-basic-auth.cjs` (installed by an earlier version) is unused: report `ℹ unused (loaded from the plugin now — safe to delete)`.
 
 ### 1e. (Removed — .ai/docs/ no longer managed by plugins)
 
@@ -146,6 +148,7 @@ Compare installed rules against plugin templates. The dx plugin templates live a
 | Installed | Template |
 |-----------|----------|
 | `.claude/rules/reuse-first.md` | `universal-reuse-first.md.template` |
+| `.claude/rules/basic-auth.md` | `universal-basic-auth.md.template` |
 
 For each rule:
 1. Missing → `✗ MISSING`
@@ -198,13 +201,19 @@ Check `.claude/settings.json`:
 
 Read `../../shared/env-vars.md` — the list of local variables and what needs each one. Check only the variables for features this project uses:
 - `aem:` section in config → `AEM_INSTANCES`
-- `aem.qa-basic-auth` (or a `qa-basic-auth` rule) → `QA_BASIC_AUTH_USER`, `QA_BASIC_AUTH_PASS`
 - axe MCP server in `.mcp.json` → `AXE_API_KEY`
 
 For each, test presence only (`[ -n "${VAR:-}" ]`), never print the value:
 - Set → `✓ <VAR> set`
 - Not set in the shell but present in `.claude/settings.local.json` `env` → `✓ <VAR> in settings.local.json (Claude Code only — Copilot CLI needs it exported in the shell)`
 - Neither → `⚠ <VAR> not set — see shared/env-vars.md for format`
+
+**Basic Auth leftovers (value-free).** `BASIC_AUTH_SITES` itself is not checked. The old `QA_BASIC_AUTH_*` variables are no longer read by anything; report leftovers without ever printing a value:
+- `.claude/rules/qa-basic-auth.md` present → `⚠ STALE: replaced by basic-auth.md — run /dx-upgrade`
+- `qa-basic-auth:` present in `.ai/config.yaml` — detect with `Grep` (`output_mode: files_with_matches` or `count`) on that key only; never Read, quote or echo the block → `✗ SECRET: no longer read; move to BASIC_AUTH_SITES, delete the block, rotate if pushed`
+- Run the exact Bash check from "Bash is ONLY for"; it prints `set` when either variable is exported → `⚠ QA_BASIC_AUTH_* is no longer read — move to BASIC_AUTH_SITES (format in the basic-auth rule)`.
+- `.ai/playwright/config.json` present — existence check only (`Glob`); never Read it, it was written by the removed `aem-playwright-auth.sh config` mode and may hold a plaintext password → `⚠ SECRET: .ai/playwright/config.json is a leftover of the old publisher Basic Auth config and is no longer read — delete it`
+- `.claude/settings.local.json` — use `Grep -l 'QA_BASIC_AUTH_'` (`files_with_matches`); do not Read this file, it holds secret values. Match → `⚠ QA_BASIC_AUTH_* keys in settings.local.json are no longer read; delete them, move values to BASIC_AUTH_SITES`
 
 Pipeline-only variables (`ANTHROPIC_API_KEY`, `ADO_PAT`, AWS keys) are not checked here — `/auto-doctor` covers them.
 
@@ -452,7 +461,6 @@ Check existence and staleness in `.claude/rules/`. Compare against `<aem-plugin>
 | Installed | Template |
 |-----------|----------|
 | `.claude/rules/audit.md` | `audit.md.template` |
-| `.claude/rules/qa-basic-auth.md` | `qa-basic-auth.md.template` |
 
 ## 9. Automation Plugin (conditional)
 

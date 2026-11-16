@@ -58,5 +58,9 @@ check "fresh aem-init layout unchanged" same "$(cmp -s "$TMP/fresh.orig" "$TMP/f
 # 5. Step 7 routes pr-review.md / pr-answer.md through it.
 check "step 7 uses sync_rule_keep_aem" yes "$(awk '/^step_7_ai_rules\(\)/,/^}/' "$SCRIPT" | grep -q 'pr-review.md|pr-answer.md) sync_rule_keep_aem' && echo yes || echo no)"
 
+# 6. Basic Auth: the rule is synced (the init page loads from the plugin); the old AEM rule is not.
+check "step 6 syncs basic-auth.md" yes "$(awk '/^step_6_claude_rules\(\)/,/^}/' "$SCRIPT" | grep -q 'universal-basic-auth.md.template.*rules/basic-auth.md' && echo yes || echo no)"
+check "qa-basic-auth.md no longer synced" no "$(grep -q 'qa-basic-auth' "$SCRIPT" && echo yes || echo no)"
+
 echo "sync-ai-rules: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

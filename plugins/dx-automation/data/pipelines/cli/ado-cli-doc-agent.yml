@@ -106,6 +106,10 @@ steps:
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       AEM_INSTANCES: $(AEM_INSTANCES)
+      # Basic Auth for the QA/Stage publisher (screenshots + publish poll).
+      # Optional secret variable; when undefined ADO passes the literal
+      # "$(BASIC_AUTH_SITES)", which the parsers treat as unset.
+      BASIC_AUTH_SITES: $(BASIC_AUTH_SITES)
       MAX_TURNS: "30"
       ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
     timeoutInMinutes: 15

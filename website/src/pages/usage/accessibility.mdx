@@ -127,8 +127,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <CommandBlock>{`/dx-axe http://admin:admin@localhost:4502/content/mysite/en/home.html?wcmmode=disabled`}</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:cloud" iconColor="bg-cyan" title="QA / Stage">
-      Protected with HTTP Basic Auth. Embed credentials or configure in <code>.ai/config.yaml</code> under <code>aem.qa-basic-auth</code>.
-      <CommandBlock>{`/dx-axe https://user:pass@qa.example.com/content/mysite/en/home.html`}</CommandBlock>
+      Protected with HTTP Basic Auth. Add the site to the <code>BASIC_AUTH_SITES</code> environment variable (see the <code>basic-auth</code> rule); the browser then logs in automatically.
+      <CommandBlock>{`/dx-axe https://qa.example.com/content/mysite/en/home.html`}</CommandBlock>
     </ContentCard>
     <ContentCard icon="mdi:web" iconColor="bg-emerald-600" title="Public URLs">
       No special handling needed.
@@ -210,7 +210,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       The server needs the Chromium build matching its Playwright version. Run <code>npx playwright@$(npm view axe-mcp-server dependencies.playwright) install chromium</code>. A bare <code>npx playwright install chromium</code> can fetch an unsupported revision.
     </HighlightBox>
     <HighlightBox severity="warning" title="QA URL returns 401">
-      Environment requires Basic Auth. Embed credentials in the URL or configure in <code>.ai/config.yaml</code> under <code>aem.qa-basic-auth</code>.
+      Environment requires Basic Auth. Add its origin (scheme + host + port) to <code>BASIC_AUTH_SITES</code>.
     </HighlightBox>
     <HighlightBox severity="info" title="API key error">
       Verify: <code>echo $AXE_API_KEY</code>. If empty, re-export and restart your terminal. If expired, get a new key from <a href="https://axe.deque.com/settings" target="_blank" rel="noopener noreferrer">axe.deque.com/settings</a>.

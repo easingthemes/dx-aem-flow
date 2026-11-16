@@ -50,17 +50,7 @@ http://admin:admin@localhost:4502/content/...?wcmmode=disabled
 
 ### Remote AEM (QA / Stage)
 
-Follow the `qa-basic-auth` rule. Resolve credentials in priority order:
-1. Env vars: `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS`
-2. `.ai/config.yaml` keys `aem.qa-basic-auth.username` / `aem.qa-basic-auth.password`
-
-If credentials are found, embed them in the URL for the **first** navigation only — the session cookie persists for subsequent navigations:
-
-```
-https://<user>:<pass>@qa.example.com/content/...
-```
-
-If no credentials are found and the URL is a non-localhost QA/Stage host, warn the user that `QA_BASIC_AUTH_USER` / `QA_BASIC_AUTH_PASS` env vars are not set and auth will likely fail.
+Follow the `basic-auth` rule: navigate with the plain URL; the browser applies `BASIC_AUTH_SITES`. On a 401 or an auth error page, report `<origin> needs an entry in BASIC_AUTH_SITES` and stop.
 
 ### Public URLs
 

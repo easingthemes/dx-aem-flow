@@ -103,12 +103,12 @@ These are plugin-owned files — update without asking.
 
 ### 3a. Utility Scripts
 
-**Discovery (mirrors dx-doctor section 1d — never hardcode the file list).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`, excluding `*.test.sh`, `*.test.js`, and anything under `<dx-plugin>/data/lib/fixtures/`. The remaining files plus the always-present hook form the utility manifest:
+**Discovery (mirrors dx-doctor section 1d — never hardcode the file list).** Glob `<dx-plugin>/data/lib/*.sh`, `<dx-plugin>/data/lib/*.js` and `<dx-plugin>/data/lib/*.cjs`, excluding `*.test.sh`, `*.test.js`, `*.test.cjs`, and anything under `<dx-plugin>/data/lib/fixtures/`. The remaining files plus the always-present hook form the utility manifest:
 
 - `.ai/lib/<basename>` ← `<dx-plugin>/data/lib/<basename>` (one entry per discovered file)
 - `.claude/hooks/stop-guard.sh` ← `<dx-plugin>/data/hooks/stop-guard.sh`
 
-For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` — Node entry points are invoked via `node` and don't need the executable bit).
+For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` / `*.cjs` — Node entry points are invoked via `node` and don't need the executable bit).
 
 **Comment-only differences:** If dx-doctor reported the script as `✓ up to date (project-specific examples)` — meaning the only differences are in comment lines where the project uses real infrastructure names (e.g., `kai-dedupe`) instead of the plugin's generic placeholders (e.g., `myai-dedupe`) — do NOT overwrite. The project-specific names are intentional and correct. Only update scripts that have functional code changes.
 
@@ -130,8 +130,22 @@ These are plugin-owned format definition files — always update without asking.
 | Installed | Plugin Source |
 |-----------|-------------|
 | `.claude/rules/reuse-first.md` | `<dx-plugin>/templates/rules/universal-reuse-first.md.template` |
+| `.claude/rules/basic-auth.md` | `<dx-plugin>/templates/rules/universal-basic-auth.md.template` |
 
 Read template, Write to installed location.
+
+### 3b-ii. Basic Auth migration (always)
+
+`QA_BASIC_AUTH_*` is replaced by one `BASIC_AUTH_SITES` variable. Nothing reads the old names any more. There is **no automatic migration** of values.
+
+1. **Install** `.claude/rules/basic-auth.md` (3b). The browser side needs nothing in the project: the `playwright` MCP server loads `${CLAUDE_PLUGIN_ROOT}/data/lib/playwright-basic-auth.cjs` from the plugin. If an earlier version left `.ai/lib/playwright-basic-auth.cjs`, delete it (unused).
+2. **Old rule:** if `.claude/rules/qa-basic-auth.md` exists, Read and show it, then ask whether to delete it. Delete only on a clear yes; otherwise list it under **Manual Actions Required**.
+3. **Never print a credential.** Do not read or echo `QA_BASIC_AUTH_*` values or any `aem.qa-basic-auth` block content. If dx-doctor reported `aem.qa-basic-auth` in `.ai/config.yaml`, list it under **Manual Actions Required**: delete the block, rotate the password if the file was ever pushed.
+4. **Print the format** and remind the user to move values by hand:
+   ```
+   export BASIC_AUTH_SITES='name:url:user:pass,name2:url2:user2:pass2'
+   ```
+   in the shell profile; in ADO a secret pipeline variable named `BASIC_AUTH_SITES`. A `user` or `pass` containing `:` `,` `%` is written `%3A` `%2C` `%25`. Do not put it in `.claude/settings.local.json` (Copilot CLI does not read it) or `.ai/config.yaml`.
 
 ### 3c. Seed Data Refresh (if `.ai/project/` exists and `aem.docs-repo` is configured)
 
@@ -160,7 +174,6 @@ For each `.md.template` file found:
 - Strip the `.template` extension to get the destination filename
 - Preserve subdirectory structure under `<aem-plugin>/templates/rules/` → `.claude/rules/`
   - Example: `shared/audit.md.template` → `.claude/rules/audit.md`
-  - Example: `shared/qa-basic-auth.md.template` → `.claude/rules/qa-basic-auth.md`
   - Example: `be/be-components.md.template` → `.claude/rules/be-components.md`
   - Example: `fe/fe-tokens.md.template` → `.claude/rules/fe-tokens.md`
 - Read source, Write to destination (flattening the subdir — destination is always directly under `.claude/rules/`, not in a subdir)
@@ -236,7 +249,7 @@ If `.claude/settings.json` is missing or lacks `attribution`:
 
 Check `.claude/settings.local.json`:
 - **If missing:** Create with empty env vars (same as dx-init step 5i). Report "Created `.claude/settings.local.json`".
-- **If exists:** Parse and merge any new env var keys that the upgraded plugin now requires (empty string value). Do NOT overwrite existing values. Base vars: `QA_BASIC_AUTH_USER`, `QA_BASIC_AUTH_PASS`, `QA_BASIC_AUTH_FALLBACK_USER`, `QA_BASIC_AUTH_FALLBACK_PASS`, `AXE_API_KEY`. If project has `aem:` section in config, also add: `AEM_INSTANCES` (with default value `local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS`). Report count of new keys added (or "up to date").
+- **If exists:** Parse and merge any new env var keys that the upgraded plugin now requires (empty string value). Do NOT overwrite existing values. Base vars: `AXE_API_KEY`. If project has `aem:` section in config, also add: `AEM_INSTANCES` (with default value `local:http://localhost:4502:admin:admin,qa:https://qa-author.example.com:USER:PASS`). Report count of new keys added (or "up to date").
 
 ### 3h. MCP Configuration (ADO only)
 

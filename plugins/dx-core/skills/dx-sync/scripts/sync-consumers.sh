@@ -450,9 +450,10 @@ step_6_claude_rules() {
 
   # Always synced — universal rules
   sync_template "$DX_PLUGIN/templates/rules/universal-reuse-first.md.template" "$repo_path/.claude/rules/reuse-first.md"
+  sync_template "$DX_PLUGIN/templates/rules/universal-basic-auth.md.template" "$repo_path/.claude/rules/basic-auth.md"
 
   # Always synced — general AEM rules
-  for name in audit.md qa-basic-auth.md; do
+  for name in audit.md; do
     local src="$AEM_PLUGIN/templates/rules/${name}.template"
     [ -f "$src" ] && sync_template "$src" "$repo_path/.claude/rules/$name"
   done
