@@ -245,11 +245,13 @@ test('a missing template degrades to an empty file instead of throwing', () => {
 
 // --- Basic Auth ------------------------------------------------------------
 
-test('scaffold installs playwright-basic-auth.js and basic-auth rule', () => {
+test('scaffold installs playwright-basic-auth.cjs and basic-auth rule', () => {
   const root = tmpDir();
   try {
     scaffold(root, { aem: true }).run();
-    assert.ok(exists(root, '.ai/lib/playwright-basic-auth.js'));
+    assert.ok(exists(root, '.ai/lib/playwright-basic-auth.cjs'));
+    const libTests = fs.readdirSync(path.join(root, '.ai/lib')).filter((f) => /\.test\./.test(f));
+    assert.deepEqual(libTests, [], 'test files are not installed');
     assert.ok(exists(root, '.claude/rules/basic-auth.md'));
     assert.ok(!exists(root, '.claude/rules/qa-basic-auth.md'));
     const offenders = generatedFiles(root).filter((rel) => {

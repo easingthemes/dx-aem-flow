@@ -103,12 +103,12 @@ These are plugin-owned files — update without asking.
 
 ### 3a. Utility Scripts
 
-**Discovery (mirrors dx-doctor section 1d — never hardcode the file list).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`, excluding `*.test.sh`, `*.test.js`, and anything under `<dx-plugin>/data/lib/fixtures/`. The remaining files plus the always-present hook form the utility manifest:
+**Discovery (mirrors dx-doctor section 1d — never hardcode the file list).** Glob `<dx-plugin>/data/lib/*.sh`, `<dx-plugin>/data/lib/*.js` and `<dx-plugin>/data/lib/*.cjs`, excluding `*.test.sh`, `*.test.js`, `*.test.cjs`, and anything under `<dx-plugin>/data/lib/fixtures/`. The remaining files plus the always-present hook form the utility manifest:
 
 - `.ai/lib/<basename>` ← `<dx-plugin>/data/lib/<basename>` (one entry per discovered file)
 - `.claude/hooks/stop-guard.sh` ← `<dx-plugin>/data/hooks/stop-guard.sh`
 
-For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` — Node entry points are invoked via `node` and don't need the executable bit).
+For each entry that dx-doctor reported as stale or missing, Read the plugin source file and Write it to the installed location. Then `chmod +x` only on `*.sh` files (do NOT chmod `*.js` / `*.cjs` — Node entry points are invoked via `node` and don't need the executable bit).
 
 **Comment-only differences:** If dx-doctor reported the script as `✓ up to date (project-specific examples)` — meaning the only differences are in comment lines where the project uses real infrastructure names (e.g., `kai-dedupe`) instead of the plugin's generic placeholders (e.g., `myai-dedupe`) — do NOT overwrite. The project-specific names are intentional and correct. Only update scripts that have functional code changes.
 
@@ -138,7 +138,7 @@ Read template, Write to installed location.
 
 `QA_BASIC_AUTH_*` is replaced by one `BASIC_AUTH_SITES` variable. Nothing reads the old names any more. There is **no automatic migration** of values.
 
-1. **Install** `.ai/lib/playwright-basic-auth.js` (from 3a — without it every Playwright navigation fails with "Failed to load init page") and `.claude/rules/basic-auth.md` (3b).
+1. **Install** `.ai/lib/playwright-basic-auth.cjs` (from 3a — without it the `playwright` MCP server exits at startup with "Init page file does not exist", so every browser tool is unavailable) and `.claude/rules/basic-auth.md` (3b).
 2. **Old rule:** if `.claude/rules/qa-basic-auth.md` exists, Read and show it, then ask whether to delete it. Delete only on a clear yes; otherwise list it under **Manual Actions Required**.
 3. **Never print a credential.** Do not read or echo `QA_BASIC_AUTH_*` values or any `aem.qa-basic-auth` block content. If dx-doctor reported `aem.qa-basic-auth` in `.ai/config.yaml`, list it under **Manual Actions Required**: delete the block, rotate the password if the file was ever pushed.
 4. **Print the format** and remind the user to move values by hand:

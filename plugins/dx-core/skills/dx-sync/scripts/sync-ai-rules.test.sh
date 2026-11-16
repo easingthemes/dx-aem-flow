@@ -59,7 +59,7 @@ check "fresh aem-init layout unchanged" same "$(cmp -s "$TMP/fresh.orig" "$TMP/f
 check "step 7 uses sync_rule_keep_aem" yes "$(awk '/^step_7_ai_rules\(\)/,/^}/' "$SCRIPT" | grep -q 'pr-review.md|pr-answer.md) sync_rule_keep_aem' && echo yes || echo no)"
 
 # 6. Basic Auth: the Playwright init-page script and the rule are synced; the old AEM rule is not.
-check "step 1 syncs playwright-basic-auth.js" yes "$(awk '/^step_1_lib_scripts\(\)/,/^}/' "$SCRIPT" | grep -q 'playwright-basic-auth.js' && echo yes || echo no)"
+check "step 1 syncs playwright-basic-auth.cjs" yes "$(awk '/^step_1_lib_scripts\(\)/,/^}/' "$SCRIPT" | grep -q 'playwright-basic-auth.cjs' && echo yes || echo no)"
 check "step 6 syncs basic-auth.md" yes "$(awk '/^step_6_claude_rules\(\)/,/^}/' "$SCRIPT" | grep -q 'universal-basic-auth.md.template.*rules/basic-auth.md' && echo yes || echo no)"
 check "qa-basic-auth.md no longer synced" no "$(grep -q 'qa-basic-auth' "$SCRIPT" && echo yes || echo no)"
 

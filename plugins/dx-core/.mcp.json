@@ -21,7 +21,7 @@
         "--no-webmcp",
         "--output-dir=.ai/playwright/screenshots",
         "--init-page",
-        ".ai/lib/playwright-basic-auth.js"
+        ".ai/lib/playwright-basic-auth.cjs"
       ]
     }
   }

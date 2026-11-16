@@ -360,7 +360,7 @@ step_1_lib_scripts() {
   local repo_path="$1"
   log "  Step 1: Utility scripts (.ai/lib/)"
   local count=0
-  for f in audit.sh dx-common.sh gather-context.sh plan-metadata.sh pre-review-checks.sh playwright-basic-auth.js; do
+  for f in audit.sh dx-common.sh gather-context.sh plan-metadata.sh pre-review-checks.sh playwright-basic-auth.cjs; do
     if sync_file "$DX_PLUGIN/data/lib/$f" "$repo_path/.ai/lib/$f"; then
       ((count++)) || true
     fi

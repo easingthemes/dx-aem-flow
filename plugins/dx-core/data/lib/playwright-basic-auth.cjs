@@ -2,7 +2,11 @@
 // Playwright MCP --init-page script: sends HTTP Basic Auth to the sites listed
 // in BASIC_AUTH_SITES ("name:url:user:pass,name2:url2:user2:pass2"), scoped to
 // each site's origin, so the model never handles a password.
-// user/pass may use %3A (:), %2C (,) and %25 (%) escapes. Never logs values.
+// user/pass may use %3A (:), %2C (,) and %25 (%) escapes. Only pass may contain
+// ':' — Basic Auth splits user:pass at the first colon (RFC 7617), so a user
+// with ':' can never authenticate. Never logs values.
+// .cjs (not .js): @playwright/mcp require()s this file, and a .js would be
+// treated as ESM in projects whose package.json sets "type": "module".
 
 function decode(s) {
   return s.includes('%') ? decodeURIComponent(s) : s;

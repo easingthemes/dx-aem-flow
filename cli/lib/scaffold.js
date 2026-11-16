@@ -242,9 +242,9 @@ class Scaffold {
     const libDir = path.join(this.dxPlugin, 'data', 'lib');
     if (!fs.existsSync(libDir)) return;
     for (const file of fs.readdirSync(libDir)) {
-      // .sh helpers + .js helpers; exclude tests and fixtures (dev-only artifacts).
-      if (!/\.(sh|js)$/.test(file)) continue;
-      if (file.endsWith('.test.js')) continue;
+      // .sh helpers + .js/.cjs helpers; exclude tests and fixtures (dev-only artifacts).
+      if (!/\.(sh|js|cjs)$/.test(file)) continue;
+      if (/\.test\.(c?js|sh)$/.test(file)) continue;
       this.copyFile(path.join(libDir, file), `.ai/lib/${file}`, { executable: true });
     }
   }
@@ -319,7 +319,7 @@ class Scaffold {
   updateGitignore() {
     const gitignorePath = path.join(this.targetDir, '.gitignore');
     // .ai/playwright/ — dx-core's playwright MCP server writes screenshots and
-    // browser session state (cookies, Basic Auth config) there.
+    // browser session state (cookies) there.
     const entries = ['.ai/specs/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
     let content = '';
     if (fs.existsSync(gitignorePath)) {

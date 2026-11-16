@@ -3,9 +3,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const http = require('node:http');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
-const { parseSites, headerFor } = require('./playwright-basic-auth.js');
+const { parseSites, headerFor } = require('./playwright-basic-auth.cjs');
 
 const b64 = (s) => 'Basic ' + Buffer.from(s).toString('base64');
 
@@ -23,9 +25,10 @@ test('parseSites splits name/url/user/pass with ports in url', () => {
 });
 
 test('parseSites decodes escapes', () => {
-  const r = parseSites('qa:https://qa.example.com:a%3Ab:x%2Cy%25z');
-  assert.strictEqual(r.sites[0].user, 'a:b');
-  assert.strictEqual(r.sites[0].pass, 'x,y%z');
+  // Only pass may hold ':' (Basic Auth splits user:pass at the first colon).
+  const r = parseSites('qa:https://qa.example.com:a%2Cb:x%3Ay%2Cz%25w');
+  assert.strictEqual(r.sites[0].user, 'a,b');
+  assert.strictEqual(r.sites[0].pass, 'x:y,z%w');
   const plain = parseSites('qa:https://qa.example.com:user:p@ss/w#rd"$');
   assert.strictEqual(plain.sites[0].pass, 'p@ss/w#rd"$');
 });
@@ -52,7 +55,7 @@ test('headerFor picks per-site credentials', () => {
 // ---------------------------------------------------------------- e2e
 
 const E2E = process.env.DX_BROWSER_TESTS === '1';
-const SCRIPT = path.join(__dirname, 'playwright-basic-auth.js');
+const SCRIPT = path.join(__dirname, 'playwright-basic-auth.cjs');
 
 function listen(server) {
   return new Promise((res) => server.listen(0, '127.0.0.1', () => res(server.address().port)));
@@ -78,12 +81,21 @@ function authServer(user, pass, title, extra) {
   return { server, seen, hits };
 }
 
-// Minimal stdio MCP client around the Playwright MCP server.
-async function withMcp(env, fn) {
+// Minimal stdio MCP client around the Playwright MCP server. Runs in a temp
+// cwd with a temp --output-dir so no .playwright-mcp/ lands in the repo.
+// opts.cwd / opts.initPage override the working directory and init-page path.
+async function withMcp(env, fn, opts = {}) {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-basic-auth-out-'));
   const p = spawn(
     'npx',
-    ['-y', '@playwright/mcp@0.0.83', '--headless', '--isolated', '--init-page', SCRIPT],
-    { env: { ...process.env, BASIC_AUTH_SITES: '', ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true }
+    ['-y', '@playwright/mcp@0.0.83', '--headless', '--isolated', '--output-dir', out,
+      '--init-page', opts.initPage || SCRIPT],
+    {
+      cwd: opts.cwd || out,
+      env: { ...process.env, BASIC_AUTH_SITES: '', ...env },
+      stdio: ['pipe', 'pipe', 'pipe'],
+      detached: true,
+    }
   );
   let buf = '';
   let stderr = '';
@@ -119,6 +131,7 @@ async function withMcp(env, fn) {
     return await fn(navigate, () => stderr);
   } finally {
     try { process.kill(-p.pid, 'SIGKILL'); } catch { /* gone */ }
+    fs.rmSync(out, { recursive: true, force: true });
   }
 }
 
@@ -146,6 +159,22 @@ test('e2e (opt-in browser tests)', { skip: !E2E && 'set DX_BROWSER_TESTS=1', tim
       assert.match(await nav(`${urlA}/`), /Page Title: A OK/);
       assert.match(await nav(`${urlB}/`), /Page Title: B OK/);
     });
+  });
+
+  await t.test('e2e: relative .cjs init page loads in a "type": "module" project', async () => {
+    const proj = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-basic-auth-esm-'));
+    try {
+      fs.writeFileSync(path.join(proj, 'package.json'), '{"type":"module"}\n');
+      fs.mkdirSync(path.join(proj, '.ai', 'lib'), { recursive: true });
+      fs.copyFileSync(SCRIPT, path.join(proj, '.ai', 'lib', 'playwright-basic-auth.cjs'));
+      await withMcp({ BASIC_AUTH_SITES: sites }, async (nav) => {
+        const out = await nav(`${urlA}/`);
+        assert.doesNotMatch(out, /Failed to load init page/);
+        assert.match(out, /Page Title: A OK/);
+      }, { cwd: proj, initPage: '.ai/lib/playwright-basic-auth.cjs' });
+    } finally {
+      fs.rmSync(proj, { recursive: true, force: true });
+    }
   });
 
   await t.test('e2e: unlisted origin gets no header', async () => {

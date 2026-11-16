@@ -87,8 +87,8 @@ Glob: "**/skills/dx-doctor/SKILL.md"
 ```
 Navigate up 3 levels from the skill directory to get the dx plugin root.
 
-**Discovery (do NOT hardcode the file list — every new utility script in `<dx-plugin>/data/lib/` must be picked up automatically).** Glob `<dx-plugin>/data/lib/*.sh` and `<dx-plugin>/data/lib/*.js`. From the result set, exclude:
-- Test files: `*.test.sh`, `*.test.js`
+**Discovery (do NOT hardcode the file list — every new utility script in `<dx-plugin>/data/lib/` must be picked up automatically).** Glob `<dx-plugin>/data/lib/*.sh`, `<dx-plugin>/data/lib/*.js` and `<dx-plugin>/data/lib/*.cjs`. From the result set, exclude:
+- Test files: `*.test.sh`, `*.test.js`, `*.test.cjs`
 - Anything under `<dx-plugin>/data/lib/fixtures/`
 
 The remaining files form the utility manifest — each is expected to live at `.ai/lib/<basename>`.
@@ -104,7 +104,7 @@ For each:
    - Different only in **comment lines** (lines starting with `#` for shell, `//` or `/* */` for JS) where the change is a genericized example name (e.g., plugin uses `myai-dedupe` but project uses `kai-dedupe`) → `✓ up to date (project-specific examples)`. Plugin templates use generic placeholder names in code comments; consumer projects replace these with real infrastructure names. This is NOT staleness.
    - Different in **functional code** (non-comment lines) → `⚠ STALE (plugin version updated — run /dx-upgrade)`
 
-**Basic Auth init-page:** if `.ai/lib/playwright-basic-auth.js` is missing, report `✗ MISSING (Playwright fails every navigation — run /dx-upgrade)` instead of the generic line — the `playwright` MCP server loads it with `--init-page`.
+**Basic Auth init-page:** if `.ai/lib/playwright-basic-auth.cjs` is missing, report `✗ MISSING (the playwright MCP server cannot start — browser tools unavailable; run /dx-upgrade)` instead of the generic line — the `playwright` MCP server loads it with `--init-page` and exits at startup when the file does not exist.
 
 ### 1e. (Removed — .ai/docs/ no longer managed by plugins)
 
@@ -212,6 +212,7 @@ For each, test presence only (`[ -n "${VAR:-}" ]`), never print the value:
 - `.claude/rules/qa-basic-auth.md` present → `⚠ STALE: replaced by basic-auth.md — run /dx-upgrade`
 - `qa-basic-auth:` present in `.ai/config.yaml` — detect with `Grep` (`output_mode: files_with_matches` or `count`) on that key only; never Read, quote or echo the block → `✗ SECRET: no longer read; move to BASIC_AUTH_SITES, delete the block, rotate if pushed`
 - Run the exact Bash check from "Bash is ONLY for"; it prints `set` when either variable is exported → `⚠ QA_BASIC_AUTH_* is no longer read — move to BASIC_AUTH_SITES (format in the basic-auth rule)`.
+- `.ai/playwright/config.json` present — existence check only (`Glob`); never Read it, it was written by the removed `aem-playwright-auth.sh config` mode and may hold a plaintext password → `⚠ SECRET: .ai/playwright/config.json is a leftover of the old publisher Basic Auth config and is no longer read — delete it`
 - `.claude/settings.local.json` — use `Grep -l 'QA_BASIC_AUTH_'` (`files_with_matches`); do not Read this file, it holds secret values. Match → `⚠ QA_BASIC_AUTH_* keys in settings.local.json are no longer read; delete them, move values to BASIC_AUTH_SITES`
 
 Pipeline-only variables (`ANTHROPIC_API_KEY`, `ADO_PAT`, AWS keys) are not checked here — `/auto-doctor` covers them.
