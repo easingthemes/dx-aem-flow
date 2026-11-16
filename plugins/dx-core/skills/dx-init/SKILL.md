@@ -493,13 +493,13 @@ Recommendation: use shell exports for machine-wide vars, settings.local.json for
 
 ### 5j. Install the Playwright browser
 
-dx-core ships the `playwright` MCP server (`@playwright/mcp`, see the plugin's `.mcp.json`). It drives a real Chromium that is **not** bundled — without it every browser skill (`/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe`, and dx-aem's `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run once:
+dx-core ships the `playwright` MCP server (`@playwright/mcp`, see the plugin's `.mcp.json`). It drives a real Chromium that is **not** bundled — without it every browser skill (`/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe`, and dx-aem's `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run it without asking — it only downloads a browser, writes nothing to the project, and is idempotent:
 
 ```bash
 npx playwright install chromium
 ```
 
-It's idempotent (no-op if already present). If it fails (offline/restricted network), tell the user to run it manually before any browser verification. Skip silently if the user declines.
+If it fails (offline/restricted network), do not stop init: report it and tell the user to run it manually before any browser verification.
 
 ## 6. Detect Project Profile
 

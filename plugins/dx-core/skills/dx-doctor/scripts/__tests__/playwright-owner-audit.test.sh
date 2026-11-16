@@ -24,7 +24,8 @@ seed() { # seed <dir> — a project with old names in all three places + a forei
       "@OLD@__browser_navigate",
       "@OLD@",
       "mcp__plugin_dx-aem_AEM__getNodeContent",
-      "@OLD@-extra__thing"
+      "@OLD@-extra__thing",
+      "@OLD@_beta__thing"
     ]
   }
 }
@@ -82,6 +83,7 @@ check "fix: tool name rewritten" 1 "$(grep -c '"mcp__plugin_dx-core_playwright__
 check "fix: bare server rewritten" 1 "$(grep -c '"mcp__plugin_dx-core_playwright"' "$P/.claude/settings.json")"
 check "fix: AEM server untouched" 1 "$(grep -c 'mcp__plugin_dx-aem_AEM__getNodeContent' "$P/.claude/settings.json")"
 check "fix: other server untouched" 1 "$(grep -c "$OLD-extra__thing" "$P/.claude/settings.json")"
+check "fix: _beta server untouched" 1 "$(grep -c "${OLD}_beta__thing" "$P/.claude/settings.json")"
 check "fix: prose in agent body rewritten" 1 "$(grep -c 'Call mcp__plugin_dx-core_playwright__browser_click' "$P/.github/agents/AEMVerify.agent.md")"
 node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$P/.claude/settings.json" 2>/dev/null
 check "fix: settings.json still valid JSON" 0 "$?"
@@ -90,7 +92,17 @@ check "fix: settings.json still valid JSON" 0 "$?"
 out="$(bash "$AUDIT" --fix "$P")"; check "fix twice: no output" "" "$out"
 bash "$AUDIT" "$P" >/dev/null; check "re-audit after fix: exit 0" 0 "$?"
 
-# 6. Usage error
+# 6. A failed rewrite is reported, not claimed as fixed
+P="$TMP/sedfail"; seed "$P"
+mkdir -p "$TMP/bin"; printf '#!/bin/sh\nexit 1\n' > "$TMP/bin/sed"; chmod +x "$TMP/bin/sed"
+# seed() used the real sed; only the audit sees the failing one.
+out="$(PATH="$TMP/bin:$PATH" bash "$AUDIT" --fix "$P" 2>"$TMP/err")"; rc=$?
+check "sed fails: exit 3" 3 "$rc"
+check "sed fails: nothing reported fixed" 0 "$(echo "$out" | grep -c '^fixed')"
+check "sed fails: failure on stderr" 1 "$(grep -c '^failed: .claude/settings.json$' "$TMP/err")"
+check "sed fails: file unchanged" 2 "$(grep -cE "$OLD(__|\")" "$P/.claude/settings.json")"
+
+# 7. Usage error
 bash "$AUDIT" --bogus >/dev/null 2>&1; check "unknown option: exit 2" 2 "$?"
 
 echo "playwright-owner-audit: $PASS passed, $FAIL failed"

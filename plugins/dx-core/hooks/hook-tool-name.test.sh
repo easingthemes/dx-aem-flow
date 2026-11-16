@@ -11,7 +11,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 COMPACT="$HERE/scripts/compaction-reminder.sh"
-SHOT="$REPO/plugins/dx-aem/hooks/scripts/screenshot-log.sh"
+SHOT="$HERE/scripts/screenshot-log.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 

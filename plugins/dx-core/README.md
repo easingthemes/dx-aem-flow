@@ -128,6 +128,7 @@ Model tiering is also applied at the skill level via `model:` frontmatter (e.g.,
 Bundled in the plugin's `.mcp.json`, available without project config:
 
 - **Playwright MCP** (`@playwright/mcp`) — headless browser for bug reproduction, prototype and visual verification, SimpleAgent before/after screenshots. Tools: `mcp__plugin_dx-core_playwright__*`. Needs Chromium once: `npx playwright install chromium` (`/dx-init` runs it).
+  **Known cost:** the server starts with every dx-core session, browser work or not — `npx @playwright/mcp` adds startup time, and the first run fetches the package from npm. To skip it in a project that never uses a browser, disable the server in `/mcp`.
 - **axe MCP** — accessibility testing (`/dx-axe`).
 - **Figma MCP** — design extraction (local Figma desktop server).
 

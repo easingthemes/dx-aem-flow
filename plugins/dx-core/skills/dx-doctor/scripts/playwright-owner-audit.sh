@@ -20,8 +20,8 @@
 #   fixed\t<file>\t<count>
 # Nothing else in the file is touched.
 #
-# Exit: 0 nothing found (or everything fixed), 3 old names found (no --fix),
-#       2 usage error.
+# Exit: 0 nothing found (or everything fixed), 3 old names found (no --fix)
+#       or a --fix rewrite failed (`failed: <file>` on stderr), 2 usage error.
 set -uo pipefail
 
 FIX=0
@@ -40,10 +40,12 @@ done
 # Split so a repo-wide grep for the retired name finds only history.
 OLD='mcp__plugin_dx-aem''_playwright'
 NEW='mcp__plugin_dx-core_playwright'
-# Match the old server name only when it is not followed by another name
-# character, so `…_playwright` and `…_playwright__tool` both match but a
-# hypothetical `…_playwright-extra` server does not.
-PATTERN="${OLD}([^A-Za-z0-9-]|\$)"
+# Match the old server name only as a whole server name: followed by the `__`
+# tool separator, a non-name character, or end of line. So `…_playwright` and
+# `…_playwright__tool` match, but other servers such as `…_playwright-extra` or
+# `…_playwright_beta` do not.
+TAIL='(__|[^A-Za-z0-9_-]|$)'
+PATTERN="${OLD}${TAIL}"
 
 count() { grep -oE "$PATTERN" "$1" 2>/dev/null | wc -l | tr -d ' '; }
 
@@ -55,11 +57,19 @@ for f in "$DIR/.claude/settings.json" "$DIR/.claude/settings.local.json" "$DIR"/
   [ "$n" -gt 0 ] || continue
   rel="${f#"$DIR"/}"
   if [ "$FIX" -eq 1 ]; then
-    tmp="$(mktemp "${f}.XXXXXX")"
-    # Portable in-place edit (GNU and BSD sed differ on -i).
-    sed -E "s/${OLD}([^A-Za-z0-9-]|\$)/${NEW}\\1/g" "$f" > "$tmp" && cat "$tmp" > "$f"
-    rm -f "$tmp"
-    printf 'fixed\t%s\t%s\n' "$rel" "$n"
+    # Portable in-place edit (GNU and BSD sed differ on -i). Report `fixed` only
+    # when the file was rewritten and no old name is left in it.
+    if tmp="$(mktemp "${f}.XXXXXX")" \
+      && sed -E "s/${OLD}${TAIL}/${NEW}\\1/g" "$f" > "$tmp" \
+      && cat "$tmp" > "$f" \
+      && [ "$(count "$f")" -eq 0 ]; then
+      rm -f "$tmp"
+      printf 'fixed\t%s\t%s\n' "$rel" "$n"
+    else
+      rm -f "${tmp:-}"
+      echo "failed: $rel" >&2
+      FOUND=1
+    fi
   else
     printf '%s\t%s\n' "$rel" "$n"
     FOUND=1

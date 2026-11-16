@@ -141,9 +141,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
   </div>
 
   <HighlightBox severity="success" title="What This Means for KAI">
-    dx-core owns general hooks (branch guard, subagent log, Figma screenshots).
-    dx-aem now has its own <code>hooks.json</code> for AEM full-flow hooks (Playwright screenshots, component inspection, editorial capture).
-    Both plugins' hooks fire in the same session without conflict.
+    dx-core owns the plugin hooks: branch guard, subagent log, Figma screenshots, and the Playwright
+    screenshot log (it moved from dx-aem with the <code>playwright</code> MCP server, so dx-core-only projects get it too).
+    Hooks from every installed plugin fire in the same session without conflict.
   </HighlightBox>
 </Section>
 
