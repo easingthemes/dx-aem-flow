@@ -297,6 +297,16 @@ Controls Phase 4 of `/dx-req` (codebase research). Mitigates the context blow-up
 | `agent-word-cap` | number | `800` | Hard cap on words per Explore-agent report. The orchestrator summarizes anything longer to ≤300 words before writing into research.md. |
 | `agent-file-cap` | number | `10` | Maximum files an Explore-agent may list in its inventory. |
 
+### `dx-req`
+
+Optional pre-research context for `/dx-req` — written into `raw-story.md` by the Phase 1 fetch script, used as hints in Phase 4. All off by default.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `release-tag-regex` | string | — | Regex a whole work-item tag must match to count as a release tag (e.g. `'\d{1,2}[A-Za-z]{3}\d{4}Release'`). Adds a Release column to `## Linked Work Items` and a `**Release check:**` line for linked items in another release or none. Write it in single quotes so backslashes stay literal. |
+| `related-comments` | number | `0` | Include the newest 5 human comments of the first N linked Related / Predecessor / Successor items — contracts agreed in a related story. Each item costs one more MCP call. |
+| `scope-repos` | map | — | Title tag or keyword → repo name, e.g. `FE: My-Frontend-Repo`. Phase 4 matches it against `**Scope Tags:**` and the title and passes the repos as a starting hint to research. |
+
 ### `doctor`
 
 Thresholds for `/dx-doctor` step 2c (rules & seed data freshness). A file under `.ai/rules/` or `.ai/project/` is reported stale only when **both** limits are exceeded.

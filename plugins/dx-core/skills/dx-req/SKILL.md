@@ -103,8 +103,9 @@ If no argument is provided, ask the user for the work item ID.
 
 Run `.ai/lib/fetch-raw-story.js`. It spawns `@azure-devops/mcp` over stdio,
 calls `wit_work_item` (`action: "get"`, `expand: "All"`), `wit_work_item`
-(`action: "list_comments"`), and a parent `wit_work_item` (`action: "get"`) if a
-hierarchy-reverse relation exists, then
+(`action: "list_comments"`), a parent `wit_work_item` (`action: "get"`) if a
+hierarchy-reverse relation exists, and one `get` per Related / Predecessor /
+Successor item (max 15), then
 writes the deterministic output: `raw-workitem.json`, `raw-story.md`, and
 `.sprint`. The work-item JSON never enters this skill's context — only the
 slim `raw-story.md` is read by later phases.
@@ -113,8 +114,13 @@ slim `raw-story.md` is read by later phases.
 # Fully qualified keys: a bare `project` matches the top-level `project:` section first.
 ORG=$(bash .ai/lib/dx-common.sh yaml-val scm.org)
 PROJ=$(bash .ai/lib/dx-common.sh yaml-val scm.project)
+# Optional pre-research context (dx-req.* in config; empty = off).
+REL_RE=$(bash .ai/lib/dx-common.sh yaml-val dx-req.release-tag-regex)
+REL_N=$(bash .ai/lib/dx-common.sh yaml-val dx-req.related-comments)
 # Last stdout line is `SPEC_DIR=<path>` — capture it.
-SCRIPT_OUT=$(node .ai/lib/fetch-raw-story.js "$ORG" "$PROJ" <work-item-id>)
+SCRIPT_OUT=$(node .ai/lib/fetch-raw-story.js \
+  ${REL_RE:+"--release-tag-regex=$REL_RE"} ${REL_N:+"--related-comments=$REL_N"} \
+  "$ORG" "$PROJ" <work-item-id>)
 echo "$SCRIPT_OUT"
 SPEC_DIR=$(printf '%s\n' "$SCRIPT_OUT" | sed -n 's/^SPEC_DIR=//p' | tail -1)
 mkdir -p "$SPEC_DIR/images"
@@ -127,7 +133,13 @@ token cache from Claude Code's own MCP session is reused — no second prompt.
 The script handles **steps 3, 4, 5 (branches + PR detail), 6, 7 (sprint
 extraction), 8a–8d (image download, INDEX.md, URL rewriting in
 raw-story.md), 9 (idempotent re-runs + pre-seed short-circuit), and 10**
-for ADO. After it runs, jump straight to **step 8e** (`images.md` vision
+for ADO. It also writes the pre-research context: `**Scope Tags:**` (bracket
+tags from the title), `**Release:**` and a `## Linked Work Items` table with a
+release-alignment column + `**Release check:**` line (when
+`dx-req.release-tag-regex` is set), the newest comments of the first
+`dx-req.related-comments` linked items (contracts are often agreed there), and
+images embedded in comments (source `comments` in `images/INDEX.md`, so the
+step 8e vision pass covers them). After it runs, jump straight to **step 8e** (`images.md` vision
 pass) — everything else in Phase 1 is already on disk.
 
 The script supports `--force` to bypass the idempotency check, and prints
@@ -441,6 +453,8 @@ provenance:
 **Area Path:** <area path>
 **Iteration Path:** <iteration path>
 **Tags:** <tags or "None">
+**Scope Tags:** <bracket tags from the title, e.g. FE, BE — omit line if none>
+**Release:** <tags matching dx-req.release-tag-regex — omit line if none>
 
 ---
 
@@ -465,8 +479,18 @@ provenance:
 
 ---
 
-## Relations
-### Parent / ### Children / ### Related
+## Linked Work Items
+| Link | Item | Type | State | Iteration | Release |
+| --- | --- | --- | --- | --- | --- |
+| Predecessor | [#<id>](<url>) <title> | <type> | <state> | <sprint> | <release> (same / ⚠ differs / ⚠ none) |
+
+**Release check:** <n> linked item(s) not in the story's release (<release>): #<id>, …
+
+### #<id> comments (<link type>)
+**<Author> — <date>:**
+<comment text>
+
+<!-- Related / Predecessor / Successor only (max 15). Release column + check only when dx-req.release-tag-regex is set. Comments only for the first dx-req.related-comments items. Omit the section if there are no such links. -->
 
 ---
 
@@ -579,6 +603,8 @@ This phase spawns parallel Explore subagents for codebase searching. Read `refer
 
 1. **Read inputs** — `raw-story.md`, `explain.md` (if exists), `$SPEC_DIR/images.md` (if exists), pre-existing research data (ticket-research.md, dor-report.md, project index files). `images.md` carries the structured visual facts from Phase 1 — mockups narrowing the search from a broad area ("the whole account section") to a specific control ("the activity list pagination"), component names visible in annotations, etc. Do not re-Read the PNGs; the descriptions in `images.md` are the authoritative textual record and are already subagent-ready prose.
 2. **Build $CONTEXT** — combine pre-discovered data (component names, file paths, pages/URLs, Figma links, market scope) to accelerate subagent work. If `images.md` exists, include an `$IMAGE_CONTEXT` block by copying or condensing each image's `What it shows` + `Implied requirements` lines. Explore subagents can't receive image content, so this textual carry-over is how visual intent reaches them. No re-synthesis from PNGs is needed — Phase 1 already did that work.
+   - **Scope → repo hints:** if `raw-story.md` has `**Scope Tags:**` and `.ai/config.yaml` has a `dx-req.scope-repos` map, add a `$SCOPE_HINT` line naming the mapped repos (keys match a scope tag case-insensitively, or a whole word in the title). It is a hint for where to look first, not a limit — the research may still find other repos in scope.
+   - **Linked items:** if `raw-story.md` has `## Linked Work Items`, carry the dependency rows, any `**Release check:**` line and the contracts found in linked-item comments into `$CONTEXT`, and list a release mismatch under risks / open questions in research.md.
 2b. **Read AEM Component Discovery** — If `.ai/project/component-discovery.md` exists, read it. For each component named in `explain.md` or `raw-story.md`, extract its entry (dialog fields, variants, pages, authored values). Append to `$CONTEXT` as `$AEM_CONTEXT`. This enriches all 4 subagents with field semantics and variant awareness without any additional MCP calls.
 3. **Identify search targets** — component/feature names, class patterns, property names, resource types, endpoint paths, keywords
 4. **Check existing output** — if `research.md` exists, check staleness (title match, files still exist, explain.md changed). If current → skip.

@@ -77,6 +77,17 @@ build:
 #   trigger-token: "@kai-dor"              # keyword that fires the DoR check. MUST match
 #                                          # the ADO Service Hook comment filter string.
 
+# Optional — /dx-req pre-research context (Phase 1 fetch + Phase 4 hints).
+# dx-req:
+#   release-tag-regex: '\d{1,2}[A-Za-z]{3}\d{4}Release'  # whole-tag regex for release tags;
+#                                          # flags linked items in another release. Use SINGLE
+#                                          # quotes so backslashes stay literal. Empty = off.
+#   related-comments: 3                    # include newest comments of the first N linked
+#                                          # Related/Predecessor/Successor items (0 = off)
+#   scope-repos:                           # title tag / keyword → repo hint for Phase 4
+#     FE: My-Frontend-Repo
+#     BE: My-Backend-Repo
+
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review
   auto-pr: {{AUTO_PR}}                  # true | false — create PR automatically after pipeline success
