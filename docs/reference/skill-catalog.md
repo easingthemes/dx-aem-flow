@@ -54,13 +54,14 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 | dx-figma-prototype | `/dx-figma-prototype` | `<work-item-id>` (optional) | Research project conventions (2 parallel agents) + generate high-fidelity standalone HTML/CSS prototype | `figma-conventions.md`, `prototype/index.html`, `prototype/styles.css` |
 | dx-figma-verify | `/dx-figma-verify` | `<work-item-id>` (optional) | Visually verify prototype against Figma reference screenshot. Compares, fixes gaps (max 2 rounds). | `figma-gaps.md`, `prototype/prototype-screenshot.png` |
 
-### Planning (`dx-plan-*`) — 4 skills
+### Planning (`dx-plan-*`, `dx-prep`) — 5 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | dx-plan | `/dx-plan` | `<work-item-id>` (optional) | Generate step-by-step implementation plan with status tracking. Tags steps with repo markers (e.g., `[repo: ui]`) when the plan spans multiple repos. Reads cross-ticket patterns from `.ai/graph/nodes/patterns/`. Optionally invokes `superpowers:brainstorming` for design exploration before planning. | `implement.md` |
 | dx-plan-validate | `/dx-plan-validate` | `<work-item-id>` (optional) | Verify plan covers all requirements, no extras, dependencies correct | Warnings/OK |
 | dx-plan-resolve | `/dx-plan-resolve` | `<work-item-id>` (optional) | Research and fix risks flagged by validation | Updated `implement.md` |
+| dx-prep | `/dx-prep` | `<work-item-id>` `[autonomous]` `[--force]` | Architect prep / hand-off: runs dx-req + dx-plan (+ validate), writes `docs/plan-wiki.md` and publishes it as a **Development Plan** child page under the story's doc page, edits the `[DevPlan]` comment with wiki link + prepared phases + next command, commits and pushes the spec dir. `/dx-agent-all` later skips the prepared phases. | `docs/plan-wiki.md`, `.plan-wiki-url`, wiki page, `[DevPlan]` |
 | dx-pattern-extract | `/dx-pattern-extract` | `[--dry-run]` (optional) | Scan completed specs for recurring decisions/approaches. Promotes patterns appearing in 3+ tickets to `.ai/graph/nodes/patterns/` for cross-ticket knowledge reuse. | Pattern YAML files |
 
 ### Execution (`dx-step-*`) — 5 skills

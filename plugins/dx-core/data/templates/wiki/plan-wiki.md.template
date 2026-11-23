@@ -1,0 +1,55 @@
+# Development Plan — <Title> (ADO #<id>)
+
+**Sprint:** <sprint name> · **ADO:** [#<id>](<work item URL>) · **Branch:** `<branch>`
+**Prepared:** <date> by `/dx-prep` · **Status:** <Draft — not reviewed | Reviewed (tag <review-tag>)>
+
+> This is the plan prepared before development. It is the default for whoever implements the story, not a contract: deviations are recorded with a reason and listed in the final documentation under "Planned vs Built".
+
+## Summary
+
+<!-- 2-4 bullets from explain.md: what the story asks for and the chosen approach (Approach section of implement.md). -->
+
+## Impacted Repos and Files
+
+<!-- From research.md Files Inventory / Cross-Repo Scope and implement.md **Files:** lines.
+One table per repo. Action = Create | Modify | Reuse. Short repo-relative paths. -->
+
+| Repo | File | Action | Why |
+|------|------|--------|-----|
+
+## Data Model and Dialog Fields
+
+<!-- OMIT if none. From explain.md / research.md: field name, property (e.g. ./data/...), type, default, required. -->
+
+## Work by Area
+
+<!-- One short subsection per area that has work: Frontend, Backend, Authoring/Content, Migration, Config.
+2-5 bullets each, from implement.md steps grouped by area. -->
+
+## Contracts and Dependencies
+
+<!-- OMIT if none. From raw-story.md ## Linked Work Items + research.md:
+- Payloads/APIs agreed with other stories (cite the linked item #id)
+- Predecessor / successor items and their state
+- **Release check** line from raw-story.md, verbatim, if present -->
+
+## Decisions and Alternatives
+
+<!-- From plan-thinking.md and the Key Decisions section of implement.md:
+chosen option, why, alternatives rejected and why. OMIT if trivial. -->
+
+## Steps Overview
+
+<!-- From implement.md: numbered list "N. <step title> — <area>". No step bodies. -->
+
+## Risks
+
+<!-- From implement.md Risks + plan-thinking.md. OMIT if none. -->
+
+## Testing Notes
+
+<!-- From implement.md Testing Plan: what to unit test, what to verify manually. -->
+
+## Open Questions for BA
+
+<!-- From dor-report.md Open Questions tagged [req]/[design]/[process]. "None" if clear. -->
