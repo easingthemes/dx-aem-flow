@@ -1,7 +1,7 @@
 ---
 name: dx-plan
 description: "Generate implement.md, a plan with status-tracked steps, from explain.md and research.md. Use after requirements are ready ('plan this story')."
-argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
+argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)] [--force]"
 model: opus
 effort: high
 context: fork
@@ -110,6 +110,7 @@ If hub mode is not active: continue with normal flow below.
    - Does the step count and files referenced align with current `research.md`?
    - Have `research.md` or `explain.md` changed since `implement.md` was generated?
 4. If `implement.md` is current → print `implement.md already up to date — skipping` and STOP
+   - **Prepared by someone else:** if the last commit of `implement.md` is by another author (`git log -1 --format=%ae -- implement.md` ≠ `git config user.email`), it is a prepared plan (`/dx-prep`). Do not regenerate it unless the argument contains `--force` — even when it looks outdated: print `implement.md was prepared by <author> — keeping it. Pass --force to regenerate.` and STOP.
 5. If inputs changed or plan looks stale → print `implement.md exists but is outdated — regenerating` and continue
 6. If not found → continue normally (first run)
 

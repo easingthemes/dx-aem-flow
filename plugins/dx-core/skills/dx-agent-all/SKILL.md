@@ -1,7 +1,7 @@
 ---
 name: dx-agent-all
 description: "Full pipeline from ADO story to code and PR — requirements, plan, execution, build, review, commit, PR — with optional review checkpoints. Use for 'implement this story', 'do the whole story'."
-argument-hint: "[ADO Work Item ID or full URL]"
+argument-hint: "[ADO Work Item ID or full URL] [autonomous] [--force]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 hooks:
   PreToolUse:
@@ -39,6 +39,8 @@ Maintain run state in `$SPEC_DIR/run-state.json`:
 2. If exists and fresh (<2 hours) → ask: "Previous run found at phase {last_phase_completed}/{total_phases}. Resume or start fresh?"
 3. If stale → start fresh, delete old state
 4. If not exists → create new
+
+`run-state.json` only covers a run interrupted in the last 2 hours. Resuming **across days** — or continuing a plan someone else prepared with `/dx-prep` — goes through **Check prepared spec files** below, which works from the spec files themselves.
 
 **During execution:** Update after each phase.
 **On completion:** Delete run-state.json.
@@ -207,6 +209,7 @@ Add conditional phases (Figma, AEM baseline, AEM verify, editorial guide, docs) 
 ```dot
 digraph agent_all {
     "Parse argument + check run-state" [shape=box];
+    "Check prepared spec files" [shape=box];
     "Determine execution mode (interactive/autonomous)" [shape=box];
     "Phase 1: Requirements (fetch - dor - explain - research - share)" [shape=box];
     "Interactive: user review checkpoint" [shape=diamond];
@@ -239,7 +242,8 @@ digraph agent_all {
     "Phase 7: Documentation (conditional)" [shape=box];
     "Final Summary" [shape=doublecircle];
 
-    "Parse argument + check run-state" -> "Determine execution mode (interactive/autonomous)";
+    "Parse argument + check run-state" -> "Check prepared spec files";
+    "Check prepared spec files" -> "Determine execution mode (interactive/autonomous)";
     "Determine execution mode (interactive/autonomous)" -> "Phase 1: Requirements (fetch - dor - explain - research - share)";
     "Phase 1: Requirements (fetch - dor - explain - research - share)" -> "Interactive: user review checkpoint";
     "Interactive: user review checkpoint" -> "project.yaml exists?" [label="continue (or autonomous)"];
@@ -285,13 +289,53 @@ digraph agent_all {
 
 Extract the numeric ADO work item ID from the argument. If a full URL is provided, parse the ID. If no argument, ask the user. Then check for existing run-state per the Run-State Management rules above.
 
+### Check prepared spec files
+
+A ticket may already have spec files: prepared ahead of the sprint by an architect (`/dx-prep`), or left by an earlier run. They are the default — continue from them instead of regenerating.
+
+1. **Find the spec dir.** `SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir <id> 2>/dev/null || true)`.
+   If none is found locally, look for a pushed branch for the ticket:
+   ```bash
+   git fetch origin --quiet 2>/dev/null || true
+   git ls-remote --heads origin | sed -n 's#.*refs/heads/##p' | grep -E "^(feature|bugfix)/<id>-" | head -1
+   ```
+   If one exists, check it out (`git checkout -b <branch> origin/<branch>`, or `git checkout <branch>` if it exists locally) — in interactive mode ask first — then look for the spec dir again. A prepared plan lives on that branch.
+2. **Run the check:**
+   ```bash
+   REVIEW_TAG=$(bash .ai/lib/dx-common.sh yaml-val dx-prep.review-tag)
+   bash "${CLAUDE_PLUGIN_ROOT}/skills/dx-agent-all/scripts/prepared-check.sh" "$SPEC_DIR" "$REVIEW_TAG"
+   ```
+   It prints `REQ`, `PLAN`, `PLAN_BY`, `PLAN_WIKI` and `REVIEW` (see the script header for the values).
+3. **Print what will be skipped**, one line per phase, before anything runs:
+   ```
+   Prepared: requirements ✅ · plan ✅ (prepared by someone else, wiki page ✅) · review ✅
+   Phase 1 Requirements — skip if the ticket is unchanged
+   Phase 2 Planning — skip, keep implement.md (pass --force to regenerate)
+   ```
+   Print `No prepared spec files — full run.` when `REQ=none`.
+4. **Review marker** (only when `dx-prep.review-tag` is set and `PLAN=prepared`): `REVIEW=no` → print `⚠ Plan not marked reviewed (tag <review-tag> missing on the work item)`. If `dx-prep.require-review: true`, STOP in autonomous mode with that message and ask in interactive mode whether to continue.
+
+Remember `REQ` and `PLAN` — Phase 1 and Phase 2 use them. `--force` in the arguments disables both skips.
+
 ### Determine execution mode (interactive/autonomous)
 
 Check if the user specified a mode. If "autonomous", "auto", or "hands-free" was used, set autonomous mode. Otherwise default to interactive.
 
 ### Phase 1: Requirements (fetch - dor - explain - research - share)
 
-Invoke `Skill(/dx-req <id>)` (context: fork) — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a forked subagent. Spec files land in `.ai/specs/<id>-<slug>/`. Do NOT echo file content to chat — the user reads them on demand.
+**Prepared requirements (`REQ=prepared`, no `--force`):** first check whether the ticket changed since the specs were written — run only the deterministic fetch (same flags as `/dx-req` Phase 1 step 2, with the existing spec dir as the last argument):
+```bash
+ORG=$(bash .ai/lib/dx-common.sh yaml-val scm.org)
+PROJ=$(bash .ai/lib/dx-common.sh yaml-val scm.project)
+REL_RE=$(bash .ai/lib/dx-common.sh yaml-val dx-req.release-tag-regex)
+REL_N=$(bash .ai/lib/dx-common.sh yaml-val dx-req.related-comments)
+node .ai/lib/fetch-raw-story.js ${REL_RE:+"--release-tag-regex=$REL_RE"} ${REL_N:+"--related-comments=$REL_N"} \
+  "$ORG" "$PROJ" <id> "$SPEC_DIR" | grep -E '^(SKIPPED|PRESEEDED|fetch-raw-story: wrote)'
+```
+Jira (`tracker.provider: jira`) has no fetch script: compare the issue's `updated` timestamp with the `raw-story.md` provenance `created` date instead.
+`SKIPPED` or `PRESEEDED` → print `Phase 1: Requirements — (<N>/<total>) skipped (prepared, ticket unchanged).` and go to the next node. `wrote` → the ticket changed: run `/dx-req` as below (its phases are idempotent and update only what the change affects).
+
+Otherwise invoke `Skill(/dx-req <id>)` (context: fork) — this runs the full requirements pipeline (fetch, DoR, explain, research, share) in a forked subagent. Spec files land in `.ai/specs/<id>-<slug>/`. Do NOT echo file content to chat — the user reads them on demand.
 
 Print: `Phase 1: Requirements — (<N>/<total>) complete.`
 
@@ -405,7 +449,9 @@ This is informational only — dx-plan itself reads patterns and decisions durin
 
 If no edge files exist (new project or early tickets), skip silently.
 
-Invoke `Skill(/dx-plan <id>)` (context: fork). The plan is written to `$SPEC_DIR/implement.md`; the design-rationale summary is written to `$SPEC_DIR/plan-thinking.md`. Do NOT echo plan content to chat — reference the files instead.
+**Prepared plan (`PLAN=prepared` or `in-progress`, no `--force`):** do NOT invoke `/dx-plan` — keep `implement.md` as prepared. Still invoke `/dx-plan-validate` below: if Phase 1 picked up a ticket change, validation shows where the plan no longer covers the requirements. On `fail`, do not regenerate the plan — STOP with `Prepared plan no longer matches the requirements. See validation-report.md, then re-run /dx-prep <id> or /dx-agent-all <id> --force.` Print `Phase 2: Planning — (<N>/<total>) prepared plan kept (validated).` `PLAN=done` → all steps are done; skip to Phase 4.
+
+Otherwise invoke `Skill(/dx-plan <id>)` (context: fork). The plan is written to `$SPEC_DIR/implement.md`; the design-rationale summary is written to `$SPEC_DIR/plan-thinking.md`. Do NOT echo plan content to chat — reference the files instead.
 
 Then invoke `Skill(/dx-plan-validate <id>)` (context: fork).
 
