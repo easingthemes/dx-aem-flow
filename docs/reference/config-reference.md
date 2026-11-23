@@ -306,6 +306,16 @@ Optional pre-research context for `/dx-req` — written into `raw-story.md` by t
 | `release-tag-regex` | string | — | Regex a whole work-item tag must match to count as a release tag (e.g. `'\d{1,2}[A-Za-z]{3}\d{4}Release'`). Adds a Release column to `## Linked Work Items` and a `**Release check:**` line for linked items in another release or none. Write it in single quotes so backslashes stay literal. |
 | `related-comments` | number | `0` | Include the newest 5 human comments of the first N linked Related / Predecessor / Successor items — contracts agreed in a related story. Each item costs one more MCP call. |
 | `scope-repos` | map | — | Title tag or keyword → repo name, e.g. `FE: My-Frontend-Repo`. Phase 4 matches it against `**Scope Tags:**` and the title and passes the repos as a starting hint to research. |
+| `devplan-update` | string | `edit` | `edit` \| `append`. When the plan changes, `edit` updates the `[DevPlan]` comment in place (falls back to a "Plan Updated" comment when ADO refuses because another identity posted it, and always on Jira); `append` keeps the old behaviour. |
+
+### `dx-prep`
+
+Settings for the architect prep / hand-off flow (`/dx-prep`, read by `/dx-agent-all`).
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `review-tag` | string | — | Work-item tag the reviewer adds after reading the plan wiki page. `/dx-agent-all` prints whether a prepared plan has it. |
+| `require-review` | boolean | `false` | With `review-tag` set: `/dx-agent-all` stops in autonomous mode, and asks in interactive mode, when a prepared plan lacks the tag. |
 
 ### `doctor`
 

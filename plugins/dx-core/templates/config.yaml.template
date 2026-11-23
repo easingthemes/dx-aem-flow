@@ -87,6 +87,15 @@ build:
 #   scope-repos:                           # title tag / keyword → repo hint for Phase 4
 #     FE: My-Frontend-Repo
 #     BE: My-Backend-Repo
+#   devplan-update: edit                   # edit | append — on a changed plan, edit the
+#                                          # [DevPlan] comment in place, or post "Plan Updated"
+
+# Optional — /dx-prep (architect prep / hand-off) settings.
+# dx-prep:
+#   review-tag: "Plan-Reviewed"            # work-item tag the reviewer adds after reading the
+#                                          # plan wiki page; /dx-agent-all shows whether it is set
+#   require-review: false                  # true → /dx-agent-all stops (autonomous) or asks
+#                                          # (interactive) when a prepared plan lacks the tag
 
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review

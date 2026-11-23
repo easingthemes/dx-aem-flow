@@ -73,6 +73,20 @@ If none: "Requirements are clear.">
 
 Where `{scm.org}` and `{scm.project_url_encoded}` are read from `.ai/config.yaml`.
 
+## Hand-off Block (prepared plan)
+
+Add this block to the posted comment (not to `share-plan.md`) when `implement.md` exists — the plan is prepared and someone else may continue it:
+
+```
+**Plan details:** [Development Plan](<URL from $SPEC_DIR/.plan-wiki-url>)
+**Prepared:** ✅ Requirements · ✅ DoR · ✅ Research · ✅ Plan (<n> steps) · Branch `<branch from .branch>`
+**Next:** `/dx-agent-all <id>` continues from implementation — the plan is the default; deviations are recorded with a reason.
+```
+
+- Omit the **Plan details** line when `.plan-wiki-url` does not exist (no wiki page published).
+- Mark a phase ✅ only if its file exists (`raw-story.md`, `dor-report.md`, `research.md`, `implement.md`); leave out phases that did not run.
+- The block is plain facts — it does not count against the 25-line limit and needs no plain-language rewrite.
+
 ## Writing Principles
 
 - **Hard limit: ~25 lines of content** — this is a Teams-pasteable summary, not a document. If it takes more than 60 seconds to read, it's too long.
@@ -99,18 +113,29 @@ Before posting, check for an existing comment to avoid duplicates:
 
    ### If provider = jira
 
-   Comments are included in the `jira_get_issue` response. Fetch the issue and search `fields.comment.comments[].body` for the signature `[DevPlan] Development Plan`:
+   Comments are included in the `jira_get_issue` response. Fetch the issue and search `fields.comment.comments[].body` for the `[DevPlan]` signature:
    ```
    mcp__atlassian__jira_get_issue
      issue_key: "<issue key>"
    ```
 
-2. Search for a comment containing the signature `[DevPlan] Development Plan`.
+2. Search for the newest comment whose first line starts with `### [DevPlan]` and is not `### [DevPlan] Plan Updated` — the main DevPlan comment. Keep its `id`.
 
 3. If found:
-   - Compare key content: scope, assumption count, open question count, change bullets
+   - Compare key content: scope, change bullets, hand-off block, assumption count, open question count
    - If unchanged → print `ADO comment already up to date — skipping` and skip
-   - If changed → post a **minimal update comment** (not a full repeat):
+   - If changed and `dx-req.devplan-update` is `edit` (default) → **edit that comment in place** with the full new text:
+     ```
+     mcp__ado__wit_work_item_comment_write
+       action: "update"
+       project: "<ADO project from config>"
+       workItemId: <id>
+       commentId: <id of the DevPlan comment>
+       format: "Markdown"
+       text: "<condensed share-plan>"
+     ```
+     ADO lets only the comment's author edit it. If the update is refused (another identity posted it, e.g. the architect's run vs. a pipeline), fall back to the minimal update comment below. Print `DevPlan comment updated in place` or `DevPlan comment owned by another identity — posted an update comment`.
+   - If changed and `dx-req.devplan-update: append`, or on Jira, or after a refused edit → post a **minimal update comment** (not a full repeat):
      ```
      ### [DevPlan] Plan Updated
      **Scope:** <scope>
@@ -149,4 +174,4 @@ If posting fails, print a warning but do NOT fail — the local `share-plan.md` 
 - **Honest scope assessment** — don't minimize to look fast or maximize to look busy. Base it on evidence.
 - **No time estimates** — never. Not even "should be quick" or "this will take a while."
 - **Preserve the developer's voice** — this reads as "here's what I plan to do" not a formal specification. First person is fine.
-- **Idempotent posting** — always check for existing `[DevPlan]` comment before posting. Never create duplicate comments.
+- **Idempotent posting** — always check for existing `[DevPlan]` comment before posting. Never create duplicate comments; edit the existing one in place when allowed.
