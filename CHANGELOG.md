@@ -1,3 +1,10 @@
+# [6.2.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.1.0...v6.2.0) (2026-11-23)
+
+
+### Features
+
+* **dx-prep:** architect prep and hand-off flow ([#274](https://github.com/easingthemes/dx-aem-flow/issues/274)) ([4e06ac5](https://github.com/easingthemes/dx-aem-flow/commit/4e06ac543101efa1bd02c5d0d9eded7325f7fcfc))
+
 # [6.1.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.0.0...v6.1.0) (2026-11-16)
 
 
