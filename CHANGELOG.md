@@ -1,3 +1,10 @@
+## [6.2.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.2.0...v6.2.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **dx-doc-gen:** find existing wiki story pages by any leading-id name ([#276](https://github.com/easingthemes/dx-aem-flow/issues/276)) ([27bda80](https://github.com/easingthemes/dx-aem-flow/commit/27bda801c32bbe382c5cf6c503ac462d06fbdfae))
+
 # [6.2.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.1.0...v6.2.0) (2026-11-23)
 
 
