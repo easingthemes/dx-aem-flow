@@ -5,7 +5,7 @@
 <!-- 3-5 bullets max. What will change, plain language. No file names, no jargon. -->
 
 <!-- Hand-off block — ONLY when implement.md exists. See share-template.md "Hand-off Block". -->
-**Plan details:** [Development Plan](<wiki URL>)
+**Plan details:** [<dx-prep.wiki-page-title — full text>](<wiki URL>)
 **Prepared:** ✅ Requirements · ✅ DoR · ✅ Research · ✅ Plan (<n> steps) · Branch `<branch>`
 **Next:** `/dx-agent-all <id>` continues from implementation.
 

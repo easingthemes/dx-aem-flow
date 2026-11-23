@@ -92,6 +92,9 @@ build:
 
 # Optional — /dx-prep (architect prep / hand-off) settings.
 # dx-prep:
+#   wiki-page-title: "Development Plan (Solution Review)"  # plan page title (default "Development Plan");
+#                                          # also the link text in [DevPlan] — name it after the
+#                                          # step it replaces so history searches find it
 #   review-tag: "Plan-Reviewed"            # work-item tag the reviewer adds after reading the
 #                                          # plan wiki page; /dx-agent-all shows whether it is set
 #   require-review: false                  # true → /dx-agent-all stops (autonomous) or asks

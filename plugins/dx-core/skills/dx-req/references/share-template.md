@@ -78,12 +78,13 @@ Where `{scm.org}` and `{scm.project_url_encoded}` are read from `.ai/config.yaml
 Add this block to the posted comment (not to `share-plan.md`) when `implement.md` exists — the plan is prepared and someone else may continue it:
 
 ```
-**Plan details:** [Development Plan](<URL from $SPEC_DIR/.plan-wiki-url>)
+**Plan details:** [<dx-prep.wiki-page-title>](<URL from $SPEC_DIR/.plan-wiki-url>)
 **Prepared:** ✅ Requirements · ✅ DoR · ✅ Research · ✅ Plan (<n> steps) · Branch `<branch from .branch>`
 **Next:** `/dx-agent-all <id>` continues from implementation — the plan is the default; deviations are recorded with a reason.
 ```
 
 - Omit the **Plan details** line when `.plan-wiki-url` does not exist (no wiki page published).
+- The link text is the configured page title (`dx-prep.wiki-page-title`, default `Development Plan`), written out in full — teams search work-item history for it (e.g. "Solution Review"), so never shorten it.
 - Mark a phase ✅ only if its file exists (`raw-story.md`, `dor-report.md`, `research.md`, `implement.md`); leave out phases that did not run.
 - The block is plain facts — it does not count against the 25-line limit and needs no plain-language rewrite.
 

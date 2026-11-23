@@ -61,7 +61,7 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 | dx-plan | `/dx-plan` | `<work-item-id>` (optional) | Generate step-by-step implementation plan with status tracking. Tags steps with repo markers (e.g., `[repo: ui]`) when the plan spans multiple repos. Reads cross-ticket patterns from `.ai/graph/nodes/patterns/`. Optionally invokes `superpowers:brainstorming` for design exploration before planning. | `implement.md` |
 | dx-plan-validate | `/dx-plan-validate` | `<work-item-id>` (optional) | Verify plan covers all requirements, no extras, dependencies correct | Warnings/OK |
 | dx-plan-resolve | `/dx-plan-resolve` | `<work-item-id>` (optional) | Research and fix risks flagged by validation | Updated `implement.md` |
-| dx-prep | `/dx-prep` | `<work-item-id>` `[autonomous]` `[--force]` | Architect prep / hand-off: runs dx-req + dx-plan (+ validate), writes `docs/plan-wiki.md` and publishes it as a **Development Plan** child page under the story's doc page, edits the `[DevPlan]` comment with wiki link + prepared phases + next command, commits and pushes the spec dir. `/dx-agent-all` later skips the prepared phases. | `docs/plan-wiki.md`, `.plan-wiki-url`, wiki page, `[DevPlan]` |
+| dx-prep | `/dx-prep` | `<work-item-id>` `[autonomous]` `[--force]` | Architect prep / hand-off: runs dx-req + dx-plan (+ validate), writes `docs/plan-wiki.md` and publishes it as a child page (`dx-prep.wiki-page-title`, default **Development Plan**) under the story's existing doc page — found whatever its name format, also in earlier sprints — edits the `[DevPlan]` comment with wiki link + prepared phases + next command, commits and pushes the spec dir. `/dx-agent-all` later skips the prepared phases. | `docs/plan-wiki.md`, `.plan-wiki-url`, wiki page, `[DevPlan]` |
 | dx-pattern-extract | `/dx-pattern-extract` | `[--dry-run]` (optional) | Scan completed specs for recurring decisions/approaches. Promotes patterns appearing in 3+ tickets to `.ai/graph/nodes/patterns/` for cross-ticket knowledge reuse. | Pattern YAML files |
 
 ### Execution (`dx-step-*`) — 5 skills
@@ -105,7 +105,7 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Dialog/FE screenshots, Figma comparison, Authoring Guide. Screenshots use repo-relative paths. Posts to ADO Wiki/Confluence. | `docs/wiki-page.md` |
+| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Dialog/FE screenshots, Figma comparison, Authoring Guide. Screenshots use repo-relative paths. Posts to ADO Wiki/Confluence: reuses the story's existing page whatever its name format (also in earlier sprints) and merges into hand-written content instead of overwriting it. | `docs/wiki-page.md` |
 | dx-doc-retro | `/dx-doc-retro` | `<work-item-id>` | Retroactive wiki docs for completed stories — fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed. | `docs/wiki-page.md` |
 
 ### Decision Support — 1 skill

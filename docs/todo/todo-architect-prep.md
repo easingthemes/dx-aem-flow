@@ -56,3 +56,11 @@ Target outputs: one short ADO comment (`[DevPlan]`) for people, one wiki page fo
 **Scope:** `skills/dx-req/references/share-template.md`, `skills/dx-estimate/`.
 **Done-when:** decision recorded after #277 is in use.
 **Approach:** Deferred — `dx-estimate` already does this; merging it into `[DevPlan]` mixes two jobs.
+
+## Wiki story page lookup
+
+**Added:** 2026-11-23
+**Problem:** dx-doc-gen and dx-prep reused an existing story page only when its name started with `<id>-`. Hand-made wikis also use `<id> <title>`, `<id>: <title>` and several leading ids, so most stories got a second `<id>-<slug>` page and the plan landed under the duplicate. Stories carried over to a later sprint were not found either. The plan page was titled "Development Plan" only, so teams that used a "Solution Review" step could not tell it replaced that step.
+**Scope:** `plugins/dx-core/data/lib/dx-common.sh` (`wiki-story-page`), `plugins/dx-core/shared/wiki-story-page.md`, `skills/dx-doc-gen/SKILL.md` (6a/6b), `skills/dx-prep/SKILL.md`, `data/templates/wiki/plan-wiki.md.template`, `skills/dx-req/references/share-template.md`, config template + `docs/reference/config-reference.md` (`dx-prep.wiki-page-title`).
+**Done-when:** `bash plugins/dx-core/data/lib/tests/dx-common-wiki-story-page.test.sh` passes (all name forms, several ids, carried-over sprint, prefix false positives, no match); `grep -n "wiki-story-page.md" plugins/dx-core/skills/dx-doc-gen/SKILL.md plugins/dx-core/skills/dx-prep/SKILL.md` hits both.
+**Approach:** Done 2026-11-23. Because the resolver now finds hand-written pages, dx-doc-gen merges its output between hidden markers (ADO) or under a `Generated documentation (dx-doc-gen)` heading (Confluence) instead of overwriting the team's content; dx-prep never writes an existing story page.

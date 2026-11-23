@@ -7,6 +7,7 @@
 #    bash .ai/lib/dx-common.sh find-spec-dir 2416553
 #    bash .ai/lib/dx-common.sh slugify 2416553 "Enhance Card Layout Switcher"
 #    bash .ai/lib/dx-common.sh yaml-val build.compile
+#    printf '%s\n' "$PATHS" | bash .ai/lib/dx-common.sh wiki-story-page --id 2416553
 #
 # 2. As a library (from other scripts):
 #    source .ai/lib/dx-common.sh
@@ -242,6 +243,72 @@ aem_instance() {
   return 1
 }
 
+# --- Wiki story page resolver ---
+# Pick the existing wiki page for a work item among a list of page paths.
+# Story pages are usually created by hand, so names vary:
+#   "<id>-<slug>", "<id> <title>", "<id>: <title>", "<id1> <id2> <title>", "<id1>, <id2>: …"
+# A name matches when <id> is one of its LEADING ids — each leading id followed
+# by a space, ",", ":" or "-" — and the id is followed by one of those or the
+# end of the name. "<id>1…" (a longer number) never matches.
+#
+# Usage: wiki_story_page --id <id> [--prefer <name>] [--root <root> [--sprint <name>]] < paths
+#   stdin     one page path per line (wiki paths or "<parent>/<title>" for Confluence)
+#   --prefer  exact story name that wins a tie (the generated "<id>-<slug>")
+#   --root    only paths exactly two levels below <root> count (<root>/<sprint>/<story>)
+#   --sprint  with --root: a match in this sprint folder beats matches in other sprints
+# Output:  MATCH=<path>, SCOPE=current|other-sprint|any, then OTHER=<path> per extra match
+# Exit:    0 = match, 1 = no match, 2 = bad arguments
+wiki_story_page() {
+  local id="" prefer="" root="" sprint=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --id) id="${2:-}"; shift 2 ;;
+      --prefer) prefer="${2:-}"; shift 2 ;;
+      --root) root="${2:-}"; root="${root%/}"; shift 2 ;;
+      --sprint) sprint="${2:-}"; shift 2 ;;
+      *) echo "wiki-story-page: unknown argument '$1'" >&2; return 2 ;;
+    esac
+  done
+  if ! [[ "$id" =~ ^[0-9]+$ ]]; then
+    echo "wiki-story-page: --id must be a number" >&2
+    return 2
+  fi
+  awk -v id="$id" -v prefer="$prefer" -v root="$root" -v sprint="$sprint" '
+    function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+    BEGIN { re = "^([0-9]+[[:space:],:-]+)*" id "([[:space:],:-]|$)"; n = 0 }
+    {
+      p = $0; sub(/\r$/, "", p); p = trim(p)
+      if (p == "") next
+      sp = ""
+      if (root != "") {
+        if (substr(p, 1, length(root) + 1) != root "/") next
+        rest = substr(p, length(root) + 2)
+        if (split(rest, seg, "/") != 2) next          # only <sprint>/<story>
+        sp = seg[1]; name = trim(seg[2])
+      } else {
+        name = p; sub(/.*\//, "", name); name = trim(name)
+      }
+      if (name !~ re) next
+      n++; path[n] = p
+      tier[n] = (root != "" && sprint != "" && sp != sprint) ? 1 : 0
+      pref[n] = (prefer != "" && name == prefer) ? 0 : 1
+      len[n] = length(p)
+    }
+    END {
+      if (!n) exit 1
+      best = 1
+      for (i = 2; i <= n; i++) {
+        if (tier[i] < tier[best] ||
+            (tier[i] == tier[best] && (pref[i] < pref[best] ||
+            (pref[i] == pref[best] && len[i] < len[best])))) best = i
+      }
+      print "MATCH=" path[best]
+      if (root != "" && sprint != "") print "SCOPE=" (tier[best] ? "other-sprint" : "current")
+      else print "SCOPE=any"
+      for (i = 1; i <= n; i++) if (i != best) print "OTHER=" path[i]
+    }'
+}
+
 # --- Basic Auth for curl, from BASIC_AUTH_SITES ---
 #
 # BASIC_AUTH_SITES="name:url:user:pass,name2:url2:user2:pass2" — the same
@@ -374,6 +441,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     aem-instance)
       aem_instance "$@"
       ;;
+    wiki-story-page)
+      wiki_story_page "$@"
+      exit $?
+      ;;
     curl-basic-auth)
       curl_basic_auth "$@"
       exit $?
@@ -389,6 +460,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       echo "  require-dir <path> [label]    Assert directory exists" >&2
       echo "  aem-instance <name> [field]   Resolve url/user/pass from AEM_INSTANCES" >&2
       echo "  curl-basic-auth <url> [curl-args...]  curl with -u from BASIC_AUTH_SITES when url's origin is listed" >&2
+      echo "  wiki-story-page --id <id> [--prefer <name>] [--root <root> [--sprint <name>]] < paths" >&2
+      echo "                                Pick the existing wiki story page for a work item" >&2
       exit 1
       ;;
   esac

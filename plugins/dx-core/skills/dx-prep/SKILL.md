@@ -9,7 +9,7 @@ You prepare a ticket so that someone else — a developer, or `/dx-agent-all` in
 
 Outputs:
 - Spec files in `.ai/specs/<id>-<slug>/` (from `/dx-req` and `/dx-plan`), committed and pushed on the feature branch
-- `docs/plan-wiki.md` in the spec dir + a wiki page **Development Plan** under the story's doc page
+- `docs/plan-wiki.md` in the spec dir + a wiki page titled `dx-prep.wiki-page-title` (default **Development Plan**) under the story's doc page. Teams that had a pre-development "Solution Review" / tech-lead sign-off step use this page for it — set the title to make that visible, e.g. `Development Plan (Solution Review)`.
 - The `[DevPlan]` comment on the work item, with the wiki link, what is prepared, and the next command
 
 Re-running is safe: every step is idempotent, the wiki page is upserted and the comment edited in place.
@@ -77,7 +77,12 @@ Print `Plan validation failed — see $SPEC_DIR/validation-report.md. Fix the pl
 
 Read `.ai/templates/wiki/plan-wiki.md.template` and fill it **only from spec files** — `raw-story.md`, `explain.md`, `research.md`, `dor-report.md`, `implement.md`, `plan-thinking.md`, `.sprint`, `.branch`. No new code search: if a section has no source, omit it. Write `$SPEC_DIR/docs/plan-wiki.md`.
 
-**Status line:** read `dx-prep.review-tag` from config. If set and `raw-story.md` `**Tags:**` contains it → `Reviewed (tag <tag>)`; otherwise `Draft — not reviewed`. Omit the status part when no tag is configured.
+**Title:** `PLAN_TITLE=$(bash .ai/lib/dx-common.sh yaml-val dx-prep.wiki-page-title)`, default `Development Plan`. It is the page heading (`# <PLAN_TITLE> — <Title> (ADO #<id>)`).
+
+**Status line:** read `dx-prep.review-tag` from config.
+- Set, and `raw-story.md` `**Tags:**` contains it → `Reviewed (tag <tag>)`
+- Set, tag missing → `Draft — not reviewed (add tag <tag> after review)`
+- Not set → `Draft — set dx-prep.review-tag to track review`
 
 Idempotent: if `docs/plan-wiki.md` exists and the new content is the same apart from the `Prepared:` date, keep the file and print `plan-wiki.md already up to date`.
 
@@ -87,23 +92,20 @@ ADO: `scm.wiki-id` and `scm.wiki-doc-root` set. Jira: `confluence.space-key` and
 
 ### Publish wiki page
 
-The plan is a **child page** of the story's doc page, so `/dx-doc-gen` can keep rewriting the story page after implementation without touching the plan.
+The plan is a **child page** of the story's doc page, so `/dx-doc-gen` can keep updating the story page after implementation without touching the plan.
 
-**ADO** — use the same path rules as `/dx-doc-gen` section 6a (sprint folder, `Unsorted` when the sprint is unknown, reuse of an existing `<id>-` page):
+**Story page:** follow `../../shared/wiki-story-page.md` to find it. It reuses the story's existing page whatever its name format (`<id>-<slug>`, `<id> <title>`, `<id>: <title>`, several ids), also in other sprint folders (carried-over stories), and only falls back to `<id>-<slug>` in the current sprint (`Unsorted` when the sprint is unknown). Never create a second story page next to an existing one.
 
-```
-WIKI_ROOT = <scm.wiki-doc-root>
-SPRINT    = <.sprint>                       # or "Unsorted"
-STORY     = <existing child of WIKI_ROOT/SPRINT starting with "<id>-">, else <id>-<slug>
-PLAN_PATH = "${WIKI_ROOT}/${SPRINT}/${STORY}/Development Plan"
-```
+**ADO:**
 
-1. Ensure the sprint page exists — `mcp__ado__wiki` `action: "get_page"`; on 404, `mcp__ado__wiki_upsert_page` with `# ${SPRINT}`.
-2. Ensure the story page exists — on 404, create a placeholder: `# <Title> (ADO #<id>)` + `Technical documentation follows after implementation. The prepared plan is in the child page **Development Plan**.` (`/dx-doc-gen` replaces it later).
-3. Upsert the plan: `mcp__ado__wiki_upsert_page` with `wikiIdentifier: <scm.wiki-id>`, `project: <scm.wiki-project>`, `path: PLAN_PATH`, `content: <docs/plan-wiki.md>`. The upsert reads the page version (ETag) itself; on a version conflict, get the page again and retry once.
-4. Write the page URL to `$SPEC_DIR/.plan-wiki-url` (one line). Use the URL the tool returns (`remoteUrl`); if none, build `<scm.org>/<wiki-project>/_wiki/wikis/<wiki-id>?pagePath=<PLAN_PATH url-encoded>`.
+1. Resolve `STORY_PATH` (shared procedure above; it creates the sprint folder only when a new story page is needed).
+2. Story page does not exist yet → create a placeholder: `# <Title> (ADO #<id>)` + `Technical documentation follows after implementation. The prepared plan is in the child page **<PLAN_TITLE>**.` (`/dx-doc-gen` replaces it later). An existing story page is **never** written by `/dx-prep`.
+3. Upsert the plan: `mcp__ado__wiki_upsert_page` with `wikiIdentifier: <scm.wiki-id>`, `project: <scm.wiki-project>`, `path: "${STORY_PATH}/${PLAN_TITLE}"`, `content: <docs/plan-wiki.md>`. Pass the page's current version as `etag` when it exists; on a version conflict, get the page again and retry once.
+4. Write the page URL to `$SPEC_DIR/.plan-wiki-url` (one line). Use the URL the tool returns (`remoteUrl`); if none, build `<scm.org>/<wiki-project>/_wiki/wikis/<wiki-id>?pagePath=<page path url-encoded>`.
 
-**Confluence** — follow `/dx-doc-gen` section 6b to find the sprint page and the story page `<id>-<slug>` (create the story page as the same placeholder if missing). Create or update a child page titled `<id> Development Plan` (Confluence titles are unique per space) with the converted content. Write its URL to `.plan-wiki-url`.
+If `PLAN_TITLE` was changed since the last run, the page under the old title stays — print `Plan page title changed — the old page "<old>" is still there; delete or rename it by hand` when `.plan-wiki-url` points at a different title.
+
+**Confluence:** resolve the story page with the shared procedure (create the same placeholder only when no page matched). Create or update its child page titled `<id> <PLAN_TITLE>` (Confluence titles are unique per space) with the converted content. Write its URL to `.plan-wiki-url`.
 
 If publishing fails, print a warning and continue — the local `docs/plan-wiki.md` and the comment still help.
 
@@ -137,10 +139,10 @@ If there is something to commit, commit with message `#<id> Prepare development 
 ## /dx-prep complete: #<id> <title>
 
 - Specs: `<spec-dir>` — requirements, DoR, research, plan (<n> steps)
-- Wiki: <PLAN_PATH or "local only: docs/plan-wiki.md">
+- Wiki: <"<STORY_PATH>/<PLAN_TITLE>" or "local only: docs/plan-wiki.md"> <"— story page carried over from <sprint>" when SCOPE=other-sprint>
 - ADO: [DevPlan] comment <posted | updated | unchanged>
 - Branch: `<branch>` <pushed | not pushed — reason>
-- Review: <"add tag <review-tag> to the work item after reading the wiki page" | "reviewed" | omit if no tag configured>
+- Review: <"add tag <review-tag> to the work item after reading the wiki page" | "reviewed" | "not tracked — set dx-prep.review-tag">
 
 **Next:** `/dx-agent-all <id>` — skips the prepared phases and starts from implementation.
 ```
