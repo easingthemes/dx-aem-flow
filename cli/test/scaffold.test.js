@@ -191,6 +191,9 @@ test('adds .ai entries to .gitignore without dropping existing ones', () => {
     assert.match(ignore, /\.ai\//);
     // dx-core's playwright MCP server writes screenshots and session cookies here.
     assert.match(ignore, /^\.ai\/playwright\/$/m);
+    // Spec files are tracked; only ticket images are ignored.
+    assert.match(ignore, /^\.ai\/specs\/\*\*\/images\/$/m);
+    assert.doesNotMatch(ignore, /^\.ai\/specs\/$/m);
   } finally {
     rm(root);
   }

@@ -220,7 +220,8 @@ Pipeline-only variables (`ANTHROPIC_API_KEY`, `ADO_PAT`, AWS keys) are not check
 ## 5. .gitignore Coverage
 
 Read `.gitignore` (if it exists). Check for these entries (exact or parent-covering pattern):
-- `.ai/specs/` → `✓` or `⚠ NOT in .gitignore`
+- `.ai/specs/` must **not** be ignored as a whole → `✓ tracked` or `⚠ .ai/specs/ is gitignored — prepared specs cannot reach another dev or a pipeline, and SimpleAgent/BugFix recovery cannot work. Replace the line with .ai/specs/**/images/` (a bare `.ai/specs/` or `.ai/specs` line, or a parent `.ai/` line, counts as ignored)
+- `.ai/specs/**/images/` → `✓` or `⚠ NOT in .gitignore` (ticket images are re-downloadable)
 - `.ai/run-context/` → `✓` or `⚠ NOT in .gitignore`
 - `.ai/research/` → `✓` or `⚠ NOT in .gitignore`
 - `.ai/playwright/` → `✓` or `⚠ NOT in .gitignore` (browser screenshots and session cookies from the `playwright` MCP server — must never be committed)
@@ -551,7 +552,8 @@ Settings                                           Status
 
 .gitignore Coverage                                Status
 ─────────────────────────────────────────────────────────
-.ai/specs/                                         ✓ in .gitignore
+.ai/specs/                                         ✓ tracked
+.ai/specs/**/images/                               ✓ in .gitignore
 .ai/run-context/                                   ⚠ NOT in .gitignore
 .ai/research/                                      ✓ in .gitignore
 .ai/playwright/                                    ✓ in .gitignore

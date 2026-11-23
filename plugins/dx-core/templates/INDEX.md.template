@@ -64,7 +64,7 @@ Machine-readable entry point for AI agents. All paths relative to repo root.
 | `.ai/project/` | Knowledge base — component index, features, markets | Yes |
 | `.ai/automation/` | Prompts, agent roles, pipeline policy | Yes |
 | `.ai/lib/` | Shared utilities (audit.sh) | Yes |
-| `.ai/specs/` | Per-ticket output (raw-story, explain, research, implement) | No (gitignored) |
+| `.ai/specs/` | Per-ticket output (raw-story, explain, research, implement) | Yes — travels with the feature branch (`images/` gitignored) |
 | `.ai/pr-reviews/` | PR review session data | No (gitignored) |
 | `.ai/cache/` | Cached resources (DoR checklist, etc.) — saves tokens by avoiding refetch | No (gitignored) |
 | `.claude/rules/` | Auto-loaded coding conventions | Yes |

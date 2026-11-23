@@ -221,8 +221,8 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `recovery.max-attempts` | integer | no | Human-answer cycles allowed on a `needs-input` blocker before downgrading it to `hard` (recommend DevAgent). Default `3`. Crashes/transient resumes do not count against this cap. |
 
 > **Prerequisite for recovery:** `.ai/specs/` must be **tracked** in git — the
-> per-ticket branch is the durable state store. The `/dx-init` gitignore ignores
-> `.ai/specs/` by default; remove that line to enable SimpleAgent recovery.
+> per-ticket branch is the durable state store. `/dx-init` tracks it by default;
+> an older install may still have a `.ai/specs/` gitignore line — remove it.
 
 ### `toolchain`
 

@@ -280,11 +280,11 @@ Content to write:
 
 ### 5f. Add .ai/ to .gitignore (if needed)
 
-Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai/specs/`. If not, suggest adding:
+Read `.gitignore` (use Read tool) and check which of these entries it already has. Suggest adding the missing ones:
 
 ```
 # dx workflow
-.ai/specs/
+.ai/specs/**/images/
 .ai/run-context/
 .ai/research/
 .ai/me.md
@@ -295,11 +295,14 @@ Read `.gitignore` (use Read tool) and check if it already handles `.ai/` or `.ai
 
 Do NOT auto-modify `.gitignore` — ask the user first.
 
-> **SimpleAgent recovery exception.** If this project uses autonomous SimpleAgent
-> (`/dx-simple`, `@kai-simple` comment trigger) with resumable recovery,
-> `.ai/specs/` must be **tracked** — the per-ticket branch is the durable state
-> store. In that case omit the `.ai/specs/` line above (keep the others). Mention
-> this when the user enables SimpleAgent.
+**`.ai/specs/` is tracked, not ignored.** Spec files (`raw-story.md`, `explain.md`,
+`research.md`, `implement.md`, …) travel with the feature branch, so a plan prepared
+by one person reaches the dev or pipeline that continues it, and SimpleAgent /
+BugFix recovery use the per-ticket branch as their state store. Only
+`.ai/specs/**/images/` is ignored: ticket images are re-downloadable, and
+`images.md` already carries their descriptions. If `.gitignore` has a bare
+`.ai/specs/` line (older installs), suggest replacing it with
+`.ai/specs/**/images/`.
 
 ### 5g. Configure ADO MCP Server
 

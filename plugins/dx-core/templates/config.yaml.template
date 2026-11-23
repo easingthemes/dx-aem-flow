@@ -55,8 +55,8 @@ build:
 #     max-attempts: 3                      # human-answer cycles before downgrading
 #                                          # a needs-input blocker to hard (DevAgent).
 # NOTE: SimpleAgent recovery requires `.ai/specs/` to be TRACKED in git
-# (the per-ticket branch is the durable state store). The /dx-init gitignore
-# ignores `.ai/specs/` by default — remove that line to enable recovery.
+# (the per-ticket branch is the durable state store). /dx-init tracks it by
+# default; older installs may still have a `.ai/specs/` gitignore line — remove it.
 
 # Optional — BugFix agent (/dx-bug-all) settings. Like SimpleAgent, the autonomous
 # BugFix agent is triggered by an Azure-native Service Hook on a Bug comment (no

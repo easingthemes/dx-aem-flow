@@ -49,7 +49,7 @@
 │   ├── agents/roles/
 │   └── policy/
 ├── lib/                   <-- shared utilities (audit.sh)
-└── specs/                 <-- per-ticket output (gitignored)
+└── specs/                 <-- per-ticket output (tracked; images/ gitignored)
     └── <id>-<slug>/
         ├── raw-story.md
         ├── explain.md
