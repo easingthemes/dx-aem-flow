@@ -237,6 +237,6 @@ Each skill that posts a work-item comment starts it with a **visible text signat
 | `[BugVerify]`, `[BugVerifyLocal]`, `[BugVerifyQA]` | dx-bug-verify |
 | `[QAHandoff]` | aem-qa-handoff |
 
-**"Solution prepared" marker:** a `[DevPlan]` comment with a `**Plan details:**` wiki link and a `**Prepared:**` line means the ticket was prepared for hand-off (`/dx-prep`). It counts as **reviewed** when the work item also carries the `dx-prep.review-tag` tag. Reports (sprint readiness and similar) should read these two signals rather than a separate marker. `[DevPlan] Plan Updated` is a follow-up, not the main comment.
+**"Solution prepared" marker:** a `[DevPlan]` comment with a `**Plan details:**` wiki link (its text is `dx-prep.wiki-page-title`, e.g. `Development Plan (Solution Review)`) and a `**Prepared:**` line means the ticket was prepared for hand-off (`/dx-prep`). It counts as **reviewed** when the work item also carries the `dx-prep.review-tag` tag. Reports (sprint readiness and similar) should read these two signals rather than a separate marker. `[DevPlan] Plan Updated` is a follow-up, not the main comment.
 
 **Never use an HTML comment (`<!-- … -->`) as a signature or anywhere in posted text.** ADO Markdown comments escape it, so readers see `<!-- … -->` as literal text. The `<!-- … -->` lines in `.ai/templates/ado-comments/*.template` are instructions for you: follow them, then leave them out of the comment you post.

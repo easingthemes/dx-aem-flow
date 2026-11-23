@@ -126,60 +126,33 @@ Read `tracker.provider` from `.ai/config.yaml` (default: `ado`).
 
 1. Read `scm.wiki-id`, `scm.wiki-project`, and `scm.wiki-doc-root` from `.ai/config.yaml`
 2. If `scm.wiki-id` is not configured, print: `Wiki ID not configured — wiki page saved locally only.` and STOP wiki posting.
-3. Determine the sprint subfolder path:
+3. **Find the story page** — follow `../../shared/wiki-story-page.md` (ADO section) with `WIKI_ROOT = <scm.wiki-doc-root>`, `SPRINT = <sprint name from .sprint>` (`Unsorted` when unknown) and the spec dir's `<id>`/`<slug>`. It reuses the story's existing page whatever its name format (`<id>-<slug>`, `<id> <title>`, `<id>: <title>`, several ids), looks in other sprint folders for a carried-over story, and only falls back to `${WIKI_ROOT}/${SPRINT}/<id>-<slug>`. Set `WIKI_PATH` to the resulting `STORY_PATH`.
 
-```
-WIKI_ROOT = <scm.wiki-doc-root>        # e.g., /My-Wiki/Technical-Documentation/Sprint-wise
-SPRINT = <sprint name from .sprint>     # e.g., Sprint 42
-PAGE_TITLE = <id>-<slug-from-title>     # e.g., 2357516-Enhance-PLP-Filter-Sticky
-WIKI_PATH = "${WIKI_ROOT}/${SPRINT}/${PAGE_TITLE}"
-```
+4. **Merge, don't overwrite.** The story page may be hand-written by the team. Get its current content (`mcp__ado__wiki` `action: "get_page_content"`, keep the version/ETag) and build the new content:
+   - Page is new, empty, or the `/dx-prep` placeholder (contains `Technical documentation follows after implementation`) → the generated doc, wrapped in the markers below.
+   - Page contains the markers → replace only the text between them.
+   - Otherwise (team content, no markers) → keep the existing content and append `---` plus the generated doc wrapped in the markers.
+   ```
+   <!-- dx-doc-gen:start -->
+   <contents of docs/wiki-page.md>
+   <!-- dx-doc-gen:end -->
+   ```
+   ADO wiki Markdown hides HTML comments, so the markers are invisible on the page.
 
-4. **Check if the sprint subfolder exists.** Try to get the sprint page:
-
-```
-mcp__ado__wiki
-  action: "get_page"
-  wikiIdentifier: <scm.wiki-id>
-  project: <scm.wiki-project>
-  path: "${WIKI_ROOT}/${SPRINT}"
-```
-
-5. **If the sprint subfolder does NOT exist** (404), create it first:
-
-```
-mcp__ado__wiki_upsert_page
-  wikiIdentifier: <scm.wiki-id>
-  project: <scm.wiki-project>
-  path: "${WIKI_ROOT}/${SPRINT}"
-  content: "# ${SPRINT}\n\nTechnical documentation for stories in ${SPRINT}."
-```
-
-6. **Check for existing page by ID prefix.** The work item ID is unique — if a page already exists for this story (possibly with a different slug), reuse its path instead of creating a duplicate:
-
-```
-mcp__ado__wiki
-  action: "list_pages"
-  wikiIdentifier: <scm.wiki-id>
-  project: <scm.wiki-project>
-  path: "${WIKI_ROOT}/${SPRINT}"
-```
-
-Scan the returned child pages for any whose name starts with `<id>-` (e.g., `2451742-`). If found, set `WIKI_PATH` to that existing page's path — do NOT use the newly generated slug.
-
-7. **Create or update the wiki page:**
+5. **Create or update the wiki page:**
 
 ```
 mcp__ado__wiki_upsert_page
   wikiIdentifier: <scm.wiki-id>
   project: <scm.wiki-project>
   path: "${WIKI_PATH}"
-  content: <contents of docs/wiki-page.md>
+  content: <merged content from step 4>
+  etag: <version from step 4, when the page existed>
 ```
 
-8. Print: `Wiki page created/updated at ${WIKI_PATH}`
+6. Print: `Wiki page created/updated at ${WIKI_PATH}` (add `— story page carried over from <sprint>` when the resolver returned `SCOPE=other-sprint`).
 
-If the sprint is `Unknown`, post under `${WIKI_ROOT}/Unsorted/${PAGE_TITLE}` instead (apply the same ID-prefix lookup in Unsorted) and warn: `Sprint unknown — page placed under Unsorted. Move it manually after confirming the sprint.`
+If the sprint is `Unknown` and no page matched anywhere, the new page lands under `${WIKI_ROOT}/Unsorted/` — warn: `Sprint unknown — page placed under Unsorted. Move it manually after confirming the sprint.`
 
 ### 6b. Confluence Mode
 
@@ -216,14 +189,7 @@ mcp__atlassian__confluence_create_page
 
 Save the sprint page ID → `SPRINT_PAGE_ID`.
 
-5. **Check if the doc page already exists:**
-
-```
-PAGE_TITLE = <id>-<slug-from-title>   # e.g., 2357516-Enhance-PLP-Filter-Sticky
-
-mcp__atlassian__confluence_search
-  cql: "title = '<PAGE_TITLE>' AND ancestor = '<SPRINT_PAGE_ID>' AND space = '<confluence.space-key>'"
-```
+5. **Find the doc page** — follow `../../shared/wiki-story-page.md` (Confluence section): it reuses the story's existing page whatever its title format, including one under another sprint page (carried over), and only falls back to creating `<id>-<slug>` under `SPRINT_PAGE_ID`. `PAGE_TITLE` = the matched page's title (unchanged), or `<id>-<slug>` for a new page. For an existing page apply the same **merge, don't overwrite** rule as ADO step 4 — Confluence shows HTML comments, so the boundary is a heading instead of markers: `<h2>Generated documentation (dx-doc-gen)</h2>`. Replace from that heading to the end of the page; if it is missing, append it and the generated doc after the existing content. A new page or the `/dx-prep` placeholder is replaced whole.
 
 6. **Content format conversion (CRITICAL):**
 

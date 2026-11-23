@@ -1,9 +1,9 @@
-# Development Plan — <Title> (ADO #<id>)
+# <dx-prep.wiki-page-title, default "Development Plan"> — <Title> (ADO #<id>)
 
 **Sprint:** <sprint name> · **ADO:** [#<id>](<work item URL>) · **Branch:** `<branch>`
-**Prepared:** <date> by `/dx-prep` · **Status:** <Draft — not reviewed | Reviewed (tag <review-tag>)>
+**Prepared:** <date> by `/dx-prep` · **Status:** <Reviewed (tag <review-tag>) | Draft — not reviewed (add tag <review-tag> after review) | Draft — set dx-prep.review-tag to track review>
 
-> This is the plan prepared before development. It is the default for whoever implements the story, not a contract: deviations are recorded with a reason and listed in the final documentation under "Planned vs Built".
+> This is the plan prepared and reviewed before development. It replaces a separate pre-development solution review or tech-lead sign-off: the reviewer reads this page and marks the work item as reviewed. It is the default for whoever implements the story, not a contract: deviations are recorded with a reason and listed in the final documentation under "Planned vs Built".
 
 ## Summary
 

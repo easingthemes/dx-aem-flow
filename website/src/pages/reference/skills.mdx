@@ -185,7 +185,7 @@ import { stats } from '../../config/stats';
         <tr><td class="p-3"><code>/dx-plan</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Generate step-by-step implementation plan with status tracking. Optionally invokes <code>superpowers:brainstorming</code> for design exploration.</td><td class="p-3"><code>implement.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-plan-validate</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Verify plan covers all requirements, no extras, dependencies correct.</td><td class="p-3">Warnings / OK</td></tr>
         <tr><td class="p-3"><code>/dx-plan-resolve</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Research and fix risks flagged by validation.</td><td class="p-3">Updated <code>implement.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-prep</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Architect prep / hand-off: requirements + plan ahead of the sprint, plan published as a wiki child page, <code>[DevPlan]</code> comment with the wiki link and next command, specs pushed. <code>/dx-agent-all</code> later skips the prepared phases.</td><td class="p-3"><code>docs/plan-wiki.md</code>, wiki page</td></tr>
+        <tr><td class="p-3"><code>/dx-prep</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Architect prep / hand-off: requirements + plan ahead of the sprint, plan published as a wiki child page (title from <code>dx-prep.wiki-page-title</code>) under the story's existing page, <code>[DevPlan]</code> comment with the wiki link and next command, specs pushed. <code>/dx-agent-all</code> later skips the prepared phases.</td><td class="p-3"><code>docs/plan-wiki.md</code>, wiki page</td></tr>
       </tbody>
     </table>
   </div>
@@ -313,7 +313,7 @@ import { stats } from '../../config/stats';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate wiki docs from spec files (after development). Reads aem-doc-gen output for Authoring/Website sections. Posts to sprint-specific ADO Wiki/Confluence subfolder.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate wiki docs from spec files (after development). Reads aem-doc-gen output for Authoring/Website sections. Posts to sprint-specific ADO Wiki/Confluence subfolder, reusing the story's existing page (any name format, also in earlier sprints) and merging into hand-written content.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
         <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Retroactive wiki docs for completed stories -- fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
       </tbody>
     </table>

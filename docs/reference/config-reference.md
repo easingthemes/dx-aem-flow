@@ -314,6 +314,7 @@ Settings for the architect prep / hand-off flow (`/dx-prep`, read by `/dx-agent-
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `wiki-page-title` | string | `Development Plan` | Title of the plan wiki page (ADO child page name; Confluence title `<id> <title>`), its heading and the link text in the `[DevPlan]` comment. Name it after the step it replaces, e.g. `Development Plan (Solution Review)`, so searches for that name find it. Changing it later leaves the old page in place. |
 | `review-tag` | string | — | Work-item tag the reviewer adds after reading the plan wiki page. `/dx-agent-all` prints whether a prepared plan has it. |
 | `require-review` | boolean | `false` | With `review-tag` set: `/dx-agent-all` stops in autonomous mode, and asks in interactive mode, when a prepared plan lacks the tag. |
 
