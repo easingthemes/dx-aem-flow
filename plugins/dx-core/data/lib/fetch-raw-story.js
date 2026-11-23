@@ -21,6 +21,11 @@
 //   - Tools called: wit_work_item action=get (main + parent if hierarchy-reverse
 //     exists), wit_work_item action=list_comments.
 //   - Linked branches are extracted from artifact relations directly (no extra MCP call).
+//   - Related / Predecessor / Successor work items: one wit_work_item action=get each
+//     (capped at LINKED_ITEMS_MAX), plus list_comments for the first N when
+//     --related-comments=N is passed. Release-tag alignment is checked when
+//     --release-tag-regex=<re> is passed.
+//   - Images embedded in comments are downloaded with the field images.
 //   - PR detail (repo_pull_request action=get) and image fetching
 //     (wit_work_item_attachment) are out of scope — the calling skill handles
 //     those after this script runs.
@@ -33,7 +38,8 @@
 // detection, since @azure-devops/mcp is fetched via `npx -y` (always latest).
 //
 // Usage:
-//   node .ai/lib/fetch-raw-story.js <org-url> <project> <work-item-id> [<spec-dir>]
+//   node .ai/lib/fetch-raw-story.js [--force] [--release-tag-regex=<re>] [--related-comments=<n>]
+//        <org-url> <project> <work-item-id> [<spec-dir>]
 //
 // If <spec-dir> is omitted, the script derives it from the fetched title via
 // `bash .ai/lib/dx-common.sh slugify <id> "<title>"` and creates
@@ -59,6 +65,8 @@ const path = require('path');
 
 async function main(opts) {
   const { org, orgUrl, project, id, force } = opts;
+  const releaseTagRegex = opts.releaseTagRegex || '';
+  const relatedComments = opts.relatedComments || 0;
   let specDir = opts.specDirArg;
   // Pre-seed short-circuit: hub mode (`/dx-hub-dispatch`) writes raw-story.md
   // without raw-workitem.json. Don't refetch in that case — the hub is the
@@ -116,6 +124,10 @@ async function main(opts) {
   // links. Fetching each PR gives us authoritative branch info via sourceRefName.
   const prs = await fetchPRs(client, extractPRRefs(wi));
 
+  // Related / Predecessor / Successor items — title, state, iteration, tags, and
+  // (opt-in) their human comments, which is where cross-story contracts get agreed.
+  const linkedItems = await fetchLinkedItems(client, project, extractLinkedItemRefs(wi), relatedComments);
+
   if (!specDir) {
     const title = (wi && wi.fields && wi.fields['System.Title']) || '';
     if (!title) {
@@ -130,7 +142,8 @@ async function main(opts) {
 
   // Idempotency: compare current fetched payload against the prior
   // raw-workitem.json. If unchanged, skip image refetch + file rewrites.
-  const newPayload = { workItem: wi, comments, parent, prs };
+  // `options` is part of the payload so a changed regex or comment count re-renders.
+  const newPayload = { workItem: wi, comments, parent, prs, linkedItems, options: { releaseTagRegex, relatedComments } };
   if (!force && payloadUnchanged(specDir, newPayload)) {
     await client.stop();
     console.log(`SKIPPED: ${path.join(specDir, 'raw-story.md')} already up to date`);
@@ -140,7 +153,7 @@ async function main(opts) {
 
   // Image fetch + INDEX.md happens BEFORE renderRawStory so the GUID→path map
   // can rewrite embedded <img src="..."> URLs in the HTML→markdown pass.
-  const guidToPath = await fetchImages(client, wi, specDir, project);
+  const guidToPath = await fetchImages(client, wi, specDir, project, comments);
 
   await client.stop();
 
@@ -153,13 +166,13 @@ async function main(opts) {
   if (sprint) fs.writeFileSync(path.join(specDir, '.sprint'), sprint + '\n');
 
   const linked = collectLinkedDevelopment(wi, prs, id);
-  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked });
+  const md = renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked, linkedItems, releaseTagRegex });
   fs.writeFileSync(path.join(specDir, 'raw-story.md'), md);
 
   console.log(
     `fetch-raw-story: wrote ${path.join(specDir, 'raw-story.md')} ` +
     `(${md.length} bytes, ${comments.length} comments, ${linked.branches.length} matching branches, ` +
-    `${linked.prs.length} matching PRs, ${guidToPath.size} images` +
+    `${linked.prs.length} matching PRs, ${linkedItems.length} linked items, ${guidToPath.size} images` +
     (parent ? `, parent #${parent.id}` : '') + ')'
   );
   // Last line — parseable by the calling skill: `SPEC_DIR=$(node fetch-raw-story.js ... | tail -1 | cut -d= -f2)`
@@ -362,6 +375,131 @@ function findParentId(wi) {
     if (m) return Number(m[1]);
   }
   return null;
+}
+
+// ------------------------------------------------------------------
+// Linked work items (Related / Predecessor / Successor)
+// ------------------------------------------------------------------
+
+const LINK_TYPE_LABELS = {
+  'System.LinkTypes.Dependency-Reverse': 'Predecessor',
+  'System.LinkTypes.Dependency-Forward': 'Successor',
+  'System.LinkTypes.Related': 'Related',
+};
+const LINKED_ITEMS_MAX = 15;          // MCP calls are sequential; keep Phase 1 fast
+const LINKED_COMMENTS_PER_ITEM = 5;   // newest human comments kept per item
+const LINKED_COMMENT_MAX_CHARS = 1500;
+
+// Ordered Predecessor → Successor → Related (dependencies matter most), deduped
+// by id — ADO can hold the same item under two link types.
+function extractLinkedItemRefs(wi) {
+  const order = Object.keys(LINK_TYPE_LABELS);
+  const refs = [];
+  const seen = new Set();
+  for (const rel of order) {
+    for (const r of (wi && wi.relations) || []) {
+      if (r.rel !== rel) continue;
+      const m = (r.url || '').match(/\/workItems\/(\d+)/);
+      if (!m) continue;
+      const id = Number(m[1]);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      refs.push({ id, linkType: LINK_TYPE_LABELS[rel] });
+    }
+  }
+  return refs.slice(0, LINKED_ITEMS_MAX);
+}
+
+// One get per item. A failed item stays in the list with `error` so the story
+// still shows the link exists. Comments only for the first `commentsFor` items.
+async function fetchLinkedItems(client, project, refs, commentsFor) {
+  const out = [];
+  for (let i = 0; i < refs.length; i++) {
+    const { id, linkType } = refs[i];
+    const item = { id, linkType };
+    try {
+      const wi = requireParsed(
+        await client.callTool('wit_work_item', { action: 'get', project, id }),
+        `wit_work_item action=get for linked #${id}`
+      );
+      Object.assign(item, summarizeLinkedItem(wi));
+    } catch (e) {
+      item.error = e.message;
+      console.error(`fetch-raw-story: linked #${id} fetch failed (${e.message}) — listing without details`);
+    }
+    if (!item.error && i < commentsFor) {
+      try {
+        const raw = requireParsed(
+          await client.callTool('wit_work_item', { action: 'list_comments', project, workItemId: id, top: 50 }),
+          `wit_work_item action=list_comments for linked #${id}`
+        );
+        item.comments = selectLinkedComments(Array.isArray(raw) ? raw : (raw && raw.comments) || []);
+      } catch (e) {
+        console.error(`fetch-raw-story: linked #${id} comments failed (${e.message}) — continuing without`);
+      }
+    }
+    out.push(item);
+  }
+  return out;
+}
+
+function summarizeLinkedItem(wi) {
+  const f = (wi && wi.fields) || {};
+  return {
+    title: f['System.Title'] || '',
+    type: f['System.WorkItemType'] || '',
+    state: f['System.State'] || '',
+    iteration: extractSprint(wi) || '',
+    tags: f['System.Tags'] || '',
+  };
+}
+
+// Newest human comments, oldest-first in the output, each truncated.
+function selectLinkedComments(comments) {
+  return comments
+    .filter(c => !isSystemComment(c))
+    .sort((a, b) => String(a.createdDate || '').localeCompare(String(b.createdDate || '')))
+    .slice(-LINKED_COMMENTS_PER_ITEM)
+    .map(c => {
+      let text = htmlToMarkdown(c.text);
+      if (text.length > LINKED_COMMENT_MAX_CHARS) text = text.slice(0, LINKED_COMMENT_MAX_CHARS).trimEnd() + ' …(truncated)';
+      return {
+        author: (c.createdBy && (c.createdBy.displayName || c.createdBy.uniqueName)) || 'Unknown',
+        date: c.createdDate ? String(c.createdDate).split('T')[0] : '',
+        text,
+      };
+    });
+}
+
+// ADO tags are one "a; b; c" string. Returns the tags matching the
+// project's release-tag regex (whole tag, case-insensitive).
+function releaseTags(tags, regex) {
+  if (!regex || !tags) return [];
+  const re = new RegExp(`^(?:${regex})$`, 'i');
+  return String(tags).split(';').map(t => t.trim()).filter(t => t && re.test(t));
+}
+
+// 'match' | 'mismatch' | 'missing' (story has a release, item none) |
+// 'item-only' (item has one, story none) | '' (neither — nothing to say).
+function releaseAlignment(storyReleases, itemReleases) {
+  if (!storyReleases.length && !itemReleases.length) return '';
+  if (!storyReleases.length) return 'item-only';
+  if (!itemReleases.length) return 'missing';
+  return itemReleases.some(r => storyReleases.some(s => s.toLowerCase() === r.toLowerCase())) ? 'match' : 'mismatch';
+}
+
+// `[FE] [BE] Title` → ['FE', 'BE']. Only leading bracket tags plus any other
+// bracket tag in the title; the mapping to repos lives in config (dx-req.scope-repos)
+// and is applied by the skill in Phase 4, not here.
+function extractTitleTags(title) {
+  const out = [];
+  const re = /\[([^\]\[]{1,30})\]/g;
+  let m;
+  while ((m = re.exec(String(title || '')))) {
+    const t = m[1].trim();
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return out;
 }
 
 function extractSprint(wi) {
@@ -633,9 +771,9 @@ function validateImage(filepath, validatorPath) {
   }
 }
 
-async function fetchImages(client, wi, specDir, project) {
+async function fetchImages(client, wi, specDir, project, comments = []) {
   const map = new Map();
-  const rows = extractImageManifest(wi);
+  const rows = extractImageManifest(wi, comments);
   if (!rows.length) {
     removeStaleImages(specDir, new Set());
     writeImageIndex(specDir, []);
@@ -729,7 +867,7 @@ function removeStaleImages(specDir, keepFilenames) {
   }
 }
 
-function extractImageManifest(wi) {
+function extractImageManifest(wi, comments = []) {
   const out = [];
   const seen = new Set();
 
@@ -763,6 +901,20 @@ function extractImageManifest(wi) {
       if (seen.has(guid)) continue;
       seen.add(guid);
       out.push({ source: name, guid, filename: decodeURIComponent(m[2]), size: -1 });
+    }
+  }
+
+  // 3) Embedded <img> in human comments — mockups are often posted as a reply
+  //    rather than edited into the description.
+  for (const c of comments || []) {
+    if (isSystemComment(c)) continue;
+    const re = /_apis\/wit\/attachments\/([0-9a-fA-F-]{36})[?&]fileName=([^"'&<> ]+)/g;
+    let m;
+    while ((m = re.exec(String(c.text || '')))) {
+      const guid = m[1];
+      if (seen.has(guid)) continue;
+      seen.add(guid);
+      out.push({ source: 'comments', guid, filename: decodeURIComponent(m[2]), size: -1 });
     }
   }
   return out;
@@ -836,7 +988,7 @@ function writeImageIndex(specDir, rows, skipped = []) {
 // raw-story.md renderer
 // ------------------------------------------------------------------
 
-function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked }) {
+function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath, linked, linkedItems = [], releaseTagRegex = '' }) {
   const f = (wi && wi.fields) || {};
   const title = f['System.Title'] || '';
   const type = f['System.WorkItemType'] || '';
@@ -873,6 +1025,10 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath,
   out.push(`**Area Path:** ${area}`);
   out.push(`**Iteration Path:** ${iter}`);
   out.push(`**Tags:** ${tags}`);
+  const scopeTags = extractTitleTags(title);
+  if (scopeTags.length) out.push(`**Scope Tags:** ${scopeTags.join(', ')}`);
+  const storyReleases = releaseTags(f['System.Tags'], releaseTagRegex);
+  if (storyReleases.length) out.push(`**Release:** ${storyReleases.join(', ')}`);
   out.push('');
   out.push('---');
 
@@ -905,6 +1061,8 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath,
       }
     }
   }
+
+  if (linkedItems.length) renderLinkedItems(out, linkedItems, storyReleases, releaseTagRegex, orgUrl, project);
 
   const humanComments = (comments || []).filter(c => !isSystemComment(c));
   if (humanComments.length) {
@@ -952,17 +1110,85 @@ function renderRawStory({ wi, comments, parent, orgUrl, project, id, guidToPath,
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
 }
 
+const ALIGNMENT_LABEL = {
+  match: 'same',
+  mismatch: '⚠ differs',
+  missing: '⚠ none',
+  'item-only': 'story has none',
+};
+
+function renderLinkedItems(out, items, storyReleases, releaseTagRegex, orgUrl, project) {
+  const orgBase = orgUrl.replace(/\/+$/, '');
+  const withRelease = !!releaseTagRegex;
+  out.push('');
+  out.push('---');
+  out.push('');
+  out.push('## Linked Work Items');
+  out.push(withRelease
+    ? '| Link | Item | Type | State | Iteration | Release |'
+    : '| Link | Item | Type | State | Iteration |');
+  out.push(withRelease ? '| --- | --- | --- | --- | --- | --- |' : '| --- | --- | --- | --- | --- |');
+  const flagged = [];
+  for (const it of items) {
+    const link = `[#${it.id}](${orgBase}/${encodeURIComponent(project)}/_workitems/edit/${it.id})`;
+    const cell = s => String(s || '').replace(/\|/g, '\\|');
+    if (it.error) {
+      out.push(`| ${it.linkType} | ${link} _(not fetched)_ |  |  |  |${withRelease ? '  |' : ''}`);
+      continue;
+    }
+    let row = `| ${it.linkType} | ${link} ${cell(it.title)} | ${cell(it.type)} | ${cell(it.state)} | ${cell(it.iteration)} |`;
+    if (withRelease) {
+      const itemReleases = releaseTags(it.tags, releaseTagRegex);
+      const a = releaseAlignment(storyReleases, itemReleases);
+      if (a === 'mismatch' || a === 'missing') flagged.push(`#${it.id}`);
+      row += ` ${itemReleases.join(', ')}${a ? ` (${ALIGNMENT_LABEL[a]})` : ''} |`;
+    }
+    out.push(row);
+  }
+  if (withRelease && flagged.length) {
+    out.push('');
+    out.push(`**Release check:** ${flagged.length} linked item(s) not in the story's release (${storyReleases.join(', ') || 'none'}): ${flagged.join(', ')}`);
+  }
+  for (const it of items) {
+    if (!it.comments || !it.comments.length) continue;
+    out.push('');
+    out.push(`### #${it.id} comments (${it.linkType})`);
+    for (const c of it.comments) {
+      out.push('');
+      out.push(`**${c.author}${c.date ? ` — ${c.date}` : ''}:**`);
+      out.push(c.text);
+    }
+  }
+}
+
 function pushSection(out, heading, body) {
   out.push('');
   out.push(`## ${heading}`);
   out.push(body);
 }
 
+function cliFlag(argv, name) {
+  const pre = `--${name}=`;
+  const hit = argv.find(a => a.startsWith(pre));
+  return hit == null ? null : hit.slice(pre.length);
+}
+
 function parseCliArgs(argv) {
   const force = argv.includes('--force');
   const positional = argv.filter(a => !a.startsWith('--'));
   if (positional.length < 3) {
-    return { error: 'Usage: fetch-raw-story.js [--force] <org-url> <project> <work-item-id> [<spec-dir>]' };
+    return { error: 'Usage: fetch-raw-story.js [--force] [--release-tag-regex=<re>] [--related-comments=<n>] <org-url> <project> <work-item-id> [<spec-dir>]' };
+  }
+  const releaseTagRegex = (cliFlag(argv, 'release-tag-regex') || '').trim();
+  if (releaseTagRegex) {
+    try { new RegExp(releaseTagRegex); } catch (e) {
+      return { error: `ERROR: --release-tag-regex is not a valid regex (${e.message}). Check dx-req.release-tag-regex — use single quotes in YAML so backslashes stay literal.` };
+    }
+  }
+  const relatedRaw = cliFlag(argv, 'related-comments');
+  const relatedComments = relatedRaw == null || relatedRaw === '' ? 0 : Number(relatedRaw);
+  if (!Number.isInteger(relatedComments) || relatedComments < 0) {
+    return { error: 'ERROR: --related-comments must be a non-negative integer' };
   }
   const [orgUrl, project, idStr, specDirArg] = positional;
   // An empty project makes the ADO MCP try to prompt for it, which the stdio
@@ -978,7 +1204,7 @@ function parseCliArgs(argv) {
   if (!org) {
     return { error: `ERROR: cannot extract org name from "${orgUrl}". Expected https://<org>.visualstudio.com/ or https://dev.azure.com/<org>/` };
   }
-  return { opts: { org, orgUrl, project, id, specDirArg, force } };
+  return { opts: { org, orgUrl, project, id, specDirArg, force, releaseTagRegex, relatedComments } };
 }
 
 if (require.main === module) {
@@ -1013,6 +1239,13 @@ module.exports = {
   decodeAttachmentBlob,
   chooseFilename,
   extractImageManifest,
+  extractLinkedItemRefs,
+  fetchLinkedItems,
+  summarizeLinkedItem,
+  selectLinkedComments,
+  releaseTags,
+  releaseAlignment,
+  extractTitleTags,
   payloadUnchanged,
   removeStaleImages,
   renderRawStory,

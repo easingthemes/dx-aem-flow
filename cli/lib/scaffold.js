@@ -322,7 +322,9 @@ class Scaffold {
     const gitignorePath = path.join(this.targetDir, '.gitignore');
     // .ai/playwright/ — dx-core's playwright MCP server writes screenshots and
     // browser session state (cookies) there.
-    const entries = ['.ai/specs/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
+    // .ai/specs/ itself is tracked (spec files travel with the feature branch for
+    // hand-off and recovery); only the re-downloadable ticket images are ignored.
+    const entries = ['.ai/specs/**/images/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
     let content = '';
     if (fs.existsSync(gitignorePath)) {
       content = fs.readFileSync(gitignorePath, 'utf8');

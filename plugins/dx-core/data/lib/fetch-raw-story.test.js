@@ -464,3 +464,194 @@ test('parseCliArgs — happy + error paths', () => {
   const forced = lib.parseCliArgs(['--force', 'https://dev.azure.com/myorg', 'MyProj', '4242']);
   assert.equal(forced.opts.force, true);
 });
+
+// ------------------------------------------------------------------
+// Pre-research context: comment images, linked items, release check,
+// title scope tags.
+// ------------------------------------------------------------------
+
+const GUID_C = 'cccc1111-dddd-2222-eeee-333344445555';
+const GUID_D = 'dddd1111-eeee-2222-ffff-333344445555';
+
+test('extractImageManifest picks up images embedded in human comments', () => {
+  const comments = [
+    { text: `<p>Mock:</p><img src="https://dev.azure.com/myorg/_apis/wit/attachments/${GUID_C}?fileName=mock.png">` },
+    // system comment is ignored even if it carries a URL
+    { text: `State changed from New to Active _apis/wit/attachments/${GUID_D}?fileName=x.png` },
+  ];
+  const rows = lib.extractImageManifest(fixture, comments);
+  assert.equal(rows.length, 3);
+  const c = rows.find(r => r.source === 'comments');
+  assert.equal(c.guid, GUID_C);
+  assert.equal(c.filename, 'mock.png');
+  assert.equal(lib.chooseFilename(c, 'png', new Map(), new Set()), 'comments-1-cccc1111.png');
+  // Default arg keeps the old single-argument callers working.
+  assert.equal(lib.extractImageManifest(fixture).length, 2);
+});
+
+test('extractImageManifest dedupes a comment image already in a field', () => {
+  const fieldGuid = lib.extractImageManifest(fixture).find(r => r.source !== 'attachment').guid;
+  const rows = lib.extractImageManifest(fixture, [{ text: `_apis/wit/attachments/${fieldGuid}?fileName=dup.png` }]);
+  assert.equal(rows.length, 2);
+});
+
+const wiUrl = id => `https://dev.azure.com/myorg/_apis/wit/workItems/${id}`;
+
+test('extractLinkedItemRefs — predecessor, successor, related order; dedupe; skips other links', () => {
+  const wi = { relations: [
+    { rel: 'System.LinkTypes.Related', url: wiUrl(30) },
+    { rel: 'System.LinkTypes.Dependency-Forward', url: wiUrl(20) },
+    { rel: 'System.LinkTypes.Dependency-Reverse', url: wiUrl(10) },
+    { rel: 'System.LinkTypes.Related', url: wiUrl(10) }, // same item, second link type
+    { rel: 'System.LinkTypes.Hierarchy-Reverse', url: wiUrl(99) },
+    { rel: 'ArtifactLink', url: 'vstfs:///Git/Ref/x' },
+  ] };
+  assert.deepEqual(lib.extractLinkedItemRefs(wi), [
+    { id: 10, linkType: 'Predecessor' },
+    { id: 20, linkType: 'Successor' },
+    { id: 30, linkType: 'Related' },
+  ]);
+  assert.deepEqual(lib.extractLinkedItemRefs({}), []);
+});
+
+test('extractLinkedItemRefs caps the number of items', () => {
+  const relations = Array.from({ length: 40 }, (_, i) => ({ rel: 'System.LinkTypes.Related', url: wiUrl(i + 1) }));
+  assert.equal(lib.extractLinkedItemRefs({ relations }).length, 15);
+});
+
+function fakeClient(byId, commentsById, failIds = []) {
+  const calls = [];
+  return {
+    calls,
+    async callTool(name, args) {
+      calls.push({ name, ...args });
+      if (args.action === 'get') {
+        if (failIds.includes(args.id)) throw new Error('boom');
+        return byId[args.id];
+      }
+      if (args.action === 'list_comments') return { comments: commentsById[args.workItemId] || [] };
+      throw new Error(`unexpected ${name}`);
+    },
+  };
+}
+
+const linkedWi = (title, tags, iter = 'Proj\\Team\\Sprint41') => ({
+  fields: { 'System.Title': title, 'System.WorkItemType': 'User Story', 'System.State': 'Active', 'System.IterationPath': iter, 'System.Tags': tags },
+});
+
+test('fetchLinkedItems — summary, comments only for first N, failure kept with error', async () => {
+  const client = fakeClient(
+    { 10: linkedWi('Pred story', 'api; 01Jan2027Release'), 20: linkedWi('Succ story', '') },
+    {
+      10: [
+        { text: '<p>Payload agreed: <b>id, name</b></p>', createdBy: { displayName: 'Dev A' }, createdDate: '2026-10-02T00:00:00Z' },
+        { text: 'State changed from New to Active', createdBy: { displayName: 'Bot' }, createdDate: '2026-10-03T00:00:00Z' },
+      ],
+    },
+    [30]
+  );
+  const refs = [{ id: 10, linkType: 'Predecessor' }, { id: 20, linkType: 'Successor' }, { id: 30, linkType: 'Related' }];
+  const items = await lib.fetchLinkedItems(client, 'MyProj', refs, 1);
+  assert.equal(items.length, 3);
+  assert.equal(items[0].title, 'Pred story');
+  assert.equal(items[0].iteration, 'Sprint 41');
+  assert.equal(items[0].comments.length, 1, 'system comment filtered');
+  assert.match(items[0].comments[0].text, /Payload agreed: \*\*id, name\*\*/);
+  assert.equal(items[1].comments, undefined, 'comments only for the first N items');
+  assert.match(items[2].error, /boom/);
+  assert.equal(client.calls.filter(c => c.action === 'list_comments').length, 1);
+});
+
+test('fetchLinkedItems with N=0 makes no comment calls', async () => {
+  const client = fakeClient({ 10: linkedWi('A', '') }, {});
+  await lib.fetchLinkedItems(client, 'P', [{ id: 10, linkType: 'Related' }], 0);
+  assert.equal(client.calls.filter(c => c.action === 'list_comments').length, 0);
+});
+
+test('selectLinkedComments keeps the newest 5 in date order and truncates long text', () => {
+  const comments = Array.from({ length: 7 }, (_, i) => ({
+    text: i === 6 ? 'x'.repeat(2000) : `c${i}`,
+    createdBy: { displayName: 'A' },
+    createdDate: `2026-10-0${i + 1}T00:00:00Z`,
+  })).reverse();
+  const out = lib.selectLinkedComments(comments);
+  assert.deepEqual(out.slice(0, 4).map(c => c.text), ['c2', 'c3', 'c4', 'c5']);
+  assert.match(out[4].text, /…\(truncated\)$/);
+  assert.ok(out[4].text.length < 1600);
+});
+
+const REL_RE = '\\d{1,2}[A-Za-z]{3}\\d{4}Release';
+
+test('releaseTags — whole-tag match, case-insensitive, empty when no regex', () => {
+  assert.deepEqual(lib.releaseTags('frontend; 05Mar2027Release; misc', REL_RE), ['05Mar2027Release']);
+  assert.deepEqual(lib.releaseTags('x05Mar2027Release-old', REL_RE), [], 'partial tag does not match');
+  assert.deepEqual(lib.releaseTags('05mar2027release', REL_RE), ['05mar2027release']);
+  assert.deepEqual(lib.releaseTags('05Mar2027Release', ''), []);
+  assert.deepEqual(lib.releaseTags('', REL_RE), []);
+});
+
+test('releaseAlignment — all four states', () => {
+  assert.equal(lib.releaseAlignment(['A'], ['a']), 'match');
+  assert.equal(lib.releaseAlignment(['A'], ['B']), 'mismatch');
+  assert.equal(lib.releaseAlignment(['A'], []), 'missing');
+  assert.equal(lib.releaseAlignment([], ['B']), 'item-only');
+  assert.equal(lib.releaseAlignment([], []), '');
+});
+
+test('extractTitleTags — bracket tags in order, deduped', () => {
+  assert.deepEqual(lib.extractTitleTags('[FE][Authoring] Add widget [FE]'), ['FE', 'Authoring']);
+  assert.deepEqual(lib.extractTitleTags('No tags here'), []);
+  assert.deepEqual(lib.extractTitleTags(''), []);
+});
+
+test('renderRawStory — scope tags, release line, linked items table, release check, linked comments', () => {
+  const wi = JSON.parse(JSON.stringify(fixture));
+  wi.fields['System.Title'] = '[FE][BE] Add fancy widget';
+  wi.fields['System.Tags'] = 'frontend; 05Mar2027Release';
+  const linkedItems = [
+    { id: 10, linkType: 'Predecessor', title: 'Pred | story', type: 'User Story', state: 'Active', iteration: 'Sprint 41', tags: '05Mar2027Release',
+      comments: [{ author: 'Dev A', date: '2026-10-02', text: 'Payload agreed.' }] },
+    { id: 20, linkType: 'Successor', title: 'Succ', type: 'User Story', state: 'New', iteration: 'Sprint 42', tags: '02Apr2027Release' },
+    { id: 30, linkType: 'Related', title: 'Rel', type: 'Bug', state: 'New', iteration: 'Backlog', tags: '' },
+    { id: 40, linkType: 'Related', error: 'boom' },
+  ];
+  const md = lib.renderRawStory({
+    wi, comments: [], parent: null, orgUrl: 'https://dev.azure.com/myorg', project: 'My Proj', id: 4242,
+    guidToPath: new Map(), linked: { branches: [], prs: [] }, linkedItems, releaseTagRegex: REL_RE,
+  });
+  assert.match(md, /\*\*Scope Tags:\*\* FE, BE/);
+  assert.match(md, /\*\*Release:\*\* 05Mar2027Release/);
+  assert.match(md, /## Linked Work Items/);
+  assert.match(md, /\| Link \| Item \| Type \| State \| Iteration \| Release \|/);
+  assert.match(md, /\| Predecessor \| \[#10\]\(https:\/\/dev\.azure\.com\/myorg\/My%20Proj\/_workitems\/edit\/10\) Pred \\\| story \|/);
+  assert.match(md, /05Mar2027Release \(same\)/);
+  assert.match(md, /02Apr2027Release \(⚠ differs\)/);
+  assert.match(md, /\| Related \| \[#30\][^\n]*\(⚠ none\) \|/);
+  assert.match(md, /#40\]\([^)]*\) _\(not fetched\)_/);
+  assert.match(md, /\*\*Release check:\*\* 2 linked item\(s\) not in the story's release \(05Mar2027Release\): #20, #30/);
+  assert.match(md, /### #10 comments \(Predecessor\)\n\n\*\*Dev A — 2026-10-02:\*\*\nPayload agreed\./);
+});
+
+test('renderRawStory — no release column or check without a regex; no section without items', () => {
+  const base = { wi: fixture, comments: [], parent: null, orgUrl: 'https://dev.azure.com/myorg', project: 'P', id: 4242, guidToPath: new Map(), linked: { branches: [], prs: [] } };
+  const md = lib.renderRawStory({ ...base, linkedItems: [{ id: 20, linkType: 'Successor', title: 'S', type: 'Task', state: 'New', iteration: 'Sprint 42', tags: '02Apr2027Release' }] });
+  assert.match(md, /\| Link \| Item \| Type \| State \| Iteration \|\n/);
+  assert.doesNotMatch(md, /Release check/);
+  assert.doesNotMatch(md, /\*\*Release:\*\*/);
+  assert.doesNotMatch(lib.renderRawStory(base), /## Linked Work Items/);
+  assert.doesNotMatch(lib.renderRawStory(base), /Scope Tags/, 'fixture title has no bracket tags');
+});
+
+test('parseCliArgs — release regex and related-comments flags', () => {
+  const args = ['https://dev.azure.com/myorg', 'MyProj', '4242'];
+  const def = lib.parseCliArgs(args).opts;
+  assert.equal(def.releaseTagRegex, '');
+  assert.equal(def.relatedComments, 0);
+  const ok = lib.parseCliArgs([`--release-tag-regex=${REL_RE}`, '--related-comments=3', ...args]).opts;
+  assert.equal(ok.releaseTagRegex, REL_RE);
+  assert.equal(ok.relatedComments, 3);
+  assert.equal(lib.parseCliArgs(['--related-comments=', ...args]).opts.relatedComments, 0, 'empty yaml-val → 0');
+  assert.match(lib.parseCliArgs(['--release-tag-regex=([', ...args]).error, /not a valid regex/);
+  assert.match(lib.parseCliArgs(['--related-comments=-1', ...args]).error, /non-negative integer/);
+  assert.match(lib.parseCliArgs(['--related-comments=two', ...args]).error, /non-negative integer/);
+});

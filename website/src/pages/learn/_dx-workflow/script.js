@@ -675,7 +675,7 @@ RegistrationForm.js in brand/scripts/libs/.`
           {
             id: 'a-spec-ticket-dir', label: '1000001-change-error-messaging-handling/', type: 'folder', children: [
               {
-                id: 'a-raw-story', label: 'raw-story.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-raw-story', label: 'raw-story.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Faithful dump of the ADO/Jira ticket, unmodified',
                 when: 'Written first by /dx-req, phase 1',
                 description: 'Preserves the ticket exactly as filed — description, acceptance criteria, comments, parent-feature context — so later phases can be checked against the original ask.',
@@ -688,7 +688,7 @@ As the PO of Accessibility, I want error messages in
 forms to be announced by screen readers proactively.`
               },
               {
-                id: 'a-dor-report', label: 'dor-report.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-dor-report', label: 'dor-report.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Definition of Ready scorecard, posted back to ADO',
                 when: 'Written by /dx-req phase 2, right after the ticket is fetched',
                 description: "Scores the ticket against the team's DoR checklist and lists blocking gaps. Doesn't halt the pipeline — /dx-req keeps going and treats gaps as open questions for the interview phase.",
@@ -698,7 +698,7 @@ forms to be announced by screen readers proactively.`
 met: Component name, QA page URL`
               },
               {
-                id: 'a-interview', label: 'interview.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-interview', label: 'interview.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Clarifying Q&A when the ticket has ambiguous scope',
                 when: 'Written by /dx-req phase 3 when dor-report.md flags open questions',
                 description: "Turns the DoR gaps into concrete questions, then records the answers so explain.md doesn't have to guess at scope.",
@@ -709,7 +709,7 @@ or a subset?
 one non-form pattern if time allows.`
               },
               {
-                id: 'a-explain', label: 'explain.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-explain', label: 'explain.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Distilled requirements — the actual spec to build against',
                 when: 'Written by /dx-req phase 3, after DoR + interview',
                 description: 'Turns the raw ticket + interview answers into a numbered requirements list, scoped Changes-by-Area, and an explicit Out-of-Scope section — this is what /dx-plan reads, not the raw ticket.',
@@ -721,7 +721,7 @@ one non-form pattern if time allows.`
 - Ripple brand — separate ticket.`
               },
               {
-                id: 'a-research', label: 'research.md', type: 'file', color: 'subagent', badge: 'gitignored',
+                id: 'a-research', label: 'research.md', type: 'file', color: 'subagent', badge: 'committed',
                 oneLiner: 'Codebase findings — existing code to reuse vs. build new',
                 when: 'Written by /dx-req phase 4, after explain.md — delegates file lookups to subagents',
                 description: "The 'don't rebuild what exists' check. Compares candidate components, flags what's already wired vs genuinely missing, and lists every file that will need to change.",
@@ -732,7 +732,7 @@ one non-form pattern if time allows.`
 | Cloud BaseForm | Per-field aria-describedby exists | Moderate |`
               },
               {
-                id: 'a-plan-thinking', label: 'plan-thinking.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-plan-thinking', label: 'plan-thinking.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Extended-thinking reasoning trace behind the plan',
                 when: 'Written by /dx-plan before implement.md, using extended thinking',
                 description: 'Captures the reasoning that produced implement.md — reuse decisions, risks, confidence roll-up — kept separate so implement.md itself stays a clean, executable step list.',
@@ -743,7 +743,7 @@ one non-form pattern if time allows.`
    the reusable rollout path.`
               },
               {
-                id: 'a-implement', label: 'implement.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-implement', label: 'implement.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: "Status-tracked implementation plan — one skill's source of truth",
                 when: 'Written by /dx-plan; updated in place by /dx-step / /dx-step-all as steps complete',
                 description: '/dx-step reads the first pending step; /dx-plan-validate cross-checks it against explain.md. Also carries the "Other repos required" field.',
@@ -754,7 +754,7 @@ helper to Forms.js
 **Files:** Modify: ui.frontend/src/core/scripts/libs/Forms.js`
               },
               {
-                id: 'a-dev-progress', label: 'dev-all-progress.md', type: 'file', color: 'fork', badge: 'gitignored',
+                id: 'a-dev-progress', label: 'dev-all-progress.md', type: 'file', color: 'fork', badge: 'committed',
                 oneLiner: 'Per-step execution log — how progress survives dx-step-all\'s fork',
                 when: 'Updated after every step during autonomous execution',
                 description: "dx-step-all runs forked, so nothing inside it is visible to the orchestrator. This file is the only window into per-step progress — the orchestrator reads it after the fork returns its ## Return block.",
@@ -765,7 +765,7 @@ helper to Forms.js
 | 7: Manual a11y verification | pending | requires manual testing |`
               },
               {
-                id: 'a-aem-fe-verify', label: 'aem-fe-verify.md', type: 'file', color: 'subagent', badge: 'gitignored',
+                id: 'a-aem-fe-verify', label: 'aem-fe-verify.md', type: 'file', color: 'subagent', badge: 'committed',
                 oneLiner: 'Visual verification report from the AEM frontend subagent',
                 when: 'Written by /aem-fe-verify, delegated to the aem-fe-verifier agent',
                 description: "Screenshots the component on a live AEM page and checks it against the requirement/Figma reference — this file is the receipt of that subagent's work, including a bug it caught.",
@@ -775,7 +775,7 @@ Brand template override was missing the error-summary
 container the JS expected — patched during verification.`
               },
               {
-                id: 'a-poc-findings', label: 'poc-findings.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-poc-findings', label: 'poc-findings.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Spike write-up — feeds the required ADO summary comment',
                 when: 'Written by /dx-step (final step) once code + verification are done',
                 description: 'For a spike ticket the deliverable is half code, half write-up. This file is the source material a later comment turns into the ADO update: what worked, what didn\'t, effort per component.',
@@ -786,7 +786,7 @@ Implemented the proactive error-announcement pattern on
 reusable via Forms.updateErrorSummary.`
               },
               {
-                id: 'a-validation-report', label: 'validation-report.md', type: 'file', color: 'model', badge: 'gitignored',
+                id: 'a-validation-report', label: 'validation-report.md', type: 'file', color: 'model', badge: 'committed',
                 oneLiner: 'Cross-check of the plan against the requirements',
                 when: 'Written by /dx-plan-validate, between /dx-plan and /dx-step',
                 description: 'Verifies every requirement maps to a step, no unrequested feature crept in, and files referenced actually exist — the gate before execution starts.',
@@ -798,7 +798,7 @@ reusable via Forms.updateErrorSummary.`
 **Overall Verdict:** PASS`
               },
               {
-                id: 'a-share-plan', label: 'share-plan.md', type: 'file', color: 'context', badge: 'gitignored',
+                id: 'a-share-plan', label: 'share-plan.md', type: 'file', color: 'context', badge: 'committed',
                 oneLiner: 'Plain-language plan summary — the human-readable version',
                 when: 'Written alongside implement.md; read by /dx-pr for the PR description',
                 description: 'implement.md is written for the agent; share-plan.md is the same plan translated for a PM/BA — no jargon, explicit "What Won\'t Change" section.',
@@ -810,7 +810,7 @@ reusable via Forms.updateErrorSummary.`
 - Nothing about how forms look for sighted users changes.`
               },
               {
-                id: 'a-dotbranch', label: '.branch', type: 'file', color: 'neutral', badge: 'gitignored',
+                id: 'a-dotbranch', label: '.branch', type: 'file', color: 'neutral', badge: 'committed',
                 oneLiner: 'Feature branch name for this ticket',
                 when: "Read by every skill to confirm it's operating on the right branch",
                 description: 'One line, no frontmatter — the durable link between a spec folder and its git branch.',
@@ -818,7 +818,7 @@ reusable via Forms.updateErrorSummary.`
                 sample: `feature/1000001-change-error-messaging-handling`
               },
               {
-                id: 'a-dotsprint', label: '.sprint', type: 'file', color: 'neutral', badge: 'gitignored',
+                id: 'a-dotsprint', label: '.sprint', type: 'file', color: 'neutral', badge: 'committed',
                 oneLiner: 'Sprint label captured at ticket-fetch time',
                 when: 'Read for reporting; not used by pipeline logic',
                 description: 'Cheap metadata snapshot — which sprint this ticket belonged to when /dx-req first ran.',

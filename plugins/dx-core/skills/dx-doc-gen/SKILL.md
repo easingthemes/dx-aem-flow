@@ -96,6 +96,20 @@ Extract demo page path from (in priority order):
 
 **Multi-component coverage:** If several components are affected, determine whether they can all be demoed on one page or need separate pages. Provide a QA URL table for each page needed. If a new component was created but not yet on a QA page, flag: `⚠️ Component <name> needs to be added to a QA page and configured for demo.`
 
+### 5-dev. Planned vs Built (both templates)
+
+If `implement.md` has any `**Deviation:**` lines (written by `/dx-step` when the implementation departed from the plan), add a `## Planned vs Built` section before `## Related`:
+
+```markdown
+## Planned vs Built
+
+| Step | Planned | Built instead — why |
+|------|---------|---------------------|
+| 2 — <step title> | <one-line summary of the step's **What**> | <the Deviation line> |
+```
+
+OMIT the section when there are no deviations. If `docs/plan-wiki.md` exists (plan prepared with `/dx-prep`), add one line under the table: `Prepared plan: <URL from .plan-wiki-url>` (omit when the file is missing).
+
 ### 5b. Template — Without Authoring Guide (non-AEM or authoring-guide missing)
 
 If `demo/authoring-guide.md` does NOT exist, read `.ai/templates/wiki/wiki-page.md.template` and follow that structure exactly. This standard template includes a `## Usage` section instead of Authoring/Website.

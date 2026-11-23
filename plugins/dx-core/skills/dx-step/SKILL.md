@@ -209,6 +209,12 @@ Implement the changes:
 - Use Edit tool for modifications, Write tool for new files
 - Follow project conventions — read `.claude/rules/` for rules matching the file types being modified (e.g., `fe-javascript.md` for JS, `fe-styles.md` for SCSS). If `.github/instructions/` exists, also read the relevant instruction file for framework-specific patterns. For AEM frontend work involving modals, overlays, or focus traps, check if `shared/aem-dom-rules.md` exists (dx-aem plugin) and follow its DOM constraints.
 
+**The plan is the default, not a contract.** When reading the actual code shows the step's **What** is wrong or a better option exists (the method it names is gone, an existing helper already does it, the field belongs on another model), do the right thing and record why, directly under the step's **Status:** line in implement.md:
+```
+**Deviation:** <what was done instead> — <why, one sentence>
+```
+One line per step, plain facts. Never deviate silently, and never use this for scope creep — work outside the step's requirement still belongs in a new step. A plan prepared by someone else (`/dx-prep`) is followed the same way. `/dx-doc-gen` collects these lines into "Planned vs built".
+
 **Test-first approach:**
 
 If the step has a `Test:` line and `superpowers:test-driven-development` is available, invoke it to guide the RED-GREEN-REFACTOR cycle.
@@ -280,7 +286,7 @@ Use ultrathink for deep reasoning about correctness.
 
 Get the diff: `git diff` for uncommitted changes, or `git diff HEAD~1` if already committed. Read modified files in full for context.
 
-**Plan compliance:** Do changes match the step's instructions? Are all **Files:** modified? Any extra files changed?
+**Plan compliance:** Do changes match the step's instructions? Are all **Files:** modified? Any extra files changed? A difference covered by a `**Deviation:**` line with a sound reason is compliant; an unexplained difference is not.
 
 **Convention check:** Read `.claude/rules/` and `.github/instructions/` for relevant file types. Check naming, framework patterns, interface separation, template patterns, test patterns.
 
@@ -337,6 +343,7 @@ Print:
 **Compilation:** passed
 **Tests:** passed (<N> tests, <time>)
 **Review:** <verdict>
+**Deviation:** <the step's Deviation line — omit if none>
 **Commit:** `<short hash>` — `<commit message>`
 **Next:** Step <N+1> — <title> (or "All steps done — run `/dx-pr`")
 ```

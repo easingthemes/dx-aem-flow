@@ -58,6 +58,7 @@ Before applying any fixes, present a summary table for each category:
 | Issue | Suggested Fix |
 |-------|--------------|
 | .ai/run-context/ not in .gitignore | Add to .gitignore manually |
+| .ai/specs/ is gitignored | Replace the line with `.ai/specs/**/images/` manually |
 | Missing project seed data | Run /aem-init or /aem-refresh |
 ```
 
