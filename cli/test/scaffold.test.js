@@ -191,11 +191,27 @@ test('adds .ai entries to .gitignore without dropping existing ones', () => {
     assert.match(ignore, /\.ai\//);
     // dx-core's playwright MCP server writes screenshots and session cookies here.
     assert.match(ignore, /^\.ai\/playwright\/$/m);
+    // Per-run result files of the coordinator skills are local only.
+    assert.match(ignore, /^\.ai\/run-results\/$/m);
     // Spec files are tracked; only ticket images are ignored.
     assert.match(ignore, /^\.ai\/specs\/\*\*\/images\/$/m);
     assert.doesNotMatch(ignore, /^\.ai\/specs\/$/m);
   } finally {
     rm(root);
+  }
+});
+
+test('preferences.auto-vote defaults to false and follows the placeholder', () => {
+  const off = tmpDir();
+  const on = tmpDir();
+  try {
+    scaffold(off).run();
+    assert.match(read(off, '.ai/config.yaml'), /^  auto-vote: false\b/m);
+    scaffold(on, { placeholders: { AUTO_VOTE: true } }).run();
+    assert.match(read(on, '.ai/config.yaml'), /^  auto-vote: true\b/m);
+  } finally {
+    rm(off);
+    rm(on);
   }
 });
 

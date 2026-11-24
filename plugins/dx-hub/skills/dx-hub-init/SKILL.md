@@ -176,6 +176,7 @@ Merge selected repos into a hub `config.yaml`:
 ```yaml
 hub:
   enabled: true
+  engine: claude          # claude | copilot — CLI /dx-hub-dispatch starts per repo
   terminal-delay: 5
   state-ttl: 7d
 

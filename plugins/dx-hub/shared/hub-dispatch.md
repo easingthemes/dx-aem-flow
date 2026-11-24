@@ -50,6 +50,7 @@ Target repos are listed under `repos:` in `.ai/config.yaml`:
 ```yaml
 hub:
   enabled: true
+  engine: claude        # claude | copilot
   terminal-delay: 5
   state-ttl: 7d
 
@@ -112,6 +113,8 @@ For each target repo:
 2. **Set directory:** `vscode_type` "cd <abs-path>" → `vscode_keystroke` Enter → wait 1s
 3. **Start Claude:** `vscode_type` "claude" → `vscode_keystroke` Enter → wait `terminal-delay` seconds
 4. **Type prompt:** `vscode_type` "<delegation prompt>" → `vscode_keystroke` Enter
+
+With `hub.engine: copilot`, steps 3–4 are one command — `copilot --session-id <uuid> -i "<delegation prompt>"` — with a lowercase uuid per repo (recorded in `status.json` `sessions`) and the skill written plugin-prefixed (`/dx-core:dx-agent-all`), since Copilot CLI does not know plugin skills by their bare name. `hub.model`, when set, is passed as `--model` to either CLI.
 5. **Pause:** wait 2s before next terminal (avoid focus conflicts)
 
 ### Delegation Prompt
@@ -162,15 +165,22 @@ state/<ticket-id>/status.json
   "title": "Add user profile page",
   "type": "User Story",
   "skill": "/dx-agent-all",
+  "engine": "copilot",
   "started": "2026-01-15T10:30:00Z",
   "repos": {
     "repo-fe": "running",
     "repo-be": "running"
+  },
+  "sessions": {
+    "repo-fe": "3f2b9c1e-0000-4000-8000-000000000001",
+    "repo-be": "3f2b9c1e-0000-4000-8000-000000000002"
   }
 }
 ```
 
 Status values: `running` | `done` | `blocked` | `failed`
+
+`engine` and `sessions` are written by dispatches since `hub.engine` exists; `sessions` (repo → Copilot `--session-id`) only for the `copilot` engine. Readers must treat both as optional. `/dx-hub-status --json` prints all status files as one JSON array.
 
 Hub writes the initial file. Each repo's Claude session updates its own entry when finished or blocked. The delegation prompt includes the instruction to do this.
 
@@ -213,7 +223,9 @@ All hub settings live under `hub:` in `.ai/config.yaml`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hub.enabled` | `false` | Enable hub mode for this workspace |
-| `hub.terminal-delay` | `5` | Seconds to wait for Claude to start in terminal |
+| `hub.engine` | `claude` | CLI started in each repo terminal: `claude` or `copilot` |
+| `hub.model` | *(unset)* | Model passed as `--model` to that CLI; unset = the CLI's default |
+| `hub.terminal-delay` | `5` | Seconds to wait for Claude to start in terminal (`claude` engine) |
 | `hub.state-ttl` | `7d` | How long to keep completed state entries |
 
 The `repos:` list is a top-level key (not nested under `hub:`):

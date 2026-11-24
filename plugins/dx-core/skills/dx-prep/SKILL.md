@@ -71,7 +71,7 @@ Invoke `Skill(/dx-plan <id>)` (add `--force` if given), then `Skill(/dx-plan-val
 
 ### STOP: plan validation failed
 
-Print `Plan validation failed — see $SPEC_DIR/validation-report.md. Fix the plan or the story, then re-run /dx-prep <id>.` Nothing is published.
+Print `Plan validation failed — see $SPEC_DIR/validation-report.md. Fix the plan or the story, then re-run /dx-prep <id>.` Nothing is published. Write the run result (see **Run result**) with `--status blocked --verdict fail --next "/dx-prep <id>"`.
 
 ### Write plan-wiki.md
 
@@ -146,6 +146,20 @@ If there is something to commit, commit with message `#<id> Prepare development 
 
 **Next:** `/dx-agent-all <id>` — skips the prepared phases and starts from implementation.
 ```
+
+Then write the run result.
+
+### Run result
+
+Last action of every run — Summary, the validation STOP, and any failure that ends the run early (`/dx-req` failing, no plan produced → `--status failed`) — per `../../shared/run-result.md`:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-prep --id <id> --status <done|blocked|failed> \
+  --verdict "<plan-validate verdict>" --next "/dx-agent-all <id>" \
+  --wiki "<.plan-wiki-url, if published>" --work-item "<work item url>" --summary "<one line>"
+```
+
+From Summary: `done` (a skipped wiki publish or an unpushed branch is still `done` — say so in `--summary`).
 
 ## Rules
 

@@ -1,7 +1,7 @@
 ---
 name: dx-hub-status
 description: "Show hub dispatch status — which repos are running, done, blocked or failed. Use for 'hub status', 'what's running'."
-argument-hint: "[ticket-id (optional) | --clean]"
+argument-hint: "[ticket-id (optional)] [--json] | --clean"
 allowed-tools: ["Read", "Glob", "Grep", "Write", "Bash"]
 ---
 
@@ -18,10 +18,21 @@ Hub mode is not enabled. Run `/dx-hub-init` first.
 - No argument → show all active dispatches (summary table)
 - `<ticket-id>` → detailed view for that one ticket
 - `--clean` → remove state entries older than `hub.state-ttl`, report count
+- `--json` (alone or with `<ticket-id>`) → machine-readable output for tools: see **JSON mode** below, then STOP
 
 Read from config:
 - `hub.state-ttl` — retention period for clean mode (default: `7d`)
 - `repos[]` — list of repos with paths (for reading spec dirs in detailed view)
+
+## JSON mode (`--json`)
+
+Print the status files as **one JSON array** and nothing else — no table, no prose before or after, so a tool can parse stdout:
+
+```bash
+bash "${CLAUDE_SKILL_DIR}/scripts/status-json.sh" state [<ticket-id>]
+```
+
+(`${CLAUDE_SKILL_DIR}` is this skill's directory; on a host that does not substitute it, run `scripts/status-json.sh` from this skill's folder.) Each element is a `state/<id>/status.json` object as `/dx-hub-dispatch` wrote it — `ticket`, `title`, `type`, `skill`, `engine`, `started`, `repos` (`<repo>: running | done | blocked | failed`) and, for the `copilot` engine, `sessions` (`<repo>: <session id>`). An unreadable file becomes `{"ticket": "<dir>", "error": "unreadable status.json"}`. No dispatches → `[]` (not the "No active dispatches" message). STOP after printing.
 
 ## 2. Load Status Files
 
@@ -119,6 +130,12 @@ Shows summary table of all dispatches with per-repo status.
 /dx-hub-status 2471234
 ```
 Shows detailed view with repo statuses. For completed repos, shows which spec files exist.
+
+### Status for a tool
+```
+/dx-hub-status --json
+```
+Prints `[{"ticket": "2471234", "repos": {...}, "sessions": {...}, ...}]` — one array, nothing else.
 
 ### Clean up old state
 ```

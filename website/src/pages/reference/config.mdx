@@ -347,6 +347,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>auto-commit</code></td><td class="p-3">bool</td><td class="p-3">false</td><td class="p-3">Commit after each step without asking</td></tr>
         <tr><td class="p-3"><code>auto-pr</code></td><td class="p-3">bool</td><td class="p-3">false</td><td class="p-3">Create PR after all steps complete</td></tr>
+        <tr><td class="p-3"><code>auto-vote</code></td><td class="p-3">bool</td><td class="p-3">false</td><td class="p-3">A local non-interactive <code>/dx-pr-review</code> (autopilot, headless, <code>autonomous</code>) casts the vote as you, with the pipeline's clamps: no positive vote with a MUST-FIX, never a blocking vote. Off: threads only</td></tr>
       </tbody>
     </table>
   </div>

@@ -68,6 +68,20 @@ rm -f .ai/run-context/orchestrating.flag
 
 The flag's existence (and freshness) is the signal that forked sub-skills (`dx-req`, `dx-plan`, `dx-plan-validate`, `dx-plan-resolve`, `dx-pr-commit`, `dx-step-all`) read to suppress their human-friendly summary output. See `plugins/dx-core/shared/orchestration-check.md`.
 
+### Run Result
+
+At **every** terminal state — wherever this skill removes the orchestration flag (Final Summary and each STOP) — write the run result as the last action, per `../../shared/run-result.md`:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-agent-all --id <id> --status <status> \
+  --next "<next step>" --pr "<PR url, if created>" --wiki "<wiki url, if published>" \
+  --work-item "<work item url>" --summary "<one line>"
+```
+
+- **Final Summary** → `done` (phases skipped by preference, e.g. auto-PR off, are still `done`; say so in `--summary`). `--next`: `none`, or the manual step the summary suggests (`/dx-pr <id>` when auto-PR was off).
+- **STOP on a gate the human must resolve** (plan validation failed, DoR / prepared-plan review gate, code review failed after fixes) → `blocked`, `--next` = the retry command the STOP message gives.
+- **STOP on an error** (step failures, build failing after the fix loop, a phase producing nothing) → `failed`, `--next` = the retry command.
+
 ## Execution Mode
 
 Check if the user specified a mode:

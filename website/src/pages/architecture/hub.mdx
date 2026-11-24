@@ -197,6 +197,7 @@ export const base = import.meta.env.BASE_URL;
 <Section>
   <CommandBlock label=".ai/config.yaml (hub section)">{`hub:
   enabled: true
+  engine: claude              # claude | copilot — CLI started per repo
   terminal-delay: 5          # seconds to wait for Claude to start
   state-ttl: 7d               # clean dispatches older than 7 days
 
@@ -224,6 +225,16 @@ repos:
         <td class="p-3"><code>hub.enabled</code></td>
         <td class="p-3"><code>true</code></td>
         <td class="p-3">Enable/disable hub mode</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.engine</code></td>
+        <td class="p-3"><code>claude</code></td>
+        <td class="p-3">CLI started in each repo terminal: <code>claude</code> or <code>copilot</code>. With <code>copilot</code>, each repo runs <code>copilot --session-id &lt;uuid&gt; -i "&lt;prompt&gt;"</code> and the ids are kept in <code>status.json</code> <code>sessions</code></td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.model</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">Optional <code>--model</code> for that CLI</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>hub.terminal-delay</code></td>

@@ -82,10 +82,16 @@ fi
 # DX_REVIEW_OWN_PRS=true). Lets the autonomous queue surface your own PRs.
 REVIEW_OWN_PRS=0
 [ "$DX_REVIEW_OWN_PRS" = "true" ] && REVIEW_OWN_PRS=1
-echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS"
+# Local non-interactive vote: opt-in per repo (preferences.auto-vote, default false).
+AUTO_VOTE=$(bash .ai/lib/dx-common.sh yaml-val preferences.auto-vote 2>/dev/null)
+[ "$AUTO_VOTE" = "true" ] || AUTO_VOTE=false
+echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS auto_vote=$AUTO_VOTE"
 ```
 
-Also treat the run as `AUTOMATION=1` when the prompt says `autonomous`/`autopilot`/`non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot autopilot, no `AskUserQuestion`) — see `../../shared/interaction-mode.md`. In such a **local** run (`DX_PIPELINE_MODE` not `true`) post the threads but **skip the vote**: the pipeline votes as its service account, while a local run would vote as you.
+Also treat the run as `AUTOMATION=1` when the prompt says `autonomous`/`autopilot`/`non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot autopilot, no `AskUserQuestion`) — see `../../shared/interaction-mode.md`. In such a **local** run (`DX_PIPELINE_MODE` not `true`) post the threads; the vote depends on `preferences.auto-vote`:
+
+- `false` (default) — **skip the vote** and record `**Vote:** skipped (local run)`: the pipeline votes as its service account, while a local run would vote as you.
+- `true` — the developer opted in to voting as themselves: cast the vote from the verdict with **the same clamps as the pipeline** (`references/post-findings.md` step 6 — `approved` → `Approved`, `approved-with-suggestions` → `ApprovedWithSuggestions`, `changes-requested`/`rejected` → `NoVote`, never a positive vote when a MUST-FIX exists).
 
 **When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict (clamped both ways — never a blocking vote, and never a positive vote when a MUST-FIX exists; `changes-requested`/`rejected` → `NoVote`; see `references/post-findings.md` step 6)** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
 
@@ -145,7 +151,7 @@ Extract:
 Skipping PR #<id> — you are the author. You can't review your own PR.
 ```
 
-And stop. If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
+And stop (write the run result first: `--status done --verdict skipped --summary "own PR, not reviewed"`). If invoked from `/dx-pr-review-all`, return this so the orchestrator can skip to the next PR.
 
 If `REVIEW_OWN_PRS=1`, do **not** skip — continue reviewing even when the author matches. The autonomous reviewer-queue pipeline runs as a service account reviewing on behalf of a human who may also be the author, so it sets this override to surface those PRs too.
 
@@ -420,7 +426,7 @@ Run this step if **`AUTOMATION=1`** (the pipeline path — post in the same pass
 
 This replaces the former `/dx-pr-post` skill — all posting logic is now part of this skill.
 
-**When `AUTOMATION=1`:** after posting, emit the `## Return` verdict block (see [Automation Return contract](#automation-return-contract)) and **stop** — do not continue to the interactive steps 5–9.
+**When `AUTOMATION=1`:** after posting, save the session (step 10), write the run result (step 12), emit the `## Return` verdict block (see [Automation Return contract](#automation-return-contract)) and **stop** — do not continue to the interactive steps 5–9.
 
 ---
 
@@ -936,7 +942,7 @@ Write `.ai/pr-reviews/pr-<id>.md`:
 **Last reviewed:** <ISO date>
 **Review commit:** <SHA>
 **Status:** reviewed | follow-up-needed | complete
-**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped> — set via `mcp__ado__repo_pull_request_write` (`action: "vote"`)
+**Vote:** <Approved | ApprovedWithSuggestions | WaitingForAuthor | Rejected | NoVote | skipped (local run) | skipped> — the vote this run cast via `mcp__ado__repo_pull_request_write` (`action: "vote"`); `skipped (local run)` when a local non-interactive run did not vote (`preferences.auto-vote: false`)
 
 ## My Threads
 
@@ -972,6 +978,21 @@ rm -rf /tmp/dx-review-<repo>
 # Temp patch file
 rm -f /tmp/dx-propose-pr-<id>.patch
 ```
+
+### 12. Run Result
+
+Last action of every run that reached a PR (first review, follow-up, posting, analyze-only, own-PR skip) — interactive and automation alike — per `../../shared/run-result.md`:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-pr-review --id <PR id> --status <done|blocked|failed> \
+  --verdict "<review verdict>" --vote "<vote cast, empty if none>" --next "<next step or none>" \
+  --pr "<PR web url>" --summary "<one line, e.g. 3 threads posted, voted ApprovedWithSuggestions>"
+```
+
+- `done` — review finished (threads posted, or findings saved in analyze-only / dry run).
+- `blocked` — findings saved but not posted and a human must act (e.g. the user declined posting); `--next` = `/dx-pr-review <id> post findings`.
+- `failed` — no review produced, or nothing could be posted (the `## Return` `fail` cases).
+- `--vote` is the vote **this run cast**; leave it empty when the vote was skipped or failed.
 
 ## Automation Return contract
 
@@ -1136,6 +1157,7 @@ Common excuses for weak reviews — and why they're wrong:
 - **Combined + individual** — per-file patches on relevant lines AND a combined patch in the summary
 - **Ask before acting** — never approve, decline, or post without user confirmation **in interactive mode**. In automation mode (`AUTOMATION=1`) there is no human: post and vote in one pass and NEVER call `AskUserQuestion`
 - **Automation auto-votes, clamped at both ends** — when `AUTOMATION=1`, cast the vote from the findings verdict (`post-findings.md` step 6). The bot never hard-blocks (no `WaitingForAuthor`/`Rejected`) **and never casts a positive vote on a PR with a MUST-FIX**: `changes-requested`/`rejected` → **`NoVote` (0)**, not `ApprovedWithSuggestions`. A positive vote feeds branch-policy approvals + auto-complete, so approving a known-buggy PR would help merge the bug. Positive votes (`Approved`/`ApprovedWithSuggestions`) are only for verdicts with no MUST-FIX. The summary thread states the bot is **not approving** and flags the MUST-FIX for a human. Emit the `## Return` verdict block at the end
+- **Local auto-vote is opt-in** — a local non-interactive run votes only with `preferences.auto-vote: true`, and then with the pipeline's clamps; never `WaitingForAuthor`/`Rejected`, never a positive vote with a MUST-FIX
 - **Own-PR override** — honor `DX_REVIEW_OWN_PRS=true` (default on in CI, off locally): when set, do not skip PRs authored by the current identity
 - **Scope your review** — review what's in the PR, don't suggest unrelated refactors
 - **Follow-up verification** — for silently fixed threads, verify the fix before marking as addressed

@@ -90,7 +90,7 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-bug-all | `/dx-bug-all` | `<bug-id>` | Full bug workflow: triage → verify → fix. Logs bug patterns, detects component hotspots. | Bug fixed |
+| dx-bug-all | `/dx-bug-all` | `<bug-id> [autonomous]` | Full bug workflow: triage → verify → fix. `autonomous` runs it locally without stops. Logs bug patterns, detects component hotspots. | Bug fixed + `.ai/run-results/dx-bug-all-<id>.json` |
 | dx-bug-triage | `/dx-bug-triage` | `<bug-id>` | Fetch bug from ADO/Jira, find affected component, save triage | `raw-bug.md`, `triage.md` |
 | dx-bug-verify | `/dx-bug-verify` | `<bug-id> [before\|after\|qa]` | Reproduce bug via Playwright. `before`: confirm bug exists. `after`: verify fix locally. `qa`: verify fix on QA post-merge. | `verification.md` / `-local.md` / `-qa.md` |
 | dx-bug-fix | `/dx-bug-fix` | `<bug-id>` (optional) | Generate fix plan from triage, execute, create PR | `implement.md` + PR |
@@ -150,10 +150,10 @@ Multi-repo orchestration plugin. Dispatches tickets to independent Claude Code s
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-hub-dispatch | `/dx-hub-dispatch` | `<ticket-id> [repos...] [--skill]` | Dispatch a ticket to repos via VS Code terminals | Terminal sessions + status.json |
+| dx-hub-dispatch | `/dx-hub-dispatch` | `<ticket-id> [repos...] [--skill] [autonomous]` | Dispatch a ticket to repos via VS Code terminals — Claude Code or Copilot CLI (`hub.engine`) | Terminal sessions + status.json |
 | dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
 | dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| terminal-delay]` | View and edit hub configuration | Config update |
-| dx-hub-status | `/dx-hub-status` | `[ticket-id \| --clean]` | Show status of hub dispatches across all repos | Status report |
+| dx-hub-status | `/dx-hub-status` | `[ticket-id] [--json] \| --clean` | Show status of hub dispatches across all repos; `--json` prints one JSON array for tools | Status report |
 | dx-discover-repos | `/dx-discover-repos` | `<work-item-id>` | Resolve which repos a work item touches via a 3-tier cascade (explicit → simple-block → cross-repo table → LLM) | JSON array of repo entries (used by the KAI-HUB router) |
 
 ---

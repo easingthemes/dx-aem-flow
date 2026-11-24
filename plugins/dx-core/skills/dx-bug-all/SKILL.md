@@ -1,13 +1,13 @@
 ---
 name: dx-bug-all
 description: "Full bug workflow in one command for an ADO Bug — triage, reproduce in the browser, fix, PR. Use for 'fix bug <id>'. Not for a single phase (dx-bug-triage, dx-bug-verify, dx-bug-fix)."
-argument-hint: "<ADO Bug Work Item ID or full URL>"
+argument-hint: "<ADO Bug Work Item ID or full URL> [autonomous]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
 You are a coordinator for the bug pipeline. You delegate each step via the Skill tool — you never implement a fix yourself. You run in one of **two modes**, decided once up front:
 
-- **Local / interactive** (`DX_PIPELINE_MODE` unset) — the original hands-on flow: parse the id, optional hub dispatch, run triage → verify → fix with `bug-progress.md` tracking and a retry-once on failure. **This mode is unchanged** from before recovery existed.
+- **Local** (`DX_PIPELINE_MODE` unset) — the original hands-on flow: parse the id, optional hub dispatch, run triage → verify → fix with `bug-progress.md` tracking and a retry-once on failure. It runs **interactive** by default, or **autonomous** (no stops, no questions) when the prompt says `autonomous` or nobody can answer — see **Local autonomous** below.
 - **Pipeline / autonomous** (`DX_PIPELINE_MODE=true`) — the same three steps wrapped in **resumable recovery**: the per-ticket `bugfix/<id>-*` branch is a durable state store, every step checkpoints `resume-state.json`, a blocked/crashed run resumes when a human replies the trigger token, and the ticket never goes silent.
 
 ```bash
@@ -18,7 +18,22 @@ If `PIPELINE_MODE` is `true`, follow **Pipeline mode** below and ignore the Loca
 
 ---
 
-# Local mode (interactive — unchanged)
+# Local mode
+
+## Local autonomous
+
+The local run is **autonomous** when the argument or prompt says `autonomous` / `autopilot` / `non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot CLI autopilot, no `AskUserQuestion`) — `../../shared/interaction-mode.md`. Same three steps, same retry-once rules as interactive; the differences:
+
+- **Orchestration flag** — so the sub-skills run non-interactively and `/dx-pr-commit` updates an existing PR instead of opening a second one, write it after parsing the id, refresh it after each step, and remove it at every terminal node (Final summary, each Report FAIL, hub STOP):
+  ```bash
+  mkdir -p .ai/run-context && touch .ai/run-context/orchestrating.flag   # start + after each step
+  rm -f .ai/run-context/orchestrating.flag                             # terminal
+  ```
+- **Never ask** — a missing id is a `failed` run (write the run result and STOP), not a question. Do not pause between steps.
+- **No ADO comments from the coordinator** — same as interactive local mode; the sub-skills post what they post in any non-interactive run.
+
+Recovery (resume-state, checkpoints, trigger token) stays a **pipeline-only** feature: a local autonomous run that stops is re-run by hand.
+
 
 ## Progress Tracking
 
@@ -67,11 +82,11 @@ digraph bug_all_local {
 
 ### Parse argument
 
-The argument is the ADO work item ID — a numeric value (e.g., `2453532`). If the user provides a full ADO URL, extract the numeric ID. If no argument is provided, ask the user for the work item ID.
+The argument is the ADO work item ID — a numeric value (e.g., `12345`), optionally followed by `autonomous`. If the user provides a full ADO URL, extract the numeric ID. If no ID is provided, ask the user for it — in **Local autonomous**, write the run result with `--status failed --next "/dx-bug-all <id> autonomous"` and STOP instead.
 
 ### Hub dispatch?
 
-Read `../../shared/hub-dispatch.md`. Hub mode is active when: `DX_PIPELINE_MODE` is NOT set, `.ai/config.yaml` has `hub.enabled: true`, and the cwd is a `.hub/` directory. If active: print `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to repo terminals.` and STOP. Otherwise proceed to triage.
+Read `../../shared/hub-dispatch.md`. Hub mode is active when: `DX_PIPELINE_MODE` is NOT set, `.ai/config.yaml` has `hub.enabled: true`, and the cwd is a `.hub/` directory. If active: print `Hub mode detected. Use /dx-hub-dispatch <ticket-id> to dispatch this bug to repo terminals.`, write the run result (`--status blocked --next "/dx-hub-dispatch <id>"`) and STOP. Otherwise proceed to triage.
 
 ### Dispatch triage / verify / fix
 
@@ -81,11 +96,23 @@ Read `../../shared/hub-dispatch.md`. Hub mode is active when: `DX_PIPELINE_MODE`
 
 ### Retry / Report FAIL
 
-Retry a failed triage or fix **once** with the same skill. If still failing, print which step failed and what succeeded, suggest running the individual skill, and STOP. **Dependency rules:** triage FAIL → STOP (no bug data); verify FAIL → WARN + continue; fix FAIL → STOP after reporting.
+Retry a failed triage or fix **once** with the same skill. If still failing, print which step failed and what succeeded, suggest running the individual skill, write the run result (`--status failed`, `--next` = that skill command), and STOP. **Dependency rules:** triage FAIL → STOP (no bug data); verify FAIL → WARN + continue; fix FAIL → STOP after reporting.
 
 ### Final summary + log run
 
 Find the spec directory and present the completion table (raw-bug.md / triage.md / verification.md / implement.md / verification-local.md, PR URL, what-was-done list). Then **log the run** (identical to before): append a record to `.ai/learning/raw/runs.jsonl` (`flow:"bug-all"`, severity, priority, component, verification, fix_result, local_verification, pr_created) and a pattern to `.ai/learning/raw/bugs.jsonl` (component, root_cause, files_changed). **Bug hotspot check:** if any component has ≥3 bugs in `bugs.jsonl`, print a learning note. **Known pattern check:** if `fixes.jsonl` exists and the root cause matches a known `error_type`, print a note. Skip silently if none.
+
+### Run result (local mode)
+
+Last action of every local run — Final summary and each Report FAIL — per `../../shared/run-result.md`:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-bug-all --id <id> --status <done|failed> \
+  --verdict "<verification result: reproduced | not-reproduced | blocked>" --next "<next step or none>" \
+  --pr "<PR url, if created>" --work-item "<work item url>" --summary "<one line>"
+```
+
+Final summary → `done` (`--next` = `/dx-bug-verify <id> after` when a PR was created, else `none`).
 
 ---
 
@@ -355,7 +382,8 @@ next_action: <human-readable next step or "none">
 ## Rules
 
 - **Coordinator only** — delegate every step via the Skill tool; never implement a fix yourself.
-- **Mode gate is first** — decide Local vs Pipeline once; never mix (no checkpoints/ADO comments in Local mode, no chat-only progress in Pipeline mode).
+- **Mode gate is first** — decide Local vs Pipeline once; never mix (no checkpoints/ADO comments in Local mode — interactive or autonomous — no chat-only progress in Pipeline mode).
+- **Local autonomous never asks** — no `AskUserQuestion`, no pause between steps; a run that cannot continue writes the run result and stops.
 - **Sequential dependencies** — never dispatch step N+1 until step N returns (except verify FAIL → continue to fix).
 - **Strict checkpoints (Pipeline)** — checkpoint after every successful step; a `BRANCH-ADVANCED` (exit 3) means stop, never force-push.
 - **Never go silent (Pipeline)** — every terminal path posts an ADO comment and touches `ado-comment-posted.flag`.

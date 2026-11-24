@@ -33,6 +33,9 @@ class Scaffold {
     if (this.placeholders.AUTO_PR === undefined) {
       this.placeholders.AUTO_PR = false;
     }
+    if (this.placeholders.AUTO_VOTE === undefined) {
+      this.placeholders.AUTO_VOTE = false;
+    }
 
     // Derive projectRole from projectType if not explicitly provided
     if (!this.placeholders.projectRole && this.placeholders.projectType) {
@@ -324,7 +327,8 @@ class Scaffold {
     // browser session state (cookies) there.
     // .ai/specs/ itself is tracked (spec files travel with the feature branch for
     // hand-off and recovery); only the re-downloadable ticket images are ignored.
-    const entries = ['.ai/specs/**/images/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/'];
+    // .ai/run-results/ — per-run result files of the coordinator skills (local only).
+    const entries = ['.ai/specs/**/images/', '.ai/research/', '.ai/pr-reviews/', '.ai/me.md', '.ai/playwright/', '.ai/run-results/'];
     let content = '';
     if (fs.existsSync(gitignorePath)) {
       content = fs.readFileSync(gitignorePath, 'utf8');

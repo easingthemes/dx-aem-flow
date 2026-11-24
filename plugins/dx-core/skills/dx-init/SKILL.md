@@ -28,7 +28,7 @@ The scaffold script handles utility and rule validation automatically. Template-
 Check if `.ai/config.yaml` exists at the project root (use Glob tool).
 
 - **If it exists:** Read and display the current config, then ask: "Config already exists. **(A) Keep as-is**, **(B) Modify**, or **(C) Start fresh**?"
-  - If **A**: Say "Config kept. Validating all project files..." — then check if `.ai/config.yaml` has a `preferences:` section with both `auto-commit` and `auto-pr` keys. **If either key is missing:** run **Step 4** (Preferences) to ask the user, then append the `preferences:` section to the existing config.yaml. After that, **CONTINUE to step 5** to validate all generated files, scripts, rules, and templates. **DO NOT stop or exit.** The re-run must validate everything.
+  - If **A**: Say "Config kept. Validating all project files..." — then check if `.ai/config.yaml` has a `preferences:` section with the `auto-commit`, `auto-pr` and `auto-vote` keys. **If any key is missing:** run **Step 4** (Preferences) to ask only the missing questions, then add the missing keys to the `preferences:` section (append the section if it is absent) to the existing config.yaml. After that, **CONTINUE to step 5** to validate all generated files, scripts, rules, and templates. **DO NOT stop or exit.** The re-run must validate everything.
   - If **B**: Load existing values as defaults, go to step 2
   - If **C**: Go to step 2 with no defaults
 - **If it doesn't exist:** Say "No dx config found. Let's set up your project." Go to step 2.
@@ -137,7 +137,7 @@ Present detected values and ask to confirm or correct:
 
 ## 4. Preferences
 
-Ask two separate questions:
+Ask three separate questions:
 
 **Question 1:**
 > **Auto-commit after successful builds?** When enabled, the pipeline automatically commits after build + code review pass.
@@ -149,9 +149,15 @@ Ask two separate questions:
 > 1. **No** — manual PR creation only (default)
 > 2. **Yes** — auto-PR
 
+**Question 3:**
+> **Vote on PRs in local non-interactive reviews?** When `/dx-pr-review` runs without anyone to ask (autopilot, headless, `autonomous`), it posts its threads and — only if enabled — casts the vote **as you**, with the pipeline's limits: approve only without a MUST-FIX, never a blocking vote.
+> 1. **No** — post threads only, vote by hand (default)
+> 2. **Yes** — auto-vote
+
 Map the answers to booleans and carry them into step 5b:
 - Question 1: `1 => false`, `2 => true` (store as `AUTO_COMMIT`)
 - Question 2: `1 => false`, `2 => true` (store as `AUTO_PR`)
+- Question 3: `1 => false`, `2 => true` (store as `AUTO_VOTE`)
 
 ## 5. Generate Files
 
@@ -189,9 +195,10 @@ Ensure the user preferences from step 4 are persisted in `.ai/config.yaml` under
 preferences:
   auto-commit: <true|false>
   auto-pr: <true|false>
+  auto-vote: <true|false>
 ```
 
-Populate template placeholders `{{AUTO_COMMIT}}` and `{{AUTO_PR}}` from the step 4 answers.
+Populate template placeholders `{{AUTO_COMMIT}}`, `{{AUTO_PR}}` and `{{AUTO_VOTE}}` from the step 4 answers.
 
 **Re-run with "Keep as-is" (case A):** If step 1 chose A and step 4 ran only to backfill missing preferences, do NOT regenerate the full config.yaml. Instead, read the existing `.ai/config.yaml` and append the `preferences:` section at the end (before any commented-out sections). Use the Edit tool — do not overwrite the entire file.
 
@@ -286,6 +293,7 @@ Read `.gitignore` (use Read tool) and check which of these entries it already ha
 # dx workflow
 .ai/specs/**/images/
 .ai/run-context/
+.ai/run-results/
 .ai/research/
 .ai/me.md
 .ai/playwright/

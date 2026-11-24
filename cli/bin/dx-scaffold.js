@@ -43,6 +43,7 @@ const flags = {
   quiet: args.includes('--quiet') || args.includes('-q'),
   autoCommit: parseOptionalBooleanFlag(args, 'auto-commit'),
   autoPr: parseOptionalBooleanFlag(args, 'auto-pr'),
+  autoVote: parseOptionalBooleanFlag(args, 'auto-vote'),
 };
 
 // --all enables everything
@@ -81,6 +82,9 @@ Flags:
   --auto-pr[=true|false]
                Set preferences.auto-pr in generated config.yaml
                (also supports --no-auto-pr)
+  --auto-vote[=true|false]
+               Set preferences.auto-vote in generated config.yaml
+               (also supports --no-auto-vote)
   --force      Overwrite existing files (default: skip)
   --quiet, -q  Suppress per-file output
   --help, -h   Show this help
@@ -191,6 +195,9 @@ if (flags.autoCommit !== undefined) {
 }
 if (flags.autoPr !== undefined) {
   placeholders.AUTO_PR = flags.autoPr;
+}
+if (flags.autoVote !== undefined) {
+  placeholders.AUTO_VOTE = flags.autoVote;
 }
 
 // --- Scaffold ---

@@ -163,7 +163,16 @@ git apply pr-fixes.patch
 
 ## 6. Set Vote
 
-Skip this step in a **local** non-interactive run (autopilot, headless — `DX_PIPELINE_MODE` not `true`): there the vote would be cast under the developer's own identity. Report the verdict in the summary instead. Pipelines vote as their service account and keep this step.
+In a **local** non-interactive run (autopilot, headless, prompt says `autonomous` — `DX_PIPELINE_MODE` not `true`) the vote would be cast under the developer's own identity, so it is **opt-in per repo**:
+
+```bash
+AUTO_VOTE=$(bash .ai/lib/dx-common.sh yaml-val preferences.auto-vote 2>/dev/null)
+```
+
+- not `true` (default) — **skip this step**: report the verdict in the summary and record `**Vote:** skipped (local run)` in the session file.
+- `true` — cast the vote from the verdict exactly as the **Automation** column below (same clamps, no `AskUserQuestion`), including the `A valid reviewer must be supplied` recovery.
+
+Pipelines vote as their service account and always keep this step.
 
 Determine vote from the verdict in the findings:
 
@@ -213,7 +222,7 @@ if [ -f "$FLAG" ]; then
 fi
 ```
 
-**When `AUTOMATION=1`** (pipeline / orchestrated): cast the vote automatically from the verdict, **clamped at both ends**. An autonomous agent must neither hard-block a human's PR nor *approve* one it found a blocking bug in:
+**When `AUTOMATION=1`** (pipeline / orchestrated, or a local non-interactive run with `preferences.auto-vote: true`): cast the vote automatically from the verdict, **clamped at both ends**. An autonomous agent must neither hard-block a human's PR nor *approve* one it found a blocking bug in:
 
 - `approved` → `Approved` (+10), `approved-with-suggestions` → `ApprovedWithSuggestions` (+5) — positive votes are fine **only when there is no MUST-FIX**.
 - `changes-requested` / `rejected` → **`NoVote` (0)**. Never `WaitingForAuthor`/`Rejected` (don't hard-block), but also never a positive `ApprovedWithSuggestions`/`Approved` — a positive vote counts toward branch-policy minimum-approvals and auto-complete, so approving a PR with a known MUST-FIX would actively help merge the bug. `NoVote` leaves the decision entirely to a human: the bot has stated its concern and explicitly declined to approve.
@@ -226,7 +235,7 @@ When you clamp a `changes-requested`/`rejected` verdict to `NoVote`, the **summa
 
 ## 7. Update Session
 
-Update the existing session file `.ai/pr-reviews/pr-<id>.md` (or create it if it doesn't exist) with thread IDs from the posted comments. Follow the same format as `/dx-pr-review` step 10.
+Update the existing session file `.ai/pr-reviews/pr-<id>.md` (or create it if it doesn't exist) with thread IDs from the posted comments and the `**Vote:**` line — the vote cast in step 6, `skipped (local run)` when step 6 was skipped, or `skipped` when the user chose comments only. Follow the same format as `/dx-pr-review` step 10.
 
 ## 8. Report
 
@@ -249,3 +258,4 @@ Threads: <list of thread IDs>
 - **MCP tools are deferred** — always load via ToolSearch before first use
 - **URL project precedence** — if a PR URL was provided, use the project from the URL, not from config
 - **Automation-safe** — no `AskUserQuestion` calls when running in pipeline context
+- **Local vote is opt-in** — a local non-interactive run votes only with `preferences.auto-vote: true`, with the Automation clamps
