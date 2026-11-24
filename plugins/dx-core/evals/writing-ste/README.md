@@ -36,7 +36,7 @@ Keep `ste-on/graders/` and `ste-off/graders/` identical (`diff -r` them).
 
 Sanity check (2026-11-24): each regex grader was run against a good and a bad
 sample text. Every one failed on the bad sample and passed on the good one. The
-`llm` grader has not been seen failing yet.
+`llm` grader was first seen failing in the haiku run below.
 
 The graders give pass/fail per run. `measure.js` gives the size of the
 difference: words, sentence count, average and maximum sentence length,
@@ -91,5 +91,29 @@ Findings:
 - The `llm` judge passed all 6 runs, so it did not separate the arms. It has
   still not been seen failing.
 
-Three runs per arm is a small sample. Repeat on `--model sonnet` and
-`--model haiku` before a decision for those tiers.
+## Result 2026-11-24 (sonnet 5.5 and haiku 5.5, judge sonnet, `--runs 3`)
+
+Cost: sonnet $0.52, haiku $0.08. Numbers are the mean of 3 runs per arm.
+
+| Metric | sonnet off | sonnet on | haiku off | haiku on |
+|---|---|---|---|---|
+| Grader score | 1.00 | 1.00 | 0.95 | 1.00 |
+| Average sentence length | 9.3 | 7.6 | 10.1 | 8.8 |
+| Longest sentence | 16-20 | 14-18 | 23-25 | 18-20 |
+| Passive hits | 4.7 | 1.0 | 4.0 | 2.0 |
+| Runs that kept a full file path | 0 of 3 | 3 of 3 | 0 of 3 | 0 of 3 |
+
+Findings:
+
+- The direction is the same on all three models: shorter sentences, a lower
+  maximum, less passive voice. The effect is small on each model.
+- Passive voice drops most on sonnet, from 4.7 to 1.0 hits per summary.
+- Haiku gains the most on the longest sentence: 23-25 words drop to 18-20.
+- Path exactness holds on opus and sonnet only. Haiku shortened paths in both
+  arms.
+- The `llm` judge failed one haiku control run. This is the first time it was
+  seen failing, so the judge is able to fail.
+
+Overall, across 18 runs: the rule gives a consistent, small gain in
+readability and no loss of facts. It is useful, but the data does not make it
+the most important rule. Three runs per arm is a small sample.
