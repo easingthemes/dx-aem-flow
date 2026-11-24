@@ -63,6 +63,33 @@ Pin `--model` and `--judge-model`, or a model rollout reads as an effect of
 the rule. To test the rule on a cheaper tier, run again with `--model sonnet`
 or `--model haiku`.
 
-## Result
+## Result 2026-11-24 (opus 5.5, judge sonnet, `--runs 3`, $0.90, 37s)
 
-Not run yet.
+Grader score: `ste-off` 0.95 (2/3 runs pass), `ste-on` 1.00 (3/3 runs pass).
+The one failure is a 27-word sentence in a control run.
+
+`measure.js`, mean of 3 runs per arm:
+
+| Metric | `ste-off` | `ste-on` |
+|---|---|---|
+| Average sentence length (words) | 9.8 | 8.5 |
+| Longest sentence (words) | 22, 23, 27 | 17, 17, 17 |
+| Sentences over 25 words | 1 in total | 0 |
+| Formal words | 0 | 0 |
+| Full file paths kept from `research.md` | 0 of 3 runs | 3 of 3 runs |
+
+Findings:
+
+- The rule caps the longest sentence. Every treatment run stayed at 17 words.
+  The control runs reached 22 to 27.
+- The average changes little. Opus 5.5 already writes short sentences and
+  does not copy the formal register of the fixture.
+- The clearest effect is the "keep paths exact" bullet. All three control runs
+  shortened `core/.../models/HeroModel.java` to `HeroModel.java`. All three
+  treatment runs kept the full path.
+- All content guards passed in both arms. The rule did not cost facts.
+- The `llm` judge passed all 6 runs, so it did not separate the arms. It has
+  still not been seen failing.
+
+Three runs per arm is a small sample. Repeat on `--model sonnet` and
+`--model haiku` before a decision for those tiers.
