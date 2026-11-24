@@ -1,11 +1,11 @@
 ---
 name: dx-hub-dispatch
-description: "Dispatch a ticket to several repos — open an independent Claude session per repo in VS Code terminals. Use for 'hub dispatch', 'work on ticket across repos'."
-argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all]"
+description: "Dispatch a ticket to several repos — open an independent Claude Code or Copilot CLI session per repo in VS Code terminals. Use for 'hub dispatch', 'work on ticket across repos'."
+argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all] [autonomous]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash", "mcp__vscode-automator__*", "mcp__ado__*", "mcp__atlassian__*"]
 ---
 
-You dispatch a ticket to one or more repos by opening independent Claude Code sessions in VS Code terminals. The hub does NOT plan or implement — it fetches the ticket, determines which repos are involved, and launches real Claude sessions in each repo with a delegation prompt.
+You dispatch a ticket to one or more repos by opening independent CLI sessions — Claude Code (default) or Copilot CLI, per `hub.engine` — in VS Code terminals. The hub does NOT plan or implement — it fetches the ticket, determines which repos are involved, and launches real Claude sessions in each repo with a delegation prompt.
 
 ## Pre-flight
 
@@ -14,7 +14,9 @@ Read `.ai/config.yaml`. If `hub.enabled` is not `true`, STOP:
 > Hub mode is not enabled. Run `/dx-hub-init` first.
 
 Read:
-- `hub.terminal-delay` — seconds to wait for Claude to start in terminal (default: `5`)
+- `hub.terminal-delay` — seconds to wait for Claude to start in terminal (default: `5`; Claude engine only)
+- `hub.engine` — CLI started in each repo terminal: `claude` (default) or `copilot`
+- `hub.model` — optional model passed as `--model <value>` to that CLI (empty: the CLI's own default)
 - `repos[]` — list of repos with `name`, `path`, `capabilities`
 
 Read `shared/provider-config.md` for provider detection and tool mapping.
@@ -72,6 +74,7 @@ Parse `$ARGUMENTS`:
 1. **Ticket ID** (required) — first positional arg. Numeric ADO ID, Jira key (`PROJ-123`), or full URL. Extract ID from URLs.
 2. **Repo names** (optional) — additional positional args matching `repos[].name` from config. If provided, skip auto-detection and use these.
 3. **`--skill`** (optional) — skill to run in each repo. Default: `/dx-agent-all`.
+4. **`autonomous`** (optional) — appended to the skill call in every repo (`<skill> <id> autonomous`), so each repo session runs without stops. Also makes this dispatch itself skip **Confirm dispatch**.
 
 Examples:
 ```
@@ -79,6 +82,7 @@ Examples:
 /dx-hub-dispatch 2471234 repo-fe repo-be
 /dx-hub-dispatch 2471234 --skill /dx-req
 /dx-hub-dispatch PROJ-123 repo-fe --skill /dx-agent-all
+/dx-hub-dispatch 2471234 repo-fe repo-be autonomous
 ```
 
 ### Fetch ticket
@@ -165,9 +169,11 @@ Type:    <type>
 Skill:   <skill>
 Repos:   <repo-a> (<caps>), <repo-b> (<caps>)
 
-This will open <N> VS Code terminals, each running an independent Claude session.
+This will open <N> VS Code terminals, each running an independent <Claude Code | Copilot CLI> session.
 Proceed? [Y/n]
 ```
+
+**Non-interactive** (`autonomous` argument, or nobody can answer — dx-core `shared/interaction-mode.md`): print the plan and proceed without asking.
 
 - **yes** (or Enter) → proceed
 - **no** → go to "STOP: cancelled"
@@ -268,7 +274,9 @@ mcp__vscode-automator__vscode_keystroke
 
 Wait 1 second.
 
-**Step 3 — Start Claude:**
+**Step 3 — Start the CLI.** Branch on `hub.engine`:
+
+**`claude` (default):**
 ```
 mcp__vscode-automator__vscode_type
   text: "claude"
@@ -278,14 +286,31 @@ mcp__vscode-automator__vscode_keystroke
   key: "return"
 ```
 
-Wait `hub.terminal-delay` seconds (default: 5) for Claude to start.
+(With `hub.model` set: `claude --model <hub.model>`.) Wait `hub.terminal-delay` seconds (default: 5) for Claude to start, then go to Step 4.
 
-**Step 4 — Type the delegation prompt:**
+**`copilot`:** the prompt goes on the command line, so Step 3 and Step 4 are one command. Give each repo its own **lowercase** session id — Copilot CLI uses it as the session folder name (`~/.copilot/session-state/<uuid>/`), which lets a tool read that terminal's usage — and keep it for **Write status.json**:
 
-Build the prompt (no line breaks — single continuous text):
+```bash
+uuidgen | tr 'A-Z' 'a-z'
+```
 
 ```
-Ticket <id> raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>. Cross-repo context at <hub-abs-path>/state/<ticket-id>/context.md — read it before starting. You handle the <repo-name> portion (<role>). Also involved: <other-repos-and-roles>. When done or blocked, update status in <hub-abs-path>/state/<ticket-id>/status.json — set repos.<repo-name> to done, blocked, or failed. Now run: <skill> <ticket-id>
+mcp__vscode-automator__vscode_type
+  text: "copilot --session-id <uuid> [--model <hub.model>] -i \"<delegation prompt>\""
+```
+```
+mcp__vscode-automator__vscode_keystroke
+  key: "return"
+```
+
+Copilot CLI only knows plugin skills by their **plugin-prefixed** name, so in the delegation prompt write the skill as `/dx-core:<name>` (`/dx-agent-all` → `/dx-core:dx-agent-all`; a skill already carrying a `plugin:` prefix stays as is). Skip the rest of this node's Step 4 and wait 2 seconds before the next repo.
+
+**Step 4 — Type the delegation prompt (`claude` engine):**
+
+Build the prompt (no line breaks — single continuous text; no `"`, `$` or backticks, since the Copilot path puts it inside a shell double-quoted string):
+
+```
+Ticket <id> raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>. Cross-repo context at <hub-abs-path>/state/<ticket-id>/context.md — read it before starting. You handle the <repo-name> portion (<role>). Also involved: <other-repos-and-roles>. When done or blocked, update status in <hub-abs-path>/state/<ticket-id>/status.json — set repos.<repo-name> to done, blocked, or failed. Now run: <skill> <ticket-id>[ autonomous]
 ```
 
 ```
@@ -309,13 +334,20 @@ Write `$STATE_DIR/status.json`:
   "title": "<title>",
   "type": "<type>",
   "skill": "<skill>",
+  "engine": "<claude | copilot>",
   "started": "<ISO timestamp>",
   "repos": {
     "<repo-a>": "running",
     "<repo-b>": "running"
+  },
+  "sessions": {
+    "<repo-a>": "<uuid>",
+    "<repo-b>": "<uuid>"
   }
 }
 ```
+
+`sessions` is written only for the `copilot` engine (the `--session-id` given to each repo terminal). `repos.<name>` stays a plain status string — the repo sessions update it, and `/dx-hub-status` reads it.
 
 ### Summary
 
@@ -328,8 +360,8 @@ Ticket:    <id> — <title>
 Skill:     <skill>
 Terminals: <N> sessions launched
 
-  <repo-a> (<role>) — running
-  <repo-b> (<role>) — running
+  <repo-a> (<role>) — running   [<session id, copilot engine>]
+  <repo-b> (<role>) — running   [<session id, copilot engine>]
 
 State: state/<ticket-id>/
 
@@ -373,6 +405,10 @@ Only runs requirements phase, not full pipeline.
 **Cause:** `hub.terminal-delay` too short — Claude CLI takes time to initialize.
 **Fix:** Increase `hub.terminal-delay` in `.ai/config.yaml` (try `8` or `10`).
 
+### Copilot CLI: "Unknown command" in a repo terminal
+**Cause:** the skill was typed without its plugin prefix.
+**Fix:** use `/dx-core:<skill>` in the delegation prompt (see Launch terminals). Run `copilot` in that repo and check the plugin is enabled if the prefixed name also fails.
+
 ### Wrong repo detected
 **Cause:** Ticket content didn't contain clear FE/BE keywords.
 **Fix:** Re-run with explicit repo names: `/dx-hub-dispatch <id> <repo-name>`.
@@ -386,5 +422,5 @@ Only runs requirements phase, not full pipeline.
 - **Hub never plans or implements** — it only fetches, routes, and launches
 - **No hardcoded values** — all org names, project names, paths from config
 - **Pre-seed raw files** — copy to each repo so skills skip redundant ADO fetches
-- **One terminal per repo** — each gets its own independent Claude session
+- **One terminal per repo** — each gets its own independent Claude Code or Copilot CLI session (`hub.engine`); with `copilot`, each repo has its own lowercase `--session-id`, recorded in `status.json` `sessions`
 - **vscode-automator is macOS only** — this skill requires macOS with Accessibility permission

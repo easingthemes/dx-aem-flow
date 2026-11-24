@@ -103,6 +103,7 @@ build:
 preferences:
   auto-commit: {{AUTO_COMMIT}}          # true | false — commit automatically after successful build + review
   auto-pr: {{AUTO_PR}}                  # true | false — create PR automatically after pipeline success
+  auto-vote: {{AUTO_VOTE}}              # true | false — local non-interactive /dx-pr-review votes as you (pipeline clamps)
 
 # toolchain: — detected by /dx-adapt, describes the project's build stack
 #   node: "18.0.0"

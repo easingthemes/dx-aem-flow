@@ -80,6 +80,7 @@ repos:
 preferences:
   auto-commit: false               # Auto-commit after each step
   auto-pr: false                  # Auto-create PR after all steps
+  auto-vote: false                # Local non-interactive /dx-pr-review casts the vote (as you)
 
 # Override plugin default prompts
 overrides:
@@ -259,6 +260,18 @@ SimpleAgent (`/dx-simple`) settings. All optional.
 | `active-markets` | list | no | Active markets with brand + countries (scopes searches by market) |
 | `repos` | list | no | Cross-repo awareness — sibling repos with name, role, platform, path, ado-project, base-branch |
 
+### `hub` (hub directory only)
+
+Written by `/dx-hub-init` in the hub's `.ai/config.yaml`. Full reference: `plugins/dx-hub/shared/hub-dispatch.md`.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | false | Hub mode for this directory |
+| `engine` | string | `claude` | CLI `/dx-hub-dispatch` starts in each repo terminal: `claude` \| `copilot`. With `copilot`, each repo gets `copilot --session-id <uuid> -i "<prompt>"` and the uuid is recorded in `state/<id>/status.json` `sessions` |
+| `model` | string | *(unset)* | Passed as `--model` to that CLI |
+| `terminal-delay` | number | 5 | Seconds to wait for Claude to start (`claude` engine) |
+| `state-ttl` | string | `7d` | Age after which `/dx-hub-status --clean` removes finished dispatches |
+
 ### `repos[]` entries
 
 | Field | Type | Required | Description |
@@ -286,6 +299,7 @@ Override plugin default prompts without replacing the full file.
 |-------|------|---------|-------------|
 | `auto-commit` | bool | false | Commit after each step without asking |
 | `auto-pr` | bool | false | Create PR after all steps complete |
+| `auto-vote` | bool | false | In a **local** non-interactive `/dx-pr-review` run (autopilot, headless, `autonomous`; `DX_PIPELINE_MODE` not `true`) cast the vote from the verdict — as the developer — with the pipeline's clamps: `approved` → `Approved`, `approved-with-suggestions` → `ApprovedWithSuggestions`, `changes-requested` / `rejected` → `NoVote`, never a positive vote with a MUST-FIX. `false`: threads only, `**Vote:** skipped (local run)`. Interactive runs ask; pipelines always vote |
 
 ### `research`
 

@@ -272,7 +272,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Description</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-bug-all</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Full bug workflow: triage, verify, fix</td></tr>
+        <tr><td class="p-3"><code>/dx-bug-all</code></td><td class="p-3"><code>&lt;bug-id&gt; [autonomous]</code></td><td class="p-3">Full bug workflow: triage, verify, fix (<code>autonomous</code>: no stops)</td></tr>
         <tr><td class="p-3"><code>/dx-bug-triage</code></td><td class="p-3"><code>&lt;bug-id&gt;</code></td><td class="p-3">Fetch bug, find affected component</td></tr>
         <tr><td class="p-3"><code>/dx-bug-verify</code></td><td class="p-3"><code>&lt;bug-id&gt; [before|after|qa]</code></td><td class="p-3">Reproduce via Playwright. <code>before</code>: confirm bug. <code>after</code>: verify fix locally. <code>qa</code>: verify fix on QA post-merge.</td></tr>
         <tr><td class="p-3"><code>/dx-bug-fix</code></td><td class="p-3"><code>&lt;bug-id&gt;</code> (opt)</td><td class="p-3">Generate fix plan, execute, create PR</td></tr>
@@ -485,8 +485,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-hub-init</code></td><td class="p-3"><code>[path]</code></td><td class="p-3">Initialise a hub directory, discover sibling repos, merge configs</td></tr>
         <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | terminal-delay &lt;s&gt;]</code></td><td class="p-3">View and edit hub configuration</td></tr>
-        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id&gt; [repos...] [--skill]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals</td></tr>
-        <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[id] [--clean]</code></td><td class="p-3">Show which repos are running, done, blocked, or failed</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id&gt; [repos...] [--skill] [autonomous]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals (Claude Code or Copilot CLI, <code>hub.engine</code>)</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[id] [--json] | --clean</code></td><td class="p-3">Show which repos are running, done, blocked, or failed (<code>--json</code>: one JSON array)</td></tr>
         <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Resolve which repos a work item touches (3-tier cascade)</td></tr>
       </tbody>
     </table>
@@ -558,6 +558,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <tr><td class="p-3"><code>.ai/learning/raw/runs.jsonl</code></td><td class="p-3">Run records -- timestamp, ticket, flow, step statuses, fix/heal counts</td><td class="p-3"><code>dx-step-all</code>, <code>dx-bug-all</code>, <code>dx-estimate</code></td></tr>
         <tr><td class="p-3"><code>.ai/learning/raw/fixes.jsonl</code></td><td class="p-3">Fix patterns -- error type, fix description, success/failure</td><td class="p-3"><code>dx-step-all</code></td></tr>
         <tr><td class="p-3"><code>.ai/learning/raw/bugs.jsonl</code></td><td class="p-3">Bug patterns -- component, root cause, files changed</td><td class="p-3"><code>dx-bug-all</code></td></tr>
+        <tr><td class="p-3"><code>.ai/run-results/&lt;skill&gt;-&lt;id&gt;.json</code></td><td class="p-3">Result of the latest run -- status (done / blocked / failed), verdict, vote, next action, PR / wiki / work item links (schema: <code>docs/reference/run-result.md</code>)</td><td class="p-3"><code>dx-agent-all</code>, <code>dx-bug-all</code>, <code>dx-pr-review</code>, <code>dx-prep</code></td></tr>
       </tbody>
     </table>
   </div>
