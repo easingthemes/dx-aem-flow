@@ -1,3 +1,10 @@
+# [6.3.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.2.1...v6.3.0) (2026-11-24)
+
+
+### Features
+
+* local auto-vote, dx-bug-all autonomous, run-result files, hub on Copilot CLI ([#277](https://github.com/easingthemes/dx-aem-flow/issues/277)) ([ca15356](https://github.com/easingthemes/dx-aem-flow/commit/ca15356a8a7f4247a7c1c74ca17dfff513567c2a))
+
 ## [6.2.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.2.0...v6.2.1) (2026-11-23)
 
 
