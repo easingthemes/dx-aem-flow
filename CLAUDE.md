@@ -82,7 +82,7 @@ Cost is real: agent runs are billed, `llm`/`baseline` graders add 3 judge calls 
 - **Sanity-check every suite against a known-bad input.** A green suite means either the skill is good or the grader is blind, and you can't tell which until something that should fail does. Each grader needs its own failing case; one scenario only exercises the graders it touches.
 - Run artifacts land in `plugins/*/evals/results/` and are gitignored.
 
-Current coverage is two suites in `dx-core/evals/`: `plan-validate-finds-gap` (see its README for a judge that passed a report its rubric said to fail) and `routing` (14 Skill-routing cases, `tool_used: Skill` graders; its no-skill grader has not yet been seen failing — TODO #252).
+Current coverage is three suites in `dx-core/evals/`: `plan-validate-finds-gap` (see its README for a judge that passed a report its rubric said to fail), `routing` (14 Skill-routing cases, `tool_used: Skill` graders; its no-skill grader has not yet been seen failing — TODO #252) and `writing-ste` (A/B of a plain-language rule in the system prompt: two cases, identical graders, `measure.js` for sentence-length numbers).
 
 ### Standalone CLI (`cli/`)
 
