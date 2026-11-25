@@ -81,8 +81,13 @@ At **every** terminal state — wherever this skill removes the orchestration fl
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-agent-all --id <id> --status <status> \
   --next "<next step>" --pr "<PR url, if created>" --wiki "<wiki url, if published>" \
-  --work-item "<work item url>" --summary "<one line>"
+  --work-item "<work item url>" --summary "<one line>" \
+  --mode <interactive|automation> --mode-reason <args|no-ask|flag|env|none> \
+  --metric steps_done=<n> --metric steps_total=<n> --metric fix_loops=<n> \
+  --metric build_attempts=<n> --metric fail_at="<first failed/blocked phase, omit if none>"
 ```
+
+Metrics come from `dev-all-progress.md` and `implement.md` (step statuses), `fix-loop-report.md` (fix loops) and the build phase (attempts) — counts you already have; omit one you do not know rather than guess. See `../../shared/run-result.md` § Metrics.
 
 - **Final Summary** → `done` (phases skipped by preference, e.g. auto-PR off, are still `done`; say so in `--summary`). `--next`: `none`, or the manual step the summary suggests (`/dx-pr <id>` when auto-PR was off).
 - **STOP on a gate the human must resolve** (plan validation failed, DoR / prepared-plan review gate, code review failed after fixes) → `blocked`, `--next` = the retry command the STOP message gives.

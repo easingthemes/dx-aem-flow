@@ -115,8 +115,12 @@ Last action of every local run — Final summary and each Report FAIL — per `.
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-bug-all --id <id> --status <done|failed> \
   --verdict "<verification result: reproduced | not-reproduced | blocked>" --next "<next step or none>" \
-  --pr "<PR url, if created>" --work-item "<work item url>" --summary "<one line>"
+  --pr "<PR url, if created>" --work-item "<work item url>" --summary "<one line>" \
+  --mode <interactive|automation> --mode-reason <args|no-ask|none> \
+  --metric fix_attempts=<n> --metric fail_at="<first failed step: triage|verify|fix, omit if none>"
 ```
+
+Metrics from `bug-progress.md` and `/dx-bug-fix`'s attempt count; omit one you do not know. See `../../shared/run-result.md` § Metrics.
 
 Final summary → `done` (`--next` = `/dx-bug-verify <id> after` when a PR was created, else `none`).
 

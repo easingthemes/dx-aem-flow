@@ -332,6 +332,33 @@ Print: `PR created: <PR URL>`
 <Otherwise omit this section.>
 ```
 
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — after **Pre-flight validation** passes:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-bug-fix --id <bug id>
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-bug-fix --id <bug id> --status <done|blocked|failed> \
+  --pr "<PR url, if created>" --work-item "<work item url>" --next "<next step or none>" \
+  --summary "<one line>" --metric fix_attempts=<1|2> --metric steps_total=<n> --metric steps_done=<n> \
+  --metric fail_at="<node or step that stopped the run, omit if none>"
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Final summary | `done` | `/dx-bug-verify <id> after`, or `none` |
+| STOP: Fix belongs in other repo, hub dispatch | `blocked` | `/dx-hub-dispatch <id>` or the other repo |
+| STOP: Human intervention needed (see `fix-loop-report.md`) | `blocked` | `/dx-bug-fix <id>` after the manual fix |
+| Pre-flight validation failed | `failed` | `/dx-bug-triage <id>` |
+
+
 ## Error Handling
 
 | Scenario | Action |

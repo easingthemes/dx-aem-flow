@@ -98,5 +98,36 @@ bash "$SCRIPT" --start --skill dx-prep --id 1 --status done 2>/dev/null; check "
 for _ in 1 2 3 4 5; do DX_RUN_HISTORY_MAX=4 DX_RUN_HISTORY_KEEP=2 bash "$SCRIPT" --skill dx-prep --id 9 --status done >/dev/null; done
 check "history trimmed" yes "$(n=$(wc -l < "$H" | tr -d ' '); [ "$n" -le 4 ] && echo yes)"
 
+# --- metrics and env ---
+cd "$TMP" && rm -rf .ai || exit 1
+out=$(env -u CLAUDECODE -u DX_ENGINE bash "$SCRIPT" --skill dx-pr-review --id 5 --status done \
+  --metric threads_posted=3 --metric must_fix=007 --metric threads_posted=4 --metric fail_at="Phase 3: build" \
+  --metric ok=true --metric neg=-2 --metric BAD=1 --metric novalue --metric long="$(printf 'x%.0s' $(seq 1 120))" \
+  --mode automation --mode-reason args 2>"$TMP/warn")
+check "bad metrics warn, write still succeeds" 2 "$(grep -c 'skipping bad --metric' "$TMP/warn")"
+if [ "$has_node" = 1 ]; then
+  check "metric repeated key: last wins" 4 "$(field "$out" metrics.threads_posted)"
+  check "metric leading zeros -> number" 7 "$(field "$out" metrics.must_fix)"
+  check "metric string" "Phase 3: build" "$(field "$out" metrics.fail_at)"
+  check "metric boolean" true "$(field "$out" metrics.ok)"
+  check "metric negative" -2 "$(field "$out" metrics.neg)"
+  check "metric string capped at 80" 80 "$(field "$out" metrics.long | wc -c | tr -d ' ')"
+  check "metric key order" "threads_posted,must_fix,fail_at,ok,neg,long" "$(node -e 'process.stdout.write(Object.keys(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).metrics).join(","))' "$out")"
+  check "env.mode" automation "$(field "$out" env.mode)"
+  check "env.mode_reason" args "$(field "$out" env.mode_reason)"
+  check "env.dx_version from manifest" yes "$(field "$out" env.dx_version | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+' && echo yes)"
+  check "env.engine unknown is null" null "$(field "$out" env.engine)"
+fi
+out=$(CLAUDECODE=1 bash "$SCRIPT" --skill dx-prep --id 6 --status done)
+if [ "$has_node" = 1 ]; then
+  check "no metrics -> {}" "{}" "$(node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).metrics))' "$out")"
+  check "engine claude under Claude Code" claude "$(field "$out" env.engine)"
+fi
+out=$(CLAUDECODE=1 DX_ENGINE=copilot bash "$SCRIPT" --skill dx-prep --id 6 --status done --engine other)
+[ "$has_node" = 1 ] && check "--engine wins" other "$(field "$out" env.engine)"
+out=$(CLAUDECODE=1 DX_ENGINE=copilot bash "$SCRIPT" --skill dx-prep --id 6 --status done)
+[ "$has_node" = 1 ] && check "DX_ENGINE over CLAUDECODE" copilot "$(field "$out" env.engine)"
+check "history lines stay JSON" yes "$(node -e 'require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").forEach(l=>JSON.parse(l));process.stdout.write("yes")' .ai/run-results/history.jsonl 2>/dev/null)"
+
 echo "run-result: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

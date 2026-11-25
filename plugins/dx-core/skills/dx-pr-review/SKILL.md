@@ -81,10 +81,10 @@ if [ "$AUTOMATION" = 0 ] && [ -f "$FLAG" ]; then
 fi
 # Skill arguments (Claude Code substitutes them; on a host that does not, put
 # the arguments here yourself).
-ARGS=$(cat <<'DX_ARGS'
+ARGS=""
+IFS= read -r -d '' ARGS <<'DX_ARGS' || true
 $ARGUMENTS
 DX_ARGS
-)
 if [ "$AUTOMATION" = 0 ] && printf '%s' "$ARGS" | grep -qiE 'autonomous|autopilot|non-interactive'; then
   AUTOMATION=1; REASON=args
 fi
@@ -421,6 +421,17 @@ provenance:
 
 <verdict + overall impression text for the summary thread>
 ```
+
+Next to it, write the same issues as **`.ai/pr-reviews/pr-<id>-findings.json`** for tools (schema: `docs/reference/pr-review-findings.md` in the plugin repo) — no comment text, only what a tool counts:
+
+```json
+{ "schema": 1, "pr": "<id>", "verdict": "<verdict>", "review_commit": "<SHA>", "created": "<ISO-8601>",
+  "summary_thread_id": null,
+  "issues": [ { "n": 1, "severity": "MUST-FIX", "category": "bug", "file": "/<path>", "start_line": 42, "end_line": 45,
+                "fixable": true, "patch": false, "thread_id": null } ] }
+```
+
+`category` is one of `bug`, `security`, `performance`, `convention`, `question`, `other` — your call per issue. `thread_id` / `patch` / `summary_thread_id` stay `null` / `false` until posting fills them in (`references/post-findings.md` step 7). A follow-up review rewrites the file.
 
 ### 4e. Auto-Generate Patches (conditional)
 
@@ -1024,8 +1035,13 @@ Last action of every run that reached a PR — interactive and automation alike;
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-pr-review --id <PR id> --status <done|blocked|failed> \
   --verdict "<review verdict>" --vote "<vote cast, empty if none>" --next "<next step or none>" \
-  --pr "<PR web url>" --summary "<one line, e.g. 3 threads posted, voted ApprovedWithSuggestions>"
+  --pr "<PR web url>" --summary "<one line, e.g. 3 threads posted, voted ApprovedWithSuggestions>" \
+  --mode <automation|interactive> --mode-reason <env|flag|args|no-ask|none> \
+  --metric must_fix=<n> --metric questions=<n> --metric threads_posted=<n> \
+  --metric threads_failed=<n> --metric patches=<n>
 ```
+
+`--mode` / `--mode-reason` are what the Automation Mode block printed (`no-ask` when you switched to automation because the host gives no way to ask). Finding counts come from `pr-<id>-findings.json`; `threads_posted` / `threads_failed` / `patches` are `0` when nothing was posted. See `../../shared/run-result.md` § Metrics.
 
 - `done` — review finished (threads posted, or findings saved in analyze-only / dry run).
 - `blocked` — findings saved but not posted and a human must act (the user declined posting, or an interactive run could not ask); `--next` = `/dx-pr-review <id> post findings`.

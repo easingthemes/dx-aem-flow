@@ -483,5 +483,22 @@ OUT=$(gate "$R")
 check "no arch-command keeps phase 5 passing" "passed" "$(echo "$OUT" | jqq "d['phases'][4]['status']")"
 
 echo "---"
+
+# ===== --out summary file =====
+R=$(mkrepo 'build:
+  compile: "true"
+')
+printf 'password = "hunter2hunter2"\n' > "$R/Secret.java"
+( cd "$R" && git add -A && git -c user.email=t@t -c user.name=t commit -qm s ) >/dev/null 2>&1
+OUT=$(gate "$R" --fix --out .ai/run-results/dx-step-verify-1.checks.json)
+SUM="$R/.ai/run-results/dx-step-verify-1.checks.json"
+check "--out: stdout JSON unchanged"         "ok"     "$(echo "$OUT" | jqq "'ok'")"
+check "--out: file written"                  "yes"    "$([ -f "$SUM" ] && echo yes)"
+check "--out: secret phase failed"           "failed" "$(jqq "[p['status'] for p in d['phases'] if p['phase']==4][0]" < "$SUM")"
+check "--out: secret file listed by path"    "Secret.java" "$(jqq "','.join(d['secret_files'])" < "$SUM")"
+if grep -q hunter2 "$SUM"; then no "--out: never stores the secret value" "value found in $SUM"; else ok "--out: never stores the secret value"; fi
+check "--out: no issue text"                 "False"  "$(jqq "'issues' in d" < "$SUM")"
+check "--out: blocking is a boolean"         "False"  "$(jqq "d['phases'][0]['blocking']" < "$SUM")"
+
 echo "Total: $((PASS+FAIL)), Pass: $PASS, Fail: $FAIL"
 [ "$FAIL" -eq 0 ]

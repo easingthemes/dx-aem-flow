@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run-result.sh — write the machine-readable result of a coordinator skill run.
 #
-# Coordinator skills (dx-agent-all, dx-bug-all, dx-pr-review, dx-prep) call this
+# dx skills (the coordinators and the ones a tool may start on their own) call this
 # once at the start (--start) and once at the end of every run — also when they
 # stop or fail — so a tool that started the run (a dashboard, a script, a hub)
 # can show running / done / blocked / next step without parsing terminal text.
@@ -14,7 +14,16 @@
 #   run-result.sh --skill <name> --id <id> --status <done|blocked|failed>
 #                 [--run-id <id>] [--verdict <v>] [--vote <v>] [--next <one line>]
 #                 [--pr <url>] [--wiki <url>] [--work-item <url>]
-#                 [--summary <one line>] [--dir <output dir>]
+#                 [--summary <one line>] [--metric <key>=<value>]...
+#                 [--engine <claude|copilot|...>] [--mode <automation|interactive>]
+#                 [--mode-reason <env|flag|args|no-ask|none>] [--dir <output dir>]
+#
+# --metric adds a key to "metrics" (key [a-z][a-z0-9_]{0,31}; an integer value
+# becomes a number, true/false a boolean, anything else a one-line string of at
+# most 80 chars; a repeated key keeps the last value). A bad metric is skipped
+# with a warning, never fails the write. "env" records dx_version (this
+# plugin's manifest), engine (--engine, else $DX_ENGINE, else "claude" when
+# CLAUDECODE=1), mode and mode_reason.
 #
 # --start writes <dir>/<skill>-<id>.running.json (status "running"). The final
 # call writes <dir>/<skill>-<id>.json (latest wins), carries run_id and
@@ -30,6 +39,8 @@ set -uo pipefail
 
 SKILL="" ID="" STATUS="" VERDICT="" VOTE="" NEXT="" PR="" WIKI="" WI="" SUMMARY=""
 START=0 RUN_ID="${DX_RUN_ID:-}" RUN_ID_SET=0 PROGRESS_FILE="" SPEC_DIR=""
+ENGINE="${DX_ENGINE:-}" MODE="" MODE_REASON=""
+METRIC_KEYS=() METRIC_VALS=()
 DIR=".ai/run-results"
 HISTORY_MAX="${DX_RUN_HISTORY_MAX:-2000}" HISTORY_KEEP="${DX_RUN_HISTORY_KEEP:-1000}"
 
@@ -52,6 +63,10 @@ while [ $# -gt 0 ]; do
     --wiki) WIKI="$2" ;;
     --work-item) WI="$2" ;;
     --summary) SUMMARY="$2" ;;
+    --metric) if [[ "$2" == *=* ]]; then METRIC_KEYS+=("${2%%=*}"); METRIC_VALS+=("${2#*=}"); else METRIC_KEYS+=("!"); METRIC_VALS+=(""); fi ;;
+    --engine) ENGINE="$2" ;;
+    --mode) MODE="$2" ;;
+    --mode-reason) MODE_REASON="$2" ;;
     --dir) DIR="$2" ;;
     *) usage "unknown option $1" ;;
   esac
@@ -133,6 +148,35 @@ if [ -n "$STARTED_AT" ]; then
   if [ -n "$S" ] && [ -n "$E" ] && [ "$E" -ge "$S" ]; then DURATION=$((E - S)); fi
 fi
 
+# metrics: validated, last value per key wins, insertion order of first appearance.
+METRICS="{}"
+if [ "${#METRIC_KEYS[@]}" -gt 0 ]; then
+  keys=() vals=()
+  for i in "${!METRIC_KEYS[@]}"; do
+    k="${METRIC_KEYS[$i]}" v="${METRIC_VALS[$i]}"
+    if ! [[ "$k" =~ ^[a-z][a-z0-9_]{0,31}$ ]]; then
+      echo "run-result.sh: skipping bad --metric (want key=value, key [a-z][a-z0-9_]{0,31})" >&2; continue
+    fi
+    if [[ "$v" =~ ^-?[0-9]{1,15}$ ]]; then v="$((10#${v#-}))"; [[ "${METRIC_VALS[$i]}" == -* ]] && v="-$v"
+    elif [ "$v" = true ] || [ "$v" = false ]; then :
+    else v="$(json "$(one_line "$v" | cut -c1-80)")"; fi
+    found=""
+    for j in "${!keys[@]}"; do [ "${keys[$j]}" = "$k" ] && { vals[$j]="$v"; found=1; }; done
+    [ -n "$found" ] || { keys+=("$k"); vals+=("$v"); }
+  done
+  if [ "${#keys[@]}" -gt 0 ]; then
+    METRICS="{"
+    for j in "${!keys[@]}"; do METRICS+="$([ "$j" -gt 0 ] && printf ', ')\"${keys[$j]}\": ${vals[$j]}"; done
+    METRICS+="}"
+  fi
+fi
+
+# env: plugin version from this script's own plugin manifest; engine best effort.
+MANIFEST="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/.claude-plugin/plugin.json"
+DX_VERSION="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$MANIFEST" 2>/dev/null | head -1)"
+[ -n "$ENGINE" ] || { [ "${CLAUDECODE:-}" = 1 ] && ENGINE=claude; }
+ENV_OBJ="{ \"dx_version\": $(json "$DX_VERSION"), \"engine\": $(json "$ENGINE"), \"mode\": $(json "$MODE"), \"mode_reason\": $(json "$MODE_REASON") }"
+
 OUT="$DIR/$SKILL-$ID.json"
 {
   printf '{\n'
@@ -148,6 +192,8 @@ OUT="$DIR/$SKILL-$ID.json"
   printf '  "run_id": %s,\n' "$(json "$RUN_ID")"
   printf '  "started_at": %s,\n' "$(json "$STARTED_AT")"
   printf '  "duration_s": %s,\n' "$DURATION"
+  printf '  "metrics": %s,\n' "$METRICS"
+  printf '  "env": %s,\n' "$ENV_OBJ"
   printf '  "finished_at": "%s"\n' "$NOW"
   printf '}\n'
 } | write_atomic "$OUT"

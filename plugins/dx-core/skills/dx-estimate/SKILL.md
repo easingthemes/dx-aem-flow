@@ -251,6 +251,33 @@ Append one JSONL line to `.ai/learning/raw/runs.jsonl`:
 
 Use Bash to append — `echo '<json>' >> .ai/learning/raw/runs.jsonl`
 
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — right after the id is parsed (§ Argument):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-estimate --id <work item id>
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-estimate --id <work item id> --status <done|blocked|failed> \
+  --next "<next step or none>" --work-item "<work item url>" \
+  --summary "<one line, e.g. 5 SP, ~32h, 2 open questions>" \
+  --metric story_points=<n> --metric hours_total=<n> --metric open_questions=<n> --metric pages_affected=<n>
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Estimation posted (§ 4. Final Summary) | `done` | `/dx-req-tasks <id>` |
+| Estimation built but the comment could not be posted | `blocked` | `post the estimation printed above manually` |
+| A step failed after its retry (§ Error Handling) | `failed` | `/dx-<failed skill> <id>` |
+Write it after § 5. Log Run on the success path. Omit a metric you do not have (no hours on a failed run).
+
+
 ## Examples
 
 1. `/dx-estimate 2416553` — Fetches the story, distills requirements, researches the codebase, then synthesizes an estimation: BE 16h + FE 12h + Authoring 4h = 32h total, suggested SP: 8 (Fibonacci). Posts the estimation as an ADO comment headed `[Estimation]`, updating the earlier one if it exists.

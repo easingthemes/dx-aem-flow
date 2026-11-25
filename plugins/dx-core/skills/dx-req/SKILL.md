@@ -702,6 +702,33 @@ After all phases complete and only when running standalone, emit:
 
 When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — right after the id is parsed (Phase 1, step 1):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-req --id <work item id> --progress-file req-progress.md
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-req --id <work item id> --status <done|blocked|failed> \
+  --verdict "<DoR verdict>" --next "<next step or none>" --work-item "<work item url>" \
+  --summary "<one line>" --metric fail_at="<phase that stopped the run, omit if none>" \
+  --metric dor_questions=<blocking questions asked>
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| All phases done (Phase 5 / Present Summary) | `done` | `/dx-plan <id>` |
+| DoR gate stopped the run (needs more detail / blocking questions unanswered) | `blocked` | `/dx-req <id>` after the story is updated |
+| Fetch or a phase failed | `failed` | `/dx-req <id>` |
+Also written when `/dx-prep` or `/dx-agent-all` runs this skill: a separate file (`dx-req-<id>.json`).
+
+
 ## Examples
 
 ### Full pipeline

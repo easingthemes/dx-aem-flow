@@ -162,8 +162,13 @@ Last action of every run — Summary, the validation STOP, and any failure that 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-prep --id <id> --status <done|blocked|failed> \
   --verdict "<plan-validate verdict>" --next "/dx-agent-all <id>" \
-  --wiki "<.plan-wiki-url, if published>" --work-item "<work item url>" --summary "<one line>"
+  --wiki "<.plan-wiki-url, if published>" --work-item "<work item url>" --summary "<one line>" \
+  --mode <interactive|automation> --mode-reason <args|no-ask|flag|none> \
+  --metric plan_steps=<steps in implement.md> --metric resolve_rounds=<0|1> \
+  --metric fail_at="<node that stopped the run, omit if none>"
 ```
+
+See `../../shared/run-result.md` § Metrics.
 
 From Summary: `done` (a skipped wiki publish or an unpushed branch is still `done` — say so in `--summary`).
 
