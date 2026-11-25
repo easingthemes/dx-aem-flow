@@ -1,6 +1,6 @@
 # Run Result — one JSON file per coordinator run
 
-Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-pr-review`, `dx-prep`) mark the start of a run and write
+Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-pr-review`, `dx-prep`) and the skills a tool may start on their own (`dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`, `dx-bug-fix`, `dx-step-all`, `dx-step-verify`) mark the start of a run and write
 a small result file at the end of **every** run — success, STOP, or failure — so the tool that started the run (a dashboard, a script, a
 hub) can show the outcome without parsing terminal text. Schema: `docs/reference/run-result.md` in the plugin repo.
 
@@ -25,12 +25,18 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" \
   --skill <skill-name> --id <work item or PR id> --status <done|blocked|failed> \
   [--verdict <verdict>] [--vote <vote cast>] [--next "<next command or step>"] \
   [--pr <PR url>] [--wiki <wiki url>] [--work-item <work item url>] \
-  [--summary "<one line>"]
+  [--summary "<one line>"] [--metric <key>=<value>]... \
+  [--mode <automation|interactive>] [--mode-reason <env|flag|args|no-ask|none>]
 ```
 
 It writes `.ai/run-results/<skill>-<id>.json` (latest run wins), appends the same object to
 `.ai/run-results/history.jsonl`, and prints the path. Omit an option, or pass
 an empty value, when there is nothing to report — it becomes `null`.
+
+## Metrics and mode
+
+- `--metric key=value` (repeatable) — the counts listed for your skill in `docs/reference/run-result.md` § Metrics. Pass only counts you already have (from progress files, the plan, your own tallies); leave one out rather than guess. Integers become numbers, `true`/`false` booleans, anything else a short string.
+- `--mode` / `--mode-reason` — whether this run was `automation` or `interactive`, and why (`env`, `flag`, `args`, `no-ask`, `none`). `env.dx_version` and `env.engine` are filled in by the helper.
 
 ## Status
 

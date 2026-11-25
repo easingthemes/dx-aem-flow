@@ -80,7 +80,7 @@ Read from `$SPEC_DIR`:
 Run the 5-phase pre-review gate before the expensive code review:
 
 ```bash
-bash .ai/lib/pre-review-checks.sh --fix 2>&1
+bash .ai/lib/pre-review-checks.sh --fix --out .ai/run-results/dx-step-verify-<id>.checks.json 2>&1
 ```
 
 This runs:
@@ -90,7 +90,7 @@ This runs:
 4. **Secret Scan** — grep for credential patterns in changed files
 5. **Architecture** — the project's own check from `build.arch-command` (ArchUnit, dependency-cruiser, eslint boundaries, …) if configured, plus built-in convention checks. A failing `build.arch-command` is marked `"blocking": true` in the phase JSON
 
-Parse the JSON output. Print the phase results table:
+Parse the JSON output (stdout). `--out` also leaves a summary for tools — phase statuses and the paths of files with secret patterns, never the matched text or tool output. An older `.ai/lib/pre-review-checks.sh` without `--out` ignores the flag. Print the phase results table:
 
 ```markdown
 ### Pre-Review Verification (Phases 1-5)
@@ -415,6 +415,19 @@ Return verdict so the pipeline continues. The calling skill (dev-all) should con
 ```
 
 Return verdict so the pipeline STOPS. List remaining issues clearly. The calling skill (dev-all) should STOP the pipeline — user must fix manually and re-run `/dx-step-verify`.
+
+## Run Result
+
+Per `../../shared/run-result.md` (never fail the run because of it): `run-result.sh --start --skill dx-step-verify --id <id>` after **Locate spec directory**. At every exit (`Report PASS`, both `Report FAIL` nodes, `STOP: Remove credentials`):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-step-verify --id <id> --status <done|blocked|failed> \
+  --verdict "<pass|fail>" --next "<next step>" --summary "<one line>" \
+  --metric compile=<passed|failed|skipped> --metric lint=<…> --metric test=<…> --metric secrets=<passed|failed> \
+  --metric arch=<passed|failed> --metric review_cycles=<n> --metric critical=<n> --metric important=<n>
+```
+
+`Report PASS` → `done`; `STOP: Remove credentials` → `blocked` (`--next` remove the credentials, re-run `/dx-step-verify <id>`); `Report FAIL` → `failed`. Phase values come from the last pre-review run; issue counts from the last review cycle.
 
 ## Examples
 

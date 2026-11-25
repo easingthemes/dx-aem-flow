@@ -146,6 +146,32 @@ Two change checks — either one triggers re-validation:
 
 - Print verdict: `DoR: <verdict> (<score>/<total>)`
 
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — once per id, right after the ids are parsed (batch: one start per id):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-dor --id <work item id>
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-dor --id <work item id> --status <done|blocked|failed> \
+  --verdict "<DoR verdict>" --next "<next step or none>" --work-item "<work item url>" \
+  --summary "<one line, e.g. DoR: Needs more detail (7/10)>" \
+  --metric criteria_pass=<n> --metric criteria_total=<n> --metric mandatory_failed=<n> --metric comment_mode=<A|B|C>
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Verdict produced (any verdict — the check itself succeeded) | `done` | `none`, or what the BA must add when not ready |
+| Story or DoR wiki could not be fetched, comment could not be posted | `failed` | `/dx-dor <id>` |
+In batch mode write one result per id, each with its own verdict. Under `/dx-req` this result is written too; it is a separate file (`dx-dor-<id>.json`).
+
+
 ## Examples
 
 ### Single work item

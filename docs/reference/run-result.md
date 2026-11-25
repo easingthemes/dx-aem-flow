@@ -1,7 +1,8 @@
 # Run Result File: `.ai/run-results/<skill>-<id>.json`
 
 Written at the end of every run (including STOP and failure) by the coordinator skills `dx-agent-all`,
-`dx-bug-all`, `dx-pr-review` and `dx-prep`, through `plugins/dx-core/data/lib/run-result.sh`
+`dx-bug-all`, `dx-pr-review` and `dx-prep`, and by `dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`,
+`dx-bug-fix`, `dx-step-all` and `dx-step-verify`, through `plugins/dx-core/data/lib/run-result.sh`
 (procedure: `plugins/dx-core/shared/run-result.md`). Meant for tools that start a skill and need its
 outcome — a local dashboard, a script, a hub — without parsing terminal output.
 
@@ -31,6 +32,8 @@ outcome — a local dashboard, a script, a hub — without parsing terminal outp
   "run_id": "3f1c2b9e-0000-4000-8000-000000000000",
   "started_at": "2026-01-01T11:48:20Z",
   "duration_s": 700,
+  "metrics": { "must_fix": 1, "questions": 2, "threads_posted": 3, "threads_failed": 0, "patches": 1 },
+  "env": { "dx_version": "6.5.0", "engine": "copilot", "mode": "automation", "mode_reason": "args" },
   "finished_at": "2026-01-01T12:00:00Z"
 }
 ```
@@ -51,6 +54,11 @@ outcome — a local dashboard, a script, a hub — without parsing terminal outp
 | `run_id` | string \| null | The caller's id for this run: `--run-id`, else the `DX_RUN_ID` environment variable, else the running marker's. `[A-Za-z0-9._:-]{1,64}`; anything else becomes `null` |
 | `started_at` | string \| null | UTC ISO 8601 time of the run's `--start` (from the running marker); `null` when the run wrote no marker |
 | `duration_s` | number \| null | Seconds from `started_at` to `finished_at`; `null` without `started_at` |
+| `metrics` | object | Per-skill counts (below); `{}` when the skill passed none. Values are numbers, booleans or short strings |
+| `env.dx_version` | string \| null | Version of the dx plugin that wrote the file |
+| `env.engine` | string \| null | `--engine`, else `DX_ENGINE`, else `claude` under Claude Code (`CLAUDECODE=1`); `null` when unknown |
+| `env.mode` | string \| null | `automation` \| `interactive`, as the skill decided |
+| `env.mode_reason` | string \| null | Why: `env` (`DX_PIPELINE_MODE`), `flag` (orchestration flag), `args` (`autonomous` / `autopilot` / `non-interactive`), `no-ask` (host has no way to ask), `none` |
 | `finished_at` | string | UTC ISO 8601 time the file was written |
 
 ### `status`
@@ -70,6 +78,41 @@ A tool that starts a skill sets `DX_RUN_ID` in the skill's environment (a sessio
 `[A-Za-z0-9._:-]{1,64}` value). It lands in the running marker, the result file and the history line,
 so the caller finds *its* run without matching by time. `/dx-hub-dispatch` sets it to each repo
 terminal's session id on the `copilot` engine.
+
+## Metrics
+
+Each skill passes the counts it already has (`--metric key=value`); a count it does not know is left
+out, never guessed. Keys are stable — a tool can rely on them per skill:
+
+| Skill | Keys |
+|-------|------|
+| `dx-agent-all` | `steps_done`, `steps_total`, `fix_loops`, `build_attempts`, `fail_at` |
+| `dx-bug-all` | `fix_attempts`, `fail_at` |
+| `dx-prep` | `plan_steps`, `resolve_rounds`, `fail_at` |
+| `dx-pr-review` | `must_fix`, `questions`, `threads_posted`, `threads_failed`, `patches` |
+| `dx-pr-answer` | `replied`, `will_fix`, `disagree`, `needs_human`, `patches_applied`, `skipped` |
+| `dx-dor` | `criteria_pass`, `criteria_total`, `mandatory_failed`, `comment_mode` |
+| `dx-estimate` | `story_points`, `hours_total`, `open_questions`, `pages_affected` |
+| `dx-req` | `dor_questions`, `fail_at` |
+| `dx-bug-fix` | `fix_attempts`, `steps_done`, `steps_total`, `fail_at` |
+| `dx-step-all` | `steps_done`, `steps_total`, `fix_attempts`, `heals`, `fail_at` |
+| `dx-step-verify` | `compile`, `lint`, `test`, `secrets`, `arch` (`passed`/`failed`/`skipped`), `review_cycles`, `critical`, `important` |
+
+`fail_at` is the first failed or blocked phase, node or step, as a short name.
+
+## Nested skills and `run_id`
+
+`dx-agent-all`, `dx-bug-all` and `dx-prep` run other skills that write their own results
+(`dx-req`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`). They inherit the caller's
+`DX_RUN_ID`, so one run id can appear in several files: match on **skill and** `run_id`.
+
+## Related files
+
+- `.ai/run-results/dx-step-verify-<id>.checks.json` — the pre-review gate's summary from
+  `pre-review-checks.sh --out`: `passed`, `phases[]` (`phase`, `name`, `status`, `blocking`),
+  `secret_files[]` (paths only, never the matched text), `checked_at`.
+- `.ai/pr-reviews/pr-<id>-findings.json` — review findings with ADO thread ids:
+  `docs/reference/pr-review-findings.md`.
 
 ## Running marker: `.ai/run-results/<skill>-<id>.running.json`
 

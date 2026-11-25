@@ -239,7 +239,7 @@ When you clamp a `changes-requested`/`rejected` verdict to `NoVote`, the **summa
 
 ## 7. Update Session
 
-Update the existing session file `.ai/pr-reviews/pr-<id>.md` (or create it if it doesn't exist) with thread IDs from the posted comments and the `**Vote:**` line — the vote cast in step 6, `skipped (local run)` when step 6 was skipped, or `skipped` when the user chose comments only. Follow the same format as `/dx-pr-review` step 10.
+Fill `.ai/pr-reviews/pr-<id>-findings.json` (when it exists): for each issue the `thread_id` of its posted thread and `patch: true` when a patch went with it, and `summary_thread_id`; an issue that failed to post keeps `thread_id: null`. Then update the existing session file `.ai/pr-reviews/pr-<id>.md` (or create it if it doesn't exist) with thread IDs from the posted comments and the `**Vote:**` line — the vote cast in step 6, `skipped (local run)` when step 6 was skipped, or `skipped` when the user chose comments only. Follow the same format as `/dx-pr-review` step 10.
 
 ## 8. Report
 

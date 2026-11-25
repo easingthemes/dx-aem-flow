@@ -805,6 +805,35 @@ Then (or immediately, in automation) follow `references/apply-fixes.md` for the 
 8. Reply "Fixed." to each resolved thread
 9. Update session file — mark threads as `code-fixed` with commit hash
 
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — once per PR, when that PR is selected for processing (step 5):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-pr-answer --id <PR id>
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-pr-answer --id <PR id> --status <done|blocked|failed> \
+  --verdict "<pass|warn|fail, as in the Return contract>" --pr "<PR web url>" --next "<next step or none>" \
+  --summary "<one line, e.g. 4 replies, 1 fix applied, 1 needs a human>" \
+  --mode <automation|interactive> --mode-reason <env|flag|args|no-ask|none> \
+  --metric replied=<n> --metric will_fix=<n> --metric disagree=<n> --metric needs_human=<n> \
+  --metric patches_applied=<n> --metric skipped=<n>
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Replies posted (and fixes applied, if any) | `done` | `none` |
+| Threads left for a human (`needs-human-input`), or the user declined posting / cannot be asked | `blocked` | `/dx-pr-answer <id>` |
+| Nothing could be posted (ADO unreachable, fatal error) | `failed` | `/dx-pr-answer <id>` |
+Multiple-PR mode: one result per PR. Dry run → `done` with `--summary` saying nothing was posted.
+
+
 ## Automation Return contract
 
 When `AUTOMATION=1`, after processing, emit this block as the final message (the pipeline runner reads `verdict:` and exits non-zero on `fail`):

@@ -4,8 +4,11 @@
 # Runs fast automated checks before the expensive code review subagent.
 # Each phase outputs a status line. Failures are collected and reported.
 #
-# Usage: pre-review-checks.sh [--fix]
+# Usage: pre-review-checks.sh [--fix] [--out <file>]
 #   --fix: auto-fix lint issues (default: report only)
+#   --out: also write a compact summary for tools to <file>: passed, phases
+#          (number, name, status, blocking) and secret_files (paths only, never
+#          the matched text) — no tool output, no issue text. Stdout unchanged.
 #
 # Exit codes:
 #   0 = all phases passed
@@ -30,7 +33,14 @@
 set -uo pipefail
 
 AUTO_FIX=false
-[[ "${1:-}" == "--fix" ]] && AUTO_FIX=true
+OUT_FILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --fix) AUTO_FIX=true; shift ;;
+    --out) OUT_FILE="${2:-}"; shift 2 2>/dev/null || shift ;;
+    *) shift ;;
+  esac
+done
 
 ISSUES=()
 PHASES=()
@@ -164,6 +174,9 @@ fi
 
 if [ -z "$BASE_SHA" ]; then
   echo '{"passed": true, "phases": [], "issues": ["Could not determine base SHA — skipping pre-review checks"]}'
+  if [ -n "$OUT_FILE" ]; then
+    { mkdir -p "$(dirname "$OUT_FILE")" && printf '{"schema": 1, "passed": true, "phases": [], "secret_files": [], "skipped": "no base commit", "checked_at": "%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$OUT_FILE"; } 2>/dev/null || true
+  fi
   exit 0
 fi
 
@@ -325,6 +338,14 @@ cat <<EOF
   "issues": $ISSUES_JSON
 }
 EOF
+
+if [ -n "$OUT_FILE" ]; then
+  SECRETS_JSON=$(printf '%s\n' "${secret_files[@]+"${secret_files[@]}"}" | jq -R -s 'split("\n") | map(select(length > 0))')
+  { mkdir -p "$(dirname "$OUT_FILE")" && jq -n --argjson passed "$OVERALL" --argjson phases "$PHASES_JSON" \
+      --argjson secrets "$SECRETS_JSON" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      '{schema: 1, passed: $passed, phases: ($phases | map({phase, name, status, blocking: (.blocking // false)})), secret_files: $secrets, checked_at: $at}' \
+      > "$OUT_FILE"; } 2>/dev/null || echo "pre-review-checks.sh: cannot write $OUT_FILE" >&2
+fi
 
 if [ "$OVERALL" = true ]; then
   exit 0
