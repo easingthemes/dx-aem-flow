@@ -1,3 +1,10 @@
+# [6.5.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.4.0...v6.5.0) (2026-11-25)
+
+
+### Features
+
+* **run-result:** metrics, env, more skills, review findings and verify summary ([#280](https://github.com/easingthemes/dx-aem-flow/issues/280)) ([bced87c](https://github.com/easingthemes/dx-aem-flow/commit/bced87cd934f2afe1ab2a2205846eda8f8ea49dc))
+
 # [6.4.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.3.1...v6.4.0) (2026-11-25)
 
 
