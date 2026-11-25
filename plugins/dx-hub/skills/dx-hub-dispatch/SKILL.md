@@ -288,7 +288,7 @@ mcp__vscode-automator__vscode_keystroke
 
 (With `hub.model` set: `claude --model <hub.model>`.) Wait `hub.terminal-delay` seconds (default: 5) for Claude to start, then go to Step 4.
 
-**`copilot`:** the prompt goes on the command line, so Step 3 and Step 4 are one command. Give each repo its own **lowercase** session id — Copilot CLI uses it as the session folder name (`~/.copilot/session-state/<uuid>/`), which lets a tool read that terminal's usage — and keep it for **Write status.json**:
+**`copilot`:** the prompt goes on the command line, so Step 3 and Step 4 are one command. Give each repo its own **lowercase** session id — Copilot CLI uses it as the session folder name (`~/.copilot/session-state/<uuid>/`), which lets a tool read that terminal's usage — and keep it for **Write status.json**. The same id goes into `DX_RUN_ID`, so the repo's run result (`.ai/run-results/`, `run_id`) points back to this terminal:
 
 ```bash
 uuidgen | tr 'A-Z' 'a-z'
@@ -296,7 +296,7 @@ uuidgen | tr 'A-Z' 'a-z'
 
 ```
 mcp__vscode-automator__vscode_type
-  text: "copilot --session-id <uuid> [--model <hub.model>] -i \"<delegation prompt>\""
+  text: "DX_RUN_ID=<uuid> copilot --session-id <uuid> [--model <hub.model>] -i \"<delegation prompt>\""
 ```
 ```
 mcp__vscode-automator__vscode_keystroke

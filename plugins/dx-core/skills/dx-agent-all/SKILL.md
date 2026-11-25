@@ -70,6 +70,12 @@ The flag's existence (and freshness) is the signal that forked sub-skills (`dx-r
 
 ### Run Result
 
+**Start marker** — right after the id is parsed (with the orchestration flag), before any long work:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-agent-all --id <id> --progress-file dev-all-progress.md
+```
+
 At **every** terminal state — wherever this skill removes the orchestration flag (Final Summary and each STOP) — write the run result as the last action, per `../../shared/run-result.md`:
 
 ```bash

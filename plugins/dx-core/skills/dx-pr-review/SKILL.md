@@ -114,6 +114,12 @@ exit 0
 
 ## Before you stop
 
+**Start marker** — right after the PR id is parsed (step 1), before any ADO call; `dx-pr-review` writes no progress file:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-pr-review --id <PR id>
+```
+
 Every exit path that **reached a PR** (it was fetched in step 2) — first review, follow-up, standalone posting, analyze-only, dry run, own-PR skip, user declined, cannot ask, or an error after the fetch — ends with these two writes, in this order, on Claude Code and Copilot CLI alike:
 
 1. **Session file** `.ai/pr-reviews/pr-<id>.md` (step 10). Own-PR skip is the one path without it — nothing was reviewed.
