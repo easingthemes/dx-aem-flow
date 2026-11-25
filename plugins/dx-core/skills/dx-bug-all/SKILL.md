@@ -104,6 +104,12 @@ Find the spec directory and present the completion table (raw-bug.md / triage.md
 
 ### Run result (local mode)
 
+**Start marker** — right after the id is parsed (local mode), before any long work:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-bug-all --id <id> --progress-file bug-progress.md
+```
+
 Last action of every local run — Final summary and each Report FAIL — per `../../shared/run-result.md`:
 
 ```bash

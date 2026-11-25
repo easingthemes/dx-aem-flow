@@ -1,10 +1,22 @@
 # Run Result — one JSON file per coordinator run
 
-Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-pr-review`, `dx-prep`) write a small result file at the
-end of **every** run — success, STOP, or failure — so the tool that started the run (a dashboard, a script, a
+Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-pr-review`, `dx-prep`) mark the start of a run and write
+a small result file at the end of **every** run — success, STOP, or failure — so the tool that started the run (a dashboard, a script, a
 hub) can show the outcome without parsing terminal text. Schema: `docs/reference/run-result.md` in the plugin repo.
 
-## How
+## Start
+
+As soon as the id is parsed — before any long work — mark the run as running:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill <skill-name> --id <id> \
+  [--progress-file <progress file name>] [--spec-dir <spec dir, if already known>]
+```
+
+It writes `.ai/run-results/<skill>-<id>.running.json` with `started_at` and the caller's `DX_RUN_ID`
+(if set). The final write below picks both up, adds `duration_s`, and removes the marker.
+
+## End
 
 Call the helper as the last action of the run, after the final summary is printed:
 
@@ -16,7 +28,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" \
   [--summary "<one line>"]
 ```
 
-It writes `.ai/run-results/<skill>-<id>.json` (latest run wins) and prints the path. Omit an option, or pass
+It writes `.ai/run-results/<skill>-<id>.json` (latest run wins), appends the same object to
+`.ai/run-results/history.jsonl`, and prints the path. Omit an option, or pass
 an empty value, when there is nothing to report — it becomes `null`.
 
 ## Status
@@ -29,6 +42,7 @@ an empty value, when there is nothing to report — it becomes `null`.
 
 ## Rules
 
+- **Start once, end once** — `--start` once per run; never pass `--status` with it. Do not set `DX_RUN_ID` yourself: it belongs to the tool that started you.
 - **Every exit path** — write the file on STOP and failure branches too, not only on success. A missing file means the run was interrupted before its end.
 - **One line, no content** — `--summary` and `--next` are one short line each. Never put file contents, ticket text, diffs or secrets in them.
 - **Links are URLs you already have** — the PR, wiki page and work item URLs the run created or read. Never construct one you did not see.

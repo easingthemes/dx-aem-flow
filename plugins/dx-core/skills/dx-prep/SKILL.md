@@ -151,6 +151,12 @@ Then write the run result.
 
 ### Run result
 
+**Start marker** — right after the id is parsed (Parse argument), before any long work:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-prep --id <id> --progress-file req-progress.md
+```
+
 Last action of every run — Summary, the validation STOP, and any failure that ends the run early (`/dx-req` failing, no plan produced → `--status failed`) — per `../../shared/run-result.md`:
 
 ```bash

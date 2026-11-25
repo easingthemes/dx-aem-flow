@@ -54,5 +54,49 @@ bash "$SCRIPT" --skill dx-prep --id 1 --status 2>/dev/null; check "missing value
 bash "$SCRIPT" --skill dx-prep --id 1 --status done --bogus x 2>/dev/null; check "unknown option exits 2" 2 "$?"
 check "nothing written on usage errors" no "$([ -e .ai/run-results/dx-prep-1.json ] && echo yes || echo no)"
 
+# --- running marker, run id, duration, history ---
+cd "$TMP" && rm -rf .ai || exit 1
+unset DX_RUN_ID
+m=$(DX_RUN_ID=run-abc.1 bash "$SCRIPT" --start --skill dx-agent-all --id 42 --progress-file dev-all-progress.md --spec-dir .ai/specs/42-x)
+check "start prints marker path" ".ai/run-results/dx-agent-all-42.running.json" "$m"
+check "start: no result file yet" no "$([ -e .ai/run-results/dx-agent-all-42.json ] && echo yes || echo no)"
+if [ "$has_node" = 1 ]; then
+  check "marker status running" running "$(field "$m" status)"
+  check "marker run_id from env" run-abc.1 "$(field "$m" run_id)"
+  check "marker progress_file" dev-all-progress.md "$(field "$m" progress_file)"
+  check "marker spec_dir" .ai/specs/42-x "$(field "$m" spec_dir)"
+fi
+# Backdate the marker so duration is non-zero without sleeping.
+sed -i.bak 's/"started_at": "[^"]*"/"started_at": "2020-01-01T00:00:00Z"/' "$m" && rm -f "$m.bak"
+out=$(bash "$SCRIPT" --skill dx-agent-all --id 42 --status done --summary ok)
+check "final: marker removed" no "$([ -e "$m" ] && echo yes || echo no)"
+if [ "$has_node" = 1 ]; then
+  check "final: run_id carried from marker" run-abc.1 "$(field "$out" run_id)"
+  check "final: started_at carried" 2020-01-01T00:00:00Z "$(field "$out" started_at)"
+  check "final: duration_s computed" yes "$(d=$(field "$out" duration_s); [ "$d" -gt 100000000 ] 2>/dev/null && echo yes)"
+fi
+H=.ai/run-results/history.jsonl
+check "history: one line" 1 "$(wc -l < "$H" | tr -d ' ')"
+if [ "$has_node" = 1 ]; then
+  check "history line is JSON with run_id" run-abc.1 "$(node -e 'const l=require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n");process.stdout.write(JSON.parse(l[l.length-1]).run_id)' "$H")"
+fi
+
+out=$(bash "$SCRIPT" --skill dx-agent-all --id 42 --status failed --run-id explicit-1)
+check "history: appended" 2 "$(wc -l < "$H" | tr -d ' ')"
+if [ "$has_node" = 1 ]; then
+  check "no marker: started_at null" null "$(field "$out" started_at)"
+  check "no marker: duration null" null "$(field "$out" duration_s)"
+  check "--run-id flag" explicit-1 "$(field "$out" run_id)"
+fi
+out=$(DX_RUN_ID='bad id; rm' bash "$SCRIPT" --skill dx-agent-all --id 42 --status done 2>/dev/null)
+[ "$has_node" = 1 ] && check "invalid run id dropped" null "$(field "$out" run_id)"
+out=$(DX_RUN_ID=from-env bash "$SCRIPT" --skill dx-agent-all --id 42 --status done)
+[ "$has_node" = 1 ] && check "run id from env on final" from-env "$(field "$out" run_id)"
+
+bash "$SCRIPT" --start --skill dx-prep --id 1 --status done 2>/dev/null; check "--start with --status exits 2" 2 "$?"
+
+for _ in 1 2 3 4 5; do DX_RUN_HISTORY_MAX=4 DX_RUN_HISTORY_KEEP=2 bash "$SCRIPT" --skill dx-prep --id 9 --status done >/dev/null; done
+check "history trimmed" yes "$(n=$(wc -l < "$H" | tr -d ' '); [ "$n" -le 4 ] && echo yes)"
+
 echo "run-result: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
