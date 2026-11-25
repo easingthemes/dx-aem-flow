@@ -213,13 +213,17 @@ Only take this path on that specific error. Do not add yourself pre-emptively: `
 Detect automation the same way the main skill does (do NOT rely on prompt keywords):
 
 ```bash
+(
 AUTOMATION=0
-[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+[ "${DX_PIPELINE_MODE:-}" = "true" ] && AUTOMATION=1
 FLAG=".ai/run-context/orchestrating.flag"
 if [ -f "$FLAG" ]; then
-  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
-  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+  MTIME=$(date -r "$FLAG" +%s 2>/dev/null || stat -c %Y "$FLAG" 2>/dev/null || stat -f %m "$FLAG" 2>/dev/null || echo 0)
+  if [ $(( $(date +%s) - ${MTIME:-0} )) -lt 7200 ]; then AUTOMATION=1; fi
 fi
+echo "automation=$AUTOMATION"
+exit 0
+)
 ```
 
 **When `AUTOMATION=1`** (pipeline / orchestrated, or a local non-interactive run with `preferences.auto-vote: true`): cast the vote automatically from the verdict, **clamped at both ends**. An autonomous agent must neither hard-block a human's PR nor *approve* one it found a blocking bug in:

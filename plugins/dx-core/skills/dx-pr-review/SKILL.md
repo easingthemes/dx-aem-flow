@@ -68,34 +68,66 @@ If the PR is from a **different repo** than the current working directory, note 
 
 ## Automation Mode (pipeline / orchestrated)
 
-Detect non-interactive execution **before** any step that would call `AskUserQuestion`:
+Detect non-interactive execution **before** any step that would call `AskUserQuestion`. The block runs in a subshell and **never fails** — every optional read is guarded and it ends with `exit 0` — so a missing file can never push you onto the interactive path:
 
 ```bash
-AUTOMATION=0
-[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+(
+AUTOMATION=0; REASON=none
+[ "${DX_PIPELINE_MODE:-}" = "true" ] && { AUTOMATION=1; REASON=env; }
 FLAG=".ai/run-context/orchestrating.flag"
-if [ -f "$FLAG" ]; then
-  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
-  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+if [ "$AUTOMATION" = 0 ] && [ -f "$FLAG" ]; then
+  MTIME=$(date -r "$FLAG" +%s 2>/dev/null || stat -c %Y "$FLAG" 2>/dev/null || stat -f %m "$FLAG" 2>/dev/null || echo 0)
+  [ $(( $(date +%s) - ${MTIME:-0} )) -lt 7200 ] && { AUTOMATION=1; REASON=flag; }
+fi
+# Skill arguments (Claude Code substitutes them; on a host that does not, put
+# the arguments here yourself).
+ARGS=$(cat <<'DX_ARGS'
+$ARGUMENTS
+DX_ARGS
+)
+if [ "$AUTOMATION" = 0 ] && printf '%s' "$ARGS" | grep -qiE 'autonomous|autopilot|non-interactive'; then
+  AUTOMATION=1; REASON=args
 fi
 # Review own PRs? Default off locally, on in CI (the pipeline sets
 # DX_REVIEW_OWN_PRS=true). Lets the autonomous queue surface your own PRs.
 REVIEW_OWN_PRS=0
-[ "$DX_REVIEW_OWN_PRS" = "true" ] && REVIEW_OWN_PRS=1
+[ "${DX_REVIEW_OWN_PRS:-}" = "true" ] && REVIEW_OWN_PRS=1
 # Local non-interactive vote: opt-in per repo (preferences.auto-vote, default false).
-AUTO_VOTE=$(bash .ai/lib/dx-common.sh yaml-val preferences.auto-vote 2>/dev/null)
+AUTO_VOTE=$(bash .ai/lib/dx-common.sh yaml-val preferences.auto-vote 2>/dev/null || true)
 [ "$AUTO_VOTE" = "true" ] || AUTO_VOTE=false
+echo "mode=$([ "$AUTOMATION" = 1 ] && echo automation || echo interactive) automation_reason=$REASON"
 echo "automation=$AUTOMATION review_own_prs=$REVIEW_OWN_PRS auto_vote=$AUTO_VOTE"
+exit 0
+)
 ```
 
-Also treat the run as `AUTOMATION=1` when the prompt says `autonomous`/`autopilot`/`non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot autopilot, no `AskUserQuestion`) — see `../../shared/interaction-mode.md`. In such a **local** run (`DX_PIPELINE_MODE` not `true`) post the threads; the vote depends on `preferences.auto-vote`:
+**Hard rule — no way to ask means automation.** If the host gives you no way to ask (headless `-p`, Copilot CLI autopilot, no `AskUserQuestion` tool), the run is `AUTOMATION=1` whatever the block printed — the script cannot see this, you can. The same holds when the prompt (not just the arguments) says `autonomous`/`autopilot`/`non-interactive`. See `../../shared/interaction-mode.md`. A failed or missing detect output is **not** evidence of an interactive run. In such a **local** run (`DX_PIPELINE_MODE` not `true`) post the threads; the vote depends on `preferences.auto-vote`:
 
 - `false` (default) — **skip the vote** and record `**Vote:** skipped (local run)`: the pipeline votes as its service account, while a local run would vote as you.
 - `true` — the developer opted in to voting as themselves: cast the vote from the verdict with **the same clamps as the pipeline** (`references/post-findings.md` step 6 — `approved` → `Approved`, `approved-with-suggestions` → `ApprovedWithSuggestions`, `changes-requested`/`rejected` → `NoVote`, never a positive vote when a MUST-FIX exists).
 
 **When `AUTOMATION=1`** — run a single non-interactive pass: analyze → save findings → generate patches (if `GENERATE_PATCHES=true`) → post threads → **auto-vote from the verdict (clamped both ways — never a blocking vote, and never a positive vote when a MUST-FIX exists; `changes-requested`/`rejected` → `NoVote`; see `references/post-findings.md` step 6)** → save session → emit the `## Return` verdict block. You MUST NOT call `AskUserQuestion` — it isn't in the pipeline `ALLOWED_TOOLS` and there is no human, so a call stalls the run to timeout. Automation overrides the interactive steps 4f, 5, 6, 7, and 9.
 
-**When `AUTOMATION=0`** — the interactive flow below is unchanged.
+**When `AUTOMATION=0`** — the interactive flow below is unchanged, with one exception:
+
+**Interactive run that cannot ask.** If an interactive step needs an answer (post? patches? vote?) and you cannot get one — no `AskUserQuestion` tool, or the call errors or returns nothing — treat it as **the user declined posting**: the findings stay saved in `.ai/pr-reviews/pr-<id>-findings.md`, nothing is posted, no vote is cast. Save the session (step 10, `**Vote:** skipped`) and write the run result with `--status blocked --next "/dx-pr-review <id> post findings" --verdict <verdict>`, then stop. Never end with a summary that says "pending your confirmation" and nothing written.
+
+## Before you stop
+
+Every exit path that **reached a PR** (it was fetched in step 2) — first review, follow-up, standalone posting, analyze-only, dry run, own-PR skip, user declined, cannot ask, or an error after the fetch — ends with these two writes, in this order, on Claude Code and Copilot CLI alike:
+
+1. **Session file** `.ai/pr-reviews/pr-<id>.md` (step 10). Own-PR skip is the one path without it — nothing was reviewed.
+2. **Run result** via `../../shared/run-result.md` (step 12): `--verdict` set whenever a review verdict exists (`skipped` for own-PR), `--vote` only if this run actually cast one.
+
+| Exit path | `--status` | `--next` |
+|---|---|---|
+| Posted (automation, or user approved posting) | `done` | `none` |
+| Analyze-only / save-only / dry run | `done` | `/dx-pr-review <id> post findings` |
+| User declined posting, or cannot ask | `blocked` | `/dx-pr-review <id> post findings` |
+| Own PR skipped | `done` | `none` |
+| Nothing could be posted / fatal error after fetch | `failed` | the retry command |
+
+A run that stops without both writes is a bug in the run, not a valid ending.
 
 ## Hub Mode Check
 
@@ -397,7 +429,7 @@ If `GENERATE_PATCHES` is not set or there are no fixable issues, skip this step.
 ### 4f. Analyze-Only Mode
 
 **If `AUTOMATION=1`:**
-- **Dry run** (`DX_DRY_RUN=true`): **stop here** — the saved findings/patches are the output. Print the summary below, emit `## Return` with `verdict: pass`, and post nothing.
+- **Dry run** (`DX_DRY_RUN=true`): **stop here** — the saved findings/patches are the output. Print the summary below, post nothing, save the session and write the run result (`--status done`, see [Before you stop](#before-you-stop)), then emit `## Return` with `verdict: pass`.
 - **Not dry run:** **skip this step** and fall through to step 4g, which posts the findings and auto-votes.
 
 Either way, do NOT call `AskUserQuestion`.
@@ -411,7 +443,7 @@ Review complete — saved findings to .ai/pr-reviews/pr-<id>-findings.md
 <if patches: Patches saved to .ai/pr-reviews/pr-<id>.patch (<N> fixable issues)>
 ```
 
-And return.
+Then save the session (step 10, `**Vote:** skipped`), write the run result (step 12: `--status done --verdict <verdict> --next "/dx-pr-review <id> post findings"`, no `--vote`) and return — see [Before you stop](#before-you-stop).
 
 ### 4g. Standalone Posting (from saved findings)
 
@@ -503,7 +535,7 @@ AskUserQuestion(
 )
 ```
 
-**Wait for explicit choice before proceeding.**
+**Wait for explicit choice before proceeding.** If you cannot ask, or the user picks **Cancel**, this is the declined path: no post, no vote, session saved, run result `--status blocked --next "/dx-pr-review <id> post findings" --verdict <verdict>` — see [Before you stop](#before-you-stop).
 
 ### 6. Generate Fixes in Worktree (conditional)
 
@@ -736,7 +768,7 @@ mcp__ado__repo_pull_request_write
 
 If the vote fails with `A valid reviewer must be supplied`, you are not an individual reviewer yet: add yourself and vote once more, as described in `references/post-findings.md` step 6. If the user picks **Skip voting — comments only**, do not call the tool.
 
-Never auto-approve or auto-decline without explicit user confirmation.
+Never auto-approve or auto-decline without explicit user confirmation. If you cannot ask here, the comments are already posted: skip the vote (record `**Vote:** skipped`), and finish with `--status done`, no `--vote`.
 
 ---
 
@@ -981,7 +1013,7 @@ rm -f /tmp/dx-propose-pr-<id>.patch
 
 ### 12. Run Result
 
-Last action of every run that reached a PR (first review, follow-up, posting, analyze-only, own-PR skip) — interactive and automation alike — per `../../shared/run-result.md`:
+Last action of every run that reached a PR — interactive and automation alike; the exit paths and their status are listed in [Before you stop](#before-you-stop). Per `../../shared/run-result.md`:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-pr-review --id <PR id> --status <done|blocked|failed> \
@@ -990,7 +1022,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-pr-review --id <P
 ```
 
 - `done` — review finished (threads posted, or findings saved in analyze-only / dry run).
-- `blocked` — findings saved but not posted and a human must act (e.g. the user declined posting); `--next` = `/dx-pr-review <id> post findings`.
+- `blocked` — findings saved but not posted and a human must act (the user declined posting, or an interactive run could not ask); `--next` = `/dx-pr-review <id> post findings`.
+- `--verdict` — always set when a review verdict exists (`approved`, `approved-with-suggestions`, `changes-requested`, `rejected`; `skipped` for own-PR).
 - `failed` — no review produced, or nothing could be posted (the `## Return` `fail` cases).
 - `--vote` is the vote **this run cast**; leave it empty when the vote was skipped or failed.
 
