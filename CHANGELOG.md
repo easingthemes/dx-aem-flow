@@ -1,3 +1,10 @@
+# [6.4.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.3.1...v6.4.0) (2026-11-25)
+
+
+### Features
+
+* **run-result:** running marker, run id, duration and run history ([#279](https://github.com/easingthemes/dx-aem-flow/issues/279)) ([8fefc24](https://github.com/easingthemes/dx-aem-flow/commit/8fefc24e4a1fa0b44c9145e26a77ea7e014f8861))
+
 ## [6.3.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.3.0...v6.3.1) (2026-11-25)
 
 
