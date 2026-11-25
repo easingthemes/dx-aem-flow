@@ -1,3 +1,10 @@
+## [6.3.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.3.0...v6.3.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **dx-pr-review:** write run result and session on every exit path ([#278](https://github.com/easingthemes/dx-aem-flow/issues/278)) ([dea975b](https://github.com/easingthemes/dx-aem-flow/commit/dea975b1047be2637b4dc5abad8c10848f987870))
+
 # [6.3.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.2.1...v6.3.0) (2026-11-24)
 
 
