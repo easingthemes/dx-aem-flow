@@ -71,15 +71,16 @@ Extract the repo name from the URL. Common ADO formats:
 
 ## Automation Mode (pipeline / orchestrated)
 
-Detect non-interactive execution **before** any step that would call `AskUserQuestion`:
+Detect non-interactive execution **before** any step that would call `AskUserQuestion`. The block runs in a subshell and never fails (optional reads guarded, `exit 0`); a failed or missing detect output is not evidence of an interactive run:
 
 ```bash
+(
 AUTOMATION=0
-[ "$DX_PIPELINE_MODE" = "true" ] && AUTOMATION=1
+[ "${DX_PIPELINE_MODE:-}" = "true" ] && AUTOMATION=1
 FLAG=".ai/run-context/orchestrating.flag"
 if [ -f "$FLAG" ]; then
-  AGE=$(( $(date +%s) - $(date -r "$FLAG" +%s) ))
-  [ "$AGE" -lt 7200 ] && AUTOMATION=1
+  MTIME=$(date -r "$FLAG" +%s 2>/dev/null || stat -c %Y "$FLAG" 2>/dev/null || stat -f %m "$FLAG" 2>/dev/null || echo 0)
+  if [ $(( $(date +%s) - ${MTIME:-0} )) -lt 7200 ]; then AUTOMATION=1; fi
 fi
 # Disagree confidence bar: send a substantive pushback only at/above it. A
 # numeric floor keeps the decision explicit and auditable. Env wins, then
@@ -93,6 +94,8 @@ DISAGREE_MIN="${DX_DISAGREE_CONFIDENCE:-}"
 # stops REPEAT arguing once the human comes back unconvinced.
 MAX_DISAGREE="${DX_MAX_DISAGREE_REPLIES:-1}"
 echo "automation=$AUTOMATION disagree_min=$DISAGREE_MIN max_disagree=$MAX_DISAGREE"
+exit 0
+)
 ```
 
 Also treat the run as `AUTOMATION=1` when the prompt says `autonomous`/`autopilot`/`non-interactive`, or the host gives you no way to ask (headless `-p`, Copilot autopilot, no `AskUserQuestion`) — see `../../shared/interaction-mode.md`.

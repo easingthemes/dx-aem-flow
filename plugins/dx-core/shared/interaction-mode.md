@@ -18,8 +18,13 @@ Otherwise it is **interactive**.
 NONINTERACTIVE=0
 [ "${DX_PIPELINE_MODE:-}" = "true" ] && NONINTERACTIVE=1
 FLAG=".ai/run-context/orchestrating.flag"
-if [ -f "$FLAG" ] && [ $(( $(date +%s) - $(date -r "$FLAG" +%s) )) -lt 7200 ]; then NONINTERACTIVE=1; fi
+if [ -f "$FLAG" ]; then
+  MTIME=$(date -r "$FLAG" +%s 2>/dev/null || stat -c %Y "$FLAG" 2>/dev/null || stat -f %m "$FLAG" 2>/dev/null || echo 0)
+  if [ $(( $(date +%s) - ${MTIME:-0} )) -lt 7200 ]; then NONINTERACTIVE=1; fi
+fi
 ```
+
+A detect block must never fail: guard every optional read (`2>/dev/null || true`), and when it chains several reads, run it in a subshell that ends with `exit 0`. A detect step that errors is **not** evidence of an interactive run — fall back to the last two conditions.
 
 The last two conditions are not visible to a script — judge them from the prompt and your tools.
 
