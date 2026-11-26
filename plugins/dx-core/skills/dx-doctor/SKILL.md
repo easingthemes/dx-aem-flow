@@ -1,7 +1,7 @@
 ---
 name: dx-doctor
 description: "Check health of the dx workflow files — config, rules, scripts, seed data, MCP, settings — for each installed plugin. Use after upgrading plugins or when something seems broken."
-argument-hint: "[dx|aem|auto|all]"
+argument-hint: "[dx|aem|auto|all] [--json]"
 allowed-tools: ["read", "edit", "search", "write", "agent"]
 ---
 
@@ -39,6 +39,8 @@ Parse the argument:
 - `all` or no argument — check everything
 
 If the user requests a specific plugin that is not configured, report: `⚠ <plugin> plugin not configured. Skipping.`
+
+`--json` (alone or after a plugin argument) — same checks, machine-readable output for tools: see **10b. JSON Output**. In JSON mode print nothing but that object (no progress lines, no table).
 
 ## 1. dx Core Files
 
@@ -616,6 +618,30 @@ Summary: 25 passed, 4 warnings, 0 errors
 ```
 
 For each warning/error, include a one-line remediation below the status.
+
+### 10b. JSON Output (`--json`)
+
+Instead of the table, print exactly one JSON object and nothing else:
+
+```json
+{
+  "schema": 1,
+  "generated_at": "<UTC ISO 8601>",
+  "dx_version": "<version from ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json, or null>",
+  "config_version": "<dx.version from .ai/config.yaml, or null>",
+  "plugins": ["dx", "aem", "seed-data", "auto"],
+  "checks": [
+    { "section": "dx Core Files", "item": ".ai/lib/dx-common.sh", "status": "ok", "detail": "up to date", "fix": null },
+    { "section": "dx Rule Files", "item": ".ai/rules/pr-answer.md", "status": "warn", "detail": "stale", "fix": "/dx-upgrade" }
+  ],
+  "summary": { "passed": 25, "warnings": 4, "errors": 0, "skipped": 2 }
+}
+```
+
+- One `checks` entry per row of the table in step 10, same `section` and `item` text; `status` maps `✓` → `ok`, `⚠` → `warn`, `✗` → `error`, `—` → `skip` (`ℹ` lines are `ok`).
+- `detail` is the short status text from the row; `fix` is the remediation command or one line, `null` when none.
+- `plugins` lists only the plugins detected and checked. Values are paths, versions and counts only — never file contents, secrets or env values (step 4a reports set / not set).
+- A fatal stop (no `.ai/config.yaml`) prints `{"schema": 1, "fatal": ".ai/config.yaml not found", "fix": "/dx-init"}`.
 
 ## Examples
 

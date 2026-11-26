@@ -32,7 +32,7 @@ Print the status files as **one JSON array** and nothing else — no table, no p
 bash "${CLAUDE_SKILL_DIR}/scripts/status-json.sh" state [<ticket-id>]
 ```
 
-(`${CLAUDE_SKILL_DIR}` is this skill's directory; on a host that does not substitute it, run `scripts/status-json.sh` from this skill's folder.) Each element is a `state/<id>/status.json` object as `/dx-hub-dispatch` wrote it — `ticket`, `title`, `type`, `skill`, `engine`, `started`, `repos` (`<repo>: running | done | blocked | failed`) and, for the `copilot` engine, `sessions` (`<repo>: <session id>`). An unreadable file becomes `{"ticket": "<dir>", "error": "unreadable status.json"}`. No dispatches → `[]` (not the "No active dispatches" message). STOP after printing.
+(`${CLAUDE_SKILL_DIR}` is this skill's directory; on a host that does not substitute it, run `scripts/status-json.sh` from this skill's folder.) Each element is a `state/<id>/status.json` object as `/dx-hub-dispatch` wrote it — `ticket`, `title`, `type`, `skill`, `engine`, `started`, `repos` (`<repo>: pending | running | done | blocked | failed`; `pending` = a `--no-launch` dispatch not yet started), `sessions` (`<repo>: <session id>`, for the `copilot` engine and `--no-launch`) and, with `--no-launch`, `launch` (`<repo>: {cwd, command}`). An unreadable file becomes `{"ticket": "<dir>", "error": "unreadable status.json"}`. No dispatches → `[]` (not the "No active dispatches" message). STOP after printing.
 
 ## 2. Load Status Files
 
@@ -57,7 +57,7 @@ Hub Dispatch Status
 │ 2471189  │ Fix auth timeout        │ repo-be      │ blocked  │
 └──────────┴─────────────────────────┴──────────────┴──────────┘
 
-Legend: done ✓  running ⟳  blocked ⚠  failed ✗
+Legend: done ✓  running ⟳  pending ·  blocked ⚠  failed ✗
 ```
 
 For multi-repo dispatches, show ticket and title only on the first row.

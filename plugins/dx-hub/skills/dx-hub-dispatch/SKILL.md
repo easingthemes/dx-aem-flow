@@ -1,7 +1,7 @@
 ---
 name: dx-hub-dispatch
 description: "Dispatch a ticket to several repos — open an independent Claude Code or Copilot CLI session per repo in VS Code terminals. Use for 'hub dispatch', 'work on ticket across repos'."
-argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all] [autonomous]"
+argument-hint: "<ADO Work Item ID, Jira key, or URL> [repo-a repo-b ...] [--skill /dx-agent-all] [autonomous] [--no-launch]"
 allowed-tools: ["Read", "Edit", "Glob", "Grep", "Write", "Bash", "mcp__vscode-automator__*", "mcp__ado__*", "mcp__atlassian__*"]
 ---
 
@@ -45,7 +45,9 @@ digraph hub_dispatch {
     "Save raw ticket" [shape=box];
     "Write context.md" [shape=box];
     "Pre-seed repos" [shape=box];
+    "Launch mode?" [shape=diamond];
     "Launch terminals" [shape=box];
+    "Write launch commands" [shape=box];
     "Write status.json" [shape=box];
     "Summary" [shape=doublecircle];
 
@@ -59,8 +61,11 @@ digraph hub_dispatch {
     "Create state dir" -> "Save raw ticket";
     "Save raw ticket" -> "Write context.md";
     "Write context.md" -> "Pre-seed repos";
-    "Pre-seed repos" -> "Launch terminals";
+    "Pre-seed repos" -> "Launch mode?";
+    "Launch mode?" -> "Launch terminals" [label="default"];
+    "Launch mode?" -> "Write launch commands" [label="--no-launch"];
     "Launch terminals" -> "Write status.json";
+    "Write launch commands" -> "Write status.json";
     "Write status.json" -> "Summary";
 }
 ```
@@ -75,6 +80,7 @@ Parse `$ARGUMENTS`:
 2. **Repo names** (optional) — additional positional args matching `repos[].name` from config. If provided, skip auto-detection and use these.
 3. **`--skill`** (optional) — skill to run in each repo. Default: `/dx-agent-all`.
 4. **`autonomous`** (optional) — appended to the skill call in every repo (`<skill> <id> autonomous`), so each repo session runs without stops. Also makes this dispatch itself skip **Confirm dispatch**.
+5. **`--no-launch`** (optional) — do everything up to the terminals, but open none: write each repo's exact command line into `status.json` for the tool that called this skill (a dashboard, a script) to start itself. No `vscode-automator` calls.
 
 Examples:
 ```
@@ -83,6 +89,7 @@ Examples:
 /dx-hub-dispatch 2471234 --skill /dx-req
 /dx-hub-dispatch PROJ-123 repo-fe --skill /dx-agent-all
 /dx-hub-dispatch 2471234 repo-fe repo-be autonomous
+/dx-hub-dispatch 2471234 repo-fe repo-be autonomous --no-launch
 ```
 
 ### Fetch ticket
@@ -251,6 +258,10 @@ For each target repo:
 
 This pre-seeds each repo so `dx-req` / `dx-bug-triage` will find `raw-story.md` / `raw-bug.md` already present and skip the ADO/Jira fetch.
 
+### Launch mode?
+
+`--no-launch` given → **Write launch commands**. Otherwise → **Launch terminals**.
+
 ### Launch terminals
 
 For each target repo, open a VS Code terminal and start a Claude session:
@@ -324,6 +335,15 @@ mcp__vscode-automator__vscode_keystroke
 
 Wait 2 seconds before opening the next terminal (to avoid focus conflicts).
 
+### Write launch commands
+
+Open no terminal. For each target repo make a lowercase session id (`uuidgen | tr 'A-Z' 'a-z'`) and build the delegation prompt exactly as in **Launch terminals** Step 4 (same rules: one line, no `"`, `$` or backticks; Copilot gets the `/dx-core:` skill prefix). The command line, per `hub.engine`:
+
+- `copilot`: `DX_RUN_ID=<uuid> copilot --session-id <uuid> [--model <hub.model>] -i "<delegation prompt>"`
+- `claude`: `DX_RUN_ID=<uuid> claude --session-id <uuid> [--model <hub.model>] "<delegation prompt>"`
+
+Keep `cwd` (the repo's absolute path), `command` and the session id per repo for **Write status.json**. Status of each repo is `pending` (not `running`) until the caller starts it — the repo session sets `done` / `blocked` / `failed` as usual.
+
 ### Write status.json
 
 Write `$STATE_DIR/status.json`:
@@ -343,11 +363,15 @@ Write `$STATE_DIR/status.json`:
   "sessions": {
     "<repo-a>": "<uuid>",
     "<repo-b>": "<uuid>"
+  },
+  "launch": {
+    "<repo-a>": { "cwd": "<repo-a absolute path>", "command": "<command line>" },
+    "<repo-b>": { "cwd": "<repo-b absolute path>", "command": "<command line>" }
   }
 }
 ```
 
-`sessions` is written only for the `copilot` engine (the `--session-id` given to each repo terminal). `repos.<name>` stays a plain status string — the repo sessions update it, and `/dx-hub-status` reads it.
+`sessions` is written for the `copilot` engine and for any `--no-launch` dispatch (the `--session-id` given, or to be given, to each repo session). `launch` is written only with `--no-launch`: run `command` in `cwd`, one terminal per repo. `repos.<name>` stays a plain status string — the repo sessions update it, and `/dx-hub-status` reads it.
 
 ### Summary
 
@@ -358,7 +382,7 @@ Hub Dispatch Started
 ────────────────────────────────
 Ticket:    <id> — <title>
 Skill:     <skill>
-Terminals: <N> sessions launched
+Terminals: <N> sessions launched   (with --no-launch: "<N> commands written, none started")
 
   <repo-a> (<role>) — running   [<session id, copilot engine>]
   <repo-b> (<role>) — running   [<session id, copilot engine>]
@@ -369,6 +393,8 @@ Next:
   /dx-hub-status <ticket-id>    — check progress
   Switch to terminal tabs to monitor each session directly
 ```
+
+With `--no-launch`, list each repo's `cwd` and `command` instead of "running", and say the caller starts them.
 
 ## Examples
 
