@@ -37,7 +37,10 @@ if (!prompt) {
 
 const maxTurns = parseInt(process.env.MAX_TURNS || "30", 10);
 const timeoutMinutes = parseInt(process.env.TIMEOUT_MINUTES, 10) || 60;
-const allowedTools = (process.env.ALLOWED_TOOLS || "Skill,Read,Glob,Grep,Agent").split(",");
+// Trim each entry: pipelines write ALLOWED_TOOLS as a folded YAML scalar (`>-`),
+// which joins lines with a space, and the SDK passes entries through untrimmed.
+const allowedTools = (process.env.ALLOWED_TOOLS || "Skill,Read,Glob,Grep,Agent")
+  .split(",").map((s) => s.trim()).filter(Boolean);
 
 // Always include ToolSearch — subagents need it to discover deferred tools
 if (!allowedTools.includes("ToolSearch")) allowedTools.push("ToolSearch");
