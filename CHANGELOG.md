@@ -1,3 +1,18 @@
+# [6.7.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.6.0...v6.7.0) (2026-11-26)
+
+
+### Features
+
+* consolidate post-merge flow into aem-demo-page, dx-qa-handoff and dx-post-merge ([#283](https://github.com/easingthemes/dx-aem-flow/issues/283)) ([2371ee2](https://github.com/easingthemes/dx-aem-flow/commit/2371ee239a7d0090b4ea2fc2a1c6d19ecce95b87))
+
+
+### BREAKING CHANGES
+
+* /aem-verify, /aem-editorial-guide, /aem-doc-gen,
+/aem-qa-handoff and /dx-doc-retro are removed. Use /aem-demo-page (--local
+before the PR), /dx-qa-handoff, /dx-doc-gen and /dx-post-merge. See
+docs/release-v7.md.
+
 # [6.6.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.5.0...v6.6.0) (2026-11-26)
 
 
