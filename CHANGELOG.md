@@ -1,3 +1,10 @@
+# [6.6.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.5.0...v6.6.0) (2026-11-26)
+
+
+### Features
+
+* dx-runs summary, interrupted-run hook, hub --no-launch, doctor --json, eval checker ([#281](https://github.com/easingthemes/dx-aem-flow/issues/281)) ([20541d7](https://github.com/easingthemes/dx-aem-flow/commit/20541d71db1c0e451da5426dbcb6d4e861131e66))
+
 # [6.5.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.4.0...v6.5.0) (2026-11-25)
 
 
