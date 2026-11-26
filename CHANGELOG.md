@@ -1,3 +1,10 @@
+# [6.9.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.8.0...v6.9.0) (2026-11-26)
+
+
+### Features
+
+* write run results from dx-req-dod, dx-doc-gen, dx-qa-handoff and aem-demo-page ([#287](https://github.com/easingthemes/dx-aem-flow/issues/287)) ([0a6aea4](https://github.com/easingthemes/dx-aem-flow/commit/0a6aea4a3ca7c2e82c579901aa141aaf33e7c4e0))
+
 # [6.8.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.2...v6.8.0) (2026-11-26)
 
 
