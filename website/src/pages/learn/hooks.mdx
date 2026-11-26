@@ -143,10 +143,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <HighlightBox severity="success" title="What This Means for KAI">
     dx-core owns the plugin hooks: branch guard, subagent log, Figma screenshots, and the Playwright
     screenshot log (it moved from dx-aem with the <code>playwright</code> MCP server, so dx-core-only projects get it too).
-    A <code>SessionEnd</code> hook (<code>run-result-close.sh</code>) closes dx runs the session left open: when a tool
-    started the session with <code>DX_RUN_ID</code> and a skill's running marker with that id is still in
-    <code>.ai/run-results/</code>, it writes the run as <code>failed</code> / interrupted so the tool learns the outcome.
-    Without <code>DX_RUN_ID</code> it does nothing.
+    A <code>SessionEnd</code> hook (<code>run-result-close.sh</code>) closes dx runs the session left open: a skill's running marker still in
+    <code>.ai/run-results/</code> whose <code>run_id</code> is the session's <code>DX_RUN_ID</code>, or — for a skill run by
+    hand — starts with the ending session's id (<code>&lt;session id&gt;.&lt;n&gt;</code>), is written as
+    <code>failed</code> / interrupted so the tool learns the outcome. Other sessions' markers are left alone.
     Hooks from every installed plugin fire in the same session without conflict.
   </HighlightBox>
 </Section>

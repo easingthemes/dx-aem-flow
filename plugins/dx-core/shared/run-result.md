@@ -13,8 +13,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill <skill-name>
   [--progress-file <progress file name>] [--spec-dir <spec dir, if already known>]
 ```
 
-It writes `.ai/run-results/<skill>-<id>.running.json` with `started_at` and the caller's `DX_RUN_ID`
-(if set). The final write below picks both up, adds `duration_s`, and removes the marker.
+It writes `.ai/run-results/<skill>-<id>.running.json` with `started_at` and a `run_id`: the caller's
+`DX_RUN_ID` if set, else `<engine session id>.<n>`. The final write below picks both up, adds `duration_s`, and removes the marker.
 
 ## End
 
