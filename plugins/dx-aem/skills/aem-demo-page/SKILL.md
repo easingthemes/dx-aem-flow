@@ -121,12 +121,12 @@ When another repo's change is a prerequisite for what the page shows:
 - **Frontend repo** can show styling, JS and rendering changes when the backend part is already on the instance; it cannot show anything that needs backend code not yet deployed.
 
 - **Local:** the prerequisite is not deployed to local AEM by this repo's build → "no", unless the user says it is.
-- **QA:** fetch the work item's PR relations (ADO `mcp__ado__wit_work_item` `expand: "Relations"`). A PR in the other repo that is not completed → "no". All completed → "yes" (the deploy gate below checks this repo's part).
+- **QA:** fetch the work item's PR relations (ADO `mcp__ado__wit_work_item` `expand: "Relations"`). For **each** prerequisite repo: no PR linked for that repo → "no"; a PR in it that is not completed → "no". Every prerequisite repo has a PR and all of them are completed → "yes", and print `Assuming <repo> is deployed to QA (its PR is merged; only this repo's part is checked by the deploy gate).` A merged PR is not proof of a QA deploy — the deploy gate below checks only this repo's part.
 
 ### STOP: cross-repo dependency
 
 ```
-Cross-repo dependency — <other repo> must be deployed to <ENV> first (<what it provides>). Re-run /aem-demo-page after that deploy.
+Cross-repo dependency — <other repo> must be deployed to <ENV> first (<what it provides>; <no PR linked | PR not completed | not deployed locally>). Re-run /aem-demo-page after that deploy.
 ```
 
 Write nothing to AEM. `/dx-post-merge` treats this like "not deployed to QA" and stops.
