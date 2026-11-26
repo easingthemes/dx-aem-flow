@@ -1,3 +1,10 @@
+## [6.7.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.0...v6.7.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **automation:** trim ALLOWED_TOOLS entries in pipeline-agent ([#284](https://github.com/easingthemes/dx-aem-flow/issues/284)) ([e13280a](https://github.com/easingthemes/dx-aem-flow/commit/e13280ae2a1da30b87b65eb66d6a5a3f4c1897cc))
+
 # [6.7.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.6.0...v6.7.0) (2026-11-26)
 
 
