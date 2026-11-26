@@ -500,7 +500,7 @@ Recommendation: use shell exports for machine-wide vars, settings.local.json for
 
 ### 5j. Install the Playwright browser
 
-dx-core ships the `playwright` MCP server (`@playwright/mcp`, see the plugin's `.mcp.json`). It drives a real Chromium that is **not** bundled — without it every browser skill (`/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe`, and dx-aem's `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`) fails at first navigation. Run it without asking — it only downloads a browser, writes nothing to the project, and is idempotent:
+dx-core ships the `playwright` MCP server (`@playwright/mcp`, see the plugin's `.mcp.json`). It drives a real Chromium that is **not** bundled — without it every browser skill (`/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe`, and dx-aem's `/aem-demo-page`, `/aem-qa`, `/aem-fe-verify`) fails at first navigation. Run it without asking — it only downloads a browser, writes nothing to the project, and is idempotent:
 
 ```bash
 npx playwright install chromium
@@ -655,7 +655,7 @@ If step 7 ran aem-init successfully, also install AEM Copilot agents:
 bash ${CLAUDE_SKILL_DIR}/scripts/install-copilot-agents.sh "$AEM_PLUGIN_DIR"
 ```
 
-Where `$AEM_PLUGIN_DIR` is the path to the aem plugin root (resolve from the aem skill files found in step 7). This installs AEM agent templates (`AEMBefore.agent.md`, `AEMAfter.agent.md`, etc.) to `.github/agents/`.
+Where `$AEM_PLUGIN_DIR` is the path to the aem plugin root (resolve from the aem skill files found in step 7). This installs AEM agent templates (`AEMBefore.agent.md`, `AEMDemoPage.agent.md`, etc.) to `.github/agents/`.
 
 > **Note:** `.github/instructions/` copies are no longer needed. Copilot CLI v1.0.89+ reads rules directly from `.claude/rules/` (step 9a-bis). If the directory exists from a previous install, leave it — Copilot reads both locations.
 
@@ -676,9 +676,8 @@ If step 7 ran aem-init and `.github/copilot-instructions.md` exists, append the 
 | Agent | Purpose | Invoke |
 |-------|---------|--------|
 | AEMBefore | Pre-development baseline snapshot | `@AEMBefore <component>` |
-| AEMAfter | Post-deployment verification | `@AEMAfter <component>` |
+| AEMDemoPage | Demo page + dialog/preview screenshots | `@AEMDemoPage <component> --local` |
 | AEMSnapshot | Component inspection | `@AEMSnapshot <component>` |
-| AEMDemo | Dialog screenshot + authoring guide | `@AEMDemo <component>` |
 | AEMComponent | Find pages using a component | `@AEMComponent <component>` |
 | AEMVerify | Bug verification on AEM | `@AEMVerify <component>` |
 ```
@@ -887,9 +886,8 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 │   ├── DxDebug.agent.md
 <If AEM + Copilot:>
 │   ├── AEMBefore.agent.md
-│   ├── AEMAfter.agent.md
+│   ├── AEMDemoPage.agent.md
 │   ├── AEMSnapshot.agent.md
-│   ├── AEMDemo.agent.md
 │   ├── AEMComponent.agent.md
 │   └── AEMVerify.agent.md
 ```
@@ -907,7 +905,7 @@ agent.index.md         ← AI setup entry point (all paths, all agents)
 <If Copilot enabled:>
 - VS Code Copilot agents: `@DxCodeReview`, `@DxReqAll`, `@DxAgentAll`, etc.
 <If AEM + Copilot:>
-- AEM Copilot: `@AEMBefore`, `@AEMAfter`, `@AEMSnapshot`, etc.
+- AEM Copilot: `@AEMBefore`, `@AEMDemoPage`, `@AEMSnapshot`, etc.
 ```
 
 ## 11. Offer AI Automation

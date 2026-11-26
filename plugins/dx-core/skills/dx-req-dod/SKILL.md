@@ -294,10 +294,10 @@ Track created tasks: `{criterion, taskId, title}`.
 
 ### 8e. Documentation Generation
 
-If auto-fixes improved the score (at least one criterion flipped to PASS):
-1. Invoke `/dx-doc-gen <work-item-id>` if available
-2. Invoke `/aem-doc-gen <work-item-id>` if available (AEM project)
-3. If skills not available: print `Documentation generation skipped (doc-gen skills not installed).`
+If a documentation, demo or QA-handoff criterion failed and the story's PR is merged:
+1. Invoke `/dx-post-merge <work-item-id>` — QA demo page (AEM projects), wiki page, QA handoff comment, in that order. Pass `--skip demo` when the failing criteria are about docs only.
+2. If it stops with `Not deployed to QA yet`, leave the criterion failing and note `re-run /dx-post-merge <id> after the QA deploy`.
+3. If the skill is not available: print `Documentation generation skipped (/dx-post-merge not installed).`
 
 ### 8f. Re-evaluate
 

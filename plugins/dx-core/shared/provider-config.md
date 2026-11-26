@@ -235,7 +235,7 @@ Each skill that posts a work-item comment starts it with a **visible text signat
 | `[Estimation]` | dx-estimate |
 | `[BugTriage]` | dx-bug-triage |
 | `[BugVerify]`, `[BugVerifyLocal]`, `[BugVerifyQA]` | dx-bug-verify |
-| `[QAHandoff]` | aem-qa-handoff |
+| `[QAHandoff]` | dx-qa-handoff |
 
 **"Solution prepared" marker:** a `[DevPlan]` comment with a `**Plan details:**` wiki link (its text is `dx-prep.wiki-page-title`, e.g. `Development Plan (Solution Review)`) and a `**Prepared:**` line means the ticket was prepared for hand-off (`/dx-prep`). It counts as **reviewed** when the work item also carries the `dx-prep.review-tag` tag. Reports (sprint readiness and similar) should read these two signals rather than a separate marker. `[DevPlan] Plan Updated` is a follow-up, not the main comment.
 

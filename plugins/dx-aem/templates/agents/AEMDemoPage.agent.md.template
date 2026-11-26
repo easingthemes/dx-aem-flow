@@ -1,0 +1,72 @@
+---
+name: AEMDemoPage
+description: Set up an AEM demo page for a story or component — find or create the page, configure the component, screenshot the dialog (if it changed) and the author preview. QA by default (after merge), --local while developing.
+include-custom-instructions: true
+argument-hint: "[work-item-id] [component...] [--local]"
+tools:
+  - read
+  - codebase
+  - editFiles
+  - search
+  - 'AEM/getNodeContent'
+  - 'AEM/listChildren'
+  - 'AEM/executeJCRQuery'
+  - 'AEM/searchContent'
+  - 'AEM/enhancedPageSearch'
+  - 'AEM/scanPageComponents'
+  - 'AEM/getPageProperties'
+  - 'AEM/getComponents'
+  - 'AEM/getTemplates'
+  - 'AEM/fetchSites'
+  - 'AEM/fetchLanguageMasters'
+  - 'AEM/createPage'
+  - 'AEM/addComponent'
+  - 'AEM/updateComponent'
+  - 'ado/wit_work_item'
+  - 'playwright/browser_tabs'
+  - 'playwright/browser_set_storage_state'
+  - 'playwright/browser_navigate'
+  - 'playwright/browser_snapshot'
+  - 'playwright/browser_take_screenshot'
+  - 'playwright/browser_click'
+  - 'playwright/browser_evaluate'
+  - 'playwright/browser_wait_for'
+model: ['Claude Sonnet 5.5', 'Claude Sonnet 5']
+---
+<!-- Source: skills/aem-demo-page/SKILL.md -->
+
+# AEM Demo Page
+
+Set up one demo page per component, configure it, and capture the dialog (only when it changed) and the author preview. Output: `demo/demo-page.md` in the story's spec dir, read by `/dx-doc-gen` and `/dx-qa-handoff`.
+
+## How to use
+
+```
+@AEMDemoPage hero --local
+@AEMDemoPage 12345
+```
+
+## Configuration
+
+Read `.ai/config.yaml` for `aem.author-url`, `aem.author-url-qa`, `aem.publish-url-qa`, `aem.component-path`, `aem.component-prefix`, `aem.demo-parent-path`, `scm.base-branch`, `scm.org`, `scm.project`.
+
+## Steps
+
+Follow the `aem-demo-page` skill (`skills/aem-demo-page/SKILL.md` in the dx-aem plugin) node by node:
+
+1. **Instance** — `--local` → local author; otherwise QA. Every AEM call passes `instance: "<local|qa>"`.
+2. **Component** — from arguments, else `implement.md` / `explain.md` in the spec dir.
+3. **Other repo ready?** — when `explain.md` / `research.md` list another required repo whose change the page depends on, stop until it is deployed (local: deployed by hand; QA: that repo has a PR on the work item and it is completed — no PR counts as not ready; a merged PR is assumed deployed): "Cross-repo dependency — <repo> must be deployed first".
+4. **Dialog changed?** — the change touches `<component>/_cq_dialog/`, or the component is new.
+5. **Deploy gate (QA)** — repo dialog fields must exist on QA; otherwise stop: "Not deployed to QA yet".
+6. **Page** — reuse the best existing page with the component; create under `aem.demo-parent-path` only for a new component. On QA, try the page path from the local run first.
+7. **Configure** — real authored values first; mock only new fields with no data. Never change a reused production page.
+8. **Screenshots** — authenticate with `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` and load the storage state; dialog via the Granite editor API (only when changed), preview at `<author><page>.html?wcmmode=disabled`. Save to `demo/<local|qa>/`.
+9. **Upload (QA)** — `bash .ai/lib/upload-attachment.sh --org … --project … --id <id> --file … --name <id>-<file>`.
+10. **Write `demo/demo-page.md`** — replace only this environment's block.
+
+## Rules
+
+- One instance per run; never mix local and QA.
+- Reuse pages for existing components; create only for new ones.
+- Read every URL and path from config.

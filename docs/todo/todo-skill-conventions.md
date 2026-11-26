@@ -295,7 +295,7 @@ external references must stay as-is).
 "solve, don't punt" principle. Symptom → diagnostic command → fix inline
 beats "if something fails, ask Claude" for ops skills.
 **Scope:** `plugins/dx-aem/skills/aem-doctor/SKILL.md`,
-`plugins/dx-aem/skills/aem-verify/SKILL.md`,
+`plugins/dx-aem/skills/aem-demo-page/SKILL.md`,
 `plugins/dx-aem/skills/aem-fe-verify/SKILL.md`,
 `plugins/dx-core/skills/dx-step-fix/SKILL.md`,
 `plugins/dx-core/skills/dx-pr-answer/SKILL.md`.
@@ -364,7 +364,7 @@ Meanwhile the catalog has dense keyword clusters that compete for the same
 prompts: **7 `dx-pr-*`** skills all keyed on "PR"/"review"
 (`dx-pr`, `dx-pr-commit`, `dx-pr-review`, `dx-pr-review-all`,
 `dx-pr-review-report`, `dx-pr-reviews-report`, `dx-pr-answer`); **5 verify**
-skills (`aem-verify`, `aem-fe-verify`, `aem-qa`, `dx-step-verify`,
+skills (`aem-demo-page`, `aem-fe-verify`, `aem-qa`, `dx-step-verify`,
 `dx-figma-verify`); **4 `dx-bug-*`**; **4 `dx-req-*`**; **3 doc-gen**. When a
 user says "review my PR", six skills have a claim and nothing disambiguates
 them. Broad, negative-free descriptions hijack unrelated prompts (the talk's
@@ -379,7 +379,7 @@ frontmatter** (`description`/`when_to_use`) — not in the body (a body-scoped
 grep false-passes on procedural lines like "do not push to main"). Verify:
 ```bash
 for s in dx-pr dx-pr-commit dx-pr-review dx-pr-review-all dx-pr-review-report \
-         dx-pr-reviews-report dx-pr-answer aem-verify aem-fe-verify aem-qa \
+         dx-pr-reviews-report dx-pr-answer aem-demo-page aem-fe-verify aem-qa \
          dx-step-verify dx-bug-all dx-bug-fix dx-bug-triage dx-bug-verify \
          dx-req dx-req-import dx-req-tasks dx-req-dod; do
   f=$(find plugins -path "*/skills/$s/SKILL.md")
@@ -627,7 +627,7 @@ baseline ratchet.
 **Added:** 2026-09-29
 **Problem:** One `/dx-agent-all` story is verified 5–6 layers deep: mandatory per-step review
 in `dx-step` (`:466`), `dx-plan-validate`, `dx-step-verify` (6 phases + up to 3 review cycles),
-heal (up to 2 cycles, each re-running verify → up to ~9 review passes), `aem-verify` /
+heal (up to 2 cycles, each re-running verify → up to ~9 review passes), `aem-demo-page` /
 `aem-fe-verify`, then the automated PR Reviewer; `dx-simple` adds `dx-pr-reviewer` (`:805`).
 Anti-rationalization tables sit in 8 skills (`dx-step:452`, `dx-step-fix`, `dx-step-verify`,
 `dx-step-build`, …). Opus 5 prompting guidance: explicit verification instructions cause

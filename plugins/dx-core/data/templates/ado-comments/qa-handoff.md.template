@@ -1,16 +1,23 @@
+
 ### [QAHandoff] Ready for QA — <story-title>
 
 **PR:** <pr-url>
-**Branch:** `<branch-name>`
-**Wiki:** [Technical Documentation](<wiki-url>) — full details, screenshots, authoring guide
+**Wiki:** [Story page](<wiki-url>) — how to test, demo script, authoring details
 
 #### QA Pages
 
-| Environment | URL |
-|-------------|-----|
-| QA Author (Edit) | <qa-author-url>/editor.html<test-page-path>.html |
-| QA Author (Preview) | <qa-author-url><test-page-path>.html?wcmmode=disabled |
-| QA Publisher | <qa-publish-url><test-page-path> |
+<!-- From demo/demo-page.md → environments.qa.pages. One row per page. OMIT the section if there is no demo-page.md. -->
+
+| Page | Edit | Preview | Publisher |
+|------|------|---------|-----------|
+| `<page-path>` | [Edit](<author-edit>) | [Preview](<author-preview>) | [Open](<publisher>) |
+
+#### Screenshots
+
+<!-- Attachment URLs from demo-page.md → environments.qa.screenshots. OMIT if none. -->
+
+- [Dialog — <component>](<attachment-url>)
+- [Preview — <component>](<attachment-url>)
 
 #### Prerequisites
 
@@ -24,4 +31,4 @@
 QA has test plans for detailed verification. -->
 
 ---
-_[QAHandoff] | <ISO timestamp> · See wiki page for dialog screenshots, authoring guide, and implementation details._
+_[QAHandoff] | <ISO timestamp>_

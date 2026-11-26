@@ -3,7 +3,7 @@ title: "What is an Agent? Two Formats, One Concept"
 category: "Agents — AI Personas"
 focus: "Claude Code"
 tags: ["Agent",".agent.md","Plugin Agent","13+25"]
-overview: "An agent is a persona with specific tools and model. Two formats exist: Claude Code plugin agents (model tiering, worktree isolation, memory) and Copilot .agent.md files (multi-model, handoffs, MCP inline config). We maintain 13 plugin agents + 25 Copilot agents. Same concepts, different capabilities."
+overview: "An agent is a persona with specific tools and model. Two formats exist: Claude Code plugin agents (model tiering, worktree isolation, memory) and Copilot .agent.md files (multi-model, handoffs, MCP inline config). We maintain 13 plugin agents + 24 Copilot agents. Same concepts, different capabilities."
 screenshot: null
 week: 5
 weekLabel: "Skills — Recipe Book"
@@ -28,7 +28,7 @@ keyPoints:
     - `model:` — fallback chain: `[claude-opus-5.5, claude-sonnet-5.5]`
     - `allowed-tools:` — auto-approve these tools
 actionItems:
-  - "We maintain both — 13 plugin agents for Claude Code, 25 Copilot agents in `.github/agents/`. Generated from shared templates by the init script."
+  - "We maintain both — 13 plugin agents for Claude Code, 24 Copilot agents in `.github/agents/`. Generated from shared templates by the init script."
   - |
     Tool name differences between platforms
     - Claude Code: `Read, Glob, Bash, Edit`

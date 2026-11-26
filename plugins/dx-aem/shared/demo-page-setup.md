@@ -1,6 +1,6 @@
 # Demo Page Setup
 
-This reference covers the page selection rule for all AEM skills that need a page to demo, verify, or document a component. The process follows the same conventions across `aem-verify`, `aem-doc-gen`, `aem-fe-verify`, and `aem-qa-handoff`.
+This reference covers the page selection rule for demo pages. `aem-demo-page` is the only skill that creates or configures them (local and QA); `aem-fe-verify`, `dx-doc-gen` and `dx-qa-handoff` read the result from `demo/demo-page.md`.
 
 ## Page Selection Rule (applies to ALL AEM skills)
 

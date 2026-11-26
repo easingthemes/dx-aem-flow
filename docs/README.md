@@ -12,4 +12,5 @@ This directory contains machine-readable reference files used by plugin skills a
 | `reference/agent-catalog.md` | All agents with tools, models, and descriptions |
 | `reference/config-reference.md` | `.ai/config.yaml` full schema |
 | `TODO.md` | Internal planning and future improvements |
+| `release-v7.md` | v7 breaking change: removed post-merge skills, replacements, upgrade and rollback |
 | `testing/copilot-cli-retest.md` | Maintainer checklist: re-verify Copilot CLI behaviour dx relies on, after Copilot releases |

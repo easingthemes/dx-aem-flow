@@ -37,7 +37,12 @@ dx-agent-all (top orchestrator)
 ├── dx-step-build
 ├── dx-step-verify → [dx-code-reviewer]
 ├── dx-pr-commit
-└── aem-doc-gen → (agent: aem-editorial-guide-capture)
+└── (ends at the PR — post-merge is dx-post-merge)
+
+dx-post-merge (post-merge orchestrator)
+├── aem-demo-page → (agent: aem-demo-page-capture)
+├── dx-doc-gen
+└── dx-qa-handoff
 
 dx-bug-all (bug orchestrator)
 ├── dx-bug-triage
@@ -54,7 +59,8 @@ dx-hub-dispatch (multi-repo orchestrator)
 
 | File | `delegates-to-skills` |
 |------|----------------------|
-| `plugins/dx-core/skills/dx-agent-all/SKILL.md` | `[dx-req, dx-ticket-analyze, dx-figma-all, dx-plan, dx-plan-validate, dx-plan-resolve, dx-step-all, dx-step-build, dx-step-verify, dx-step-fix, dx-pr-commit, dx-doc-gen, aem-doc-gen]` |
+| `plugins/dx-core/skills/dx-agent-all/SKILL.md` | `[dx-req, dx-ticket-analyze, dx-figma-all, dx-plan, dx-plan-validate, dx-plan-resolve, dx-step-all, dx-step-build, dx-step-verify, dx-step-fix, dx-pr-commit, aem-snapshot, aem-demo-page, aem-fe-verify]` |
+| `plugins/dx-core/skills/dx-post-merge/SKILL.md` | `[aem-demo-page, dx-doc-gen, dx-qa-handoff]` |
 | `plugins/dx-core/skills/dx-step-all/SKILL.md` | `[dx-step, dx-step-fix]` |
 | `plugins/dx-core/skills/dx-bug-all/SKILL.md` | `[dx-bug-triage, dx-bug-verify, dx-bug-fix]` |
 | `plugins/dx-core/skills/dx-figma-all/SKILL.md` | `[dx-figma-extract, dx-figma-prototype, dx-figma-verify]` |
@@ -71,7 +77,7 @@ dx-hub-dispatch (multi-repo orchestrator)
 | `plugins/dx-core/skills/dx-step-verify/SKILL.md` | `[dx-code-reviewer]` |
 | `plugins/dx-aem/skills/aem-component/SKILL.md` | `[aem-file-resolver, aem-page-finder]` |
 
-Note: 6 skills already have `agent:` frontmatter (aem-snapshot, aem-verify, aem-qa-handoff, aem-doc-gen, aem-editorial-guide, aem-fe-verify) — no changes needed, graph generator treats `agent:` as implicit delegation.
+Note: 3 skills already have `agent:` frontmatter (aem-snapshot, aem-demo-page, aem-fe-verify) — no changes needed, graph generator treats `agent:` as implicit delegation.
 
 #### Agents — `reports-to-skills` (12 files)
 
@@ -83,9 +89,9 @@ Note: 6 skills already have `agent:` frontmatter (aem-snapshot, aem-verify, aem-
 | `plugins/dx-core/agents/dx-figma-styles.md` | `[dx-figma-prototype]` |
 | `plugins/dx-core/agents/dx-figma-markup.md` | `[dx-figma-prototype]` |
 | `plugins/dx-core/agents/dx-pr-reviewer.md` | `[dx-pr-review, dx-pr-review-all]` |
-| `plugins/dx-aem/agents/aem-inspector.md` | `[aem-snapshot, aem-verify, aem-qa-handoff]` |
+| `plugins/dx-aem/agents/aem-inspector.md` | `[aem-snapshot]` |
 | `plugins/dx-aem/agents/aem-fe-verifier.md` | `[aem-fe-verify]` |
-| `plugins/dx-aem/agents/aem-editorial-guide-capture.md` | `[aem-editorial-guide, aem-doc-gen]` |
+| `plugins/dx-aem/agents/aem-demo-page-capture.md` | `[aem-demo-page]` |
 | `plugins/dx-aem/agents/aem-file-resolver.md` | `[dx-ticket-analyze, aem-component]` |
 | `plugins/dx-aem/agents/aem-page-finder.md` | `[aem-component, aem-page-search]` |
 

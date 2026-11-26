@@ -31,6 +31,15 @@ Include technique used and WHY chosen over alternatives. -->
 
 <!-- How to use the feature. Prerequisites, steps, expected behavior. -->
 
+## How to test
+
+<!-- Numbered steps derived from the acceptance criteria: where to go, what to do, what to expect.
+Do not copy the AC text — the ticket has it. OMIT only if the story has nothing testable. -->
+
+| # | Where | Do | Expected |
+|---|-------|----|----------|
+| 1 | <page / endpoint / screen> | <action> | <expected result> |
+
 ## Files Changed
 
 <!-- Grouped by area (FE/BE/Tests/Config) from implement.md. Short relative paths. -->

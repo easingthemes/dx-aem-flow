@@ -7,7 +7,8 @@
 | Story workflow | `/dx-req <ID>` then `/dx-plan` then `/dx-agent-all` | Spec files created, steps executed, PR created |
 | Bug fix | `/dx-bug-all <ID>` | Triage + fix, no `[ALERT:CRITICAL]` |
 | PR review | `/dx-pr-review <PR>` then `/dx-pr-answer` | Review posted, answers drafted |
-| AEM verify | `/aem-snapshot <comp>` then `/aem-verify <comp>` | Before/after snapshots captured |
+| AEM demo page | `/aem-snapshot <comp>` then `/aem-demo-page <comp> --local` | `demo/demo-page.md` with page, dialog diff and screenshots |
+| Post-merge | `/dx-post-merge <ID> dry run` | Demo page on QA, wiki page and handoff text generated, nothing posted |
 | Dry run | `/auto-test dor <ID> --dryRun` | Agent runs, nothing posted to ADO |
 | Unit tests | `node --test .ai/automation/lambda/__tests__/*.test.js` | All green |
 | Health check | `/dx-doctor` and `/auto-doctor` | All checks pass |

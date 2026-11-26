@@ -156,7 +156,7 @@ Before starting the pipeline, count the total phases that will run (including op
 
 Example: `Phase 4: Build & Deploy — (6/8)` means 6th phase out of 8 total.
 
-All phases in order (max 15):
+All phases in order (max 14):
 
 | # | Phase | Condition |
 |---|-------|-----------|
@@ -165,16 +165,16 @@ All phases in order (max 15):
 | 1.5 | Figma Design-to-Code | only if Figma URL in story |
 | 2 | Planning | always |
 | 3 | Feature Branch | always |
+| 3+ | AEM Baseline | only if /aem-snapshot exists + an existing component is changed + not FE-only |
 | 4 | Execution | always |
 | 5 | Build | always |
-| 5+ | AEM Baseline | only if /aem-snapshot exists + component found + not FE-only |
 | 6 | Full Code Review | skipped if build failed |
-| 6+ | AEM Verification | only if AEM Baseline ran + build passed |
+| 6+ | AEM Demo Page (local) | only if build passed + component found + local AEM reachable |
 | 6++ | AEM FE Verification | only if build passed + AEM MCP on localhost + Playwright available |
 | 7 | Commit | skipped if build/review failed |
-| 7.5 | Editorial Guide | only if AEM Verification passed + AEM MCP available |
 | 8 | Pull Request | skipped if commit failed |
-| 9 | Documentation | optional (if doc-gen skills available) |
+
+The demo page on QA, the wiki page and the QA handoff come **after the merge and the QA deploy** — `/dx-post-merge <id>`. This pipeline ends at the PR.
 
 At the start, determine which optional phases will run and calculate the total. Update the total if a phase gets skipped mid-run (e.g., build failure skips review, commit, PR).
 
@@ -227,7 +227,7 @@ Use the phase table above to determine which phases apply. Example tasks for a t
 7. Commit
 8. Pull request
 
-Add conditional phases (Figma, AEM baseline, AEM verify, editorial guide, docs) only when their conditions are met. Delete them if conditions turn out false mid-run.
+Add conditional phases (Figma, AEM baseline, AEM demo page, AEM FE verify) only when their conditions are met. Delete them if conditions turn out false mid-run.
 
 ## Flow
 
@@ -258,13 +258,13 @@ digraph agent_all {
     "Review passed?" [shape=diamond];
     "Phase 4.5-heal: Self-healing review (max 2 cycles)" [shape=box];
     "Heal succeeded?" [shape=diamond];
-    "Phase 5: AEM Baseline (conditional)" [shape=box];
-    "Phase 5+: AEM Verify (conditional)" [shape=box];
-    "Phase 5++: AEM FE Verify (conditional)" [shape=box];
+    "Phase 2.6: AEM Baseline (conditional)" [shape=box];
+    "Phase 5: AEM Demo Page (local, conditional)" [shape=box];
+    "Phase 5+: AEM FE Verify (conditional)" [shape=box];
+    "FE verify changed code?" [shape=diamond];
+    "Phase 5++: Refresh demo page" [shape=box];
     "Phase 5a: Commit (if auto-commit)" [shape=box];
     "Phase 6: Pull Request (if auto-pr)" [shape=box];
-    "Phase 6.5: Editorial Guide (conditional)" [shape=box];
-    "Phase 7: Documentation (conditional)" [shape=box];
     "Final Summary" [shape=doublecircle];
 
     "Parse argument + check run-state" -> "Check prepared spec files";
@@ -285,7 +285,8 @@ digraph agent_all {
     "Phase 2: Planning (plan - validate - resolve)" -> "Plan valid?";
     "Plan valid?" -> "STOP: Plan validation failed" [label="no"];
     "Plan valid?" -> "Phase 2.5: Create feature branch" [label="yes"];
-    "Phase 2.5: Create feature branch" -> "Phase 3: Execution (invoke dx-step-all)";
+    "Phase 2.5: Create feature branch" -> "Phase 2.6: AEM Baseline (conditional)";
+    "Phase 2.6: AEM Baseline (conditional)" -> "Phase 3: Execution (invoke dx-step-all)";
     "Phase 3: Execution (invoke dx-step-all)" -> "Execution complete?";
     "Execution complete?" -> "STOP: Step failures" [label="no"];
     "Execution complete?" -> "Phase 4: Build (invoke dx-step-build)" [label="yes"];
@@ -293,18 +294,18 @@ digraph agent_all {
     "Build passed?" -> "Phase 4.5: Code Review (invoke dx-step-verify)" [label="yes"];
     "Build passed?" -> "Final Summary" [label="no (skip review, commit, PR)"];
     "Phase 4.5: Code Review (invoke dx-step-verify)" -> "Review passed?";
-    "Review passed?" -> "Phase 5: AEM Baseline (conditional)" [label="yes"];
+    "Review passed?" -> "Phase 5: AEM Demo Page (local, conditional)" [label="yes"];
     "Review passed?" -> "Phase 4.5-heal: Self-healing review (max 2 cycles)" [label="no"];
     "Phase 4.5-heal: Self-healing review (max 2 cycles)" -> "Heal succeeded?";
-    "Heal succeeded?" -> "Phase 5: AEM Baseline (conditional)" [label="yes"];
+    "Heal succeeded?" -> "Phase 5: AEM Demo Page (local, conditional)" [label="yes"];
     "Heal succeeded?" -> "Final Summary" [label="no (skip commit, PR)"];
-    "Phase 5: AEM Baseline (conditional)" -> "Phase 5+: AEM Verify (conditional)";
-    "Phase 5+: AEM Verify (conditional)" -> "Phase 5++: AEM FE Verify (conditional)";
-    "Phase 5++: AEM FE Verify (conditional)" -> "Phase 5a: Commit (if auto-commit)";
+    "Phase 5: AEM Demo Page (local, conditional)" -> "Phase 5+: AEM FE Verify (conditional)";
+    "Phase 5+: AEM FE Verify (conditional)" -> "FE verify changed code?";
+    "FE verify changed code?" -> "Phase 5++: Refresh demo page" [label="yes"];
+    "FE verify changed code?" -> "Phase 5a: Commit (if auto-commit)" [label="no"];
+    "Phase 5++: Refresh demo page" -> "Phase 5a: Commit (if auto-commit)";
     "Phase 5a: Commit (if auto-commit)" -> "Phase 6: Pull Request (if auto-pr)";
-    "Phase 6: Pull Request (if auto-pr)" -> "Phase 6.5: Editorial Guide (conditional)";
-    "Phase 6.5: Editorial Guide (conditional)" -> "Phase 7: Documentation (conditional)";
-    "Phase 7: Documentation (conditional)" -> "Final Summary";
+    "Phase 6: Pull Request (if auto-pr)" -> "Final Summary";
 }
 ```
 
@@ -523,6 +524,19 @@ Print: `Phase 2.5: Feature Branch — (<N>/<total>) <BRANCH> (<BRANCH_ACTION>)`
 
 **This is a hard gate** — do not proceed to Phase 3 until confirmed on a feature branch.
 
+### Phase 2.6: AEM Baseline (conditional)
+
+Runs **before** execution, so the snapshot is the state before this story's code reaches local AEM (Phase 4 deploys it).
+
+**Guard:** ALL of:
+1. `/aem-snapshot` skill exists
+2. `research.md` / `implement.md` name a component that already exists (a new component has nothing to snapshot)
+3. Changes are NOT FE-only (FE-only changes don't touch the dialog or content)
+
+Invoke `/aem-snapshot <component>` (context: fork). It writes `aem-before.md`; `/aem-demo-page --local` diffs the dialog against it in Phase 5. If it reports the component is not on AEM, record `skipped` and continue — Phase 5 does not depend on it.
+
+Print: `Phase 2.6: AEM Baseline — (<N>/<total>) <captured|skipped>.`
+
 ### Phase 3: Execution (invoke dx-step-all)
 
 Invoke `Skill(/dx-step-all <id>)` (context: fork). The skill writes per-step status to `$SPEC_DIR/dev-all-progress.md` and returns a `## Return` block when complete.
@@ -584,12 +598,12 @@ Invoke the `/dx-step-verify` skill. It has `context: fork` — the full review-f
 
 **This phase is always autonomous** — no interactive pause regardless of mode. Print the review summary from the skill's return, then:
 
-**If PASSED** — print: `Phase 4.5: Code Review — (<N>/<total>) passed in <C> cycles.` Continue to Phase 5.
+**If PASSED** — print: `Phase 4.5: Code Review — (<N>/<total>) passed in <C> cycles.` Continue to Phase 5 (AEM Demo Page).
 **If FAILED** (issues remain after 3 cycles) — go to Phase 4.5-heal (self-healing).
 
 ### Review passed?
 
-If review passed, continue to AEM Baseline. If failed, go to self-healing.
+If review passed, continue to the AEM Demo Page. If failed, go to self-healing.
 
 ### Phase 4.5-heal: Self-healing review (max 2 cycles)
 
@@ -620,40 +634,29 @@ If build fails → print: `Phase 4.5-heal: Build failed after healing. Human int
 
 Invoke the `/dx-step-verify` skill (context: fork).
 
-If PASSED → print: `Phase 4.5: Code Review — (<N>/<total>) passed after healing cycle <H>.` Continue to Phase 5.
+If PASSED → print: `Phase 4.5: Code Review — (<N>/<total>) passed after healing cycle <H>.` Continue to Phase 5 (AEM Demo Page).
 If FAILED and healing cycle < 2 → repeat Phase 4.5-heal from Step 1.
 If FAILED and healing cycle = 2 → print: `Phase 4.5: Code Review — (<N>/<total>) FAILED after 2 healing cycles.` Skip Phase 5a. Continue to Final Summary.
 
 ### Heal succeeded?
 
-If healing produced a passing review, continue to AEM Baseline. If healing failed or was unrecoverable, skip commit/PR and go to Final Summary.
+If healing produced a passing review, continue to the AEM Demo Page. If healing failed or was unrecoverable, skip commit/PR and go to Final Summary.
 
-### Phase 5: AEM Baseline (conditional)
+### Phase 5: AEM Demo Page (local, conditional)
 
 **Guard:** ALL of:
-1. `/aem-snapshot` skill exists
-2. A component was identified in research.md
-3. Changes are NOT FE-only (FE-only changes don't affect AEM dialog/content)
+1. Phase 4 (Build) passed — the change is deployed to local AEM
+2. `/aem-demo-page` skill exists (dx-aem installed)
+3. A component was identified in `research.md` or `implement.md`
+4. Local AEM author is reachable (`aem.author-url`, default localhost)
 
-If FE-only: ask user to confirm skip.
+Invoke `Skill(/aem-demo-page <id> --local)` (context: fork). It reuses the best page with the component (creates one only for a new component), configures it, diffs the dialog against `aem-before.md` when Phase 2.6 ran, and saves the dialog (if changed) and preview screenshots to `demo/local/`. Its page path is reused on QA after the merge.
 
-Invoke `/aem-snapshot` skill (context: fork). Captures component state before development — dialog fields, properties, pages where it's used.
+**If it reports a dialog regression** (a field removed that the plan does not remove): pause in interactive mode and report; in autonomous mode record it as a warning and continue.
 
-Print: `Phase 5: AEM Baseline — (<N>/<total>) <captured|skipped>.`
+Print: `Phase 5: AEM Demo Page — (<N>/<total>) <page path> (<created|reused>) | skipped | failed: <reason>.`
 
-### Phase 5+: AEM Verify (conditional)
-
-**Guard:**
-1. Phase 5 (AEM Baseline) was run
-2. Phase 4 (Build) passed
-
-Invoke `/aem-verify` skill (context: fork).
-
-**If fails:** Pause — report component broken, wait for user instruction.
-
-Print: `Phase 5+: AEM Verification — (<N>/<total>) <passed|FAILED>.`
-
-### Phase 5++: AEM FE Verify (conditional)
+### Phase 5+: AEM FE Verify (conditional)
 
 **Guard:** ALL of:
 1. Phase 4 (Build) passed
@@ -661,9 +664,7 @@ Print: `Phase 5+: AEM Verification — (<N>/<total>) <passed|FAILED>.`
 3. Playwright MCP is available
 4. A component was identified in research.md or implement.md
 
-**This phase does NOT require AEM Baseline (Phase 5).** It verifies frontend rendering, not dialog fields. It runs even for FE-only changes.
-
-Invoke `/aem-fe-verify` skill (context: fork). It creates/reuses a demo page, screenshots the component in `wcmmode=disabled`, and compares against Figma reference (if available) or requirements.
+Invoke `/aem-fe-verify` skill (context: fork). It reads the page from `demo/demo-page.md` (it reports BLOCKED when Phase 5 set up no page — record `skipped`), screenshots the component in `wcmmode=disabled`, compares against Figma reference (if available) or requirements, and fixes gaps in a loop.
 
 **Decision tree:**
 - **PASS** → continue
@@ -671,7 +672,17 @@ Invoke `/aem-fe-verify` skill (context: fork). It creates/reuses a demo page, sc
 - **NEEDS ATTENTION** → warn but continue (not a hard gate — fix loop already attempted 3 iterations)
 - **BLOCKED** → warn and continue (AEM not on localhost, MCP unavailable)
 
-Print: `Phase 5++: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR GAPS|NEEDS ATTENTION|BLOCKED|skipped>.`
+Print: `Phase 5+: AEM FE Verification — (<N>/<total>) <PASS|PASS WITH MINOR GAPS|NEEDS ATTENTION|BLOCKED|skipped>.`
+
+### FE verify changed code?
+
+"yes" when `/aem-fe-verify` reports `Code changed: yes` (a fix iteration ran and redeployed). Then the Phase 5 screenshots show the old rendering.
+
+### Phase 5++: Refresh demo page
+
+Invoke `Skill(/aem-demo-page <id> --local)` again — the page is reused and only the screenshots are re-captured.
+
+Print: `Phase 5++: Demo page refreshed — (<N>/<total>).`
 
 ### Phase 5a: Commit (if auto-commit)
 
@@ -690,37 +701,6 @@ Read `.ai/config.yaml` and check the **preferences** section for `auto-pr` (fall
 - **If `true`:** Invoke the `/dx-pr` skill to create the pull request automatically.
   Print: `Phase 6: Pull Request — (<N>/<total>) PR created.`
 - **If `false` or not found:** Print: `Phase 6: Pull Request — (<N>/<total>) skipped (auto-PR disabled).`
-
-### Phase 6.5: Editorial Guide (conditional)
-
-**Guard:**
-1. AEM Verification (Phase 5+) passed
-2. AEM MCP is available
-
-Ask user: "Capture editorial guide? (y/n)"
-
-If yes: invoke `/aem-editorial-guide` skill (context: fork). Captures dialog screenshots and writes authoring guide.
-
-Print: `Phase 6.5: Editorial Guide — (<N>/<total>) <captured|skipped>.`
-
-### Phase 7: Documentation (conditional)
-
-**Guard:**
-1. Phase 6 (PR) completed successfully (code is committed and PR created)
-2. The `/dx-doc-gen` skill exists (check if the skill is available)
-
-If both conditions are met, invoke documentation generation. **Run aem-doc-gen FIRST** (it produces screenshots and authoring-guide.md), then dx-doc-gen (it reads aem-doc-gen output and embeds Authoring/Website sections in the wiki page).
-
-If `/aem-doc-gen` skill is available (AEM project), invoke it first:
-
-Invoke `Skill(/aem-doc-gen <id>)` (if the skill is available — skip if not found).
-
-Then invoke dx-doc-gen (reads aem-doc-gen output if available):
-
-Invoke `Skill(/dx-doc-gen <id>)` (if the skill is available — skip if not found).
-
-**If skills not available:** Print: `Phase 7: Documentation — skipped (doc-gen skills not installed).`
-**If executed:** Print: `Phase 7: Documentation — (<N>/<total>) generated.`
 
 ### Final Summary
 
@@ -741,20 +721,19 @@ rm -f .ai/run-context/orchestrating.flag
 | Figma Design-to-Code | Done/Skip | Extract + prototype + verify / skipped (no URL) |
 | Planning | Done | <N> steps planned |
 | Execution | Done | <N> steps completed |
+| AEM Baseline | Done/Skip | snapshot captured / skipped (new component or FE-only) |
 | Build | Pass/Fail | passed / failed after 6 attempts |
-| AEM Baseline | Done/Skip | snapshot captured / skipped |
 | Full Code Review | Pass/Skip | PASSED in <N> cycles (+ <H> healing) / skipped (build failed) |
-| AEM Verification | Done/Skip | passed / failed / skipped |
+| AEM Demo Page | Done/Skip | <local page path>, <N> screenshots / skipped |
 | AEM FE Verification | Done/Skip | PASS / PASS WITH MINOR GAPS / NEEDS ATTENTION / skipped |
 | Commit | Done/Skip | committed / skipped (build/review failed or auto-commit off) |
-| Editorial Guide | Done/Skip | captured / skipped |
 | Pull Request | Done/Skip | PR created / skipped (auto-PR off or prior failure) |
-| Documentation | Done/Skip | Wiki + demo pages / skipped (skills not installed) |
 
 Review the results above.
 If build failed, fix the issues and run `/dx-step-build` to retry.
 If review failed after fixing, run `/dx-step-fix` manually to diagnose, then `/dx-step-verify`.
 If auto-PR was off, create PR manually with `/dx-pr`.
+After the PR is merged and deployed to QA: `/dx-post-merge <id>` — QA demo page, wiki page, QA handoff.
 ```
 
 ## Validation Gates
@@ -774,7 +753,7 @@ If auto-PR was off, create PR manually with `/dx-pr`.
 
 2. `/dx-agent-all 2416553 autonomous` — Runs the entire pipeline without pausing for review. Only stops on errors (build failure, plan validation failure). Produces a final summary table showing all phase statuses.
 
-3. `/dx-agent-all 2435084` (AEM project with Figma) — Detects a Figma URL in the story, runs `/dx-figma-all` (extract + prototype + verify), includes AEM Baseline snapshot before execution, runs AEM Verification after build, captures a demo, and generates wiki documentation.
+3. `/dx-agent-all 2435084` (AEM project with Figma) — Detects a Figma URL in the story, runs `/dx-figma-all` (extract + prototype + verify), takes the AEM Baseline snapshot before execution, sets up the local demo page with dialog and preview screenshots after the build, verifies the rendering against Figma, and ends at the PR (docs and QA handoff come later with `/dx-post-merge`).
 
 ## Troubleshooting
 

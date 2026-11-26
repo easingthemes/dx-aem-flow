@@ -183,7 +183,7 @@ Three quick validation queries against AEM QA:
 
 **All results are warnings — never block execution.** The agent uses warnings to adjust its implementation approach if needed. Pre-check informs, does not gate.
 
-**What this does NOT do:** No page scanning (init territory), no variant discovery (planning territory), no content comparison (aem-verify territory), no full dialog walk (aem-snapshot territory). This is a focused 3-query sanity check.
+**What this does NOT do:** No page scanning (init territory), no variant discovery (planning territory), no demo page or dialog diff (aem-demo-page territory), no full dialog walk (aem-snapshot territory). This is a focused 3-query sanity check.
 
 ### Execute the step
 

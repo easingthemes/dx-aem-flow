@@ -125,7 +125,7 @@ Resolves all source files for an AEM component across multiple repos and platfor
 |----------|-------|
 | **Model** | Sonnet |
 | **File** | `plugins/dx-aem/agents/aem-inspector.md` |
-| **Used by** | `/aem-snapshot`, `/aem-verify`, `/aem-doc-gen`, `/dx-simple` (Phase 2: dialog inspection) |
+| **Used by** | `/aem-snapshot`, `/dx-simple` (Phase 2: dialog inspection) |
 | **Tools** | Read, Write, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools |
 
 AEM component inspector. Queries the AEM author instance via MCP tools for dialog fields, page searches, test/docs page creation, publishing, and demo data configuration. Returns compact markdown summaries — never raw JSON.
@@ -150,11 +150,11 @@ AEM component inspector. Queries the AEM author instance via MCP tools for dialo
 | **Used by** | `/aem-fe-verify` |
 | **Tools** | Read, Write, Edit, Glob, Grep, ToolSearch, all `mcp__plugin_dx-aem_AEM__*` tools, all `mcp__plugin_dx-core_playwright__*` tools |
 
-Frontend visual verification agent. Creates/reuses demo pages on local AEM, screenshots components in `wcmmode=disabled` via Playwright, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines AEM MCP (page creation, component config) with Playwright MCP (navigation, screenshots).
+Frontend visual verification agent. Uses the local demo page recorded by `/aem-demo-page --local` (never creates pages), screenshots components in `wcmmode=disabled` via Playwright, and compares rendered output against Figma reference screenshots or requirements using multimodal vision. Combines read-only AEM MCP with Playwright MCP (navigation, screenshots).
 
 **Key capabilities:**
 - Localhost hard gate (verifies AEM MCP connected to localhost)
-- Demo page creation/reuse (same conventions as aem-inspector)
+- Reads the demo page from `demo/demo-page.md`
 - Component screenshot in publish-like rendering (wcmmode=disabled)
 - Multimodal visual comparison against Figma reference or requirements
 - Fix loop (edit source → rebuild → redeploy → re-screenshot)
@@ -163,24 +163,23 @@ Frontend visual verification agent. Creates/reuses demo pages on local AEM, scre
 
 ---
 
-### aem-editorial-guide-capture
+### aem-demo-page-capture
 
 | Property | Value |
 |----------|-------|
 | **Model** | Sonnet |
-| **File** | `plugins/dx-aem/agents/aem-editorial-guide-capture.md` |
-| **Used by** | `/aem-editorial-guide`, `/aem-doc-gen` |
-| **Tools** | Read, Write, Glob, ToolSearch, all `mcp__plugin_dx-core_playwright__*` tools |
+| **File** | `plugins/dx-aem/agents/aem-demo-page-capture.md` |
+| **Used by** | `/aem-demo-page` |
+| **Tools** | Read, Write, Glob, Grep, Bash, ToolSearch, AEM MCP page/component tools, `mcp__plugin_dx-core_playwright__*` browser tools |
 
-Browser automation agent for AEM editor interaction. Opens AEM author/publisher pages, handles login and Basic Auth for protected sites listed in `BASIC_AUTH_SITES`, triggers component dialogs via Granite API, captures screenshots, and writes editor-friendly documentation. Supports both local and QA environments.
+Sets up and captures the demo page on one instance per run (local or QA): finds or creates the page and configures the component via AEM MCP, then opens the dialog in the editor and the author preview (`wcmmode=disabled`) via Playwright and screenshots both.
 
 **Key capabilities:**
-- AEM login handling (detect redirect, fill credentials, submit)
-- QA/Stage Basic Auth (open plain URLs; logins come from `BASIC_AUTH_SITES` via the Playwright init-page module)
+- Page Selection Rule (reuse for existing components, create only for new ones)
+- Demo data from real authored instances
+- AEM author login via storageState (no password in context)
 - Component dialog opening via `Granite.author.editables` API
-- Publisher view capture (locate component by CSS class, scroll, screenshot)
-- Screenshot capture with deduplication
-- Authoring guide generation (non-technical)
+- Author preview capture (locate component by CSS class, scroll, screenshot)
 
 ---
 
@@ -414,7 +413,7 @@ Figma design-to-code coordinator. Chains `/dx-figma-extract` → `/dx-figma-prot
 
 ---
 
-## Copilot Agents — aem plugin (10 agents)
+## Copilot Agents — aem plugin (9 agents)
 
 AEM Copilot agents are seeded into `.github/agents/` when Copilot support is enabled during `/aem-init`. They provide the AEM full-flow lifecycle — component dialogs, JCR content, editorial QA, browser automation, and demo capture.
 
@@ -432,17 +431,15 @@ Pre-development baseline capture. Walks component dialog, finds pages, saves sna
 
 ---
 
-### AEMAfter
+### AEMDemoPage
 
 | Property | Value |
 |----------|-------|
-| **Template** | `plugins/dx-aem/templates/agents/AEMAfter.agent.md.template` |
-| **Claude equivalent** | aem-inspector |
-| **Invoke** | `@AEMAfter <component>` |
+| **Template** | `plugins/dx-aem/templates/agents/AEMDemoPage.agent.md.template` |
+| **Claude equivalent** | aem-demo-page-capture (`/aem-demo-page`) |
+| **Invoke** | `@AEMDemoPage <component> --local` |
 
-Post-deployment verification. Compares current state against `aem-before.md` baseline, verifies new fields and pages.
-
-**Handoffs:** DxCodeReview
+Demo page setup with dialog (if changed) and preview screenshots. QA by default, `--local` while developing.
 
 ---
 
@@ -457,18 +454,6 @@ Post-deployment verification. Compares current state against `aem-before.md` bas
 General-purpose component inspection without before/after context. Dialog fields, pages, JCR properties.
 
 **Handoffs:** AEMBefore, DxComponent
-
----
-
-### AEMEditorialGuide
-
-| Property | Value |
-|----------|-------|
-| **Template** | `plugins/dx-aem/templates/agents/AEMEditorialGuide.agent.md.template` |
-| **Claude equivalent** | aem-editorial-guide-capture |
-| **Invoke** | `@AEMEditorialGuide <component>` |
-
-Captures dialog screenshots via Playwright and writes editor-friendly authoring guide.
 
 ---
 

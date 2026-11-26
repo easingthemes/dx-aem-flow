@@ -15,7 +15,7 @@
 - `test -f plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml`
 - `grep -n 'universalHook' plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml` → webhook resource declared
 - `grep -n 'ALLOWLIST' plugins/dx-automation/data/pipelines/cli/ado-cli-universal.yml` → skill allowlist enforced
-- Smoke test: comment `@kai /dx-doc-retro 12345` on a completed story → wiki page created + ADO comment posted with link
+- Smoke test: comment `@kai /dx-doc-gen 12345` on a completed story without spec files (retro mode) → wiki page created + ADO comment posted with link
 
 ---
 
@@ -31,8 +31,8 @@ Examples:
 ```
 @kai /dx-agent-all
 @kai /dx-doc-gen focus on the dialog authoring section
-@kai /dx-doc-retro
-@kai /aem-qa-handoff hero
+@kai /dx-post-merge
+@kai /dx-qa-handoff
 ```
 
 ---
@@ -61,8 +61,8 @@ Universal trigger candidates — skills that produce a real ADO artifact and wor
 |---------------|--------|----------------|----------------|--------|
 | `/dx-agent-all` | PR + ADO comment | None (starts from scratch) | DX_PIPELINE_MODE audit (#155) | Pending #155 |
 | `/dx-doc-gen` | ADO Wiki page | Spec files from dx-agent-all run | Pre-req guard: linked PR → branch → spec file check; ADO comment on failure (#156) | Pending #156 |
-| `/dx-doc-retro` | ADO Wiki page | None (discovers from WI + linked PRs) | Minimal: WI_ID injection + result notification comment | Near-ready |
-| `/aem-qa-handoff` | ADO comment (QA notes) | Component name (from comment text) + QA URLs configured | Minimal: parse component from `@kai /aem-qa-handoff <component>` | Near-ready |
+| `/dx-doc-gen` (retro mode) | ADO Wiki page | None (discovers from WI + linked PRs) | Minimal: WI_ID injection + result notification comment | Near-ready |
+| `/dx-qa-handoff` | ADO comment (QA pointer) | Work item ID; reads `demo/demo-page.md` + `.wiki-url` if present | None — no AEM access, no component argument | Ready |
 
 ---
 
@@ -81,10 +81,10 @@ Implementation
 Documentation (after PR is opened)
   → @kai /dx-doc-gen     (uses spec files from dx-agent-all run → writes wiki page)
     or:
-  → @kai /dx-doc-retro   (discovers context from WI + linked PRs → writes wiki page, no spec files needed)
+  → @kai /dx-doc-gen     (no spec files → retro mode: discovers context from WI + linked PRs)
 
-QA handoff
-  → @kai /aem-qa-handoff hero   (posts QA notes + test plan as ADO comment)
+After the QA deploy
+  → @kai /dx-post-merge  (QA demo page → wiki page → [QAHandoff] comment)
 ```
 
 `dx-doc-gen` depends on `dx-agent-all` having run first. This is acceptable — it's a sequential flow, not a race. If spec files are missing, the pre-req guard (#156) reports this as an ADO comment so the developer knows what step is missing.
@@ -131,7 +131,7 @@ steps:
         EXTRA=$(echo "$COMMENT" | sed -E 's/.*@kai\s+\/[\w-]+\s*//' | xargs)
       fi
 
-      ALLOWLIST="dx-agent-all dx-doc-gen dx-doc-retro aem-qa-handoff"
+      ALLOWLIST="dx-agent-all dx-doc-gen dx-post-merge dx-qa-handoff"
       SKILL_NAME="${SKILL#/}"
       if ! echo "$ALLOWLIST" | grep -qw "$SKILL_NAME"; then
         echo "##[error]Skill '$SKILL_NAME' not in allowlist: $ALLOWLIST"
@@ -167,8 +167,8 @@ steps:
 
 **Scope:**
 - `plugins/dx-core/skills/dx-doc-gen/SKILL.md` — replace "print error and STOP" with ADO comment + STOP; add linked PR discovery
-- `plugins/dx-core/skills/dx-doc-retro/SKILL.md` — add result notification comment (nice-to-have); WI_ID injection already works
-- `plugins/dx-aem/skills/aem-qa-handoff/SKILL.md` — component name must be parseable from comment text; already posts ADO comments
+- `plugins/dx-core/skills/dx-doc-gen/SKILL.md` (retro mode) — add result notification comment (nice-to-have); WI_ID injection already works
+- `plugins/dx-core/skills/dx-qa-handoff/SKILL.md` — already posts ADO comments; needs no component argument
 
 **Done-when:**
 - `grep -n 'wit_add_work_item_comment' plugins/dx-core/skills/dx-doc-gen/SKILL.md` → skill posts ADO comment on pre-req failure
@@ -241,6 +241,8 @@ The comment format follows the dx-simple blocker pattern — actionable, explain
 
 #### `dx-doc-retro` — minimal changes needed
 
+> **Update 2026-11-26:** `dx-doc-retro` is now `/dx-doc-gen` retro mode (TODO-286). The changes below apply to that mode.
+
 **Current behavior:**
 - Step 1: fetches work item directly (`mcp__ado__wit_get_work_item`) — no interactive ask needed if WI_ID is in `$ARGUMENTS`
 - Already handles missing linked PRs gracefully (warns and continues with reduced context)
@@ -260,6 +262,8 @@ Otherwise this skill is near-ready for the universal trigger — no structural c
 ---
 
 #### `aem-qa-handoff` — minimal changes needed
+
+> **Update 2026-11-26:** superseded. `aem-qa-handoff` was replaced by `/dx-qa-handoff` (TODO-286), which takes only the work item ID and never touches AEM — points 1 and 3 below no longer apply. The QA pages come from `/aem-demo-page`; `/dx-post-merge` runs all three.
 
 **Current behavior:**
 - Requires `<component-name>` as argument

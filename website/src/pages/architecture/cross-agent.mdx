@@ -116,13 +116,13 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>aem-inspector</code></td>
-        <td class="p-3">AEMBefore / AEMAfter / AEMSnapshot</td>
-        <td class="p-3">Pre/post deployment capture, inspection</td>
+        <td class="p-3">AEMBefore / AEMSnapshot</td>
+        <td class="p-3">Pre-development baseline, inspection</td>
       </tr>
       <tr class="border-t border-gray-200">
-        <td class="p-3"><code>aem-editorial-guide-capture</code></td>
-        <td class="p-3">AEMEditorialGuide</td>
-        <td class="p-3">Dialog screenshots + authoring guide</td>
+        <td class="p-3"><code>aem-demo-page-capture</code></td>
+        <td class="p-3">AEMDemoPage</td>
+        <td class="p-3">Demo page + dialog/preview screenshots</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>aem-page-finder</code></td>
@@ -152,12 +152,6 @@ import CommandBlock from '../../components/CommandBlock.astro';
     steps={[
       { title: 'AEMBefore', subtitle: 'Baseline\ncapture', color: '#0891b2' },
       { title: 'DxPlanExecutor', subtitle: 'Start\nimplementation', color: '#059669' },
-    ]}
-  />
-  <PipelineBlock
-    steps={[
-      { title: 'AEMAfter', subtitle: 'Post-deploy\nverify', color: '#0891b2' },
-      { title: 'DxCodeReview', subtitle: 'Review\nchanges', color: '#8b5cf6' },
     ]}
   />
   <PipelineBlock

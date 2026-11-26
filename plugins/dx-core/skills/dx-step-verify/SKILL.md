@@ -1,6 +1,6 @@
 ---
 name: dx-step-verify
-description: "6-phase pre-PR verification with auto-fix — compile, lint, test, secrets, architecture, code review (max 3 cycles). Use after /dx-step-build. Not for checks on a running AEM (aem-verify, aem-fe-verify, aem-qa) or existing PRs (dx-pr-review)."
+description: "6-phase pre-PR verification with auto-fix — compile, lint, test, secrets, architecture, code review (max 3 cycles). Use after /dx-step-build. Not for checks on a running AEM (aem-demo-page, aem-fe-verify, aem-qa) or existing PRs (dx-pr-review)."
 argument-hint: "[Work Item ID or slug (optional — uses most recent if omitted)]"
 model: opus
 effort: high

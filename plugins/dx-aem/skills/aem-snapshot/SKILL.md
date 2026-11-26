@@ -161,7 +161,7 @@ Return ONLY:
 
 1. `/aem-snapshot hero` — Connects to AEM author, fetches the hero component dialog structure (12 fields across 3 tabs, 2 multifields), finds 8 pages using the hero component, and saves the baseline to `.ai/specs/<id>-<slug>/aem-before.md`.
 
-2. `/aem-snapshot productlisting 2416553` — Snapshots the productlisting component for story #2416553. Captures dialog fields, current JCR properties on 3 pages, and saves to the story's spec directory. This baseline will be compared by `/aem-verify` after deployment.
+2. `/aem-snapshot productlisting 2416553` — Snapshots the productlisting component for story #2416553. Captures dialog fields, current JCR properties on 3 pages, and saves to the story's spec directory. `/aem-demo-page --local` diffs the dialog against this baseline after deployment.
 
 3. `/aem-snapshot card` (AEM not reachable) — Attempts to connect to AEM author but gets no response. Reports "AEM not reachable at http://localhost:4502" and saves a partial snapshot from codebase analysis only (dialog XML structure, no live page data).
 

@@ -101,12 +101,13 @@ Each skill reads from local spec files (`.ai/specs/<id>-<slug>/`), not from the 
 |-------|-----------|----------|-------------|--------|
 | dx-agent-all | `/dx-agent-all` | `<work-item-id>` | Full pipeline: requirements → plan → develop → review → PR with checkpoints. Optionally invokes `superpowers:executing-plans` for execution discipline. | End-to-end delivery |
 
-### Documentation — 2 skills
+### Documentation + Post-merge — 3 skills
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Generate wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Dialog/FE screenshots, Figma comparison, Authoring Guide. Screenshots use repo-relative paths. Posts to ADO Wiki/Confluence: reuses the story's existing page whatever its name format (also in earlier sprints) and merges into hand-written content instead of overwriting it. | `docs/wiki-page.md` |
-| dx-doc-retro | `/dx-doc-retro` | `<work-item-id>` | Retroactive wiki docs for completed stories — fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed. | `docs/wiki-page.md` |
+| dx-post-merge | `/dx-post-merge` | `<work-item-id> [--skip demo\|docs\|handoff]` | After merge + QA deploy: runs `/aem-demo-page` (AEM projects) → `/dx-doc-gen` → `/dx-qa-handoff`. Stops if the change is not on QA yet. Coordinator skill. | `post-merge-progress.md` + outputs below |
+| dx-doc-gen | `/dx-doc-gen` | `<work-item-id>` | Story wiki page as demo walkthrough: Summary, Design Reference, What Changed and Why, QA URLs, Authoring (fields + dialog screenshot), Frontend Preview, How to test, Demo script. Reads `demo/demo-page.md`; screenshots are work-item attachment URLs. Retro mode (no spec files): reads the story and its completed PRs. Reuses the story's existing wiki page and merges into hand-written content. | `docs/wiki-page.md`, `.wiki-url` |
+| dx-qa-handoff | `/dx-qa-handoff` | `<work-item-id>` | Post the `[QAHandoff]` comment: PR, wiki link, QA pages, screenshot links, what changed. No AEM access; later runs post a short update. | `qa-handoff.md` |
 
 ### Decision Support — 1 skill
 
@@ -182,9 +183,14 @@ dx-agent-all ─┬─ dx-req
               │               └─ dx-step-fix
               ├─ dx-step-build
               ├─ dx-step-verify
-              ├─ dx-pr
-              ├─ dx-doc-gen (optional, Phase 7)
-              └─ aem-doc-gen (optional, Phase 7, AEM projects)
+              ├─ aem-snapshot (optional, Phase 2.6, AEM projects)
+              ├─ aem-demo-page --local (optional, Phase 5, AEM projects)
+              ├─ aem-fe-verify (optional, Phase 5+, AEM projects)
+              └─ dx-pr
+
+dx-post-merge ─┬─ aem-demo-page (QA, AEM projects)
+               ├─ dx-doc-gen (reads demo/demo-page.md)
+               └─ dx-qa-handoff (reads demo-page.md + .wiki-url)
 
 dx-bug-all ─┬─ dx-bug-triage
              ├─ dx-bug-verify (needs triage)
@@ -195,27 +201,19 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 
 ## dx-aem plugin
 
-### Verification (4)
+### Verification (3)
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | aem-snapshot | `/aem-snapshot` | `<component-name>` | Baseline component state before development — dialog fields, properties, pages | `aem-before.md` |
-| aem-verify | `/aem-verify` | `<component-name>` | Check component after deployment, compare against baseline, create test page | `aem-after.md` |
-| aem-fe-verify | `/aem-fe-verify` | `<component-name>` | Screenshot component in wcmmode=disabled, compare against Figma/requirements, fix loop | `aem-fe-verify.md` |
-| aem-editorial-guide | `/aem-editorial-guide` | `<component-name>` | Open AEM editor, screenshot dialog, write authoring guide | `demo/` folder |
+| aem-demo-page | `/aem-demo-page` | `[work-item-id] [component...] [--local]` | Find or create the demo page, configure the component, screenshot the dialog (if changed) and the author preview. QA by default with a deploy gate and work-item upload; `--local` while developing, with a dialog diff against `aem-before.md` | `demo/demo-page.md`, `demo/<env>/*.png` |
+| aem-fe-verify | `/aem-fe-verify` | `<component-name>` | Screenshot the component on the local demo page in wcmmode=disabled, compare against Figma/requirements, fix loop | `aem-fe-verify.md` |
 
-### QA (2)
+### QA (1)
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | aem-qa | `/aem-qa` | `<work-item-id>` (optional) | Full QA agent — navigate pages, check rendering/dialogs, screenshot, create Bug tickets | `qa.json` |
-| aem-qa-handoff | `/aem-qa-handoff` | `<component> <id>` | Post short QA handoff to ADO: QA URLs, prerequisites, what changed, wiki link. Reuses `/aem-doc-gen` test page or creates own | `qa-handoff.md` |
-
-### Documentation (1)
-
-| Skill | Invocation | Argument | Description | Output |
-|-------|-----------|----------|-------------|--------|
-| aem-doc-gen | `/aem-doc-gen` | `<work-item-id>` | Generate AEM demo docs — find existing pages, create docs page, capture dialog + website screenshots on QA, write authoring guide with Authoring/Website sections | `demo/authoring-guide.md`, `demo/*.png` |
 
 ### Recon (5)
 

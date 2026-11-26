@@ -313,8 +313,9 @@ import { stats } from '../../config/stats';
         <th class="text-left p-3 font-semibold text-brand-900">Output</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate wiki docs from spec files (after development). Reads aem-doc-gen output for Authoring/Website sections. Posts to sprint-specific ADO Wiki/Confluence subfolder, reusing the story's existing page (any name format, also in earlier sprints) and merging into hand-written content.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
-        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Retroactive wiki docs for completed stories -- fetches ADO story, finds linked PRs, searches codebase, generates simplified docs. No spec files needed.</td><td class="p-3"><code>docs/wiki-page.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Story wiki page as demo walkthrough: what changed, QA URLs, field table, dialog/preview screenshots (work-item attachments), how to test, demo script. Reads <code>demo/demo-page.md</code>. Without spec files it works from the story and its completed PRs. Reuses the story's existing wiki page and merges into hand-written content.</td><td class="p-3"><code>docs/wiki-page.md</code>, <code>.wiki-url</code></td></tr>
+        <tr><td class="p-3"><code>/dx-qa-handoff</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Post the <code>[QAHandoff]</code> comment: PR, wiki link, QA pages, screenshot links, what changed. No AEM access.</td><td class="p-3"><code>qa-handoff.md</code></td></tr>
+        <tr><td class="p-3"><code>/dx-post-merge</code></td><td class="p-3"><code>&lt;work-item-id&gt; [--skip …]</code></td><td class="p-3">After merge + QA deploy: <code>/aem-demo-page</code> → <code>/dx-doc-gen</code> → <code>/dx-qa-handoff</code>. Stops if the change is not on QA yet.</td><td class="p-3"><code>post-merge-progress.md</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -401,9 +402,8 @@ import { stats } from '../../config/stats';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/aem-snapshot</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Baseline component state before development -- dialog fields, properties, pages.</td><td class="p-3"><code>aem-before.md</code></td></tr>
-        <tr><td class="p-3"><code>/aem-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Check component after deployment, compare against baseline, create test page.</td><td class="p-3"><code>aem-after.md</code></td></tr>
+        <tr><td class="p-3"><code>/aem-demo-page</code></td><td class="p-3"><code>[id] [component] [--local]</code></td><td class="p-3">Find or create the demo page, configure the component, screenshot the dialog (if changed) and the author preview. QA by default (deploy gate, upload to work item); <code>--local</code> while developing, with a dialog diff against the snapshot.</td><td class="p-3"><code>demo/demo-page.md</code>, <code>demo/&lt;env&gt;/&#42;.png</code></td></tr>
         <tr><td class="p-3"><code>/aem-fe-verify</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Screenshot component in wcmmode=disabled, compare against Figma/requirements, fix loop.</td><td class="p-3"><code>aem-fe-verify.md</code></td></tr>
-        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>&lt;component-name&gt;</code></td><td class="p-3">Open AEM editor, screenshot dialog, write authoring guide.</td><td class="p-3"><code>demo/</code> folder</td></tr>
       </tbody>
     </table>
   </div>
@@ -427,8 +427,6 @@ import { stats } from '../../config/stats';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/aem-qa</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code> (optional)</td><td class="p-3">Full QA agent -- navigate pages, check rendering/dialogs, screenshot, create Bug tickets.</td><td class="p-3"><code>qa.json</code></td></tr>
-        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team, post to ADO. Reuses <code>/aem-doc-gen</code> output or creates own test page.</td><td class="p-3"><code>qa-handoff.md</code></td></tr>
-        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>&lt;work-item-id&gt;</code></td><td class="p-3">Generate AEM demo docs -- find existing pages, create docs page, capture dialog + website screenshots on QA, write authoring guide with Authoring/Website sections.</td><td class="p-3"><code>demo/authoring-guide.md</code>, <code>demo/&#42;.png</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -588,9 +586,13 @@ import { stats } from '../../config/stats';
   │    └─ dx-step-fix (targeted fix + escalation)
   ├─ dx-step-build
   ├─ dx-step-verify
-  ├─ dx-pr
-  ├─ aem-doc-gen (optional)
-  └─ dx-doc-gen (optional)`}</code>
+  ├─ aem-snapshot / aem-demo-page --local / aem-fe-verify (AEM, optional)
+  └─ dx-pr
+
+dx-post-merge (after merge + QA deploy)
+  ├─ aem-demo-page (QA, AEM projects)
+  ├─ dx-doc-gen
+  └─ dx-qa-handoff`}</code>
   </ContentCard>
 
   <ContentCard icon="mdi:source-branch" iconColor="bg-red-500" title="dx-bug-all chain" class="mt-4">
@@ -599,4 +601,37 @@ import { stats } from '../../config/stats';
   ├─ dx-bug-verify (needs triage)
   └─ dx-bug-fix (needs triage + verify)`}</code>
   </ContentCard>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Removed in v7                                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="v7.0"
+  badgeColor="warning"
+  title="Removed in v7"
+  subtitle="The post-merge skills were consolidated. Old commands and what replaces them."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Removed</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Use instead</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Notes</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-verify &lt;component&gt;</code></td><td class="p-3"><code>/aem-demo-page &lt;component&gt; --local</code></td><td class="p-3">Dialog diff against the <code>/aem-snapshot</code> baseline, local demo page, screenshots</td></tr>
+        <tr><td class="p-3"><code>/aem-verify --qa</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">QA is the default instance</td></tr>
+        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>/aem-demo-page + /dx-doc-gen</code></td><td class="p-3">Screenshots from the demo page; the authoring section lives on the story's wiki page (needs a work item)</td></tr>
+        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">Screenshots uploaded as work-item attachments</td></tr>
+        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>/dx-qa-handoff &lt;id&gt;</code></td><td class="p-3">Work item ID only, no AEM access</td></tr>
+        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>/dx-doc-gen &lt;id&gt;</code></td><td class="p-3">Retro mode starts by itself when the story has no spec files</td></tr>
+        <tr><td class="p-3"><code>@AEMAfter, @AEMEditorialGuide</code></td><td class="p-3"><code>@AEMDemoPage</code></td><td class="p-3">Copilot agents</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-sm mt-3"><code>aem-after.md</code> and <code>demo/authoring-guide.md</code> are no longer written or read — <code>demo/demo-page.md</code> replaces both. <code>/dx-agent-all</code> now ends at the PR; run <code>/dx-post-merge &lt;id&gt;</code> after the merge and the QA deploy. Upgrade steps: <a href={`${import.meta.env.BASE_URL}/setup/#upgrading-to-v7`}>Setup → Upgrading to v7</a>.</p>
 </Section>

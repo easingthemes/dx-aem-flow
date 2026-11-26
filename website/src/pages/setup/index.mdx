@@ -68,6 +68,28 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     After upgrading, run <code>/dx-upgrade</code> to sync project files to the new plugin version.
   </HighlightBox>
 
+  <div id="upgrading-to-v7">
+  <HighlightBox severity="warning" title="Upgrading to v7: post-merge skills consolidated">
+    v7 removes <code>/aem-verify</code>, <code>/aem-editorial-guide</code>, <code>/aem-doc-gen</code>,
+    <code>/aem-qa-handoff</code> and <code>/dx-doc-retro</code>, and the Copilot agents
+    <code>@AEMAfter</code> / <code>@AEMEditorialGuide</code>. Use <code>/aem-demo-page</code>
+    (<code>--local</code> while developing, QA after the merge), <code>/dx-doc-gen</code> (retro mode
+    when the story has no spec files), <code>/dx-qa-handoff</code>, and <code>/dx-post-merge</code>, which
+    runs demo page → wiki → QA handoff once the change is on QA. Full mapping:
+    <a href={`${import.meta.env.BASE_URL}/reference/skills/`}>Skill Catalog → Removed in v7</a>.
+    <br /><br />
+    What changes for you: <code>/dx-agent-all</code> ends at the PR; <code>/aem-fe-verify</code> needs
+    <code>/aem-demo-page --local</code> first; the DOCAgent pipeline posts nothing for an AEM story until
+    the change is on QA, so tag the work item after the QA deploy; <code>aem-after.md</code> and
+    <code>demo/authoring-guide.md</code> are no longer read.
+    <br /><br />
+    After updating, run <code>/dx-upgrade</code>: it swaps the Copilot agents and lists every local
+    script, shadowed skill or <code>copilot-instructions.md</code> row that still names a removed
+    command. DOCAgent users: re-run <code>/auto-init</code> (keep config) to refresh the pipeline YAML.
+    To stay on v6, pin the marketplace source to <code>ref: "v6.6.0"</code>.
+  </HighlightBox>
+  </div>
+
   <HighlightBox severity="warning" title="Upgrading: Basic Auth (BASIC_AUTH_SITES)">
     The old QA-only Basic Auth environment variables and the matching block under <code>aem:</code> in
     <code>.ai/config.yaml</code> are no longer read (<code>/dx-doctor</code> lists any leftovers). Set <code>BASIC_AUTH_SITES</code> instead (format below and in the <code>basic-auth</code> rule):

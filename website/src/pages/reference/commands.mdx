@@ -242,11 +242,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/aem-snapshot</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Baseline component state before changes</td></tr>
-        <tr><td class="p-3"><code>/aem-verify</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Verify component after deployment, create test page</td></tr>
+        <tr><td class="p-3"><code>/aem-demo-page</code></td><td class="p-3"><code>[id] [component] [--local]</code></td><td class="p-3">Demo page + dialog/preview screenshots (local or QA)</td></tr>
         <tr><td class="p-3"><code>/aem-fe-verify</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Screenshot and compare against Figma/requirements</td></tr>
-        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Screenshot dialog, write authoring guide</td></tr>
         <tr><td class="p-3"><code>/aem-qa</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Full QA agent -- navigate, check rendering, create Bug tickets</td></tr>
-        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team, post to ADO</td></tr>
       </tbody>
     </table>
   </div>
@@ -333,10 +331,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Description</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Generate wiki docs from spec files, post to ADO wiki</td></tr>
-        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Retroactive wiki docs for completed stories</td></tr>
-        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">AEM authoring guide with dialog screenshots</td></tr>
-        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team</td></tr>
+        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Story wiki page (also retroactively, without spec files)</td></tr>
+        <tr><td class="p-3"><code>/dx-qa-handoff</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Post the QA handoff comment</td></tr>
+        <tr><td class="p-3"><code>/dx-post-merge</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">After merge: demo page on QA → wiki page → QA handoff</td></tr>
       </tbody>
     </table>
   </div>
@@ -607,4 +604,37 @@ import CommandBlock from '../../components/CommandBlock.astro';
     The BA checkbox loop between <code>dor</code> steps is the only human gate in the chain.
     All other transitions are automatic.
   </HighlightBox>
+</Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Removed in v7                                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="v7.0"
+  badgeColor="warning"
+  title="Removed in v7"
+  subtitle="The post-merge skills were consolidated. Old commands and what replaces them."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Removed</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Use instead</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Notes</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-verify &lt;component&gt;</code></td><td class="p-3"><code>/aem-demo-page &lt;component&gt; --local</code></td><td class="p-3">Dialog diff against the <code>/aem-snapshot</code> baseline, local demo page, screenshots</td></tr>
+        <tr><td class="p-3"><code>/aem-verify --qa</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">QA is the default instance</td></tr>
+        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>/aem-demo-page + /dx-doc-gen</code></td><td class="p-3">Screenshots from the demo page; the authoring section lives on the story's wiki page (needs a work item)</td></tr>
+        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">Screenshots uploaded as work-item attachments</td></tr>
+        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>/dx-qa-handoff &lt;id&gt;</code></td><td class="p-3">Work item ID only, no AEM access</td></tr>
+        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>/dx-doc-gen &lt;id&gt;</code></td><td class="p-3">Retro mode starts by itself when the story has no spec files</td></tr>
+        <tr><td class="p-3"><code>@AEMAfter, @AEMEditorialGuide</code></td><td class="p-3"><code>@AEMDemoPage</code></td><td class="p-3">Copilot agents</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-sm mt-3"><code>aem-after.md</code> and <code>demo/authoring-guide.md</code> are no longer written or read — <code>demo/demo-page.md</code> replaces both. <code>/dx-agent-all</code> now ends at the PR; run <code>/dx-post-merge &lt;id&gt;</code> after the merge and the QA deploy. Upgrade steps: <a href={`${import.meta.env.BASE_URL}/setup/#upgrading-to-v7`}>Setup → Upgrading to v7</a>.</p>
 </Section>

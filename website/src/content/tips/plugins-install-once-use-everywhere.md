@@ -12,7 +12,7 @@ slackOneLiner: "🤖 Tip #52 — Plugins are installable bundles of skills, agen
 keyPointsTitle: "What Plugins Give You"
 actionItemsTitle: "How to Install and Use"
 keyPoints:
-  - "**What's in a plugin** — Skills (slash commands like /dx-plan, /aem-verify), agents (specialized AI personas), rules (convention templates for .claude/rules/), and MCP servers (external tool connections to ADO, AEM, Figma)."
+  - "**What's in a plugin** — Skills (slash commands like /dx-plan, /aem-demo-page), agents (specialized AI personas), rules (convention templates for .claude/rules/), and MCP servers (external tool connections to ADO, AEM, Figma)."
   - "**Cross-platform** — Works in both Claude Code and Copilot CLI. Install once, both tools discover skills, agents, rules, and MCP servers automatically."
   - "**No build step** — Plugins are pure Markdown + shell scripts. Install, init, use. No compilation or bundling needed."
   - "**Auto-discovery** — After install, everything is automatic. Skills show up as /commands, agents are available for dispatch, rules load based on file paths, and MCP servers connect on their own."

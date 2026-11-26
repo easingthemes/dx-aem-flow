@@ -19,9 +19,11 @@ Pilot (2026-10-16, sonnet): ~$0.10 per run.
 
 | Case | main (old descriptions) | #225 (new descriptions) |
 |---|---|---|
-| 11 routing cases (`dx-pr-commit`, `dx-pr-answer`, `dx-bug-all`/`-triage`/`-verify`, `dx-req`, `dx-dor`, `dx-step-verify`, `aem-verify`, `aem-fe-verify`, `aem-page-search`) | 22/22 | 22/22 |
+| 11 routing cases (`dx-pr-commit`, `dx-pr-answer`, `dx-bug-all`/`-triage`/`-verify`, `dx-req`, `dx-dor`, `dx-step-verify`, `aem-verify`¹, `aem-fe-verify`, `aem-page-search`) | 22/22 | 22/22 |
 | 2 no-skill questions | 4/4 | 4/4 |
 | `pr-review` ("look over pull request 4521…") | 0/2 | 0/2 |
+
+¹ `aem-verify` was merged into `aem-demo-page` on 2026-11-26; the case now targets `aem-demo-page` with a new prompt and has not been run since.
 
 - **No regression.** Every case scored the same on both versions.
 - **`pr-review` fails on both.** The pilot trace shows Claude picks Claude Code's **bundled `code-review` skill**: the prompt does not say ADO, and the bundled skill also reviews "a PR number". That is a real competitor every consumer has. It is not caused by the #238 rewrite.

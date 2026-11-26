@@ -120,7 +120,7 @@ aem:
   author-url-qa: "https://qa-author.example.com"  # Remote QA author (for clickable links)
   publish-url: "http://localhost:4503"  # Local AEM publisher (for user-facing verification)
   publish-url-qa: "https://qa-publish.example.com"  # Remote QA publisher (for user-facing verification)
-  demo-parent-path: "/content/mysite/en/demo"  # Parent path for all AI-created demo pages (aem-verify, aem-doc-gen)
+  demo-parent-path: "/content/mysite/en/demo"  # Parent path for AI-created demo pages (aem-demo-page)
   selector: "model"               # Exporter selector (if project uses custom selector)
   current-repo: "My-Repo"         # Current repo name (for cross-repo awareness)
   platform: "alpha"               # opaque, project-defined platform identifier (e.g. alpha, beta) — declared in project.yaml

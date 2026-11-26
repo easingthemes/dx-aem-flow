@@ -27,7 +27,7 @@ keyPoints:
     - Plan mode (Shift+Tab): structured planning before coding
     - Cloud delegation: prefix with & to offload to cloud agents
     - Cross-session memory (remembers conventions)
-    - 25 Copilot agents (vs 13 in Claude Code)
+    - 24 Copilot agents (vs 13 in Claude Code)
 actionItemsTitle: "When to Use Which"
 actionItems:
   - |

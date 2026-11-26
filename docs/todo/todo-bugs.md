@@ -96,7 +96,7 @@
 - `repo_pull_request` `get` returns the raw PR, so `mergeStatus` is the numeric REST enum (`2` = conflicts) — `shared/git-rules.md` updated.
 - Comment `format` now defaults to `Markdown`; enums are case-sensitive (`Markdown`, `Relations`, `Active`).
 - Allowing a `*_write` tool in `ALLOWED_TOOLS` now allows **every** action on it (e.g. `repo_pull_request_write` includes `vote` and `update`) — noted for #119.
-- Open, not fixed here: `aem-qa-handoff` still says ADO MCP cannot edit comments; `wit_work_item_comment_write` `update` now can. Changing that alters the skill's behaviour — decide separately.
+- ~~Open, not fixed here: `aem-qa-handoff` still says ADO MCP cannot edit comments~~ — moot 2026-11-26: `aem-qa-handoff` was removed (TODO-286); `dx-qa-handoff` posts a short `[QAHandoff] Updated` comment instead of editing.
 - Unverified live: none of the new call shapes were run against a real ADO org; confirmation needs a live run (the prose is checked against the package schema only).
 
 ## `allowed-tools` values may grant nothing on Claude Code
