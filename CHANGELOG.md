@@ -1,3 +1,10 @@
+# [6.8.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.2...v6.8.0) (2026-11-26)
+
+
+### Features
+
+* **dx-core:** link manual skill runs to their engine session via run_id ([#286](https://github.com/easingthemes/dx-aem-flow/issues/286)) ([0b415b2](https://github.com/easingthemes/dx-aem-flow/commit/0b415b221dd463dfbc28e99381536c02f54516f2))
+
 ## [6.7.2](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.1...v6.7.2) (2026-11-26)
 
 
