@@ -5,7 +5,9 @@
 # replaces it with <skill>-<id>.json at its end (data/lib/run-result.sh). When
 # the session ends first (Ctrl+C, terminal closed, crash, the model stopping
 # early), the marker stays and the tool that started the run never learns the
-# outcome. This hook writes the missing result: status failed, "interrupted".
+# outcome. This hook writes the missing result: status failed, "interrupted",
+# metrics.interrupted true, and — when the marker names a progress file — the
+# step that was in progress ("interrupted: <step>", metrics.fail_at <step>).
 #
 # Only runs this session owns are touched:
 #   - markers whose run_id equals this process's DX_RUN_ID (set by the tool that
@@ -40,6 +42,25 @@ RR="$HERE/../../data/lib/run-result.sh"
 
 val() { sed -n "s/^  \"$2\": \"\\(.*\\)\",\\{0,1\\}\$/\\1/p" "$1" 2>/dev/null | head -1; }
 
+# The step a run was on: the last in_progress row of the marker's progress file
+# (in its spec_dir, else the one .ai/specs/<id>-*/). Empty when there is none.
+last_step() { # marker id
+  local pf sd f
+  pf="$(val "$1" progress_file)" sd="$(val "$1" spec_dir)"
+  [ -n "$pf" ] || return 0
+  case "$pf" in */*|..*) return 0 ;; esac
+  if [ -n "$sd" ]; then
+    case "$sd" in /*) f="$sd/$pf" ;; *) f="$PROJECT/$sd/$pf" ;; esac
+  else
+    set -- "$PROJECT"/.ai/specs/"$2"-*/"$pf"
+    [ $# -eq 1 ] || return 0
+    f="$1"
+  fi
+  [ -f "$f" ] || return 0
+  awk -F'|' '$3 ~ /^ *in_progress *$/ { s = $2 } END { gsub(/^ +| +$/, "", s); print s }' "$f" \
+    | tr '\000-\037\177' ' ' | cut -c1-80
+}
+
 for m in "$DIR"/*.running.json; do
   [ -f "$m" ] || continue
   rid="$(val "$m" run_id)"
@@ -49,9 +70,16 @@ for m in "$DIR"/*.running.json; do
   else continue; fi
   skill="$(val "$m" skill)" id="$(val "$m" id)"
   [ -n "$skill" ] && [ -n "$id" ] || continue
-  bash "$RR" --dir "$DIR" --skill "$skill" --id "$id" --status failed --run-id "$rid" \
-    --summary "interrupted: the session ended before the skill wrote its result" \
-    --next "/$skill $id" --metric interrupted=true >/dev/null 2>&1 || true
+  step="$(last_step "$m" "$id")"
+  if [ -n "$step" ]; then
+    bash "$RR" --dir "$DIR" --skill "$skill" --id "$id" --status failed --run-id "$rid" \
+      --summary "interrupted: $step" --next "/$skill $id" \
+      --metric interrupted=true --metric fail_at="$step" >/dev/null 2>&1 || true
+  else
+    bash "$RR" --dir "$DIR" --skill "$skill" --id "$id" --status failed --run-id "$rid" \
+      --summary "interrupted: the session ended before the skill wrote its result" \
+      --next "/$skill $id" --metric interrupted=true >/dev/null 2>&1 || true
+  fi
 done
 
 # Run counters of sessions idle for 30 days. The current one stays: a resumed

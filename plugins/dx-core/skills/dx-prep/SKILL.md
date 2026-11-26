@@ -157,6 +157,13 @@ Then write the run result.
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-prep --id <id> --progress-file req-progress.md
 ```
 
+**Progress** — `req-progress.md` is shared with `/dx-req` (it adds its own phase rows there). Add one row per dx-prep step, each `in_progress` before it starts: `Prep: requirements` (the nested `/dx-req` call; on a first run the spec dir does not exist yet — write this row as soon as `/dx-req` returns) → `Prep: planning` (`/dx-plan` + validate) → `Prep: plan wiki` (`skipped` when no wiki is configured) → `Prep: DevPlan comment` → `Prep: commit specs` (`skipped` when specs are not tracked). Rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="req-progress.md" DX_PROGRESS_TITLE="/dx-req Progress" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
+```
+
 Last action of every run — Summary, the validation STOP, and any failure that ends the run early (`/dx-req` failing, no plan produced → `--status failed`) — per `../../shared/run-result.md`:
 
 ```bash

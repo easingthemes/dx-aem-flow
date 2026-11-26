@@ -90,8 +90,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-agent-all --id <i
 Metrics come from `dev-all-progress.md` and `implement.md` (step statuses), `fix-loop-report.md` (fix loops) and the build phase (attempts) — counts you already have; omit one you do not know rather than guess. See `../../shared/run-result.md` § Metrics.
 
 - **Final Summary** → `done` (phases skipped by preference, e.g. auto-PR off, are still `done`; say so in `--summary`). `--next`: `none`, or the manual step the summary suggests (`/dx-pr <id>` when auto-PR was off).
-- **STOP on a gate the human must resolve** (plan validation failed, DoR / prepared-plan review gate, code review failed after fixes) → `blocked`, `--next` = the retry command the STOP message gives.
-- **STOP on an error** (step failures, build failing after the fix loop, a phase producing nothing) → `failed`, `--next` = the retry command.
+- **STOP on a gate the human must resolve** (**STOP: Plan validation failed**, DoR / prepared-plan review gate, code review failed after fixes) → `blocked`, `--next` = the retry command the STOP message gives.
+- **STOP on an error** (**STOP: Step failures**, build failing after the fix loop, a phase producing nothing) → `failed`, `--next` = the retry command.
 
 ## Execution Mode
 

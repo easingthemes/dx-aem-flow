@@ -339,7 +339,14 @@ Machine-readable outcome for a tool that started this skill (dashboard, script, 
 **Start** — after **Pre-flight validation** passes:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-bug-fix --id <bug id>
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-bug-fix --id <bug id> --progress-file bug-fix-progress.md
+```
+
+**Progress** — one row per step in `bug-fix-progress.md`, each `in_progress` before it starts: `Fix plan` → `Execute steps` (note `step <n>/<total>`) → `Build` → `Verify fix` (note `attempt <n>`) → `Commit + PR`. Under `/dx-bug-all` its `fix` row covers this whole skill. Rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="bug-fix-progress.md" DX_PROGRESS_TITLE="/dx-bug-fix Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 **End** — last action of **every** exit, after the final message:

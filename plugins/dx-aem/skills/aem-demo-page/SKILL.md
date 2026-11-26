@@ -74,7 +74,14 @@ From `$ARGUMENTS`: a numeric token is the work item ID; `--local` selects the lo
 Start the run as the first action after parsing (see [Run Result](#run-result)) — `RUN_ID_KEY` is the work item ID, else the first component name. Arguments with neither → start as soon as **Resolve spec dir and components** finds one (the spec dir's work item ID, else the first component):
 
 ```bash
-bash .ai/lib/run-result.sh --start --skill aem-demo-page --id <RUN_ID_KEY>
+bash .ai/lib/run-result.sh --start --skill aem-demo-page --id <RUN_ID_KEY> --progress-file demo-page-progress.md
+```
+
+**Progress** — once the spec dir is known (**Resolve spec dir and components**), one row per step in `demo-page-progress.md`, each `in_progress` before it starts: `Checks` (instance, component, other repo, deploy gate) → `Select or create page` → `Configure component` → `Capture screenshots` → `Upload screenshots` (`skipped` for local runs or Jira) → `Write demo-page.md`. A STOP leaves `Checks` `blocked` with the reason. Command and rules: `../../../dx-core/shared/run-result.md` § 2 — dx-aem runs the project copy:
+
+```bash
+DX_PROGRESS_FILE="demo-page-progress.md" DX_PROGRESS_TITLE="/aem-demo-page Progress" DX_PROGRESS_LABEL="Step" \
+  bash .ai/lib/update-progress.sh "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 Read `.ai/config.yaml`:

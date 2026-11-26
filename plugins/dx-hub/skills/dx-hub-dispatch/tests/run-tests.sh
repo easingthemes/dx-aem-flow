@@ -124,5 +124,39 @@ bash "$S/build-launch.sh" --engine cursor --cwd /x --session "$U" --prompt 'ok' 
 bash "$S/build-launch.sh" --engine claude --cwd /x --session "$U" --prompt 'ok' --out "$TMP/c.sh" --model 'a;rm' 2>/dev/null; check "rejects model metachar" 2 "$?"
 bash "$S/build-launch.sh" --engine claude --session "$U" --prompt 'ok' --out "$TMP/c.sh" 2>/dev/null; check "requires cwd" 2 "$?"
 
+# ── dx-core-lib.sh ───────────────────────────────────────────────────────────
+# Finds a dx-core data/lib script from a dx-hub skill in each plugin layout.
+mk() { mkdir -p "$(dirname "$1")"; printf 'echo %s "$@"\n' "$2" > "$1"; }
+L="$TMP/lib"
+# Claude Code cache: <marketplace>/<plugin>/<version>/ — the highest dx-core version wins.
+mkdir -p "$L/cache/mkt/dx-hub/2.0.0/skills/dx-hub-dispatch"
+cp -r "$S" "$L/cache/mkt/dx-hub/2.0.0/skills/dx-hub-dispatch/scripts"
+mk "$L/cache/mkt/dx-core/1.9.0/data/lib/x.sh" v1.9
+mk "$L/cache/mkt/dx-core/1.10.0/data/lib/x.sh" v1.10
+out="$(cd "$TMP" && env -u CLAUDE_PLUGIN_ROOT -u DX_CORE_ROOT bash "$L/cache/mkt/dx-hub/2.0.0/skills/dx-hub-dispatch/scripts/dx-core-lib.sh" x.sh a b)"
+check "lib: cache layout, newest version, args passed" "v1.10 a b" "$out"
+# Sibling layout (repo checkout, Copilot installed-plugins/<marketplace>/).
+mkdir -p "$L/sib/dx-hub/skills/dx-hub-dispatch"
+cp -r "$S" "$L/sib/dx-hub/skills/dx-hub-dispatch/scripts"
+mk "$L/sib/dx-core/data/lib/x.sh" sibling
+out="$(cd "$TMP" && env -u CLAUDE_PLUGIN_ROOT -u DX_CORE_ROOT bash "$L/sib/dx-hub/skills/dx-hub-dispatch/scripts/dx-core-lib.sh" x.sh)"
+check "lib: sibling layout" "sibling" "$out"
+# Exported CLAUDE_PLUGIN_ROOT (Copilot CLI shell) beats the sibling; .ai/lib beats both.
+mk "$L/env/data/lib/x.sh" env
+out="$(cd "$TMP" && CLAUDE_PLUGIN_ROOT="$L/env" bash "$L/sib/dx-hub/skills/dx-hub-dispatch/scripts/dx-core-lib.sh" x.sh)"
+check "lib: CLAUDE_PLUGIN_ROOT" "env" "$out"
+mkdir -p "$L/proj" && mk "$L/proj/.ai/lib/x.sh" project
+out="$(cd "$L/proj" && CLAUDE_PLUGIN_ROOT="$L/env" bash "$L/sib/dx-hub/skills/dx-hub-dispatch/scripts/dx-core-lib.sh" x.sh)"
+check "lib: .ai/lib copy first" "project" "$out"
+# Not found: warn, exit 0 (never fails the skill). Bad name: exit 2.
+out="$(cd "$TMP" && env -u CLAUDE_PLUGIN_ROOT -u DX_CORE_ROOT bash "$L/sib/dx-hub/skills/dx-hub-dispatch/scripts/dx-core-lib.sh" missing.sh 2>"$TMP/err")"; rc=$?
+check "lib: missing → exit 0" 0 "$rc"
+contains "lib: missing → warning" "missing.sh not found" "$(cat "$TMP/err")"
+bash "$S/dx-core-lib.sh" ../etc.sh 2>/dev/null; check "lib: rejects a path" 2 "$?"
+# The real thing from this checkout: dx-core's run-result.sh writes a marker.
+P="$TMP/hubproj"; mkdir -p "$P"
+(cd "$P" && env -u CLAUDE_PLUGIN_ROOT -u DX_CORE_ROOT DX_RUN_ID=hub-1 bash "$S/dx-core-lib.sh" run-result.sh --start --skill dx-hub-dispatch --id 42 --spec-dir state/42 >/dev/null 2>&1)
+contains "lib: run-result.sh marker via the checkout's dx-core" '"run_id": "hub-1"' "$(cat "$P/.ai/run-results/dx-hub-dispatch-42.running.json" 2>/dev/null)"
+
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" = 0 ]

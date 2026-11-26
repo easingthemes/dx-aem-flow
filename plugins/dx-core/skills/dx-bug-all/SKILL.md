@@ -110,7 +110,7 @@ Find the spec directory and present the completion table (raw-bug.md / triage.md
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-bug-all --id <id> --progress-file bug-progress.md
 ```
 
-Last action of every local run — Final summary and each Report FAIL — per `../../shared/run-result.md`:
+Last action of every local run — **Final summary + log run**, **Report FAIL (triage)** and **Report FAIL (fix)** — per `../../shared/run-result.md`:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-bug-all --id <id> --status <done|failed> \
@@ -127,6 +127,25 @@ Final summary → `done` (`--next` = `/dx-bug-verify <id> after` when a PR was c
 ---
 
 # Pipeline mode (autonomous — resumable recovery)
+
+### Run result (pipeline mode)
+
+Pipeline runs record their run too, per `../../shared/run-result.md` (never fail the run because of it). **Start** right after **Phase 0: resume-check dispatch** (`SPEC_DIR` known, or created by triage on `fresh`): `run-result.sh --start --skill dx-bug-all --id <id> --progress-file bug-progress.md`. **End** — last action of every terminal node, after its ADO comment and before the exit:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-bug-all --id <id> --status <done|blocked|failed> \
+  --summary "<one line>" --next "<what the run waits for, or none>" --pr "<PR url, if any>" \
+  --mode automation --mode-reason env --metric fix_attempts=<n> [--metric fail_at=<step>]
+```
+
+| Terminal node | `--status` | `--summary` / `--next` |
+|---------------|------------|------------------------|
+| **Finalize: report + ADO comment + flag + done** | `done` | PR opened or updated / `none` |
+| **No-op: already done (PR exists)**, or a stray re-trigger with no qualifying comment | `done` | already done — nothing to do / `none` |
+| **Persist state + ADO comment + flag + exit** — `needs-user-input` or `hard` blocker | `blocked` | the blocker reason / reply `@<keyword> <answer>` (needs-user-input) or re-tag for the full DevAgent (hard) |
+| **Persist state + ADO comment + flag + exit** — `transient` blocker | `failed` | the infra error, `fail_at` the step / re-trigger to resume |
+| **Re-post hard note + exit** | `blocked` | needs a manual fix / re-tag for the full DevAgent |
+| **Ambiguous: ask which branch + exit** | `blocked` | waiting for the user to name the branch / reply `@<keyword> <branch>` |
 
 Same three steps, wrapped in recovery. You DO read state and post ADO comments here (you do not in local mode). Coarse-step granularity: `triage` → `verify` → `fix` → `finalize`. The `bugfix/<id>-<slug>` branch (created by triage, pushed by every checkpoint) is the durable store; a crashed/blocked container resumes from the committed `resume-state.json`.
 

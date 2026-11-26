@@ -26,7 +26,8 @@
 # COPILOT_AGENT_SESSION_ID is set or COPILOT_CLI=1, else "claude" when
 # CLAUDECODE=1), mode and mode_reason.
 #
-# --start writes <dir>/<skill>-<id>.running.json (status "running"). The final
+# --start writes <dir>/<skill>-<id>.running.json (status "running"). Without
+# --spec-dir it records the single .ai/specs/<id>-*/ beside <dir>, if one exists. The final
 # call writes <dir>/<skill>-<id>.json (latest wins), carries run_id and
 # started_at over from the running marker, adds duration_s, removes the marker
 # and appends the result as one line to <dir>/history.jsonl (trimmed to the
@@ -159,6 +160,15 @@ if [ "$START" = 1 ]; then
   [ "$RUN_ID_SET" = 1 ] || [ -n "$RUN_ID" ] || mint_run_id
   if [ -n "$RUN_ID" ] && ! valid_run_id "$RUN_ID"; then
     echo "run-result.sh: ignoring run id outside [A-Za-z0-9._:-]{1,64}" >&2; RUN_ID=""
+  fi
+  # No --spec-dir: the one .ai/specs/<id>-*/ next to the results dir, if exactly
+  # one exists — so the SessionEnd hook can find the progress file later.
+  if [ -z "$SPEC_DIR" ]; then
+    ROOT="$(dirname "$(dirname "$DIR")")"
+    set -- "$ROOT"/.ai/specs/"$ID"-*/
+    if [ $# -eq 1 ] && [ -d "$1" ]; then
+      SPEC_DIR="${1%/}"; [ "$ROOT" = "." ] && SPEC_DIR="${SPEC_DIR#./}"
+    fi
   fi
   {
     printf '{\n'
