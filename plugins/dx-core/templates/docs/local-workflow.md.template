@@ -60,8 +60,9 @@ All commands run in Claude Code (terminal) or as `@Agent` in VS Code Copilot cha
 
 | Command | What it does |
 |---------|-------------|
-| `/dx-doc-gen` | Generate wiki documentation from completed spec files |
-| `/dx-doc-retro` | Generate docs retroactively for completed stories |
+| `/dx-post-merge <ID>` | After merge + QA deploy: AEM demo page → wiki page → QA handoff comment |
+| `/dx-doc-gen <ID>` | Story wiki page (also for stories done without dx) |
+| `/dx-qa-handoff <ID>` | `[QAHandoff]` comment linking PR, wiki, QA pages, screenshots |
 
 ### Bug Fix
 

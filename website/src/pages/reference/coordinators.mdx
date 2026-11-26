@@ -214,10 +214,10 @@ import CommandBlock from '../../components/CommandBlock.astro';
   <PipelineBlock
     steps={[
       { title: 'Phase 4.5', subtitle: 'Code review', command: 'dx-step-verify' },
+      { title: 'Phase 5', subtitle: 'AEM demo page (local)', command: 'aem-demo-page --local' },
+      { title: 'Phase 5+', subtitle: 'AEM FE verify', command: 'aem-fe-verify' },
       { title: 'Phase 5a', subtitle: 'Commit', command: 'dx-pr-commit' },
-      { title: 'Phase 5', subtitle: 'AEM verify', command: 'aem-verify' },
       { title: 'Phase 6', subtitle: 'Create PR', command: 'dx-pr' },
-      { title: 'Phase 7', subtitle: 'Documentation', command: 'dx-doc-gen' },
     ]}
   />
 </Section>
@@ -276,9 +276,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       Only if build AND review passed. Reads <code>auto-commit</code> and <code>auto-pr</code> from config preferences.
     </ContentCard>
 
-    <ContentCard icon="mdi:file-document" iconColor="bg-amber-500" title="Phase 7: Documentation (optional)">
-      Only if PR created. <code>aem-doc-gen</code> runs first (AEM projects), then <code>dx-doc-gen</code>
-      reads its output and posts wiki page to sprint subfolder.
+    <ContentCard icon="mdi:file-document" iconColor="bg-amber-500" title="After the merge: /dx-post-merge">
+      The pipeline ends at the PR. Once it is merged and deployed to QA, <code>/dx-post-merge &lt;id&gt;</code>
+      runs <code>aem-demo-page</code> (AEM projects), <code>dx-doc-gen</code> and <code>dx-qa-handoff</code> in that order.
     </ContentCard>
   </div>
 </Section>

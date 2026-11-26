@@ -203,7 +203,16 @@ The browser install and `.gitignore` entry are now dx-core's — see 3d-iii.
    ```bash
    npx playwright install chromium
    ```
-   Needed by `/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe` and, with dx-aem, `/aem-verify`, `/aem-qa`, `/aem-fe-verify`, `/aem-editorial-guide`. If it fails (offline), list it under **Manual Actions Required**.
+   Needed by `/dx-bug-verify`, `/dx-figma-verify`, `/dx-simple`, `/dx-axe` and, with dx-aem, `/aem-demo-page`, `/aem-qa`, `/aem-fe-verify`. If it fails (offline), list it under **Manual Actions Required**.
+
+### 3d-iv. Post-merge skills consolidated (always)
+
+`/aem-demo-page` replaces `/aem-verify`, `/aem-editorial-guide` and `/aem-doc-gen`; `/dx-qa-handoff` replaces `/aem-qa-handoff`; `/dx-doc-gen` absorbed `/dx-doc-retro` (retro mode); `/dx-post-merge` runs demo page → wiki → QA handoff after a merge.
+
+1. **Copilot agents:** delete `.github/agents/AEMAfter.agent.md` and `.github/agents/AEMEditorialGuide.agent.md` (or `AEMDemo.agent.md`) if present — `AEMDemoPage.agent.md` replaces both and 3e installs it. Report each under **Updated**.
+2. **`copilot-instructions.md`:** if its AEM Agents table lists `AEMAfter` or `AEMDemo`, list it under **Manual Actions Required** (replace both rows with `AEMDemoPage`).
+3. **Local shadows and scripts:** grep `.claude/skills/`, `.claude/agents/`, `.ai/automation/` and `.github/` for `aem-verify`, `aem-editorial-guide`, `aem-doc-gen`, `aem-qa-handoff`, `dx-doc-retro`, `aem-after.md`, `authoring-guide.md`; list hits under **Manual Actions Required** with the replacement.
+4. **Existing spec dirs:** leave old `aem-after.md` / `demo/authoring-guide.md` files alone — nothing reads them any more.
 
 ### 3e. Copilot Agents and Skills
 

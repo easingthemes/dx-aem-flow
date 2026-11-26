@@ -1,6 +1,6 @@
 ---
 name: aem-fe-verify
-description: "Visually verify a component's rendering on local AEM (wcmmode=disabled) against Figma or requirements, fixing gaps in a loop. Use for 'verify frontend', 'visual verify', 'compare AEM with figma'. Not for dialog checks (aem-verify) or full story QA (aem-qa)."
+description: "Visually verify a component's rendering on local AEM (wcmmode=disabled) against Figma or requirements, fixing gaps in a loop. Use for 'verify frontend', 'visual verify', 'compare AEM with figma'. Not for setting up the demo page (aem-demo-page) or full story QA (aem-qa)."
 argument-hint: "[component-name] [ADO Work Item ID (optional)]"
 context: fork
 agent: aem-fe-verifier
@@ -16,7 +16,7 @@ allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "AEM/*", 
 
 **Platform note:** This skill uses `context: fork` + `agent: aem-fe-verifier` for isolated execution. If subagent dispatch is unavailable (e.g., VS Code Chat), you may run inline but AEM MCP tools (`AEM/*`, `playwright/*`) must be available. If they are not, inform the user: "Frontend verification requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI."
 
-You visually verify a component's rendered output on a local AEM instance against the Figma design or requirements. You create/reuse a demo page, screenshot the component in `wcmmode=disabled`, compare using multimodal vision, and fix code gaps — up to 3 iterations.
+You visually verify a component's rendered output on a local AEM instance against the Figma design or requirements. You use the local demo page set up by `/aem-demo-page --local`, screenshot the component in `wcmmode=disabled`, compare using multimodal vision, and fix code gaps — up to 3 iterations.
 
 Use ultrathink for visual comparison — identifying layout, spacing, and color differences between two screenshots requires careful analysis.
 
@@ -38,7 +38,9 @@ digraph aem_fe_verify {
     "Gate passed?" [shape=diamond];
     "STOP: blocked" [shape=doublecircle];
     "Resolve component and spec directory" [shape=box];
-    "Ensure demo page exists" [shape=box];
+    "Load demo page" [shape=box];
+    "Demo page recorded?" [shape=diamond];
+    "STOP: no demo page" [shape=doublecircle];
     "Determine reference for comparison" [shape=box];
     "MCP fallback check" [shape=box];
     "Playwright available?" [shape=diamond];
@@ -58,8 +60,10 @@ digraph aem_fe_verify {
     "Hard gate: localhost check" -> "Gate passed?";
     "Gate passed?" -> "STOP: blocked" [label="no"];
     "Gate passed?" -> "Resolve component and spec directory" [label="yes"];
-    "Resolve component and spec directory" -> "Ensure demo page exists";
-    "Ensure demo page exists" -> "Determine reference for comparison";
+    "Resolve component and spec directory" -> "Load demo page";
+    "Load demo page" -> "Demo page recorded?";
+    "Demo page recorded?" -> "STOP: no demo page" [label="no"];
+    "Demo page recorded?" -> "Determine reference for comparison" [label="yes"];
     "Determine reference for comparison" -> "MCP fallback check";
     "MCP fallback check" -> "Playwright available?";
     "Playwright available?" -> "Screenshot component on local AEM" [label="yes"];
@@ -117,17 +121,19 @@ Read `.ai/config.yaml` for `aem.resource-type-pattern` to derive the full resour
 
 Print: `[FE Verify] Component: <name>, Spec: <spec-dir>`
 
-### Ensure demo page exists
+### Load demo page
 
-Check if a demo page from prior `/aem-verify` already exists under `<demo-parent-path>/<slug>`.
+Read `<spec-dir>/demo/demo-page.md` → `environments.local.pages`: the page whose `components` include this component. `/aem-demo-page` is the only skill that creates or configures demo pages — this skill only reads the result.
 
-- **If page exists:** reuse it. Verify the component is present via `mcp__plugin_dx-aem_AEM__scanPageComponents`.
-- **If page does NOT exist:** create one following the aem-inspector conventions (discover language root, template, container chain from an existing page; add component; configure demo data from real instances).
-- **If component missing from existing page:** add it and configure demo data.
+### Demo page recorded?
 
-See `references/demo-page-setup.md` for the full creation workflow.
+A local page for the component is listed → "yes". Print: `[FE Verify] Demo page: <page-path>`.
 
-Print: `[FE Verify] Demo page: <page-path> (<created|reused>)`
+### STOP: no demo page
+
+```
+BLOCKED: no local demo page for <component>. Run /aem-demo-page <component> --local first, then re-run /aem-fe-verify.
+```
 
 ### Determine reference for comparison
 
@@ -301,6 +307,7 @@ Write `<spec-dir>/aem-fe-verify.md` with:
 
 - Gaps found: <total>
 - Fixed: <count> in <N> iterations
+- Code changed: <yes|no> (yes → re-run `/aem-demo-page --local` to refresh its screenshots)
 - Remaining: <count> (<severity breakdown>)
 - Report: <spec-dir>/aem-fe-verify.md
 ```
@@ -315,7 +322,7 @@ Write `<spec-dir>/aem-fe-verify.md` with:
 
 ## Examples
 
-1. `/aem-fe-verify hero` — Verifies AEM MCP is on localhost, reuses demo page from prior `/aem-verify`, screenshots hero in wcmmode=disabled, compares against figma-reference-desktop.png. Finds 2 minor spacing gaps. Result: PASS WITH MINOR GAPS.
+1. `/aem-fe-verify hero` — Verifies AEM MCP is on localhost, reads the local page from `demo/demo-page.md`, screenshots hero in wcmmode=disabled, compares against figma-reference-desktop.png. Finds 2 minor spacing gaps. Result: PASS WITH MINOR GAPS.
 
 2. `/aem-fe-verify card 2416553` — Uses spec directory `.ai/specs/2416553-*/` for Figma reference. Screenshots card component, compares against Figma. No gaps. Result: PASS.
 
@@ -362,7 +369,7 @@ Write `<spec-dir>/aem-fe-verify.md` with:
 - **Content tolerance** — focus on structure and styling, not mockup vs real content
 - **Surgical fixes** — edit specific properties, don't refactor or add features
 - **3 iterations max** — stop after 3 fix rounds regardless of remaining gaps
-- **Reuse demo pages** — if `/aem-verify` created a page, reuse it
+- **Never create pages** — the page comes from `/aem-demo-page --local`
 - **wcmmode=disabled always** — required for publish-like rendering on author
 - **Build after fixes** — always rebuild and wait for deploy before re-screenshotting
 - **Idempotent** — re-running overwrites screenshots and aem-fe-verify.md

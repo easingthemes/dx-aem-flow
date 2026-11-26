@@ -98,8 +98,9 @@ A comprehensive development workflow plugin for Azure DevOps and Jira projects. 
 
 | Skill | Description |
 |-------|-------------|
-| `/dx-doc-gen` | Generate wiki docs from spec files — reads aem-doc-gen output for Authoring/Website sections, posts to ADO wiki |
-| `/dx-doc-retro` | Retroactive wiki docs for completed stories — fetches ADO story, finds linked PRs, generates docs |
+| `/dx-post-merge` | After merge + QA deploy: AEM demo page (dx-aem) → wiki page → QA handoff comment |
+| `/dx-doc-gen` | Story wiki page — what changed, screenshots, QA URLs, how to test, demo script; retro mode for stories done without dx |
+| `/dx-qa-handoff` | `[QAHandoff]` comment linking PR, wiki, QA pages and screenshots |
 
 ### Utility
 

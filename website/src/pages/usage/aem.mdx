@@ -39,21 +39,13 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     <ContentCard
       icon="mdi:check-circle"
       iconColor="bg-emerald-600"
-      title="/aem-verify"
-      tags={[{ label: 'Post-Dev', color: 'success' }, { label: 'aem-after.md', color: 'success' }]}
+      title="/aem-demo-page"
+      tags={[{ label: 'Local + QA', color: 'success' }, { label: 'demo/demo-page.md', color: 'success' }]}
     >
-      After deployment -- walk the dialog, compare fields with the baseline snapshot, create a test page
-      on AEM with the component configured and demo data populated.
-    </ContentCard>
-
-    <ContentCard
-      icon="mdi:camera"
-      iconColor="bg-cyan"
-      title="/aem-editorial-guide"
-      tags={[{ label: 'Documentation', color: 'secondary' }, { label: 'demo/', color: 'secondary' }]}
-    >
-      Screenshot the component dialog, capture rendered output, and write an authoring guide for
-      content authors.
+      Find or create the demo page, configure the component, and screenshot the dialog (only when it
+      changed) and the author preview (<code>wcmmode=disabled</code>). <code>--local</code> while developing,
+      with a dialog diff against the snapshot; QA by default after the merge, with a deploy gate and
+      screenshots uploaded to the work item. Same page path on both instances.
     </ContentCard>
 
     <ContentCard
@@ -91,10 +83,10 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
     steps={[
       { title: 'Snapshot', subtitle: 'Baseline: fields, pages', command: '/aem-snapshot', color: '#3b82f6' },
       { title: 'Developer implements', subtitle: 'Code changes', color: '#8b5cf6' },
-      { title: 'Verify', subtitle: 'Compare, create demo page', command: '/aem-verify', color: '#22c55e' },
+      { title: 'Demo page (local)', subtitle: 'Page, dialog diff, screenshots', command: '/aem-demo-page --local', color: '#22c55e' },
       { title: 'FE Verify', subtitle: 'AEM vs Figma visual', command: '/aem-fe-verify', color: '#d97706' },
-      { title: 'Editorial Guide', subtitle: 'Screenshot dialog, authoring guide', command: '/aem-editorial-guide', color: '#a855f7' },
       { title: 'QA', subtitle: 'FE+BE verification', command: '/aem-qa', color: '#ef4444' },
+      { title: 'After merge', subtitle: 'QA demo page → wiki → handoff', command: '/dx-post-merge', color: '#a855f7' },
     ]}
   />
 </Section>
@@ -229,13 +221,14 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
 <SectionHeading
   badge="Documentation"
   title="AEM Documentation Generation"
-  subtitle="/aem-doc-gen creates comprehensive component documentation."
+  subtitle="/dx-post-merge: demo page on QA, wiki page, QA handoff."
   bg="primary"
 />
 <Section>
-  <HighlightBox severity="success" title="Full Documentation Output">
-    Generates complete documentation with dialog screenshots (each panel captured individually),
-    website screenshots (rendered component on a live page), field descriptions, authoring instructions,
-    and technical notes. Published to ADO Wiki, Confluence, or saved locally as Markdown.
+  <HighlightBox severity="success" title="After the merge">
+    Once the change is deployed to QA, <code>/dx-post-merge &lt;id&gt;</code> runs three skills in order:
+    <code>/aem-demo-page</code> (same page on QA, dialog and preview screenshots uploaded to the work item),
+    <code>/dx-doc-gen</code> (wiki page with QA URLs, field table, screenshots, how to test and a demo script),
+    and <code>/dx-qa-handoff</code> (one <code>[QAHandoff]</code> comment linking everything). Each also runs on its own.
   </HighlightBox>
 </Section>

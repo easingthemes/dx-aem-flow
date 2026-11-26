@@ -12,17 +12,10 @@ Reader should understand full scope in 15 seconds. -->
 
 ## Design Reference
 
-<!-- ONLY if figma-extract.md or prototype/ exists in spec dir. OMIT entirely if no Figma.
-
-Link to the Figma file and show the reference screenshot. -->
+<!-- ONLY if a Figma URL is known (raw-story.md or figma-extract.md). OMIT entirely if no Figma.
+Link only — local Figma reference images are not embedded. -->
 
 **Figma:** [Open in Figma](<figma URL from raw-story.md or figma-extract.md>)
-
-![Figma Design](<repo-relative-path>/prototype/figma-reference.png)
-<!-- Multi-viewport: use figma-reference-desktop.png and figma-reference-mobile.png -->
-
-<!-- Screenshot location: .ai/specs/<id>-<slug>/prototype/figma-reference.png
-Commit with: git add .ai/specs/<id>-<slug>/prototype/figma-reference*.png -->
 
 ## What Changed and Why
 
@@ -45,7 +38,7 @@ Dialog/component authoring changes go in the Authoring section below. -->
 ## QA Verification
 
 <!-- MANDATORY for AEM projects. AEM pages are the deliverable — this is what the customer sees.
-URLs from authoring-guide.md, aem-after.md, or qa-handoff.md. QA URLs from config.yaml. -->
+Page paths and URLs from demo/demo-page.md (environments.qa, else environments.local + aem.author-url-qa). -->
 
 <!-- For EACH affected component/page. If multiple components need different pages, repeat the table.
 If all components can be demoed on one page, one table is enough. -->
@@ -60,20 +53,20 @@ If all components can be demoed on one page, one table is enough. -->
      QA Author Preview = frontend rendering without editor chrome (for FE demo, wcmmode=disabled)
      QA Publisher = end-user view -->
 
-<!-- If new component was created but not yet on a QA page:
-"⚠️ Component <name> needs to be added to a QA page and configured for demo." -->
-
-<!-- If component only exists on production pages:
-"Component exists on production pages — no dedicated QA demo page." with page paths if known. -->
+<!-- If demo-page.md has only a local entry:
+"⚠️ QA demo page not set up yet — run /aem-demo-page <id> after the QA deploy."
+If there is no demo-page.md at all:
+"⚠️ No demo page yet — run /aem-demo-page <id>." -->
 
 ## Authoring
 
-<!-- From authoring-guide.md. This is the CORE demo section — every action MUST have a clickable link.
+<!-- This is the CORE demo section — every action MUST have a clickable link.
 The presenter follows this to configure and demo the component live. -->
 
-<!-- Repeat this block for EACH component that needs configuration.
-Component names MUST be real AEM component names (from authoring-guide.md or aem-after.md).
-Page URL MUST be a real AEM Author Edit URL where the component exists. -->
+<!-- Repeat this block for EACH component in demo-page.md.
+Component names and field values from demo-page.md; field labels and descriptions from the
+component's _cq_dialog/.content.xml in the repo, written for an author (no JCR property names).
+Page URL MUST be the Author Edit URL from demo-page.md. -->
 
 ### <Component Name>
 
@@ -86,45 +79,51 @@ Open the page, find **<Component Name>**, open the component dialog, and change:
 |-------|-------|-------|
 | <field name> | <new value or setting> | <conditional visibility, default, purpose> |
 
-<!-- Add all NEW or CHANGED fields from authoring-guide.md. Skip unchanged fields. -->
+<!-- Dialog changed: all NEW or CHANGED fields. Dialog unchanged: the fields to set for the demo. -->
 
 #### Dialog Screenshot
 
-![Dialog](<repo-relative-path>/demo/dialog-<component>.png)
+<!-- OMIT if the dialog did not change (no kind: dialog screenshot in demo-page.md). -->
 
-<!-- Screenshot location: .ai/specs/<id>-<slug>/demo/dialog-<component>.png
-Commit with: git add .ai/specs/<id>-<slug>/demo/dialog-*.png -->
+![Dialog](<attachment url of the kind: dialog screenshot from demo-page.md>)
 
 ### Tips
 
-<!-- Conditional visibility, gotchas, recommendations from authoring-guide.md. -->
-
-### Existing Pages
-
-<!-- OMIT if none. Table from authoring-guide.md — other pages using this component. -->
+<!-- Conditional visibility (show/hide wiring in the dialog XML), defaults, recommendations. OMIT if none. -->
 
 ## Frontend Preview
 
-![Rendered Component](<repo-relative-path>/demo/rendered-<component>.png)
+**Preview:** [Open](<author-preview URL from demo-page.md>)
 
-<!-- Screenshot location: .ai/specs/<id>-<slug>/demo/rendered-<component>.png
-Commit with: git add .ai/specs/<id>-<slug>/demo/rendered-*.png -->
+![Preview](<attachment url of the kind: preview screenshot from demo-page.md>)
 
 ## Figma Comparison
 
 <!-- OMIT entirely if no Figma. Gap analysis from aem-fe-verify.md if available. -->
 
-| Figma Design | Implementation |
-|:---:|:---:|
-| ![Figma](<repo-relative-path>/prototype/figma-reference.png) | ![AEM](<repo-relative-path>/demo/rendered-<component>.png) |
-
-<!-- If aem-fe-verify.md exists, summarize the verdict:
+<!-- If aem-fe-verify.md exists, summarize the verdict as text:
 - PASS: "Implementation matches Figma design."
 - PASS WITH MINOR GAPS: list the minor gaps.
-- NEEDS ATTENTION: list the issues. -->
+- NEEDS ATTENTION: list the issues.
+No local image paths — the wiki cannot resolve them. -->
 
-<!-- If fe-verify screenshots exist in screenshots/ dir, use those instead:
-.ai/specs/<id>-<slug>/screenshots/component-rendered.png -->
+## How to test
+
+<!-- Numbered steps derived from the acceptance criteria. Each row: where to go, what to do, what to expect.
+Use the QA Preview / Edit URLs from demo-page.md. Do not copy the AC text — the ticket has it. -->
+
+| # | Open | Do | Expected |
+|---|------|----|----------|
+| 1 | [Preview](<author-preview URL>) | <action> | <expected result> |
+
+## Demo script
+
+<!-- OMIT if there is no demo-page.md. 4-8 short steps, in the order to present them in the demo call. -->
+
+1. Open [<page>](<author-edit URL>) and find **<Component Name>**.
+2. Open the dialog — point out <new/changed fields>.
+3. Set <field> = <value>.
+4. Open [Preview](<author-preview URL>) — show <the visible change>.
 
 ## Files Changed
 
@@ -136,4 +135,4 @@ Commit with: git add .ai/specs/<id>-<slug>/demo/rendered-*.png -->
 - Branch: `<branch>`
 - PR: [#<pr-number>](<pr-url>) _(if available)_
 - Figma: [Open in Figma](<figma URL>) _(if available)_
-- QA Page: `<demo-page-path>` _(if created)_
+- Demo page: `<demo-page-path>` _(from demo-page.md)_

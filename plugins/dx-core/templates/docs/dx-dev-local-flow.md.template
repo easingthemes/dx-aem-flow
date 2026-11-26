@@ -82,36 +82,27 @@ flowchart TD
         BUILD -.->|"fail"| BUILD_FAIL
     end
 
-    subgraph P5["Phase 5: Commit + AEM"]
+    subgraph P5["Phase 5: AEM (local) + Commit"]
+        AEM_DEMO["5 /aem-demo-page --local<br/>Demo page, dialog diff,<br/>dialog + preview screenshots"]
+        FE_VERIFY["5+ /aem-fe-verify<br/>Compare rendering with Figma,<br/>fix gaps"]
         COMMIT_ALL["5a /dx-step (commit)<br/>Stage and commit all changes<br/>(if auto-commit enabled)"]
-        SNAPSHOT["5 /aem-snapshot<br/>Record dialog fields and pages<br/>to aem-before.md"]
-        AEM_VERIFY["5+ /aem-verify<br/>Compare dialog changes,<br/>create demo page"]
-        COMMIT_ALL --> SNAPSHOT --> AEM_VERIFY
+        AEM_DEMO --> FE_VERIFY --> COMMIT_ALL
     end
 
     subgraph P6["Phase 6: Pull Request"]
         PR["6.0 /dx-pr<br/>Push branch, create<br/>ADO pull request<br/>(if auto-pr enabled)"]
-    end
-
-    subgraph P6H["Phase 6.5: Demo Capture"]
-        AEM_DEMO["6.5 /aem-editorial-guide<br/>Screenshot dialog,<br/>write authoring guide"]
-    end
-
-    subgraph P7["Phase 7: Documentation"]
-        DOC_AEM["7a /aem-doc-gen<br/>Full AEM documentation<br/>with screenshots"]
-        DOC_GEN["7b /dx-doc-gen<br/>Generate and post<br/>wiki page"]
         SUMMARY["Final Summary<br/>Progress table"]
-        DOC_AEM --> DOC_GEN --> SUMMARY
+        PR --> SUMMARY
     end
 
     SHARE --> TICKET
     FIGMA --> PROTO
     PROTO --> PLAN
-    BRANCH --> STEP_ALL
+    SNAPSHOT["2.6 /aem-snapshot<br/>Baseline dialog fields<br/>to aem-before.md"]
+    BRANCH --> SNAPSHOT --> STEP_ALL
     STEP_ALL --> BUILD
-    HEAL -->|pass| COMMIT_ALL
-    AEM_VERIFY --> PR
-    PR --> AEM_DEMO --> DOC_AEM
+    HEAL -->|pass| AEM_DEMO
+    COMMIT_ALL --> PR
 
     style P1 fill:none,stroke:#90a4ae
     style P1E fill:none,stroke:#90a4ae
@@ -121,8 +112,6 @@ flowchart TD
     style P4 fill:none,stroke:#90a4ae
     style P5 fill:none,stroke:#90a4ae
     style P6 fill:none,stroke:#90a4ae
-    style P6H fill:none,stroke:#90a4ae
-    style P7 fill:none,stroke:#90a4ae
     style DOR fill:#bbdefb,stroke:#1565c0,color:#000
     style SHARE fill:#bbdefb,stroke:#1565c0,color:#000
     style STEP_ALL fill:#fff9c4,stroke:#f9a825,color:#000
@@ -295,64 +284,56 @@ flowchart TD
 
 ---
 
-## AEM Verification Flow (standalone skills)
+## AEM Flow (standalone skills)
 
-**Developer types:** `/aem-snapshot`, `/aem-verify`, `/aem-editorial-guide`, `/aem-qa` individually as needed.
+**Before the PR:** `/aem-snapshot`, `/aem-demo-page --local`, `/aem-fe-verify`, `/aem-qa`. **After the merge and QA deploy:** `/dx-post-merge` (or its three steps one by one).
 
-These are standalone skills invoked manually. They are NOT chained -- each reads/writes spec files independently.
+Every skill runs on its own. They pass data through files in the spec dir; `demo/demo-page.md` carries the demo page and screenshots from one step to the next.
 
 ```mermaid
 flowchart TD
-    subgraph BEFORE_DEV["Before Development (manual)"]
-        SNAPSHOT["/aem-snapshot<br/>Capture current dialog fields,<br/>find pages using component"]
-        SNAP_OUT["aem-before.md<br/>Baseline: fields, pages,<br/>authored values"]
+    subgraph BEFORE_DEV["Before development"]
+        SNAPSHOT["/aem-snapshot<br/>Current dialog fields,<br/>pages using the component"]
+        SNAP_OUT["aem-before.md"]
         SNAPSHOT --> SNAP_OUT
     end
 
-    DEV["Developer implements changes<br/>and deploys to AEM"]
+    DEV["Developer implements changes<br/>and deploys to local AEM"]
 
-    subgraph AFTER_DEV["After Deployment (manual)"]
-        VERIFY_AEM["/aem-verify<br/>Walk dialog, compare with<br/>baseline, create demo page"]
-        VERIFY_IN["Reads aem-before.md<br/>(from /aem-snapshot)"]
-        VERIFY_OUT["aem-after.md<br/>ADDED/REMOVED fields,<br/>demo page URL"]
-        VERIFY_IN -.-> VERIFY_AEM
-        VERIFY_AEM --> VERIFY_OUT
+    subgraph LOCAL["After local deploy"]
+        DEMO_LOCAL["/aem-demo-page --local<br/>Page, configuration, dialog diff,<br/>dialog + preview screenshots"]
+        FE["/aem-fe-verify<br/>Rendering vs Figma,<br/>fix loop"]
+        QA_SKILL["/aem-qa<br/>Story QA, Bug tickets"]
+        DEMO_LOCAL --> FE
     end
 
-    subgraph DEMO_DOC["Documentation (manual)"]
-        DEMO_SKILL["/aem-editorial-guide<br/>Open AEM editor, screenshot<br/>dialog, write authoring guide"]
-        DEMO_IN["Reads aem-after.md<br/>(from /aem-verify)"]
-        DEMO_OUT["demo/authoring-guide.md<br/>demo/dialog-name.png"]
-        DEMO_IN -.-> DEMO_SKILL
-        DEMO_SKILL --> DEMO_OUT
+    subgraph POST["After merge + QA deploy: /dx-post-merge"]
+        DEMO_QA["/aem-demo-page<br/>Same page on QA,<br/>screenshots → work item"]
+        DOC["/dx-doc-gen<br/>Wiki: how to test,<br/>demo script"]
+        HANDOFF["/dx-qa-handoff<br/>[QAHandoff] comment"]
+        DEMO_QA --> DOC --> HANDOFF
     end
 
-    subgraph QA_CHECK["QA (manual, requires running AEM)"]
-        QA_SKILL["/aem-qa<br/>Automated QA: verify dialog,<br/>rendering, interactions"]
-        BE["BE: dialog fields,<br/>JCR properties<br/>via AEM MCP"]
-        FE["FE: page rendering,<br/>layout, interactions<br/>via Playwright"]
-        QA_OUT["specs/&lt;id&gt;/qa.json + screenshots/<br/>Bug tickets if issues found"]
-        QA_SKILL --> BE
-        QA_SKILL --> FE
-        BE --> QA_OUT
-        FE --> QA_OUT
-    end
+    DEMO_MD["demo/demo-page.md<br/>environments.local / .qa"]
 
-    SNAP_OUT -.->|"baseline input"| VERIFY_AEM
-    DEV --> VERIFY_AEM
-    VERIFY_OUT -.->|"reads for page/component"| DEMO_SKILL
-    QA_OUT -->|"bugs found, max 2 cycles"| DEV
+    SNAP_OUT -.->|"baseline"| DEMO_LOCAL
+    DEV --> DEMO_LOCAL
+    DEMO_LOCAL --> DEMO_MD
+    DEMO_MD -.->|"page"| FE
+    DEMO_MD -.->|"page path"| DEMO_QA
+    DEMO_QA --> DEMO_MD
+    DEMO_MD -.->|"URLs, screenshots"| DOC
+    DEMO_MD -.->|"URLs, screenshots"| HANDOFF
 
     style BEFORE_DEV fill:none,stroke:#90a4ae
-    style AFTER_DEV fill:none,stroke:#90a4ae
-    style DEMO_DOC fill:none,stroke:#90a4ae
-    style QA_CHECK fill:none,stroke:#90a4ae
-    style VERIFY_AEM fill:#ffe0b2,stroke:#e65100,color:#000
-    style QA_SKILL fill:#ffcdd2,stroke:#c62828,color:#000
-    style QA_OUT fill:#bbdefb,stroke:#1565c0,color:#000
+    style LOCAL fill:none,stroke:#90a4ae
+    style POST fill:none,stroke:#90a4ae
+    style DEMO_LOCAL fill:#ffe0b2,stroke:#e65100,color:#000
+    style DEMO_QA fill:#ffe0b2,stroke:#e65100,color:#000
+    style DEMO_MD fill:#bbdefb,stroke:#1565c0,color:#000
 ```
 
-**Key:** Dashed arrows show optional file reads, not execution chains. In `/dx-agent-all`, phases 5/5+/6.5 call these skills automatically.
+**Key:** Dashed arrows are file reads. In `/dx-agent-all`, phases 2.6 / 5 / 5+ call the "before the PR" skills automatically; the post-merge part is `/dx-post-merge`.
 
 ---
 
@@ -513,7 +494,6 @@ flowchart LR
         FIGMA_CONV["figma-conventions.md"]
         IMPL_F["implement.md"]
         AEM_B["aem-before.md"]
-        AEM_A["aem-after.md"]
         DOD_F["dod-report.md"]
 
         subgraph PROTO_DIR["prototype/"]
@@ -524,10 +504,11 @@ flowchart LR
         end
 
         subgraph DEMO["demo/"]
-            GUIDE_F["authoring-guide.md"]
-            DIALOG_PNG["dialog-name.png"]
-            RENDER_PNG["rendered-name.png"]
+            DEMO_F["demo-page.md"]
+            DIALOG_PNG["local/ + qa/ dialog-name.png"]
+            RENDER_PNG["local/ + qa/ preview-name.png"]
         end
+        QAH_F["qa-handoff.md"]
 
         subgraph DOCS_DIR["docs/"]
             WIKI["wiki-page.md"]
@@ -548,9 +529,10 @@ flowchart LR
     FIGMA_PROTO_S --> STYLES_CSS
     PLAN_S["/dx-plan"] --> IMPL_F
     SNAP_S["/aem-snapshot"] --> AEM_B
-    VER_S["/aem-verify"] --> AEM_A
-    DEMO_S["/aem-editorial-guide or /aem-doc-gen"] --> GUIDE_F
+    DEMO_S["/aem-demo-page"] --> DEMO_F
     DEMO_S --> DIALOG_PNG
+    DEMO_S --> RENDER_PNG
+    QAH_S["/dx-qa-handoff"] --> QAH_F
     DOC_S["/dx-doc-gen"] --> WIKI
     DOD_S["/dx-req-dod"] --> DOD_F
 
@@ -570,9 +552,10 @@ flowchart LR
 | `dx-figma-styles` | Haiku | /dx-figma-prototype Phase A | Discover CSS/SCSS conventions (colors, breakpoints, typography, spacing) |
 | `dx-figma-markup` | Haiku | /dx-figma-prototype Phase A | Discover HTML/accessibility conventions (component structure, ARIA, keyboard) |
 | `dx-doc-searcher` | Haiku | /dx-help | Search .ai/ docs for architecture answers |
-| `aem-inspector` | Sonnet | /aem-snapshot, /aem-verify, /aem-doc-gen | Walk dialogs, create pages, configure components via AEM MCP |
+| `aem-inspector` | Sonnet | /aem-snapshot | Walk dialogs via AEM MCP |
 | `aem-page-finder` | Haiku | /aem-component, /aem-page-search | Find pages using a component via AEM MCP |
-| `aem-editorial-guide-capture` | Sonnet | /aem-editorial-guide, /aem-doc-gen | Browser automation for dialog and rendered screenshots |
+| `aem-demo-page-capture` | Sonnet | /aem-demo-page | Demo page setup (AEM MCP) + dialog and preview screenshots (Playwright) |
+| `aem-fe-verifier` | Sonnet | /aem-fe-verify | Rendering screenshots and Figma comparison |
 | `aem-file-resolver` | Haiku | /aem-component, /dx-ticket-analyze | Resolve component files using file-patterns.yaml |
 
 ---

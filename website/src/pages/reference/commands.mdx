@@ -242,11 +242,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/aem-snapshot</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Baseline component state before changes</td></tr>
-        <tr><td class="p-3"><code>/aem-verify</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Verify component after deployment, create test page</td></tr>
+        <tr><td class="p-3"><code>/aem-demo-page</code></td><td class="p-3"><code>[id] [component] [--local]</code></td><td class="p-3">Demo page + dialog/preview screenshots (local or QA)</td></tr>
         <tr><td class="p-3"><code>/aem-fe-verify</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Screenshot and compare against Figma/requirements</td></tr>
-        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>&lt;component&gt;</code></td><td class="p-3">Screenshot dialog, write authoring guide</td></tr>
         <tr><td class="p-3"><code>/aem-qa</code></td><td class="p-3"><code>&lt;id&gt;</code> (opt)</td><td class="p-3">Full QA agent -- navigate, check rendering, create Bug tickets</td></tr>
-        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team, post to ADO</td></tr>
       </tbody>
     </table>
   </div>
@@ -333,10 +331,9 @@ import CommandBlock from '../../components/CommandBlock.astro';
         <th class="text-left p-3 font-semibold text-brand-900">Description</th>
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
-        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Generate wiki docs from spec files, post to ADO wiki</td></tr>
-        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Retroactive wiki docs for completed stories</td></tr>
-        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">AEM authoring guide with dialog screenshots</td></tr>
-        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>&lt;component&gt; &lt;id&gt;</code></td><td class="p-3">Generate testing steps for QA team</td></tr>
+        <tr><td class="p-3"><code>/dx-doc-gen</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Story wiki page (also retroactively, without spec files)</td></tr>
+        <tr><td class="p-3"><code>/dx-qa-handoff</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Post the QA handoff comment</td></tr>
+        <tr><td class="p-3"><code>/dx-post-merge</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">After merge: demo page on QA → wiki page → QA handoff</td></tr>
       </tbody>
     </table>
   </div>

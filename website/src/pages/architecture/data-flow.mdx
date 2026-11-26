@@ -48,12 +48,16 @@ import CommandBlock from '../../components/CommandBlock.astro';
   verification-local.md     -- dx-bug-verify after (post-fix local)
   verification-qa.md        -- dx-bug-verify qa (post-merge QA)
   docs/
-    wiki-page.md            -- dx-doc-gen (demo walkthrough: summary, QA URLs, screenshots, Figma)
+    wiki-page.md            -- dx-doc-gen (demo walkthrough: QA URLs, screenshots, how to test, demo script)
+  .wiki-url                 -- dx-doc-gen (posted page link, read by dx-qa-handoff)
+  qa-handoff.md             -- dx-qa-handoff (posted [QAHandoff] comment)
   demo/
-    dialog-*.png            -- aem-doc-gen (dialog screenshot)
-    rendered-*.png          -- aem-doc-gen (publisher screenshot)
-    authoring-guide.md      -- aem-doc-gen (editor-friendly guide)
-    page-structure.md       -- aem-doc-gen (cached page structure)
+    demo-page.md            -- aem-demo-page (pages, URLs, fields, screenshots per environment)
+    local/dialog-*.png      -- aem-demo-page --local (dialog, only if it changed)
+    local/preview-*.png     -- aem-demo-page --local (author preview, wcmmode=disabled)
+    qa/dialog-*.png         -- aem-demo-page (QA; uploaded to the work item)
+    qa/preview-*.png        -- aem-demo-page (QA; uploaded to the work item)
+    page-structure.md       -- aem-demo-page (cached page structure)
   images/                   -- dx-req (ADO attachments)
   screenshots/              -- aem-fe-verify (component vs Figma)`}
     </CommandBlock>
@@ -189,7 +193,7 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>aem.url</code></td>
-        <td class="p-3">aem-verify, aem-snapshot, aem-editorial-guide</td>
+        <td class="p-3">aem-demo-page, aem-snapshot, aem-fe-verify</td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>preferences.auto-commit</code></td>

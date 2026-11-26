@@ -13,7 +13,7 @@ keyPointsTitle: "Three Tiers, Three Roles"
 actionItemsTitle: "The Cost Math"
 keyPoints:
   - "**Opus ($15/M tokens)** — `dx-code-reviewer` reviews code with confidence scoring. Needs deep reasoning to distinguish real bugs from style preferences. Worth the cost because a bad review wastes more human time than the tokens cost."
-  - "**Sonnet ($3/M tokens)** — `dx-pr-reviewer`, `aem-inspector`, `aem-editorial-guide-capture`, `aem-fe-verifier`. Need good judgment AND they take actions (read files, run commands, edit code). Sonnet is the sweet spot for execution."
+  - "**Sonnet ($3/M tokens)** — `dx-pr-reviewer`, `aem-inspector`, `aem-demo-page-capture`, `aem-fe-verifier`. Need good judgment AND they take actions (read files, run commands, edit code). Sonnet is the sweet spot for execution."
   - "**Haiku ($0.25/M tokens)** — `dx-file-resolver`, `dx-doc-searcher`, `dx-figma-components`, `dx-figma-markup`, `dx-figma-styles`, `aem-file-resolver`, `aem-page-finder`. Pure lookups. 'Find files matching this pattern.' No reasoning needed, just fast execution."
 actionItems:
   - "**The math** — Using Opus for all agents costs dramatically more than our tiered approach. For a team running pipelines daily, the savings are substantial."

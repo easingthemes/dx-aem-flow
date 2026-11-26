@@ -65,52 +65,33 @@ steps:
     displayName: "Install Claude Code + Agent SDK"
     workingDirectory: $(Build.SourcesDirectory)
   - bash: |
-      PROMPT="/dx-doc-gen ${{ parameters.workItemId }}"
+      # One coordinator runs the post-merge steps in order: AEM demo page on QA
+      # (skipped automatically for non-AEM repos), wiki page, QA handoff comment.
+      # It stops early when the merged change is not on QA yet.
+      PROMPT="/dx-post-merge ${{ parameters.workItemId }}"
       if [ "${{ parameters.dryRun }}" = "True" ]; then
-        PROMPT="$PROMPT (dry run — generate docs locally only, do not post to wiki)"
+        PROMPT="$PROMPT dry run --skip demo"
       fi
 
       export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
 
       echo "prompt: $PROMPT"
       node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
-    displayName: "Run dx-doc-gen"
+    displayName: "Run dx-post-merge"
     workingDirectory: $(TARGET_DIR)
     env:
       ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
       ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
+      # upload-attachment.sh (screenshots → work item attachments)
+      ADO_PAT: $(ADO_PAT)
       TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
       PIPELINE_MODE: "true"
-      MAX_TURNS: "30"
-      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
-    timeoutInMinutes: 15
-
-  - bash: |
-      if [ -d ".claude/skills/aem-doc-gen" ] || [ -d "plugins/dx-aem/skills/aem-doc-gen" ]; then
-        PROMPT="/aem-doc-gen ${{ parameters.workItemId }}"
-        if [ "${{ parameters.dryRun }}" = "True" ]; then
-          PROMPT="$PROMPT (dry run — capture screenshots only, do not publish)"
-        fi
-
-        export PLUGIN_BASE_DIR="$(Pipeline.Workspace)/dx-aem-flow/plugins"
-
-        echo "prompt: $PROMPT"
-        node "$(Build.SourcesDirectory)/.ai/automation/scripts/pipeline-agent.js" "$PROMPT"
-      else
-        echo "aem-doc-gen skill not found — skipping AEM documentation"
-      fi
-    displayName: "Run aem-doc-gen (if AEM project)"
-    workingDirectory: $(TARGET_DIR)
-    env:
-      ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
-      ADO_MCP_AUTH_TOKEN: $(ADO_PAT)
-      TIMEOUT_MINUTES: $(TIMEOUT_MINUTES)
+      DX_PIPELINE_MODE: "true"
       AEM_INSTANCES: $(AEM_INSTANCES)
-      # Basic Auth for the QA/Stage publisher (screenshots + publish poll).
-      # Optional secret variable; when undefined ADO passes the literal
-      # "$(BASIC_AUTH_SITES)", which the parsers treat as unset.
+      # Basic Auth for the QA/Stage publisher. Optional secret variable; when
+      # undefined ADO passes the literal "$(BASIC_AUTH_SITES)", which the
+      # parsers treat as unset.
       BASIC_AUTH_SITES: $(BASIC_AUTH_SITES)
-      MAX_TURNS: "30"
-      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Bash(git *),Agent"
-    timeoutInMinutes: 15
-    condition: succeededOrFailed()
+      MAX_TURNS: "120"
+      ALLOWED_TOOLS: "Skill,Read,Write,Edit,Glob,Grep,Agent,Bash(git *),Bash(bash *),Bash(mkdir *),Bash(cp *),Bash(curl *)"
+    timeoutInMinutes: 40

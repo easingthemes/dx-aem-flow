@@ -1,6 +1,6 @@
 ---
 name: aem-qa
-description: "QA a story on AEM — check component rendering and dialogs on pages, capture screenshots, create Bug tickets for issues. Use after deploying, for 'qa this', 'verify on AEM'. Not for one component's dialog (aem-verify) or visual-only checks (aem-fe-verify)."
+description: "QA a story on AEM — check component rendering and dialogs on pages, capture screenshots, create Bug tickets for issues. Use after deploying, for 'qa this', 'verify on AEM'. Not for setting up a demo page (aem-demo-page) or visual-only checks (aem-fe-verify)."
 argument-hint: "[Work Item ID (optional — uses the most recent .ai/specs/ folder)]"
 allowed-tools: ["read", "edit", "execute", "search", "write", "agent", "ado/*", "AEM/*", "playwright/*"]
 ---

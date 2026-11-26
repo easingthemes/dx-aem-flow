@@ -119,9 +119,9 @@ export const base = import.meta.env.BASE_URL;
       icon="mdi:book-open-variant"
       iconColor="bg-cyan"
       title="DOC Agent"
-      tags={[{ label: 'KAI-DOC-AUTOMATION', color: 'info' }, { label: '/dx-doc-gen + /aem-doc-gen', color: 'secondary' }]}
+      tags={[{ label: 'KAI-DOC-AUTOMATION', color: 'info' }, { label: '/dx-post-merge', color: 'secondary' }]}
     >
-      Generates wiki documentation from completed story specs. Posts to ADO Wiki or Confluence with authoring guides.
+      Runs <code>/dx-post-merge</code> after the merge: demo page on QA with screenshots, the story wiki page (ADO Wiki or Confluence), and the QA handoff comment.
     </ContentCard>
 
     <ContentCard

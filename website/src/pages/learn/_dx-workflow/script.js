@@ -657,14 +657,14 @@ RegistrationForm.js in brand/scripts/libs/.`
             id: 'a-templates-adocomments-dir', label: 'ado-comments/', type: 'folder', children: [
               {
                 id: 'a-tpl-qahandoff', label: 'qa-handoff.md.template', type: 'file', color: 'context', badge: 'committed',
-                oneLiner: 'ADO comment skeleton posted by /aem-qa-handoff',
+                oneLiner: 'ADO comment skeleton posted by /dx-qa-handoff',
                 when: 'Read when handing a finished ticket to QA',
                 description: 'Same override system — a project can replace this template to change how the QA handoff comment looks, without touching the skill itself.',
                 target: 'config-box', enables: ['t-config', 't-config-detail'],
                 sample: `### [QAHandoff] Ready for QA — <story-title>
 #### QA Pages
-| Environment | URL |
-| QA Author (Edit) | <qa-author-url>/editor.html<page>.html |`
+| Page | Edit | Preview | Publisher |
+| \`<page-path>\` | [Edit](<author-edit>) | [Preview](<author-preview>) | [Open](<publisher>) |`
               }
             ]
           }

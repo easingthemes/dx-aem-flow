@@ -89,7 +89,7 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility) and P
 - No hardcoded org URLs, project names, paths, build commands, or branch names
 - `scm.provider` supports `ado` only — repo/PR skills call `mcp__ado__*` directly; there is no GitHub,
   GitLab or Bitbucket code path. Work-item tracking is the one real choice (`tracker.provider: ado | jira`)
-- Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-verify`, `auto-deploy`)
+- Skill naming: kebab-case with plugin prefix (`dx-req`, `aem-demo-page`, `auto-deploy`)
 - Versioning is automated via semantic-release on push to `main`
 - PR titles must be conventional (`fix(scope): …`, `feat: …`) — PRs are squash-merged and the title is the commit semantic-release reads; CI checks it (`scripts/check-pr-title.sh`)
 - Structural validation (`scripts/validate-*.sh`) runs in CI on every PR, as do all test suites — CI

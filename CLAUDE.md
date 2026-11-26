@@ -177,7 +177,7 @@ Model tiering is applied at two levels: agents use `model:` in their frontmatter
 |------|--------|-----|-----------------|
 | Opus | `xhigh` | Hardest reasoning — multi-file architectural review, complex verification, root-cause debugging. **Escalation tier _above_ the `high` baseline** | Reserved for `dx-step-verify`, `dx-pr-review` when escalation is needed; opt-in via `effort: xhigh` frontmatter |
 | Opus | `high` | Deep reasoning (code review, planning, verification). **Set explicitly** — Opus 5.5 defaults to `medium`; `validate-skills.sh` errors on `model: opus` without `effort:` | dx-code-reviewer agent; dx-plan, dx-step-verify, dx-pr-review skills |
-| Sonnet | (model default — `medium` on Sonnet 5.5) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-editorial-guide-capture; dx-step, dx-req, dx-step-fix skills |
+| Sonnet | (model default — `medium` on Sonnet 5.5) | Execution (steps, PR review, inspections) | dx-pr-reviewer agent, aem-inspector, aem-demo-page-capture; dx-step, dx-req, dx-step-fix skills |
 | Haiku | `low` (skills); model default `medium` (agents) | Simple lookups (file search, doc search). Haiku 5.5 is the `haiku` alias since v2.1.293 | dx-file-resolver, dx-doc-searcher, aem-page-finder agents; dx-ticket-analyze, dx-help skills |
 
 Write `model: opus | sonnet | haiku` in frontmatter, never a version-pinned model id — the alias follows the current default generation, a pinned id goes stale.

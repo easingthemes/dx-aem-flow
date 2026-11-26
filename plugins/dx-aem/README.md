@@ -26,31 +26,27 @@ Install the `dx-core` plugin first:
 /aem-snapshot starterkit          # Baseline before development
 # ... develop your changes ...
 /dx-step-build                         # Build & deploy to AEM
-/aem-verify starterkit            # Verify component after deployment
-/aem-editorial-guide starterkit              # Screenshot dialog, write authoring guide
+/aem-demo-page starterkit --local # Demo page + dialog/preview screenshots on local AEM
+/aem-fe-verify starterkit         # Compare the rendering with Figma, fix gaps
+# ... PR merged, deployed to QA ...
+/dx-post-merge 12345              # QA demo page → wiki page → QA handoff comment
 ```
 
-## Skills (10)
+## Skills (9)
 
 ### Verification
 
 | Skill | Description |
 |-------|-------------|
 | `/aem-snapshot` | Baseline component state before development — dialog fields, properties, pages |
-| `/aem-verify` | Check component after deployment, compare against baseline, create test page |
-| `/aem-editorial-guide` | Open AEM editor, screenshot dialog, write authoring guide |
+| `/aem-demo-page` | Find or create the demo page, configure the component, screenshot the dialog (if changed) and author preview. QA by default, `--local` while developing; diffs the dialog against the snapshot |
+| `/aem-fe-verify` | Compare the rendered component on local AEM with Figma or requirements, fix gaps in a loop |
 
 ### QA
 
 | Skill | Description |
 |-------|-------------|
 | `/aem-qa` | Full QA agent — navigate pages, check rendering/dialogs, capture screenshots, create Bug tickets |
-
-### Documentation
-
-| Skill | Description |
-|-------|-------------|
-| `/aem-doc-gen` | Generate AEM demo docs — find existing pages, create docs page, capture dialog + website screenshots on QA, write authoring guide |
 
 ### Recon
 
@@ -66,8 +62,9 @@ Install the `dx-core` plugin first:
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| `aem-inspector` | Sonnet | Dialog/component inspection, docs page creation, publishing via AEM MCP |
-| `aem-editorial-guide-capture` | Sonnet | Playwright screenshots, QA Basic Auth, dialog + publisher view capture |
+| `aem-inspector` | Sonnet | Dialog/component inspection via AEM MCP (`/aem-snapshot`) |
+| `aem-demo-page-capture` | Sonnet | Demo page setup via AEM MCP + dialog and preview screenshots via Playwright (`/aem-demo-page`) |
+| `aem-fe-verifier` | Sonnet | Rendering screenshots and Figma comparison (`/aem-fe-verify`) |
 | `aem-file-resolver` | Haiku | Resolve all source files for an AEM component across repos |
 | `aem-page-finder` | Haiku | Find AEM pages using a specific component |
 
@@ -101,8 +98,11 @@ Browser automation (screenshots, navigation, dialog interaction) uses the **Play
 ## Full Workflow
 
 ```
-/aem-snapshot hero  →  /dx-step-all  →  /dx-step-build  →  /aem-verify hero  →  /aem-editorial-guide hero
+Before the PR:   /aem-snapshot hero  →  /dx-step-all  →  /dx-step-build  →  /aem-demo-page hero --local  →  /aem-fe-verify hero
+After the merge: /dx-post-merge <id>  =  /aem-demo-page <id>  →  /dx-doc-gen <id>  →  /dx-qa-handoff <id>
 ```
+
+Each step also runs on its own. `demo/demo-page.md` in the spec dir carries the page and screenshots from one step to the next.
 
 ## License
 

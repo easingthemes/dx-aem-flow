@@ -1,7 +1,7 @@
 # Run Result File: `.ai/run-results/<skill>-<id>.json`
 
 Written at the end of every run (including STOP and failure) by the coordinator skills `dx-agent-all`,
-`dx-bug-all`, `dx-pr-review` and `dx-prep`, and by `dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`,
+`dx-bug-all`, `dx-post-merge`, `dx-pr-review` and `dx-prep`, and by `dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`,
 `dx-bug-fix`, `dx-step-all` and `dx-step-verify`, through `plugins/dx-core/data/lib/run-result.sh`
 (procedure: `plugins/dx-core/shared/run-result.md`). Meant for tools that start a skill and need its
 outcome — a local dashboard, a script, a hub — without parsing terminal output.
@@ -88,6 +88,7 @@ out, never guessed. Keys are stable — a tool can rely on them per skill:
 |-------|------|
 | `dx-agent-all` | `steps_done`, `steps_total`, `fix_loops`, `build_attempts`, `fail_at` |
 | `dx-bug-all` | `fix_attempts`, `fail_at` |
+| `dx-post-merge` | `steps_done`, `steps_skipped`, `screenshots`, `fail_at` |
 | `dx-prep` | `plan_steps`, `resolve_rounds`, `fail_at` |
 | `dx-pr-review` | `must_fix`, `questions`, `threads_posted`, `threads_failed`, `patches` |
 | `dx-pr-answer` | `replied`, `will_fix`, `disagree`, `needs_human`, `patches_applied`, `skipped` |
