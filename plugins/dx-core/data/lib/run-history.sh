@@ -12,7 +12,7 @@
 #   --json         one JSON object instead of the table (for tools)
 #   --days N       only runs finished in the last N days (default: all)
 #   --skill NAME   only this skill
-#   --stale-hours  a running marker older than this is reported as stale
+#   --stale-hours  a running marker at least this old is reported as stale
 #                  (likely interrupted; default 6)
 #   --dir          results dir (default .ai/run-results)
 #
@@ -70,7 +70,7 @@ SUMMARY=$(jq -n -c --argjson runs "$RUNS" --argjson markers "$MARKERS" \
   ($runs | map(select(($skill == "" or .skill == $skill) and ((.finished_at | ts) // 0) >= $since))) as $r
   | ($markers | map(select($skill == "" or .skill == $skill))
       | map(. + { age_s: ($now - ((.started_at | ts) // $now)) })
-      | map(. + { stale: (.age_s > $stale) })) as $m
+      | map(. + { stale: (.age_s >= $stale) })) as $m
   | {
       generated_at: ($now | todateiso8601),
       since: (if $since > 0 then ($since | todateiso8601) else null end),
