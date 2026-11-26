@@ -1,6 +1,6 @@
 # Run Result — one JSON file per coordinator run
 
-Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-post-merge`, `dx-pr-review`, `dx-prep`) and the skills a tool may start on their own (`dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`, `dx-bug-fix`, `dx-step-all`, `dx-step-verify`) mark the start of a run and write
+Coordinator skills (`dx-agent-all`, `dx-bug-all`, `dx-post-merge`, `dx-pr-review`, `dx-prep`) and the skills a tool may start on their own (`dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`, `dx-bug-fix`, `dx-step-all`, `dx-step-verify`, `dx-req-dod`, `dx-doc-gen`, `dx-qa-handoff`, and dx-aem's `aem-demo-page` — which runs the project's `.ai/lib/run-result.sh` copy) mark the start of a run and write
 a small result file at the end of **every** run — success, STOP, or failure — so the tool that started the run (a dashboard, a script, a
 hub) can show the outcome without parsing terminal text. Schema: `docs/reference/run-result.md` in the plugin repo.
 

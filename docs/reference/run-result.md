@@ -2,7 +2,9 @@
 
 Written at the end of every run (including STOP and failure) by the coordinator skills `dx-agent-all`,
 `dx-bug-all`, `dx-post-merge`, `dx-pr-review` and `dx-prep`, and by `dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`,
-`dx-bug-fix`, `dx-step-all` and `dx-step-verify`, through `plugins/dx-core/data/lib/run-result.sh`
+`dx-bug-fix`, `dx-step-all`, `dx-step-verify`, `dx-req-dod`, `dx-doc-gen`, `dx-qa-handoff` and dx-aem's
+`aem-demo-page`, through `plugins/dx-core/data/lib/run-result.sh` (`aem-demo-page` runs the project's
+`.ai/lib/run-result.sh` copy, since a dx-aem skill's `${CLAUDE_PLUGIN_ROOT}` is dx-aem's root)
 (procedure: `plugins/dx-core/shared/run-result.md`). Meant for tools that start a skill and need its
 outcome — a local dashboard, a script, a hub — without parsing terminal output.
 
@@ -119,13 +121,17 @@ out, never guessed. Keys are stable — a tool can rely on them per skill:
 | `dx-bug-fix` | `fix_attempts`, `steps_done`, `steps_total`, `fail_at` |
 | `dx-step-all` | `steps_done`, `steps_total`, `fix_attempts`, `heals`, `fail_at` |
 | `dx-step-verify` | `compile`, `lint`, `test`, `secrets`, `arch` (`passed`/`failed`/`skipped`), `review_cycles`, `critical`, `important` |
+| `dx-req-dod` | `criteria_pass`, `criteria_total`, `fixed`, `tasks_created`, `fail_at` |
+| `dx-doc-gen` | `screenshots`, `posted`, `retro`, `fail_at` |
+| `dx-qa-handoff` | `comment_mode` (`posted`/`update`/`unchanged`/`dry-run`), `qa_pages`, `screenshots`, `fail_at` |
+| `aem-demo-page` | `env` (`qa`/`local`), `pages`, `pages_created`, `screenshots`, `screenshots_uploaded`, `fail_at` |
 
 `fail_at` is the first failed or blocked phase, node or step, as a short name.
 
 ## Nested skills and `run_id`
 
-`dx-agent-all`, `dx-bug-all` and `dx-prep` run other skills that write their own results
-(`dx-req`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`). They inherit the caller's
+`dx-agent-all`, `dx-bug-all`, `dx-prep`, `dx-post-merge` and `dx-req-dod` run other skills that write their own results
+(`dx-req`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`, `aem-demo-page`, `dx-doc-gen`, `dx-qa-handoff`, `dx-post-merge`). They inherit the caller's
 `DX_RUN_ID`, so one run id can appear in several files: match on **skill and** `run_id`. Run by
 hand (no `DX_RUN_ID`), each nested skill gets its own `<session id>.<n>`.
 

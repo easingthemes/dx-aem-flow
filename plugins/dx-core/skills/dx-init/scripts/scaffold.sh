@@ -15,7 +15,7 @@
 #   .claude/rules, .claude/hooks
 #
 # Installs/validates:
-#   .ai/lib/audit.sh          ← from data/lib/audit.sh
+#   .ai/lib/*                 ← every helper in data/lib/ (*.sh, *.js, *.cjs; no tests)
 #   .claude/hooks/stop-guard.sh ← from data/hooks/stop-guard.sh
 #   .ai/rules/*.md            ← from templates/rules/*.template (non-universal)
 #   .claude/rules/*.md        ← from templates/rules/universal-*.template
@@ -85,14 +85,15 @@ mkdir -p .claude/rules .claude/hooks
 echo "created .claude/ directories"
 
 # --- Install/validate utility scripts ---
-install_utility "$PLUGIN_DIR/data/lib/audit.sh" ".ai/lib/audit.sh" ".ai/lib/audit.sh"
-install_utility "$PLUGIN_DIR/data/lib/dx-common.sh" ".ai/lib/dx-common.sh" ".ai/lib/dx-common.sh"
-install_utility "$PLUGIN_DIR/data/lib/pre-review-checks.sh" ".ai/lib/pre-review-checks.sh" ".ai/lib/pre-review-checks.sh"
-install_utility "$PLUGIN_DIR/data/lib/plan-metadata.sh" ".ai/lib/plan-metadata.sh" ".ai/lib/plan-metadata.sh"
-install_utility "$PLUGIN_DIR/data/lib/gather-context.sh" ".ai/lib/gather-context.sh" ".ai/lib/gather-context.sh"
-install_utility "$PLUGIN_DIR/data/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh" ".ai/lib/parse-wi-images.sh"
-install_utility "$PLUGIN_DIR/data/lib/validate-image.sh" ".ai/lib/validate-image.sh" ".ai/lib/validate-image.sh"
-install_utility "$PLUGIN_DIR/data/lib/fetch-raw-story.js" ".ai/lib/fetch-raw-story.js" ".ai/lib/fetch-raw-story.js"
+# Discovered, never listed — same set as dx-upgrade / dx-doctor 1d: data/lib/*.sh,
+# *.js and *.cjs, top level only (tests/ and fixtures/ stay out), minus *.test.*.
+# A hardcoded list here left run-result.sh and upload-attachment.sh out of fresh installs.
+for f in "$PLUGIN_DIR"/data/lib/*.sh "$PLUGIN_DIR"/data/lib/*.js "$PLUGIN_DIR"/data/lib/*.cjs; do
+  [ -f "$f" ] || continue
+  name="$(basename "$f")"
+  case "$name" in *.test.sh|*.test.js|*.test.cjs) continue ;; esac
+  install_utility "$f" ".ai/lib/$name" ".ai/lib/$name"
+done
 install_utility "$PLUGIN_DIR/data/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh" ".claude/hooks/stop-guard.sh"
 
 # --- Install/validate output templates ---
