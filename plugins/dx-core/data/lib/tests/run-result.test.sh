@@ -6,6 +6,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT="$HERE/../run-result.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+# The engine's own variables would make every run a manual run of this session.
+unset DX_RUN_ID DX_ENGINE DX_SESSION_ID CLAUDECODE CLAUDE_CODE_SESSION_ID COPILOT_AGENT_SESSION_ID COPILOT_CLI
 
 PASS=0 FAIL=0
 check() { # name expected actual
@@ -127,7 +129,66 @@ out=$(CLAUDECODE=1 DX_ENGINE=copilot bash "$SCRIPT" --skill dx-prep --id 6 --sta
 [ "$has_node" = 1 ] && check "--engine wins" other "$(field "$out" env.engine)"
 out=$(CLAUDECODE=1 DX_ENGINE=copilot bash "$SCRIPT" --skill dx-prep --id 6 --status done)
 [ "$has_node" = 1 ] && check "DX_ENGINE over CLAUDECODE" copilot "$(field "$out" env.engine)"
+out=$(COPILOT_AGENT_SESSION_ID=abc bash "$SCRIPT" --skill dx-prep --id 6 --status done)
+[ "$has_node" = 1 ] && check "engine copilot from COPILOT_AGENT_SESSION_ID" copilot "$(field "$out" env.engine)"
+out=$(COPILOT_CLI=1 bash "$SCRIPT" --skill dx-prep --id 6 --status done)
+[ "$has_node" = 1 ] && check "engine copilot from COPILOT_CLI" copilot "$(field "$out" env.engine)"
+out=$(CLAUDECODE=1 COPILOT_AGENT_SESSION_ID=abc bash "$SCRIPT" --skill dx-prep --id 6 --status done)
+[ "$has_node" = 1 ] && check "copilot inside a Claude Code shell is copilot" copilot "$(field "$out" env.engine)"
 check "history lines stay JSON" yes "$(node -e 'require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").forEach(l=>JSON.parse(l));process.stdout.write("yes")' .ai/run-results/history.jsonl 2>/dev/null)"
+
+
+# --- manual runs: run_id = <engine session id>.<n> ---
+cd "$TMP" && rm -rf .ai || exit 1
+U=3F1C2B9E-0000-4000-8000-00000000000A; u=3f1c2b9e-0000-4000-8000-00000000000a
+m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-agent-all --id 50)
+if [ "$has_node" = 1 ]; then
+  check "manual claude: marker run_id <uuid>.1, lowercase" "$u.1" "$(field "$m" run_id)"
+  out=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --skill dx-agent-all --id 50 --status done)
+  check "manual claude: final carries the marker's id" "$u.1" "$(field "$out" run_id)"
+  check "manual claude: engine claude" claude "$(field "$out" env.engine)"
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-step-all --id 50)
+  check "manual claude: second run in session is .2" "$u.2" "$(field "$m" run_id)"
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-pr-review --id 51)
+  check "manual claude: third run (other ticket) is .3" "$u.3" "$(field "$m" run_id)"
+  out=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=other-session bash "$SCRIPT" --skill dx-pr-review --id 51 --status done)
+  check "final takes the marker's id, not a new one" "$u.3" "$(field "$out" run_id)"
+  m=$(COPILOT_AGENT_SESSION_ID=7e5602a7-9aca-4958-958d-10dc407ba73e bash "$SCRIPT" --start --skill dx-bug-all --id 52)
+  check "manual copilot: own counter" "7e5602a7-9aca-4958-958d-10dc407ba73e.1" "$(field "$m" run_id)"
+  out=$(COPILOT_AGENT_SESSION_ID=7e5602a7-9aca-4958-958d-10dc407ba73e bash "$SCRIPT" --skill dx-bug-all --id 52 --status blocked)
+  check "manual copilot: final same id" "7e5602a7-9aca-4958-958d-10dc407ba73e.1" "$(field "$out" run_id)"
+  check "manual copilot: engine copilot" copilot "$(field "$out" env.engine)"
+  out=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --skill dx-dor --id 53 --status done)
+  check "final with no marker mints the next id" "$u.4" "$(field "$out" run_id)"
+  m=$(DX_SESSION_ID=Sess-X CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-prep --id 54)
+  check "DX_SESSION_ID overrides the engine's" "sess-x.1" "$(field "$m" run_id)"
+  # caller id: unchanged behavior, no counter consumed
+  m=$(DX_RUN_ID=kai-flow-1 CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-prep --id 55)
+  check "DX_RUN_ID set: marker keeps it" kai-flow-1 "$(field "$m" run_id)"
+  out=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U DX_RUN_ID=kai-flow-1 bash "$SCRIPT" --skill dx-prep --id 55 --status done)
+  check "DX_RUN_ID set: final keeps it" kai-flow-1 "$(field "$out" run_id)"
+  out=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --skill dx-prep --id 56 --status done --run-id "")
+  check "explicit empty --run-id stays null" null "$(field "$out" run_id)"
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=$U bash "$SCRIPT" --start --skill dx-prep --id 57)
+  check "caller ids consumed no counter" "$u.5" "$(field "$m" run_id)"
+  # invalid session ids → null, never a broken id
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID='a.b' bash "$SCRIPT" --start --skill dx-prep --id 58 2>/dev/null)
+  check "session id with a dot: null" null "$(field "$m" run_id)"
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID='x y;rm' bash "$SCRIPT" --start --skill dx-prep --id 58 2>"$TMP/warn")
+  check "session id with bad characters: null" null "$(field "$m" run_id)"
+  check "bad session id warns" 1 "$(grep -c 'ignoring session id' "$TMP/warn")"
+  m=$(CLAUDECODE=1 CLAUDE_CODE_SESSION_ID="$(printf 'a%.0s' $(seq 1 61))" bash "$SCRIPT" --start --skill dx-prep --id 58 2>/dev/null)
+  check "session id too long: null" null "$(field "$m" run_id)"
+  m=$(bash "$SCRIPT" --start --skill dx-prep --id 59)
+  check "no engine, no session: null" null "$(field "$m" run_id)"
+fi
+check "no counter lock left" "" "$(ls .ai/run-results/.sessions | grep lock || true)"
+check "counter files are not result files" 0 "$(ls .ai/run-results/.sessions | grep -c json || true)"
+# concurrent starts in one session never share an id
+for i in 1 2 3 4 5 6; do (CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=par bash "$SCRIPT" --start --skill dx-prep --id "p$i" >/dev/null) & done; wait
+if [ "$has_node" = 1 ]; then
+  check "parallel starts: 6 distinct ids" 6 "$(for i in 1 2 3 4 5 6; do field .ai/run-results/dx-prep-p$i.running.json run_id; echo; done | sort -u | grep -c '^par\.[1-6]$')"
+fi
 
 echo "run-result: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

@@ -51,12 +51,12 @@ outcome — a local dashboard, a script, a hub — without parsing terminal outp
 | `links.wiki` | string \| null | Wiki page published |
 | `links.work_item` | string \| null | Work item the run worked on |
 | `summary` | string \| null | One line, no file contents |
-| `run_id` | string \| null | The caller's id for this run: `--run-id`, else the `DX_RUN_ID` environment variable, else the running marker's. `[A-Za-z0-9._:-]{1,64}`; anything else becomes `null` |
+| `run_id` | string \| null | The caller's id for this run: `--run-id`, else the `DX_RUN_ID` environment variable, else the running marker's. Without any of them (a skill run by hand), `<session id>.<n>` — see [Manual runs](#manual-runs-run_id-from-the-engine-session). `[A-Za-z0-9._:-]{1,64}`; anything else becomes `null` |
 | `started_at` | string \| null | UTC ISO 8601 time of the run's `--start` (from the running marker); `null` when the run wrote no marker |
 | `duration_s` | number \| null | Seconds from `started_at` to `finished_at`; `null` without `started_at` |
 | `metrics` | object | Per-skill counts (below); `{}` when the skill passed none. Values are numbers, booleans or short strings |
 | `env.dx_version` | string \| null | Version of the dx plugin that wrote the file |
-| `env.engine` | string \| null | `--engine`, else `DX_ENGINE`, else `claude` under Claude Code (`CLAUDECODE=1`); `null` when unknown |
+| `env.engine` | string \| null | `--engine`, else `DX_ENGINE`, else `copilot` under Copilot CLI (`COPILOT_AGENT_SESSION_ID` set or `COPILOT_CLI=1`), else `claude` under Claude Code (`CLAUDECODE=1`). Always set on both engines; `null` only outside them (a plain script) |
 | `env.mode` | string \| null | `automation` \| `interactive`, as the skill decided |
 | `env.mode_reason` | string \| null | Why: `env` (`DX_PIPELINE_MODE`), `flag` (orchestration flag), `args` (`autonomous` / `autopilot` / `non-interactive`), `no-ask` (host has no way to ask), `none` |
 | `finished_at` | string | UTC ISO 8601 time the file was written |
@@ -78,6 +78,27 @@ A tool that starts a skill sets `DX_RUN_ID` in the skill's environment (a sessio
 `[A-Za-z0-9._:-]{1,64}` value). It lands in the running marker, the result file and the history line,
 so the caller finds *its* run without matching by time. `/dx-hub-dispatch` sets it to each repo
 terminal's session id on the `copilot` engine.
+
+## Manual runs: `run_id` from the engine session
+
+A skill run by hand in a terminal has no `DX_RUN_ID`. `run-result.sh` then mints
+`run_id` = `<session id>.<n>`:
+
+- **session id** — the engine session's id, lowercased: `CLAUDE_CODE_SESSION_ID` on Claude Code,
+  `COPILOT_AGENT_SESSION_ID` on Copilot CLI (the engine named by `env.engine`; `DX_SESSION_ID`
+  overrides both). It is the same id the engine's hooks receive (`session_id` / `sessionId`), so a
+  tool can link the run to its session transcript exactly. It must match `[a-z0-9_:-]{1,60}` — no
+  `.` — or `run_id` stays `null`; a broken id is never written.
+- **n** — the run's number within that session (1, 2, …), so two skills or two tickets in one
+  session never share a `run_id`. Nested skills each get their own number. The counter lives in
+  `.ai/run-results/.sessions/<session id>`; counters idle for 30 days are pruned at `SessionEnd`.
+
+`--start` mints the id and the final write carries it over from the marker, so marker, result and
+history line agree. A final write with no marker mints the next number. With `DX_RUN_ID` (or
+`--run-id`) set nothing changes and no number is used.
+
+To find the session of a run: the part of `run_id` before the first `.`. A `run_id` without `.`
+came from a caller (`DX_RUN_ID`).
 
 ## Metrics
 
@@ -105,7 +126,8 @@ out, never guessed. Keys are stable — a tool can rely on them per skill:
 
 `dx-agent-all`, `dx-bug-all` and `dx-prep` run other skills that write their own results
 (`dx-req`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`). They inherit the caller's
-`DX_RUN_ID`, so one run id can appear in several files: match on **skill and** `run_id`.
+`DX_RUN_ID`, so one run id can appear in several files: match on **skill and** `run_id`. Run by
+hand (no `DX_RUN_ID`), each nested skill gets its own `<session id>.<n>`.
 
 ## Related files
 
@@ -151,10 +173,12 @@ trimmed to the last `DX_RUN_HISTORY_KEEP` (default 1000). Readers should skip li
 ## Interrupted runs: the SessionEnd hook
 
 When the session ends before a skill's final write (Ctrl+C, terminal closed, crash), its running
-marker stays. dx-core's `SessionEnd` hook (`hooks/scripts/run-result-close.sh`) closes the markers whose
-`run_id` equals the session's `DX_RUN_ID`: it writes the result as `failed`, `summary` "interrupted: …",
-`next_action` the re-run command, `metrics.interrupted: true`. It touches nothing without `DX_RUN_ID`,
-because another session in the same repo may still own a marker that has no run id. A crash that skips
+marker stays. dx-core's `SessionEnd` hook (`hooks/scripts/run-result-close.sh`) closes the markers this
+session owns: `run_id` equal to the session's `DX_RUN_ID`, or a manual run whose `run_id` part before
+the first `.` equals the ending session's id (hook input `session_id` on Claude Code, `sessionId` on
+Copilot CLI). It writes the result as `failed`, `summary` "interrupted: …", `next_action` the re-run
+command, `metrics.interrupted: true`, keeping the marker's `run_id`. Markers of other sessions and
+markers with no run id are left alone, because another session in the same repo may still own them. A crash that skips
 `SessionEnd` still leaves the marker; readers treat an old marker with no result as interrupted.
 
 ## Reading the history: `/dx-runs`

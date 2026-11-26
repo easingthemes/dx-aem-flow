@@ -22,7 +22,8 @@
 # becomes a number, true/false a boolean, anything else a one-line string of at
 # most 80 chars; a repeated key keeps the last value). A bad metric is skipped
 # with a warning, never fails the write. "env" records dx_version (this
-# plugin's manifest), engine (--engine, else $DX_ENGINE, else "claude" when
+# plugin's manifest), engine (--engine, else $DX_ENGINE, else "copilot" when
+# COPILOT_AGENT_SESSION_ID is set or COPILOT_CLI=1, else "claude" when
 # CLAUDECODE=1), mode and mode_reason.
 #
 # --start writes <dir>/<skill>-<id>.running.json (status "running"). The final
@@ -32,6 +33,11 @@
 # last HISTORY_KEEP lines once it passes HISTORY_MAX).
 # run_id: --run-id, else $DX_RUN_ID, else the marker's; an id outside
 # [A-Za-z0-9._:-]{1,64} is dropped (null) with a warning.
+# Manual runs (none of those): "<session id>.<n>" — the engine session id
+# ($DX_SESSION_ID, else $CLAUDE_CODE_SESSION_ID on claude, $COPILOT_AGENT_SESSION_ID
+# on copilot; lowercased, [a-z0-9_:-]{1,60}, else null) and n, a counter per
+# session kept in <dir>/.sessions/<session id>. Minted by --start, or by a final
+# call that has no marker.
 # Empty or missing optional values become null. Prints the path written.
 # Exit 2 on a usage error (nothing written).
 
@@ -97,6 +103,41 @@ json() {
 
 valid_run_id() { [[ "$1" =~ ^[A-Za-z0-9._:-]{1,64}$ ]]; }
 
+# Engine: --engine / DX_ENGINE, else what the shell says. A Copilot session started
+# from a Claude Code shell inherits CLAUDECODE=1, so Copilot's own variable wins.
+if [ -z "$ENGINE" ]; then
+  if [ -n "${COPILOT_AGENT_SESSION_ID:-}" ] || [ "${COPILOT_CLI:-}" = 1 ]; then ENGINE=copilot
+  elif [ "${CLAUDECODE:-}" = 1 ]; then ENGINE=claude; fi
+fi
+
+# Manual run (no caller id): "<engine session id>.<n>", n counting the runs of
+# that session, so a tool can link the run to its session exactly.
+mint_run_id() {
+  local sid="${DX_SESSION_ID:-}" f lock n _
+  if [ -z "$sid" ]; then
+    case "$ENGINE" in
+      claude) sid="${CLAUDE_CODE_SESSION_ID:-}" ;;
+      copilot) sid="${COPILOT_AGENT_SESSION_ID:-}" ;;
+    esac
+  fi
+  [ -n "$sid" ] || return 0
+  sid="$(printf '%s' "$sid" | tr '[:upper:]' '[:lower:]')"
+  if ! [[ "$sid" =~ ^[a-z0-9_:-]{1,60}$ ]]; then
+    echo "run-result.sh: ignoring session id outside [a-z0-9_:-]{1,60}" >&2; return 0
+  fi
+  mkdir -p "$DIR/.sessions" 2>/dev/null || return 0
+  f="$DIR/.sessions/$sid" lock="$DIR/.sessions/$sid.lock"
+  # mkdir is atomic: two runs starting together never get the same n. A lock left
+  # by a killed run is taken over after ~5 s.
+  for _ in $(seq 1 50); do mkdir "$lock" 2>/dev/null && break; sleep 0.1; done
+  n="$(head -1 "$f" 2>/dev/null)"
+  [[ "$n" =~ ^[0-9]{1,9}$ ]] || n=0
+  n=$((10#$n + 1))
+  { printf '%s\n' "$n" > "$f.tmp.$$" && mv -f "$f.tmp.$$" "$f"; } 2>/dev/null || rm -f "$f.tmp.$$"
+  rmdir "$lock" 2>/dev/null
+  RUN_ID="$sid.$n"
+}
+
 # Value of a top-level string field in a file this script wrote ("key": "value"); empty if absent or null.
 field() { sed -n "s/^  \"$2\": \"\\(.*\\)\",\{0,1\}\$/\\1/p" "$1" 2>/dev/null | head -1; }
 
@@ -115,6 +156,7 @@ write_atomic() { # target ; content on stdin
 }
 
 if [ "$START" = 1 ]; then
+  [ "$RUN_ID_SET" = 1 ] || [ -n "$RUN_ID" ] || mint_run_id
   if [ -n "$RUN_ID" ] && ! valid_run_id "$RUN_ID"; then
     echo "run-result.sh: ignoring run id outside [A-Za-z0-9._:-]{1,64}" >&2; RUN_ID=""
   fi
@@ -138,6 +180,8 @@ STARTED_AT=""
 if [ -f "$MARKER" ]; then
   STARTED_AT="$(field "$MARKER" started_at)"
   [ "$RUN_ID_SET" = 1 ] || [ -n "$RUN_ID" ] || RUN_ID="$(field "$MARKER" run_id)"
+else
+  [ "$RUN_ID_SET" = 1 ] || [ -n "$RUN_ID" ] || mint_run_id
 fi
 if [ -n "$RUN_ID" ] && ! valid_run_id "$RUN_ID"; then
   echo "run-result.sh: ignoring run id outside [A-Za-z0-9._:-]{1,64}" >&2; RUN_ID=""
@@ -171,10 +215,9 @@ if [ "${#METRIC_KEYS[@]}" -gt 0 ]; then
   fi
 fi
 
-# env: plugin version from this script's own plugin manifest; engine best effort.
+# env: plugin version from this script's own plugin manifest; engine as detected above.
 MANIFEST="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/.claude-plugin/plugin.json"
 DX_VERSION="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$MANIFEST" 2>/dev/null | head -1)"
-[ -n "$ENGINE" ] || { [ "${CLAUDECODE:-}" = 1 ] && ENGINE=claude; }
 ENV_OBJ="{ \"dx_version\": $(json "$DX_VERSION"), \"engine\": $(json "$ENGINE"), \"mode\": $(json "$MODE"), \"mode_reason\": $(json "$MODE_REASON") }"
 
 OUT="$DIR/$SKILL-$ID.json"
