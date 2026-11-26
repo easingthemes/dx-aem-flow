@@ -245,6 +245,8 @@ Set these on the DevAgent pipeline (in addition to `ANTHROPIC_API_KEY` + `ADO_OR
 
 ### DOCAgent pipeline additional variables
 
+The DOCAgent runs `/dx-post-merge <id>`: AEM demo page on QA → wiki page → `[QAHandoff]` comment. For an AEM story it **stops without posting anything** when the merged change is not on QA yet — tag the work item after the QA deploy, or tag it again after a blocked run. A dry run skips the demo step (`--skip demo`).
+
 Set these on the DOCAgent pipeline (in addition to `ANTHROPIC_API_KEY`):
 
 | Variable | Value | Secret? |

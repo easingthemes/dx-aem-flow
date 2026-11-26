@@ -26,6 +26,7 @@
 - Catalog: `docs/reference/skill-catalog.md`
 **Done-when:** `ls plugins/dx-aem/skills/aem-demo 2>&1` returns "No such file or directory" AND `ls plugins/dx-aem/skills/aem-editorial-guide/SKILL.md` exists.
 **Approach:** Rename to `/aem-editorial-guide` or `/aem-authoring-guide`. Update all references.
+**Superseded 2026-11-26:** `/aem-editorial-guide` was removed when the post-merge skills were consolidated (TODO-286); `/aem-demo-page` captures the screenshots and `/dx-doc-gen` writes the authoring section. The Done-when above no longer holds and is kept as history.
 
 ## Revert Namespace Naming
 

@@ -241,7 +241,7 @@ Skills like `dx-step-verify` and `dx-pr-review` read this file and grade against
 
 **What we have today:**
 - `aem-inspector` uses Chrome DevTools MCP for browser-based AEM verification
-- `aem-verify` checks author/publish rendering
+- `aem-demo-page` screenshots the author preview (`wcmmode=disabled`); `aem-fe-verify` compares it with Figma
 - `dx-step-verify` runs compile + lint + test but NOT browser-based E2E
 
 **Gap:** For non-AEM projects, `dx-step-verify` has no browser automation. It verifies code-level correctness but not runtime behavior.

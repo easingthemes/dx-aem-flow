@@ -101,7 +101,7 @@ Tracking expansion from 3 platforms (Claude Code, Copilot CLI, VS Code Chat) to 
 
 **Approach:** the existing solutions with real code behind them (compound-engineering's converter and wshobson/agents generate native OpenCode files; oh-my-openagent loads Claude plugins in place; see research §2.1 for the value filter). We first make the main flow work by hand, then cover the details, then automate. Every limitation is documented in the [research note](../research/2026-11-04-opencode-support.md) even when it is deferred.
 
-**Phase 1 — main flow works (manual install).** Goal: single skills (`dx-req`, `dx-plan`, `dx-step`, `aem-verify`, …) run on OpenCode with MCP and agents.
+**Phase 1 — main flow works (manual install).** Goal: single skills (`dx-req`, `dx-plan`, `dx-step`, `aem-demo-page`, …) run on OpenCode with MCP and agents.
 - `.opencode/INSTALL.md` from research §5:
   - an intact plugin tree in `~/.config/opencode/dx/{dx-core,dx-aem}`
   - per-skill symlinks (v1) or a `skills` array (v2)

@@ -38,7 +38,7 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 **Added:** 2026-03-27
 **Problem:** `skill-return-contract.md` (Pre-Dispatch Context Hygiene) says "summarize inputs >5KB before passing to fork" but provides no worked examples. Skills don't consistently follow this. `explain.md` can be 10-20KB; passing it raw to a `context: fork` skill wastes context window and reduces the subagent's working memory for actual tool calls.
 **Scope:** `plugins/dx-core/shared/skill-return-contract.md`, all 10 `context: fork` skills.
-**Done-when:** `skill-return-contract.md` has 2-3 worked examples showing: (a) what a >5KB input looks like, (b) what the summary should contain, (c) how to pass `summary + file path`. At least 3 high-traffic fork skills (`dx-step-verify`, `dx-step-build`, `aem-verify`) have explicit "Context Budget" sections.
+**Done-when:** `skill-return-contract.md` has 2-3 worked examples showing: (a) what a >5KB input looks like, (b) what the summary should contain, (c) how to pass `summary + file path`. At least 3 high-traffic fork skills (`dx-step-verify`, `dx-step-build`, `aem-demo-page`) have explicit "Context Budget" sections.
 
 **Approach:**
 - Add worked examples to the contract:
@@ -50,8 +50,8 @@ Improvements inspired by Claude Code's background agent patterns (async dispatch
 ## MCP tool discovery resilience — shared reference
 
 **Added:** 2026-03-27
-**Problem:** MCP-dependent agents (aem-inspector, aem-editorial-guide-capture, etc.) list tools in `tools:` frontmatter using full prefixed names. If the MCP server is slow to start in a `context: fork`, the agent gets "tool not found" on first call. Some agents have a prose fallback ("use ToolSearch if not found") but it's inconsistent. Claude Code's own agent system handles tool resolution automatically; our agents need a standardized manual fallback since they run as LLM prompts.
-**Scope:** All MCP-dependent agents: `aem-inspector`, `aem-editorial-guide-capture`, `aem-fe-verifier`, `dx-figma-markup`, `dx-figma-styles` (5 agents).
+**Problem:** MCP-dependent agents (aem-inspector, aem-demo-page-capture, etc.) list tools in `tools:` frontmatter using full prefixed names. If the MCP server is slow to start in a `context: fork`, the agent gets "tool not found" on first call. Some agents have a prose fallback ("use ToolSearch if not found") but it's inconsistent. Claude Code's own agent system handles tool resolution automatically; our agents need a standardized manual fallback since they run as LLM prompts.
+**Scope:** All MCP-dependent agents: `aem-inspector`, `aem-demo-page-capture`, `aem-fe-verifier`, `dx-figma-markup`, `dx-figma-styles` (5 agents).
 **Done-when:** Shared reference `plugins/dx-core/shared/mcp-tool-resolution.md` exists. Every MCP-dependent agent includes a reference to it. The pattern is: (1) try direct call, (2) on "not found", run `ToolSearch("+<server>")`, (3) retry with discovered name, (4) if still fails, return Result with `error-class: config`.
 
 **Approach:**

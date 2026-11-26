@@ -602,3 +602,36 @@ dx-post-merge (after merge + QA deploy)
   └─ dx-bug-fix (needs triage + verify)`}</code>
   </ContentCard>
 </Section>
+
+{/* ════════════════════════════════════════════════════════════════════════ */}
+{/* Removed in v7                                                           */}
+{/* ════════════════════════════════════════════════════════════════════════ */}
+
+<SectionHeading
+  badge="v7.0"
+  badgeColor="warning"
+  title="Removed in v7"
+  subtitle="The post-merge skills were consolidated. Old commands and what replaces them."
+  bg="alt"
+/>
+<Section>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
+      <thead><tr class="bg-brand-100">
+        <th class="text-left p-3 font-semibold text-brand-900">Removed</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Use instead</th>
+        <th class="text-left p-3 font-semibold text-brand-900">Notes</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr><td class="p-3"><code>/aem-verify &lt;component&gt;</code></td><td class="p-3"><code>/aem-demo-page &lt;component&gt; --local</code></td><td class="p-3">Dialog diff against the <code>/aem-snapshot</code> baseline, local demo page, screenshots</td></tr>
+        <tr><td class="p-3"><code>/aem-verify --qa</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">QA is the default instance</td></tr>
+        <tr><td class="p-3"><code>/aem-editorial-guide</code></td><td class="p-3"><code>/aem-demo-page + /dx-doc-gen</code></td><td class="p-3">Screenshots from the demo page; the authoring section lives on the story's wiki page (needs a work item)</td></tr>
+        <tr><td class="p-3"><code>/aem-doc-gen</code></td><td class="p-3"><code>/aem-demo-page &lt;id&gt;</code></td><td class="p-3">Screenshots uploaded as work-item attachments</td></tr>
+        <tr><td class="p-3"><code>/aem-qa-handoff</code></td><td class="p-3"><code>/dx-qa-handoff &lt;id&gt;</code></td><td class="p-3">Work item ID only, no AEM access</td></tr>
+        <tr><td class="p-3"><code>/dx-doc-retro</code></td><td class="p-3"><code>/dx-doc-gen &lt;id&gt;</code></td><td class="p-3">Retro mode starts by itself when the story has no spec files</td></tr>
+        <tr><td class="p-3"><code>@AEMAfter, @AEMEditorialGuide</code></td><td class="p-3"><code>@AEMDemoPage</code></td><td class="p-3">Copilot agents</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-sm mt-3"><code>aem-after.md</code> and <code>demo/authoring-guide.md</code> are no longer written or read — <code>demo/demo-page.md</code> replaces both. <code>/dx-agent-all</code> now ends at the PR; run <code>/dx-post-merge &lt;id&gt;</code> after the merge and the QA deploy. Upgrade steps: <a href={`${import.meta.env.BASE_URL}/setup/#upgrading-to-v7`}>Setup → Upgrading to v7</a>.</p>
+</Section>

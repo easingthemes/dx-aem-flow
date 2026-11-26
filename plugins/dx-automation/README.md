@@ -89,7 +89,7 @@ Eleven autonomous agents:
 | **BugFix agent** | Bug comment contains `@kai-bugfix` (Azure-native Service Hook → pipeline Incoming WebHook, **no Lambda**) | Triages Bug, applies fix, creates PR — resumable (triage→verify→fix) |
 | **QA agent** | Work item tag `KAI-QA-AUTOMATION` (ADO webhook → Lambda) | Browser-based QA, screenshots, creates Bug tickets |
 | **DevAgent** | Work item tag `KAI-DEV-AUTOMATION` (ADO webhook → Lambda) | Full autonomous development: requirements → plan → implement → test → review → commit → PR. Supports Figma design-to-code. |
-| **DOCAgent** | Work item tag `KAI-DOC-AUTOMATION` (ADO webhook → Lambda) | Generate wiki documentation + AEM authoring guides with screenshots |
+| **DOCAgent** | Work item tag `KAI-DOC-AUTOMATION` (ADO webhook → Lambda) | `/dx-post-merge`: AEM demo page on QA with screenshots, wiki page, QA handoff comment. Tag **after** the QA deploy — an AEM story stops with nothing posted until the change is on QA |
 | **Estimation** | Work item tag `KAI-ESTIMATION-AUTOMATION` (ADO webhook → Lambda) | Estimate story points by analyzing codebase complexity |
 | **SimpleAgent** | `@kai-simple` comment → **Azure-native Service Hook** (no Lambda); same event starts the first run and recovery | Apply small AEM change (a11y label / color / spacing / copy) via authoring (AEM MCP write) OR code (file edits → PR) split. 9 confidence gates. ≤5 files / ≤50 lines / ≤10 JCR writes. |
 

@@ -55,7 +55,8 @@ Start the run and the progress file, and mark the run as orchestrated so the sub
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-post-merge --id <id> --progress-file post-merge-progress.md
-mkdir -p .ai/run-context && touch .ai/run-context/orchestrating.flag
+# Not in pipeline mode — a pipeline run is non-interactive already (../../shared/interaction-mode.md)
+[ "${DX_PIPELINE_MODE:-}" = "true" ] || { mkdir -p .ai/run-context && touch .ai/run-context/orchestrating.flag; }
 bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-post-merge/scripts/update-progress.sh "$SPEC_DIR" "demo" "pending"   # and docs, handoff
 ```
 
@@ -76,11 +77,11 @@ Otherwise "no"; write the `demo` row as `skipped` with the reason.
 bash ${CLAUDE_PLUGIN_ROOT}/skills/dx-post-merge/scripts/update-progress.sh "$SPEC_DIR" "demo" "in_progress"
 ```
 
-Invoke `Skill(/aem-demo-page <id>)` — QA instance (the default). Refresh the orchestration flag after it returns.
+Invoke `Skill(/aem-demo-page <id>)` — QA instance (the default). Refresh the orchestration flag after it returns (local runs only).
 
 ### Demo step outcome?
 
-- Report says `Not deployed to QA yet` → "not deployed" (`demo` row `blocked`).
+- Report says `Not deployed to QA yet` or `Cross-repo dependency` → "not deployed" (`demo` row `blocked`).
 - Page set up, possibly with a missing screenshot → "done / partial" (`demo` row `done`, note any missing screenshot).
 - Any other failure (AEM MCP down, QA URL not configured) → write the row `failed` with the reason and continue to docs: the wiki page and handoff still help, and they say the demo page is missing.
 
@@ -89,7 +90,7 @@ Invoke `Skill(/aem-demo-page <id>)` — QA instance (the default). Refresh the o
 Docs and handoff without the QA page are the wrong result right after a merge, so stop.
 
 ```bash
-rm -f .ai/run-context/orchestrating.flag
+[ "${DX_PIPELINE_MODE:-}" = "true" ] || rm -f .ai/run-context/orchestrating.flag
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-post-merge --id <id> --status blocked \
   --next "/dx-post-merge <id> after the QA deploy" --metric fail_at=demo
 ```
@@ -109,7 +110,7 @@ Unless `handoff` is skipped: row `in_progress`, invoke `Skill(/dx-qa-handoff <id
 ### Final summary
 
 ```bash
-rm -f .ai/run-context/orchestrating.flag
+[ "${DX_PIPELINE_MODE:-}" = "true" ] || rm -f .ai/run-context/orchestrating.flag
 ```
 
 ```markdown

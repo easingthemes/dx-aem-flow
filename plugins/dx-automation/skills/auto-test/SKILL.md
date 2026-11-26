@@ -66,7 +66,7 @@ Map agent names to skill prompts:
 | pr-answer | `/dx-pr-answer <pr-url>` |
 | bugfix | `/dx-bug-all <id>` |
 | devagent | `/dx-agent-all <id>` |
-| docagent | `/dx-doc-gen <id>` |
+| docagent | `/dx-post-merge <id>` (dry run: `/dx-post-merge <id> dry run --skip demo`) |
 | estimation | `/dx-estimate <id>` |
 
 Stream output as it runs. This may take 1-3 minutes depending on the agent.

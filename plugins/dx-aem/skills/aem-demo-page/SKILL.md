@@ -5,7 +5,7 @@ argument-hint: "[work-item-id] [component...] [--local]"
 context: fork
 agent: aem-demo-page-capture
 compatibility: "Requires AEM MCP and Playwright MCP. QA mode uploads screenshots to the work item (ADO)."
-allowed-tools: ["read", "edit", "execute", "search", "write", "AEM/*", "playwright/*"]
+allowed-tools: ["read", "edit", "execute", "search", "write", "AEM/*", "playwright/*", "ado/*"]
 ---
 
 **Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-aem:aem-demo-page skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-aem:aem-demo-page (you are a fork or that subagent), continue below.
@@ -24,6 +24,8 @@ digraph aem_demo_page {
     "Resolve spec dir and components" [shape=box];
     "Component identified?" [shape=diamond];
     "STOP: no component" [shape=doublecircle];
+    "Other repo ready?" [shape=diamond];
+    "STOP: cross-repo dependency" [shape=doublecircle];
     "Detect dialog changes" [shape=box];
     "QA run?" [shape=diamond];
     "Deploy gate" [shape=box];
@@ -43,7 +45,9 @@ digraph aem_demo_page {
     "Instance configured?" -> "Resolve spec dir and components" [label="yes"];
     "Resolve spec dir and components" -> "Component identified?";
     "Component identified?" -> "STOP: no component" [label="no"];
-    "Component identified?" -> "Detect dialog changes" [label="yes"];
+    "Component identified?" -> "Other repo ready?" [label="yes"];
+    "Other repo ready?" -> "STOP: cross-repo dependency" [label="no"];
+    "Other repo ready?" -> "Detect dialog changes" [label="yes / single repo"];
     "Detect dialog changes" -> "QA run?";
     "QA run?" -> "Deploy gate" [label="yes"];
     "QA run?" -> "Select or create page" [label="no (local)"];
@@ -105,6 +109,27 @@ At least one component resolved → "yes".
 ```
 Cannot identify the component — pass it: /aem-demo-page <component> [<work-item-id>]
 ```
+
+### Other repo ready?
+
+A story can need changes in more than one repo (separate backend and frontend repos). A demo page built from half the change shows the wrong thing, so check before writing anything to AEM.
+
+Read `repos` in `.ai/config.yaml` and the "Repos Required" / "Cross-Repo Scope" section of `explain.md` or `research.md`. No other repo listed, or no spec dir → "yes / single repo".
+
+When another repo's change is a prerequisite for what the page shows:
+- **Backend repo** can show dialog, HTL, model/exporter and component-definition changes; it cannot show rendering that needs new frontend code from the other repo.
+- **Frontend repo** can show styling, JS and rendering changes when the backend part is already on the instance; it cannot show anything that needs backend code not yet deployed.
+
+- **Local:** the prerequisite is not deployed to local AEM by this repo's build → "no", unless the user says it is.
+- **QA:** fetch the work item's PR relations (ADO `mcp__ado__wit_work_item` `expand: "Relations"`). A PR in the other repo that is not completed → "no". All completed → "yes" (the deploy gate below checks this repo's part).
+
+### STOP: cross-repo dependency
+
+```
+Cross-repo dependency — <other repo> must be deployed to <ENV> first (<what it provides>). Re-run /aem-demo-page after that deploy.
+```
+
+Write nothing to AEM. `/dx-post-merge` treats this like "not deployed to QA" and stops.
 
 ### Detect dialog changes
 
@@ -244,6 +269,7 @@ Facts only — field descriptions for editors are written by `/dx-doc-gen`.
 
 ## Rules
 
+- **Whole change or nothing** — when the story spans repos, wait until every prerequisite repo is deployed to the instance.
 - **One instance per run** — every AEM MCP call carries `instance: "<ENV>"`; never mix local and QA.
 - **Page Selection Rule** — reuse for existing components, create only for new ones; never edit authored values on a reused page.
 - **Dialog screenshot only when the dialog changed** (or the component is new).

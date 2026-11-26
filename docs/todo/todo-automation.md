@@ -38,8 +38,8 @@
 ## AEM MCP localhost dependency in pipelines
 
 **Added:** 2026-05-28
-**Problem:** Phases 5, 5+, 5++ of `/dx-agent-all` and `/aem-editorial-guide` assume AEM is at `localhost:4502` (from `aem.author-url`). In pipeline mode, AEM is not available locally. Currently these phases either time out or "succeed" silently with empty results.
-**Scope:** `plugins/dx-aem/skills/aem-snapshot/`, `aem-verify/`, `aem-fe-verify/`, `aem-editorial-guide/`. Use the existing `aem.author-url-qa` config key (set by `aem-init`).
+**Problem:** Phases 5, 5+, 5++ of `/dx-agent-all` and `/aem-demo-page --local` assume AEM is at `localhost:4502` (from `aem.author-url`). In pipeline mode, AEM is not available locally. Currently these phases either time out or "succeed" silently with empty results.
+**Scope:** `plugins/dx-aem/skills/aem-snapshot/`, `aem-demo-page/` (`--local` only — QA is its default), `aem-fe-verify/`. Use the existing `aem.author-url-qa` config key (set by `aem-init`).
 **Done-when:** Run any of these skills with `DX_PIPELINE_MODE=true` and an unreachable `aem.author-url` — skill exits non-zero with clear message instead of silently producing empty output.
 **Approach:** Each AEM skill should detect pipeline mode and either use `aem.author-url-qa` or skip with a comment.
 
