@@ -270,7 +270,10 @@ Written by `/dx-hub-init` in the hub's `.ai/config.yaml`. Full reference: `plugi
 | `engine` | string | `claude` | CLI `/dx-hub-dispatch` starts in each repo terminal: `claude` \| `copilot`. With `copilot`, each repo gets `copilot --session-id <uuid> -i "<prompt>"` and the uuid is recorded in `state/<id>/status.json` `sessions` |
 | `model` | string | *(unset)* | Passed as `--model` to that CLI |
 | `terminal-delay` | number | 5 | Seconds to wait for Claude to start (`claude` engine) |
+| `launcher` | string | `auto` | How `/dx-hub-dispatch` starts sessions: `auto` (vscode-automator if its tools are in the session, else print commands) \| `vscode-automator` (same fallback) \| `terminal` (macOS Terminal.app via `osascript`) \| `none` (print only) |
 | `state-ttl` | string | `7d` | Age after which `/dx-hub-status --clean` removes finished dispatches |
+
+`/dx-hub-dispatch` prints a `default:` line for every one of these it has to fill in (and for a missing `tracker.provider`); `/dx-hub-config fill-defaults` writes them. In a hub, `repos[]` entries also take `capabilities` (`fe`, `be`; `[]` for neither) and `keywords` (words that point a ticket's title, area path or tags at that repo), and `ado-project` is needed for ADO — dispatch passes it when fetching the ticket.
 
 ### `repos[]` entries
 

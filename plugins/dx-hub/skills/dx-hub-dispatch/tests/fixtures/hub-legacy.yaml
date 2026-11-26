@@ -1,0 +1,32 @@
+# A hub config written by an older /dx-hub-init: no engine, delay, launcher,
+# tracker or scm sections; two repos without capabilities.
+dx:
+  version: "3.0.0"
+
+hub:
+  enabled: true
+  state-dir: state/
+  state-ttl: 7d
+
+repos:
+  - name: site-alpha-global-2.0
+    path: ../site-alpha-global-2.0
+    base-branch: development
+    ado-project: Project One
+
+  - name: site-beta
+    path: ../site-beta
+    base-branch: development
+    ado-project: Project One
+
+  - name: shared-core
+    path: ../shared-core
+    base-branch: development
+    ado-project: Project Two
+    capabilities: [fe, be, sling]
+
+  - name: aem-shared-core
+    path: ../aem-shared-core
+    base-branch: develop
+    ado-project: Project Two
+    capabilities: [fe, be, sling]

@@ -14,13 +14,13 @@ This is a **hub directory** — it orchestrates work across multiple repos. It c
 
 ## Dispatch Model
 
-The hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server. Each terminal runs an independent interactive Claude session in the target repo's directory with full plugin and MCP access.
+The hub dispatches work by starting one independent CLI session (Claude Code or Copilot CLI, `hub.engine`) per repo, in the repo's directory with full plugin and MCP access. `hub.launcher` decides how: VS Code terminals via the `vscode-automator` MCP server when its tools are in the session, macOS Terminal.app windows (`terminal`), or — when neither applies — printed `bash '<script>'` lines to run by hand. Never improvise a launcher with other tools.
 
 **Hub does:**
 - Fetch tickets from ADO/Jira
 - Determine which repos are involved (by capabilities or explicit user selection)
 - Pre-seed raw ticket files into each repo's spec directory
-- Launch Claude sessions in VS Code terminals with delegation prompts
+- Launch sessions (or print their commands) with delegation prompts
 - Track simple status (running/done/blocked/failed)
 
 **Hub does NOT:**
@@ -31,7 +31,8 @@ The hub dispatches work by opening VS Code terminals via the `vscode-automator` 
 
 ## Working with Tickets
 
-- Use the ADO MCP tools (`mcp__ado__wit_work_item` with `action: "get"`, or `action: "get_batch"` for several IDs) to read work items.
+- Use the ADO MCP tools (`mcp__ado__wit_work_item` with `action: "get"`, or `action: "get_batch"` for several IDs) to read work items. On Copilot CLI the same tool is `ado-wit_work_item` — `<server>-<tool>` instead of `mcp__<server>__<tool>`.
+- **Always pass `project`.** Repos here can sit in different ADO projects (`repos[].ado-project`); without a project the ADO server prompts, and that fails in an agent session. Once you have a work item, use its `System.TeamProject` for comments and related calls.
 - When asked about multiple tickets, batch-read them and present a summary table.
 - Check `state/<ticket-id>/status.json` for dispatch progress.
 
@@ -60,9 +61,9 @@ Four plugins are installed. To understand what a skill does, how to invoke it, o
 
 | Skill | Purpose |
 |-------|---------|
-| `/dx-hub-dispatch` | Dispatch a ticket to repos via VS Code terminals |
+| `/dx-hub-dispatch` | Dispatch a ticket to repos — one CLI session per repo (terminals, or printed commands) |
 | `/dx-hub-status` | Check dispatch progress (running/done/blocked/failed) |
-| `/dx-hub-config` | View/edit hub configuration |
+| `/dx-hub-config` | View/edit hub configuration (`fill-defaults` for an older hub) |
 | `/dx-hub-init` | Initialize or reinitialize the hub directory |
 
 ### User Story pipeline stages (dx-core)

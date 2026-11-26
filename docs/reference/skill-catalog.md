@@ -152,9 +152,9 @@ Multi-repo orchestration plugin. Dispatches tickets to independent Claude Code s
 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
-| dx-hub-dispatch | `/dx-hub-dispatch` | `<ticket-id> [repos...] [--skill] [autonomous]` | Dispatch a ticket to repos via VS Code terminals — Claude Code or Copilot CLI (`hub.engine`) | Terminal sessions + status.json |
+| dx-hub-dispatch | `/dx-hub-dispatch` | `<ticket-id> [repos...] [--skill] [autonomous] [--no-launch]` | Dispatch a ticket to repos — one Claude Code or Copilot CLI session each (`hub.engine`), started via vscode-automator, Terminal.app or printed commands (`hub.launcher`) | Sessions or launch scripts + status.json |
 | dx-hub-init | `/dx-hub-init` | `[path]` | Initialize hub directory for multi-repo orchestration | Hub config |
-| dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| terminal-delay]` | View and edit hub configuration | Config update |
+| dx-hub-config | `/dx-hub-config` | `[show \| add-repo \| fill-defaults \| terminal-delay]` | View and edit hub configuration; `fill-defaults` adds keys an older hub lacks | Config update |
 | dx-hub-status | `/dx-hub-status` | `[ticket-id] [--json] \| --clean` | Show status of hub dispatches across all repos; `--json` prints one JSON array for tools | Status report |
 | dx-discover-repos | `/dx-discover-repos` | `<work-item-id>` | Resolve which repos a work item touches via a 3-tier cascade (explicit → simple-block → cross-repo table → LLM) | JSON array of repo entries (used by the KAI-HUB router) |
 

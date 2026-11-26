@@ -1,0 +1,27 @@
+hub:
+  enabled: true
+  engine: copilot       # claude | copilot
+  model: "some-model"
+  terminal-delay: 8
+  launcher: none
+  state-ttl: 7d
+
+tracker:
+  provider: ado
+
+scm:
+  org: my-org
+  project: my-project
+
+repos:
+  - name: shop-fe
+    path: ../shop-fe
+    ado-project: my-project
+    capabilities:
+      - fe
+    keywords: [storefront, "Checkout UI"]
+  - name: shop-be
+    path: ../shop-be
+    capabilities: [be]
+    keywords:
+      - orders

@@ -221,7 +221,7 @@ Skill/agent files use the Claude Code prefix shown above. On other platforms the
 | Platform | Registered name format | Example (AEM `getNodeContent`) |
 |----------|-----------------------|-------------------------------|
 | Claude Code | `mcp__plugin_<plugin>_<server>__<tool>` (double underscore) | `mcp__plugin_dx-aem_AEM__getNodeContent` |
-| Copilot CLI | bare name (no prefix; LLM maps from Claude prefix) | `getNodeContent` |
+| Copilot CLI | `<server>-<tool>` (server name, a hyphen, the tool; LLM maps from the Claude prefix) — e.g. ADO's `wit_work_item` is `ado-wit_work_item` (v1.0.116) | `AEM-getNodeContent` |
 | VS Code Chat | bare name | `getNodeContent` |
 | Codex CLI | TOML-configured `[mcp_servers.<server>]`; **no dotted tool-name prefix** — tool names constrained to `^[a-zA-Z0-9_-]+$` (dots disallowed). Plugins (`.codex-plugin/`, Mar 2026) bundle skills/hooks/MCP/apps, not agents. | `getNodeContent` |
 | Gemini CLI | `mcp_<server>_<tool>` (single underscore). Server name **must not contain `_`**; on cross-server tool-name collision Gemini promotes to `serverAlias__tool` (double underscore). | `mcp_aem_getnodecontent` |
