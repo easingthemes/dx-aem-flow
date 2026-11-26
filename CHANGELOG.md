@@ -1,3 +1,10 @@
+# [6.10.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.9.0...v6.10.0) (2026-11-26)
+
+
+### Features
+
+* record the run of every flow skill (start, steps, end, interrupted) ([#288](https://github.com/easingthemes/dx-aem-flow/issues/288)) ([570c411](https://github.com/easingthemes/dx-aem-flow/commit/570c41177666851d4f0e60340134e393bc38e061))
+
 # [6.9.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.8.0...v6.9.0) (2026-11-26)
 
 
