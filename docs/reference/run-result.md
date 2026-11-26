@@ -146,3 +146,19 @@ globs only result files never sees it.
 Each final write appends the result object, unchanged, as one line. It is the record of every run;
 the per-id file only holds the latest. Once it passes `DX_RUN_HISTORY_MAX` lines (default 2000) it is
 trimmed to the last `DX_RUN_HISTORY_KEEP` (default 1000). Readers should skip lines that do not parse.
+
+## Interrupted runs: the SessionEnd hook
+
+When the session ends before a skill's final write (Ctrl+C, terminal closed, crash), its running
+marker stays. dx-core's `SessionEnd` hook (`hooks/scripts/run-result-close.sh`) closes the markers whose
+`run_id` equals the session's `DX_RUN_ID`: it writes the result as `failed`, `summary` "interrupted: …",
+`next_action` the re-run command, `metrics.interrupted: true`. It touches nothing without `DX_RUN_ID`,
+because another session in the same repo may still own a marker that has no run id. A crash that skips
+`SessionEnd` still leaves the marker; readers treat an old marker with no result as interrupted.
+
+## Reading the history: `/dx-runs`
+
+`/dx-runs [--days N] [--skill <name>] [--json]` (script: `plugins/dx-core/data/lib/run-history.sh`)
+summarizes `history.jsonl` and the running markers per skill: runs, done / blocked / failed, success
+rate, median `duration_s`, most common `metrics.fail_at` of unfinished runs, and running vs stale
+markers (`--stale-hours`, default 6). `--json` prints one object for tools.

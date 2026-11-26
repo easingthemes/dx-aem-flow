@@ -81,6 +81,7 @@ Cost is real: agent runs are billed, `llm`/`baseline` graders add 3 judge calls 
 - Prefer deterministic graders. Use `llm` only when no exact oracle exists — **a judge can be argued out of its rubric by a confident wrong answer; a regex cannot.**
 - **Sanity-check every suite against a known-bad input.** A green suite means either the skill is good or the grader is blind, and you can't tell which until something that should fail does. Each grader needs its own failing case; one scenario only exercises the graders it touches.
 - Run artifacts land in `plugins/*/evals/results/` and are gitignored.
+- **Check a case for free before a billed run:** `bash plugins/dx-core/data/lib/eval-case-check.sh plugins/<plugin>/evals` applies the runner's strict grader schema (contract: `docs/reference/eval-cases.md`). CI runs it over every `evals/` folder.
 
 Current coverage is two suites in `dx-core/evals/`: `plan-validate-finds-gap` (see its README for a judge that passed a report its rubric said to fail) and `routing` (14 Skill-routing cases, `tool_used: Skill` graders; its no-skill grader has not yet been seen failing — TODO #252).
 
