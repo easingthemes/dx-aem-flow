@@ -1,3 +1,10 @@
+## [6.7.2](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.1...v6.7.2) (2026-11-26)
+
+
+### Bug Fixes
+
+* **dx-hub:** dispatch without vscode-automator, per-repo ADO project, keyword repo matching ([#285](https://github.com/easingthemes/dx-aem-flow/issues/285)) ([ad99e85](https://github.com/easingthemes/dx-aem-flow/commit/ad99e855d67758071bb21ba4f39e449412cff61a))
+
 ## [6.7.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.7.0...v6.7.1) (2026-11-26)
 
 
