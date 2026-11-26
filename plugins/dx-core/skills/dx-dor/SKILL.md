@@ -153,7 +153,14 @@ Machine-readable outcome for a tool that started this skill (dashboard, script, 
 **Start** — once per id, right after the ids are parsed (batch: one start per id):
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-dor --id <work item id>
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-dor --id <work item id> --progress-file dor-progress.md
+```
+
+**Progress** — once `$SPEC_DIR` exists (**Fetch story**), one row per step in `dor-progress.md`, each `in_progress` before it starts: `Fetch story` → `Fetch DoR wiki` → `Evaluate` (or `Compare with last comment` on a re-run) → `Post comment` (`skipped` when no change or dry run). Command and rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="dor-progress.md" DX_PROGRESS_TITLE="/dx-dor Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 **End** — last action of **every** exit, after the final message:

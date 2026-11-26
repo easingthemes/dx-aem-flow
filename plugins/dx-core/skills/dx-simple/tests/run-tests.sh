@@ -282,8 +282,22 @@ run "progress: 'Build|Deploy' is one row, status done" \
   bash -c "test \$(grep -c 'Build' $TMPSPEC2/simple-progress.md) -eq 1 && grep -q 'Deploy | done | ok |' $TMPSPEC2/simple-progress.md"
 # A literal '|' in a value would add a markdown column. Every table line must
 # split into exactly 5 awk fields: "" | c1 | c2 | c3 | "".
-run "progress: every table row has exactly 3 columns" \
-  bash -c "awk -F'|' '/^\\|/ && NF != 5 { bad = 1 } END { exit bad + 0 }' $TMPSPEC2/simple-progress.md"
+run "progress: every table row has exactly 4 columns (step, status, note, updated)" \
+  bash -c "awk -F'|' '/^\\|/ && NF != 6 { bad = 1 } END { exit bad + 0 }' $TMPSPEC2/simple-progress.md"
+
+# The Updated column holds the time the row was last written.
+TMPSPEC_T="$TMP/5555555-time"
+DX_PROGRESS_NOW="2026-01-02T03:04:05Z" "$SCRIPTS/update-progress.sh" "$TMPSPEC_T" "Fetch" "in_progress" 2>/dev/null
+run "progress: row carries the Updated time" \
+  bash -c "grep -qF '| Fetch | in_progress | — | 2026-01-02T03:04:05Z |' $TMPSPEC_T/simple-progress.md"
+
+# A file started before the Updated column existed keeps three columns.
+TMPSPEC_L="$TMP/4444444-legacy"
+mkdir -p "$TMPSPEC_L"
+printf '# /dx-simple Progress — #4444444\n\n| Phase | Status | Note |\n|---|---|---|\n| Fetch | done | ok |\n' > "$TMPSPEC_L/simple-progress.md"
+"$SCRIPTS/update-progress.sh" "$TMPSPEC_L" "Apply" "in_progress" 2>/dev/null
+run "progress: legacy 3-column file stays 3 columns" \
+  bash -c "awk -F'|' '/^\\|/ && NF != 5 { bad = 1 } END { exit bad + 0 }' $TMPSPEC_L/simple-progress.md && grep -qF '| Apply | in_progress | — |' $TMPSPEC_L/simple-progress.md"
 
 # C2: note with pipe and hash is sanitized, doesn't break table — and the note
 # must be stored verbatim, with no sed replacement escapes leaking into it.

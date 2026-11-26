@@ -418,7 +418,11 @@ Return verdict so the pipeline STOPS. List remaining issues clearly. The calling
 
 ## Run Result
 
-Per `../../shared/run-result.md` (never fail the run because of it): `run-result.sh --start --skill dx-step-verify --id <id>` after **Locate spec directory**. At every exit (`Report PASS`, both `Report FAIL` nodes, `STOP: Remove credentials`):
+Per `../../shared/run-result.md` (never fail the run because of it): `run-result.sh --start --skill dx-step-verify --id <id> --progress-file step-verify-progress.md` after **Locate spec directory**.
+
+Progress (`DX_PROGRESS_FILE="step-verify-progress.md" DX_PROGRESS_TITLE="/dx-step-verify Progress" DX_PROGRESS_LABEL="Step" bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"`), each row `in_progress` before it starts: `Pre-review checks` → `Fix pre-review issues` (`skipped` when nothing failed; note `attempt <n>`) → `Code review` (note `cycle <n>`) → `Fix review issues` (`skipped` when the review is clean). A stop leaves its row `blocked` / `failed`.
+
+At every exit (`Report PASS`, `Report FAIL (blocking architecture check)`, `Report FAIL (issues after 3 cycles)`, `STOP: Remove credentials`):
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-step-verify --id <id> --status <done|blocked|failed> \

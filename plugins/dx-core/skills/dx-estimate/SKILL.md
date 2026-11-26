@@ -258,7 +258,14 @@ Machine-readable outcome for a tool that started this skill (dashboard, script, 
 **Start** — right after the id is parsed (§ Argument):
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-estimate --id <work item id>
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-estimate --id <work item id> --progress-file estimate-progress.md
+```
+
+**Progress** — one row per step of § Execution Order in `estimate-progress.md` (`$SPEC_DIR` = `.ai/specs/<id>-*/`, once step 1 created it), each `in_progress` before it starts: `1 Fetch` → `2 Explain` → `3 Research` → `4 Estimate` → `5 Post comment` (`skipped` on a dry run). The `/dx-req` phases are nested calls: one row each here; `/dx-req` writes its own result. Command and rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="estimate-progress.md" DX_PROGRESS_TITLE="/dx-estimate Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 **End** — last action of **every** exit, after the final message:
@@ -274,7 +281,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-estimate --id <wo
 |------|------------|----------|
 | Estimation posted (§ 4. Final Summary) | `done` | `/dx-req-tasks <id>` |
 | Estimation built but the comment could not be posted | `blocked` | `post the estimation printed above manually` |
-| A step failed after its retry (§ Error Handling) | `failed` | `/dx-<failed skill> <id>` |
+| A step failed after its retry (§ Error Handling) | `failed` (`--metric fail_at=<step>`) | `/dx-<failed skill> <id>` |
+| No work item ID and nobody to ask (non-interactive) | — nothing names the run; stop with the message | — |
 Write it after § 5. Log Run on the success path. Omit a metric you do not have (no hours on a failed run).
 
 

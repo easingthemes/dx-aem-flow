@@ -44,7 +44,9 @@ TICKET=$(basename "$SPEC_DIR" | grep -oE '^[0-9]+' || echo "unknown")
 cell() { printf '%s' "$1" | sed 's/|/∣/g'; }
 
 PHASE_CELL=$(cell "$PHASE")
-ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") |"
+# When the row was last written (UTC), so a reader can tell how long a step has
+# been in progress. DX_PROGRESS_NOW overrides it (tests).
+UPDATED="${DX_PROGRESS_NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 
 # Serialize concurrent writers. Subagents and forked skills write this same file
 # (see rules/task-progress.md), so the init + read-merge-write below must not
@@ -107,9 +109,17 @@ done
 if [[ ! -f "$PROGRESS" ]]; then
   {
     printf '# %s — #%s\n\n' "$PROGRESS_TITLE" "$TICKET"
-    printf '| %s | Status | Note |\n' "$PROGRESS_LABEL"
-    printf '|---|---|---|\n'
+    printf '| %s | Status | Note | Updated |\n' "$PROGRESS_LABEL"
+    printf '|---|---|---|---|\n'
   } > "$PROGRESS"
+fi
+
+# Files started before the Updated column existed keep their three columns: a
+# run that was already going must not end up with rows of two shapes.
+if grep -q '^| .* | Status | Note | Updated |$' "$PROGRESS"; then
+  ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") | $UPDATED |"
+else
+  ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") |"
 fi
 
 # Rewrite the row in place if the phase is already listed, else append it.

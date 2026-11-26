@@ -2,9 +2,11 @@
 
 Written at the end of every run (including STOP and failure) by the coordinator skills `dx-agent-all`,
 `dx-bug-all`, `dx-post-merge`, `dx-pr-review` and `dx-prep`, and by `dx-dor`, `dx-estimate`, `dx-req`, `dx-pr-answer`,
-`dx-bug-fix`, `dx-step-all`, `dx-step-verify`, `dx-req-dod`, `dx-doc-gen`, `dx-qa-handoff` and dx-aem's
-`aem-demo-page`, through `plugins/dx-core/data/lib/run-result.sh` (`aem-demo-page` runs the project's
-`.ai/lib/run-result.sh` copy, since a dx-aem skill's `${CLAUDE_PLUGIN_ROOT}` is dx-aem's root)
+`dx-bug-fix`, `dx-plan`, `dx-step-all`, `dx-step-verify`, `dx-req-dod`, `dx-doc-gen`, `dx-qa-handoff`, dx-aem's
+`aem-demo-page` and dx-hub's `dx-hub-dispatch`, through `plugins/dx-core/data/lib/run-result.sh`
+(`aem-demo-page` runs the project's `.ai/lib/run-result.sh` copy, since a dx-aem skill's
+`${CLAUDE_PLUGIN_ROOT}` is dx-aem's root; `dx-hub-dispatch` finds dx-core beside dx-hub through its
+`scripts/dx-core-lib.sh`)
 (procedure: `plugins/dx-core/shared/run-result.md`). Meant for tools that start a skill and need its
 outcome — a local dashboard, a script, a hub — without parsing terminal output.
 
@@ -125,13 +127,42 @@ out, never guessed. Keys are stable — a tool can rely on them per skill:
 | `dx-doc-gen` | `screenshots`, `posted`, `retro`, `fail_at` |
 | `dx-qa-handoff` | `comment_mode` (`posted`/`update`/`unchanged`/`dry-run`), `qa_pages`, `screenshots`, `fail_at` |
 | `aem-demo-page` | `env` (`qa`/`local`), `pages`, `pages_created`, `screenshots`, `screenshots_uploaded`, `fail_at` |
+| `dx-plan` | `plan_steps`, `fail_at` |
+| `dx-hub-dispatch` | `repos`, `started`, `pending`, `fail_at` |
 
-`fail_at` is the first failed or blocked phase, node or step, as a short name.
+`fail_at` is the first failed or blocked phase, node or step, as a short name. `interrupted: true`
+(with `fail_at` the step that was in progress) is added by the SessionEnd hook, never by a skill.
+
+## Progress file: `<spec dir>/<progress_file>`
+
+Every skill with more than one step keeps a progress table in its spec dir (the marker's
+`progress_file`), written by `shared/update-progress.sh`:
+
+```markdown
+# /dx-doc-gen Progress — #12345
+
+| Step | Status | Note | Updated |
+|---|---|---|---|
+| Read sources | done | spec files | 2026-01-01T11:48:21Z |
+| Generate wiki-page.md | in_progress | — | 2026-01-01T11:49:02Z |
+```
+
+One row per step, updated in place; `Status` is `pending`, `in_progress`, `done`, `skipped`,
+`blocked` or `failed`; `Updated` is when the row was last written (UTC). A step is `in_progress`
+before it starts, so the last `in_progress` row of an interrupted run is where it stopped. A nested
+skill is one row in its caller's file. Files started before the `Updated` column existed keep three
+columns. Per skill: `dev-all-progress.md` (`dx-agent-all`, `dx-step-all`), `bug-progress.md`,
+`req-progress.md` (`dx-req`, `dx-prep`), `plan-progress.md`, `step-verify-progress.md`,
+`dor-progress.md`, `estimate-progress.md`, `post-merge-progress.md`, `dod-progress.md`,
+`doc-gen-progress.md`, `qa-handoff-progress.md`, `demo-page-progress.md`, and
+`hub-dispatch-progress.md` (in the hub's `state/<id>/`). `dx-pr-review` and `dx-pr-answer` work on a
+PR, have no spec dir and write none.
 
 ## Nested skills and `run_id`
 
-`dx-agent-all`, `dx-bug-all`, `dx-prep`, `dx-post-merge` and `dx-req-dod` run other skills that write their own results
-(`dx-req`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`, `aem-demo-page`, `dx-doc-gen`, `dx-qa-handoff`, `dx-post-merge`). They inherit the caller's
+`dx-agent-all`, `dx-bug-all`, `dx-prep`, `dx-estimate`, `dx-post-merge` and `dx-req-dod` run other skills that write their own results
+(`dx-req`, `dx-plan`, `dx-step-all`, `dx-bug-fix`, `dx-step-verify`, `dx-dor`, `aem-demo-page`, `dx-doc-gen`, `dx-qa-handoff`, `dx-post-merge`) —
+each in its own `<skill>-<id>.json`, never the caller's file. They inherit the caller's
 `DX_RUN_ID`, so one run id can appear in several files: match on **skill and** `run_id`. Run by
 hand (no `DX_RUN_ID`), each nested skill gets its own `<session id>.<n>`.
 
@@ -165,7 +196,7 @@ Removed by the final write. A newer `--start` for the same skill and id overwrit
 |-------|------|-------------|
 | `status` | string | Always `running` |
 | `progress_file` | string \| null | File name of the progress table this skill writes in its spec dir (`dev-all-progress.md`, `bug-progress.md`, `req-progress.md`); `null` when it writes none (`dx-pr-review`) |
-| `spec_dir` | string \| null | The spec dir, when the skill already knows it at start; otherwise find it as `.ai/specs/<id>-*/` |
+| `spec_dir` | string \| null | The spec dir: `--spec-dir`, else the one `.ai/specs/<id>-*/` that exists at start; `null` when there is none or several |
 
 Other fields as in the result file. The file name does not match `<skill>-<id>.json`, so a reader that
 globs only result files never sees it.
@@ -181,9 +212,12 @@ trimmed to the last `DX_RUN_HISTORY_KEEP` (default 1000). Readers should skip li
 When the session ends before a skill's final write (Ctrl+C, terminal closed, crash), its running
 marker stays. dx-core's `SessionEnd` hook (`hooks/scripts/run-result-close.sh`) closes the markers this
 session owns: `run_id` equal to the session's `DX_RUN_ID`, or a manual run whose `run_id` part before
-the first `.` equals the ending session's id (hook input `session_id` on Claude Code, `sessionId` on
-Copilot CLI). It writes the result as `failed`, `summary` "interrupted: …", `next_action` the re-run
-command, `metrics.interrupted: true`, keeping the marker's `run_id`. Markers of other sessions and
+the first `.` equals the ending session's id (hook input `session_id` — Copilot CLI too since v1.0.116 —
+or `sessionId` on older Copilot CLI; the project comes from `CLAUDE_PROJECT_DIR`, else the input's `cwd`). It writes the result
+as `failed`, `summary` "interrupted: <step>" — the last `in_progress` row of the marker's progress file,
+also in `metrics.fail_at` — or "interrupted: the session ended before the skill wrote its result" when
+there is no such row, `next_action` the re-run command, `metrics.interrupted: true`, keeping the
+marker's `run_id`. Markers of other sessions and
 markers with no run id are left alone, because another session in the same repo may still own them. A crash that skips
 `SessionEnd` still leaves the marker; readers treat an old marker with no result as interrupted.
 

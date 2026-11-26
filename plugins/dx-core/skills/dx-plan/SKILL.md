@@ -43,7 +43,17 @@ Two outputs are always required regardless of path:
 SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir $ARGUMENTS)
 ```
 
-If the script exits with error, ask the user for the work item ID or slug.
+If the script exits with error, ask the user for the work item ID or slug (non-interactive: nothing names the run yet — stop with that message).
+
+Start the run and the progress file (see [Run Result](#run-result)) — `<id>` is the number the spec dir name starts with (the slug if it has none):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-plan --id <id> --progress-file plan-progress.md --spec-dir "$SPEC_DIR"
+DX_PROGRESS_FILE="plan-progress.md" DX_PROGRESS_TITLE="/dx-plan Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "Read inputs" "in_progress"
+```
+
+Steps, each marked `in_progress` before it starts: `Read inputs` → `Check existing plan` → `Design` (sections 3, 5: decisions, `plan-thinking.md`) → `Write implement.md`. Hub mode adds `Dispatch to repos` in place of the last two.
 
 Read these files from `$SPEC_DIR` (in order of importance):
 - `research.md` — codebase findings (required for a good plan)
@@ -51,6 +61,8 @@ Read these files from `$SPEC_DIR` (in order of importance):
 - `raw-story.md` — original story for reference (may not exist for non-ADO flows)
 
 If `research.md` doesn't exist, warn the user: "No research.md found — run `/dx-req` first for a better plan. Proceeding with explain.md only."
+
+Neither `research.md` nor `explain.md` exists → print `Nothing to plan from — run /dx-req <id> first.`, write the run result (`--status blocked --next "/dx-req <id>" --metric fail_at="Read inputs"`) and STOP.
 
 ### Provenance Check on Inputs
 
@@ -97,7 +109,7 @@ If hub mode is active (`hub.enabled: true` AND cwd is `.hub/`):
    c. Each repo generates its own `implement.md` locally
    d. Collect and summarize: "Plans generated in <N> repos"
 3. Write state files
-4. STOP — do not continue with local planning
+4. Write the run result (`--status done --summary "plans generated in <N> repos"`, or `failed` with the repos that failed) and STOP — do not continue with local planning
 
 If hub mode is not active: continue with normal flow below.
 
@@ -109,8 +121,8 @@ If hub mode is not active: continue with normal flow below.
    - Does the title in `implement.md` match the current spec?
    - Does the step count and files referenced align with current `research.md`?
    - Have `research.md` or `explain.md` changed since `implement.md` was generated?
-4. If `implement.md` is current → print `implement.md already up to date — skipping` and STOP
-   - **Prepared by someone else:** if the last commit of `implement.md` is by another author (`git log -1 --format=%ae -- implement.md` ≠ `git config user.email`), it is a prepared plan (`/dx-prep`). Do not regenerate it unless the argument contains `--force` — even when it looks outdated: print `implement.md was prepared by <author> — keeping it. Pass --force to regenerate.` and STOP.
+4. If `implement.md` is current → print `implement.md already up to date — skipping`, write the run result (`--status done --summary "implement.md already up to date — nothing to do"`) and STOP
+   - **Prepared by someone else:** if the last commit of `implement.md` is by another author (`git log -1 --format=%ae -- implement.md` ≠ `git config user.email`), it is a prepared plan (`/dx-prep`). Do not regenerate it unless the argument contains `--force` — even when it looks outdated: print `implement.md was prepared by <author> — keeping it. Pass --force to regenerate.`, write the run result (`--status done --summary "kept the plan prepared by <author> — nothing to do" --next "/dx-plan <id> --force"`) and STOP.
 5. If inputs changed or plan looks stale → print `implement.md exists but is outdated — regenerating` and continue
 6. If not found → continue normally (first run)
 
@@ -346,39 +358,9 @@ After all phases complete and only when running standalone, emit:
 
 When orchestrated (`$ORCHESTRATED == 1`), skip this section entirely and emit only the `## Return` block.
 
-## Examples
+## Examples and troubleshooting
 
-### Standard planning flow
-```
-/dx-plan 2416553
-```
-Reads `.ai/specs/2416553-add-layout-switcher/explain.md` and `research.md`, generates `implement.md` with 6 steps covering model changes, dialog updates, HTL template, JS logic, SCSS, and tests. All steps start as `pending`.
-
-### Re-run after research update
-```
-/dx-plan 2416553
-```
-Detects that `research.md` has changed since `implement.md` was generated. Prints "implement.md exists but is outdated — regenerating" and creates a fresh plan.
-
-### Without research (degraded mode)
-```
-/dx-plan 2416553
-```
-If `research.md` doesn't exist, warns "No research.md found — run `/dx-req` first for a better plan" and generates from `explain.md` only. Plan will lack specific file paths and line numbers.
-
-## Troubleshooting
-
-### "No spec directory found"
-**Cause:** No `.ai/specs/` directory matches the given ID or slug.
-**Fix:** Run `/dx-req <id>` first to create the spec directory, or check the ID is correct.
-
-### Plan has vague steps without file paths
-**Cause:** `research.md` is missing or has thin results.
-**Fix:** Run `/dx-req <id>` with search hints to get better codebase findings, then re-run `/dx-plan`.
-
-### Plan creates new utilities instead of reusing existing ones
-**Cause:** `research.md` didn't find existing utilities, or the "Existing Implementation Check" section is missing.
-**Fix:** Run `/dx-req <id>` again — it may find more with different search terms. Or manually add findings to `research.md` before re-planning.
+Worked runs (standard, re-run after a research update, no research) and fixes for a missing spec dir, vague steps and plans that recreate existing utilities: `references/examples-troubleshooting.md`.
 
 ## Decision Tree: Step Granularity
 
@@ -461,6 +443,26 @@ When ordering steps, tackle highest-uncertainty pieces first:
 - **Simple UI wiring** → leave for last, lowest risk
 
 **Change sizing:** Aim for steps that produce ~100 lines of diff each. Smaller is reviewable; larger hides problems.
+
+## Run Result
+
+Records the run for a tool that started it, per `../../shared/run-result.md` (how; never fail the run because of it). **Start** in section 1. **End** — last action of **every** exit, after the summary or `## Return` block:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-plan --id <id> --status <done|blocked|failed> \
+  --summary "<one line, e.g. 6-step plan, 2 risks>" --next "<next step or none>" \
+  --metric plan_steps=<n> [--metric fail_at=<step>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| `implement.md` written | `done` | `/dx-plan-validate <id>` (`none` when orchestrated) |
+| Already up to date, or a prepared plan kept — nothing to do | `done` | `none` / `/dx-plan <id> --force` |
+| Hub mode: plans dispatched to the repos | `done` | `none` |
+| No `explain.md` and no `research.md` to plan from | `blocked` | `/dx-req <id>` |
+| `implement.md` could not be written, a hub repo run failed | `failed` | `/dx-plan <id>` |
+
+Under `/dx-prep` or `/dx-agent-all` this is its own file (`dx-plan-<id>.json`); the caller's progress file has a `Planning` row for it.
 
 ## Rules
 

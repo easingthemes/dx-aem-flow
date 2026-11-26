@@ -1,6 +1,6 @@
 # Progress Tracking
 
-Every coordinator skill (`-all` suffix, plus `dx-req`, `dx-step`, `dx-simple`)
+Every coordinator skill (`-all` suffix, plus `dx-req`, `dx-step`, `dx-simple`) and every flow skill with more than one step (`shared/run-result.md` § 2)
 reports progress through a **progress file** in the spec directory. The file is
 the single source of truth. Task-tracking tools are an optional display layer
 that may not exist.
@@ -31,7 +31,11 @@ crashed run.
   ```
   Status values: `pending` · `in_progress` · `done` · `failed` · `skipped` ·
   `blocked`. One row per phase, updated in place — never append a second row
-  for the same phase.
+  for the same phase. The script adds an `Updated` column (UTC time of the last
+  write).
+- **`in_progress` before the phase starts**, not after it ends. The SessionEnd
+  hook reports an interrupted run by its last `in_progress` row
+  (`shared/run-result.md` § 4).
 - **Mirror into task tools only when they exist.** If `TaskCreate` is in the
   session's tool list, mirror the same phases so the user gets a live checklist.
   If it is absent, say nothing about it and carry on — a missing tool is the
@@ -42,7 +46,9 @@ crashed run.
   its parent anyway.
 - **One progress file per skill invocation.** If a coordinator delegates to
   another coordinator (`dx-agent-all` → `dx-step-all`), the inner skill writes
-  rows into the outer skill's file rather than starting its own.
+  rows into the outer skill's file rather than starting its own. Any other
+  nested skill is one row in the caller's file (`in_progress` before the call,
+  its outcome after) and keeps its own file under its own name.
 - **Reference, do not quote.** Point at the progress file in chat and emit a
   one-line summary derived from it. Re-printing the whole table on each phase
   re-anchors it in context and doubles the cost of every recap.

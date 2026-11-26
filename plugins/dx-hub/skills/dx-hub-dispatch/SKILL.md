@@ -21,6 +21,41 @@ Tool calls in this skill are written with Claude Code names. Other hosts registe
 
 The rule: Claude Code `mcp__<server>__<tool>`, Copilot CLI `<server>-<tool>`. Arguments are identical. If neither form of a tool is in your tool list, that server is not connected in this session — say so by name; never substitute a different tool for it.
 
+## Run record
+
+This skill records its run like every dx flow skill — `../../../dx-core/shared/run-result.md` (dx-hub form: the helpers run through `scripts/dx-core-lib.sh`, which finds dx-core beside dx-hub, since a hub has no `.ai/lib/`). Never fail the run because of it.
+
+**Start** — the very first action, with the ticket ID from `$ARGUMENTS` (first positional argument; the ID part of a URL — none: print the usage line and stop, nothing names the run):
+
+```bash
+bash "${CLAUDE_SKILL_DIR}/scripts/dx-core-lib.sh" run-result.sh --start --skill dx-hub-dispatch --id <ticket-id> \
+  --spec-dir "state/<ticket-id>" --progress-file hub-dispatch-progress.md
+```
+
+**Progress** — `state/<ticket-id>/hub-dispatch-progress.md`, each row `in_progress` before it starts: `Pre-flight` → `Fetch ticket` → `Determine repos` → `Confirm dispatch` → `Prepare state` (state dir, raw ticket, context.md, pre-seed) → `Launch` (one note per repo) → `Write status.json`.
+
+```bash
+DX_PROGRESS_FILE="hub-dispatch-progress.md" DX_PROGRESS_TITLE="/dx-hub-dispatch Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_SKILL_DIR}/scripts/dx-core-lib.sh" update-progress.sh "state/<ticket-id>" "<step>" "<status>" "<note>"
+```
+
+**End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_SKILL_DIR}/scripts/dx-core-lib.sh" run-result.sh --skill dx-hub-dispatch --id <ticket-id> \
+  --status <done|blocked|failed> --summary "<one line>" --next "<next step or none>" \
+  --metric repos=<n> --metric started=<n> --metric pending=<n> [--metric fail_at=<step>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| **Summary** — sessions started or launch commands written | `done` (`--summary "<N> started, <M> waiting to be started"`) | `/dx-hub-status <ticket-id>` |
+| **STOP: cancelled** — the user said no | `done` (`--summary "dispatch cancelled by the user — nothing started"`) | `none` |
+| Pre-flight: hub not enabled or a config value invalid; no ADO project configured; **STOP: no repos** | `blocked` | `/dx-hub-init`, or the config fix, or `/dx-hub-dispatch <id> <repo>…` |
+| **STOP: ticket not found**; a state file could not be written | `failed` | `/dx-hub-dispatch <ticket-id>` |
+
+Repo sessions are separate runs, not nested skills: each has its own `DX_RUN_ID` (**Launch terminals**) and result.
+
 ## Pre-flight
 
 Resolve the hub config:
@@ -29,9 +64,9 @@ Resolve the hub config:
 bash "${CLAUDE_SKILL_DIR}/scripts/hub-config.sh" .ai/config.yaml
 ```
 
-- **exit 2 / 3** — no config, or `hub.enabled` is not `true` → STOP:
+- **exit 2 / 3** — no config, or `hub.enabled` is not `true` → STOP (run record `blocked`, `--next "/dx-hub-init"`):
   > Hub mode is not enabled. Run `/dx-hub-init` first.
-- **exit 4** — a value is invalid (engine, launcher, terminal-delay). Print the `warn:` lines and STOP; do not guess a replacement.
+- **exit 4** — a value is invalid (engine, launcher, terminal-delay). Print the `warn:` lines and STOP (run record `blocked`, `--next` the fix); do not guess a replacement.
 - **exit 0** — use the `KEY=VALUE` lines as the settings for this run:
   - `engine` — CLI started in each repo: `claude` (default) or `copilot`
   - `model` — passed as `--model <value>` to that CLI (empty: the CLI's own default)
@@ -129,7 +164,7 @@ Fetch the work item using the configured provider.
 3. `scm_project`
 4. the `ado-project` of every other `repos[]` entry
 
-If the list is empty, STOP: `No ADO project configured — set scm.project or repos[].ado-project in .ai/config.yaml.`
+If the list is empty, STOP (run record `blocked`): `No ADO project configured — set scm.project or repos[].ado-project in .ai/config.yaml.`
 
 Try each candidate until one returns the item (work item IDs are unique across an organization, so the first hit is the ticket; a "not found" in one project only means "try the next"):
 
@@ -175,7 +210,7 @@ Extract and hold in memory:
 
 ### STOP: ticket not found
 
-Print the ticket ID, each project tried and the error each returned. STOP.
+Print the ticket ID, each project tried and the error each returned. Write the run record (`failed`, `--metric fail_at="Fetch ticket"`) and STOP.
 
 ### Determine repos
 
@@ -221,7 +256,7 @@ Available repos:
 Re-run with explicit repos: /dx-hub-dispatch <id> <repo-name> [<repo-name> ...]
 Or add capabilities / keywords to repos[] in .ai/config.yaml.
 ```
-STOP.
+Write the run record (`blocked`, `--next "/dx-hub-dispatch <id> <repo-name>…"`) and STOP.
 
 ### Confirm dispatch
 
@@ -247,7 +282,7 @@ Proceed? [Y/n]
 
 ### STOP: cancelled
 
-Print: `Dispatch cancelled.` STOP.
+Print: `Dispatch cancelled.` Write the run record (`done`, summary `dispatch cancelled by the user — nothing started`) and STOP.
 
 ### Create state dir
 
@@ -453,38 +488,11 @@ Next:
   /dx-hub-status <ticket-id>    — check progress
 ```
 
-## Example: Copilot CLI without vscode-automator
+Last action: the run record's **End** (`done`; see **Run record**).
 
-```
-/dx-hub-dispatch 2471234 brand-a-site
-```
-`launcher: auto` finds no vscode-automator tools → writes `state/2471234/launch/brand-a-site.sh` and prints `bash '<path>'` to start it. With `hub.launcher: terminal` the hub opens a Terminal.app window for it instead.
+## Example and troubleshooting
 
-## Troubleshooting
-
-### VS Code terminals not opening
-**Cause:** vscode-automator MCP server not running in this session, or macOS Accessibility permission not granted.
-**Fix:** The dispatch already fell back to `print` and listed one `bash '<script>'` line per repo — run those. To get terminals opened for you: register vscode-automator in the hub's `.mcp.json` (Claude Code) and grant your terminal app Accessibility permission, or set `hub.launcher: terminal` (macOS Terminal.app, works from any host).
-
-### "Project selection cancelled" from ADO
-**Cause:** an ADO call without `project`.
-**Fix:** set `repos[].ado-project` for every repo (or `scm.project`). Dispatch passes a project on every call and reads the ticket's own `System.TeamProject` after the first fetch.
-
-### Claude not starting in terminal
-**Cause:** `hub.terminal-delay` too short — Claude CLI takes time to initialize.
-**Fix:** Increase `hub.terminal-delay` in `.ai/config.yaml` (try `8` or `10`).
-
-### Copilot CLI: "Unknown command" in a repo terminal
-**Cause:** the skill was typed without its plugin prefix.
-**Fix:** use `/dx-core:<skill>` in the delegation prompt (see Launch terminals). Run `copilot` in that repo and check the plugin is enabled if the prefixed name also fails.
-
-### Wrong repo detected
-**Cause:** the title, area path and tags name no repo or keyword, and the FE/BE guess picked the wrong repos.
-**Fix:** add `keywords: [<product or brand words>]` to the repo in `repos[]`, or re-run with explicit repo names: `/dx-hub-dispatch <id> <repo-name>`.
-
-### Raw ticket not found in repo
-**Cause:** Pre-seed step failed (directory permissions or path mismatch).
-**Fix:** Check that repo paths in config are correct. The raw file should be at `<repo>/.ai/specs/<id>-<slug>/raw-story.md`.
+A Copilot CLI run without vscode-automator, and fixes for terminals not opening, "Project selection cancelled", the CLI not starting, "Unknown command", a wrong repo and a missing raw ticket: `references/troubleshooting.md`.
 
 ## Rules
 

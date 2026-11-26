@@ -25,7 +25,14 @@ SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir <work-item-id-if-given>)
 Once the ID is known, start the run (see [Run Result](#run-result)):
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-qa-handoff --id <id>
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-qa-handoff --id <id> --progress-file qa-handoff-progress.md
+```
+
+**Progress** — one row per step in `qa-handoff-progress.md`, each `in_progress` before it starts: `Load context` (step 2) → `Build comment` → `Post comment` (`skipped` on a dry run or when nothing changed). Command and rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="qa-handoff-progress.md" DX_PROGRESS_TITLE="/dx-qa-handoff Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 No spec dir → ask for the ID (interactive) or STOP with `No spec dir for <id> — run /dx-doc-gen <id> first.` (non-interactive, `../../shared/interaction-mode.md`) — run result `--status blocked --next "/dx-doc-gen <id>" --metric fail_at=spec-dir`.

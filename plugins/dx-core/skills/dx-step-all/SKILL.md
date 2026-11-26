@@ -408,7 +408,7 @@ Log the run anyway — append the same `runs.jsonl` record as the completion nod
 
 ## Run Result
 
-Per `../../shared/run-result.md` (never fail the run because of it): `run-result.sh --start --skill dx-step-all --id <id>` after **Locate spec dir + check run-state**; at both exits, next to the `runs.jsonl` line, `run-result.sh --skill dx-step-all --id <id> --status <done|blocked> --next "<next step>" --summary "<one line>" --metric steps_done=<n> --metric steps_total=<n> --metric fix_attempts=<n> --metric heals=<n> [--metric fail_at="Step N"]`. Completion → `done` (`--next` `/dx-step-build <id>`, or `none` when orchestrated); STOP: Human intervention needed → `blocked` (`--next` `/dx-step-all <id>` after the fix). Under `/dx-agent-all` or `/dx-bug-fix` this is its own file, `dx-step-all-<id>.json`.
+Per `../../shared/run-result.md` (never fail the run because of it): `run-result.sh --start --skill dx-step-all --id <id> --progress-file dev-all-progress.md` after **Locate spec dir + check run-state** (the progress file the step rows above go to, so an interrupted run names its step); at both exits (**Completion summary + log run + promote fixes**, **STOP: Human intervention needed**), next to the `runs.jsonl` line, `run-result.sh --skill dx-step-all --id <id> --status <done|blocked> --next "<next step>" --summary "<one line>" --metric steps_done=<n> --metric steps_total=<n> --metric fix_attempts=<n> --metric heals=<n> [--metric fail_at="Step N"]`. Completion → `done` (`--next` `/dx-step-build <id>`, or `none` when orchestrated); STOP: Human intervention needed → `blocked` (`--next` `/dx-step-all <id>` after the fix). Under `/dx-agent-all` or `/dx-bug-fix` this is its own file, `dx-step-all-<id>.json`.
 
 ## Examples
 

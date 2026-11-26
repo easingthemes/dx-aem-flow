@@ -22,7 +22,14 @@ If the script exits with error and an ID was given → **retro mode** (section 2
 As soon as the ID is known (given, or taken from the spec dir name), start the run (see [Run Result](#run-result)):
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-doc-gen --id <id>
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-doc-gen --id <id> --progress-file doc-gen-progress.md
+```
+
+**Progress** — one row per step in `doc-gen-progress.md` (in retro mode once section 2r created `$SPEC_DIR`), each `in_progress` before it starts: `Read sources` (or `Retro: story + PRs`) → `Check existing` → `Generate wiki-page.md` → `Post to wiki` (`skipped` in local mode or when no wiki is configured, with the reason). Command and rules: `../../shared/run-result.md` § 2.
+
+```bash
+DX_PROGRESS_FILE="doc-gen-progress.md" DX_PROGRESS_TITLE="/dx-doc-gen Progress" DX_PROGRESS_LABEL="Step" \
+  bash "${CLAUDE_PLUGIN_ROOT}/shared/update-progress.sh" "$SPEC_DIR" "<step>" "<status>" "<note>"
 ```
 
 Read `.ai/config.yaml` for:
