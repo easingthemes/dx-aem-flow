@@ -52,18 +52,26 @@ hub:
   enabled: true
   engine: claude        # claude | copilot
   terminal-delay: 5
+  launcher: auto        # auto | vscode-automator | terminal | none
   state-ttl: 7d
+
+tracker:
+  provider: ado
 
 repos:
   - name: Repo-A
     path: ../repo-a
+    ado-project: my-project
     capabilities: [fe]
   - name: Repo-B
     path: ../repo-b
+    ado-project: my-other-project
     capabilities: [be]
-  - name: Repo-C
-    path: /absolute/path/to/repo-c
-    capabilities: [fe, be]
+  - name: site-brand-a
+    path: /absolute/path/to/site-brand-a
+    ado-project: my-project
+    capabilities: []
+    keywords: [brand-a-shop]
 ```
 
 ### Matching Logic
@@ -71,8 +79,8 @@ repos:
 Match repos by explicit user arguments or by detecting scope from ticket content:
 
 1. **Explicit** — user names repos in the dispatch command → use those
-2. **Name match** — compare repo names case-insensitively against ticket text
-3. **Capabilities match** — use the role-to-capabilities table below
+2. **Name and keyword match** — `skills/dx-hub-dispatch/scripts/match-repos.sh` over the ticket's title, area path and tags: a repo's full name, one of its `keywords`, or a distinctive token of its name (`brand-a` in `site-brand-a`; tokens shared by several repo names and generic words never count) as a whole word
+3. **Capabilities match** — use the role-to-capabilities table below; repos without `capabilities` are skipped here
 
 ### Role-to-Capabilities Mapping
 
@@ -103,7 +111,18 @@ Example: if cwd is `/projects/project-x/.hub` and path is `../repo-a`, the resol
 
 ## 2. Dispatch Mechanism — VS Code Terminals
 
-Hub dispatches work by opening VS Code terminals via the `vscode-automator` MCP server (registered in the hub's project-level `.mcp.json` by `/dx-hub-init`). Each terminal gets an independent interactive Claude session with full plugin and MCP access. The user can see all sessions live and intervene at any time.
+`hub.launcher` decides how the per-repo sessions start:
+
+| `hub.launcher` | Behaviour |
+|----------------|-----------|
+| `auto` (default) | VS Code terminals via the `vscode-automator` MCP server (registered in the hub's `.mcp.json` by `/dx-hub-init`) when its tools are in the session; otherwise **print** |
+| `vscode-automator` | Same as `auto` — and the same fallback; it never fails a dispatch |
+| `terminal` | macOS Terminal.app windows via `osascript`, one per repo — works from any host, including Copilot CLI |
+| `none` | **print**: nothing is started (same as `--no-launch`) |
+
+**print** writes `state/<ticket-id>/launch/<repo>.sh` per repo (cd + the CLI command, built by `build-launch.sh`), records it in `status.json` `launch`, and shows `bash '<script>'` lines to paste into any terminal. A missing launcher never makes the agent improvise with other tools.
+
+Each session is independent, with full plugin and MCP access. The user can see all sessions live and intervene at any time.
 
 ### Terminal Launch Sequence
 
@@ -117,12 +136,20 @@ For each target repo:
 With `hub.engine: copilot`, steps 3–4 are one command — `copilot --session-id <uuid> -i "<delegation prompt>"` — with a lowercase uuid per repo (recorded in `status.json` `sessions`) and the skill written plugin-prefixed (`/dx-core:dx-agent-all`), since Copilot CLI does not know plugin skills by their bare name. `hub.model`, when set, is passed as `--model` to either CLI.
 5. **Pause:** wait 2s before next terminal (avoid focus conflicts)
 
+### Tool names by host
+
+Skill files call MCP tools by their Claude Code name, `mcp__<server>__<tool>`. Copilot CLI registers the same tool as `<server>-<tool>` (`mcp__ado__wit_work_item` → `ado-wit_work_item`). The arguments are the same; the agent calls whichever form its host lists.
+
+### ADO project
+
+The repos of one hub often live in different ADO projects, and the ADO MCP server prompts for a project when none is passed — which an agent session cannot answer. Dispatch therefore always passes one: it tries the project from a ticket URL, then each candidate `repos[].ado-project` (and `scm.project`), and once the item is found uses its `System.TeamProject` for every further call. The project is written to `context.md`, `status.json` and the delegation prompt.
+
 ### Delegation Prompt
 
 The prompt typed into each repo's Claude session:
 
 ```
-Ticket <id> raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>.
+Ticket <id> (ADO project <project>) raw content is pre-seeded at .ai/specs/<dir-name>/<raw-file>.
 Cross-repo context at <hub-abs-path>/state/<ticket-id>/context.md — read it before starting.
 You handle the <repo-name> portion (<role>).
 Also involved: <other-repos-and-roles>.
@@ -164,8 +191,10 @@ state/<ticket-id>/status.json
   "ticket": "12345",
   "title": "Add user profile page",
   "type": "User Story",
+  "project": "my-project",
   "skill": "/dx-agent-all",
   "engine": "copilot",
+  "launcher": "vscode-automator",
   "started": "2026-01-15T10:30:00Z",
   "repos": {
     "repo-fe": "running",
@@ -178,9 +207,9 @@ state/<ticket-id>/status.json
 }
 ```
 
-Status values: `running` | `done` | `blocked` | `failed`
+Status values: `pending` | `running` | `done` | `blocked` | `failed` (`pending` = written but not started yet)
 
-`engine` and `sessions` are written by dispatches since `hub.engine` exists; `sessions` (repo → Copilot `--session-id`) only for the `copilot` engine. Readers must treat both as optional. `/dx-hub-status --json` prints all status files as one JSON array.
+`engine`, `sessions`, `project`, `launcher` and `launch` are optional for readers — older dispatches lack them. `sessions` (repo → `--session-id`) is written for the `copilot` engine and whenever `launch` is; `launch` (repo → `{cwd, command, script}`) for the `terminal` and print launchers. `/dx-hub-status --json` prints all status files as one JSON array.
 
 Hub writes the initial file. Each repo's Claude session updates its own entry when finished or blocked. The delegation prompt includes the instruction to do this.
 
@@ -226,6 +255,7 @@ All hub settings live under `hub:` in `.ai/config.yaml`:
 | `hub.engine` | `claude` | CLI started in each repo terminal: `claude` or `copilot` |
 | `hub.model` | *(unset)* | Model passed as `--model` to that CLI; unset = the CLI's default |
 | `hub.terminal-delay` | `5` | Seconds to wait for Claude to start in terminal (`claude` engine) |
+| `hub.launcher` | `auto` | How sessions start: `auto`, `vscode-automator`, `terminal`, `none` (table above) |
 | `hub.state-ttl` | `7d` | How long to keep completed state entries |
 
 The `repos:` list is a top-level key (not nested under `hub:`):
@@ -234,4 +264,8 @@ The `repos:` list is a top-level key (not nested under `hub:`):
 |-----|----------|-------------|
 | `repos[].name` | yes | Display name, used for state file names and terminal identification |
 | `repos[].path` | yes | Absolute or relative path to repo root |
-| `repos[].capabilities` | no | List of capability tags: `fe`, `be` |
+| `repos[].capabilities` | no | List of capability tags: `fe`, `be`. `[]` = neither (matched by name/keywords only) |
+| `repos[].keywords` | no | Words that point a ticket at this repo (title, area path, tags) when the repo name does not contain them |
+| `repos[].ado-project` | for ADO | The repo's ADO project — a candidate when fetching the ticket |
+
+`tracker.provider` (default `ado`) and, for ADO, `scm.org` sit at the top level as in any dx config. `/dx-hub-dispatch` prints a `default:` line for every key above that is missing, and `/dx-hub-config fill-defaults` writes them.

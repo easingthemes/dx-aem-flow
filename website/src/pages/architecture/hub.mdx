@@ -64,14 +64,15 @@ export const base = import.meta.env.BASE_URL;
 │       └── <ticket>/
 │           ├── raw-story.md  ← fetched ticket (copied to each repo)
 │           ├── context.md    ← cross-repo context for delegates
-│           └── status.json   ← per-repo status (running/done/blocked/failed)
+│           ├── status.json   ← per-repo status (pending/running/done/blocked/failed)
+│           └── launch/       ← per-repo start scripts (terminal / print launchers)
 ├── Frontend-Repo/           ← sibling repo with .ai/config.yaml
 └── Backend-Repo/            ← sibling repo with .ai/config.yaml`}</CommandBlock>
 
   <HighlightBox severity="warning" title="Requirements">
     <ul class="text-sm space-y-1 mt-2">
-      <li>macOS with Accessibility permission (vscode-automator uses AppleScript)</li>
-      <li>VS Code open with the hub workspace</li>
+      <li>To have terminals opened for you: macOS — with Accessibility permission for vscode-automator (VS Code terminals), or <code>hub.launcher: terminal</code> (Terminal.app)</li>
+      <li>Without either (any OS, or a Copilot CLI session without vscode-automator) dispatch prints one <code>bash '&lt;script&gt;'</code> line per repo to run yourself</li>
       <li>Sibling repos with <code>.ai/config.yaml</code> (run <code>/dx-init</code> in each first)</li>
     </ul>
   </HighlightBox>
@@ -199,17 +200,31 @@ export const base = import.meta.env.BASE_URL;
   enabled: true
   engine: claude              # claude | copilot — CLI started per repo
   terminal-delay: 5          # seconds to wait for Claude to start
+  launcher: auto              # auto | vscode-automator | terminal | none
   state-ttl: 7d               # clean dispatches older than 7 days
+
+tracker:
+  provider: ado
 
 repos:
   - name: Frontend-Repo
     path: ../Frontend-Repo     # relative to hub
     base-branch: develop
+    ado-project: my-project
     capabilities: [fe]
   - name: Backend-Repo
     path: ../Backend-Repo
     base-branch: develop
-    capabilities: [be]`}</CommandBlock>
+    ado-project: my-other-project
+    capabilities: [be]
+  - name: Site-BrandA
+    path: ../Site-BrandA
+    base-branch: develop
+    ado-project: my-project
+    capabilities: []           # neither fe nor be — matched by name/keywords
+    keywords: [brand-a-shop]`}</CommandBlock>
+
+  <p class="text-sm mt-4">Missing keys are not guessed silently: <code>/dx-hub-dispatch</code> prints each default it applies, and <code>/dx-hub-config fill-defaults</code> writes them into an older hub's config.</p>
 
   <h3 class="text-lg font-bold mt-8 mb-4">Config Fields</h3>
   <table class="w-full text-sm border-collapse bg-white rounded overflow-hidden">
@@ -242,6 +257,11 @@ repos:
         <td class="p-3">Seconds to wait for Claude to start in each terminal</td>
       </tr>
       <tr class="border-t border-gray-200">
+        <td class="p-3"><code>hub.launcher</code></td>
+        <td class="p-3"><code>auto</code></td>
+        <td class="p-3">How sessions start: <code>auto</code> — VS Code terminals via vscode-automator when its tools are in the session, otherwise print one <code>bash '&lt;script&gt;'</code> line per repo; <code>terminal</code> — macOS Terminal.app windows (works from Copilot CLI); <code>none</code> — print only (same as <code>--no-launch</code>)</td>
+      </tr>
+      <tr class="border-t border-gray-200">
         <td class="p-3"><code>hub.state-ttl</code></td>
         <td class="p-3"><code>7d</code></td>
         <td class="p-3">Auto-clean dispatch state older than this</td>
@@ -259,7 +279,17 @@ repos:
       <tr class="border-t border-gray-200">
         <td class="p-3"><code>repos[].capabilities</code></td>
         <td class="p-3"><code>[]</code></td>
-        <td class="p-3">Tags for scope routing (e.g., fe, be)</td>
+        <td class="p-3">Tags for the FE/BE guess (<code>fe</code>, <code>be</code>); <code>[]</code> for repos that are neither</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>repos[].keywords</code></td>
+        <td class="p-3"><code>[]</code></td>
+        <td class="p-3">Words in a ticket's title, area path or tags that point at this repo. Distinctive words of the repo name (a brand) match without being listed</td>
+      </tr>
+      <tr class="border-t border-gray-200">
+        <td class="p-3"><code>repos[].ado-project</code></td>
+        <td class="p-3">--</td>
+        <td class="p-3">The repo's ADO project. Dispatch always passes a project when fetching the ticket, then uses the ticket's own <code>System.TeamProject</code></td>
       </tr>
     </tbody>
   </table>
@@ -368,12 +398,12 @@ repos:
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Repo discovery</td>
-        <td class="p-3">Sibling directories on disk + capabilities</td>
+        <td class="p-3">Repo name / keywords in the ticket, then capabilities</td>
         <td class="p-3"><code>/dx-discover-repos</code> against <code>repos.json</code></td>
       </tr>
       <tr class="border-t border-gray-200">
         <td class="p-3">Dispatch mechanism</td>
-        <td class="p-3">VS Code terminals via vscode-automator MCP</td>
+        <td class="p-3">VS Code terminals via vscode-automator MCP, Terminal.app, or printed commands (<code>hub.launcher</code>)</td>
         <td class="p-3">KAI-HUB router queues one worker per repo → ADO REST API</td>
       </tr>
       <tr class="border-t border-gray-200">

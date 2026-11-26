@@ -1,0 +1,9 @@
+hub:
+  enabled: true
+  engine: cursor
+  terminal-delay: soon
+  launcher: tmux
+repos:
+  - name: one
+    path: ../one
+    capabilities: [fe]

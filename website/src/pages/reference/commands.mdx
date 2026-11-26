@@ -481,8 +481,8 @@ import CommandBlock from '../../components/CommandBlock.astro';
       </tr></thead>
       <tbody class="divide-y divide-gray-100">
         <tr><td class="p-3"><code>/dx-hub-init</code></td><td class="p-3"><code>[path]</code></td><td class="p-3">Initialise a hub directory, discover sibling repos, merge configs</td></tr>
-        <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | terminal-delay &lt;s&gt;]</code></td><td class="p-3">View and edit hub configuration</td></tr>
-        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id&gt; [repos...] [--skill] [autonomous]</code></td><td class="p-3">Dispatch a ticket to multiple repos via VS Code terminals (Claude Code or Copilot CLI, <code>hub.engine</code>)</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-config</code></td><td class="p-3"><code>[show | add-repo &lt;path&gt; | fill-defaults | terminal-delay &lt;s&gt;]</code></td><td class="p-3">View and edit hub configuration</td></tr>
+        <tr><td class="p-3"><code>/dx-hub-dispatch</code></td><td class="p-3"><code>&lt;id&gt; [repos...] [--skill] [autonomous] [--no-launch]</code></td><td class="p-3">Dispatch a ticket to multiple repos — one Claude Code or Copilot CLI session each (<code>hub.engine</code>), started in VS Code terminals, Terminal.app or by hand (<code>hub.launcher</code>)</td></tr>
         <tr><td class="p-3"><code>/dx-hub-status</code></td><td class="p-3"><code>[id] [--json] | --clean</code></td><td class="p-3">Show which repos are running, done, blocked, or failed (<code>--json</code>: one JSON array)</td></tr>
         <tr><td class="p-3"><code>/dx-discover-repos</code></td><td class="p-3"><code>&lt;id&gt;</code></td><td class="p-3">Resolve which repos a work item touches (3-tier cascade)</td></tr>
       </tbody>

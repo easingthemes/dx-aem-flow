@@ -171,24 +171,43 @@ Accept `all` to include every discovered repo.
 
 ### Build config
 
-Merge selected repos into a hub `config.yaml`:
+Merge selected repos into a hub `config.yaml`. Write **every** key below, defaults included — `/dx-hub-dispatch` reads all of them and prints a `default:` notice for each one it has to fill in:
 
 ```yaml
 hub:
   enabled: true
   engine: claude          # claude | copilot — CLI /dx-hub-dispatch starts per repo
-  terminal-delay: 5
+  # model:                # optional — passed as --model to that CLI
+  terminal-delay: 5       # seconds for Claude to start in a vscode-automator terminal
+  launcher: auto          # auto | vscode-automator | terminal | none — see below
   state-ttl: 7d
+
+tracker:
+  provider: <tracker.provider from the first selected repo, else scm.provider, else ado>
+
+scm:
+  provider: ado
+  org: <scm.org from the first selected repo — omit if absent>
+  # project: omitted on purpose — a hub spans projects; each repo carries its own ado-project
 
 repos:
   - name: <dir-name>
     path: ../<dir-name>
     base-branch: <scm.base-branch from repo config, default: main>
-    capabilities: [<fe|be — infer from repo name or ask user>]
-    ado-project: <scm.project from repo config, omit if absent>
+    ado-project: <scm.project from repo config — ask if absent>
+    capabilities: [<fe|be — infer from repo name or ask user; [] if neither>]
+    keywords: [<product / brand words that identify this repo in ticket titles — optional>]
 ```
 
-The `capabilities` field is used by `/dx-hub-dispatch` to auto-detect which repos a ticket needs. Common values: `fe` (frontend), `be` (backend). If unsure, ask the user during repo selection. A repo can have multiple capabilities: `[fe, be]`.
+When the first selected repo uses `tracker.provider: jira`, copy its `jira:` block (`url`, `project-key`) as well.
+
+**`launcher`:** `auto` opens VS Code terminals through vscode-automator when its tools are in the session and otherwise prints one `bash '<script>'` line per repo; `terminal` opens macOS Terminal.app windows (works from Copilot CLI, which has no vscode-automator); `none` always prints. Ask the user only if they said they run the hub from Copilot CLI — then suggest `terminal`.
+
+**`capabilities`** drive the FE/BE guess in `/dx-hub-dispatch` (`fe`, `be`; a repo can have both). **`keywords`** win over that guess: a ticket whose title, area path or tags contain one dispatches to that repo. Dispatch also matches distinctive words of the repo name on its own (a brand in `site-brand-a-global`), so keywords are for words the name does not contain. If a repo fits neither `fe` nor `be` (a per-brand site, a content repo), write `capabilities: []` and ask the user for keywords. Never leave the key out — an absent key reads as "not set up yet".
+
+**`ado-project`** is required for ADO: the repos of one hub often sit in different ADO projects, and the ticket is fetched with these as candidates. If a repo's config has no `scm.project`, ask.
+
+**Reinit keeps what the user set:** when "Confirm reinit" ran, read the existing `.ai/config.yaml` first. For a repo that stays selected, keep its existing `capabilities`, `keywords`, `ado-project` and `base-branch`; keep existing `hub.*`, `tracker` and `scm` values; add only what is missing.
 
 One entry per selected repo. Paths are relative to the hub directory. No hardcoded org URLs, project names, or credentials.
 
@@ -298,7 +317,7 @@ The hub needs project-level MCP servers so the user can read tickets, check PRs,
 
 **Step 5 — Add vscode-automator MCP server:**
 
-The hub's dispatch mechanism uses the `vscode-automator` MCP server to open VS Code terminals. Add it to the merged MCP config:
+With `hub.launcher: auto` (or `vscode-automator`), `/dx-hub-dispatch` opens VS Code terminals through the `vscode-automator` MCP server when its tools are present. When the server is not running in a session (not registered, a path that did not resolve, a Copilot CLI session without it), dispatch prints one command per repo instead — or opens Terminal.app windows with `hub.launcher: terminal`. Add it to the merged MCP config:
 
 ```json
 {
@@ -343,7 +362,10 @@ No build commands. This directory dispatches to repos.
 ## MCP Servers
 
 ADO MCP is configured — use `mcp__ado__wit_work_item` (`action: "get"`, or
-`action: "get_batch"` for several IDs) to read tickets directly.
+`action: "get_batch"` for several IDs) to read tickets directly. Always pass
+`project`: repos here sit in different ADO projects (`repos[].ado-project` in
+`.ai/config.yaml`), and an ADO call without one fails in an agent session.
+On Copilot CLI the same tool is `ado-wit_work_item` (`<server>-<tool>`).
 
 ## Specs & Progress
 
@@ -402,7 +424,9 @@ Print:
 
 **Location:** $HUB_PATH
 **Repos:** <N> repos configured
+**Engine / launcher:** <hub.engine> / <hub.launcher>
 **Terminal delay:** 5s (configurable via hub.terminal-delay)
+**Repos without capabilities or keywords:** <list, or "none"> — dispatch can only reach these by name
 **Workspace file:** <created at hub.code-workspace | not created>
 
 ### Files created:
@@ -458,7 +482,11 @@ If `../.hub/.ai/config.yaml` already exists, prompts for confirmation before ove
 
 ### Hub already exists — want to add a repo
 **Cause:** Re-running init overwrites the full repo list.
-**Fix:** Edit `.ai/config.yaml` directly to append a new entry under `repos:`. Follow the existing format (name, path, base-branch, ado-project).
+**Fix:** Run `/dx-hub-config add-repo <path>`, or edit `.ai/config.yaml` directly to append a new entry under `repos:` (name, path, base-branch, ado-project, capabilities, keywords).
+
+### Hub created by an older version
+**Cause:** the hub's `.ai/config.yaml` predates `hub.engine`, `hub.launcher`, `tracker` or per-repo `capabilities`, so `/dx-hub-dispatch` prints `default:` / `warn:` lines.
+**Fix:** `/dx-hub-config fill-defaults` adds the missing keys without touching existing ones.
 
 ### No plugins available in hub
 **Cause:** No sibling repo had `.claude/settings.json` when hub-init ran, so marketplace and plugin settings were not copied.
