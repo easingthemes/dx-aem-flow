@@ -54,6 +54,12 @@ SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir 2>/dev/null)
 ```
 Extract ID from the spec directory name. If no spec dir found, ask the user for the work item ID.
 
+As soon as the ID is known, start the run (see [Run Result](#run-result)):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-req-dod --id <id> --progress-file dod-progress.md
+```
+
 Read `.ai/config.yaml` for:
 - `scm.org` — ADO org URL
 - `scm.project` — ADO project name
@@ -71,6 +77,8 @@ Read `scm.wiki-dod-url` from `.ai/config.yaml`.
   Add the wiki URL and re-run. See docs/authoring/wiki-checklist-format.md for page format requirements.
 ```
 
+Run result: `--status blocked --next "set scm.wiki-dod-url, then /dx-req-dod <id>" --metric fail_at=config`.
+
 **Fetch the wiki page content via MCP:**
 ```
 mcp__ado__wiki
@@ -83,6 +91,8 @@ mcp__ado__wiki
 ✗ Could not fetch DoD wiki page from <url>.
   Verify the URL is correct and the wiki page exists.
 ```
+
+Run result: `--status failed --next "/dx-req-dod <id>" --metric fail_at=wiki`.
 
 ### If provider = jira (Confluence)
 
@@ -122,7 +132,7 @@ Parse the wiki content to extract:
 If a spec directory exists for this work item:
 1. Check if `dod.md` exists in it
 2. If it exists, read content and check staleness (ADO ID match)
-3. If inputs unchanged → print `dod.md already up to date — skipping` and STOP
+3. If inputs unchanged → print `dod.md already up to date — skipping`, write the run result (`--status done --summary "dod.md already up to date — nothing to do"`, `--verdict` from the existing `dod.md`) and STOP
 4. If outdated → print `dod.md exists but is outdated — regenerating`
 5. If not found → continue normally
 
@@ -347,6 +357,30 @@ Re-run DoD criteria evaluation (same as step 5) against updated evidence. Update
 ### Recommended action
 No action needed — all automated DoD criteria passed.
 ```
+
+Then write the run result as the last action (see [Run Result](#run-result)).
+
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — once, as soon as the work item ID is known (step 1). **End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-req-dod --id <id> --status <done|blocked|failed> \
+  --verdict "<PASS|FAIL>" --next "<next step or none>" --work-item "<work item url>" \
+  --summary "<one line, e.g. DoD: FAIL 8/10 — 2 tasks created>" \
+  --metric criteria_pass=<n> --metric criteria_total=<n> --metric fixed=<n> --metric tasks_created=<n> [--metric fail_at=<step>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Verdict produced (PASS or FAIL — the check itself succeeded), comment posted or dry run | `done` | `none`, or what is left (`[DoD]` tasks open, `/dx-post-merge <id>` after the QA deploy) |
+| `dod.md` already up to date — nothing to do | `done` | `none` |
+| `scm.wiki-dod-url` not configured | `blocked` | `set scm.wiki-dod-url, then /dx-req-dod <id>` |
+| DoD wiki or work item could not be fetched, comment could not be posted | `failed` | `/dx-req-dod <id>` |
+
+Counts are the final ones (after step 8f). `/dx-post-merge` run from step 8e writes its own result (`dx-post-merge-<id>.json`).
 
 ## Examples
 

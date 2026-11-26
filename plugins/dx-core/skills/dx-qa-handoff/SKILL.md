@@ -22,7 +22,13 @@ You never touch AEM. Everything comes from files earlier steps wrote; each is op
 SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir <work-item-id-if-given>)
 ```
 
-No spec dir → ask for the ID (interactive) or STOP with `No spec dir for <id> — run /dx-doc-gen <id> first.` (non-interactive, `../../shared/interaction-mode.md`).
+Once the ID is known, start the run (see [Run Result](#run-result)):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-qa-handoff --id <id>
+```
+
+No spec dir → ask for the ID (interactive) or STOP with `No spec dir for <id> — run /dx-doc-gen <id> first.` (non-interactive, `../../shared/interaction-mode.md`) — run result `--status blocked --next "/dx-doc-gen <id>" --metric fail_at=spec-dir`.
 
 Read `.ai/config.yaml`: `tracker.provider` (default `ado`), `scm.org`, `scm.project`. Provider rules: `../../shared/provider-config.md`.
 
@@ -70,6 +76,28 @@ Write `$SPEC_DIR/qa-handoff.md` with the posted text (or the dry-run text).
 **Wiki:** <url> / not generated
 **Screenshots:** <N> linked
 ```
+
+Then write the run result as the last action.
+
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it. **Start** in step 1; **end** — last action of **every** exit:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-qa-handoff --id <id> --status <done|blocked|failed> \
+  --wiki "<wiki url, if any>" --pr "<PR url, if any>" --next "<next step or none>" \
+  --summary "<one line, e.g. [QAHandoff] update posted — 1 QA page, 2 screenshots>" \
+  --metric comment_mode=<posted|update|unchanged|dry-run> --metric qa_pages=<n> --metric screenshots=<n> [--metric fail_at=<step>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Comment posted, update posted, or dry run | `done` | `none`, or what is missing (`/aem-demo-page <id>`, `/dx-doc-gen <id>`) |
+| Nothing changed since the last handoff — nothing to do | `done` (`--summary "unchanged since the last handoff — nothing posted"`) | `none` |
+| No spec dir (non-interactive) | `blocked` | `/dx-doc-gen <id>` |
+| Work item could not be fetched, comment could not be posted | `failed` | `/dx-qa-handoff <id>` |
+
+Under `/dx-post-merge` this is its own file (`dx-qa-handoff-<id>.json`).
 
 ## Examples
 

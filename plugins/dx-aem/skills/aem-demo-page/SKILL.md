@@ -10,7 +10,7 @@ allowed-tools: ["read", "edit", "execute", "search", "write", "AEM/*", "playwrig
 
 **Isolation check.** This skill is meant to run in its own context (`context: fork`). If you can see the user's messages from before this skill was invoked, you are running inline (Copilot CLI ignores `context: fork`): do not run the steps below yourself. Start one subagent with your task/subagent tool, give it only this instruction — "Invoke the dx-aem:aem-demo-page skill with these arguments: <the arguments you were given, or none>. Run it fully and reply with its final report only." — then show the user that report and stop. If you cannot see earlier user messages, or your only earlier message is that instruction to invoke dx-aem:aem-demo-page (you are a fork or that subagent), continue below.
 
-**Platform note:** needs AEM MCP (`AEM/*`) and Playwright MCP (`playwright/*`). If they are not available, say: "aem-demo-page requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI." and stop.
+**Platform note:** needs AEM MCP (`AEM/*`) and Playwright MCP (`playwright/*`). If they are not available, say: "aem-demo-page requires AEM and Playwright MCP servers. Please use Claude Code or Copilot CLI." and stop — after writing a `failed` run result (start + end, `--next "/aem-demo-page <args>"`, `--metric fail_at=mcp`; see [Run Result](#run-result)).
 
 You set up one demo page per component on AEM, configure it, and capture two screenshots: the dialog (only when the dialog changed) and the author preview (`?wcmmode=disabled`). The same page serves developer testing (`--local`, before the PR), QA and the demo call (QA, after merge). Your output, `demo/demo-page.md`, is read by `/dx-doc-gen` and `/dx-qa-handoff`.
 
@@ -71,6 +71,12 @@ digraph aem_demo_page {
 
 From `$ARGUMENTS`: a numeric token is the work item ID; `--local` selects the local instance; any other token is a component name. Default instance: **QA**.
 
+Start the run as the first action after parsing (see [Run Result](#run-result)) — `RUN_ID_KEY` is the work item ID, else the first component name. Arguments with neither → start as soon as **Resolve spec dir and components** finds one (the spec dir's work item ID, else the first component):
+
+```bash
+bash .ai/lib/run-result.sh --start --skill aem-demo-page --id <RUN_ID_KEY>
+```
+
 Read `.ai/config.yaml`:
 - `aem.author-url` (default `http://localhost:4502`), `aem.author-url-qa`, `aem.publish-url-qa`
 - `aem.component-path`, `aem.resource-type-pattern`, `aem.component-prefix`, `aem.demo-parent-path`, `aem.content-paths`
@@ -87,6 +93,8 @@ QA run needs `aem.author-url-qa`. Local run always passes (localhost default).
 ```
 BLOCKED: aem.author-url-qa is not set in .ai/config.yaml. Set it, or run /aem-demo-page --local.
 ```
+
+Run result: `--status blocked --next "set aem.author-url-qa, then /aem-demo-page <id>" --metric fail_at=config`.
 
 ### Resolve spec dir and components
 
@@ -110,6 +118,8 @@ At least one component resolved → "yes".
 Cannot identify the component — pass it: /aem-demo-page <component> [<work-item-id>]
 ```
 
+Run result: `--status blocked --next "/aem-demo-page <component> <id>" --metric fail_at=component`.
+
 ### Other repo ready?
 
 A story can need changes in more than one repo (separate backend and frontend repos). A demo page built from half the change shows the wrong thing, so check before writing anything to AEM.
@@ -130,6 +140,8 @@ Cross-repo dependency — <other repo> must be deployed to <ENV> first (<what it
 ```
 
 Write nothing to AEM. `/dx-post-merge` treats this like "not deployed to QA" and stops.
+
+Run result: `--status blocked --next "/aem-demo-page <id> after the <other repo> deploy" --metric fail_at=cross-repo`.
 
 ### Detect dialog changes
 
@@ -164,6 +176,8 @@ Not deployed to QA yet: <component> (<missing fields | component missing>). Re-r
 ```
 
 Write nothing to QA. (`/dx-post-merge` stops here too.)
+
+Run result: `--status blocked --next "/aem-demo-page <id> after the QA deploy" --metric fail_at=deploy-gate`.
 
 ### Select or create page
 
@@ -260,6 +274,31 @@ Facts only — field descriptions for editors are written by `/dx-doc-gen`.
 **Output:** `<spec-dir>/demo/demo-page.md`
 **Next:** <local: "/aem-fe-verify <component>" | qa: "/dx-doc-gen <id>, then /dx-qa-handoff <id>">
 ```
+
+Then write the run result as the last action (`done`; see [Run Result](#run-result)).
+
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../../dx-core/shared/run-result.md`. Never fail the run because of it.
+
+The helper is dx-core's `run-result.sh`, run from the project's `.ai/lib/` copy — like `upload-attachment.sh` above (dx-aem's `${CLAUDE_PLUGIN_ROOT}` is not dx-core's root). If `.ai/lib/run-result.sh` is missing, print `Run result not written — run /dx-upgrade to install .ai/lib/run-result.sh.` once and carry on.
+
+**Start** — in **Parse arguments and load config**. **End** — last action of **every** exit, after the final message, with the same `--id`:
+
+```bash
+bash .ai/lib/run-result.sh --skill aem-demo-page --id <RUN_ID_KEY> --status <done|blocked|failed> \
+  --next "<next step or none>" --work-item "<work item url, if any>" \
+  --summary "<one line, e.g. qa: page reused, 2 screenshots uploaded>" \
+  --metric env=<qa|local> --metric pages=<n> --metric pages_created=<n> --metric screenshots=<n> --metric screenshots_uploaded=<n> [--metric fail_at=<node>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Present summary (a missing screenshot or failed upload is noted in `--summary`, still `done`) | `done` | the summary's **Next** line |
+| STOP: instance not configured, no component, cross-repo dependency, not deployed to QA | `blocked` | as given at each STOP |
+| AEM / Playwright MCP unavailable or failing, page could not be created or configured | `failed` | `/aem-demo-page <args>` |
+
+Only when nothing names the run — no work item ID, no spec dir, no component — is there no id to write under. Under `/dx-post-merge` this is its own file (`aem-demo-page-<id>.json`).
 
 ## Examples
 

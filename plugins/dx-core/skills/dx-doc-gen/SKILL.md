@@ -19,6 +19,12 @@ SPEC_DIR=$(bash .ai/lib/dx-common.sh find-spec-dir <work-item-id-if-provided>)
 
 If the script exits with error and an ID was given → **retro mode** (section 2r). With no ID at all, ask the user for it.
 
+As soon as the ID is known (given, or taken from the spec dir name), start the run (see [Run Result](#run-result)):
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --start --skill dx-doc-gen --id <id>
+```
+
 Read `.ai/config.yaml` for:
 - `tracker.provider` — `ado` (default) or `jira`
 - `scm.org` — ADO org URL
@@ -51,7 +57,7 @@ If none of the story files exist (`raw-story.md`, `explain.md`, `share-plan.md`,
 
 For a story finished without dx spec files. Discover the content from the work item and its PRs, then continue at section 3 with the same templates.
 
-1. **Fetch the work item** — `mcp__ado__wit_work_item` (`action: "get"`, `expand: "Relations"`); Jira: `mcp__atlassian__jira_get_issue`. Take title, type, state, description, acceptance criteria, iteration path (sprint = last segment, `Sprint41` → `Sprint 41`). Not found → print the error and STOP.
+1. **Fetch the work item** — `mcp__ado__wit_work_item` (`action: "get"`, `expand: "Relations"`); Jira: `mcp__atlassian__jira_get_issue`. Take title, type, state, description, acceptance criteria, iteration path (sprint = last segment, `Sprint41` → `Sprint 41`). Not found → print the error, write the run result (`--status failed --next "/dx-doc-gen <id>" --metric fail_at=fetch`) and STOP.
 2. **Linked PRs** — relations with `vstfs:///Git/PullRequestId/{projectId}%2F{repoId}%2F{prId}`. Fetch each with `mcp__ado__repo_pull_request` (`action: "get"`). Keep only `completed` PRs in `scm.repo-id` (or a repo in `repos:`). Collect title, description, source/target branch, merge commit. None → warn `No linked PRs found — documentation is based on the story only.`
 3. **Changed files** — `git show --name-only --format= -m --first-parent <merge-commit>` when the commit is local; else keywords from the title and PR descriptions with Grep/Glob; else file paths named in the PR descriptions. Group by area (FE/BE/Config).
 4. **Spec dir** — `DIR_NAME=$(bash .ai/lib/dx-common.sh slugify <id> "<title>")`, `mkdir -p ".ai/specs/$DIR_NAME/docs"`, write the sprint to `.sprint` and the first PR to `.pr`.
@@ -67,7 +73,7 @@ Read `$SPEC_DIR/.sprint` for the sprint name. If the file doesn't exist, try to 
 1. Check if `docs/wiki-page.md` exists in the spec directory
 2. If it exists, read its content
 3. Check staleness: does the ADO ID match? Has `implement.md` or `demo/demo-page.md` changed since generation?
-4. If current → print `docs/wiki-page.md already up to date — skipping` and STOP
+4. If current → print `docs/wiki-page.md already up to date — skipping`, write the run result (`--status done --summary "wiki-page.md already up to date — nothing to do"`, `--wiki` from `.wiki-url` if present) and STOP
 5. If outdated → print `docs/wiki-page.md exists but is outdated — regenerating`
 6. If not found → continue normally
 
@@ -189,7 +195,7 @@ mcp__atlassian__confluence_search
   cql: "title = '<confluence.doc-root>' AND space = '<confluence.space-key>'"
 ```
 
-Extract `page_id` from results → `DOC_ROOT_ID`. If not found, print: `Doc root page "<confluence.doc-root>" not found in space <space-key> — create it in Confluence first.` and STOP.
+Extract `page_id` from results → `DOC_ROOT_ID`. If not found, print: `Doc root page "<confluence.doc-root>" not found in space <space-key> — create it in Confluence first.`, write the run result (`--status blocked --next "create the doc root page, then /dx-doc-gen <id>" --metric fail_at=wiki`) and STOP.
 
 4. **Find or create the sprint subfolder page:**
 
@@ -269,6 +275,30 @@ If the sprint is `Unknown`, create the page under `DOC_ROOT_ID` directly with an
 - Word count: <N> words
 - Mode: Local / Wiki (posted to <wiki path>)
 ```
+
+Then write the run result as the last action (see [Run Result](#run-result)).
+
+## Run Result
+
+Machine-readable outcome for a tool that started this skill (dashboard, script, hub), per `../../shared/run-result.md`. Never fail the run because of it.
+
+**Start** — once, as soon as the ID is known (section 1). **End** — last action of **every** exit, after the final message:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/data/lib/run-result.sh" --skill dx-doc-gen --id <id> --status <done|blocked|failed> \
+  --wiki "<page URL from .wiki-url, if posted>" --next "<next step or none>" \
+  --summary "<one line, e.g. wiki page posted (AEM template, retro)>" \
+  --metric screenshots=<n linked> --metric posted=<true|false> --metric retro=<true|false> [--metric fail_at=<step>]
+```
+
+| Exit | `--status` | `--next` |
+|------|------------|----------|
+| Page generated (posted, or local only — say which in `--summary`, e.g. `saved locally only (wiki id not configured)`) | `done` | `/dx-qa-handoff <id>`, or `none` |
+| `docs/wiki-page.md` already up to date — nothing to do | `done` | `none` |
+| Confluence doc root page missing | `blocked` | `create the doc root page, then /dx-doc-gen <id>` |
+| Work item not found (retro), wiki/Confluence write failed | `failed` | `/dx-doc-gen <id>` |
+
+Under `/dx-post-merge` or `/dx-req-dod` this is its own file (`dx-doc-gen-<id>.json`).
 
 ## Examples
 
