@@ -31,6 +31,7 @@ digraph aem_demo_page {
     "Deploy gate" [shape=box];
     "Deployed to QA?" [shape=diamond];
     "STOP: not deployed to QA" [shape=doublecircle];
+    "Find local source page" [shape=box];
     "Select or create page" [shape=box];
     "Configure component" [shape=box];
     "Diff dialog against baseline" [shape=box];
@@ -53,7 +54,8 @@ digraph aem_demo_page {
     "QA run?" -> "Select or create page" [label="no (local)"];
     "Deploy gate" -> "Deployed to QA?";
     "Deployed to QA?" -> "STOP: not deployed to QA" [label="no"];
-    "Deployed to QA?" -> "Select or create page" [label="yes / cannot tell"];
+    "Deployed to QA?" -> "Find local source page" [label="yes / cannot tell"];
+    "Find local source page" -> "Select or create page";
     "Select or create page" -> "Configure component";
     "Configure component" -> "Diff dialog against baseline";
     "Diff dialog against baseline" -> "Capture screenshots";
@@ -77,7 +79,7 @@ Start the run as the first action after parsing (see [Run Result](#run-result)) 
 bash .ai/lib/run-result.sh --start --skill aem-demo-page --id <RUN_ID_KEY> --progress-file demo-page-progress.md
 ```
 
-**Progress** — once the spec dir is known (**Resolve spec dir and components**), one row per step in `demo-page-progress.md`, each `in_progress` before it starts: `Checks` (instance, component, other repo, deploy gate) → `Select or create page` → `Configure component` → `Capture screenshots` → `Upload screenshots` (`skipped` for local runs or Jira) → `Write demo-page.md`. A STOP leaves `Checks` `blocked` with the reason. Command and rules: `../../../dx-core/shared/run-result.md` § 2 — dx-aem runs the project copy:
+**Progress** — once the spec dir is known (**Resolve spec dir and components**), one row per step in `demo-page-progress.md`, each `in_progress` before it starts: `Checks` (instance, component, other repo, deploy gate) → `Find local source page` (`skipped` for local runs) → `Select or create page` → `Configure component` → `Capture screenshots` → `Upload screenshots` (`skipped` for local runs or Jira) → `Write demo-page.md`. A STOP leaves `Checks` `blocked` with the reason. Command and rules: `../../../dx-core/shared/run-result.md` § 2 — dx-aem runs the project copy:
 
 ```bash
 DX_PROGRESS_FILE="demo-page-progress.md" DX_PROGRESS_TITLE="/aem-demo-page Progress" DX_PROGRESS_LABEL="Step" \
@@ -186,11 +188,26 @@ Write nothing to QA. (`/dx-post-merge` stops here too.)
 
 Run result: `--status blocked --next "/aem-demo-page <id> after the QA deploy" --metric fail_at=deploy-gate`.
 
+### Find local source page
+
+QA runs only. The developer tested the change on a local page, usually with several instances of the component (variants, edge cases, long text, empty optional fields). That page is a better QA demo than one instance with mock data, so use it as the source.
+
+Local AEM is **read-only** here: only `getPageProperties`, `scanPageComponents`, `getNodeContent` with `instance: "local"`. Never write to local.
+
+Per component, first page that exists on local and has ≥1 instance of the component (`scanPageComponents`, match `sling:resourceType`):
+1. `environments.local.pages[].path` in `demo/demo-page.md` (from `/aem-demo-page --local`).
+2. `<aem.demo-parent-path>/<spec-slug>` on local.
+
+Found → `LOCAL_SOURCE` = the page path + every instance of the component on it, in page order: node path relative to the page (`jcr:content/root/container/hero_123`), and the full subtree (`getNodeContent`, depth 10 — multifield items and child nodes are part of the variant). Print `Local source: <path> (<N> instances of <component>)`.
+
+Local not reachable, or no page found → no source, carry on as before. Print `No local source page for <component> — using QA data.` Not an error.
+
 ### Select or create page
 
 Read `../../shared/demo-page-setup.md` and apply it: Page Selection Rule, structure discovery, page creation, `demo/page-structure.md` cache.
 
-- **QA run with a local entry in `demo-page.md`:** try that page path first — the same JCR path is what the developer tested. Use it if it exists on QA with the component; create it there if the component is new.
+- **QA run with `LOCAL_SOURCE`:** the QA page is the same JCR path, when that path is under `aem.demo-parent-path` (a demo page — create it on QA with the local page's template and container chain if missing). When the local page is outside `aem.demo-parent-path` (a production page), do not write to it on QA — use `<aem.demo-parent-path>/<spec-slug>` on QA instead (create if missing). Either way the page gets the component instances from the local source (see **Configure component**), even for an existing component.
+- **QA run with a local entry in `demo-page.md` but no `LOCAL_SOURCE`** (local not reachable): try that page path first — the same JCR path is what the developer tested. Use it if it exists on QA with the component; create it there if the component is new.
 - **Existing component:** reuse the best representative existing page; do not create one.
 - **New component:** create `<aem.demo-parent-path>/<spec-slug>` (fallback `<language-root>/demo/<spec-slug>`), recreate the container chain, add the component.
 
@@ -199,6 +216,14 @@ Record per page: path, `created` (true/false), components on it.
 ### Configure component
 
 Only on pages this skill created, or a component this skill added. Never change authored values on a reused production page.
+
+**With `LOCAL_SOURCE` (QA):** copy every local instance to the QA page, in the same order and container:
+- Same node name exists on QA → `updateComponent` with the local properties; missing → `addComponent` with the local `sling:resourceType`, then `updateComponent`. Recreate child nodes (multifield items) from the local subtree. Leave QA nodes that are not on local alone.
+- Copy authored properties only; skip `jcr:*`, `cq:*` and `sling:*` except `sling:resourceType`.
+- References (`fileReference`, image/link paths under `/content/dam` or `/content`): check each on QA (`getNodeContent`). Missing on QA → keep the value and note `missing on QA: <path>` in the summary — do not upload assets or create pages for them.
+- Then mock only the new/changed fields that are still empty after the copy.
+
+Record per instance: node path, `source: local`, the field values.
 
 Per `demo-page-setup.md` → Demo Data Configuration: real values from an existing authored instance first; mock only new fields with no real data (`Test <label>`, booleans `true`, selects first option). Make sure every **new or changed** dialog field has a value, so the preview shows the change. Record the field values set.
 
@@ -254,6 +279,8 @@ environments:
             new: <true|false>
             node: <component node path>
             fields: { <name>: <value>, ... }               # values this run set or found
+            source: <local|qa>                             # qa only: copied from the local page, or QA data
+        local-source: <local page path or null>            # qa only
     screenshots:
       - { file: demo/<ENV>/dialog-<component>.png, kind: dialog, component: <component>, url: <attachment URL> }   # url: qa only
       - { file: demo/<ENV>/preview-<component>.png, kind: preview, component: <component>, url: <attachment URL> }
@@ -275,6 +302,7 @@ Facts only — field descriptions for editors are written by `/dx-doc-gen`.
 ## aem-demo-page complete — <ENV>
 
 **Page:** <path> (<created|reused>) — [Edit](<url>) · [Preview](<url>)
+**Local source:** <local path, N instances copied | none — QA data>   (qa only)
 **Components:** <name> (<new|updated>), dialog <changed|unchanged|unknown>
 **Screenshots:** <list> (<uploaded to #id | local only>)
 **Dialog diff:** <N added, N removed> (local, with baseline)
@@ -310,13 +338,14 @@ Only when nothing names the run — no work item ID, no spec dir, no component �
 ## Examples
 
 1. `/aem-demo-page hero --local` — while developing: reuses the best page with hero on local AEM, dialog changed in the branch → captures dialog + preview into `demo/local/`, diffs the dialog against `aem-before.md`.
-2. `/aem-demo-page 12345` — after merge: deploy gate passes, reuses the page path from the local run, captures on QA, uploads `12345-dialog-hero.png` and `12345-preview-hero.png` to the work item.
+2. `/aem-demo-page 12345` — after merge: deploy gate passes, finds the local demo page with 4 hero variants, recreates it on QA at the same path with the same 4 instances, captures on QA, uploads `12345-dialog-hero.png` and `12345-preview-hero.png` to the work item.
 3. `/aem-demo-page 12345` before the QA deploy — the new `variant` field is missing on QA → `Not deployed to QA yet`, nothing written.
 
 ## Rules
 
 - **Whole change or nothing** — when the story spans repos, wait until every prerequisite repo is deployed to the instance.
-- **One instance per run** — every AEM MCP call carries `instance: "<ENV>"`; never mix local and QA.
+- **One instance to write** — every write carries `instance: "<ENV>"`. A QA run reads the local page as source (read-only) and never writes to local; a local run never touches QA.
+- **Local page is the QA source** — when the developer's local page exists, its component instances (all variants) go to QA; QA data and mocks only when there is no local source.
 - **Page Selection Rule** — reuse for existing components, create only for new ones; never edit authored values on a reused page.
 - **Dialog screenshot only when the dialog changed** (or the component is new).
 - **Preview from the author** (`wcmmode=disabled`) — no publish, no publisher polling.

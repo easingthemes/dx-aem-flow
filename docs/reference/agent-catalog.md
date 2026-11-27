@@ -172,7 +172,7 @@ Frontend visual verification agent. Uses the local demo page recorded by `/aem-d
 | **Used by** | `/aem-demo-page` |
 | **Tools** | Read, Write, Glob, Grep, Bash, ToolSearch, AEM MCP page/component tools, `mcp__plugin_dx-core_playwright__*` browser tools |
 
-Sets up and captures the demo page on one instance per run (local or QA): finds or creates the page and configures the component via AEM MCP, then opens the dialog in the editor and the author preview (`wcmmode=disabled`) via Playwright and screenshots both.
+Sets up and captures the demo page, writing to one instance per run (local or QA; a QA run reads the developer's local page as source): finds or creates the page and configures the component via AEM MCP, then opens the dialog in the editor and the author preview (`wcmmode=disabled`) via Playwright and screenshots both.
 
 **Key capabilities:**
 - Page Selection Rule (reuse for existing components, create only for new ones)

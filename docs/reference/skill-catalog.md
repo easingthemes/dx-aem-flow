@@ -206,7 +206,7 @@ dx-req-dod ── (standalone, needs wiki-dod-url in config + linked PR in ADO, 
 | Skill | Invocation | Argument | Description | Output |
 |-------|-----------|----------|-------------|--------|
 | aem-snapshot | `/aem-snapshot` | `<component-name>` | Baseline component state before development — dialog fields, properties, pages | `aem-before.md` |
-| aem-demo-page | `/aem-demo-page` | `[work-item-id] [component...] [--local]` | Find or create the demo page, configure the component, screenshot the dialog (if changed) and the author preview. QA by default with a deploy gate and work-item upload; `--local` while developing, with a dialog diff against `aem-before.md` | `demo/demo-page.md`, `demo/<env>/*.png` |
+| aem-demo-page | `/aem-demo-page` | `[work-item-id] [component...] [--local]` | Find or create the demo page, configure the component, screenshot the dialog (if changed) and the author preview. QA by default with a deploy gate, component variants copied from the local demo page (read-only) and work-item upload; `--local` while developing, with a dialog diff against `aem-before.md` | `demo/demo-page.md`, `demo/<env>/*.png` |
 | aem-fe-verify | `/aem-fe-verify` | `<component-name>` | Screenshot the component on the local demo page in wcmmode=disabled, compare against Figma/requirements, fix loop | `aem-fe-verify.md` |
 
 ### QA (1)

@@ -59,14 +59,15 @@ Follow the `aem-demo-page` skill (`skills/aem-demo-page/SKILL.md` in the dx-aem 
 3. **Other repo ready?** — when `explain.md` / `research.md` list another required repo whose change the page depends on, stop until it is deployed (local: deployed by hand; QA: that repo has a PR on the work item and it is completed — no PR counts as not ready; a merged PR is assumed deployed): "Cross-repo dependency — <repo> must be deployed first".
 4. **Dialog changed?** — the change touches `<component>/_cq_dialog/`, or the component is new.
 5. **Deploy gate (QA)** — repo dialog fields must exist on QA; otherwise stop: "Not deployed to QA yet".
-6. **Page** — reuse the best existing page with the component; create under `aem.demo-parent-path` only for a new component. On QA, try the page path from the local run first.
-7. **Configure** — real authored values first; mock only new fields with no data. Never change a reused production page.
-8. **Screenshots** — authenticate with `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` and load the storage state; dialog via the Granite editor API (only when changed), preview at `<author><page>.html?wcmmode=disabled`. Save to `demo/<local|qa>/`.
-9. **Upload (QA)** — `bash .ai/lib/upload-attachment.sh --org … --project … --id <id> --file … --name <id>-<file>`.
-10. **Write `demo/demo-page.md`** — replace only this environment's block.
+6. **Local source (QA)** — read-only on `instance: "local"`: the local page from `demo-page.md`, else `<aem.demo-parent-path>/<spec-slug>`. If it has the component, take all its instances (variants) as the source.
+7. **Page** — with a local source: same path on QA if it is under `aem.demo-parent-path`, else `<aem.demo-parent-path>/<spec-slug>`; create if missing. Without: reuse the best existing page with the component; create under `aem.demo-parent-path` only for a new component.
+8. **Configure** — local source → copy every instance (properties + child nodes) to QA, note references missing on QA. Otherwise real authored values first; mock only new fields with no data. Never change a reused production page.
+9. **Screenshots** — authenticate with `bash .ai/lib/aem-playwright-auth.sh author <local|qa>` and load the storage state; dialog via the Granite editor API (only when changed), preview at `<author><page>.html?wcmmode=disabled`. Save to `demo/<local|qa>/`.
+10. **Upload (QA)** — `bash .ai/lib/upload-attachment.sh --org … --project … --id <id> --file … --name <id>-<file>`.
+11. **Write `demo/demo-page.md`** — replace only this environment's block.
 
 ## Rules
 
-- One instance per run; never mix local and QA.
+- Write to one instance per run; a QA run only reads local (source page), never writes it.
 - Reuse pages for existing components; create only for new ones.
 - Read every URL and path from config.
