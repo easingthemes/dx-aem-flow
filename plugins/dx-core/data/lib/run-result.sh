@@ -128,14 +128,25 @@ mint_run_id() {
   fi
   mkdir -p "$DIR/.sessions" 2>/dev/null || return 0
   f="$DIR/.sessions/$sid" lock="$DIR/.sessions/$sid.lock"
-  # mkdir is atomic: two runs starting together never get the same n. A lock left
-  # by a killed run is taken over after ~5 s.
-  for _ in $(seq 1 50); do mkdir "$lock" 2>/dev/null && break; sleep 0.1; done
+  # The lock file is created O_EXCL by bash itself (noclobber), so two runs starting
+  # together never get the same n whatever coreutils is installed: uutils mkdir 0.10
+  # (ubuntu-26.04) let two concurrent callers both "create" a lock dir (see
+  # update-progress.sh). A lock left by a killed run is taken over after ~5 s.
+  local got=""
+  for _ in $(seq 1 50); do
+    if ( set -C; printf '%s\n' "$$" > "$lock" ) 2>/dev/null; then got=1; break; fi
+    sleep 0.1
+  done
+  if [ -z "$got" ]; then # take over: stamp the stale lock (or replace an old-style lock dir)
+    [ -d "$lock" ] && rmdir "$lock" 2>/dev/null
+    printf '%s\n' "$$" > "$lock" 2>/dev/null && got=1
+  fi
   n="$(head -1 "$f" 2>/dev/null)"
   [[ "$n" =~ ^[0-9]{1,9}$ ]] || n=0
   n=$((10#$n + 1))
   { printf '%s\n' "$n" > "$f.tmp.$$" && mv -f "$f.tmp.$$" "$f"; } 2>/dev/null || rm -f "$f.tmp.$$"
-  rmdir "$lock" 2>/dev/null
+  # Release only our own lock — after a takeover the path may hold a successor's.
+  [ -n "$got" ] && [ "$(head -1 "$lock" 2>/dev/null)" = "$$" ] && rm -f "$lock"
   RUN_ID="$sid.$n"
 }
 
