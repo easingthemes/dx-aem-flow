@@ -1,14 +1,35 @@
-### DoD Check: <Title> (ADO #<id>)
+### [DoDAgent] Definition of Done Check
 
-**Verdict:** <PASS/FAIL>
-**Score:** <N>/<total automated criteria>
+**Story:** <story title>
+**Score:** <passes>/<total automated criteria> (<percentage>%)
+**Verdict:** ✅ Done — all automated criteria met / ❌ Not done — <N> criteria failing
 
-<!-- If any failures, list them:
-**Failures:**
-- ❌ Criterion name — what's missing
+#### DoD Checklist
+<!-- One line per wiki criterion, grouped by wiki section when there are several.
+The checklist reflects the wiki-parsed criteria dynamically — no fixed count.
 
-If any warnings:
-**Warnings:**
-- ⚠️ Warning description -->
+Use:
+- [x] for criteria that pass
+- [ ] for criteria that fail (Agent) or need a human check (Human / Advisory → ⚠️)
+- ~~item~~ (strikethrough) for skipped criteria, with the skip reason
 
-<!-- Link to full dod.md in the branch -->
+Format: `- [x] **Criterion** — evidence` or `- [ ] **Criterion** — what's missing`
+-->
+
+- [x] **PR approved** — <evidence, e.g. "2 approvals, all threads resolved">
+- [ ] **Unit tests** — <what's missing>
+- [ ] ⚠️ **Manual QA** — verify manually
+- ~~Accessibility~~ — skipped (<reason>)
+
+#### Auto-Fixed
+<!-- Only if step 8 fixed something. OMIT otherwise.
+- 🔧 **<criterion>** — <what was done>
+-->
+
+#### Needs Human
+<!-- Only if [DoD] tasks exist for remaining failures. OMIT otherwise.
+- 👤 **<criterion>** — Task #<task-id>: <title>
+-->
+
+---
+_[DoDAgent] Run | <ISO date> · <N> passed, <M> failing · Re-run DoD after fixing to update this comment._

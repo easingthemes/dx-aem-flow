@@ -231,7 +231,7 @@ Each skill that posts a work-item comment starts it with a **visible text signat
 |-----------|---------|
 | `[DevPlan]` | dx-req (Phase 5, share plan), dx-prep (hand-off) |
 | `[DoRAgent]` | dx-dor / dx-req (Phase 2) |
-| `DoD Check:` + story title | dx-req-dod |
+| `[DoDAgent]` | dx-req-dod |
 | `[Estimation]` | dx-estimate |
 | `[BugTriage]` | dx-bug-triage |
 | `[BugVerify]`, `[BugVerifyLocal]`, `[BugVerifyQA]` | dx-bug-verify |

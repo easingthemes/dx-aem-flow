@@ -181,11 +181,13 @@ Read `.ai/templates/spec/dod.md.template` and follow that structure, adapting to
 - Include section grouping headers
 - Score only Agent-verifiable criteria (exclude Human, Advisory, and SKIP)
 
-## 7. Post ADO Comment (idempotent, unless dry run)
+## 7. Post ADO Comment (one comment, updated in place, unless dry run)
 
 If dry run: print "Dry run — skipping ADO comment" and show what would be posted. Skip the rest of this step.
 
-Before posting, check for an existing comment to avoid duplicates:
+The work item carries **one** DoD comment. Every later run edits that comment — it never posts a second one.
+
+**Build the text:** read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure (same shape as the DoR comment: `### [DoDAgent] Definition of Done Check` header, checkbox checklist, `_[DoDAgent] Run | …_` footer). Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text). Use `format: "Markdown"`, checkboxes, never tables.
 
 1. Fetch existing comments:
    ```
@@ -203,40 +205,68 @@ Before posting, check for an existing comment to avoid duplicates:
      issue_key: "<issue key>"
    ```
 
-2. Search for a comment containing the signature `DoD Check:` with the work item title.
+2. Find the newest comment containing `[DoDAgent] Definition of Done Check`. If none, also accept the legacy header `### DoD Check:` (older runs) — it gets replaced by the new format. Keep its `id`.
 
-3. If found:
-   - Compare key metrics: verdict (PASS/FAIL), score, failure count
-   - If unchanged → print `ADO comment already up to date — skipping` and skip
-   - If changed → post a **minimal update comment** (not a full repeat):
+3. **Found** — compare verdict, score, checkbox states, auto-fixed and needs-human lists:
+   - Unchanged → print `DoD comment already up to date — skipping` and skip.
+   - Changed → **edit that comment in place** with the full new text:
      ```
-     ### DoD Updated
+     mcp__ado__wit_work_item_comment_write
+       action: "update"
+       project: "<ADO project>"
+       workItemId: <id>
+       commentId: <id of the DoD comment>
+       text: "<comment following dod-summary.md.template>"
+       format: "Markdown"
+     ```
+
+     #### If provider = jira
+     ```
+     mcp__atlassian__jira_edit_comment
+       issue_key: "<issue key>"
+       comment_id: "<id of the DoD comment>"
+       comment: "<comment following dod-summary.md.template>"
+     ```
+
+     Print `DoD comment updated in place`. ADO/Jira let only the comment's author edit it. If the edit is refused (another identity posted it, e.g. a pipeline vs. a local run), fall back to a **short** update comment — never a second full checklist:
+     ```markdown
+     ### [DoDAgent] DoD Update
+
+     **Score:** <old score> → <new score> (<percentage>%)
      **Verdict:** <new verdict> (was <old verdict>)
-     **Score:** <new score> (was <old score>)
-     **Changes:** <1-2 bullet summary of what changed>
+
+     #### Resolved
+     - [x] **<criterion>** — now passes
+
+     #### Still Failing
+     - [ ] **<criterion>** — <what's missing>
+
+     ---
+     _[DoDAgent] Update | <ISO date> · <N> resolved, <M> remaining_
      ```
+     Print `DoD comment owned by another identity — posted an update comment`.
 
-4. If not found → post full comment using template.
+4. **Not found** → post the full comment:
+   ```
+   mcp__ado__wit_work_item_comment_write
+     action: "add"
+     project: "<ADO project>"
+     workItemId: <id>
+     text: "<comment following dod-summary.md.template>"
+     format: "Markdown"
+   ```
 
-**Post:**
-```
-mcp__ado__wit_work_item_comment_write
-  action: "add"
-  project: "<ADO project>"
-  workItemId: <id>
-  text: "<condensed dod results>"
-  format: "Markdown"
-```
+   ### If provider = jira
 
-### If provider = jira
+   ```
+   mcp__atlassian__jira_add_comment
+     issue_key: "<issue key>"
+     comment: "<comment following dod-summary.md.template>"
+   ```
 
-```
-mcp__atlassian__jira_add_comment
-  issue_key: "<issue key>"
-  comment: "<condensed dod results>"
-```
+Keep the comment id — step 8f edits the same comment with the final results.
 
-Read `.ai/templates/ado-comments/dod-summary.md.template` and follow that structure. Its `<!-- … -->` lines are instructions — leave them out of the posted comment (ADO shows them as literal text).
+**On failure:** if posting/editing fails (network, auth), print a warning and continue — `dod.md` has the full report.
 
 ## 8. Auto-Fix Gaps (if any FAIL criteria)
 
@@ -314,6 +344,8 @@ If a documentation, demo or QA-handoff criterion failed and the story's PR is me
 Re-run DoD criteria evaluation (same as step 5) against updated evidence. Update `dod.md` with new results. Track the delta:
 - Criteria that flipped from FAIL → PASS
 - Criteria still failing (with created Task IDs)
+
+Then re-run step 7 — it finds the comment posted above and **edits it in place** with the final results (Auto-Fixed + Needs Human sections filled). Do not post a second comment.
 
 ## 9. Present Summary
 
@@ -430,7 +462,7 @@ Extracts ID from URL. Same check.
 - **No assumptions** — if you can't verify a criterion, mark it WARN with "unable to verify" reason
 - **Pragmatic thresholds** — a story with no test files is FAIL only if the implementation touches logic (not pure config/content changes)
 - **Read config, never hardcode** — ADO URLs, build commands, branch names from config.yaml
-- **Idempotent** — check existing dod.md before regenerating
+- **Idempotent** — check existing dod.md before regenerating; one `[DoDAgent]` comment per work item, edited in place on re-runs
 - **Fail fast on missing config** — if wiki URL is not configured, error immediately with clear instructions
 - **Conservative auto-fixes** — only fix things the agent can verify; when in doubt, create a Task work item instead
 - **Never fake evidence** — don't mark tests as passing without running them, don't mark PR as approved without verifying
