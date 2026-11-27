@@ -4,7 +4,8 @@
 # CLAUDE.md: "a validator nobody has watched fail is indistinguishable from a blind one."
 # Every selection rule has at least one case below that fails if the rule is deleted.
 # Hermetic: builds a throwaway fixture tree (DX_TEST_ROOT), never touches git, the network
-# or ambient config. `--list -` only prints a selection; no suite is executed.
+# or ambient config. `--list -` only prints a selection; `--all` runs the suites of a second
+# throwaway fixture (FX2) and never the real repo's.
 
 set -uo pipefail
 
@@ -74,7 +75,7 @@ rm "$FX/plugins/dx-x/data/lib/helper.sh"
 check "deleted lib file still selects its consumers" "$LIB_EXPECT" "$(sel plugins/dx-x/data/lib/helper.sh)"
 mk plugins/dx-x/data/lib/helper.sh
 
-# Guards rule 2 (pair)
+# Guards rule 2 (pair) — selection (rule 1 would also pick it, so the reason check below is the guard)
 check "script change selects its pair only" \
   "$(exp scripts/check-foo.test.sh)" "$(sel scripts/check-foo.sh)"
 # Rule 2 runs before rule 1 for scripts/: reason is pair, not home (fails if rule 2 is removed)
@@ -84,6 +85,14 @@ check "script change reason is pair" "pair" "$(list scripts/check-foo.sh | cut -
 # editing validate-skills.sh must select the .test.sh, which needs it paired, not self-homed)
 check "validator test is homed on its validator" "pair" \
   "$(list scripts/validate-skills.sh | awk -F'\t' '$1=="scripts/validate-skills.test.sh"{print $2}')"
+
+# Guards the suite_home case order: with the .test.sh case first, validate-skills.test.sh is homed
+# on validate-skills.sh, so a lib name mentioned only there selects the test via rule 3.
+mk plugins/dx-x/data/lib/only-in-validator.sh
+echo "uses only-in-validator.sh" > "$FX/scripts/validate-skills.sh"
+check "validator test is homed on its validator (rule 3 greps the validator)" "uses only-in-validator.sh" \
+  "$(list plugins/dx-x/data/lib/only-in-validator.sh | awk -F'\t' '$1=="scripts/validate-skills.test.sh"{print $2}')"
+: > "$FX/scripts/validate-skills.sh"; rm -f "$FX/plugins/dx-x/data/lib/only-in-validator.sh"
 
 # Guards rule 2 for validators (pair + the validator itself)
 check "validator change selects validator and its test" \
@@ -173,6 +182,21 @@ check "all-green exits 0" "0" "$RC"
 runall -j 1
 case "$OUT" in *"2 passed, 0 failed"*) r=yes ;; *) r=no ;; esac
 check "-j 1 gives the same result" "0 yes" "$RC $r"
+
+# A path with a quote must still run (xargs quote parsing must not drop it) and its failure count
+mk2 "plugins/dx-x/skills/it's/tests/run-tests.sh" 'echo quote-boom; exit 1'
+runall -j 2
+case "$OUT" in *quote-boom*) r=ran ;; *) r=skipped ;; esac
+[ "$RC" -ne 0 ]; check "suite under a dir with a quote runs and fails the run" "0 ran" "$? $r"
+rm -rf "$FX2/plugins/dx-x/skills/it's"
+
+# A suite that never reports must fail the run, by name. A suite that kills its own runner
+# process (the --run-one child) before it can record a result stands in for a killed child.
+mk2 plugins/dx-x/skills/killed/tests/run-tests.sh 'kill -9 $PPID; sleep 1; exit 0'
+runall -j 2
+case "$OUT" in *"NOT RUN"*killed/tests/run-tests.sh*) r=named ;; *) r=unnamed ;; esac
+[ "$RC" -ne 0 ]; check "unaccounted suite fails the run and is named" "0 named" "$? $r"
+rm -rf "$FX2/plugins/dx-x/skills/killed"
 
 DX_TEST_ROOT="$FX2" bash "$RUNNER" --all -j 0 >/dev/null 2>&1
 check "-j 0 exits 2" "2" "$?"

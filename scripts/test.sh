@@ -239,6 +239,7 @@ run_one() {
   t1=$(date +%s)
   if [ $rc -eq 0 ]; then
     printf 'PASS  %ss  %s\n' $((t1 - t0)) "$s"
+    echo "$s" >> "$DX_TEST_LOGDIR/passed"
   else
     printf 'FAIL  %ss  %s\n' $((t1 - t0)) "$s"
     echo "$s" >> "$DX_TEST_LOGDIR/failed"
@@ -253,14 +254,23 @@ run_suites() {
   trap 'rm -rf "$DX_TEST_LOGDIR"' EXIT
   trap 'rm -rf "$DX_TEST_LOGDIR"; exit 130' INT
   trap 'rm -rf "$DX_TEST_LOGDIR"; exit 143' TERM
-  : > "$DX_TEST_LOGDIR/failed"
+  : > "$DX_TEST_LOGDIR/failed"; : > "$DX_TEST_LOGDIR/passed"
   grep -v '^$' > "$DX_TEST_LOGDIR/suites" || true
 
-  local total nfail t0 t1 s
+  local total nfail npass nmiss xrc t0 t1 s
   total=$(wc -l < "$DX_TEST_LOGDIR/suites" | tr -d ' ')
   t0=$(date +%s)
-  xargs -P "$JOBS" -I{} bash "$SELF" --run-one {} < "$DX_TEST_LOGDIR/suites"
+  # NUL-delimited so xargs never parses quotes/backslashes in a path.
+  tr '\n' '\0' < "$DX_TEST_LOGDIR/suites" | xargs -0 -P "$JOBS" -I{} bash "$SELF" --run-one {}
+  xrc=$?
   t1=$(date +%s)
+
+  # Every suite must be accounted for: a suite that never reported (xargs abort, killed child)
+  # must fail the run, never count as passed.
+  cat "$DX_TEST_LOGDIR/passed" "$DX_TEST_LOGDIR/failed" | LC_ALL=C sort > "$DX_TEST_LOGDIR/reported"
+  LC_ALL=C sort "$DX_TEST_LOGDIR/suites" | LC_ALL=C comm -23 - "$DX_TEST_LOGDIR/reported" > "$DX_TEST_LOGDIR/missing"
+  nmiss=$(grep -c . "$DX_TEST_LOGDIR/missing" || true)
+  npass=$(grep -c . "$DX_TEST_LOGDIR/passed" || true)
 
   nfail=$(grep -c . "$DX_TEST_LOGDIR/failed" || true)
   if [ "$nfail" -gt 0 ]; then
@@ -269,8 +279,12 @@ run_suites() {
       cat "$DX_TEST_LOGDIR/$(printf '%s' "$s" | sed 's|/|__|g').log"
     done
   fi
-  printf '\n%s passed, %s failed (%s s)\n' $((total - nfail)) "$nfail" $((t1 - t0))
-  [ "$nfail" -eq 0 ]
+  if [ "$nmiss" -gt 0 ]; then
+    printf '\nNOT RUN (no result recorded):\n'
+    sed 's/^/  /' "$DX_TEST_LOGDIR/missing"
+  fi
+  printf '\n%s passed, %s failed (%s s)\n' "$npass" "$nfail" $((t1 - t0))
+  [ "$nfail" -eq 0 ] && [ "$nmiss" -eq 0 ] && [ "$xrc" -eq 0 ]
 }
 
 case "$MODE" in
