@@ -10,30 +10,45 @@
 # Usage:
 #   scripts/test.sh --list -      # read changed paths on stdin, print the selection
 #                                 #   (<suite><TAB><reason>, sorted); nothing runs
+#   scripts/test.sh --all [-j N]  # run every suite in parallel (default N = CPU count);
+#                                 #   failed suites' full logs are printed, then a summary
 #   scripts/test.sh -h            # this help
 #
 # Env: DX_TEST_ROOT overrides the repo root (used by scripts/test.test.sh).
-# Exit: 0 = ok.  2 = usage error.
+# Exit: 0 = ok / all suites passed.  1 = a suite failed.  2 = usage error.
 
 set -uo pipefail
 
-usage() { sed -n '2,15p' "$0"; }
+usage() { sed -n '2,18p' "$0"; }
 
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"   # absolute: we cd to ROOT below
 MODE=""
+JOBS=""
+RUN_ONE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --list)
       shift
       if [ "${1:-}" = "-" ]; then MODE="list-stdin"; shift
       else echo "--list needs '-' (paths on stdin)" >&2; exit 2; fi ;;
+    --all) MODE="all"; shift ;;
+    --run-one)   # internal: invoked by run_suites via xargs
+      [ -n "${2:-}" ] || { echo "--run-one needs a suite" >&2; exit 2; }
+      MODE="run-one"; RUN_ONE="$2"; shift 2 ;;
+    -j)
+      case "${2:-}" in ''|*[!0-9]*|0) echo "-j needs a positive integer" >&2; exit 2 ;; esac
+      JOBS="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 [ -n "$MODE" ] || { usage >&2; exit 2; }
+[ -n "$JOBS" ] || JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
+case "$JOBS" in ''|*[!0-9]*|0) JOBS=4 ;; esac
 
 ROOT="${DX_TEST_ROOT:-$(git rev-parse --show-toplevel)}"
 cd "$ROOT" || { echo "cannot cd to $ROOT" >&2; exit 2; }
+export DX_TEST_ROOT="$ROOT"
 
 # discover_suites — every suite path relative to root, sorted, one per line.
 discover_suites() {
@@ -42,7 +57,7 @@ discover_suites() {
     find plugins scripts -type f \( -name 'run-tests.sh' -o -name '*.test.sh' \) 2>/dev/null
     local v
     for v in skills agents structure stats; do
-      [ -f "scripts/validate-$v.sh" ] && echo "scripts/validate-$v.sh"
+      if [ -f "scripts/validate-$v.sh" ]; then echo "scripts/validate-$v.sh"; fi
     done
   } | LC_ALL=C sort -u
 }
@@ -210,8 +225,60 @@ EOF_FB
   return 0
 }
 
+# run_one <suite> — run one suite, log to $DX_TEST_LOGDIR, print PASS/FAIL. Always exits 0:
+# failure is recorded in $DX_TEST_LOGDIR/failed so xargs exit-code handling never matters.
+run_one() {
+  local s="$1" log t0 t1 rc
+  log="$DX_TEST_LOGDIR/$(printf '%s' "$s" | sed 's|/|__|g').log"
+  t0=$(date +%s)
+  case "$s" in
+    *.test.js) GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null node --test "$s" >"$log" 2>&1 </dev/null ;;
+    *)         bash "$s" >"$log" 2>&1 </dev/null ;;
+  esac
+  rc=$?
+  t1=$(date +%s)
+  if [ $rc -eq 0 ]; then
+    printf 'PASS  %ss  %s\n' $((t1 - t0)) "$s"
+  else
+    printf 'FAIL  %ss  %s\n' $((t1 - t0)) "$s"
+    echo "$s" >> "$DX_TEST_LOGDIR/failed"
+  fi
+  return 0
+}
+
+# run_suites — suite paths on stdin; runs them $JOBS at a time, prints failed logs + summary.
+run_suites() {
+  DX_TEST_LOGDIR=$(mktemp -d "${TMPDIR:-/tmp}/dx-test-run.XXXXXX") || return 2
+  export DX_TEST_LOGDIR
+  trap 'rm -rf "$DX_TEST_LOGDIR"' EXIT
+  trap 'rm -rf "$DX_TEST_LOGDIR"; exit 130' INT
+  trap 'rm -rf "$DX_TEST_LOGDIR"; exit 143' TERM
+  : > "$DX_TEST_LOGDIR/failed"
+  grep -v '^$' > "$DX_TEST_LOGDIR/suites" || true
+
+  local total nfail t0 t1 s
+  total=$(wc -l < "$DX_TEST_LOGDIR/suites" | tr -d ' ')
+  t0=$(date +%s)
+  xargs -P "$JOBS" -I{} bash "$SELF" --run-one {} < "$DX_TEST_LOGDIR/suites"
+  t1=$(date +%s)
+
+  nfail=$(grep -c . "$DX_TEST_LOGDIR/failed" || true)
+  if [ "$nfail" -gt 0 ]; then
+    LC_ALL=C sort "$DX_TEST_LOGDIR/failed" | while IFS= read -r s; do
+      printf '\n===== FAIL: %s =====\n' "$s"
+      cat "$DX_TEST_LOGDIR/$(printf '%s' "$s" | sed 's|/|__|g').log"
+    done
+  fi
+  printf '\n%s passed, %s failed (%s s)\n' $((total - nfail)) "$nfail" $((t1 - t0))
+  [ "$nfail" -eq 0 ]
+}
+
 case "$MODE" in
   list-stdin)
     sel=$(select_suites)
     if [ -z "$sel" ]; then echo "No suites affected."; else printf '%s\n' "$sel"; fi ;;
+  all)
+    discover_suites | run_suites ;;
+  run-one)
+    run_one "$RUN_ONE" ;;
 esac

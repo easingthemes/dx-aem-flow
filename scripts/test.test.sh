@@ -141,6 +141,42 @@ DX_TEST_ROOT="$FX" bash "$RUNNER" --bogus >/dev/null 2>&1
 check "unknown flag exits 2" "2" "$?"
 DX_TEST_ROOT="$FX" bash "$RUNNER" -h 2>&1 | grep -q 'Usage' ; check "-h prints usage" "0" "$?"
 
+# ---- Execution (--all): a second fixture whose suites have real bodies ----
+FX2="$(mktemp -d "${TMPDIR:-/tmp}/dx-test-run.XXXXXX")"
+trap 'rm -rf "$FX" "$FX2"' EXIT
+mk2() { mkdir -p "$FX2/$(dirname "$1")"; printf '%s\n' "$2" > "$FX2/$1"; }
+mk2 plugins/dx-x/skills/ok/tests/run-tests.sh 'echo fine; exit 0'
+mk2 plugins/dx-x/skills/bad/tests/run-tests.sh 'echo boom-marker; exit 1'
+mk2 plugins/dx-x/skills/js/x.test.js "require('node:test')('ok', () => {});"
+mk2 plugins/dx-x/skills/jsbad/y.test.js "require('node:test')('nope', () => { throw new Error('js-boom'); });"
+
+# runall <extra args...> — sets OUT and RC
+runall() { OUT=$(DX_TEST_ROOT="$FX2" bash "$RUNNER" --all "$@" 2>&1); RC=$?; }
+
+runall -j 2
+[ "$RC" -ne 0 ]; check "--all exits non-zero when one suite fails" "0" "$?"
+case "$OUT" in *boom-marker*) r=yes ;; *) r=no ;; esac
+check "failed suite log is printed" "yes" "$r"
+case "$OUT" in *fine*) r=leaked ;; *) r=hidden ;; esac
+check "passing suite log is not printed" "hidden" "$r"
+case "$OUT" in *"2 passed, 2 failed"*) r=yes ;; *) r=no ;; esac
+check "summary counts" "yes" "$r"
+
+rm -rf "$FX2/plugins/dx-x/skills/bad"
+runall -j 2
+case "$OUT" in *FAIL*y.test.js*) r=yes ;; *) r=no ;; esac
+[ "$RC" -ne 0 ]; check "failing node suite fails the run" "0 yes" "$? $r"
+
+rm -rf "$FX2/plugins/dx-x/skills/jsbad"
+runall -j 2
+check "all-green exits 0" "0" "$RC"
+runall -j 1
+case "$OUT" in *"2 passed, 0 failed"*) r=yes ;; *) r=no ;; esac
+check "-j 1 gives the same result" "0 yes" "$RC $r"
+
+DX_TEST_ROOT="$FX2" bash "$RUNNER" --all -j 0 >/dev/null 2>&1
+check "-j 0 exits 2" "2" "$?"
+
 echo ""
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
