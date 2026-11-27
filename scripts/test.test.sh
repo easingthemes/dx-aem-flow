@@ -9,6 +9,8 @@
 # fixture (FX3), a throwaway git repo with per-repo identity.
 
 set -uo pipefail
+# The runner exports these for its --run-one children; this suite must start clean.
+unset DX_TEST_ROOT DX_TEST_LOGDIR
 
 RUNNER="${DX_TEST_RUNNER:-$(cd "$(dirname "$0")" && pwd)/test.sh}"
 PASS=0
