@@ -63,7 +63,12 @@ run_with_timeout() {
   local flag; flag=$(mktemp)
   "$@" &
   local pid=$!
-  ( sleep "$secs"; echo fired >"$flag"; kill -TERM "$pid" 2>/dev/null ) &
+  # Watchdog: detached from stdout/stderr, and its own sleep dies with it, so
+  # an enclosing $(...) is not held open until the full timeout elapses.
+  ( sleep "$secs" & sp=$!
+    trap 'kill "$sp" 2>/dev/null; exit 0' TERM
+    wait "$sp" && { echo fired >"$flag"; kill -TERM "$pid" 2>/dev/null; }
+  ) >/dev/null 2>&1 &
   local wd=$!
   local rc=0
   wait "$pid" || rc=$?
