@@ -1,3 +1,10 @@
+# [6.11.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.10.0...v6.11.0) (2026-11-27)
+
+
+### Features
+
+* **aem-demo-page:** use the local demo page as source for QA ([#290](https://github.com/easingthemes/dx-aem-flow/issues/290)) ([f4967f9](https://github.com/easingthemes/dx-aem-flow/commit/f4967f94e2eb23354c182c9f897d812c5b32e89b))
+
 # [6.10.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.9.0...v6.10.0) (2026-11-26)
 
 
