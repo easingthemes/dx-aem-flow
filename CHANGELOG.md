@@ -1,3 +1,10 @@
+## [6.11.1](https://github.com/easingthemes/dx-aem-flow/compare/v6.11.0...v6.11.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **dx-req-dod:** edit existing DoD comment in place, align format with DoR ([#292](https://github.com/easingthemes/dx-aem-flow/issues/292)) ([776c739](https://github.com/easingthemes/dx-aem-flow/commit/776c739bab2b728b83648b465bcb353d7e1963ff))
+
 # [6.11.0](https://github.com/easingthemes/dx-aem-flow/compare/v6.10.0...v6.11.0) (2026-11-27)
 
 
