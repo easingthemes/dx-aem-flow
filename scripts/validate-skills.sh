@@ -61,41 +61,16 @@ REASONING_ECHO='(explain|show|print|write out|output|include|echo|transcribe|rep
 # to `high` (code.claude.com/docs/en/model-config). A `model: opus` file with no
 # `effort:` silently dropped a level when the alias moved. Opus is the tier we
 # pay for depth, so it must say which effort it wants. TODO #222.
-# check_opus_effort <file> <rel-path>
-check_opus_effort() {
-  local fm
-  fm=$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$1")
-  if echo "$fm" | grep -qE '^model:[[:space:]]*opus[[:space:]]*$' \
-     && ! echo "$fm" | grep -qE '^effort:[[:space:]]*[a-z]+'; then
-    echo "ERROR: $2 — model: opus without effort: (Opus 5.5 defaults to medium; set effort: high or another level explicitly, TODO #222)"
-    ERRORS=$((ERRORS + 1))
-  fi
-}
+
+# Each check below is answered from one parse of every file (facts_awk) and two
+# greps over all prompt files, not from a grep/awk/sed per check per file: each
+# process costs tens of ms under endpoint security on macOS, and the validator
+# used to start ~40 of them per skill. The patterns are the ones the per-file
+# commands used; scripts/validate-skills.test.sh proves each check still fires.
 
 # Copilot CLI ignores `context: fork`, so a fork skill must isolate itself: an
 # "Isolation check" paragraph tells an inline run to delegate to one subagent
 # (TODO-269). Verified on Copilot CLI 1.0.109 with dx-step-build.
-# check_fork_isolation <file> <rel-path>
-check_fork_isolation() {
-  local fm
-  fm=$(awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$1")
-  if echo "$fm" | grep -qE '^context:[[:space:]]*fork[[:space:]]*$' \
-     && ! grep -q '^\*\*Isolation check\.\*\*' "$1"; then
-    echo "ERROR: $2 — context: fork without an **Isolation check.** paragraph (Copilot CLI runs it inline; copy the paragraph from another fork skill, TODO-269)"
-    ERRORS=$((ERRORS + 1))
-  fi
-}
-
-# check_reasoning_echo <file> <rel-path> — one ERROR per offending line
-check_reasoning_echo() {
-  local hits
-  hits=$(grep -niE "$REASONING_ECHO" "$1" || true)
-  [ -z "$hits" ] && return 0
-  while IFS= read -r hit; do
-    echo "ERROR: $2:${hit%%:*} — reasoning-echo instruction (Claude 5 may refuse; see TODO #239)"
-    ERRORS=$((ERRORS + 1))
-  done <<< "$hits"
-}
 
 # Since Claude Code v2.1.281 a recursive `rm` whose target comes from command
 # substitution asks for permission even under bypassPermissions + an allow rule
@@ -111,59 +86,92 @@ check_reasoning_echo() {
 # through git, which the guard does not prompt for.
 RM_DYNAMIC='(^|[^[:alnum:]_.-])rm([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)([[:space:]]+(-[a-zA-Z]+|--[a-z-]*))*[[:space:]]+(["'"'"']?`|([^;&|[:space:]`$]+[[:space:]]+)*[^;&|[:space:]`]*\$)'
 
-# check_rm_target <file> <rel-path> — one ERROR per offending line
-check_rm_target() {
-  local hits
-  hits=$(grep -nE "$RM_DYNAMIC" "$1" | grep -vE '^[0-9]+:.*git[[:space:]]+rm[[:space:]]' || true)
-  [ -z "$hits" ] && return 0
-  while IFS= read -r hit; do
-    echo "ERROR: $2:${hit%%:*} — recursive rm on a variable/substitution target; name a literal path (stalls bypass-mode pipelines; see TODO #223)"
-    ERRORS=$((ERRORS + 1))
-  done <<< "$hits"
-}
-
 # Claude Code reads frontmatter leniently; Copilot CLI uses a strict YAML parser
 # and drops the whole skill with "mapping values are not allowed in this context"
 # when an unquoted value holds `: ` (seen on dx-estimate's description in 3.4.2).
 # A plain (unquoted) top-level value must not contain `: `, end in `:`, or start
 # with a character YAML reserves — each is a parse error. ` #` parses, but starts
 # a comment and silently cuts the value short. Quote the value instead.
-# check_yaml_plain <file> <rel-path> — one ERROR per offending line
-check_yaml_plain() {
-  local hits
-  hits=$(awk -v q="'" '
-    NR==1 && $0=="---" {fm=1; next}
-    fm!=1 {exit}
-    $0=="---" {exit}
-    /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+[^ \t]/ {
-      v=$0; sub(/^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
-      if (index("\"" q "[{|>&*!#", substr(v, 1, 1))) next
-      if (v ~ /: / || v ~ /:$/ || v ~ /[ \t]#/ || v ~ /^[@`%]/ || v ~ /^- /) print NR
-    }' "$1")
-  [ -z "$hits" ] && return 0
-  while IFS= read -r ln; do
-    echo "ERROR: $2:$ln — unquoted frontmatter value is a strict-YAML parse error (Copilot CLI drops the file) or is cut at ' #'; wrap it in double quotes"
-    ERRORS=$((ERRORS + 1))
-  done <<< "$hits"
-}
 
-# Extracts the full `description:` value from frontmatter — the line's own text
-# plus any indented continuation lines, block indicators dropped. A blank line
-# inside the block is a paragraph break ("\n"), not the end of the value.
-DESC_AWK='
-  NR==1 && $0=="---" {fm=1; next}
-  fm!=1 {next}
-  $0=="---" {exit}
-  /^description:/ {
-    v=$0; sub(/^description:[ \t]*/, "", v)
-    if (v ~ /^[|>][-+0-9]*$/) v=""
-    out=v; c=1; next
-  }
-  c && /^[ \t]*$/ { gap=1; next }
-  c && /^[ \t]/ { l=$0; sub(/^[ \t]+/, "", l); out=(out=="" ? l : out (gap ? "\n" : " ") l); gap=0; next }
-  c { exit }
-  END { print out }
-'
+# One record per file, each field ended by \036 (fields may hold newlines):
+#   1 name         the first ^name: line, "name: *" removed
+#   2 description  the full frontmatter value — the line's own text plus any
+#                  indented continuation lines, block indicators dropped; a
+#                  blank line inside the block is a paragraph break ("\n"), not
+#                  the end of the value; the first non-indented line ends it
+#   3 when_to_use  the same, for when_to_use:
+#   4-7            1 when the frontmatter has model: opus / effort: <level> /
+#                  context: fork / disable-model-invocation: true, else 0
+#   8 chain fork   1 when a frontmatter line starts "context: fork", else empty
+#   9 isolation    1 when a line starts with **Isolation check.**
+#  10 body lines   lines after the closing --- (frontmatter excluded)
+#  11 yaml lines   numbers of frontmatter lines holding a strict-YAML trap
+#  12 invocations  skills it invokes (`Skill(/x)`, `Invoke /x`, "Invoke `/x`",
+#                  "Invoke the `/x` skill"), one per line, in order, repeats kept
+# The frontmatter is line 2 up to the next ---, when line 1 is ---. Awk skips an
+# empty file: callers give it non-empty files only and default the rest.
+facts_awk() {
+  awk -v q="'" '
+    function reset() {
+      name = ""; gotname = 0; fm = 0; done = 0
+      dout = ""; dc = 0; dgap = 0; dstop = 0
+      wout = ""; wc = 0; wgap = 0; wstop = 0
+      opus = 0; effort = 0; fork = 0; dmi = 0; cfork = ""; iso = 0
+      body = 0; bstate = 0; yaml = ""; tg = ""
+    }
+    function emit() {
+      printf "%s\036%s\036%s\036%d\036%d\036%d\036%d\036%s\036%d\036%d\036%s\036%s\036", \
+        name, dout, wout, opus, effort, fork, dmi, cfork, iso, body, yaml, tg
+    }
+    FNR == 1 { if (NR > 1) emit(); reset() }
+    {
+      line = $0
+      if (!gotname && line ~ /^name:/) { v = line; sub(/^name: */, "", v); name = v; gotname = 1 }
+      if (line ~ /^\*\*Isolation check\.\*\*/) iso = 1
+      s = line
+      while (match(s, "(Skill\\([[:space:]]*/?|[Ii]nvoke (the )?`?/)[a-z][a-z0-9-]+")) {
+        m = substr(s, RSTART, RLENGTH); s = substr(s, RSTART + RLENGTH)
+        sub(".*[(`/ ]", "", m); tg = tg (tg == "" ? "" : "\n") m
+      }
+      if (FNR == 1) { if (line == "---") { bstate = 1; fm = 1 }; next }
+      if (bstate == 1 && line == "---") bstate = 2
+      else if (bstate == 2) body++
+      if (fm != 1 || done) next
+      if (line == "---") { done = 1; next }
+      if (line ~ /^model:[[:space:]]*opus[[:space:]]*$/) opus = 1
+      if (line ~ /^effort:[[:space:]]*[a-z]+/) effort = 1
+      if (line ~ /^context:[[:space:]]*fork[[:space:]]*$/) fork = 1
+      if (line ~ /^disable-model-invocation:[[:space:]]*(true|True|TRUE)/) dmi = 1
+      if (cfork == "" && line ~ /^context:[ \t]*fork/) cfork = 1
+      if (line ~ /^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+[^ \t]/) {
+        v = line; sub(/^[A-Za-z_][A-Za-z0-9_-]*:[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
+        if (!index("\"" q "[{|>&*!#", substr(v, 1, 1)))
+          if (v ~ /: / || v ~ /:$/ || v ~ /[ \t]#/ || v ~ /^[@`%]/ || v ~ /^- /) yaml = yaml (yaml == "" ? "" : "\n") FNR
+      }
+      if (!dstop) {
+        if (line ~ /^description:/) {
+          v = line; sub(/^description:[ \t]*/, "", v)
+          if (v ~ /^[|>][-+0-9]*$/) v = ""
+          dout = v; dc = 1
+        }
+        else if (dc && line ~ /^[ \t]*$/) dgap = 1
+        else if (dc && line ~ /^[ \t]/) { l = line; sub(/^[ \t]+/, "", l); dout = (dout == "" ? l : dout (dgap ? "\n" : " ") l); dgap = 0 }
+        else if (dc) dstop = 1
+      }
+      if (!wstop) {
+        if (line ~ /^when_to_use:/) {
+          v = line; sub(/^when_to_use:[ \t]*/, "", v)
+          if (v ~ /^[|>][-+0-9]*$/) v = ""
+          wout = v; wc = 1
+        }
+        else if (wc && line ~ /^[ \t]*$/) wgap = 1
+        else if (wc && line ~ /^[ \t]/) { l = line; sub(/^[ \t]+/, "", l); wout = (wout == "" ? l : wout (wgap ? "\n" : " ") l); wgap = 0 }
+        else if (wc) wstop = 1
+      }
+    }
+    END { if (NR > 0) emit() }
+  ' "$@"
+}
 
 # Claude Code sends one skill listing per turn: `- <plugin>:<name>: <description
 # - when_to_use>` per model-invocable skill, each capped at 1536 chars. Its budget
@@ -181,39 +189,186 @@ LISTING_BUDGET_200K=8000
 LISTING_BASELINE=${LISTING_BASELINE:-11740}
 LISTING_CHARS=0
 LISTING_SKILLS=0
-WTU_AWK="${DESC_AWK//description/when_to_use}"
 # Count characters, not bytes (descriptions carry em dashes): pick a UTF-8
-# locale that exists here, proven on a two-byte character.
+# locale that exists here, proven on a two-byte character. Probed from the C
+# locale in a subshell, so a name that does not exist leaves it at C (2 chars).
 UTF8_LOCALE=""
 for _loc in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
-  if [ "$(LC_ALL=$_loc bash -c 'x=é; echo ${#x}' 2>/dev/null)" = 1 ]; then UTF8_LOCALE=$_loc; break; fi
+  if [ "$(LC_ALL=C; { LC_ALL=$_loc; } 2>/dev/null; x=é; echo ${#x})" = 1 ]; then UTF8_LOCALE=$_loc; break; fi
 done
 # listing_value <text> — the YAML scalar as Claude Code sees it: outer quotes off
 listing_value() {
   local v="$1"
   case "$v" in
     \"*\") v="${v#\"}"; v="${v%\"}"; v="${v//\\\"/\"}" ;;
-    \'*\') v="${v#\'}"; v="${v%\'}"; v="${v//\'\'/\'}" ;;
+    \'*\') v="${v#\'}"; v="${v%\'}"; v="$(unescape_single "$v")" ;;
   esac
   printf '%s' "$v"
 }
+# unescape_single <text> — '' becomes ', left to right. Not ${v//\'\'/\'}: bash
+# 3.2 (macOS /bin/bash) keeps the backslash in that replacement.
+unescape_single() {
+  local rest="$1" out=""
+  while [[ "$rest" == *"''"* ]]; do out="$out${rest%%"''"*}'"; rest="${rest#*"''"}"; done
+  printf '%s' "$out$rest"
+}
 strlen() {
-  if [ -n "$UTF8_LOCALE" ]; then LC_ALL=$UTF8_LOCALE bash -c 'printf %s "${#1}"' _ "$1"; else printf '%s' "${#1}"; fi
+  if [ -n "$UTF8_LOCALE" ]; then (LC_ALL=$UTF8_LOCALE; printf %s "${#1}"); else printf '%s' "${#1}"; fi
+}
+# bytes <file> — wc -c, read in the shell.
+bytes() {
+  local c=""
+  IFS= read -r -d '' c < "$1" || true
+  (LC_ALL=C; printf %s "${#c}")
+}
+# any_line_matches <text> <ERE> — grep -qE over the lines of text.
+any_line_matches() {
+  local line
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ "$line" =~ $2 ]] && return 0
+  done <<EOF_TEXT
+$1
+EOF_TEXT
+  return 1
 }
 
-# Temp file for collision detection
-NAMES_FILE=$(mktemp)
-trap 'rm -f "$NAMES_FILE"' EXIT
+# --- facts for every skill, agent and agent template: one awk run -----------
+SKILL_DIRS=() FACT_FILES=()
+for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
+  [ -d "$plugin_dir" ] || continue
+  SKILL_DIRS+=("$plugin_dir")
+  [ -f "$plugin_dir/SKILL.md" ] && FACT_FILES+=("${plugin_dir}SKILL.md")
+done
+NSKILLFILES=${#FACT_FILES[@]}
+AGENT_FILES=()
+for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
+  [ -f "$agent_file" ] && AGENT_FILES+=("$agent_file") && FACT_FILES+=("$agent_file")
+done
+TEMPLATE_FILES=()
+for tpl in "$REPO_ROOT"/plugins/*/templates/agents/*.agent.md.template; do
+  [ -f "$tpl" ] && TEMPLATE_FILES+=("$tpl") && FACT_FILES+=("$tpl")
+done
+
+F_NAME=() F_DESC=() F_WTU=() F_OPUS=() F_EFFORT=() F_FORK=() F_DMI=() F_CFORK=() F_ISO=() F_BODY=() F_YAML=() F_TG=()
+NONEMPTY=()
+for f in ${FACT_FILES[@]+"${FACT_FILES[@]}"}; do [ -s "$f" ] && NONEMPTY+=("$f"); done
+if [ "${#NONEMPTY[@]}" -gt 0 ]; then
+  exec 3< <(facts_awk "${NONEMPTY[@]}")
+fi
+i=0
+for f in ${FACT_FILES[@]+"${FACT_FILES[@]}"}; do
+  a="" b="" c="" d="0" e="0" g="0" h="0" k="" l="0" m="0" y="" t=""
+  if [ -s "$f" ]; then
+    IFS= read -r -d $'\036' a <&3; IFS= read -r -d $'\036' b <&3; IFS= read -r -d $'\036' c <&3
+    IFS= read -r -d $'\036' d <&3; IFS= read -r -d $'\036' e <&3; IFS= read -r -d $'\036' g <&3
+    IFS= read -r -d $'\036' h <&3; IFS= read -r -d $'\036' k <&3; IFS= read -r -d $'\036' l <&3
+    IFS= read -r -d $'\036' m <&3; IFS= read -r -d $'\036' y <&3; IFS= read -r -d $'\036' t <&3
+  fi
+  F_NAME[i]="$a" F_DESC[i]="$b" F_WTU[i]="$c" F_OPUS[i]="$d" F_EFFORT[i]="$e" F_FORK[i]="$g"
+  F_DMI[i]="$h" F_CFORK[i]="$k" F_ISO[i]="$l" F_BODY[i]="$m" F_YAML[i]="$y" F_TG[i]="$t"
+  i=$((i + 1))
+done
+[ "${#NONEMPTY[@]}" -gt 0 ] && exec 3<&-
+
+# fact_index <file> — the index of a file in FACT_FILES ("" if absent).
+fact_index() {
+  local j=0 f
+  for f in ${FACT_FILES[@]+"${FACT_FILES[@]}"}; do
+    [ "$f" = "$1" ] && { printf '%s' "$j"; return 0; }
+    j=$((j + 1))
+  done
+}
+
+# --- the prompt files of every skill (SKILL.md and references/) and agent ----
+# find | sort once for all skills; a skill's files keep the order a per-skill
+# `find <dir> | sort` gives (same strings, same comparison).
+SKILLS_WITH_FILE=()
+for plugin_dir in ${SKILL_DIRS[@]+"${SKILL_DIRS[@]}"}; do
+  [ -f "$plugin_dir/SKILL.md" ] && SKILLS_WITH_FILE+=("$plugin_dir")
+done
+SKILL_MDS=""
+if [ "${#SKILLS_WITH_FILE[@]}" -gt 0 ]; then
+  SKILL_MDS=$(find "${SKILLS_WITH_FILE[@]}" -name '*.md' -type f | sort)
+fi
+PROMPT_FILES=()
+while IFS= read -r md; do [ -n "$md" ] && PROMPT_FILES+=("$md"); done <<< "$SKILL_MDS"
+PROMPT_FILES+=(${AGENT_FILES[@]+"${AGENT_FILES[@]}"})
+ECHO_HITS="" RM_HITS=""
+if [ "${#PROMPT_FILES[@]}" -gt 0 ]; then
+  ECHO_HITS=$(grep -HniE -- "$REASONING_ECHO" "${PROMPT_FILES[@]}" || true)
+  RM_HITS=$(grep -HnE -- "$RM_DYNAMIC" "${PROMPT_FILES[@]}" || true)
+fi
+
+# hits_of <hits> <file> — that file's "N:text" lines of a grep -Hn output
+hits_of() {
+  local hit
+  [ -n "$1" ] || return 0
+  while IFS= read -r hit; do
+    case "$hit" in "$2:"*) printf '%s\n' "${hit#"$2:"}" ;; esac
+  done <<< "$1"
+}
+
+# check_reasoning_echo <file> <rel-path> — one ERROR per offending line
+check_reasoning_echo() {
+  local hits
+  hits=$(hits_of "$ECHO_HITS" "$1")
+  [ -z "$hits" ] && return 0
+  while IFS= read -r hit; do
+    echo "ERROR: $2:${hit%%:*} — reasoning-echo instruction (Claude 5 may refuse; see TODO #239)"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$hits"
+}
+
+# check_rm_target <file> <rel-path> — one ERROR per offending line
+check_rm_target() {
+  local hits hit
+  hits=$(hits_of "$RM_HITS" "$1")
+  [ -z "$hits" ] && return 0
+  while IFS= read -r hit; do
+    [[ "$hit" =~ ^[0-9]+:.*git[[:space:]]+rm[[:space:]] ]] && continue
+    echo "ERROR: $2:${hit%%:*} — recursive rm on a variable/substitution target; name a literal path (stalls bypass-mode pipelines; see TODO #223)"
+    ERRORS=$((ERRORS + 1))
+  done <<< "$hits"
+}
+
+# check_opus_effort <fact index> <rel-path>
+check_opus_effort() {
+  if [ "${F_OPUS[$1]}" = 1 ] && [ "${F_EFFORT[$1]}" != 1 ]; then
+    echo "ERROR: $2 — model: opus without effort: (Opus 5.5 defaults to medium; set effort: high or another level explicitly, TODO #222)"
+    ERRORS=$((ERRORS + 1))
+  fi
+}
+
+# check_fork_isolation <fact index> <rel-path>
+check_fork_isolation() {
+  if [ "${F_FORK[$1]}" = 1 ] && [ "${F_ISO[$1]}" != 1 ]; then
+    echo "ERROR: $2 — context: fork without an **Isolation check.** paragraph (Copilot CLI runs it inline; copy the paragraph from another fork skill, TODO-269)"
+    ERRORS=$((ERRORS + 1))
+  fi
+}
+
+# check_yaml_plain <fact index> <rel-path> — one ERROR per offending line
+check_yaml_plain() {
+  local ln
+  [ -z "${F_YAML[$1]}" ] && return 0
+  while IFS= read -r ln; do
+    echo "ERROR: $2:$ln — unquoted frontmatter value is a strict-YAML parse error (Copilot CLI drops the file) or is cut at ' #'; wrap it in double quotes"
+    ERRORS=$((ERRORS + 1))
+  done <<< "${F_YAML[$1]}"
+}
+
+# Collision detection: "name<TAB>rel-path" per line
+NAMES=""
 
 echo "=== Skill Validation ==="
 echo
 
-for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
-  [ -d "$plugin_dir" ] || continue
-
-  skill_name=$(basename "$plugin_dir")
+k=-1
+for plugin_dir in ${SKILL_DIRS[@]+"${SKILL_DIRS[@]}"}; do
+  p="${plugin_dir%/}"
+  skill_name="${p##*/}"
   skill_file="$plugin_dir/SKILL.md"
-  plugin=$(basename "$(dirname "$(dirname "$plugin_dir")")")
+  p="${p%/*}"; p="${p%/*}"; plugin="${p##*/}"
   rel_path="plugins/$plugin/skills/$skill_name"
   TOTAL=$((TOTAL + 1))
 
@@ -223,12 +378,11 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
     ERRORS=$((ERRORS + 1))
     continue
   fi
+  k=$((k + 1))
 
-  # Check name: frontmatter matches directory name
-  # `|| true`: under `set -euo pipefail` a file with no `name:` line makes the
-  # pipeline return 1 and kills the script mid-scan, silently — the check below
-  # never runs and nothing is printed.
-  file_name=$(grep "^name:" "$skill_file" | head -1 | sed 's/^name: *//') || true
+  # Check name: frontmatter matches directory name. A file with no `name:` line
+  # reports '' — it must not stop the scan.
+  file_name="${F_NAME[$k]}"
   if [ "$file_name" != "$skill_name" ]; then
     echo "ERROR: $rel_path — name: '$file_name' does not match directory '$skill_name'"
     ERRORS=$((ERRORS + 1))
@@ -239,7 +393,7 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   # scalar (`description: >-`) or a plain continued one carries its text on the
   # following indented lines, and `grep | head -1` measured none of it — an
   # 1,800-char wrapped description passed the cap check as 0 chars.
-  file_desc=$(awk "$DESC_AWK" "$skill_file")
+  file_desc="${F_DESC[$k]}"
   if [ -z "$file_desc" ]; then
     echo "ERROR: $rel_path — missing or empty description: field"
     ERRORS=$((ERRORS + 1))
@@ -248,14 +402,14 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
     ERRORS=$((ERRORS + 1))
   fi
 
-  check_opus_effort "$skill_file" "$rel_path"
-  check_fork_isolation "$skill_file" "$rel_path"
-  check_yaml_plain "$skill_file" "$rel_path/SKILL.md"
+  check_opus_effort "$k" "$rel_path"
+  check_fork_isolation "$k" "$rel_path"
+  check_yaml_plain "$k" "$rel_path/SKILL.md"
 
   # Listing entry, exactly as Claude Code builds it (see LISTING_BASELINE)
-  if ! awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$skill_file" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)'; then
+  if [ "${F_DMI[$k]}" != 1 ]; then
     listing_text=$(listing_value "$file_desc")
-    file_wtu=$(awk "$WTU_AWK" "$skill_file")
+    file_wtu="${F_WTU[$k]}"
     [ -n "$file_wtu" ] && listing_text="$listing_text - $(listing_value "$file_wtu")"
     listing_len=$(strlen "$listing_text")
     [ "$listing_len" -gt "$LISTING_ENTRY_CAP" ] && listing_len=$LISTING_ENTRY_CAP
@@ -267,12 +421,13 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
 
   # Skill body and its references/ are both loaded into the model's context
   while IFS= read -r md; do
+    case "$md" in "$plugin_dir"*) ;; *) continue ;; esac
     check_reasoning_echo "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
     check_rm_target "$md" "plugins/$plugin/skills/$skill_name/${md#"$plugin_dir"}"
-  done < <(find "$plugin_dir" -name '*.md' -type f | sort)
+  done <<< "$SKILL_MDS"
 
   # Check body length (frontmatter excluded) against the authoring threshold
-  body_lines=$(awk 'NR==1 && $0=="---" {fm=1; next} fm==1 && $0=="---" {fm=2; next} fm==2 {n++} END {print n+0}' "$skill_file")
+  body_lines="${F_BODY[$k]}"
   if [ "$body_lines" -gt "$BODY_MAX" ]; then
     echo "WARN: $rel_path — body is $body_lines lines (over $BODY_MAX; see TODO #108/#113)"
     WARNINGS=$((WARNINGS + 1))
@@ -280,7 +435,12 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   # Check format: lowercase, numbers, hyphens only
-  if ! echo "$skill_name" | grep -qE '^[a-z][a-z0-9-]*$'; then
+  case "$skill_name" in
+    [abcdefghijklmnopqrstuvwxyz]*) valid_format=1 ;;
+    *) valid_format="" ;;
+  esac
+  case "$skill_name" in *[!abcdefghijklmnopqrstuvwxyz0123456789-]*) valid_format="" ;; esac
+  if [ -z "$valid_format" ]; then
     echo "ERROR: $rel_path — invalid format (must be lowercase, numbers, hyphens, start with letter)"
     ERRORS=$((ERRORS + 1))
   fi
@@ -292,12 +452,15 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
   fi
 
   # Check for cross-plugin collisions
-  prev=$(grep "^${skill_name}	" "$NAMES_FILE" 2>/dev/null | head -1 | cut -f2) || true
+  prev=""
+  while IFS= read -r name_row; do
+    case "$name_row" in "$skill_name"$'\t'*) prev="${name_row#*$'\t'}"; prev="${prev%%$'\t'*}"; break ;; esac
+  done <<< "$NAMES"
   if [ -n "$prev" ]; then
     echo "ERROR: COLLISION — '$skill_name' in $rel_path AND $prev"
     ERRORS=$((ERRORS + 1))
   else
-    printf '%s\t%s\n' "$skill_name" "$rel_path" >> "$NAMES_FILE"
+    NAMES="$NAMES$skill_name"$'\t'"$rel_path"$'\n'
   fi
 
   # Check for built-in command collisions
@@ -310,18 +473,19 @@ for plugin_dir in "$REPO_ROOT"/plugins/*/skills/*/; do
 done
 
 # Agents are prompts too
-for agent_file in "$REPO_ROOT"/plugins/*/agents/*.md; do
-  [ -f "$agent_file" ] || continue
+k=$NSKILLFILES
+for agent_file in ${AGENT_FILES[@]+"${AGENT_FILES[@]}"}; do
   check_reasoning_echo "$agent_file" "${agent_file#"$REPO_ROOT"/}"
   check_rm_target "$agent_file" "${agent_file#"$REPO_ROOT"/}"
-  check_opus_effort "$agent_file" "${agent_file#"$REPO_ROOT"/}"
-  check_yaml_plain "$agent_file" "${agent_file#"$REPO_ROOT"/}"
+  check_opus_effort "$k" "${agent_file#"$REPO_ROOT"/}"
+  check_yaml_plain "$k" "${agent_file#"$REPO_ROOT"/}"
+  k=$((k + 1))
 done
 
 # Copilot agent templates are parsed by the same strict YAML
-for tpl in "$REPO_ROOT"/plugins/*/templates/agents/*.agent.md.template; do
-  [ -f "$tpl" ] || continue
-  check_yaml_plain "$tpl" "${tpl#"$REPO_ROOT"/}"
+for tpl in ${TEMPLATE_FILES[@]+"${TEMPLATE_FILES[@]}"}; do
+  check_yaml_plain "$k" "${tpl#"$REPO_ROOT"/}"
+  k=$((k + 1))
 done
 
 # Inline chains. Invocation forms used in skills: `Skill(/x)`, `Invoke /x`,
@@ -329,19 +493,41 @@ done
 # external skills (superpowers:*) are not counted.
 # One row per skill: name, ~tokens, forked(1/0), invoked skills. awk does the
 # graph walk (portable — no bash-4 associative arrays; macOS ships bash 3.2).
-CHAIN_TABLE=$(mktemp)
-trap 'rm -f "$NAMES_FILE" "$CHAIN_TABLE"' EXIT
+# A skill's invoked skills are sorted and deduplicated (sort -u) in one sort run
+# for all skills: "<row><TAB><skill>" lines, keyed on the row number.
+CHAIN_FILES=() CHAIN_IDX=()
 for skill_file in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
-  n=$(basename "$(dirname "$skill_file")")
-  tok=$(( $(wc -c < "$skill_file") / 4 ))
-  fork=$(awk 'NR==1 && $0=="---" {fm=1; next} fm && $0=="---" {exit} fm && /^context:[ \t]*fork/ {print 1; exit}' "$skill_file")
-  targets=$(grep -oE '(Skill\([[:space:]]*/?|[Ii]nvoke (the )?`?/)[a-z][a-z0-9-]+' "$skill_file" \
-    | sed -E 's/.*[(`/ ]//' | sort -u | grep -vx "$n" | tr '\n' ' ' || true)
-  echo "$n ${tok} ${fork:-0} $targets" >> "$CHAIN_TABLE"
+  CHAIN_FILES+=("$skill_file")
+  CHAIN_IDX+=("$(fact_index "$skill_file")")
+done
+TG_LINES=""
+r=0
+for skill_file in ${CHAIN_FILES[@]+"${CHAIN_FILES[@]}"}; do
+  j="${CHAIN_IDX[$r]}"
+  if [ -n "$j" ] && [ -n "${F_TG[$j]}" ]; then
+    while IFS= read -r t; do TG_LINES="$TG_LINES$r"$'\t'"$t"$'\n'; done <<< "${F_TG[$j]}"
+  fi
+  r=$((r + 1))
+done
+TG_SORTED=""
+[ -n "$TG_LINES" ] && TG_SORTED=$(printf '%s' "$TG_LINES" | sort -t "$(printf '\t')" -k1,1n -k2,2 -u)
+CHAIN_ROWS=""
+r=0
+for skill_file in ${CHAIN_FILES[@]+"${CHAIN_FILES[@]}"}; do
+  n="${skill_file%/SKILL.md}"; n="${n##*/}"
+  j="${CHAIN_IDX[$r]}"
+  tok=$(( $(bytes "$skill_file") / 4 ))
+  fork=""; [ -n "$j" ] && fork="${F_CFORK[$j]}"
+  targets=""
+  while IFS= read -r row; do
+    case "$row" in "$r"$'\t'*) t="${row#*$'\t'}"; [ "$t" = "$n" ] || targets="$targets$t " ;; esac
+  done <<< "$TG_SORTED"
+  CHAIN_ROWS="$CHAIN_ROWS$n ${tok} ${fork:-0} $targets"$'\n'
+  r=$((r + 1))
 done
 
 # Prints "name tokens inline-targets..." for each skill over the budget.
-CHAIN_HITS=$(awk -v max="$CHAIN_MAX_TOK" '
+CHAIN_HITS=$(printf '%s' "$CHAIN_ROWS" | awk -v max="$CHAIN_MAX_TOK" '
   { tok[$1]=$2; fork[$1]=$3; tg[$1]=""; for (i=4; i<=NF; i++) tg[$1]=tg[$1] " " $i }
   function inl(n,   a, k, i, out) {
     k=split(tg[n], a, " "); out=""
@@ -360,7 +546,7 @@ CHAIN_HITS=$(awk -v max="$CHAIN_MAX_TOK" '
       }
       if (total>max) print n, total, direct
     }
-  }' "$CHAIN_TABLE")
+  }')
 
 while read -r n tok inline; do
   [ -z "$n" ] && continue
@@ -396,15 +582,21 @@ fi
 # and tells the model not to work around it — a dead end. Name such skills
 # as the user's slash command ("/dx-foo") instead. TODO #238.
 DMI_NAMES=""
-for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
-  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)' \
-    && DMI_NAMES="$DMI_NAMES $(basename "$(dirname "$f")")"
+r=0
+for f in ${CHAIN_FILES[@]+"${CHAIN_FILES[@]}"}; do
+  j="${CHAIN_IDX[$r]}"; r=$((r + 1))
+  if [ -n "$j" ] && [ "${F_DMI[$j]}" = 1 ]; then n="${f%/SKILL.md}"; DMI_NAMES="$DMI_NAMES ${n##*/}"; fi
 done
-for f in "$REPO_ROOT"/plugins/*/skills/*/SKILL.md; do
-  awk 'NR==1 && $0=="---" {f=1; next} f && $0=="---" {exit} f' "$f" | grep -qE '^disable-model-invocation:[[:space:]]*(true|True|TRUE)' && continue
-  d="$(awk "$DESC_AWK" "$f") $(awk "$WTU_AWK" "$f")"
+r=0
+for f in ${CHAIN_FILES[@]+"${CHAIN_FILES[@]}"}; do
+  j="${CHAIN_IDX[$r]}"; r=$((r + 1))
+  d=" "
+  if [ -n "$j" ]; then
+    [ "${F_DMI[$j]}" = 1 ] && continue
+    d="${F_DESC[$j]} ${F_WTU[$j]}"
+  fi
   for n in $DMI_NAMES; do
-    if printf '%s' "$d" | grep -qE "(^|[^/[:alnum:]_-])$n([^[:alnum:]_-]|\$)"; then
+    if any_line_matches "$d" "(^|[^/[:alnum:]_-])$n([^[:alnum:]_-]|\$)"; then
       echo "ERROR: ${f#"$REPO_ROOT"/} — description or when_to_use routes to $n, which has disable-model-invocation; write it as /$n (the user's command)"
       ERRORS=$((ERRORS + 1))
     fi

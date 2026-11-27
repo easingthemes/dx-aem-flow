@@ -31,17 +31,21 @@ PROGRESS_LABEL="${DX_PROGRESS_LABEL:-Phase}"
 
 PROGRESS="$SPEC_DIR/$PROGRESS_FILE"
 
-mkdir -p "$SPEC_DIR"
+[ -d "$SPEC_DIR" ] || mkdir -p "$SPEC_DIR"
 
 # Resolve ticket id from spec dir name (e.g., 9999999-foo-bar -> 9999999)
-TICKET=$(basename "$SPEC_DIR" | grep -oE '^[0-9]+' || echo "unknown")
+# (in the shell: basename, then the leading digits).
+TICKET="${SPEC_DIR%"${SPEC_DIR##*[!/]}"}"; TICKET="${TICKET##*/}"
+if [[ "$TICKET" =~ ^[0-9]+ ]]; then TICKET="${BASH_REMATCH[0]}"; else TICKET="unknown"; fi
 
 # A literal '|' in any value would add a markdown column, so swap it for
 # U+2223 (DIVIDES). This is the ONLY transform applied to a value — the row is
 # matched and rewritten with literal string comparison (awk `index`), never a
 # regex or a sed replacement, so phase names like "Phase(A.1)", "Build|Deploy"
 # or notes like "color #FF0000 & more" need no further escaping.
-cell() { printf '%s' "$1" | sed 's/|/∣/g'; }
+# A value with no '|' needs no sed (each process costs tens of ms under endpoint
+# security on macOS).
+cell() { case "$1" in *"|"*) printf '%s' "$1" | sed 's/|/∣/g' ;; *) printf '%s' "$1" ;; esac; }
 
 PHASE_CELL=$(cell "$PHASE")
 # When the row was last written (UTC), so a reader can tell how long a step has
@@ -67,21 +71,25 @@ UPDATED="${DX_PROGRESS_NOW:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 LOCK="$PROGRESS.lock"
 LOCKED=""
 cleanup() {
-  [ -n "${TMP:-}" ] && rm -f "$TMP"
+  [ -n "${TMP:-}" ] && [ -e "$TMP" ] && rm -f "$TMP"
   # Release only a lock still stamped with our PID. Removing by path alone is the
   # same class of bug as the -mmin -1 reclaim below, one threshold up: if our hold
   # ever outlives the staleness window (a suspended laptop mid-critical-section is
   # the realistic way), another writer reclaims the path and creates its own lock,
   # and an unconditional rmdir here would delete a live one. Lock dirs would always
   # be empty, so that rmdir would always succeed.
-  if [ -n "$LOCKED" ] && [ "$(cat "$LOCK/owner" 2>/dev/null)" = "$$" ]; then
+  local owner=""
+  [ -n "$LOCKED" ] && { IFS= read -r owner < "$LOCK/owner"; } 2>/dev/null || true
+  if [ -n "$LOCKED" ] && [ "$owner" = "$$" ]; then
     rm -rf "$LOCK"
   fi
   return 0
 }
 trap cleanup EXIT
 
-for _ in $(seq 1 200); do
+_try=0
+while [ "$_try" -lt 200 ]; do
+  _try=$((_try + 1))
   # The lock is held by whoever creates $LOCK/owner, not by whoever's mkdir
   # returned 0: uutils mkdir 0.10 (ubuntu-26.04) let two concurrent writers both
   # "create" the dir and a row was lost. The owner file is opened O_EXCL by bash
@@ -116,7 +124,12 @@ fi
 
 # Files started before the Updated column existed keep their three columns: a
 # run that was already going must not end up with rows of two shapes.
-if grep -q '^| .* | Status | Note | Updated |$' "$PROGRESS"; then
+HAS_UPDATED=""
+_re='^\| .* \| Status \| Note \| Updated \|$'
+[ ! -r "$PROGRESS" ] || while IFS= read -r _line || [ -n "$_line" ]; do
+  if [[ "$_line" =~ $_re ]]; then HAS_UPDATED=1; break; fi
+done < "$PROGRESS"
+if [ -n "$HAS_UPDATED" ]; then
   ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") | $UPDATED |"
 else
   ROW="| $PHASE_CELL | $(cell "$STATUS") | $(cell "$NOTE") |"

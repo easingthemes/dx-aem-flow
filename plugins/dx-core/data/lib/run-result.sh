@@ -90,7 +90,14 @@ else
 fi
 
 # One line only: newlines, tabs and other control characters become spaces.
-one_line() { printf '%s' "$1" | tr '\000-\037\177' ' ' | sed -e 's/  */ /g' -e 's/^ //' -e 's/ $//'; }
+# A value that is already one clean line (the usual case) is printed as is, with
+# no tr/sed: each process costs tens of ms under endpoint security on macOS.
+one_line() {
+  case "$1" in
+    *[[:cntrl:]]*|*"  "*|" "*|*" ") printf '%s' "$1" | tr '\000-\037\177' ' ' | sed -e 's/  */ /g' -e 's/^ //' -e 's/ $//' ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
 
 # JSON string, or null when empty.
 json() {
@@ -100,6 +107,12 @@ json() {
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
   printf '"%s"' "$s"
+}
+
+# At most 80 characters (cut -c1-80); cut runs only for a value over 80 bytes.
+cut80() {
+  local n; n="$(LC_ALL=C; printf '%s' "${#1}")"
+  if [ "$n" -le 80 ]; then printf '%s' "$1"; else printf '%s' "$1" | cut -c1-80; fi
 }
 
 valid_run_id() { [[ "$1" =~ ^[A-Za-z0-9._:-]{1,64}$ ]]; }
@@ -150,21 +163,61 @@ mint_run_id() {
   RUN_ID="$sid.$n"
 }
 
+# dirname(1) in the shell: trailing slashes dropped, then the last component.
+dn() {
+  local p="$1"
+  while [ "$p" != / ] && [ "${p%/}" != "$p" ]; do p="${p%/}"; done
+  case "$p" in
+    /) ;;
+    */*) p="${p%/*}"; while [ -n "$p" ] && [ "${p%/}" != "$p" ]; do p="${p%/}"; done; [ -n "$p" ] || p=/ ;;
+    *) p=. ;;
+  esac
+  printf '%s\n' "$p"
+}
+
 # Value of a top-level string field in a file this script wrote ("key": "value"); empty if absent or null.
-field() { sed -n "s/^  \"$2\": \"\\(.*\\)\",\{0,1\}\$/\\1/p" "$1" 2>/dev/null | head -1; }
+# Read in the shell, not with sed: same match as ^  "key": "(.*)",?$, first line wins.
+field() {
+  local line re="^  \"$2\": \"(.*)\",?\$"
+  [ -r "$1" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [[ "$line" =~ $re ]]; then printf '%s\n' "${BASH_REMATCH[1]}"; return 0; fi
+  done < "$1"
+}
 
 # ISO 8601 UTC (as this script writes it) to epoch seconds; empty if the date cannot be parsed.
+# Computed in the shell for a valid YYYY-MM-DDTHH:MM:SSZ from 1970 on (days from
+# civil date, proleptic Gregorian); anything else is left to date(1).
 epoch() {
+  local re='^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$'
+  local y m d H M S dim yy era yoe mp doe
+  if [[ "$1" =~ $re ]]; then
+    y=$((10#${BASH_REMATCH[1]})) m=$((10#${BASH_REMATCH[2]})) d=$((10#${BASH_REMATCH[3]}))
+    H=$((10#${BASH_REMATCH[4]})) M=$((10#${BASH_REMATCH[5]})) S=$((10#${BASH_REMATCH[6]}))
+    case "$m" in
+      2) if [ $((y % 4)) -eq 0 ] && { [ $((y % 100)) -ne 0 ] || [ $((y % 400)) -eq 0 ]; }; then dim=29; else dim=28; fi ;;
+      4|6|9|11) dim=30 ;;
+      *) dim=31 ;;
+    esac
+    if [ "$y" -ge 1970 ] && [ "$m" -ge 1 ] && [ "$m" -le 12 ] && [ "$d" -ge 1 ] && [ "$d" -le "$dim" ] \
+       && [ "$H" -le 23 ] && [ "$M" -le 59 ] && [ "$S" -le 59 ]; then
+      yy=$((y - (m <= 2))); era=$((yy / 400)); yoe=$((yy - era * 400)); mp=$(((m + 9) % 12))
+      doe=$((yoe * 365 + yoe / 4 - yoe / 100 + (153 * mp + 2) / 5 + d - 1))
+      echo $(((era * 146097 + doe - 719468) * 86400 + H * 3600 + M * 60 + S))
+      return 0
+    fi
+  fi
   date -u -d "$1" +%s 2>/dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2>/dev/null || true
 }
 
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-mkdir -p "$DIR" || usage "cannot create $DIR"
+[ -d "$DIR" ] || mkdir -p "$DIR" || usage "cannot create $DIR"
 MARKER="$DIR/$SKILL-$ID.running.json"
 
-write_atomic() { # target ; content on stdin
-  local tmp="$1.tmp.$$"
-  cat > "$tmp" && mv -f "$tmp" "$1" || { rm -f "$tmp"; echo "run-result.sh: cannot write $1" >&2; exit 1; }
+write_atomic() { # target ; content (newline-terminated lines) on stdin
+  local tmp="$1.tmp.$$" l
+  { while IFS= read -r l || [ -n "$l" ]; do printf '%s\n' "$l"; done > "$tmp"; } && mv -f "$tmp" "$1" \
+    || { rm -f "$tmp"; echo "run-result.sh: cannot write $1" >&2; exit 1; }
 }
 
 if [ "$START" = 1 ]; then
@@ -175,7 +228,7 @@ if [ "$START" = 1 ]; then
   # No --spec-dir: the one .ai/specs/<id>-*/ next to the results dir, if exactly
   # one exists — so the SessionEnd hook can find the progress file later.
   if [ -z "$SPEC_DIR" ]; then
-    ROOT="$(dirname "$(dirname "$DIR")")"
+    ROOT="$(dn "$(dn "$DIR")")"
     set -- "$ROOT"/.ai/specs/"$ID"-*/
     if [ $# -eq 1 ] && [ -d "$1" ]; then
       SPEC_DIR="${1%/}"; [ "$ROOT" = "." ] && SPEC_DIR="${SPEC_DIR#./}"
@@ -224,7 +277,7 @@ if [ "${#METRIC_KEYS[@]}" -gt 0 ]; then
     fi
     if [[ "$v" =~ ^-?[0-9]{1,15}$ ]]; then v="$((10#${v#-}))"; [[ "${METRIC_VALS[$i]}" == -* ]] && v="-$v"
     elif [ "$v" = true ] || [ "$v" = false ]; then :
-    else v="$(json "$(one_line "$v" | cut -c1-80)")"; fi
+    else v="$(json "$(cut80 "$(one_line "$v")")")"; fi
     found=""
     for j in "${!keys[@]}"; do [ "${keys[$j]}" = "$k" ] && { vals[$j]="$v"; found=1; }; done
     [ -n "$found" ] || { keys+=("$k"); vals+=("$v"); }
@@ -237,8 +290,14 @@ if [ "${#METRIC_KEYS[@]}" -gt 0 ]; then
 fi
 
 # env: plugin version from this script's own plugin manifest; engine as detected above.
-MANIFEST="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/.claude-plugin/plugin.json"
-DX_VERSION="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$MANIFEST" 2>/dev/null | head -1)"
+MANIFEST="$(cd "$(dn "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/.claude-plugin/plugin.json"
+DX_VERSION=""
+if [ -r "$MANIFEST" ]; then
+  re='^[[:space:]]*"version":[[:space:]]*"([^"]*)"'
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [[ "$line" =~ $re ]]; then DX_VERSION="${BASH_REMATCH[1]}"; break; fi
+  done < "$MANIFEST"
+fi
 ENV_OBJ="{ \"dx_version\": $(json "$DX_VERSION"), \"engine\": $(json "$ENGINE"), \"mode\": $(json "$MODE"), \"mode_reason\": $(json "$MODE_REASON") }"
 
 OUT="$DIR/$SKILL-$ID.json"
@@ -261,7 +320,7 @@ OUT="$DIR/$SKILL-$ID.json"
   printf '  "finished_at": "%s"\n' "$NOW"
   printf '}\n'
 } | write_atomic "$OUT"
-rm -f "$MARKER"
+[ ! -e "$MARKER" ] || rm -f "$MARKER"
 
 # History: the same object on one line. Never fail the run over it.
 HIST="$DIR/history.jsonl"

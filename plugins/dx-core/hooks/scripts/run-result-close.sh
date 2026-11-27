@@ -22,11 +22,22 @@
 
 RUN_ID="${DX_RUN_ID:-}"
 INPUT=""
-[ -t 0 ] || INPUT="$(cat)"
-jstr() { printf '%s' "$INPUT" | sed -n "s/.*\"$1\" *: *\"\([^\"]*\)\".*/\1/p" | head -1; }
+[ -t 0 ] || IFS= read -r -d '' INPUT || true
+# Values are read in the shell, not with sed/head/tr: each process costs tens of
+# ms under endpoint security on macOS. Same matches as the sed they replace.
+# jstr: the last "key": "value" on the first input line that has one.
+jstr() {
+  local line re=".*\"$1\" *: *\"([^\"]*)\""
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [[ "$line" =~ $re ]]; then printf '%s\n' "${BASH_REMATCH[1]}"; return 0; fi
+  done <<EOF_INPUT
+$INPUT
+EOF_INPUT
+}
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 SID="$(jstr session_id)"
 [ -n "$SID" ] || SID="$(jstr sessionId)"
-SID="$(printf '%s' "$SID" | tr '[:upper:]' '[:lower:]')"
+case "$SID" in *[[:upper:]]*) SID="$(lower "$SID")" ;; esac
 [[ "$SID" =~ ^[a-z0-9_:-]{1,60}$ ]] || SID=""
 [ -n "$RUN_ID" ] || [ -n "$SID" ] || exit 0
 
@@ -40,7 +51,14 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RR="$HERE/../../data/lib/run-result.sh"
 [ -f "$RR" ] || exit 0
 
-val() { sed -n "s/^  \"$2\": \"\\(.*\\)\",\\{0,1\\}\$/\\1/p" "$1" 2>/dev/null | head -1; }
+# val: the first ^  "key": "(.*)",?$ of a file run-result.sh wrote.
+val() {
+  local line re="^  \"$2\": \"(.*)\",?\$"
+  [ -r "$1" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [[ "$line" =~ $re ]]; then printf '%s\n' "${BASH_REMATCH[1]}"; return 0; fi
+  done < "$1"
+}
 
 # The step a run was on: the last in_progress row of the marker's progress file
 # (in its spec_dir, else the one .ai/specs/<id>-*/). Empty when there is none.
@@ -66,7 +84,7 @@ for m in "$DIR"/*.running.json; do
   rid="$(val "$m" run_id)"
   [ -n "$rid" ] || continue
   if [ "$rid" = "$RUN_ID" ]; then :
-  elif [ -n "$SID" ] && [ "$(printf '%s' "${rid%%.*}" | tr '[:upper:]' '[:lower:]')" = "$SID" ]; then :
+  elif [ -n "$SID" ] && { r="${rid%%.*}"; case "$r" in *[[:upper:]]*) r="$(lower "$r")" ;; esac; [ "$r" = "$SID" ]; }; then :
   else continue; fi
   skill="$(val "$m" skill)" id="$(val "$m" id)"
   [ -n "$skill" ] && [ -n "$id" ] || continue
