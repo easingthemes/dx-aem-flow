@@ -26,7 +26,7 @@
 
 set -uo pipefail
 
-usage() { sed -n '2,24p' "$0"; }
+usage() { sed -n '2,25p' "$0"; }
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"   # absolute: we cd to ROOT below
 LIST=0
@@ -336,9 +336,14 @@ changed_paths() {
     echo "ERROR: base ref '$BASE' not found. Fetch it first, or pass --changed <ref>." >&2
     return 2
   fi
+  if ! git merge-base "$BASE" HEAD >/dev/null 2>&1; then
+    echo "ERROR: no merge base between '$BASE' and HEAD. Fetch more history (git fetch --unshallow) or pass --changed <ref>." >&2
+    return 2
+  fi
+  # --no-renames: report the OLD path of a rename too, so its consumers are still selected.
   {
-    git diff --name-only "$BASE"...HEAD
-    git diff --name-only HEAD                  # staged + unstaged
+    git diff --no-renames --name-only "$BASE"...HEAD
+    git diff --no-renames --name-only HEAD     # staged + unstaged
     git ls-files --others --exclude-standard   # untracked
   } | sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u
 }

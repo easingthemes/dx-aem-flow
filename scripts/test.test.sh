@@ -194,9 +194,29 @@ check "runs from a subdirectory" "$FROM_ROOT" "$FROM_SUB"
 case "$FROM_SUB" in *"$ALPHA"*) r=yes ;; *) r=no ;; esac
 check "subdirectory run selects suites" "yes" "$r"
 
-glist --changed origin/nope
+# gerr <args...> — like glist but captures stderr only (sets OUT and RC)
+gerr() { OUT=$(cd "$FX3" && DX_TEST_ROOT="$FX3" bash "$RUNNER" --list "$@" 2>&1 >/dev/null); RC=$?; }
+
+gerr --changed origin/nope
 case "$OUT" in *"not found"*) r=yes ;; *) r=no ;; esac
-check "missing base ref exits 2" "2 yes" "$RC $r"
+check "missing base ref exits 2, message on stderr" "2 yes" "$RC $r"
+
+# Unrelated history (orphan base) has no merge base: must fail loudly, not report "no changes".
+git_fx update-ref refs/remotes/origin/orphan "$(git_fx commit-tree -m orphan "$(git_fx rev-parse 'HEAD^{tree}')")"
+gerr --changed origin/orphan
+case "$OUT" in *"no merge base"*) r=yes ;; *) r=no ;; esac
+check "base with no merge base exits 2, message on stderr" "2 yes" "$RC $r"
+
+# A renamed lib file must still select consumers of its OLD name (staged, then committed).
+git_fx mv plugins/dx-x/data/lib/helper.sh plugins/dx-x/data/lib/helper2.sh
+glist
+check "staged rename selects consumers of the old name" "uses helper.sh" \
+  "$(printf '%s\n' "$OUT" | awk -F'\t' -v s="$BETA" '$1==s{print $2}')"
+git_fx commit -q -m rename
+glist
+check "committed rename selects consumers of the old name" "uses helper.sh" \
+  "$(printf '%s\n' "$OUT" | awk -F'\t' -v s="$BETA" '$1==s{print $2}')"
+git_fx reset -q --hard HEAD~1
 
 glist --group lib
 check "group lib" "plugins/dx-x/data/lib/tests/helper.test.sh" "$(printf '%s\n' "$OUT" | cut -f1)"
@@ -213,8 +233,9 @@ check "group cli" "$CLI" "$(printf '%s\n' "$OUT" | cut -f1)"
 glist --group nope
 case "$OUT" in *"Groups:"*) r=yes ;; *) r=no ;; esac
 check "unknown group exits 2" "2 yes" "$RC $r"
-glist --group hooks
-check "group with no suites exits 2" "2" "$RC"
+gerr --group hooks
+case "$OUT" in *"Groups:"*) r=yes ;; *) r=no ;; esac
+check "group with no suites exits 2" "2 yes" "$RC $r"
 glist --all
 check "--list --all lists every suite" "$(exp $ALL)" "$(printf '%s\n' "$OUT" | cut -f1 | tr '\n' ' ')"
 glist --changed origin/main --group lib
