@@ -53,6 +53,31 @@ run_validator() {
   REPO_ROOT="$FIXTURE_ROOT" "$@" bash "$VALIDATOR" 2>&1
 }
 
+# run_with_timeout <seconds> <cmd...> — GNU timeout / gtimeout when present,
+# else a background watchdog (macOS has neither). Returns the command's exit
+# code, or 124 if the watchdog fired (same as GNU timeout).
+run_with_timeout() {
+  local secs=$1; shift
+  if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; return $?; fi
+  if command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; return $?; fi
+  local flag; flag=$(mktemp)
+  "$@" &
+  local pid=$!
+  # Watchdog: detached from stdout/stderr, and its own sleep dies with it, so
+  # an enclosing $(...) is not held open until the full timeout elapses.
+  ( sleep "$secs" & sp=$!
+    trap 'kill "$sp" 2>/dev/null; exit 0' TERM
+    wait "$sp" && { echo fired >"$flag"; kill -TERM "$pid" 2>/dev/null; }
+  ) >/dev/null 2>&1 &
+  local wd=$!
+  local rc=0
+  wait "$pid" || rc=$?
+  kill "$wd" 2>/dev/null; wait "$wd" 2>/dev/null
+  if [ -s "$flag" ]; then rc=124; fi
+  rm -f "$flag"
+  return "$rc"
+}
+
 check() {
   local label="$1" expected="$2" actual="$3"
   if [ "$expected" = "$actual" ]; then
@@ -327,7 +352,7 @@ check "transitive chain is summed (A over, B under)" "1:0" \
 reset_fixture
 chain_skill dx-p 0 'Invoke /dx-q first.'
 chain_skill dx-q 0 'Invoke /dx-p back.'
-out=$(CHAIN_MAX_TOK=100000 timeout 20 bash -c "REPO_ROOT='$FIXTURE_ROOT' bash '$VALIDATOR'" 2>&1); rc=$?
+out=$(CHAIN_MAX_TOK=100000 run_with_timeout 20 bash -c "REPO_ROOT='$FIXTURE_ROOT' bash '$VALIDATOR'" 2>&1); rc=$?
 check "a cycle terminates" "0" "$rc"
 
 # a hint to the human is not an invocation
