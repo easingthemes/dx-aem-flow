@@ -215,17 +215,25 @@ run "progress: concurrent run leaves no lock or temp files behind" \
 
 # A lock left behind by a killed writer must not wedge later writers: it ages past
 # the staleness window and gets reclaimed. Deterministic via a back-dated mtime.
+# "Not waited out" is measured in lock waits, not seconds: the writer sleeps once
+# per failed attempt and gives up after 200 (printing "lock wait timed out"), so
+# a reclaim takes one or two waits and waiting it out takes 200. A wall-clock
+# bound failed here under heavy load while the behaviour was right. A `sleep`
+# shim on PATH counts the waits.
 TMPSTALE="$TMP/7777777-stale"
-mkdir -p "$TMPSTALE/simple-progress.md.lock"
+mkdir -p "$TMPSTALE/simple-progress.md.lock" "$TMP/sleep-shim"
 echo 99999 > "$TMPSTALE/simple-progress.md.lock/owner"
+printf '#!/bin/sh\necho wait >> "%s"\nexec "%s" "$@"\n' "$TMP/sleep-calls" "$(command -v sleep)" > "$TMP/sleep-shim/sleep"
+chmod +x "$TMP/sleep-shim/sleep"
+: > "$TMP/sleep-calls"
 if touch -t "$(date -v-5M +%Y%m%d%H%M 2>/dev/null || date -d '5 minutes ago' +%Y%m%d%H%M)" "$TMPSTALE/simple-progress.md.lock" 2>/dev/null; then
   run "progress: stale lock is reclaimed, not waited out" bash -c '
-    start=$(date +%s)
-    "'"$SCRIPTS"'/update-progress.sh" "'"$TMPSTALE"'" "Phase 1" done >/dev/null 2>&1
-    took=$(( $(date +%s) - start ))
+    PATH="'"$TMP"'/sleep-shim:$PATH" "'"$SCRIPTS"'/update-progress.sh" "'"$TMPSTALE"'" "Phase 1" done >/dev/null 2>"'"$TMP"'/stale.err"
+    waits=$(wc -l < "'"$TMP"'/sleep-calls")
     grep -qE "^\| Phase 1 \| done \|" "'"$TMPSTALE"'/simple-progress.md" &&
       [ ! -e "'"$TMPSTALE"'/simple-progress.md.lock" ] &&
-      [ "$took" -lt 5 ]
+      ! grep -q "lock wait timed out" "'"$TMP"'/stale.err" &&
+      [ "$waits" -le 2 ]
   '
 else
   echo "SKIP: progress: stale lock reclaim (no back-dating touch available)"
