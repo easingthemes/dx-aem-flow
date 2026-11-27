@@ -97,6 +97,7 @@ Six MCP servers across plugins: ADO, Atlassian, Figma, axe (accessibility) and P
   under `plugins/` and `scripts/`, rather than listing them,
   so a new suite needs no workflow change but MUST be hermetic (no live ADO/AEM/network, no reliance on
   ambient git config)
+- Locally, run `bash scripts/test.sh` (affected suites only; `--list` shows why); CI runs all
 - Structural checks cannot tell you a script works, and `node --check` / `bash -n` only parse syntax — run the
   relevant suite when changing anything under `data/lib/` or `skills/*/scripts/`
 - Behavioral evals live in `plugins/<plugin>/evals/` and run via `claude plugin eval` — two suites so far in `dx-core/evals/` (`plan-validate-finds-gap`, `routing`); add one alongside non-trivial skill changes where practical
