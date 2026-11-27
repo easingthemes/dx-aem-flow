@@ -45,7 +45,7 @@ import PipelineBlock from '../../components/PipelineBlock.astro';
       Find or create the demo page, configure the component, and screenshot the dialog (only when it
       changed) and the author preview (<code>wcmmode=disabled</code>). <code>--local</code> while developing,
       with a dialog diff against the snapshot; QA by default after the merge, with a deploy gate and
-      screenshots uploaded to the work item. Same page path on both instances.
+      screenshots uploaded to the work item. On QA the local page is the source: its component variants are copied over.
     </ContentCard>
 
     <ContentCard
