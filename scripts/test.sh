@@ -8,41 +8,57 @@
 # A changed path that maps to no rule runs EVERYTHING — never silently skips a suite.
 #
 # Usage:
-#   scripts/test.sh --list -      # read changed paths on stdin, print the selection
-#                                 #   (<suite><TAB><reason>, sorted); nothing runs
-#   scripts/test.sh --all [-j N]  # run every suite in parallel (default N = CPU count);
-#                                 #   failed suites' full logs are printed, then a summary
-#   scripts/test.sh -h            # this help
+#   scripts/test.sh                      # run the suites the git diff affects (default = --changed)
+#   scripts/test.sh --changed [<base>]   # same, diff against <base> (default origin/main):
+#                                        #   <base>...HEAD + working tree + untracked files
+#   scripts/test.sh --group <name>       # run one named group: lib hooks hub automation cli
+#                                        #   tooling validators skill:<name>
+#   scripts/test.sh --all [-j N]         # run every suite
+#   scripts/test.sh --list [mode]        # print the selection (<suite><TAB><reason>) and run
+#                                        #   nothing; mode is --changed, --all, --group <name>,
+#                                        #   or '-' to read changed paths from stdin
+#   scripts/test.sh -h                   # this help
+# Suites run in parallel (-j N, default = CPU count); failed suites' full logs are printed,
+# then a summary.
 #
 # Env: DX_TEST_ROOT overrides the repo root (used by scripts/test.test.sh).
 # Exit: 0 = ok / all suites passed.  1 = a suite failed.  2 = usage error.
 
 set -uo pipefail
 
-usage() { sed -n '2,18p' "$0"; }
+usage() { sed -n '2,24p' "$0"; }
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"   # absolute: we cd to ROOT below
-MODE=""
+LIST=0
+SRC="changed"
+BASE="origin/main"
+GROUP=""
 JOBS=""
 RUN_ONE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --list)
-      shift
-      if [ "${1:-}" = "-" ]; then MODE="list-stdin"; shift
-      else echo "--list needs '-' (paths on stdin)" >&2; exit 2; fi ;;
-    --all) MODE="all"; shift ;;
+      LIST=1; shift
+      if [ "${1:-}" = "-" ]; then SRC="stdin"; shift; fi ;;
+    --all) SRC="all"; shift ;;
+    --changed)
+      SRC="changed"; shift
+      case "${1:-}" in ''|-*) ;; *) BASE="$1"; shift ;; esac ;;
+    --group)
+      [ -n "${2:-}" ] || { echo "--group needs a name" >&2; exit 2; }
+      SRC="group"; GROUP="$2"; shift 2 ;;
     --run-one)   # internal: invoked by run_suites via xargs
       [ -n "${2:-}" ] || { echo "--run-one needs a suite" >&2; exit 2; }
-      MODE="run-one"; RUN_ONE="$2"; shift 2 ;;
+      [ -n "${DX_TEST_LOGDIR:-}" ] || { echo "--run-one is internal (needs DX_TEST_LOGDIR)" >&2; exit 2; }
+      SRC="run-one"; RUN_ONE="$2"; shift 2 ;;
     -j)
-      case "${2:-}" in ''|*[!0-9]*|0) echo "-j needs a positive integer" >&2; exit 2 ;; esac
-      JOBS="$2"; shift 2 ;;
+      case "${2:-}" in ''|*[!0-9]*) echo "-j needs a positive integer" >&2; exit 2 ;; esac
+      [ "$((10#$2))" -gt 0 ] || { echo "-j needs a positive integer" >&2; exit 2; }
+      JOBS="$((10#$2))"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
-[ -n "$MODE" ] || { usage >&2; exit 2; }
 [ -n "$JOBS" ] || JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
 case "$JOBS" in ''|*[!0-9]*|0) JOBS=4 ;; esac
 
@@ -226,7 +242,8 @@ EOF_FB
 }
 
 # run_one <suite> — run one suite, log to $DX_TEST_LOGDIR, print PASS/FAIL. Always exits 0:
-# failure is recorded in $DX_TEST_LOGDIR/failed so xargs exit-code handling never matters.
+# the verdict is recorded in $DX_TEST_LOGDIR/passed|failed, so a failing suite never aborts
+# xargs early. (run_suites still checks xargs' own exit status and unreported suites.)
 run_one() {
   local s="$1" log t0 t1 rc
   log="$DX_TEST_LOGDIR/$(printf '%s' "$s" | sed 's|/|__|g').log"
@@ -283,16 +300,73 @@ run_suites() {
     printf '\nNOT RUN (no result recorded):\n'
     sed 's/^/  /' "$DX_TEST_LOGDIR/missing"
   fi
-  printf '\n%s passed, %s failed (%s s)\n' "$npass" "$nfail" $((t1 - t0))
+  if [ "$nmiss" -gt 0 ]; then
+    printf '\n%s passed, %s failed, %s not run (%s s)\n' "$npass" "$nfail" "$nmiss" $((t1 - t0))
+  else
+    printf '\n%s passed, %s failed (%s s)\n' "$npass" "$nfail" $((t1 - t0))
+  fi
   [ "$nfail" -eq 0 ] && [ "$nmiss" -eq 0 ] && [ "$xrc" -eq 0 ]
 }
 
-case "$MODE" in
-  list-stdin)
-    sel=$(select_suites)
-    if [ -z "$sel" ]; then echo "No suites affected."; else printf '%s\n' "$sel"; fi ;;
-  all)
-    discover_suites | run_suites ;;
+# group_suites <name> — suites in a named group, one per line. Membership is by suite_home
+# (or by path for tooling/validators).
+group_suites() {
+  local g="$1" s h
+  while IFS= read -r s; do
+    [ -n "$s" ] || continue
+    h=$(suite_home "$s")
+    case "$g" in
+      lib)        case "$h" in plugins/*/data/lib/*) echo "$s" ;; esac ;;
+      hooks)      case "$h" in plugins/*/hooks/*|plugins/*/data/hooks/*) echo "$s" ;; esac ;;
+      hub)        case "$h" in plugins/dx-hub/*) echo "$s" ;; esac ;;
+      automation) case "$h" in plugins/dx-automation/*) echo "$s" ;; esac ;;
+      cli)        case "$h" in cli/*) echo "$s" ;; esac ;;
+      tooling)    case "$s" in scripts/*.test.sh) echo "$s" ;; esac ;;
+      validators) case "$s" in scripts/validate-*.test.sh) ;; scripts/validate-*.sh) echo "$s" ;; esac ;;
+      skill:?*)   case "$h" in plugins/*/skills/"${g#skill:}"/) echo "$s" ;; esac ;;
+    esac
+  done <<EOF_G
+$(discover_suites)
+EOF_G
+}
+
+# changed_paths — git diff vs base, plus working tree, plus untracked; blanks dropped.
+changed_paths() {
+  if ! git rev-parse --verify -q "$BASE^{commit}" >/dev/null 2>&1; then
+    echo "ERROR: base ref '$BASE' not found. Fetch it first, or pass --changed <ref>." >&2
+    return 2
+  fi
+  {
+    git diff --name-only "$BASE"...HEAD
+    git diff --name-only HEAD                  # staged + unstaged
+    git ls-files --others --exclude-standard   # untracked
+  } | sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u
+}
+
+SEL=""
+case "$SRC" in
   run-one)
-    run_one "$RUN_ONE" ;;
+    run_one "$RUN_ONE"; exit 0 ;;
+  stdin)
+    SEL=$(select_suites) ;;
+  all)
+    SEL=$(discover_suites | awk '{ printf "%s\tall\n", $0 }') ;;
+  group)
+    SEL=$(group_suites "$GROUP" | awk -v g="$GROUP" '{ printf "%s\tgroup %s\n", $0, g }')
+    if [ -z "$SEL" ]; then
+      echo "ERROR: group '$GROUP' matched no suites. Groups: lib hooks hub automation cli tooling validators skill:<name>" >&2
+      exit 2
+    fi ;;
+  changed)
+    files=$(changed_paths); rc=$?
+    [ $rc -eq 0 ] || exit 2
+    if [ -z "$files" ]; then
+      echo "No changed files — nothing to run."
+      exit 0
+    fi
+    SEL=$(printf '%s\n' "$files" | select_suites) ;;
 esac
+
+if [ -z "$SEL" ]; then echo "No suites affected."; exit 0; fi
+if [ "$LIST" -eq 1 ]; then printf '%s\n' "$SEL"; exit 0; fi
+printf '%s\n' "$SEL" | cut -f1 | run_suites

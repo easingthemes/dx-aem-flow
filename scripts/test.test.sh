@@ -3,9 +3,10 @@
 #
 # CLAUDE.md: "a validator nobody has watched fail is indistinguishable from a blind one."
 # Every selection rule has at least one case below that fails if the rule is deleted.
-# Hermetic: builds a throwaway fixture tree (DX_TEST_ROOT), never touches git, the network
-# or ambient config. `--list -` only prints a selection; `--all` runs the suites of a second
-# throwaway fixture (FX2) and never the real repo's.
+# Hermetic: builds throwaway fixture trees (DX_TEST_ROOT), never touches the real repo, the
+# network or ambient config. `--list` only prints a selection; `--all` runs the suites of a
+# second throwaway fixture (FX2) and never the real repo's. The git-diff cases use a third
+# fixture (FX3), a throwaway git repo with per-repo identity.
 
 set -uo pipefail
 
@@ -33,6 +34,20 @@ mk scripts/validate-skills.test.sh
 mk scripts/validate-agents.sh
 mk scripts/validate-structure.sh
 mk scripts/validate-stats.sh
+
+# FX3: the same tree as a throwaway git repo, for the git-diff and --group cases below.
+FX3="$(mktemp -d "${TMPDIR:-/tmp}/dx-test-git.XXXXXX")"
+trap 'rm -rf "$FX" "$FX3"' EXIT
+cp -R "$FX/." "$FX3"
+git_fx() { git -C "$FX3" "$@"; }
+git -c init.defaultBranch=main init -q "$FX3"
+git_fx config user.email bot@example.com
+git_fx config user.name test
+git_fx config commit.gpgsign false
+git_fx config http.proxy http://127.0.0.1:9   # unroutable: nothing may dial out
+git_fx add -A
+git_fx commit -q -m init
+git_fx update-ref refs/remotes/origin/main HEAD
 
 # check <label> <expected> <actual>
 check() {
@@ -143,16 +158,71 @@ check "lib consumer reason names the file" "uses helper.sh" \
   "$(list plugins/dx-x/data/lib/helper.sh | awk -F'\t' -v s="$BETA" '$1==s{print $2}')"
 
 # CLI behaviour
-# Task 4 turns bare --list into git-diff mode: replace this case then.
-DX_TEST_ROOT="$FX" bash "$RUNNER" --list >/dev/null 2>&1
-check "--list without '-' exits 2 (pre-git-diff mode)" "2" "$?"
 DX_TEST_ROOT="$FX" bash "$RUNNER" --bogus >/dev/null 2>&1
 check "unknown flag exits 2" "2" "$?"
 DX_TEST_ROOT="$FX" bash "$RUNNER" -h 2>&1 | grep -q 'Usage' ; check "-h prints usage" "0" "$?"
 
+# ---- Git-diff mode (default / --changed) and --group, on the FX3 git fixture ----
+# glist <args...> — sets OUT and RC; runs from the fixture root
+glist() { OUT=$(cd "$FX3" && DX_TEST_ROOT="$FX3" bash "$RUNNER" --list "$@" 2>&1); RC=$?; }
+
+glist
+check "clean tree runs nothing" "No changed files — nothing to run. 0" "$OUT $RC"
+
+echo "more" >> "$FX3/$SKILLS/alpha/SKILL.md"
+glist
+case "$OUT" in *"$ALPHA"*) r=yes ;; *) r=no ;; esac
+check "uncommitted edit is selected" "yes" "$r"
+
+echo "x" > "$FX3/$SKILLS/beta/new.txt"
+glist
+case "$OUT" in *"b.test.sh"*) r=yes ;; *) r=no ;; esac
+check "untracked file is selected" "yes" "$r"
+
+git_fx add -A
+git_fx commit -q -m change
+glist
+case "$OUT" in *"$ALPHA"*"b.test.sh"*|*"b.test.sh"*"$ALPHA"*) r=yes ;; *) r=no ;; esac
+check "committed change vs base is selected" "yes" "$r"
+glist --changed HEAD
+check "--changed HEAD sees nothing once committed" "No changed files — nothing to run. 0" "$OUT $RC"
+
+# No DX_TEST_ROOT: the root must come from git itself, whatever the working directory is.
+FROM_ROOT=$(cd "$FX3" && bash "$RUNNER" --list 2>&1)
+FROM_SUB=$(cd "$FX3/cli" && bash "$RUNNER" --list 2>&1)
+check "runs from a subdirectory" "$FROM_ROOT" "$FROM_SUB"
+case "$FROM_SUB" in *"$ALPHA"*) r=yes ;; *) r=no ;; esac
+check "subdirectory run selects suites" "yes" "$r"
+
+glist --changed origin/nope
+case "$OUT" in *"not found"*) r=yes ;; *) r=no ;; esac
+check "missing base ref exits 2" "2 yes" "$RC $r"
+
+glist --group lib
+check "group lib" "plugins/dx-x/data/lib/tests/helper.test.sh" "$(printf '%s\n' "$OUT" | cut -f1)"
+glist --group skill:beta
+check "group skill:beta" "$BETA" "$(printf '%s\n' "$OUT" | cut -f1)"
+glist --group validators
+check "group validators" "$(exp scripts/validate-agents.sh scripts/validate-skills.sh scripts/validate-stats.sh scripts/validate-structure.sh)" \
+  "$(printf '%s\n' "$OUT" | cut -f1 | tr '\n' ' ')"
+glist --group tooling
+check "group tooling" "$(exp scripts/check-foo.test.sh scripts/validate-skills.test.sh)" \
+  "$(printf '%s\n' "$OUT" | cut -f1 | tr '\n' ' ')"
+glist --group cli
+check "group cli" "$CLI" "$(printf '%s\n' "$OUT" | cut -f1)"
+glist --group nope
+case "$OUT" in *"Groups:"*) r=yes ;; *) r=no ;; esac
+check "unknown group exits 2" "2 yes" "$RC $r"
+glist --group hooks
+check "group with no suites exits 2" "2" "$RC"
+glist --all
+check "--list --all lists every suite" "$(exp $ALL)" "$(printf '%s\n' "$OUT" | cut -f1 | tr '\n' ' ')"
+glist --changed origin/main --group lib
+check "--list combines with the last mode given" "plugins/dx-x/data/lib/tests/helper.test.sh" "$(printf '%s\n' "$OUT" | cut -f1)"
+
 # ---- Execution (--all): a second fixture whose suites have real bodies ----
 FX2="$(mktemp -d "${TMPDIR:-/tmp}/dx-test-run.XXXXXX")"
-trap 'rm -rf "$FX" "$FX2"' EXIT
+trap 'rm -rf "$FX" "$FX2" "$FX3"' EXIT
 mk2() { mkdir -p "$FX2/$(dirname "$1")"; printf '%s\n' "$2" > "$FX2/$1"; }
 mk2 plugins/dx-x/skills/ok/tests/run-tests.sh 'echo fine; exit 0'
 mk2 plugins/dx-x/skills/bad/tests/run-tests.sh 'echo boom-marker; exit 1'
@@ -196,10 +266,18 @@ mk2 plugins/dx-x/skills/killed/tests/run-tests.sh 'kill -9 $PPID; sleep 1; exit 
 runall -j 2
 case "$OUT" in *"NOT RUN"*killed/tests/run-tests.sh*) r=named ;; *) r=unnamed ;; esac
 [ "$RC" -ne 0 ]; check "unaccounted suite fails the run and is named" "0 named" "$? $r"
+case "$OUT" in *" failed, "[0-9]*" not run ("*) r=yes ;; *) r=no ;; esac
+check "summary counts suites not run" "yes" "$r"
 rm -rf "$FX2/plugins/dx-x/skills/killed"
 
 DX_TEST_ROOT="$FX2" bash "$RUNNER" --all -j 0 >/dev/null 2>&1
 check "-j 0 exits 2" "2" "$?"
+DX_TEST_ROOT="$FX2" bash "$RUNNER" --all -j 00 >/dev/null 2>&1
+check "-j 00 exits 2" "2" "$?"
+
+# --run-one is internal and needs the log dir the parent sets up.
+env -u DX_TEST_LOGDIR DX_TEST_ROOT="$FX2" bash "$RUNNER" --run-one plugins/dx-x/skills/ok/tests/run-tests.sh >/dev/null 2>&1
+check "--run-one without a log dir exits 2" "2" "$?"
 
 echo ""
 echo "$PASS passed, $FAIL failed"
