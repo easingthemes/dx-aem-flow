@@ -77,6 +77,13 @@ mk plugins/dx-x/data/lib/helper.sh
 # Guards rule 2 (pair)
 check "script change selects its pair only" \
   "$(exp scripts/check-foo.test.sh)" "$(sel scripts/check-foo.sh)"
+# Rule 2 runs before rule 1 for scripts/: reason is pair, not home (fails if rule 2 is removed)
+check "script change reason is pair" "pair" "$(list scripts/check-foo.sh | cut -f2)"
+
+# suite_home must not make validate-skills.test.sh its own home (exercised via rule 2:
+# editing validate-skills.sh must select the .test.sh, which needs it paired, not self-homed)
+check "validator test is homed on its validator" "pair" \
+  "$(list scripts/validate-skills.sh | awk -F'\t' '$1=="scripts/validate-skills.test.sh"{print $2}')"
 
 # Guards rule 2 for validators (pair + the validator itself)
 check "validator change selects validator and its test" \
@@ -84,7 +91,13 @@ check "validator change selects validator and its test" \
 
 # Guards rule 6 (inert)
 check "docs-only change selects nothing" "No suites affected." \
-  "$(list docs/x.md website/src/pages/a.md README.md)"
+  "$(list docs/x.md website/README.md README.md)"
+
+# Spec ruling: validate-structure.sh scans website/src/ for hardcoded secrets
+check "website/src change selects the structure validator only" \
+  "$(exp scripts/validate-structure.sh)" "$(sel website/src/pages/a.md)"
+check "website/src reason is structural" "structural" \
+  "$(list website/src/pages/a.md | cut -f2)"
 
 # Guards rule 6's carve-out (stats.ts) + rule 5 (structural)
 check "stats.ts is not inert" \
@@ -96,10 +109,14 @@ check "fallback names the unmapped path" "fallback: .github/workflows/validate.y
   "$(list .github/workflows/validate.yml | cut -f2 | sort -u)"
 
 # Guards rule 1 (suite file equals path)
-case "$(sel $BETA)" in
-  *b.test.sh*) check "suite file change selects that suite" ok ok ;;
-  *)           check "suite file change selects that suite" ok "got: $(sel $BETA)" ;;
-esac
+check "suite file change selects that suite" "$(exp "$BETA" scripts/validate-skills.sh scripts/validate-stats.sh scripts/validate-structure.sh)" "$(sel $BETA)"
+
+# Guards rule 3 for scripts/ suites: the suite file itself is grepped, not only its home
+echo "uses check-foo.sh" > "$FX/scripts/check-foo.test.sh"
+mk plugins/dx-x/data/lib/check-foo.sh
+check "lib file named in a scripts/ suite selects that suite" "yes" \
+  "$(sel plugins/dx-x/data/lib/check-foo.sh | grep -q 'scripts/check-foo.test.sh' && echo yes || echo no)"
+rm -f "$FX/plugins/dx-x/data/lib/check-foo.sh"; : > "$FX/scripts/check-foo.test.sh"
 
 # Guards rule 1 (exact-file home) — a scripts/ test selects itself
 check "editing a scripts/ test selects it" \
@@ -117,6 +134,9 @@ check "lib consumer reason names the file" "uses helper.sh" \
   "$(list plugins/dx-x/data/lib/helper.sh | awk -F'\t' -v s="$BETA" '$1==s{print $2}')"
 
 # CLI behaviour
+# Task 4 turns bare --list into git-diff mode: replace this case then.
+DX_TEST_ROOT="$FX" bash "$RUNNER" --list >/dev/null 2>&1
+check "--list without '-' exits 2 (pre-git-diff mode)" "2" "$?"
 DX_TEST_ROOT="$FX" bash "$RUNNER" --bogus >/dev/null 2>&1
 check "unknown flag exits 2" "2" "$?"
 DX_TEST_ROOT="$FX" bash "$RUNNER" -h 2>&1 | grep -q 'Usage' ; check "-h prints usage" "0" "$?"

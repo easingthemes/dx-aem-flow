@@ -52,9 +52,9 @@ discover_suites() {
 suite_home() {
   local s="$1" d
   case "$s" in
-    scripts/validate-*.sh) echo "$s"; return ;;   # a validator is its own home
-    scripts/*.test.sh)
+    scripts/*.test.sh)   # first: scripts/validate-X.test.sh must pair with validate-X.sh
       case "${s#scripts/}" in */*) ;; *) echo "${s%.test.sh}.sh"; return ;; esac ;;
+    scripts/validate-*.sh) echo "$s"; return ;;   # a validator is its own home
   esac
   case "$s" in
     plugins/*/skills/*/*)
@@ -92,21 +92,6 @@ EOF_SUITES
     [ -n "$p" ] || continue
     matched=0
 
-    # Rule 1 — path is inside the suite's home, or is the suite file itself.
-    while IFS="$TAB" read -r s h; do
-      [ -n "$s" ] || continue
-      if [ "$p" = "$s" ]; then out="$out$s${TAB}home
-"; matched=1; continue; fi
-      case "$h" in
-        */) case "$p" in "$h"*) out="$out$s${TAB}home
-"; matched=1 ;; esac ;;
-        *)  [ "$p" = "$h" ] && { out="$out$s${TAB}home
-"; matched=1; } ;;
-      esac
-    done <<EOF_HOMES
-$homes
-EOF_HOMES
-
     # Rule 2 — scripts/X.sh pairs with scripts/X.test.sh (a validator also selects itself).
     case "$p" in
       scripts/*.test.sh) ;;
@@ -123,6 +108,21 @@ EOF_HOMES
         esac ;;
     esac
 
+    # Rule 1 — path is inside the suite's home, or is the suite file itself.
+    while IFS="$TAB" read -r s h; do
+      [ -n "$s" ] || continue
+      if [ "$p" = "$s" ]; then out="$out$s${TAB}home
+"; matched=1; continue; fi
+      case "$h" in
+        */) case "$p" in "$h"*) out="$out$s${TAB}home
+"; matched=1 ;; esac ;;
+        *)  [ "$p" = "$h" ] && { out="$out$s${TAB}home
+"; matched=1; } ;;
+      esac
+    done <<EOF_HOMES
+$homes
+EOF_HOMES
+
     # Rule 3 — shared libs/hooks/shared docs: every suite whose home mentions the basename.
     case "$p" in
       plugins/*/data/lib/*|plugins/*/data/hooks/*|plugins/*/shared/*)
@@ -132,7 +132,7 @@ EOF_HOMES
           case "$h" in
             */) grep -rqF -- "$b" "$h" 2>/dev/null && out="$out$s${TAB}uses $b
 " ;;
-            *)  grep -qF -- "$b" "$h" 2>/dev/null && out="$out$s${TAB}uses $b
+            *)  { grep -qF -- "$b" "$h" 2>/dev/null || grep -qF -- "$b" "$s" 2>/dev/null; } && out="$out$s${TAB}uses $b
 " ;;
           esac
         done <<EOF_HOMES3
@@ -155,7 +155,7 @@ EOF_S4
     esac
 
     # Rule 5 — structural validators.
-    local sk=0 ag=0 st=0
+    local sk=0 ag=0 st=0 ws=0
     case "$p" in
       plugins/*/skills/*) sk=1 ;;
     esac
@@ -165,6 +165,12 @@ EOF_S4
     case "$p" in
       plugins/*|.claude-plugin/*|.cursor-plugin/*|gemini-extension.json|website/src/config/stats.ts) st=1 ;;
     esac
+    # website/src/ is scanned by validate-structure.sh (hardcoded-secret check).
+    case "$p" in website/src/*) ws=1 ;; esac
+    if [ $ws -eq 1 ] && printf '%s\n' "$suites" | grep -qxF scripts/validate-structure.sh; then
+      matched=1; out="${out}scripts/validate-structure.sh${TAB}structural
+"
+    fi
     if [ $((sk + ag + st)) -gt 0 ]; then
       matched=1
       [ $sk -eq 1 ] && printf '%s\n' "$suites" | grep -qxF scripts/validate-skills.sh && out="${out}scripts/validate-skills.sh${TAB}validator
@@ -182,7 +188,7 @@ EOF_S4
     # Rule 6 — inert paths select nothing and are not "unmapped".
     if [ $matched -eq 0 ]; then
       case "$p" in
-        docs/*|website/*) matched=1 ;;
+        docs/*|website/*) matched=1 ;;   # website/src/ handled by rule 5
         */*) ;;
         *.md) matched=1 ;;
       esac
