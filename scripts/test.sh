@@ -14,6 +14,7 @@
 #   scripts/test.sh --group <name>       # run one named group: lib hooks hub automation cli
 #                                        #   tooling validators skill:<name>
 #   scripts/test.sh --all [-j N]         # run every suite
+#   scripts/test.sh -                    # run the suites affected by the paths read from stdin
 #   scripts/test.sh --list [mode]        # print the selection (<suite><TAB><reason>) and run
 #                                        #   nothing; mode is --changed, --all, --group <name>,
 #                                        #   or '-' to read changed paths from stdin
@@ -26,7 +27,7 @@
 
 set -uo pipefail
 
-usage() { sed -n '2,25p' "$0"; }
+usage() { sed -n '2,26p' "$0"; }
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"   # absolute: we cd to ROOT below
 LIST=0
@@ -37,9 +38,8 @@ JOBS=""
 RUN_ONE=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --list)
-      LIST=1; shift
-      if [ "${1:-}" = "-" ]; then SRC="stdin"; shift; fi ;;
+    --list) LIST=1; shift ;;
+    -) SRC="stdin"; shift ;;
     --all) SRC="all"; shift ;;
     --changed)
       SRC="changed"; shift
@@ -107,9 +107,11 @@ suite_home() {
 # select_suites — changed paths on stdin -> "<suite>\t<reason>" lines, sorted by suite,
 # one per suite, first matching reason wins. Unmapped path -> every suite, "fallback: <path>".
 select_suites() {
-  local suites homes s h p b matched out="" fallback=""
-  local TAB; TAB=$(printf '\t')
+  local suites homes validators s h p b t hits terms matched out="" fallback=""
+  local TAB NL; TAB=$(printf '\t'); NL='
+'
   suites=$(discover_suites)
+  validators=$(printf '%s\n' "$suites" | grep '^scripts/validate-[^/]*\.sh$' | grep -v '\.test\.sh$')
   homes=""
   while IFS= read -r s; do
     [ -n "$s" ] || continue
@@ -118,12 +120,24 @@ select_suites() {
   done <<EOF_SUITES
 $suites
 EOF_SUITES
+  # Rule 3 greps every home in ONE call per term (not one per suite): directory homes
+  # without their trailing slash, so grep prints "<home>/<file>" on BSD and GNU alike, plus
+  # file homes and scripts/ suite files.
+  local gargs; gargs=()
+  while IFS= read -r h; do
+    [ -n "$h" ] && gargs[${#gargs[@]}]="$h"
+  done <<EOF_GARGS
+$(printf '%s' "$homes" | awk -F'\t' '{ if ($2 ~ /\/$/) print substr($2, 1, length($2) - 1); else { print $2; print $1 } }' | LC_ALL=C sort -u)
+EOF_GARGS
 
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     matched=0
 
-    # Rule 2 — scripts/X.sh pairs with scripts/X.test.sh (a validator also selects itself).
+    # Rule 2 — scripts/X.sh pairs with scripts/X.test.sh (a validator also selects itself),
+    # and selects every scripts/validate-*.sh that names it (validate-structure.sh runs
+    # check-agent-hooks.sh). A validator hit alone does not count as mapped: a script with
+    # no pair still falls back to everything, since other callers may not be validators.
     case "$p" in
       scripts/*.test.sh) ;;
       scripts/*.sh)
@@ -135,7 +149,16 @@ EOF_SUITES
           case "$p" in scripts/validate-*.sh)
             if printf '%s\n' "$suites" | grep -qxF "$p"; then out="$out$p${TAB}pair
 "; matched=1; fi ;;
-          esac ;;
+          esac
+          b="${p##*/}"
+          while IFS= read -r s; do
+            [ -n "$s" ] && [ "$s" != "$p" ] || continue
+            grep -qF -- "$b" "$s" 2>/dev/null && out="$out$s${TAB}uses $b
+"
+          done <<EOF_V
+$validators
+EOF_V
+          ;;
         esac ;;
     esac
 
@@ -154,21 +177,45 @@ EOF_SUITES
 $homes
 EOF_HOMES
 
-    # Rule 3 — shared libs/hooks/shared docs: every suite whose home mentions the basename.
+    # Rule 3 — readers from outside the home. Suites read files across the tree (a lib test
+    # reads every flow skill's SKILL.md, a skill test reads a template, an eval checker walks
+    # plugins/*/evals), so for EVERY path under plugins/ or docs/reference/, select each suite
+    # whose home (or, for scripts/ suites, whose file) mentions one of these terms
+    # (fixed-string grep; the reason names the first term that hit):
+    #   - the basename — except SKILL.md, README.md and index.md, which every tree mentions;
+    #   - for plugins/<p>/skills/<name>/**, the skill name (covers SKILL.md and references);
+    #   - for plugins/<p>/evals/**, the word "evals" (the checker globs the folder, never a file).
+    # A docs/reference/ file no suite mentions selects nothing; other docs/** stay inert (rule 6).
     case "$p" in
-      plugins/*/data/lib/*|plugins/*/data/hooks/*|plugins/*/shared/*)
-        matched=1; b="${p##*/}"
-        while IFS="$TAB" read -r s h; do
-          [ -n "$s" ] || continue
-          case "$h" in
-            */) grep -rqF -- "$b" "$h" 2>/dev/null && out="$out$s${TAB}uses $b
-" ;;
-            *)  { grep -qF -- "$b" "$h" 2>/dev/null || grep -qF -- "$b" "$s" 2>/dev/null; } && out="$out$s${TAB}uses $b
-" ;;
-          esac
-        done <<EOF_HOMES3
+      plugins/*|docs/reference/*)
+        matched=1; terms=""
+        b="${p##*/}"
+        case "$b" in SKILL.md|README.md|index.md|'') ;; *) terms="$b" ;; esac
+        case "$p" in
+          plugins/*/skills/*/*)
+            t="${p#plugins/*/skills/}"; t="${t%%/*}"
+            terms="$terms
+$t" ;;
+          plugins/*/evals/*) terms="$terms
+evals" ;;
+        esac
+        while IFS= read -r t; do
+          [ -n "$t" ] && [ ${#gargs[@]} -gt 0 ] || continue
+          hits="$NL$(grep -rlF -- "$t" "${gargs[@]}" 2>/dev/null)$NL"   # one file per line
+          while IFS="$TAB" read -r s h; do
+            [ -n "$s" ] || continue
+            case "$h" in
+              */) case "$hits" in *"$NL$h"*) out="$out$s${TAB}uses $t
+" ;; esac ;;
+              *)  case "$hits" in *"$NL$h$NL"*|*"$NL$s$NL"*) out="$out$s${TAB}uses $t
+" ;; esac ;;
+            esac
+          done <<EOF_HOMES3
 $homes
 EOF_HOMES3
+        done <<EOF_TERMS
+$terms
+EOF_TERMS
         ;;
     esac
 
@@ -219,7 +266,7 @@ EOF_S4
     # Rule 6 — inert paths select nothing and are not "unmapped".
     if [ $matched -eq 0 ]; then
       case "$p" in
-        docs/*|website/*) matched=1 ;;   # website/src/ handled by rule 5
+        docs/*|website/*) matched=1 ;;   # docs/reference/ by rule 3, website/src/ by rule 5
         */*) ;;
         *.md) matched=1 ;;
       esac

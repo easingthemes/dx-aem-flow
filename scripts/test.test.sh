@@ -157,6 +157,44 @@ check "reason is home for own-suite hit" "home" \
 check "lib consumer reason names the file" "uses helper.sh" \
   "$(list plugins/dx-x/data/lib/helper.sh | awk -F'\t' -v s="$BETA" '$1==s{print $2}')"
 
+# ---- Rule 3 for every plugins/ and docs/reference/ path: suites that read a file from
+# outside their home. Each new suite lives in its own home so the expected sets are exact.
+FLOW=plugins/dx-y/data/lib/tests/flow.test.sh          # reads skills by name + a reference doc
+GENERIC=plugins/dx-z/shared/tests/generic.test.sh      # mentions "SKILL.md", no skill name
+EVALCHK=plugins/dx-w/data/lib/tests/evalcheck.test.sh  # walks every plugins/*/evals folder
+DELTA=$SKILLS/delta/tests/run-tests.sh                 # reads a template from outside its skill
+mk "$FLOW";    echo 'for s in gamma; do cat "$P/skills/$s/x"; done; cat docs/reference/thing.md' > "$FX/$FLOW"
+mk "$GENERIC"; echo 'for f in "$P"/*/skills/*/SKILL.md; do :; done' > "$FX/$GENERIC"
+mk "$EVALCHK"; echo 'for d in "$P"/*/evals; do :; done' > "$FX/$EVALCHK"
+mk "$DELTA";   echo 'cp "$PLUGIN/templates/conf.yaml.template" .' > "$FX/$DELTA"
+
+check "SKILL.md change selects a suite outside the skill that names it (not one naming SKILL.md)" \
+  "$(exp "$FLOW" scripts/validate-skills.sh scripts/validate-stats.sh scripts/validate-structure.sh)" \
+  "$(sel $SKILLS/gamma/SKILL.md)"
+check "skill-name reason" "uses gamma" \
+  "$(list $SKILLS/gamma/SKILL.md | awk -F'\t' -v s="$FLOW" '$1==s{print $2}')"
+case "$(sel $SKILLS/gamma/SKILL.md)" in *"$GENERIC"*) r=selected ;; *) r=skipped ;; esac
+check "a suite that only mentions SKILL.md is not selected by a SKILL.md change" "skipped" "$r"
+check "docs/reference file selects the suite that reads it" "$(exp "$FLOW")" \
+  "$(sel docs/reference/thing.md)"
+check "other docs/reference files stay quiet, other docs inert" "No suites affected." \
+  "$(list docs/reference/unread.md docs/notes/thing.md)"
+check "evals file selects the eval-checking suite" \
+  "$(exp "$EVALCHK" scripts/validate-stats.sh scripts/validate-structure.sh)" \
+  "$(sel plugins/dx-x/evals/case-one/case.yaml)"
+check "template change selects the skill suite that reads it" \
+  "$(exp "$DELTA" "$CLI" scripts/validate-stats.sh scripts/validate-structure.sh)" \
+  "$(sel plugins/dx-x/templates/conf.yaml.template)"
+rm -rf "$FX/plugins/dx-y" "$FX/plugins/dx-z" "$FX/plugins/dx-w" "$FX/$SKILLS/delta"
+
+# Rule 2: a changed scripts/*.sh also selects a validator that runs it.
+echo 'bash "$ROOT/scripts/check-foo.sh"' > "$FX/scripts/validate-structure.sh"
+check "script run by a validator selects its pair and that validator" \
+  "$(exp scripts/check-foo.test.sh scripts/validate-structure.sh)" "$(sel scripts/check-foo.sh)"
+check "validator reason names the script" "uses check-foo.sh" \
+  "$(list scripts/check-foo.sh | awk -F'\t' '$1=="scripts/validate-structure.sh"{print $2}')"
+: > "$FX/scripts/validate-structure.sh"
+
 # CLI behaviour
 DX_TEST_ROOT="$FX" bash "$RUNNER" --bogus >/dev/null 2>&1
 check "unknown flag exits 2" "2" "$?"
@@ -290,6 +328,11 @@ case "$OUT" in *"NOT RUN"*killed/tests/run-tests.sh*) r=named ;; *) r=unnamed ;;
 case "$OUT" in *" failed, "[0-9]*" not run ("*) r=yes ;; *) r=no ;; esac
 check "summary counts suites not run" "yes" "$r"
 rm -rf "$FX2/plugins/dx-x/skills/killed"
+
+#  `-` without --list runs the selection read from stdin.
+OUT=$(printf '%s\n' plugins/dx-x/skills/ok/SKILL.md | DX_TEST_ROOT="$FX2" bash "$RUNNER" - -j 2 2>&1); RC=$?
+case "$OUT" in *PASS*skills/ok/tests/run-tests.sh*) r=ran ;; *) r=not-run ;; esac
+check "'-' runs the suites selected from stdin" "0 ran" "$RC $r"
 
 DX_TEST_ROOT="$FX2" bash "$RUNNER" --all -j 0 >/dev/null 2>&1
 check "-j 0 exits 2" "2" "$?"
